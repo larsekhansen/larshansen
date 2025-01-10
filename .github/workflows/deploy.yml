@@ -23,7 +23,7 @@ jobs:
       uses: appleboy/ssh-action@v0.1.6
       with:
         host: ${{ secrets.RASPBERRY_PI_PUBLIC_IP }}
-        username: pi
+        username: lars
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         script: |
           cd ~/personal/larshansen.dev
