@@ -1,37 +1,19 @@
 import { Sprite } from "pixi.js";
 
-/* 
-
-  This is an Typescript adapted version of rectangleCollision from the "bump" collision
-  detection library for PixiJS, used to detect collisions between two sprites.
-
-  The original library is available at: https://github.com/kittykatattack/bump
-
-*/
-
-interface SpriteWithCollisionProperties extends Sprite {
-  _bumpPropertiesAdded: boolean;
-  gx: number;
-  gy: number;
-  centerX: number;
-  centerY: number;
-  halfWidth: number;
-  halfHeight: number;
-  xAnchorOffset: number;
-  yAnchorOffset: number;
+export enum CollisionSide {
+  LEFT = "left",
+  RIGHT = "right",
+  TOP = "top",
+  BOTTOM = "bottom"
 }
 
-export function rectangleCollision(
-  r1: SpriteWithCollisionProperties,
-  r2: SpriteWithCollisionProperties,
-  bounce = false,
-  global = true
-): string | undefined {
+// Adapted from "bump" collision detection library: https://github.com/kittykatattack/bump
+export function rectangleCollision(r1: Sprite, r2: Sprite, bounce = false, global = true): string | undefined {
   //Add collision properties
   if (!r1._bumpPropertiesAdded) addCollisionProperties(r1);
   if (!r2._bumpPropertiesAdded) addCollisionProperties(r2);
 
-  let collisionSide: string | undefined;
+  let collisionSide: CollisionSide | undefined;
   let combinedHalfWidths: number | undefined;
   let combinedHalfHeights: number | undefined;
   let overlapX: number | undefined;
@@ -41,27 +23,11 @@ export function rectangleCollision(
 
   //Calculate the distance vector
   if (global) {
-    vx =
-      r1.gx +
-      Math.abs(r1.halfWidth) -
-      r1.xAnchorOffset -
-      (r2.gx + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
-    vy =
-      r1.gy +
-      Math.abs(r1.halfHeight) -
-      r1.yAnchorOffset -
-      (r2.gy + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
+    vx = r1.gx + Math.abs(r1.halfWidth) - r1.xAnchorOffset - (r2.gx + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
+    vy = r1.gy + Math.abs(r1.halfHeight) - r1.yAnchorOffset - (r2.gy + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
   } else {
-    vx =
-      r1.x +
-      Math.abs(r1.halfWidth) -
-      r1.xAnchorOffset -
-      (r2.x + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
-    vy =
-      r1.y +
-      Math.abs(r1.halfHeight) -
-      r1.yAnchorOffset -
-      (r2.y + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
+    vx = r1.x + Math.abs(r1.halfWidth) - r1.xAnchorOffset - (r2.x + Math.abs(r2.halfWidth) - r2.xAnchorOffset);
+    vy = r1.y + Math.abs(r1.halfHeight) - r1.yAnchorOffset - (r2.y + Math.abs(r2.halfHeight) - r2.yAnchorOffset);
   }
 
   //Figure out the combined half-widths and half-heights
@@ -73,72 +39,43 @@ export function rectangleCollision(
     //A collision might be occurring!
     //Check whether vy is less than the combined half heights
     if (Math.abs(vy) < combinedHalfHeights) {
-      //A collision has occurred! This is good!
-      //Find out the size of the overlap on both the X and Y axes
+      //A collision has occurred, find size of the overlap on both the X and Y axes
       overlapX = combinedHalfWidths - Math.abs(vx);
       overlapY = combinedHalfHeights - Math.abs(vy);
 
-      //The collision has occurred on the axis with the
-      //*smallest* amount of overlap. Let's figure out which
-      //axis that is
-
+      //The collision has occurred on the axis with the smallest amount of overlap
       if (overlapX >= overlapY) {
-        //The collision is happening on the X axis
-        //But on which side? vy can tell us
+        //The collision is happening on the X axis, use vy to determine collision side
 
         if (vy > 0) {
-          collisionSide = "top";
+          collisionSide = CollisionSide.TOP;
           //Move the rectangle out of the collision
           r1.y = r1.y + overlapY;
         } else {
-          collisionSide = "bottom";
+          collisionSide = CollisionSide.BOTTOM;
           //Move the rectangle out of the collision
           r1.y = r1.y - overlapY;
         }
-
-        //Bounce
         if (bounce) {
-          //r1.vy *= -1; // LARS: I think this is wrong, so will try using vy not as method
+          //r1.vy *= -1; // LARS: I think this is wrong, so will try using vy, not r1.vy
           vy *= -1;
-
-          /*Alternative
-          //Find the bounce surface's vx and vy properties
-          var s = {};
-          s.vx = r2.x - r2.x + r2.width;
-          s.vy = 0;
-
-          //Bounce r1 off the surface
-          //this.bounceOffSurface(r1, s);
-          */
         }
       } else {
-        //The collision is happening on the Y axis
-        //But on which side? vx can tell us
+        //The collision is on the Y axis, use vx to determine collision side
 
         if (vx > 0) {
-          collisionSide = "left";
+          collisionSide = CollisionSide.LEFT;
           //Move the rectangle out of the collision
           r1.x = r1.x + overlapX;
         } else {
-          collisionSide = "right";
+          collisionSide = CollisionSide.RIGHT;
           //Move the rectangle out of the collision
           r1.x = r1.x - overlapX;
         }
 
-        //Bounce
         if (bounce) {
-          //r1.vx *= -1; // LARS: I think this is wrong, so will try using vx not as method
+          //r1.vx *= -1; // LARS: I think this is wrong, so will try using vx, not r1.vx
           vx *= -1;
-
-          /*Alternative
-          //Find the bounce surface's vx and vy properties
-          var s = {};
-          s.vx = 0;
-          s.vy = r2.y - r2.y + r2.height;
-
-          //Bounce r1 off the surface
-          this.bounceOffSurface(r1, s);
-          */
         }
       }
     } else {
@@ -148,12 +85,11 @@ export function rectangleCollision(
     //No collision
   }
 
-  //Return the collision string. it will be either "top", "right",
-  //"bottom", or "left" depending on which side of r1 is touching r2.
+  //Return "top", "right", "bottom", or "left" depending on which side of r1 is touching r2.
   return collisionSide;
 }
 
-function addCollisionProperties(sprite: SpriteWithCollisionProperties) {
+function addCollisionProperties(sprite: Sprite) {
   //Add properties to Pixi sprites
 
   //gx
