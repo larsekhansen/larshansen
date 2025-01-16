@@ -11,12 +11,10 @@ export class EventController {
   }
 
   private handleKeyDown = (e: KeyboardEvent) => {
-    console.log(e.code, "down");
     this.keys[e.code] = true;
   };
 
   private handleKeyUp = (e: KeyboardEvent) => {
-    console.log(e.code, "up");
     this.keys[e.code] = false;
   };
 
@@ -43,10 +41,7 @@ export class EventController {
 
   public isColliding(a: Graphics, b: Graphics): boolean {
     return (
-      a.x < b.x + b.width &&
-      a.x + a.width > b.x &&
-      a.y < b.y + b.height &&
-      a.y + a.height > b.y
+      a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
     );
   }
 }

@@ -1,4 +1,4 @@
-import VikingGame from "./VikingGame";
+import VikingGame from "./game/VikingGame";
 
 function App() {
   return (

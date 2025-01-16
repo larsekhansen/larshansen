@@ -1,8 +1,14 @@
 import { useEffect, useRef } from "react";
-import { Application, Graphics } from "pixi.js";
+import { Application, Graphics, Sprite } from "pixi.js";
 import { JumpController } from "./jumpController";
 import worldCreation from "./WorldCreation";
 import { EventController } from "./eventController";
+
+if (import.meta.hot) {
+  import.meta.hot.accept(() => {
+    window.location.reload();
+  });
+}
 
 const VikingGame = () => {
   const gameRef = useRef<HTMLDivElement>(null);
@@ -39,10 +45,7 @@ const VikingGame = () => {
         // ----------------- //
 
         // -- Player movement (HAS TO BE BEFORE COLLISION DETECTION) -- //
-        velocity.y = jumpController.update(
-          e.isKeyPressed("Space"),
-          e.isGrounded
-        );
+        velocity.y = jumpController.update(e.isKeyPressed("Space"), e.isGrounded);
         if (e.isKeyPressed("ArrowLeft") || e.isKeyPressed("KeyA"))
           velocity.x = -e.moveSpeed * deltaTime;
         if (e.isKeyPressed("ArrowRight") || e.isKeyPressed("KeyD"))
@@ -53,25 +56,34 @@ const VikingGame = () => {
 
         // -- Collision detection X axis -- //
         if (player.x < 0) player.x = 0;
-        if (player.x > app.screen.width - player.width)
-          player.x = app.screen.width - player.width;
+        if (player.x > app.screen.width - player.width) player.x = app.screen.width - player.width;
         // ----------------- //
         // -- Collision detection Y axis (HAS TO BE AFTER PLAYER MOVEMENT) -- //
         platforms.forEach((platform) => {
           if (isColliding(player, platform)) {
             const playerTop = player.y;
             const playerBottom = player.y + player.height;
+            const playerLeft = player.x;
+            const playerRight = player.x + player.width;
             const platformTop = platform.y;
             const platformBottom = platform.y + platform.height;
+            const platformLeft = platform.x;
+            const platformRight = platform.x + platform.width;
 
             const isMovingDown = velocity.y > 0;
             const isMovingUp = velocity.y < 0;
             const isMovingLeft = velocity.x < 0;
             const isMovingRight = velocity.x > 0;
             const isOnGround = playerBottom >= ground.y;
+            const isUnderPlatform = playerTop < platformBottom;
+            const isOnPlatform = playerBottom >= platformTop && playerTop <= platformBottom;
 
-            const l = () =>
-              console.log({
+            const isAtPlatformSideRight = playerLeft <= platformRight;
+            const isAtPlatformSideLeft = playerRight >= platformLeft;
+            const isAtPlatformSide = isAtPlatformSideLeft || isAtPlatformSideRight;
+
+            const l = (msg: string) =>
+              console.log(msg, {
                 playerTop,
                 playerBottom,
                 platformTop,
@@ -79,35 +91,29 @@ const VikingGame = () => {
                 isMovingUp,
                 isMovingDown,
                 isMovingLeft,
-                isMovingRight
+                isMovingRight,
+                isAtPlatformSideLeft,
+                isAtPlatformSideRight,
+                isOnPlatform
               });
 
-            if (
-              isMovingLeft &&
-              !isOnGround &&
-              player.x < platform.x + platform.width
-            ) {
-              player.x = platform.x + platform.width;
-              l();
-            } else if (
-              isMovingRight &&
-              !isOnGround &&
-              player.x > platform.x - player.width
-            ) {
-              player.x = platform.x - player.width;
-              l();
+            if (isMovingLeft && !isOnGround) {
+              l("isMovingLeft ALT");
             }
-            if (isMovingDown && playerBottom > platformTop) {
-              // Landing on top of platform
+            if (isMovingLeft && !isOnGround && isAtPlatformSide && !isOnPlatform) {
+              player.x = platform.x + platform.width;
+              l("isMovingLeft");
+            } else if (isMovingRight && !isOnGround && isAtPlatformSide && !isOnPlatform) {
+              player.x = platform.x - player.width;
+              l("isMovingRight");
+            }
+            if (isMovingDown && isOnPlatform) {
               player.y = platformTop - player.height;
               e.isGrounded = true;
               jumpController.reset();
               velocity.y = 0;
-            } else if (isMovingUp && playerTop < platformBottom) {
-              // only if player hits platform with head, not side
-
-              l();
-              // Hitting platform from below
+            } else if (isMovingUp && isUnderPlatform) {
+              l("isMovingUp");
               player.y = platformBottom;
               velocity.y = 0;
             }
@@ -123,12 +129,9 @@ const VikingGame = () => {
     };
   }, []);
 
-  function isColliding(a: Graphics, b: Graphics) {
+  function isColliding(a: Sprite, b: Graphics) {
     return (
-      a.x < b.x + b.width &&
-      a.x + a.width > b.x &&
-      a.y < b.y + b.height &&
-      a.y + a.height > b.y
+      a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
     );
   }
 

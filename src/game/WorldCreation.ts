@@ -1,4 +1,4 @@
-import { Application, Graphics, Container } from "pixi.js";
+import { Application, Graphics, Container, Sprite, Texture } from "pixi.js";
 
 const worldCreation = (app: Application) => {
   // Create game scene with platforms
@@ -11,12 +11,11 @@ const worldCreation = (app: Application) => {
   ];
 
   // Create player
-  const player = new Graphics();
-  player.setFillStyle({ color: 0xff0000 });
-  player.rect(0, 0, 40, 60);
-  player.fill();
-  player.x = 100;
-  player.y = 240;
+  const player = new Sprite(Texture.WHITE);
+  player.tint = 0xff0000;
+  player.width = 40;
+  player.height = 60;
+  player.position.set(100, 240);
   gameScene.addChild(player);
 
   // Create ground
