@@ -1,9 +1,5 @@
-import { Graphics } from "pixi.js";
-
 export class EventController {
   private keys: { [key: string]: boolean } = {};
-  private isOnGround = true;
-  private readonly MOVE_SPEED = 10;
 
   constructor() {
     window.addEventListener("keydown", this.handleKeyDown);
@@ -22,26 +18,20 @@ export class EventController {
     return !!this.keys[code];
   }
 
-  public set isGrounded(state: boolean) {
-    this.isOnGround = state;
+  public isPressingJump(): boolean {
+    return this.isKeyPressed("Space");
   }
 
-  public get isGrounded(): boolean {
-    return this.isOnGround;
+  public isPressingRight(): boolean {
+    return this.isKeyPressed("ArrowRight") || this.isKeyPressed("KeyD");
   }
 
-  public get moveSpeed(): number {
-    return this.MOVE_SPEED;
+  public isPressingLeft(): boolean {
+    return this.isKeyPressed("ArrowLeft") || this.isKeyPressed("KeyA");
   }
 
-  public cleanup() {
+  public cleanupEventListeners() {
     window.removeEventListener("keydown", this.handleKeyDown);
     window.removeEventListener("keyup", this.handleKeyUp);
-  }
-
-  public isColliding(a: Graphics, b: Graphics): boolean {
-    return (
-      a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y
-    );
   }
 }
