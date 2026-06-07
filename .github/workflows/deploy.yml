@@ -1,0 +1,41 @@
+name: Deploy to Raspberry Pi
+
+# Builds the monorepo on a self-hosted runner that lives ON the Pi (outbound-only,
+# so it works behind the home double-NAT — no inbound ports needed) and publishes
+# each app's static build to the nginx webroots that Cloudflare Tunnel serves.
+#
+# Prerequisite: the Pi must be registered as a self-hosted runner with the label
+# `larshansen-pi`, and own the /var/www/* webroots. See infra/README.md.
+
+on:
+  push:
+    branches: [master] # TODO: switch to "main" once the default branch is renamed
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pi
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, larshansen-pi]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build all apps
+        run: bun run build
+
+      - name: Publish to nginx webroots
+        run: |
+          set -euo pipefail
+          publish () { rsync -a --delete "apps/$1/dist/" "$2/"; }
+          publish landing   /var/www/larshansen.dev
+          publish portfolio /var/www/cv.larshansen.dev
+          publish iron-maze /var/www/maze.larshansen.dev
