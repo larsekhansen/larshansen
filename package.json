@@ -1,15 +1,21 @@
 {
-  "name": "larshansen-dev",
+  "name": "larshansen",
   "version": "1.0.0",
   "private": true,
-  "description": "Personal website - monorepo containing frontend and backend",
+  "description": "Lars Hansen — personal monorepo. Platform-game landing page plus apps.",
   "homepage": "https://larshansen.dev",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
-    "dev:frontend": "npm --prefix frontend run dev",
-    "dev:backend": "npm --prefix backend run go",
-    "build": "npm --prefix frontend run build",
-    "test": "npm --prefix frontend run test",
-    "install:all": "npm --prefix frontend install && npm --prefix backend install"
+    "dev:landing": "bun run --filter '@larshansen/landing' dev",
+    "dev:portfolio": "bun run --filter '@larshansen/portfolio' dev",
+    "dev:iron-maze": "bun run --filter '@larshansen/iron-maze' dev",
+    "build": "bun run --filter '*' build",
+    "build:landing": "bun run --filter '@larshansen/landing' build",
+    "build:portfolio": "bun run --filter '@larshansen/portfolio' build",
+    "build:iron-maze": "bun run --filter '@larshansen/iron-maze' build"
   },
   "license": "MIT"
 }

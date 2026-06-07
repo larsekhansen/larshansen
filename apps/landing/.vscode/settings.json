@@ -1,0 +1,4 @@
+{
+  "prettier.printWidth": 120,
+  "editor.rulers": [100, 120]
+}
