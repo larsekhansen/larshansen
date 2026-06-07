@@ -1,0 +1,16 @@
+# cloudflared tunnel config for the Pi.
+# Copy to /etc/cloudflared/config.yml (or ~/.cloudflared/config.yml) and replace
+# TUNNEL_ID with the id printed by `cloudflared tunnel create larshansen`.
+
+tunnel: TUNNEL_ID
+credentials-file: /home/lars/.cloudflared/TUNNEL_ID.json
+
+ingress:
+  - hostname: larshansen.dev
+    service: http://localhost:8080
+  - hostname: cv.larshansen.dev
+    service: http://localhost:8080
+  - hostname: maze.larshansen.dev
+    service: http://localhost:8080
+  # everything else gets a 404
+  - service: http_status:404
