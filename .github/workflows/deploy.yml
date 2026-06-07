@@ -9,7 +9,7 @@ name: Deploy to Raspberry Pi
 
 on:
   push:
-    branches: [master] # TODO: switch to "main" once the default branch is renamed
+    branches: [master, main] # works on the current default and survives a master→main rename
   workflow_dispatch:
 
 concurrency:

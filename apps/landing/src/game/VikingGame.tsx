@@ -1,5 +1,4 @@
 import { useEffect, useRef } from "react";
-import { EventController } from "./eventController";
 import initGame from "./game";
 
 if (import.meta.hot) {
@@ -8,19 +7,17 @@ if (import.meta.hot) {
 
 const VikingGame = () => {
   const gameRef = useRef<HTMLDivElement>(null);
-  const isMounted = useRef(false);
+  const startedRef = useRef(false);
 
   useEffect(() => {
-    if (!isMounted.current) {
-      return (isMounted.current = true) && undefined;
-    }
+    // React StrictMode invokes effects twice in dev; guard so the game inits
+    // exactly once. (The previous guard skipped the *first* run, so in a
+    // production build — where the effect fires only once — it never ran and
+    // the page rendered blank.)
+    if (startedRef.current) return;
+    startedRef.current = true;
 
     initGame(gameRef);
-
-    return () => {
-      const { cleanupEventListeners } = new EventController();
-      cleanupEventListeners();
-    };
   }, []);
 
   return <div id="game" ref={gameRef} />;
