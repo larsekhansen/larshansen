@@ -1,0 +1,238 @@
+
+/*-------------------- 
+    FONT import
+--------------------*/
+
+@font-face {
+    font-family: 'PirulenRg-Regular';
+    font-style: normal;
+    font-weight: normal;
+    src: local('PirulenRg-Regular'), url('assets/img/pirulen rg.woff') format('woff');
+}
+@font-face {
+    font-family: 'Dungeon';
+    src: url('assets/img/Dungeon.ttf') format('truetype')
+}
+
+
+/*-------------------- 
+    WEB PAGE 
+--------------------*/
+
+body {
+    background-image: url(assets/img/landscape_movies-the-maze-runner-poster.jpg);
+    background-size: cover;
+    padding: unset;
+}
+
+/* The div surrounding the gameboard, and text elements inside */
+.game-page {
+    background-color: rgba(100, 100, 100, 0.90);
+    height: 750px;
+    width: 1400px;
+    margin: 0 auto;
+    border-radius: 10px;
+    display: block;
+    padding: unset;
+}
+.game-page h1 {
+    display: block;
+    width: 768px;
+    margin:0 auto ;
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: "PirulenRg-Regular";
+}
+.game-page p {
+    border: 1px solid darkslategray;
+    background-color: rgba(173, 216, 230, 0.527);
+    border-radius: 10px;
+    width: 740px ;
+    height: 35px;
+    line-height: 37px;
+    margin: 4px auto 0 auto ;
+    padding-left: 12px;
+    font-family: "Dungeon";
+    font-size: 20px;
+}
+
+
+/* The gameboard! */
+.gameboard {
+    background-image: url(assets/img/cartoon_dirt.png);
+    background-size: contain;
+    width: 768px;
+    height: 480px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    border: 10px ridge lightslategray;
+    box-sizing: content-box;
+    margin: 0 auto;
+    position: relative;
+}
+
+
+    /*---------
+      IN GAME 
+    ---------*/
+
+
+.game-area {
+    background-image: url(assets/img/cartoon_dirt.png);
+    background-size: contain;
+}
+
+
+/*Each div on the gameboard*/
+.cell {
+    min-width: 3.125%;
+    min-height: 5%;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+
+.wall {
+    background-image: url(assets/img/wall_vines4.png);
+    background-repeat: repeat;
+}
+
+.start-btn {
+    background-size: cover;
+    background-color: rgb(14, 209, 21);
+    box-shadow: 0px 4px #666;
+    overflow: visible;
+
+}
+.clicked{
+    box-shadow: 0px 1px #666;
+    transform: translateY(4px);
+}
+
+.finish-btn {
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+
+
+/*Using this to add borders ONLY between safe-area and walls*/
+.left-border {
+    border-left: 2px solid black
+}
+.right-border {
+    border-right: 2px solid black
+}
+.top-border {
+    border-top: 2px solid black
+}
+.bottom-border {
+    border-bottom: 2px solid black
+}
+
+
+/* background-images for the finish-area */
+
+.cartoon_grass_nw {
+    background-image: url(assets/img/cartoon_grass_nw.png)
+}
+.cartoon_grass_ne {
+    background-image: url(assets/img/cartoon_grass_ne.png)
+}
+.cartoon_grass_sw {
+    background-image: url(assets/img/cartoon_grass_sw.png)
+}
+.cartoon_grass_se {
+    background-image: url(assets/img/cartoon_grass_se.png)
+}
+
+
+
+/* Borders for the start button.*/
+.nw-border {
+    border-left: 4px outset slategray;
+    border-top: 4px outset slategray;
+    border-bottom: none;
+    border-right: none;
+    border-top-left-radius: 10px
+}
+
+.ne-border {
+    border-right: 4px outset slategray;
+    border-top: 4px outset slategray;
+    border-bottom: none;
+    border-left: none; /*I had to specifify no borders where i didnt want them only this one, so i did it on all of them, just in case of later bugs*/
+    border-top-right-radius: 10px
+}
+.sw-border {
+    border-left: 4px outset slategray;
+    border-bottom: 4px outset slategray;
+    border-right: none;
+    border-top: none;
+    border-bottom-left-radius: 10px;
+    margin-bottom: 5px;
+}
+.se-border {
+    border-right: 4px outset slategray;
+    border-bottom: 4px outset slategray;
+    border-top: none;
+    border-left: none;
+    border-bottom-right-radius: 10px;
+    margin-bottom: 5px;
+}
+
+
+
+
+
+/* ENEMY LEVEL 2 VISUALS AND ANIMATIONS */
+.lvl2-snakes {
+    margin: 0.2% 0;
+    position: absolute;
+    background-image: url(assets/img/water_moccasin.png);
+    background-size: contain;
+}
+
+.snake-pos-1 {
+    right: 100px;
+    min-height: 14%;
+    min-width: 4.365%;
+    top: 30%;
+    animation: enemy-one 3s ease-in-out infinite alternate both;
+}
+.snake-pos-2 {
+    right: 250px;
+    min-height: 14%;
+    min-width: 4.365%;
+    top: 30%;
+    animation: enemy-one 3s ease-in-out infinite alternate both;
+}
+.snake-pos-3 {
+    right: 347px;
+    min-width: 3.305%;
+    min-height: 5%;
+    top: 75%;
+    animation: enemy-one 3s ease-in-out infinite alternate both;
+}
+.snake-pos-4 {
+    right: 150px;
+    min-width: 3.305%;
+    min-height: 5%;
+    top:80%;
+    animation: enemy-one 3s ease-in-out infinite alternate both;
+}
+
+
+@keyframes enemy-one {
+    0% {
+      -webkit-transform: translateX(0);
+              transform: translateX(0);
+    }
+    100% {
+      -webkit-transform: translateX(-250px);
+              transform: translateX(-250px);
+    }
+  }
+
+
