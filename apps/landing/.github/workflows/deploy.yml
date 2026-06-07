@@ -1,0 +1,36 @@
+name: Deploy to Raspberry Pi
+
+on:
+  push:
+    branches:
+      - main # Triggers on pushes to the main branch
+  pull_request:
+    branches:
+      - main # Triggers on pull request merges into main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Install SSH Client
+        run: sudo apt-get install -y openssh-client
+
+      - name: Deploy to Raspberry Pi
+        uses: appleboy/ssh-action@v0.1.6
+        with:
+          host: ${{ secrets.RASPBERRY_PI_PUBLIC_IP }}
+          username: lars
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            export PATH=$PATH:/home/lars/.bun/bin
+            cd ~/personal/larshansen.dev
+            git pull origin main
+            bun install
+            bun run build
+            sudo rsync -av --delete dist/ /var/www/larshansen.dev/
+            sudo chown -R www-data:www-data /var/www/larshansen.dev
+            sudo chmod -R 755 /var/www/larshansen.dev
