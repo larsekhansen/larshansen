@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="6" fill="#ffd23f"/>
+  <g fill="#151714" fill-rule="evenodd">
+    <path d="M4 4h10.5v10.5H4zM5.5 5.5v7.5h7.5V5.5z"/>
+    <path d="M17.5 4H28v10.5H17.5zM19 5.5v7.5h7.5V5.5z"/>
+    <path d="M4 17.5h10.5V28H4zM5.5 19v7.5h7.5V19z"/>
+    <rect x="7" y="7" width="4.5" height="4.5"/>
+    <rect x="20.5" y="7" width="4.5" height="4.5"/>
+    <rect x="7" y="20.5" width="4.5" height="4.5"/>
+    <rect x="17.5" y="17.5" width="3" height="3"/>
+    <rect x="24.5" y="17.5" width="3.5" height="3"/>
+    <rect x="21" y="21" width="3" height="3"/>
+    <rect x="17.5" y="24.5" width="3" height="3.5"/>
+    <rect x="24.5" y="24.5" width="3.5" height="3.5"/>
+  </g>
+</svg>

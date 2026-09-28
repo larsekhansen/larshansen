@@ -12,10 +12,12 @@
     "dev:landing": "bun run --filter '@larshansen/landing' dev",
     "dev:portfolio": "bun run --filter '@larshansen/portfolio' dev",
     "dev:iron-maze": "bun run --filter '@larshansen/iron-maze' dev",
+    "dev:qr": "bun run --filter '@larshansen/qr' dev",
     "build": "bun run --filter '*' build",
     "build:landing": "bun run --filter '@larshansen/landing' build",
     "build:portfolio": "bun run --filter '@larshansen/portfolio' build",
-    "build:iron-maze": "bun run --filter '@larshansen/iron-maze' build"
+    "build:iron-maze": "bun run --filter '@larshansen/iron-maze' build",
+    "build:qr": "bun run --filter '@larshansen/qr' build"
   },
   "license": "MIT"
 }

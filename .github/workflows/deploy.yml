@@ -35,7 +35,9 @@ jobs:
       - name: Publish to nginx webroots
         run: |
           set -euo pipefail
-          publish () { rsync -a --delete "apps/$1/dist/" "$2/"; }
-          publish landing   /var/www/larshansen.dev
+          publish () { local app=$1 webroot=$2; shift 2; rsync -a --delete "$@" "apps/$app/dist/" "$webroot/"; }
+          # apps/qr lives inside larshansen.dev at /qr/, so the landing page's --delete must leave it alone.
+          publish landing   /var/www/larshansen.dev --exclude /qr/
+          publish qr        /var/www/larshansen.dev/qr
           publish portfolio /var/www/cv.larshansen.dev
           publish iron-maze /var/www/maze.larshansen.dev

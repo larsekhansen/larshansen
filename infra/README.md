@@ -19,6 +19,7 @@ push to master ─▶ self-hosted GitHub runner ON the Pi  (outbound only)
 | Host | App |
 |------|-----|
 | `larshansen.dev` | `apps/landing` (the platform game) |
+| `larshansen.dev/qr/` | `apps/qr` — rsynced into a subfolder of the landing webroot, no nginx change needed |
 | `cv.larshansen.dev` | `apps/portfolio` |
 | `maze.larshansen.dev` | `apps/iron-maze` |
 
