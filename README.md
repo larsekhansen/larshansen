@@ -10,7 +10,8 @@ Managed with **[Bun](https://bun.sh) workspaces — Bun only** (no npm/npx/pnpm/
 apps/
 ├── landing/      # PixiJS platform game — the front page (React 19 + Pixi 8)
 ├── portfolio/    # CV / about site (React 18 + Vite + styled-components + zustand)
-└── iron-maze/    # React + jQuery maze game (migrated from CRA to Vite)
+├── iron-maze/    # React + jQuery maze game (migrated from CRA to Vite)
+└── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)
 packages/         # shared code (empty for now)
 ```
 
@@ -22,6 +23,7 @@ bun install            # install all workspaces
 bun run dev:landing    # platform game        (http://localhost:5173)
 bun run dev:portfolio  # CV site              (http://localhost:3000)
 bun run dev:iron-maze  # maze game
+bun run dev:qr         # QR code generator    (http://localhost:5173/qr/)
 
 bun run build          # build every app
 bun run build:landing  # build a single app

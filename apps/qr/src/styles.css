@@ -1,0 +1,878 @@
+/* QR-verkstedet
+ *
+ * Look: an industrial parts label. Grey-green paper, black ink, one signal yellow.
+ * Type: Archivo (wide for the title, normal for text) and IBM Plex Mono for measurements.
+ * Colors are tokens; the dark theme only swaps the token values.
+ */
+
+:root {
+  color-scheme: light;
+
+  --paper: #f1f2ee;
+  --surface: #fbfbf8;
+  --ink: #151714;
+  --ink-soft: #545b52;
+  --rule: #cfd4ca;
+  --field: #ffffff;
+  --field-border: #aeb5a9;
+  --accent: #ffd23f;
+  --accent-ink: #151714;
+  --focus: #2f5ee8;
+  --grid-dot: rgb(21 23 20 / 0.09);
+
+  --good: #1e7f46;
+  --good-soft: #dcefe2;
+  --warn: #9a5c00;
+  --warn-soft: #f7e8c8;
+  --bad: #b8322a;
+  --bad-soft: #f6dcd8;
+
+  --font-body: "Archivo Variable", "Archivo", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+
+  --radius: 10px;
+  --gutter: clamp(16px, 4vw, 40px);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+
+    --paper: #121411;
+    --surface: #1a1d19;
+    --ink: #eceee8;
+    --ink-soft: #a2a99d;
+    --rule: #30352e;
+    --field: #1f231e;
+    --field-border: #4b5347;
+    --focus: #8aa8ff;
+    --grid-dot: rgb(236 238 232 / 0.07);
+
+    --good: #5cc98a;
+    --good-soft: #173524;
+    --warn: #f0b24a;
+    --warn-soft: #3a2c10;
+    --bad: #ff8577;
+    --bad-soft: #3d1a17;
+  }
+}
+
+/* ---------- Base ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.55;
+  font-stretch: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:hover {
+  text-decoration-thickness: 2px;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- Page frame ---------- */
+
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-inline: var(--gutter);
+  padding-block: 0 48px;
+}
+
+.masthead {
+  display: grid;
+  gap: 12px;
+  padding-block: clamp(24px, 5vw, 56px) clamp(24px, 4vw, 40px);
+  /* Dot grid, like the modules of a code. */
+  background-image: radial-gradient(var(--grid-dot) 1.2px, transparent 1.2px);
+  background-size: 14px 14px;
+  background-position: -7px -7px;
+}
+
+.masthead__crumbs {
+  display: flex;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.masthead__title {
+  display: flex;
+  align-items: center;
+  gap: 0.3em;
+  margin: 0;
+  font-size: clamp(2.3rem, 7vw, 4.4rem);
+  font-stretch: 125%;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* A finder pattern (the squares in a QR code's corners), in its real 7 : 5 : 3 proportions. */
+.masthead__title::before {
+  content: "";
+  flex: none;
+  width: 0.7em;
+  height: 0.7em;
+  border: 0.1em solid currentColor;
+  padding: 0.1em;
+  background: var(--accent) content-box;
+  box-shadow: inset 0 0 0 0.1em var(--paper);
+}
+
+.masthead__lede {
+  max-width: 62ch;
+  margin: 0;
+  font-size: 17px;
+  color: var(--ink-soft);
+  text-wrap: pretty;
+}
+
+/* ---------- Workbench layout ---------- */
+
+.workbench {
+  display: grid;
+  gap: 40px;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "content"
+    "preview"
+    "design";
+}
+
+.panel--content {
+  grid-area: content;
+}
+
+.panel--preview {
+  grid-area: preview;
+}
+
+.panel--design {
+  grid-area: design;
+}
+
+.panel {
+  display: grid;
+  gap: 20px;
+  align-content: start;
+  min-width: 0;
+}
+
+.panel--content,
+.panel--design {
+  border-top: 2px solid var(--ink);
+  padding-top: 16px;
+}
+
+/* The preview is the one raised object on the page. */
+.panel--preview {
+  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  border-radius: calc(var(--radius) + 4px);
+}
+
+@media (min-width: 900px) {
+  .workbench {
+    column-gap: 48px;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 400px);
+    grid-template-areas:
+      "content preview"
+      "design preview";
+  }
+
+  .panel--preview {
+    position: sticky;
+    top: 20px;
+    align-self: start;
+  }
+}
+
+.step-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  font-size: 22px;
+  font-stretch: 112%;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.step-heading__number {
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.subheading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.stack {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.stack--loose {
+  gap: 32px;
+}
+
+.grid-2 {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+}
+
+/* ---------- Form fields ---------- */
+
+.field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.field__label {
+  padding: 0;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.field__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+}
+
+.field__input:disabled {
+  opacity: 0.5;
+}
+
+.field__input--multiline {
+  resize: vertical;
+  min-height: 110px;
+}
+
+.field__hint {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  overflow-wrap: anywhere;
+}
+
+.field__hint:empty {
+  display: none;
+}
+
+.notice {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--warn-soft);
+  color: var(--ink);
+  font-size: 14px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.checkbox input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--ink);
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--ink);
+}
+
+.disclosure {
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  padding: 0 14px;
+}
+
+.disclosure summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.disclosure[open] {
+  padding-bottom: 16px;
+}
+
+.disclosure__count {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.disclosure__intro {
+  margin: 0 0 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Choice groups (radio buttons that look like buttons) ---------- */
+
+.choices {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.choices__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.choice {
+  position: relative;
+  cursor: pointer;
+}
+
+.choice input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  margin: 0;
+  cursor: pointer;
+}
+
+.choice__face {
+  display: grid;
+  justify-items: center;
+  min-height: 40px;
+  align-content: center;
+  padding: 6px 14px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field);
+  font-size: 14px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.choice__detail {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.choice:hover .choice__face {
+  border-color: var(--ink);
+}
+
+.choice input:focus-visible + .choice__face {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Settings: the chosen option is printed in ink. */
+.choices--segments .choice input:checked + .choice__face {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.choices--segments .choice input:checked + .choice__face .choice__detail {
+  color: inherit;
+}
+
+/* Tabs: the chosen one is marked with the signal yellow. */
+.choices--tabs .choice__face {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.choices--tabs .choice input:checked + .choice__face {
+  background: var(--accent);
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+}
+
+/* ---------- Colors ---------- */
+
+.color-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+}
+
+.color-field {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid var(--field-border);
+  border-radius: 8px;
+  background: var(--field);
+  cursor: pointer;
+}
+
+.color-field[data-disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.color-field input {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  background: none;
+  cursor: inherit;
+}
+
+.color-field input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-field input::-webkit-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+.color-field input::-moz-color-swatch {
+  border: 0;
+  border-radius: 5px;
+}
+
+.color-field__text {
+  display: grid;
+  line-height: 1.25;
+}
+
+.color-field__label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.color-field__value {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Templates ---------- */
+
+.template-grid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (min-width: 560px) {
+  .template-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1140px) {
+  .template-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+}
+
+.template {
+  display: grid;
+  gap: 6px;
+  padding: 6px;
+  border: 1px solid var(--rule);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+.template:hover {
+  border-color: var(--ink);
+}
+
+.template[aria-pressed="true"] {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+
+.template__code {
+  aspect-ratio: 1;
+  max-width: 100%;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.template__code svg,
+.label__svg svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Square modules are separate rectangles. Scaled down on screen, anti-aliasing leaves hairline
+   seams between them; crisp edges close the gaps. (Downloads are drawn at whole pixels.) */
+[data-dot-style="square"] svg {
+  shape-rendering: crispEdges;
+}
+
+.template__name {
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.template[aria-pressed="true"] .template__name {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+/* ---------- Logo ---------- */
+
+.dropzone {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1.5px dashed var(--field-border);
+  border-radius: var(--radius);
+  background: var(--field);
+  cursor: pointer;
+}
+
+.dropzone:hover,
+.dropzone:focus-within {
+  border-color: var(--ink);
+}
+
+.dropzone__icon,
+.dropzone__preview {
+  flex: none;
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+}
+
+.dropzone__icon {
+  display: grid;
+  place-items: center;
+  background: var(--paper);
+  font-size: 28px;
+  font-weight: 300;
+}
+
+.dropzone__preview {
+  object-fit: contain;
+  background: repeating-conic-gradient(var(--rule) 0% 25%, transparent 0% 50%) 50% / 12px 12px;
+}
+
+.dropzone__text {
+  display: grid;
+  gap: 2px;
+  font-size: 14px;
+}
+
+.dropzone__text small {
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+/* ---------- Buttons ---------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--ink);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.button:hover:not(:disabled) {
+  background: var(--paper);
+}
+
+.button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.button--primary {
+  flex: 1 1 auto;
+  background: var(--accent);
+  border-color: var(--accent-ink);
+  color: var(--accent-ink);
+  font-stretch: 112%;
+}
+
+.button--primary:hover:not(:disabled) {
+  background: var(--accent);
+  box-shadow: inset 0 -3px 0 rgb(0 0 0 / 0.18);
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/* ---------- Preview label ---------- */
+
+.label {
+  margin: 0;
+  border: 1px solid var(--ink);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--field);
+}
+
+.label__code {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 1;
+  max-width: 100%;
+}
+
+.label__svg {
+  width: 100%;
+}
+
+/* A checkerboard shows through transparent codes, as in image editors. */
+.label__code[data-transparent] {
+  background: repeating-conic-gradient(var(--rule) 0% 25%, var(--field) 0% 50%) 50% / 20px 20px;
+}
+
+.label__empty {
+  max-width: 28ch;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.label__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding: 10px 12px;
+  border-top: 1px dashed var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft);
+}
+
+/* ---------- Scannability meter ---------- */
+
+.meter {
+  --level-color: var(--good);
+  --level-soft: var(--good-soft);
+  display: grid;
+  gap: 10px;
+}
+
+.meter[data-level="medium"] {
+  --level-color: var(--warn);
+  --level-soft: var(--warn-soft);
+}
+
+.meter[data-level="low"] {
+  --level-color: var(--bad);
+  --level-soft: var(--bad-soft);
+}
+
+.meter__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.meter__title {
+  font-size: 14px;
+}
+
+.meter__title strong {
+  margin-left: 4px;
+  color: var(--level-color);
+}
+
+.meter__track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.meter__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--level-color);
+  transition: width 240ms ease-out;
+}
+
+.meter__tips {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 10px 12px 10px 28px;
+  border-radius: 8px;
+  background: var(--level-soft);
+  font-size: 13px;
+}
+
+.chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid currentColor;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+
+.chip[data-result="passed"] {
+  color: var(--good);
+}
+
+.chip[data-result="failed"] {
+  color: var(--bad);
+}
+
+/* ---------- Downloads ---------- */
+
+.download-options {
+  display: grid;
+  gap: 12px;
+}
+
+/* ---------- Footer ---------- */
+
+.colophon {
+  display: grid;
+  gap: 8px;
+  margin-top: 56px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+.colophon p {
+  margin: 0;
+  max-width: 75ch;
+}
+
+.colophon__fine {
+  font-size: 12px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .meter__fill {
+    transition: none;
+  }
+}
