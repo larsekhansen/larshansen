@@ -41,3 +41,18 @@ jobs:
           publish qr        /var/www/larshansen.dev/qr
           publish portfolio /var/www/cv.larshansen.dev
           publish iron-maze /var/www/maze.larshansen.dev
+
+      - name: Smoke test through nginx
+        run: |
+          set -euo pipefail
+          # Ask nginx on the Pi directly, the same way the Cloudflare Tunnel does.
+          fetch () { curl -fsS --max-time 10 -H "Host: larshansen.dev" "http://127.0.0.1:8090$1"; }
+          expect () {
+            local body; body=$(fetch "$1") # read it all first; `curl | grep -q` can fail on SIGPIPE
+            if grep -qF "$2" <<<"$body"; then echo "ok   $1"; else echo "FAIL $1 does not contain: $2"; exit 1; fi
+          }
+
+          expect /     '<div id="root">'
+          expect /qr/  'QR-verkstedet'
+          # The QR app's script must load from /qr/assets/, not the landing page's /assets/.
+          expect "$(fetch /qr/ | grep -o '/qr/assets/index-[^"]*\.js')" 'Lest av QR-leser'
