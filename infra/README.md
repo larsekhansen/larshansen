@@ -22,6 +22,10 @@ push to master ─▶ self-hosted GitHub runner ON the Pi  (outbound only)
 | `larshansen.dev/qr/` | `apps/qr` — rsynced into a subfolder of the landing webroot, no nginx change needed |
 | `cv.larshansen.dev` | `apps/portfolio` |
 | `maze.larshansen.dev` | `apps/iron-maze` |
+| `larshansen.no`, `www.larshansen.no` | 301 → `https://larshansen.dev` (same path), no app |
+
+The same tunnel also carries `torunn-lars.no` (nginx, `:8090`) and `reise.torunn-lars.no`
+(PocketBase, `:8091`). Those live in the `larsekhansen/reise` repo.
 
 ## Deploying
 Just `git push` to `master`. The runner (`larshansen-pi`) builds the monorepo and
@@ -32,7 +36,8 @@ rsyncs each app to its webroot. Manual run: GitHub → Actions → **Deploy to R
 - **cloudflared** — systemd service, *remotely-managed* tunnel `larshansen` (connector
   token, no local `config.yml`). Ingress + DNS live in Cloudflare, not on the Pi.
 - **nginx** — `/etc/nginx/sites-enabled/larshansen.conf`, three server blocks on
-  `127.0.0.1:8090`, SPA fallback to `index.html`.
+  `127.0.0.1:8090`, SPA fallback to `index.html`. `larshansen-no.conf` is the redirect
+  for larshansen.no. Both are copied by hand from `infra/nginx/` (the runner doesn't touch them).
 - **webroots** — `/var/www/{larshansen.dev,cv.larshansen.dev,maze.larshansen.dev}`,
   owned by `lars` so the runner rsyncs without sudo.
 - **runner** — `~/actions-runner`, systemd service, label `larshansen-pi`.
@@ -42,10 +47,12 @@ rsyncs each app to its webroot. Manual run: GitHub → Actions → **Deploy to R
   (each hostname → `http://localhost:8090`).
 - **DNS** — three proxied `CNAME`s (`@`, `cv`, `maze`) → `<tunnel-id>.cfargotunnel.com`.
   The `MX`/`TXT` records are Namecheap email forwarding — leave them.
+- **larshansen.no** is its own Cloudflare zone (registered at Domeneshop), with proxied `CNAME`s
+  for `@` and `www` to the tunnel. It has no email, so its only other records are `MX .`,
+  `v=spf1 -all` and `_dmarc p=reject`.
 
 ## Notes
-- `.github/workflows/deploy.yml` triggers on `master` — switch to `main` if the default
-  branch is renamed.
+- `.github/workflows/deploy.yml` triggers on both `master` and `main`.
 - TLS is terminated at Cloudflare; nginx stays plain HTTP on localhost.
 - Old `HOSTINGER_FTP_*` repo secrets (2021) are dead — safe to delete.
 - `infra/cloudflared/config.example.yml` is the *alternative* locally-managed setup
