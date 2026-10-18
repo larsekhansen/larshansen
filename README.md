@@ -8,7 +8,7 @@ Managed with **[Bun](https://bun.sh) workspaces — Bun only** (no npm/npx/pnpm/
 
 ```
 apps/
-├── landing/      # PixiJS platform game — the front page (React 19 + Pixi 8)
+├── landing/      # the front page: a walk through Gamle Oslo, one house per app (TypeScript, Canvas 2D)
 ├── portfolio/    # CV / about site (React 18 + Vite + styled-components + zustand)
 ├── iron-maze/    # React + jQuery maze game (migrated from CRA to Vite)
 └── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)

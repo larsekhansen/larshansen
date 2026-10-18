@@ -1,12 +1,56 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Platformer Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Lars Hansen</title>
+    <meta name="description" content="A small game set in Gamle Oslo, where every house is one of Lars Hansen's apps." />
+    <meta name="theme-color" content="#4f96d8" />
+    <meta property="og:title" content="Lars Hansen" />
+    <meta property="og:description" content="A small game set in Gamle Oslo, where every house is one of Lars Hansen's apps." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://larshansen.dev/" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <header class="bar">
+      <h1 class="me">Lars Hansen</h1>
+      <!-- The list of apps. The game reads it, so every link here is a door in the game. -->
+      <nav class="apps" aria-label="Apps">
+        <span class="go" data-i18n="goStraightTo">Go straight to</span>
+        <ul>
+          <li><span data-door="cv" data-name="CV" data-soon>CV <small data-i18n="soon">coming soon</small></span></li>
+          <li><a href="https://maze.larshansen.dev/" data-door="maze" data-name="Iron Maze">Iron Maze</a></li>
+          <li><a href="/qr/" data-door="qr" data-name="QR-verkstedet">QR-verkstedet</a></li>
+          <li><span data-door="quintle" data-name="Quintle" data-soon>Quintle <small data-i18n="soon">coming soon</small></span></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main class="stage" id="stage">
+      <p class="sr-only" data-i18n="game">Game: a walk through Gamle Oslo</p>
+      <canvas id="px" aria-hidden="true"></canvas>
+      <canvas id="ui" aria-hidden="true"></canvas>
+      <p class="help" id="help" data-i18n="help">Arrow keys to walk, Space to jump, up arrow to go through a door</p>
+      <p class="sr-only" id="announce" aria-live="polite"></p>
+      <noscript><p class="noscript">The game needs JavaScript. The links above work without it.</p></noscript>
+    </main>
+
+    <div class="pad" id="pad" hidden>
+      <div>
+        <button type="button" data-action="left" aria-label="Walk left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
+        </button>
+        <button type="button" data-action="right" aria-label="Walk right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+        </button>
+      </div>
+      <div>
+        <button type="button" data-action="enter" class="enter">Go in</button>
+        <button type="button" data-action="jump">Jump</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
