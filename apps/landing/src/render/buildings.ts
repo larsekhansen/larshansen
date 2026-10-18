@@ -1,7 +1,9 @@
 import type { Door } from "../game/doors";
 import { WORLD_W, districtFrom, rampAt } from "../game/level";
 import type { Sky } from "../game/oslo";
-import { R, gable, light, wdisc } from "./paint";
+import { R, gable, light, view, wdisc } from "./paint";
+
+const reduced = () => view.reduced;
 
 // The street-level landmarks. Each part of town is drawn relative to where its district starts,
 // so the map can change without moving every building by hand. The street is at y 160.
@@ -58,7 +60,10 @@ function flag(x: number, top: number) {
   R(x + 1, top + 4, 13, 1, "#00205b");
 }
 
-/** A street lamp with a broad hat, so its light only falls downward. */
+/** Street lamps, by where they stand. The street lights up around them after dark. */
+export const LAMPS: { x: number; tall: number }[] = [];
+
+/** A street lamp with a broad hat over the bulb. */
 function lamp(x: number, tall = 36) {
   const top = G - tall;
   R(x, top, 2, tall, "#2f3438");
@@ -66,7 +71,7 @@ function lamp(x: number, tall = 36) {
   R(x - 3, top - 5, 8, 1, "#3b4045");
   R(x - 2, top - 4, 6, 3, "#d9dcd2");
   light(x - 2, top - 4, 6, 3, "lamp");
-  light(x - 10, G - 2, 22, 2, "pool");
+  if (!LAMPS.some((l) => l.x === x)) LAMPS.push({ x, tall });
 }
 
 function tree(x: number, sky: Sky, birch = false) {
@@ -89,7 +94,7 @@ function tree(x: number, sky: Sky, birch = false) {
 const QR_BITS = ["111010111", "101001101", "111011111", "000101000", "110111011", "001010100", "111001010", "101110011", "111010101"];
 
 /** Vålerenga and Kampen: small wooden houses, Lars's yellow one, and a brick workshop. */
-function valerengaKampen(home: Door | undefined, workshop: Door | undefined, sky: Sky) {
+function valerengaKampen(home: Door | undefined, workshop: Door | undefined, sky: Sky, time: number) {
   const roof = (c: string) => (sky.snow ? SNOW : c);
   walls(8, 112, 80, "#8fb8a0", "#7ea692");
   gable(2, 112, 92, 24, roof("#7b2d26"));
@@ -124,6 +129,14 @@ function valerengaKampen(home: Door | undefined, workshop: Door | undefined, sky
     for (let x = 352 + ((y / 4) % 2) * 4; x < 448; x += 8) R(x, y - 3, 1, 3, "#86402f");
   }
   gable(346, 100, 108, 14, roof("#3e3a3a"));
+  R(424, 78, 4, 18, "#4a4f55");
+  R(423, 76, 6, 2, "#3a3e43");
+  R(425, 80, 1, 14, "#6a7077");
+  if (!reduced())
+    for (let i = 0; i < 3; i++) {
+      const ph = ((time * 0.5 + i * 24) % 72) / 72;
+      R(424 + Math.round(Math.sin(ph * 6 + i) * 2 + ph * 5), 72 - ph * 20, 4, 3, `rgba(200, 196, 190, ${(0.55 * (1 - ph)).toFixed(2)})`);
+    }
   R(358, 116, 24, 34, "#2c2f36");
   for (let dy = 0; dy < 6; dy++) {
     const half = Math.round(12 * Math.sqrt(1 - ((6 - dy) / 6) ** 2));
@@ -191,7 +204,16 @@ function toyen(gate: Door | undefined, sky: Sky) {
 }
 
 // Ruined stone: irregular blocks with dark mortar, a little moss, and the same stones every visit.
-export const STONE = { base: "#6f6a62", light: "#7e786f", dark: "#625d56", mortar: "#4b4741", moss: "#5d7a45" };
+// Walls you can stand on are a little lighter and warmer than the ruins further back.
+export interface Stone {
+  base: string;
+  light: string;
+  dark: string;
+  mortar: string;
+  moss: string;
+}
+export const STONE: Stone = { base: "#7d776e", light: "#8c857a", dark: "#6c665e", mortar: "#4b4741", moss: "#5d7a45" };
+const STONE_BACK: Stone = { base: "#5f5c58", light: "#68645f", dark: "#56534f", mortar: "#474441", moss: "#4c5f40" };
 
 function stoneHash(x: number, y: number) {
   const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
@@ -199,7 +221,7 @@ function stoneHash(x: number, y: number) {
 }
 
 /** One column of rough stonework from `top` to `bottom`, leaving a gap for an opening. */
-export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, gapBottom = 0) {
+export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, gapBottom = 0, stone: Stone = STONE) {
   for (let y = top; y < bottom; y++) {
     if (y >= gapTop && y < gapBottom) continue;
     const course = Math.floor(y / 4);
@@ -207,26 +229,30 @@ export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, 
     const block = Math.floor((x + offset) / 6);
     const isMortar = y % 4 === 3 || (x + offset) % 6 === 0;
     const shade = stoneHash(block, course);
-    const color = isMortar ? STONE.mortar : shade < 0.33 ? STONE.dark : shade < 0.75 ? STONE.base : STONE.light;
+    const color = isMortar ? stone.mortar : shade < 0.33 ? stone.dark : shade < 0.75 ? stone.base : stone.light;
     R(x, y, 1, 1, color);
   }
 }
 
-/** Gamlebyen: what is left of Mariakirken in Middelalderparken, a broken arch and a ruined wall. */
-function gamlebyen(sky: Sky) {
+/**
+ * Gamlebyen: what is left of Mariakirken in Middelalderparken, a broken arch and a ruined wall.
+ * This is scenery, drawn in its own layer a little further back than the walls you can stand on.
+ */
+export function drawRuins(sky: Sky) {
   const o = districtFrom("Gamlebyen");
-  const moss = (x: number, y: number) => R(x, y - 1, 1, 2, sky.snow ? SNOW : STONE.moss);
+  const back = (x: number, top: number, bottom: number, gapTop = 0, gapBottom = 0) => stoneColumn(x, top, bottom, gapTop, gapBottom, STONE_BACK);
+  const moss = (x: number, y: number) => R(x, y - 1, 1, 2, sky.snow ? SNOW : STONE_BACK.moss);
 
   // A broken arch: one pillar standing, the other snapped off, and the curve broken past the top.
   const cx = o + 40;
-  for (let x = cx - 24; x < cx - 16; x++) stoneColumn(x, 118, G);
-  for (let x = cx + 16; x < cx + 24; x++) stoneColumn(x, 132 + (x % 3), G);
+  for (let x = cx - 24; x < cx - 16; x++) back(x, 118, G);
+  for (let x = cx + 16; x < cx + 24; x++) back(x, 132 + (x % 3), G);
   for (let x = cx - 24; x <= cx + 9; x++) {
     const dx = x - cx;
     const outer = Math.round(118 - Math.sqrt(24 * 24 - dx * dx));
     const inner = Math.abs(dx) < 16 ? Math.round(118 - Math.sqrt(16 * 16 - dx * dx)) : 118;
     const broken = dx > 4 ? (dx - 4) * 2 : 0; // the stones fall away at the break
-    stoneColumn(x, outer + broken, inner);
+    back(x, outer + broken, inner);
     if (dx > 0 && dx % 3 === 0) moss(x, outer + broken);
   }
   moss(cx - 22, 118);
@@ -246,14 +272,13 @@ function gamlebyen(sky: Sky) {
         gapBottom = wBottom;
       }
     }
-    stoneColumn(x, top, G, gapTop, gapBottom);
+    back(x, top, G, gapTop, gapBottom);
     if (x % 5 === 0) moss(x, top);
   }
   // Fallen stones in the grass.
   for (const [rx, rw, rh] of [[o + 8, 5, 3], [o + 70, 6, 4], [o + 92, 4, 2], [o + 214, 6, 3]]) {
-    for (let x = rx; x < rx + rw; x++) stoneColumn(x, G - rh, G);
+    for (let x = rx; x < rx + rw; x++) back(x, G - rh, G);
   }
-  tree(o + 226, sky, true);
 }
 
 /** Bjørvika: Deichman, the library, with its top floor hanging out over the square. */
@@ -312,11 +337,11 @@ function opera(secret: Door | undefined) {
   }
 }
 
-export function drawBuildings(doors: Door[], sky: Sky) {
+export function drawBuildings(doors: Door[], sky: Sky, time: number) {
   const byId = (id: string) => doors.find((d) => d.id === id);
-  valerengaKampen(byId("cv"), byId("qr"), sky);
+  valerengaKampen(byId("cv"), byId("qr"), sky, time);
   toyen(byId("maze"), sky);
-  gamlebyen(sky);
+  tree(districtFrom("Gamlebyen") + 226, sky, true);
   deichman(byId("quintle"));
   opera(byId("opera"));
 }

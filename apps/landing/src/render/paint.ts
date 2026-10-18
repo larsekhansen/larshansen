@@ -79,18 +79,21 @@ export function drawLights() {
     const x = l.x - view.camX;
     const y = l.y - view.camY;
     if (l.kind === "pool") {
-      // Where a street lamp's light lands on the ground.
-      g.fillStyle = "rgba(255, 205, 120, 0.16)";
-      g.fillRect(x, y, l.w, l.h);
-      g.fillRect(x + 3, y - 1, l.w - 6, 1);
+      // Lamplight on the street: the ground itself gets brighter, most right under the lamp.
+      g.globalCompositeOperation = "lighter";
+      const cx = x + l.w / 2;
+      for (let i = 0; i < l.w; i++) {
+        const t = 1 - Math.abs(x + i + 0.5 - cx) / (l.w / 2);
+        if (t <= 0) continue;
+        g.fillStyle = `rgba(255, 186, 96, ${(0.34 * t * t).toFixed(3)})`;
+        g.fillRect(x + i, y, 1, l.h);
+      }
+      g.globalCompositeOperation = "source-over";
       continue;
     }
     if (l.kind === "lamp") {
-      // Light falls downward from under the hat, widening as it goes.
-      for (let i = 1; i <= 8; i++) {
-        g.fillStyle = `rgba(255, 205, 120, ${(0.15 - i * 0.015).toFixed(3)})`;
-        g.fillRect(x - i, y + l.h + i - 1, l.w + i * 2, 1);
-      }
+      g.fillStyle = "rgba(255, 205, 120, 0.22)";
+      g.fillRect(x - 1, y + l.h, l.w + 2, 1);
     }
     g.fillStyle = l.kind === "soft" ? "rgba(255, 214, 120, 0.45)" : "#ffd36b";
     g.fillRect(x, y, l.w, l.h);

@@ -73,33 +73,37 @@ export function drawFjord(t: number) {
  * Galgeberg, between Vålerenga and Gamlebyen: a slope of small wooden houses. On top stands the
  * lamp post that an old photograph made people take for the gallows.
  */
+const GALGEBERG = 330;
+const hillHeight = (wx: number) => 30 * Math.exp(-(((wx - GALGEBERG) / 170) ** 2));
+// Placed in the layer's own pixels, side by side, so no house hides behind another's window.
+const HILL_HOUSES = [
+  { dx: -40, w: 9, h: 7, color: "#c9a14a" },
+  { dx: -29, w: 8, h: 6, color: "#b04a35" },
+  { dx: -18, w: 10, h: 7, color: "#e8e2d4" },
+  { dx: -6, w: 8, h: 6, color: "#86a98f" },
+  { dx: 6, w: 9, h: 7, color: "#c9a14a" },
+  { dx: 17, w: 8, h: 6, color: "#b04a35" },
+  { dx: 28, w: 9, h: 7, color: "#e8e2d4" }
+];
+
 export function drawGalgeberg(sky: Sky) {
   for (let x = 0; x < view.w; x++) {
-    const wx = layerWorldX(x, HILL);
-    const h = 30 * Math.exp(-(((wx - 330) / 170) ** 2));
+    const h = hillHeight(layerWorldX(x, HILL));
     if (h > 1) column(x, 146 - h, 160, "#7d9466");
   }
-  const houses = [
-    { wx: 250, w: 9, h: 7, color: "#c9a14a" },
-    { wx: 268, w: 8, h: 6, color: "#b04a35" },
-    { wx: 290, w: 10, h: 7, color: "#e8e2d4" },
-    { wx: 312, w: 8, h: 6, color: "#86a98f" },
-    { wx: 350, w: 9, h: 7, color: "#c9a14a" },
-    { wx: 372, w: 8, h: 6, color: "#b04a35" },
-    { wx: 396, w: 9, h: 7, color: "#e8e2d4" }
-  ];
-  for (const house of houses) {
-    const x = layerX(house.wx, HILL);
+  const f = view.reduced ? 1 : HILL;
+  const base = layerX(GALGEBERG, HILL);
+  for (const house of HILL_HOUSES) {
+    const x = base + house.dx;
     if (x < -12 || x > view.w + 2) continue;
-    const ground = 146 - 30 * Math.exp(-(((house.wx - 330) / 170) ** 2));
+    const ground = 146 - hillHeight(GALGEBERG + (house.dx + house.w / 2) / f);
     box(x, ground - house.h, house.w, house.h + 2, house.color);
     for (let i = 0; i < 3; i++) box(x + 1 - i, ground - house.h - 3 + i, house.w - 2 + i * 2, 1, sky.snow ? "#eef3f9" : "#5a3a32");
     box(x + 2, ground - house.h + 2, 2, 2, "#4b5560");
     lit(x + 2, ground - house.h + 2, 2, 2);
   }
-  const lx = layerX(330, HILL);
-  box(lx, 104, 1, 13, "#2f3438");
-  box(lx - 1, 103, 3, 1, "#2f3438");
+  box(base, 104, 1, 13, "#2f3438");
+  box(base - 1, 103, 3, 1, "#2f3438");
 }
 
 // The skyline: ordinary blocks, with gaps left for the landmarks.
@@ -115,13 +119,14 @@ const LANDMARK_GAPS: [number, number][] = [
 const BLOCKS = (() => {
   const out: { wx: number; w: number; h: number; color: string; gableRoof: boolean }[] = [];
   const colors = ["#b9c2ca", "#c8b8a4", "#aab5a2", "#c3a69a", "#d4ccbe"];
-  for (let wx = -40; wx < 1560; wx += 14 + Math.floor(rnd() * 14)) {
+  // Side by side on screen, never overlapping, so every lit window belongs to the block in front.
+  for (let wx = -40; wx < 1560; ) {
     const w = 14 + Math.floor(rnd() * 14);
     const h = 12 + Math.floor(rnd() * 20);
     const color = colors[Math.floor(rnd() * colors.length)];
     const gableRoof = rnd() < 0.35;
-    if (LANDMARK_GAPS.some(([a, b]) => wx + w > a && wx < b)) continue;
-    out.push({ wx, w, h, color, gableRoof });
+    if (!LANDMARK_GAPS.some(([a, b]) => wx + w / SKYLINE > a && wx < b)) out.push({ wx, w, h, color, gableRoof });
+    wx += Math.ceil((w + 1 + Math.floor(rnd() * 3)) / SKYLINE);
   }
   return out;
 })();

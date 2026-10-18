@@ -1,10 +1,21 @@
 import { TILE } from "../game/config";
 import { COLS, MAP, ROWS, districtFrom, isSolid } from "../game/level";
 import type { Sky } from "../game/oslo";
-import { STONE, stoneColumn } from "./buildings";
-import { R, view } from "./paint";
+import { LAMPS, STONE, stoneColumn } from "./buildings";
+import { R, light, view } from "./paint";
 
 const SNOW = "#f2f5fa";
+
+// Everything you can stand on shares one look: a bright top edge and a dark outline.
+// Scenery never gets it, so it is easy to tell what is a platform.
+const EDGE = { B: "#3d2612", H: "#173620", R: "#2b2825" } as const;
+
+function outline(c: number, r: number, x: number, y: number, t: "B" | "H" | "R") {
+  const same = (cc: number, rr: number) => MAP[rr]?.[cc] === t;
+  if (!same(c - 1, r)) R(x, y, 1, TILE, EDGE[t]);
+  if (!same(c + 1, r)) R(x + TILE - 1, y, 1, TILE, EDGE[t]);
+  if (!same(c, r - 1)) R(x, y, TILE, 1, EDGE[t]);
+}
 
 // The street changes underfoot: cobbles at Vålerenga and Kampen, grass in the garden and the
 // park, and pale stone on the square in Bjørvika.
@@ -39,28 +50,36 @@ export function drawTiles(sky: Sky) {
         R(x, y, TILE, TILE, "#6e4824");
         R(x + 1, y + 1, TILE - 2, TILE - 2, "#9a6a3a");
         for (let i = 0; i < TILE - 2; i++) R(x + 1 + i, y + 1 + i, 1, 1, "#7d5530");
-        R(x + 1, y + 1, TILE - 2, 1, open ? (sky.snow ? SNOW : "#b07e48") : "#9a6a3a");
+        outline(c, r, x, y, "B");
+        if (open) R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW : "#d9a466");
       } else if (t === "H") {
         R(x, y, TILE, TILE, "#2f6b3a");
         for (let i = 0; i < 6; i++) R(x + ((i * 5 + c * 3) % 14), y + ((i * 7 + r * 5) % 14), 2, 2, i % 2 ? "#3f8a4b" : "#285c32");
-        if (open && sky.snow) R(x, y, TILE, 2, SNOW);
+        outline(c, r, x, y, "H");
+        if (open) R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW : "#7cc06f");
       } else if (t === "R") {
-        // Fallen walls you can stand on: the same rough stone, with a worn, mossy top.
+        // Fallen walls you can stand on: rough stone with a worn, mossy top.
         for (let i = 0; i < TILE; i++) stoneColumn(x + i, y, y + TILE);
-        R(x, y, 1, TILE, STONE.mortar);
-        R(x + TILE - 1, y, 1, TILE, STONE.mortar);
+        outline(c, r, x, y, "R");
         if (open) {
-          R(x, y, TILE, 2, sky.snow ? SNOW : "#8e887e");
-          if (!sky.snow) for (let i = 2; i < TILE; i += 5) R(x + i, y - 1, 2, 1, STONE.moss);
+          R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW : "#c2bbae");
+          if (!sky.snow) for (let i = 2; i < TILE - 2; i += 5) R(x + i, y - 1, 2, 1, STONE.moss);
         }
       } else if (t === "_") {
         // A stone lintel left from an arch.
-        R(x, y, TILE, 4, "#857f75");
-        R(x, y, TILE, 1, sky.snow ? SNOW : "#9a948a");
-        R(x, y + 4, TILE, 1, STONE.mortar);
+        R(x, y, TILE, 4, "#8a8378");
+        R(x, y, TILE, 1, sky.snow ? SNOW : "#c2bbae");
+        R(x, y + 4, TILE, 1, EDGE.R);
         for (let i = 3; i < TILE; i += 6) R(x + i, y + 1, 1, 3, STONE.mortar);
+        if (MAP[r][c - 1] !== "_") R(x, y, 1, 5, EDGE.R);
+        if (MAP[r][c + 1] !== "_") R(x + TILE - 1, y, 1, 5, EDGE.R);
       }
     }
+}
+
+/** After dark, the street brightens around each lamp. */
+export function lightStreet() {
+  for (const l of LAMPS) light(l.x - 12, 160, 26, 6, "pool");
 }
 
 /** Wooden sign boards. The words on them are drawn sharp by the text layer. */

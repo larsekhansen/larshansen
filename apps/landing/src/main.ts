@@ -8,8 +8,8 @@ import { createStepper } from "./game/loop";
 import { skyFor } from "./game/oslo";
 import { createBody, stepBody } from "./game/physics";
 import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
-import { drawBuildings } from "./render/buildings";
-import { drawBoards, drawTiles } from "./render/ground";
+import { drawBuildings, drawRuins } from "./render/buildings";
+import { drawBoards, drawTiles, lightStreet } from "./render/ground";
 import { R, TINT, drawLights, lights, target, view } from "./render/paint";
 import { drawSky, drawSnowfall, horizonColor } from "./render/sky";
 import { drawText, layoutBoards, textTarget, type Board } from "./render/text";
@@ -308,10 +308,12 @@ function render() {
   layer(drawSkylineBlocks, 0.25);
   layer(drawLandmarks, 0.18);
   layer(() => drawTram(state.steps), 0.08);
-  layer(() => drawBuildings(doors, sky));
+  layer(() => drawRuins(sky), 0.12);
+  layer(() => drawBuildings(doors, sky, state.steps));
   layer(() => {
     drawBoards(boards);
     drawTiles(sky);
+    lightStreet();
   });
   target(wg);
   for (const p of state.sparks) R(p.x, p.y, 1, 1, p.color);

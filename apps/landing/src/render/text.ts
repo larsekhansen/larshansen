@@ -1,5 +1,6 @@
-import { PLAYER } from "../game/config";
+import { PLAYER, TILE } from "../game/config";
 import type { Door } from "../game/doors";
+import { isOneWay, isSolid, rampAt } from "../game/level";
 import type { Phase } from "../game/oslo";
 import type { Body } from "../game/physics";
 import { view } from "./paint";
@@ -41,9 +42,19 @@ export function layoutBoards(doors: Door[], welcome: string): Board[] {
   return boards;
 }
 
+/** True where there is something to stand on at height y, under world x. */
+function standable(x: number, y: number) {
+  const ramp = rampAt(x);
+  if (ramp !== null && Math.abs(ramp - y) < 1.5) return true;
+  if (y % TILE !== 0) return false;
+  const c = Math.floor(x / TILE);
+  const r = y / TILE;
+  return (isSolid(c, r) || isOneWay(c, r)) && !isSolid(c, r - 1);
+}
+
 /**
- * The player, with a soft glow so it stands out from the busy town behind, and a small shadow
- * under its feet when it stands on something.
+ * The player, with a faint glow so it stands out from the busy town behind. Its shadow lies on
+ * whatever it stands on, and stops at the edge instead of hanging in the air.
  */
 function drawPlayer(b: Body, walk: number, alpha: number, phase: Phase) {
   if (alpha <= 0) return;
@@ -51,17 +62,23 @@ function drawPlayer(b: Body, walk: number, alpha: number, phase: Phase) {
   const cx = sx(b.x + PLAYER.w / 2);
   const cy = sy(b.y + PLAYER.h / 2);
   u.globalAlpha = alpha;
-  const glow = u.createRadialGradient(cx, cy, 0, cx, cy, 15 * n);
+  const glow = u.createRadialGradient(cx, cy, 0, cx, cy, 11 * n);
   const tone = phase === "day" ? "255, 255, 255" : "255, 232, 190";
-  glow.addColorStop(0, `rgba(${tone}, ${phase === "day" ? 0.32 : 0.24})`);
+  glow.addColorStop(0, `rgba(${tone}, ${phase === "day" ? 0.09 : 0.11})`);
   glow.addColorStop(1, `rgba(${tone}, 0)`);
   u.fillStyle = glow;
-  u.fillRect(cx - 15 * n, cy - 15 * n, 30 * n, 30 * n);
+  u.fillRect(cx - 11 * n, cy - 11 * n, 22 * n, 22 * n);
   if (b.onGround) {
-    u.fillStyle = "rgba(0, 0, 0, 0.18)";
-    u.beginPath();
-    u.ellipse(cx, sy(b.y + PLAYER.h), 6 * n, 1.5 * n, 0, 0, Math.PI * 2);
-    u.fill();
+    const feet = b.y + PLAYER.h;
+    const mid = Math.round(b.x + PLAYER.w / 2);
+    u.fillStyle = "rgba(0, 0, 0, 0.22)";
+    for (let dx = -6; dx <= 5; dx++) {
+      const x = mid + dx;
+      const ramp = rampAt(x);
+      const y = ramp !== null && Math.abs(ramp - feet) < 4 ? Math.round(ramp) : Math.round(feet);
+      if (!standable(x, y)) continue;
+      u.fillRect(sx(x), sy(y), n, (Math.abs(dx + 0.5) < 4 ? 2 : 1) * n);
+    }
   }
   playerPixels(b, walk, phase, (x, y, color) => {
     u.fillStyle = color;
