@@ -7,11 +7,11 @@ import { GROUND_Y, WORLD_W, districtAt, findDoorSpots, findSpawn, type District 
 import { createStepper } from "./game/loop";
 import { skyFor } from "./game/oslo";
 import { createBody, stepBody } from "./game/physics";
-import { drawFjord, drawHills, drawSkyline, drawTram } from "./render/backdrop";
+import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
 import { drawBuildings } from "./render/buildings";
-import { drawBoards, drawPlayer, drawTiles } from "./render/ground";
+import { drawBoards, drawTiles } from "./render/ground";
 import { R, TINT, drawLights, lights, target, view } from "./render/paint";
-import { drawSky, drawSnowfall } from "./render/sky";
+import { drawSky, drawSnowfall, horizonColor } from "./render/sky";
 import { drawText, layoutBoards, textTarget, type Board } from "./render/text";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -84,6 +84,8 @@ const state = {
   sparks: [] as Spark[]
 };
 
+state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: 0 };
+
 const LAST_DOOR = "lh:lastDoor";
 function remember(id: string) {
   try {
@@ -103,6 +105,7 @@ function recall() {
 function standAt(d: Door) {
   Object.assign(body, { x: d.x + d.w / 2 - PLAYER.w / 2, y: d.bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
   state.district = districtAt(body.x);
+  state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: state.steps };
 }
 
 function resetScene() {
@@ -264,15 +267,23 @@ function layout() {
 }
 
 /**
- * Draws one depth of the scene. At dusk and night the layer is darkened and then its own windows
- * and lamps come on, before the next, nearer layer covers what it should.
+ * Draws one depth of the scene. Distant layers fade a little towards the colour of the horizon,
+ * which keeps them calm behind the player. At dusk and night the layer is darkened and then its
+ * own windows and lamps come on, before the next, nearer layer covers what it should.
  */
-function layer(draw: () => void) {
+function layer(draw: () => void, haze = 0) {
   lg.globalCompositeOperation = "source-over";
   lg.clearRect(0, 0, view.w, view.h);
   target(lg);
   lights.length = 0;
   draw();
+  if (haze > 0) {
+    lg.globalCompositeOperation = "source-atop";
+    lg.globalAlpha = haze;
+    lg.fillStyle = horizonColor(sky.phase);
+    lg.fillRect(0, 0, view.w, view.h);
+    lg.globalAlpha = 1;
+  }
   const tint = TINT[sky.phase];
   if (tint) {
     lg.globalCompositeOperation = "source-atop";
@@ -292,18 +303,17 @@ function render() {
   layer(() => {
     drawHills(sky);
     drawFjord(state.steps);
-  });
-  layer(() => {
-    drawSkyline();
-    drawTram(state.steps);
-  });
+  }, 0.35);
+  layer(() => drawGalgeberg(sky), 0.28);
+  layer(drawSkylineBlocks, 0.25);
+  layer(drawLandmarks, 0.18);
+  layer(() => drawTram(state.steps), 0.08);
   layer(() => drawBuildings(doors, sky));
   layer(() => {
     drawBoards(boards);
     drawTiles(sky);
   });
   target(wg);
-  drawPlayer(body, state.walk, state.alpha, sky.phase);
   for (const p of state.sparks) R(p.x, p.y, 1, 1, p.color);
 
   target(g);
@@ -318,6 +328,7 @@ function render() {
   const age = state.banner ? state.steps - state.banner.since : 0;
   drawText({
     boards,
+    player: { body, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase },
     hint: door && !touch ? { x: body.x + PLAYER.w / 2, y: body.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
     bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, text: state.bubble.text } : null,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,

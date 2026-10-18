@@ -1,7 +1,12 @@
+import { PLAYER } from "../game/config";
 import type { Door } from "../game/doors";
+import type { Phase } from "../game/oslo";
+import type { Body } from "../game/physics";
 import { view } from "./paint";
+import { playerPixels } from "./sprite";
 
-// Words are drawn at full screen resolution on top of the pixel art, so they stay sharp.
+// Words are drawn at full screen resolution on top of the pixel art, so they stay sharp. The player
+// is drawn here too, after the signs, so it is never hidden behind a sign's words.
 
 let u: CanvasRenderingContext2D;
 export function textTarget(ctx: CanvasRenderingContext2D) {
@@ -24,15 +29,45 @@ export interface Board {
   post?: boolean;
 }
 
-const LIFT = { home: 13, garden: 30, basar: 14, library: 13, opera: 14 } as const;
+const LIFT = { home: 13, workshop: 22, garden: 30, library: 13, opera: 14 } as const;
 
 /** Sign boards above the doors, each as wide as its words. */
 export function layoutBoards(doors: Door[], welcome: string): Board[] {
   u.font = `600 ${fontPx()}px ${FONT}`;
-  const width = (s: string) => Math.ceil(u.measureText(s).width / unit()) + 8;
+  // Even widths, so a board sits square on its post.
+  const width = (s: string) => Math.ceil((u.measureText(s).width / unit() + 8) / 2) * 2;
   const boards: Board[] = doors.map((d) => ({ text: d.sign, cx: d.x + d.w / 2, y: d.bottom - d.h - LIFT[d.kind], w: width(d.sign) }));
   boards.push({ text: welcome, cx: 104, y: 118, w: width(welcome), post: true });
   return boards;
+}
+
+/**
+ * The player, with a soft glow so it stands out from the busy town behind, and a small shadow
+ * under its feet when it stands on something.
+ */
+function drawPlayer(b: Body, walk: number, alpha: number, phase: Phase) {
+  if (alpha <= 0) return;
+  const n = unit();
+  const cx = sx(b.x + PLAYER.w / 2);
+  const cy = sy(b.y + PLAYER.h / 2);
+  u.globalAlpha = alpha;
+  const glow = u.createRadialGradient(cx, cy, 0, cx, cy, 15 * n);
+  const tone = phase === "day" ? "255, 255, 255" : "255, 232, 190";
+  glow.addColorStop(0, `rgba(${tone}, ${phase === "day" ? 0.32 : 0.24})`);
+  glow.addColorStop(1, `rgba(${tone}, 0)`);
+  u.fillStyle = glow;
+  u.fillRect(cx - 15 * n, cy - 15 * n, 30 * n, 30 * n);
+  if (b.onGround) {
+    u.fillStyle = "rgba(0, 0, 0, 0.18)";
+    u.beginPath();
+    u.ellipse(cx, sy(b.y + PLAYER.h), 6 * n, 1.5 * n, 0, 0, Math.PI * 2);
+    u.fill();
+  }
+  playerPixels(b, walk, phase, (x, y, color) => {
+    u.fillStyle = color;
+    u.fillRect(sx(x), sy(y), n, n);
+  });
+  u.globalAlpha = 1;
 }
 
 function bubble(x: number, y: number, text: string) {
@@ -51,6 +86,7 @@ function bubble(x: number, y: number, text: string) {
 
 export interface Overlay {
   boards: Board[];
+  player: { body: Body; walk: number; alpha: number; phase: Phase };
   hint: { x: number; y: number; text: string } | null;
   bubble: { x: number; y: number; text: string } | null;
   banner: { title: string; sub: string; alpha: number } | null;
@@ -67,6 +103,8 @@ export function drawText(o: Overlay) {
   u.font = `600 ${fontPx()}px ${FONT}`;
   u.fillStyle = "#fff4dc";
   for (const b of o.boards) u.fillText(b.text, sx(b.cx), sy(b.y + 5) + 0.5);
+
+  drawPlayer(o.player.body, o.player.walk, o.player.alpha, o.player.phase);
 
   if (o.bubble) bubble(sx(o.bubble.x), sy(o.bubble.y) - 8, o.bubble.text);
   else if (o.hint) bubble(sx(o.hint.x), sy(o.hint.y) - 8, o.hint.text);

@@ -1,24 +1,25 @@
 import { TILE } from "./config";
 
-// The world as text, one character per 16 px tile. A walk through Gamle Oslo,
-// from the wooden houses at Kampen down to the Opera in Bjørvika.
+// The world as text, one character per 16 px tile. A walk through Gamle Oslo, from the
+// wooden houses at Vålerenga and Kampen, past Botanisk hage and the ruins in Gamlebyen,
+// down to the Opera in Bjørvika.
 //
-//   #  ground           H  hedge             R  ruin wall
-//   ~  market awning    _  stone ledge       (both can be jumped up through)
-//   S  start            C M Q T  doors, see DOOR_TILES
+//   #  ground      B  crates      H  hedge      R  ruin wall
+//   _  stone ledge (can be jumped up through)
+//   S  start       C Q M T  doors, see DOOR_TILES
 export const MAP = [
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "................................................................___.................................",
-  ".................................HH.....~~~.......~~~........RR.....................................",
-  "....S......C..........HH....M....HH...........Q...........R..RR......R.......T......................",
-  "####################################################################################################",
-  "####################################################################################################"
+  "..........................................................................................",
+  "..........................................................................................",
+  "..........................................................................................",
+  "..........................................................................................",
+  "..........................................................................................",
+  "..........................................................................................",
+  "..........................................................................................",
+  ".....................................................___..................................",
+  ".....................B...................HH.......RR......................................",
+  "....S......C........BB..Q.....HH....M....HH.....R.RR......R........T......................",
+  "##########################################################################################",
+  "##########################################################################################"
 ];
 
 export const COLS = MAP[0].length;
@@ -27,15 +28,15 @@ export const WORLD_W = COLS * TILE;
 export const WORLD_H = ROWS * TILE;
 export const GROUND_Y = 10 * TILE;
 
-const SOLID = new Set(["#", "H", "R"]);
-const ONE_WAY = new Set(["~", "_"]);
+const SOLID = new Set(["#", "B", "H", "R"]);
+const ONE_WAY = new Set(["_"]);
 
-export type DoorKind = "home" | "garden" | "basar" | "library" | "opera";
+export type DoorKind = "home" | "workshop" | "garden" | "library" | "opera";
 
 export const DOOR_TILES: Record<string, { id: string; kind: DoorKind }> = {
   C: { id: "cv", kind: "home" },
+  Q: { id: "qr", kind: "workshop" },
   M: { id: "maze", kind: "garden" },
-  Q: { id: "qr", kind: "basar" },
   T: { id: "quintle", kind: "library" }
 };
 
@@ -46,8 +47,8 @@ export interface Ramp {
 export const RAMPS: Ramp[] = [
   {
     points: [
-      [84 * TILE, GROUND_Y],
-      [95 * TILE, 6 * TILE],
+      [74 * TILE, GROUND_Y],
+      [85 * TILE, 6 * TILE],
       [WORLD_W, 6 * TILE]
     ]
   }
@@ -61,7 +62,7 @@ export interface DoorSpot {
 }
 
 // The door at the top of the Opera's stage tower is the secret.
-export const EXTRA_DOORS: DoorSpot[] = [{ id: "opera", kind: "opera", x: 97 * TILE, bottom: 6 * TILE }];
+export const EXTRA_DOORS: DoorSpot[] = [{ id: "opera", kind: "opera", x: 87 * TILE, bottom: 6 * TILE }];
 
 export interface District {
   name: string;
@@ -69,12 +70,18 @@ export interface District {
   from: number;
 }
 export const DISTRICTS: District[] = [
-  { name: "Kampen", landmark: null, from: 0 },
-  { name: "Tøyen", landmark: { nb: "Botanisk hage", en: "The Botanical Garden" }, from: 20 * TILE },
-  { name: "Grønland", landmark: { nb: "Grønland Basar", en: "Grønland Basar" }, from: 38 * TILE },
-  { name: "Gamlebyen", landmark: { nb: "Middelalderparken", en: "The Medieval Park" }, from: 56 * TILE },
-  { name: "Bjørvika", landmark: { nb: "Deichman og Operaen", en: "Deichman and the Opera" }, from: 72 * TILE }
+  { name: "Vålerenga & Kampen", landmark: null, from: 0 },
+  { name: "Tøyen", landmark: { nb: "Botanisk hage", en: "The Botanical Garden" }, from: 28 * TILE },
+  { name: "Gamlebyen", landmark: { nb: "Middelalderparken", en: "The Medieval Park" }, from: 46 * TILE },
+  { name: "Bjørvika", landmark: { nb: "Deichman og Operaen", en: "Deichman and the Opera" }, from: 62 * TILE }
 ];
+
+/** Where a district starts, so buildings are placed relative to their own part of town. */
+export function districtFrom(name: string): number {
+  const d = DISTRICTS.find((x) => x.name === name);
+  if (!d) throw new Error(`No district called ${name}`);
+  return d.from;
+}
 
 export function districtAt(x: number): District {
   let found = DISTRICTS[0];

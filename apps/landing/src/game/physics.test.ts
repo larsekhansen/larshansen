@@ -60,43 +60,43 @@ describe("jumping", () => {
 describe("getting up onto things", () => {
   const hopRight = (b: Body, steps = 70) => run(b, steps, (i) => ({ left: false, right: true, jumpHeld: i < 30, jumpPressed: i === 0 }));
 
+  test("the crates by the workshop", () => {
+    const b = createBody(21 * TILE - 28, GROUND_Y);
+    run(b, 60, (i) => ({ left: false, right: i < 22, jumpHeld: i < 30, jumpPressed: i === 0 }));
+    expect(feet(b)).toBe(8 * TILE);
+  });
+
   test("the tall hedge at Tøyen", () => {
-    const b = createBody(33 * TILE - 28, GROUND_Y);
+    const b = createBody(41 * TILE - 28, GROUND_Y);
     hopRight(b, 40);
     expect(feet(b)).toBe(8 * TILE);
   });
 
-  test("the market awning at Grønland", () => {
-    const b = createBody(40 * TILE - 30, GROUND_Y);
-    hopRight(b, 34);
-    expect(feet(b)).toBe(8 * TILE);
-  });
-
   test("from the ruin wall to the stone ledge in Gamlebyen", () => {
-    const b = createBody(62 * TILE + 8, 8 * TILE);
+    const b = createBody(51 * TILE + 8, 8 * TILE);
     run(b, 45, (i) => ({ left: false, right: i < 28, jumpHeld: i < 30, jumpPressed: i === 0 }));
     expect(feet(b)).toBe(7 * TILE);
   });
 
   test("up the Opera roof to the stage tower", () => {
-    const b = createBody(82 * TILE, GROUND_Y);
+    const b = createBody(72 * TILE, GROUND_Y);
     run(b, 420, () => ({ ...idle, right: true }));
     expect(b.onGround).toBe(true);
     expect(feet(b)).toBe(6 * TILE);
-    expect(b.x).toBeGreaterThan(96 * TILE);
+    expect(b.x).toBeGreaterThan(86 * TILE);
   });
 
   test("and back down to the square", () => {
-    const b = createBody(97 * TILE, 6 * TILE);
+    const b = createBody(87 * TILE, 6 * TILE);
     run(b, 420, () => ({ ...idle, left: true }));
     expect(feet(b)).toBe(GROUND_Y);
-    expect(b.x).toBeLessThan(82 * TILE);
+    expect(b.x).toBeLessThan(72 * TILE);
   });
 
-  test("the awnings can be jumped up through from below", () => {
-    const b = createBody(41 * TILE, GROUND_Y);
+  test("the stone ledge can be jumped up through from below", () => {
+    const b = createBody(54 * TILE + 8, 8 * TILE);
+    b.y = 8 * TILE - 14;
     const top = run(b, 40, (i) => ({ ...idle, jumpHeld: true, jumpPressed: i === 0 }));
-    expect(top).toBeLessThan(8 * TILE);
-    expect(feet(b)).toBe(8 * TILE);
+    expect(top).toBeLessThan(7 * TILE);
   });
 });

@@ -1,6 +1,6 @@
 # Landing page
 
-The front page of [larshansen.dev](https://larshansen.dev): a small platform game set in Gamle Oslo. You walk from the wooden houses at Kampen, past Botanisk hage at Tøyen, Grønland Basar and the ruins in Middelalderparken, down to Deichman and the Opera in Bjørvika. Every house is one of the apps. Stand at a door and press up to go in.
+The front page of [larshansen.dev](https://larshansen.dev): a small platform game set in Gamle Oslo. You walk from the wooden houses at Vålerenga and Kampen, past Botanisk hage at Tøyen and the ruins in Middelalderparken, down to Deichman and the Opera in Bjørvika. Vålerenga kirke, Kampen kirke, Galgeberg, Kruttverket, Kværnerbyen, MUNCH and the Barcode stand in the background. Every house is one of the apps. Stand at a door and press up to go in.
 
 Plain TypeScript and Canvas 2D, no framework. The art is drawn in code at low resolution and scaled up by whole pixels, so it stays sharp on every screen.
 
@@ -20,7 +20,7 @@ bun run build
 | `src/game/loop.ts` | Runs physics at a fixed 60 steps per second, so the game plays the same at 60 and 120 Hz. |
 | `src/game/oslo.ts` | Oslo time, sunrise and sunset, and the sky that follows them. |
 | `src/game/i18n.ts` | Norwegian for Norwegian browsers, English for everyone else. |
-| `src/render/` | The sky, the city behind the street, the landmarks, the street and the words. |
+| `src/render/` | The sky, the city behind the street, the landmarks, the street, the player and the words. Each part of town is drawn relative to where its district starts. |
 | `src/main.ts` | Input, doors, the camera and the main loop. |
 
 ## Adding a house

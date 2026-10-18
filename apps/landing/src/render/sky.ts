@@ -1,5 +1,5 @@
-import type { Sky } from "../game/oslo";
-import { S, ctx, disc, mix, seeded, view } from "./paint";
+import type { Phase, Sky } from "../game/oslo";
+import { S, ctx, disc, seeded, view } from "./paint";
 
 const GRADIENT = {
   day: ["#4f96d8", "#cde8f5"],
@@ -8,14 +8,45 @@ const GRADIENT = {
   twilight: ["#1d2a5e", "#7083c2"]
 } as const;
 
+/** The sky's colour at the horizon, which distant things fade towards. */
+export function horizonColor(phase: Phase) {
+  return GRADIENT[phase][1];
+}
+
 const rnd = seeded(7);
 const STARS = Array.from({ length: 90 }, () => ({ x: rnd(), y: rnd(), k: rnd() }));
 const FLAKES = Array.from({ length: 110 }, () => ({ x: rnd(), y: rnd(), k: rnd() }));
 const CLOUDS = Array.from({ length: 7 }, () => ({ x: rnd(), y: rnd(), s: 0.6 + rnd() * 0.8 }));
-const CLOUD_COLOR = { day: "#ffffff", evening: "#f6c3a0", twilight: "#8a98cf", night: "#1c2750" } as const;
+const CLOUD_COLOR = { day: "#ffffff", evening: "#f6c3a0", twilight: "#8a98cf", night: "rgba(28, 39, 80, 0.55)" } as const;
 
 /** World y of the horizon, so the low evening sun sinks behind the hills. */
 const HORIZON = 126;
+const MOON_R = 6;
+
+/**
+ * A crescent: only the lit pixels are drawn, so the sky, the northern lights and the clouds
+ * show where the dark side of the moon is.
+ */
+function crescent(cx: number, cy: number) {
+  const g = ctx();
+  g.fillStyle = "#e9eefb";
+  const bx = 3;
+  const by = -2;
+  const br = MOON_R - 1;
+  for (let dy = -MOON_R; dy <= MOON_R; dy++) {
+    const half = Math.floor(Math.sqrt(MOON_R * MOON_R - dy * dy));
+    const bdy = dy - by;
+    if (Math.abs(bdy) > br) {
+      g.fillRect(Math.round(cx - half), Math.round(cy + dy), half * 2 + 1, 1);
+      continue;
+    }
+    const bhalf = Math.floor(Math.sqrt(br * br - bdy * bdy));
+    const left = Math.min(half, bx - bhalf - 1);
+    if (left >= -half) g.fillRect(Math.round(cx - half), Math.round(cy + dy), left + half + 1, 1);
+    const right = Math.max(-half, bx + bhalf + 1);
+    if (right <= half) g.fillRect(Math.round(cx + right), Math.round(cy + dy), half - right + 1, 1);
+  }
+}
 
 export function drawSky(sky: Sky, t: number) {
   const g = ctx();
@@ -27,13 +58,32 @@ export function drawSky(sky: Sky, t: number) {
   g.fillStyle = grad;
   g.fillRect(0, 0, view.w, view.h);
 
+  const sunX = view.w * 0.78;
+  const high = Math.max(14, HORIZON - view.camY - 96);
+
   if (sky.phase === "night") {
     STARS.forEach((s, i) => {
+      const x = Math.floor(s.x * view.w);
+      const y = Math.floor(s.y * (view.h * 0.6));
+      if ((x - sunX) ** 2 + (y - high) ** 2 <= (MOON_R + 1) ** 2) return; // behind the moon
       g.globalAlpha = 0.35 + 0.65 * Math.abs(Math.sin(tt * 0.03 + i * 1.7)) * s.k;
-      S(s.x * view.w, s.y * (view.h * 0.6), 1, 1, "#ffffff");
+      S(x, y, 1, 1, "#ffffff");
     });
     g.globalAlpha = 1;
   }
+
+  // The sun and the moon are furthest away, so everything else in the sky goes in front.
+  if (sky.phase === "day") {
+    disc(sunX, high, 9, "rgba(255, 236, 150, 0.35)");
+    disc(sunX, high, 6, "#fff3b8");
+  } else if (sky.phase === "evening") {
+    const y = HORIZON - view.camY - 30;
+    disc(view.w * 0.62, y, 12, "rgba(255, 170, 100, 0.4)");
+    disc(view.w * 0.62, y, 9, "#ffb26b");
+  } else {
+    crescent(sunX, high);
+  }
+
   if (sky.aurora) {
     const bands = ["rgba(90, 255, 170, 0.10)", "rgba(60, 220, 210, 0.08)", "rgba(180, 120, 255, 0.06)"];
     const top0 = Math.max(8, HORIZON - view.camY - 112);
@@ -45,21 +95,6 @@ export function drawSky(sky: Sky, t: number) {
         g.fillRect(x, Math.round(y), 2, Math.round(16 + Math.sin(wx * 0.05 + b + tt * 0.01) * 6));
       }
     });
-  }
-
-  const sunX = view.w * 0.78;
-  const high = Math.max(14, HORIZON - view.camY - 96);
-  if (sky.phase === "day") {
-    disc(sunX, high, 9, "rgba(255, 236, 150, 0.35)");
-    disc(sunX, high, 6, "#fff3b8");
-  } else if (sky.phase === "evening") {
-    const y = HORIZON - view.camY - 30;
-    disc(view.w * 0.62, y, 12, "rgba(255, 170, 100, 0.4)");
-    disc(view.w * 0.62, y, 9, "#ffb26b");
-  } else {
-    // A crescent moon, cut with the sky colour at its own height.
-    disc(sunX, high, 6, "#e9eefb");
-    disc(sunX + 3, high - 2, 5, mix(top, bottom, (high - 2) / view.h));
   }
 
   // Clouds drift slowly from the west, further away the smaller they are.

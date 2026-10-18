@@ -57,14 +57,18 @@ export function gable(x: number, baseY: number, w: number, h: number, color: str
   }
 }
 
-/** Where a layer at `factor` depth puts world x on screen. Reduced motion flattens every layer. */
+/**
+ * Where a layer at `factor` depth puts world x on screen. The layer's offset is rounded once, so
+ * everything in a layer moves together by whole pixels instead of each thing rounding on its own.
+ * Reduced motion flattens every layer.
+ */
 export function layerX(wx: number, factor: number) {
   const f = view.reduced ? 1 : factor;
-  return (wx - (view.camX + view.w / 2)) * f + view.w / 2;
+  return Math.round(wx * f) - Math.round((view.camX + view.w / 2) * f) + Math.round(view.w / 2);
 }
 
 // Windows and lamps register themselves while a layer is drawn, and come on after dark.
-export type LightKind = "window" | "soft" | "lamp";
+export type LightKind = "window" | "soft" | "lamp" | "pool";
 export const lights: { x: number; y: number; w: number; h: number; kind: LightKind }[] = [];
 export function light(x: number, y: number, w: number, h: number, kind: LightKind = "window") {
   lights.push({ x, y, w, h, kind });
@@ -74,9 +78,19 @@ export function drawLights() {
   for (const l of lights) {
     const x = l.x - view.camX;
     const y = l.y - view.camY;
+    if (l.kind === "pool") {
+      // Where a street lamp's light lands on the ground.
+      g.fillStyle = "rgba(255, 205, 120, 0.16)";
+      g.fillRect(x, y, l.w, l.h);
+      g.fillRect(x + 3, y - 1, l.w - 6, 1);
+      continue;
+    }
     if (l.kind === "lamp") {
-      g.fillStyle = "rgba(255, 200, 110, 0.22)";
-      g.fillRect(x - 3, y - 2, l.w + 6, l.h + 8);
+      // Light falls downward from under the hat, widening as it goes.
+      for (let i = 1; i <= 8; i++) {
+        g.fillStyle = `rgba(255, 205, 120, ${(0.15 - i * 0.015).toFixed(3)})`;
+        g.fillRect(x - i, y + l.h + i - 1, l.w + i * 2, 1);
+      }
     }
     g.fillStyle = l.kind === "soft" ? "rgba(255, 214, 120, 0.45)" : "#ffd36b";
     g.fillRect(x, y, l.w, l.h);
