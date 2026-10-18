@@ -52,7 +52,8 @@ jobs:
             if grep -qF "$2" <<<"$body"; then echo "ok   $1"; else echo "FAIL $1 does not contain: $2"; exit 1; fi
           }
 
-          expect /     '<div id="root">'
+          # The front page lists its apps as plain links; the game reads them.
+          expect /     'data-door="qr"'
           expect /qr/  'QR-verkstedet'
           # The QR app's script must load from /qr/assets/, not the landing page's /assets/.
           expect "$(fetch /qr/ | grep -o '/qr/assets/index-[^"]*\.js')" 'Lest av QR-leser'

@@ -1,0 +1,221 @@
+:root {
+  --pad: 0px;
+  --ink: #1f1a17;
+  --muted: #6b625c;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+  /* Painted before the game has loaded: sky over a street. */
+  background: linear-gradient(#4f96d8, #cde8f5 82%, #8d8a84 82%, #4a4038);
+}
+
+body.touch {
+  --pad: calc(96px + env(safe-area-inset-bottom));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.bar {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  background: rgba(255, 252, 246, 0.86);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(31, 26, 23, 0.08);
+}
+
+.me {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.apps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 14px;
+}
+
+.apps .go {
+  color: var(--muted);
+}
+
+.apps ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apps a,
+.apps li > span {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: 99px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.apps a:hover,
+.apps a:focus-visible {
+  border-color: #541321;
+  color: #541321;
+}
+
+.apps li > span {
+  color: var(--muted);
+  font-weight: 500;
+  background: transparent;
+}
+
+.apps small {
+  font-size: 12px;
+}
+
+:focus-visible {
+  outline: 3px solid #1f4e8c;
+  outline-offset: 2px;
+}
+
+.stage {
+  position: fixed;
+  inset: 0 0 var(--pad) 0;
+  overflow: hidden;
+}
+
+.stage canvas {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: block;
+}
+
+#px {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.help {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgba(20, 22, 34, 0.72);
+  color: #fff;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.noscript {
+  position: absolute;
+  inset: auto 16px 24px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.pad {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px max(16px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px, env(safe-area-inset-left));
+  background: #16161c;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pad[hidden] {
+  display: none;
+}
+
+.pad div {
+  display: flex;
+  gap: 10px;
+}
+
+.pad button {
+  min-width: 64px;
+  height: 64px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 20px;
+  background: #2c2c38;
+  color: #fff;
+  font: 600 17px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pad button.down {
+  background: #4a4a5c;
+}
+
+.pad svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pad .enter {
+  background: #8a2234;
+  visibility: hidden;
+}
+
+.pad .enter.show {
+  visibility: visible;
+}
+
+@media (max-width: 560px) {
+  .apps .go {
+    display: none;
+  }
+}
