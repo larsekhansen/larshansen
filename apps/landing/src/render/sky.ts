@@ -112,14 +112,13 @@ export function drawSky(sky: Sky, t: number) {
   }
 }
 
-export function drawSnowfall(sky: Sky, t: number) {
-  if (!sky.snow) return;
-  const g = ctx();
+/** Falling snow, in screen art pixels. It falls in front of everything, so the text layer draws it. */
+export function snowfall(sky: Sky, t: number): { x: number; y: number; size: number }[] {
+  if (!sky.snow) return [];
   const tt = view.reduced ? 0 : t;
-  g.fillStyle = "rgba(255, 255, 255, 0.85)";
-  for (const f of FLAKES) {
-    const x = (((f.x * view.w + Math.sin(tt * 0.02 + f.k * 6) * 4 - view.camX * 0.3 * f.k) % view.w) + view.w) % view.w;
-    const y = (((f.y * view.h + tt * (0.25 + f.k * 0.35)) % view.h) + view.h) % view.h;
-    g.fillRect(Math.round(x), Math.round(y), f.k > 0.7 ? 2 : 1, 1);
-  }
+  return FLAKES.map((f) => ({
+    x: (((f.x * view.w + Math.sin(tt * 0.02 + f.k * 6) * 4 - view.camXf * 0.3 * f.k) % view.w) + view.w) % view.w,
+    y: (((f.y * view.h + tt * (0.25 + f.k * 0.35)) % view.h) + view.h) % view.h,
+    size: f.k > 0.7 ? 2 : 1
+  }));
 }

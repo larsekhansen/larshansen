@@ -35,7 +35,13 @@ jobs:
       - name: Publish to nginx webroots
         run: |
           set -euo pipefail
-          publish () { local app=$1 webroot=$2; shift 2; rsync -a --delete "$@" "apps/$app/dist/" "$webroot/"; }
+          # Built files in assets/ have hashed names, and a page cached in a browser may still ask for
+          # the previous ones. So --delete leaves old assets alone, and they are removed after 30 days.
+          publish () {
+            local app=$1 webroot=$2; shift 2
+            rsync -a --delete --filter 'P /assets/**' "$@" "apps/$app/dist/" "$webroot/"
+            if [ -d "$webroot/assets" ]; then find "$webroot/assets" -type f -mtime +30 -delete; fi
+          }
           # apps/qr lives inside larshansen.dev at /qr/, so the landing page's --delete must leave it alone.
           publish landing   /var/www/larshansen.dev --exclude /qr/
           publish qr        /var/www/larshansen.dev/qr

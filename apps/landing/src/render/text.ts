@@ -19,8 +19,11 @@ const FONT = "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif";
 /** Screen pixels per art pixel. */
 const unit = () => view.k / view.dpr;
 const fontPx = () => Math.max(11, Math.round(4.3 * unit()));
-const sx = (wx: number) => (wx - view.camX) * unit();
-const sy = (wy: number) => (wy - view.camY) * unit();
+// From the camera's real position, so words and the player glide with the art beneath them.
+const sx = (wx: number) => (wx - view.camXf) * unit();
+const sy = (wy: number) => (wy - view.camYf) * unit();
+/** Rounded to whole device pixels, so moving pixel art keeps sharp edges. */
+const snap = (v: number) => Math.round(v * view.dpr) / view.dpr;
 
 export interface Board {
   text: string;
@@ -77,12 +80,14 @@ function drawPlayer(b: Body, walk: number, alpha: number, phase: Phase) {
       const ramp = rampAt(x);
       const y = ramp !== null && Math.abs(ramp - feet) < 4 ? Math.round(ramp) : Math.round(feet);
       if (!standable(x, y)) continue;
-      u.fillRect(sx(x), sy(y), n, (Math.abs(dx + 0.5) < 4 ? 2 : 1) * n);
+      u.fillRect(snap(sx(x)), snap(sy(y)), n, (Math.abs(dx + 0.5) < 4 ? 2 : 1) * n);
     }
   }
-  playerPixels(b, walk, phase, (x, y, color) => {
+  const ox = snap(sx(b.x));
+  const oy = snap(sy(b.y));
+  playerPixels(b, walk, phase, (c, r, color) => {
     u.fillStyle = color;
-    u.fillRect(sx(x), sy(y), n, n);
+    u.fillRect(ox + c * n, oy + r * n, n, n);
   });
   u.globalAlpha = 1;
 }
@@ -103,6 +108,8 @@ function bubble(x: number, y: number, text: string) {
 
 export interface Overlay {
   boards: Board[];
+  fade: number;
+  snow: { x: number; y: number; size: number }[];
   player: { body: Body; walk: number; alpha: number; phase: Phase };
   hint: { x: number; y: number; text: string } | null;
   bubble: { x: number; y: number; text: string } | null;
@@ -121,7 +128,19 @@ export function drawText(o: Overlay) {
   u.fillStyle = "#fff4dc";
   for (const b of o.boards) u.fillText(b.text, sx(b.cx), sy(b.y + 5) + 0.5);
 
+  // Going through a door fades everything behind the player to black.
+  if (o.fade > 0) {
+    u.fillStyle = `rgba(5, 5, 12, ${o.fade.toFixed(3)})`;
+    u.fillRect(0, 0, view.cssW, view.cssH);
+  }
+
   drawPlayer(o.player.body, o.player.walk, o.player.alpha, o.player.phase);
+
+  if (o.snow.length) {
+    const n = unit();
+    u.fillStyle = "rgba(255, 255, 255, 0.85)";
+    for (const f of o.snow) u.fillRect(snap(f.x * n), snap(f.y * n), f.size * n, n);
+  }
 
   if (o.bubble) bubble(sx(o.bubble.x), sy(o.bubble.y) - 8, o.bubble.text);
   else if (o.hint) bubble(sx(o.hint.x), sy(o.hint.y) - 8, o.hint.text);

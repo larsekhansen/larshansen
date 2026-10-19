@@ -37,12 +37,12 @@ describe("jumping", () => {
       const b = createBody(5 * TILE, GROUND_Y);
       let i = 0;
       let top = feet(b);
-      const advance = createStepper(() => {
+      const stepper = createStepper(() => {
         stepBody(b, { ...idle, jumpHeld: true, jumpPressed: i === 0 });
         top = Math.min(top, feet(b));
         i++;
       });
-      for (let frame = 0; frame < hz; frame++) advance(1000 / hz);
+      for (let frame = 0; frame < hz; frame++) stepper.advance(1000 / hz);
       return GROUND_Y - top;
     });
     expect(new Set(heights).size).toBe(1);
