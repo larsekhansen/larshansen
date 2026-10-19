@@ -14,15 +14,13 @@ const LEGS = {
 const COLORS: Record<string, string> = { w: "#ffffff", r: "#c8302b", s: "#f1c27d", e: "#1f1a17", b: "#2b4c8c", d: "#2a2a35", k: "#3b2a20" };
 const DIM: Record<Phase, number> = { day: 0, evening: 0.12, twilight: 0.18, night: 0.25 };
 
-/** Calls `dot` for every pixel of the player, in world coordinates. */
-export function playerPixels(b: Body, walkSteps: number, phase: Phase, dot: (x: number, y: number, color: string) => void) {
+/** Calls `dot` for every pixel of the player, as column and row within the sprite. */
+export function playerPixels(b: Body, walkSteps: number, phase: Phase, dot: (c: number, r: number, color: string) => void) {
   const legs = !b.onGround ? LEGS.air : walkSteps ? (Math.floor(walkSteps / 6) % 2 ? LEGS.walk1 : LEGS.walk2) : LEGS.stand;
-  const x0 = Math.round(b.x);
-  const y0 = Math.round(b.y);
   SPRITE.concat(legs).forEach((row, r) => {
     for (let c = 0; c < PLAYER.w; c++) {
       const ch = row[b.facing > 0 ? c : PLAYER.w - 1 - c];
-      if (ch !== ".") dot(x0 + c, y0 + r, mix(COLORS[ch], "#141c46", DIM[phase]));
+      if (ch !== ".") dot(c, r, mix(COLORS[ch], "#141c46", DIM[phase]));
     }
   });
 }

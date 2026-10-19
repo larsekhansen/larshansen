@@ -32,7 +32,10 @@ rsyncs each app to its webroot. Manual run: GitHub → Actions → **Deploy to R
 - **cloudflared** — systemd service, *remotely-managed* tunnel `larshansen` (connector
   token, no local `config.yml`). Ingress + DNS live in Cloudflare, not on the Pi.
 - **nginx** — `/etc/nginx/sites-enabled/larshansen.conf`, three server blocks on
-  `127.0.0.1:8090`, SPA fallback to `index.html`.
+  `127.0.0.1:8090`, SPA fallback to `index.html`. Hashed files in `assets/` are cached for a
+  year and 404 when missing; pages are revalidated on every visit.
+- **old assets** — the deploy keeps previous files in `assets/` for 30 days, so a page still
+  cached in a browser can load what it asks for.
 - **webroots** — `/var/www/{larshansen.dev,cv.larshansen.dev,maze.larshansen.dev}`,
   owned by `lars` so the runner rsyncs without sudo.
 - **runner** — `~/actions-runner`, systemd service, label `larshansen-pi`.

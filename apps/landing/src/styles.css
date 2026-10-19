@@ -120,11 +120,13 @@ body.touch {
 .stage canvas {
   position: absolute;
   left: 0;
-  bottom: 0;
+  top: 0;
   display: block;
+  will-change: transform;
 }
 
-#px {
+#px,
+.depth {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }

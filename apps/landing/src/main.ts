@@ -10,8 +10,8 @@ import { createBody, stepBody } from "./game/physics";
 import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
 import { drawBuildings, drawRuins } from "./render/buildings";
 import { drawBoards, drawTiles, lightStreet } from "./render/ground";
-import { R, TINT, drawLights, lights, target, view } from "./render/paint";
-import { drawSky, drawSnowfall, horizonColor } from "./render/sky";
+import { R, TINT, drawLights, layerOrigin, lights, target, view } from "./render/paint";
+import { drawSky, horizonColor, snowfall } from "./render/sky";
 import { drawText, layoutBoards, textTarget, type Board } from "./render/text";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -24,11 +24,23 @@ const announce = $<HTMLElement>("announce");
 const enterButton = pad.querySelector<HTMLButtonElement>('[data-action="enter"]')!;
 
 const g = px.getContext("2d")!;
-const worldCanvas = document.createElement("canvas");
-const wg = worldCanvas.getContext("2d")!;
-const layerCanvas = document.createElement("canvas");
-const lg = layerCanvas.getContext("2d")!;
+const scratch = document.createElement("canvas");
+const sg = scratch.getContext("2d")!;
 textTarget(ui.getContext("2d")!);
+
+/**
+ * One canvas per depth, stacked between the sky and the text layer. Each is drawn at whole art
+ * pixels and then moved by the fraction its depth has scrolled, so every depth glides smoothly
+ * instead of jumping a whole, large pixel at a time.
+ */
+const DEPTHS = [0.12, 0.2, 0.25, 0.4, 0.7, 1].map((factor) => {
+  const canvas = document.createElement("canvas");
+  canvas.setAttribute("aria-hidden", "true");
+  canvas.className = "depth";
+  stage.insertBefore(canvas, ui);
+  return { factor, canvas, g: canvas.getContext("2d")! };
+});
+const depth = (factor: number) => DEPTHS.find((d) => d.factor === factor)!;
 
 // Language: Norwegian for Norwegian browsers, English for everyone else.
 const lang = pickLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
@@ -58,6 +70,10 @@ const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 view.reduced = reducedMotion.matches;
 reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
 const touch = matchMedia("(pointer: coarse)").matches;
+
+// Physics runs in fixed steps. Drawing blends the last two steps, so motion is smooth on any screen.
+const before = { x: body.x, y: body.y };
+const shown = { ...body };
 
 interface Spark {
   x: number;
@@ -104,6 +120,8 @@ function recall() {
 
 function standAt(d: Door) {
   Object.assign(body, { x: d.x + d.w / 2 - PLAYER.w / 2, y: d.bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
+  before.x = body.x;
+  before.y = body.y;
   state.district = districtAt(body.x);
   state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: state.steps };
 }
@@ -204,6 +222,8 @@ function goThrough() {
 }
 
 function stepOnce() {
+  before.x = body.x;
+  before.y = body.y;
   state.steps++;
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
@@ -217,27 +237,22 @@ function stepOnce() {
     return --p.life > 0;
   });
   input.endStep();
-  camera(false);
   if (state.steps % 120 === 0) sky = skyFor(new Date(), skyOverride);
 }
 
-const cam = { x: 0, y: 0 };
-function camera(snap: boolean) {
+/** The camera follows the player smoothly, at the same pace on every screen. */
+function camera(elapsedMs: number, snap: boolean) {
   const maxX = WORLD_W - view.w;
   const maxY = GROUND_Y + TILE - view.h; // one tile of ground below the street
-  const tx = body.x + PLAYER.w / 2 + body.facing * 22 - view.w / 2;
+  const tx = shown.x + PLAYER.w / 2 + body.facing * 22 - view.w / 2;
   const wantX = maxX < 0 ? maxX / 2 : Math.max(0, Math.min(maxX, tx));
   // A tall screen shows more sky, with the street kept at the bottom.
-  const wantY = maxY < 0 ? maxY : Math.max(0, Math.min(maxY, body.y + PLAYER.h / 2 - view.h / 2));
-  if (snap) {
-    cam.x = wantX;
-    cam.y = wantY;
-  } else {
-    cam.x += (wantX - cam.x) * 0.12;
-    cam.y += (wantY - cam.y) * 0.12;
-  }
-  view.camX = Math.round(cam.x);
-  view.camY = Math.round(cam.y);
+  const wantY = maxY < 0 ? maxY : Math.max(0, Math.min(maxY, shown.y + PLAYER.h / 2 - view.h / 2));
+  const k = snap ? 1 : 1 - Math.exp(-elapsedMs / 130);
+  view.camXf += (wantX - view.camXf) * k;
+  view.camYf += (wantY - view.camYf) * k;
+  view.camX = Math.floor(view.camXf);
+  view.camY = Math.floor(view.camYf);
 }
 
 let boards: Board[] = [];
@@ -250,88 +265,94 @@ function layout() {
   // A tall phone zooms in further, so the street is not a strip under an empty sky.
   let k = Math.max(1, Math.floor(Math.min(devH / 192, devW / 180)));
   if (devH > devW * 1.2) k = Math.max(k, Math.min(Math.ceil(devH / 280), Math.floor(devW / 120)));
-  Object.assign(view, { k, dpr, w: Math.ceil(devW / k), h: Math.ceil(devH / k) });
+  // One art pixel more than the screen in each direction, so nudging a layer never shows an edge.
+  Object.assign(view, { k, dpr, w: Math.ceil(devW / k) + 1, h: Math.ceil(devH / k) + 1 });
   view.cssW = (view.w * k) / dpr;
   view.cssH = (view.h * k) / dpr;
-  for (const c of [px, ui]) {
+  for (const c of [px, ui, ...DEPTHS.map((d) => d.canvas)]) {
     c.style.width = `${view.cssW}px`;
     c.style.height = `${view.cssH}px`;
   }
-  px.width = worldCanvas.width = layerCanvas.width = view.w;
-  px.height = worldCanvas.height = layerCanvas.height = view.h;
+  for (const c of [px, scratch, ...DEPTHS.map((d) => d.canvas)]) {
+    c.width = view.w;
+    c.height = view.h;
+  }
   ui.width = Math.round(view.cssW * dpr);
   ui.height = Math.round(view.cssH * dpr);
-  g.imageSmoothingEnabled = false;
   boards = layoutBoards(doors, "larshansen.dev");
-  camera(true);
+  camera(0, true);
 }
 
 /**
- * Draws one depth of the scene. Distant layers fade a little towards the colour of the horizon,
- * which keeps them calm behind the player. At dusk and night the layer is darkened and then its
- * own windows and lamps come on, before the next, nearer layer covers what it should.
+ * Draws one pass of the scene onto a depth's canvas. Distant passes fade a little towards the
+ * colour of the horizon, which keeps them calm behind the player. At dusk and night the pass is
+ * darkened and then its own windows and lamps come on, before nearer things cover what they should.
  */
-function layer(draw: () => void, haze = 0) {
-  lg.globalCompositeOperation = "source-over";
-  lg.clearRect(0, 0, view.w, view.h);
-  target(lg);
+function pass(onto: CanvasRenderingContext2D, draw: () => void, haze = 0) {
+  sg.globalCompositeOperation = "source-over";
+  sg.clearRect(0, 0, view.w, view.h);
+  target(sg);
   lights.length = 0;
   draw();
   if (haze > 0) {
-    lg.globalCompositeOperation = "source-atop";
-    lg.globalAlpha = haze;
-    lg.fillStyle = horizonColor(sky.phase);
-    lg.fillRect(0, 0, view.w, view.h);
-    lg.globalAlpha = 1;
+    sg.globalCompositeOperation = "source-atop";
+    sg.globalAlpha = haze;
+    sg.fillStyle = horizonColor(sky.phase);
+    sg.fillRect(0, 0, view.w, view.h);
+    sg.globalAlpha = 1;
   }
   const tint = TINT[sky.phase];
   if (tint) {
-    lg.globalCompositeOperation = "source-atop";
-    lg.fillStyle = tint;
-    lg.fillRect(0, 0, view.w, view.h);
-    lg.globalCompositeOperation = "source-over";
+    sg.globalCompositeOperation = "source-atop";
+    sg.fillStyle = tint;
+    sg.fillRect(0, 0, view.w, view.h);
+    sg.globalCompositeOperation = "source-over";
     drawLights();
   }
-  wg.drawImage(layerCanvas, 0, 0);
+  onto.drawImage(scratch, 0, 0);
+}
+
+/** Moves a canvas by what is left after drawing at whole art pixels, rounded to device pixels. */
+function nudge(canvas: HTMLCanvasElement, fracX: number) {
+  const toCss = (art: number) => Math.round(art * view.k) / view.dpr;
+  canvas.style.transform = `translate3d(${-toCss(fracX)}px, ${-toCss(view.camYf - view.camY)}px, 0)`;
 }
 
 function render() {
   target(g);
   drawSky(sky, state.steps);
+  nudge(px, 0);
 
-  wg.clearRect(0, 0, view.w, view.h);
-  layer(() => {
-    drawHills(sky);
-    drawFjord(state.steps);
-  }, 0.35);
-  layer(() => drawGalgeberg(sky), 0.28);
-  layer(drawSkylineBlocks, 0.25);
-  layer(drawLandmarks, 0.18);
-  layer(() => drawTram(state.steps), 0.08);
-  layer(() => drawRuins(sky), 0.12);
-  layer(() => drawBuildings(doors, sky, state.steps));
-  layer(() => {
+  for (const d of DEPTHS) {
+    d.g.clearRect(0, 0, view.w, view.h);
+    const origin = layerOrigin(d.factor);
+    nudge(d.canvas, origin - Math.floor(origin));
+  }
+  pass(depth(0.12).g, () => drawHills(sky), 0.35);
+  pass(depth(0.2).g, () => drawFjord(state.steps), 0.35);
+  pass(depth(0.25).g, () => drawGalgeberg(sky), 0.28);
+  pass(depth(0.4).g, drawSkylineBlocks, 0.25);
+  pass(depth(0.4).g, drawLandmarks, 0.18);
+  pass(depth(0.7).g, () => drawTram(state.steps), 0.08);
+  const street = depth(1).g;
+  pass(street, () => drawRuins(sky), 0.12);
+  pass(street, () => drawBuildings(doors, sky, state.steps));
+  pass(street, () => {
     drawBoards(boards);
     drawTiles(sky);
     lightStreet();
   });
-  target(wg);
+  target(street);
   for (const p of state.sparks) R(p.x, p.y, 1, 1, p.color);
-
-  target(g);
-  g.drawImage(worldCanvas, 0, 0);
-  drawSnowfall(sky, state.steps);
-  if (state.fade > 0) {
-    g.fillStyle = `rgba(5, 5, 12, ${state.fade.toFixed(3)})`;
-    g.fillRect(0, 0, view.w, view.h);
-  }
 
   const door = state.mode === "play" ? doorAt(body, doors) : null;
   const age = state.banner ? state.steps - state.banner.since : 0;
   drawText({
     boards,
-    player: { body, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase },
-    hint: door && !touch ? { x: body.x + PLAYER.w / 2, y: body.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
+    fade: state.fade,
+    snow: snowfall(sky, state.steps),
+    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase },
+    hint: door && !touch ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
     bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, text: state.bubble.text } : null,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
     highlight: state.highlight,
@@ -342,11 +363,15 @@ function render() {
   if (state.moved && !help.hidden) help.hidden = true;
 }
 
-const advance = createStepper(stepOnce);
+const stepper = createStepper(stepOnce);
 let last = performance.now();
 function frame(now: number) {
-  advance(now - last);
+  const elapsed = Math.min(100, Math.max(0, now - last));
   last = now;
+  stepper.advance(elapsed);
+  const a = stepper.alpha();
+  Object.assign(shown, body, { x: before.x + (body.x - before.x) * a, y: before.y + (body.y - before.y) * a });
+  camera(elapsed, false);
   render();
   requestAnimationFrame(frame);
 }
@@ -388,6 +413,7 @@ for (const link of links) {
   link.el.addEventListener("blur", off);
 }
 
+Object.assign(shown, body);
 new ResizeObserver(layout).observe(stage);
 layout();
 requestAnimationFrame((now) => {
@@ -395,4 +421,4 @@ requestAnimationFrame((now) => {
   requestAnimationFrame(frame);
 });
 
-if (params.has("debug")) Object.assign(window, { __game: { body, doors, state, view, input, step: stepOnce } });
+if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce } });

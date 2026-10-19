@@ -1,5 +1,5 @@
 import { TILE } from "../game/config";
-import { COLS, MAP, ROWS, districtFrom, isSolid } from "../game/level";
+import { COLS, MAP, ROWS, districtFrom, isSolid, tileAt } from "../game/level";
 import type { Sky } from "../game/oslo";
 import { LAMPS, STONE, stoneColumn } from "./buildings";
 import { R, light, view } from "./paint";
@@ -37,13 +37,15 @@ export function drawTiles(sky: Sky) {
       const y = r * TILE;
       const open = !isSolid(c, r - 1);
       if (t === "#") {
+        // The pavement or grass runs on under crates, hedges and ruins, which stand on it.
+        const surfaceTop = tileAt(c, r - 1) !== "#";
         const s = surface(x);
         R(x, y, TILE, TILE, s.fill);
         R(x + ((c * 7 + r * 3) % 12) + 1, y + ((c * 5 + r * 11) % 9) + 5, 2, 1, "rgba(0, 0, 0, 0.25)");
-        if (open) {
-          R(x, y, TILE, 4, sky.snow ? SNOW : s.top);
-          R(x, y + 4, TILE, 1, sky.snow ? "#cfd8e6" : s.dot);
-          if (!sky.snow) for (let i = 1; i < TILE; i += 4) R(x + i + (c % 2), y + 1 + (i % 3), 1, 1, s.dot);
+        if (surfaceTop) {
+          R(x, y, TILE, 4, sky.snow && open ? SNOW : s.top);
+          R(x, y + 4, TILE, 1, sky.snow && open ? "#cfd8e6" : s.dot);
+          if (!sky.snow || !open) for (let i = 1; i < TILE; i += 4) R(x + i + (c % 2), y + 1 + (i % 3), 1, 1, s.dot);
         }
       } else if (t === "B") {
         // A wooden crate.

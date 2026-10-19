@@ -10,7 +10,9 @@ export const view = {
   dpr: 1,
   cssW: 960,
   cssH: 600,
-  camX: 0, // whole art pixels, shared by the art and text layers
+  camXf: 0, // where the camera really is, in art pixels
+  camYf: 0,
+  camX: 0, // the whole-pixel part the art is drawn at; each layer is then nudged by the rest
   camY: 0,
   reduced: false
 };
@@ -57,14 +59,20 @@ export function gable(x: number, baseY: number, w: number, h: number, color: str
   }
 }
 
+/** Where a layer at `factor` depth starts, in its own pixels. Reduced motion flattens every layer. */
+export function layerOrigin(factor: number) {
+  const f = view.reduced ? 1 : factor;
+  return (view.camXf + view.w / 2) * f - view.w / 2;
+}
+
 /**
- * Where a layer at `factor` depth puts world x on screen. The layer's offset is rounded once, so
- * everything in a layer moves together by whole pixels instead of each thing rounding on its own.
- * Reduced motion flattens every layer.
+ * Where a layer at `factor` depth puts world x on its canvas. Everything in a layer is drawn at
+ * the same whole-pixel offset, and the canvas itself is then moved by the remaining fraction, so a
+ * layer glides smoothly without its pixels drifting apart.
  */
 export function layerX(wx: number, factor: number) {
   const f = view.reduced ? 1 : factor;
-  return Math.round(wx * f) - Math.round((view.camX + view.w / 2) * f) + Math.round(view.w / 2);
+  return Math.round(wx * f) - Math.floor(layerOrigin(factor));
 }
 
 // Windows and lamps register themselves while a layer is drawn, and come on after dark.

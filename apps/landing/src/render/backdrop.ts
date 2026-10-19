@@ -1,5 +1,5 @@
 import type { Sky } from "../game/oslo";
-import { ctx, layerX, light, seeded, view } from "./paint";
+import { ctx, layerOrigin, layerX, light, seeded, view } from "./paint";
 
 // Everything behind the street: the hills, Ekeberg, the fjord, Galgeberg, the skyline and the
 // tram. Each layer moves slower than the street the further away it is, and every layer is
@@ -11,10 +11,10 @@ const HILL = 0.25;
 const SKYLINE = 0.4;
 const TRAM = 0.7;
 
-/** Screen x to the world x a layer shows there. */
+/** A column of a layer's canvas, to the world x it shows there. */
 function layerWorldX(x: number, factor: number) {
   const f = view.reduced ? 1 : factor;
-  return (x - view.w / 2) / f + view.camX + view.w / 2;
+  return (x + Math.floor(layerOrigin(factor))) / f;
 }
 
 function column(x: number, top: number, bottom: number, color: string) {
