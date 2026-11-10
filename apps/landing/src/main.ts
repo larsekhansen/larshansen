@@ -59,7 +59,7 @@ pad.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((b) => {
 
 // The world.
 const params = new URLSearchParams(location.search);
-const skyOverride = params.get("sky");
+let skyOverride = params.get("sky");
 let sky = skyFor(new Date(), skyOverride);
 const links = readAppLinks();
 const doors = buildDoors(findDoorSpots(), links, { cv: "CV", maze: t.maze, qr: "QR-verkstedet", quintle: "Quintle", opera: "?" });
@@ -97,6 +97,11 @@ const state = {
   district: districtAt(body.x) as District,
   banner: null as { title: string; sub: string; since: number } | null,
   highlight: null as Door | null,
+  /** A house the visitor clicked or tapped: the player walks there and goes in. */
+  goal: null as Door | null,
+  goalSteps: 0,
+  stuck: 0,
+  hover: null as Door | null,
   sparks: [] as Spark[]
 };
 
@@ -151,6 +156,12 @@ function tryEnter(d: Door) {
     state.bubble = { text: t.secret, until: state.steps + 240, door: d };
     say(t.secret);
     if (!view.reduced) fireworks(d);
+    if (!d.href) return;
+    // Let the fireworks play for a moment, then go through to the game behind the door.
+    state.mode = "enter";
+    state.modeSteps = view.reduced ? 0 : -80;
+    state.door = d;
+    body.vx = 0;
     return;
   }
   if (d.soon || !d.href) {
@@ -183,13 +194,31 @@ function fireworks(d: Door) {
 function play() {
   const door = doorAt(body, doors);
   if (door && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
-  const r = stepBody(body, {
+  const intent = {
     left: input.held.left,
     right: input.held.right,
     jumpHeld: input.held.jump || input.held.up,
     jumpPressed: input.pressed("jump") || (input.pressed("up") && !door)
-  });
-  if (input.held.left || input.held.right || r.jumped) state.moved = true;
+  };
+  // Walking to a clicked house. Any input of the visitor's own takes over again.
+  if (state.goal) {
+    const goal = state.goal;
+    if (intent.left || intent.right || intent.jumpPressed || ++state.goalSteps > 1200) state.goal = null;
+    else if (door === goal) {
+      state.goal = null;
+      return tryEnter(goal);
+    } else {
+      const dx = goal.x + goal.w / 2 - (body.x + PLAYER.w / 2);
+      intent.left = dx < -1;
+      intent.right = dx > 1;
+      // Crates, hedges and walls in the way: hop over when walking gets nowhere.
+      state.stuck = body.onGround && Math.abs(body.vx) < 0.05 ? state.stuck + 1 : 0;
+      intent.jumpPressed = state.stuck > 4;
+      intent.jumpHeld = true; // always the full jump
+    }
+  }
+  const r = stepBody(body, intent);
+  if (intent.left || intent.right || r.jumped) state.moved = true;
   state.walk = body.onGround && Math.abs(body.vx) > 0.2 ? state.walk + 1 : 0;
   if (r.landed > 3 && !view.reduced)
     for (let i = 0; i < 5; i++)
@@ -205,6 +234,7 @@ function play() {
 function goThrough() {
   const d = state.door!;
   const s = ++state.modeSteps;
+  if (s <= 0) return; // still celebrating
   const quick = view.reduced;
   const cx = d.x + d.w / 2 - PLAYER.w / 2;
   if (!quick && s <= 10) body.x += (cx - body.x) * 0.35;
@@ -225,6 +255,7 @@ function stepOnce() {
   before.x = body.x;
   before.y = body.y;
   state.steps++;
+  input.pollPad();
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
   else if (++state.modeSteps > 300) resetScene(); // the app never opened
@@ -355,14 +386,20 @@ function render() {
     hint: door && !touch ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
     bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, text: state.bubble.text } : null,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
-    highlight: state.highlight,
+    highlight: state.highlight ?? state.hover ?? state.goal,
     steps: state.steps
   });
 
   enterButton.classList.toggle("show", !!door);
+  // The header link of the house you are standing at lights up.
+  if (door !== nearDoor) {
+    nearDoor = door;
+    for (const link of links) link.el.classList.toggle("here", link.id === door?.id);
+  }
   if (state.moved && !help.hidden) help.hidden = true;
 }
 
+let nearDoor: Door | null = null;
 const stepper = createStepper(stepOnce);
 let last = performance.now();
 function frame(now: number) {
@@ -413,6 +450,35 @@ for (const link of links) {
   link.el.addEventListener("blur", off);
 }
 
+// Clicking or tapping a house sends the player there. The secret door has to be found on foot.
+function houseAt(e: MouseEvent): Door | null {
+  const rect = stage.getBoundingClientRect();
+  const x = ((e.clientX - rect.left) * view.dpr) / view.k + view.camXf;
+  const y = ((e.clientY - rect.top) * view.dpr) / view.k + view.camYf;
+  return doors.find((d) => !d.secret && x >= d.x - TILE && x <= d.x + d.w + TILE && y >= d.bottom - TILE * 3.5 && y <= d.bottom + 2) ?? null;
+}
+stage.addEventListener("click", (e) => {
+  const d = houseAt(e);
+  if (!d || state.mode !== "play") return;
+  state.goal = d;
+  state.goalSteps = 0;
+  state.stuck = 0;
+});
+stage.addEventListener("mousemove", (e) => {
+  state.hover = state.mode === "play" ? houseAt(e) : null;
+  stage.style.cursor = state.hover ? "pointer" : "";
+});
+stage.addEventListener("mouseleave", () => (state.hover = null));
+
+// T steps through every sky, and back to the real one.
+const SKIES = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
+window.addEventListener("keydown", (e) => {
+  if (e.code !== "KeyT" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if ((e.target as HTMLElement | null)?.closest("a, button, input, textarea, select")) return;
+  skyOverride = SKIES[(SKIES.indexOf(skyOverride) + 1) % SKIES.length];
+  sky = skyFor(new Date(), skyOverride);
+});
+
 Object.assign(shown, body);
 new ResizeObserver(layout).observe(stage);
 layout();
@@ -421,4 +487,4 @@ requestAnimationFrame((now) => {
   requestAnimationFrame(frame);
 });
 
-if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce } });
+if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce, frame } });

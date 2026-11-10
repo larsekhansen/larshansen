@@ -22,11 +22,15 @@ export interface Input {
   hold(action: Action, down: boolean): void;
   endStep(): void;
   clear(): void;
+  /** Reads a connected gamepad. Call once per physics step. */
+  pollPad(): void;
 }
 
 export function createInput(): Input {
   const held: Record<Action, boolean> = { left: false, right: false, jump: false, up: false, enter: false };
   const started = new Set<Action>();
+  // What the gamepad held last step, kept apart so it never lets go of a key the keyboard holds.
+  const padHeld: Partial<Record<Action, boolean>> = {};
 
   const input: Input = {
     held,
@@ -40,6 +44,21 @@ export function createInput(): Input {
     clear: () => {
       (Object.keys(held) as Action[]).forEach((a) => (held[a] = false));
       started.clear();
+    },
+    pollPad: () => {
+      const pad = navigator.getGamepads?.().find((p) => p?.connected);
+      if (!pad) return;
+      const axis = pad.axes[0] ?? 0;
+      const now: Partial<Record<Action, boolean>> = {
+        left: axis < -0.35 || !!pad.buttons[14]?.pressed,
+        right: axis > 0.35 || !!pad.buttons[15]?.pressed,
+        jump: !!pad.buttons[0]?.pressed,
+        up: !!pad.buttons[12]?.pressed || !!pad.buttons[2]?.pressed
+      };
+      for (const a of Object.keys(now) as Action[]) {
+        if (!!padHeld[a] !== now[a]) input.hold(a, !!now[a]);
+        padHeld[a] = now[a];
+      }
     }
   };
 

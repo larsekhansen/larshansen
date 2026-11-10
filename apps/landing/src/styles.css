@@ -91,7 +91,8 @@ body.touch {
 }
 
 .apps a:hover,
-.apps a:focus-visible {
+.apps a:focus-visible,
+.apps .here {
   border-color: #541321;
   color: #541321;
 }

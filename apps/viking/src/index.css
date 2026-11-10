@@ -1,0 +1,293 @@
+:root {
+  --ink: #fffbf0;
+  --panel: rgba(11, 16, 38, 0.55);
+  --gold: #ffd166;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  /* Matches the game's dusk sky so there is no flash before the canvas, and
+     doubles as the backdrop when the game cannot start. */
+  background: linear-gradient(#2a2757, #d9567b 60%, #ffb36b);
+  color: var(--ink);
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.page {
+  position: fixed;
+  inset: 0;
+}
+
+#game {
+  position: absolute;
+  inset: 0;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#game canvas {
+  display: block;
+}
+
+/* --- Heads-up overlay: the real links live here ------------------------- */
+.hud {
+  position: absolute;
+  inset: 0 0 auto 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: max(12px, env(safe-area-inset-top)) max(14px, env(safe-area-inset-right)) 0 max(14px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.hud > * {
+  pointer-events: auto;
+}
+
+.brand {
+  padding: 8px 12px 10px;
+  border-radius: 12px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  max-width: min(60vw, 330px);
+}
+
+.brand h1 {
+  margin: 0;
+  font: 700 1.15rem/1.2 Georgia, "Times New Roman", serif;
+  letter-spacing: 0.04em;
+}
+
+.brand p {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+
+.runes {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 7px;
+}
+
+.rune {
+  width: 13px;
+  height: 19px;
+  fill: none;
+  stroke: rgba(255, 251, 240, 0.28);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: stroke 0.3s, filter 0.3s, transform 0.3s;
+}
+
+.rune:nth-child(5) {
+  margin-left: 7px; /* the space in "LARS HANSEN" */
+}
+
+.rune.lit {
+  stroke: var(--gold);
+  filter: drop-shadow(0 0 3px var(--gold));
+  transform: translateY(-1px);
+}
+
+.brand .timer {
+  display: block;
+  margin-top: 6px;
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+
+.timer .now {
+  font-weight: 700;
+}
+
+.timer.done .now {
+  color: var(--gold);
+}
+
+.crown {
+  margin-left: 6px;
+  color: var(--gold);
+  text-shadow: 0 0 6px var(--gold);
+}
+
+nav {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+nav a,
+nav button {
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 251, 240, 0.25);
+  border-radius: 999px;
+  background: var(--panel);
+  backdrop-filter: blur(6px);
+  color: var(--ink);
+  font: 600 0.85rem/1.2 inherit;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+nav a:hover,
+nav button:hover,
+nav a.near {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: #1d1b26;
+}
+
+:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+.keys {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: max(8px, env(safe-area-inset-bottom));
+  margin: 0;
+  text-align: center;
+  font-size: 0.72rem;
+  letter-spacing: 0.03em;
+  opacity: 0.7;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+/* --- Touch controls: only where there is no keyboard to speak of -------- */
+.touch {
+  display: none;
+  position: absolute;
+  inset: auto 0 0 0;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 0 max(16px, env(safe-area-inset-right)) max(18px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+
+.pad {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.touch button {
+  width: 64px;
+  height: 64px;
+  border: 2px solid rgba(255, 251, 240, 0.45);
+  border-radius: 50%;
+  background: rgba(11, 16, 38, 0.45);
+  color: var(--ink);
+  font-size: 1.4rem;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.touch button:active {
+  background: rgba(255, 209, 102, 0.6);
+}
+
+.touch .jump {
+  width: 76px;
+  height: 76px;
+}
+
+.touch .enter {
+  width: auto;
+  height: 48px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border-color: var(--gold);
+  background: var(--gold);
+  color: #1d1b26;
+  font: 700 0.9rem/1 inherit;
+  font-family: inherit;
+}
+
+@media (pointer: coarse) {
+  .touch {
+    display: flex;
+  }
+  .keys {
+    display: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .brand p {
+    display: none;
+  }
+  nav a,
+  nav button {
+    padding: 6px 10px;
+    font-size: 0.78rem;
+  }
+}
+
+/* --- No WebGL: the overlay becomes the whole page ----------------------- */
+.failed .hud {
+  inset: 0;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 20px;
+  text-align: center;
+}
+
+.failed .brand {
+  max-width: 420px;
+  padding: 20px 26px;
+}
+
+.failed .brand h1 {
+  font-size: 2rem;
+}
+
+.failed .brand p {
+  display: block;
+  font-size: 0.95rem;
+}
+
+.failed nav {
+  justify-content: center;
+}
+
+.failed nav a {
+  padding: 10px 18px;
+  font-size: 1rem;
+}
+
+noscript nav {
+  position: fixed;
+  inset: 0;
+  align-content: center;
+  justify-content: center;
+}

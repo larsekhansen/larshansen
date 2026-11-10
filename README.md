@@ -11,7 +11,8 @@ apps/
 ├── landing/      # the front page: a walk through Gamle Oslo, one house per app (TypeScript, Canvas 2D)
 ├── portfolio/    # CV / about site (React 18 + Vite + styled-components + zustand)
 ├── iron-maze/    # React + jQuery maze game (migrated from CRA to Vite)
-└── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)
+├── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)
+└── viking/       # Viking platform game at larshansen.dev/viking, behind the landing page's secret door (React 19 + Pixi 8)
 packages/         # shared code (empty for now)
 ```
 
@@ -24,6 +25,7 @@ bun run dev:landing    # platform game        (http://localhost:5173)
 bun run dev:portfolio  # CV site              (http://localhost:3000)
 bun run dev:iron-maze  # maze game
 bun run dev:qr         # QR code generator    (http://localhost:5173/qr/)
+bun run dev:viking     # viking game          (http://localhost:5173/viking/)
 
 bun run build          # build every app
 bun run build:landing  # build a single app

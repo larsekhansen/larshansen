@@ -42,9 +42,11 @@ jobs:
             rsync -a --delete --filter 'P /assets/**' "$@" "apps/$app/dist/" "$webroot/"
             if [ -d "$webroot/assets" ]; then find "$webroot/assets" -type f -mtime +30 -delete; fi
           }
-          # apps/qr lives inside larshansen.dev at /qr/, so the landing page's --delete must leave it alone.
-          publish landing   /var/www/larshansen.dev --exclude /qr/
+          # apps/qr and apps/viking live inside larshansen.dev at /qr/ and /viking/, so the landing
+          # page's --delete must leave them alone.
+          publish landing   /var/www/larshansen.dev --exclude /qr/ --exclude /viking/
           publish qr        /var/www/larshansen.dev/qr
+          publish viking    /var/www/larshansen.dev/viking
           publish portfolio /var/www/cv.larshansen.dev
           publish iron-maze /var/www/maze.larshansen.dev
 
@@ -61,5 +63,8 @@ jobs:
           # The front page lists its apps as plain links; the game reads them.
           expect /     'data-door="qr"'
           expect /qr/  'QR-verkstedet'
+          # The game behind the Opera's secret door, and its script from /viking/assets/.
+          expect /viking/ 'Vikingfjorden'
+          expect "$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')" 'Velkommen!'
           # The QR app's script must load from /qr/assets/, not the landing page's /assets/.
           expect "$(fetch /qr/ | grep -o '/qr/assets/index-[^"]*\.js')" 'Lest av QR-leser'

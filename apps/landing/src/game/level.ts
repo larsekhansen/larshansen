@@ -59,10 +59,16 @@ export interface DoorSpot {
   kind: DoorKind;
   x: number;
   bottom: number;
+  /** Doors that are not in the page header say here where they lead. */
+  href?: string;
+  name?: string;
 }
 
-// The door at the top of the Opera's stage tower is the secret.
-export const EXTRA_DOORS: DoorSpot[] = [{ id: "opera", kind: "opera", x: 87 * TILE, bottom: 6 * TILE }];
+// The door at the top of the Opera's stage tower is the secret. It leads to the viking game
+// (apps/viking), which is deliberately not listed in the header.
+export const EXTRA_DOORS: DoorSpot[] = [
+  { id: "opera", kind: "opera", x: 87 * TILE, bottom: 6 * TILE, href: "/viking/", name: "Vikingfjorden" }
+];
 
 export interface District {
   name: string;

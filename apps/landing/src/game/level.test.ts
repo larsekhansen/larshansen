@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { TILE } from "./config";
+import { buildDoors } from "./doors";
 import { COLS, DISTRICTS, DOOR_TILES, EXTRA_DOORS, MAP, findDoorSpots, findSpawn, isSolid, rampAt } from "./level";
 
 describe("the map", () => {
@@ -47,5 +48,11 @@ describe("the page and the map agree", () => {
 
   test("the secret is not in the header", () => {
     for (const d of EXTRA_DOORS) expect(linked).not.toContain(d.id);
+  });
+
+  test("the secret door leads to the viking game", () => {
+    const opera = buildDoors(findDoorSpots(), [], {}).find((d) => d.secret);
+    expect(opera?.href).toBe("/viking/");
+    expect(opera?.soon).toBe(false);
   });
 });

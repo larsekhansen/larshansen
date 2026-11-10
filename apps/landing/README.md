@@ -31,6 +31,13 @@ bun run build
 
 The tests check that every house has a link and every link has a house.
 
+## Other ways in
+
+- Clicking or tapping a house walks the player there and through the door. Any key takes control back.
+- The header link of the house you are standing at lights up, and pointing at a link lights up its house.
+- A gamepad works: stick or d-pad to walk, A to jump, d-pad up or X to go in.
+- The door at the top of the Opera is the secret. It is not in the header on purpose; it leads to the viking game in `apps/viking` (`EXTRA_DOORS` in `src/game/level.ts`).
+
 ## Looking at every sky
 
-The sky follows the real time in Oslo. Add `?sky=day`, `evening`, `night`, `twilight`, `winter` or `17mai` to the address to see the others.
+The sky follows the real time in Oslo. Add `?sky=day`, `evening`, `night`, `twilight`, `winter` or `17mai` to the address to see the others, or press T in the game to step through them.

@@ -20,6 +20,7 @@ push to master ─▶ self-hosted GitHub runner ON the Pi  (outbound only)
 |------|-----|
 | `larshansen.dev` | `apps/landing` (the platform game) |
 | `larshansen.dev/qr/` | `apps/qr` — rsynced into a subfolder of the landing webroot, no nginx change needed |
+| `larshansen.dev/viking/` | `apps/viking` — same arrangement as `/qr/`. It works without an nginx change; reinstalling `nginx/larshansen.conf` only adds long-lived caching for `/viking/assets/` |
 | `cv.larshansen.dev` | `apps/portfolio` |
 | `maze.larshansen.dev` | `apps/iron-maze` |
 
