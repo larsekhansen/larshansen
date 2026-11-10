@@ -81,7 +81,7 @@ describe.each(LEVELS.map((l, i) => [i + 1, l] as const))("level %d", (_n, level)
 describe("the levels", () => {
   test("there are seven, with their snakes, sliders and darkness where they belong", () => {
     expect(LEVELS.map((l) => l.name)).toEqual(["Inngangen", "Ormegropa", "Jernporten", "Råttent gulv", "Skyveveggene", "Mørket", "Haugbonden"]);
-    expect(LEVELS.map((l) => l.snakes.length)).toEqual([0, 4, 0, 0, 0, 0, 2]);
+    expect(LEVELS.map((l) => l.snakes.length)).toEqual([0, 4, 0, 0, 0, 0, 4]);
     expect(LEVELS.map((l) => l.sliders.length)).toEqual([0, 0, 0, 0, 7, 0, 1]);
     expect(LEVELS.map((l) => !!l.dark)).toEqual([false, false, false, false, false, true, false]);
   });
