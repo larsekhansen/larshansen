@@ -2,11 +2,29 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Platformer Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Lars Hansen — frontend developer, Oslo</title>
+    <meta
+      name="description"
+      content="Lars Hansen is a frontend developer in Oslo. This front page is a small viking platform game: walk through a door to reach the CV, the QR code generator, Iron Maze or GitHub."
+    />
+    <meta name="theme-color" content="#2a2757" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://larshansen.dev/" />
+    <meta property="og:title" content="Lars Hansen — frontend developer, Oslo" />
+    <meta property="og:description" content="A front page you can play: a viking, a fjord, and doors to everything else." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
     <div id="root"></div>
+    <noscript>
+      <nav aria-label="Destinations">
+        <a href="https://cv.larshansen.dev">CV</a>
+        <a href="/qr/">QR-verkstedet</a>
+        <a href="https://maze.larshansen.dev">Iron Maze</a>
+        <a href="https://github.com/larsekhansen">GitHub</a>
+      </nav>
+    </noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
