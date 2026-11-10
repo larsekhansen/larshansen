@@ -12,7 +12,7 @@ apps/
 ├── portfolio/    # CV / about site (React 18 + Vite + styled-components + zustand)
 ├── iron-maze/    # React + jQuery maze game (migrated from CRA to Vite)
 ├── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)
-└── viking/       # Viking platform game at larshansen.dev/viking, behind the landing page's secret door (React 19 + Pixi 8)
+└── viking/       # Viking platform game at larshansen.dev/viking, behind the landing page's secret door (plain TypeScript + Canvas 2D, on the shared pixel kit)
 packages/         # shared code (empty for now)
 ```
 

@@ -19,6 +19,8 @@ export interface Body {
   coyote: number;
   buffer: number;
   cutReady: boolean;
+  /** Jumps left in the air. Refilled on the ground and by `bounce`; only spent when the ability is on. */
+  airJumps: number;
 }
 
 /** What the player wants this step. `jumpPressed` is true only on the step the key went down. */
@@ -45,13 +47,29 @@ export function createBody(centerX: number, bottom: number): Body {
     facing: 1,
     coyote: 0,
     buffer: 0,
-    cutReady: false
+    cutReady: false,
+    airJumps: 0
   };
 }
 
+/** What the person can do beyond the front page's single jump. */
+export interface Abilities {
+  doubleJump?: boolean;
+}
+
+/** Throws the body up at `speed` (a trampoline, a sheep) and refills the jump in the air. */
+export function bounce(b: Body, speed: number) {
+  b.vy = -speed;
+  b.onGround = false;
+  b.coyote = 0;
+  b.airJumps = 1;
+  b.cutReady = false;
+}
+
 /** One physics step at 60 steps per second. */
-export function stepBody(b: Body, intent: Intent, world: World): StepResult {
+export function stepBody(b: Body, intent: Intent, world: World, abilities?: Abilities): StepResult {
   const result: StepResult = { jumped: false, landed: 0 };
+  if (b.onGround) b.airJumps = 1;
 
   b.buffer = intent.jumpPressed ? JUMP.bufferSteps : Math.max(0, b.buffer - 1);
   b.coyote = b.onGround ? JUMP.coyoteSteps : Math.max(0, b.coyote - 1);
@@ -60,6 +78,13 @@ export function stepBody(b: Body, intent: Intent, world: World): StepResult {
     b.buffer = 0;
     b.coyote = 0;
     b.onGround = false;
+    b.cutReady = true;
+    result.jumped = true;
+  } else if (abilities?.doubleJump && intent.jumpPressed && !b.onGround && b.coyote === 0 && b.airJumps > 0) {
+    // The extra jump in the air, the same height as the first.
+    b.vy = -JUMP.speed;
+    b.airJumps--;
+    b.buffer = 0;
     b.cutReady = true;
     result.jumped = true;
   }

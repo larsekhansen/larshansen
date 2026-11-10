@@ -1,0 +1,705 @@
+import "@larshansen/pixelkit/chrome.css";
+import "./styles.css";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
+import { buildDoors, doorAt, readAppLinks, type Door } from "./game/doors";
+import { pickLang } from "@larshansen/pixelkit/i18n";
+import { strings, type SkyName } from "./game/i18n";
+import { createInput, type Action } from "@larshansen/pixelkit/input";
+import {
+  GROUND_Y,
+  RUNE_COUNT,
+  WATER_Y,
+  WORLD,
+  WORLD_W,
+  districtAt,
+  findDoorSpots,
+  findRunes,
+  findSheep,
+  findSigns,
+  findSpawn,
+  isOneWay,
+  isSolid,
+  isWater,
+  rampAt,
+  type District
+} from "./game/level";
+import { createStepper } from "@larshansen/pixelkit/loop";
+import { skyFor } from "@larshansen/pixelkit/oslo";
+import { bounce, createBody, stepBody } from "@larshansen/pixelkit/physics";
+import { R, layerOrigin, target, view } from "@larshansen/pixelkit/paint";
+import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
+import { createStage } from "@larshansen/pixelkit/stage";
+import { createSfx } from "@larshansen/pixelkit/sfx";
+import { textTarget } from "@larshansen/pixelkit/text";
+import { RUNE_STROKES, type RuneChar } from "./game/runes";
+import { begin, collect, countOf, elapsedMs, formatTime, judge, newRun, tick, touched } from "./game/run";
+import { createSheep, stepSheep, stomped, SHEEP } from "./game/sheep";
+import { drawText, layoutBoards, type Board } from "./render/text";
+import { drawFjord, drawHeadlands, drawMountains } from "./render/backdrop";
+import { drawActors } from "./render/actors";
+import { drawBack, drawBoards, lightGround } from "./render/props";
+import { drawTiles, drawWater } from "./render/tiles";
+
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const stage = $<HTMLElement>("stage");
+const px = $<HTMLCanvasElement>("px");
+const ui = $<HTMLCanvasElement>("ui");
+const pad = $<HTMLElement>("pad");
+const help = $<HTMLElement>("help");
+const announce = $<HTMLElement>("announce");
+const header = document.querySelector<HTMLElement>(".bar")!;
+const enterButton = pad.querySelector<HTMLButtonElement>('[data-action="enter"]')!;
+
+// Four depths: mountains, the far shore of the fjord, near headlands, and the street he walks on.
+const kit = createStage({ stage, px, ui, factors: [0.12, 0.2, 0.4, 1] });
+const g = kit.g;
+textTarget(ui.getContext("2d")!);
+
+// Language: Norwegian for Norwegian browsers, English for everyone else.
+const lang = pickLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
+const t = strings(lang);
+document.documentElement.lang = lang;
+document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+  const text = t[el.dataset.i18n as keyof typeof t];
+  if (typeof text === "string") el.textContent = text;
+});
+const actionLabels: Record<string, string> = { left: t.left, right: t.right, jump: t.jump, enter: t.enter };
+pad.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((b) => {
+  b.setAttribute("aria-label", actionLabels[b.dataset.action ?? ""]);
+  if (b.dataset.action === "jump") b.textContent = t.jump;
+  if (b.dataset.action === "enter") b.textContent = t.enter;
+});
+
+// Storage can be refused in private windows; nothing here may depend on it.
+const store = {
+  get(key: string): string | null {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  set(key: string, value: string) {
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // the value lasts for this visit only
+    }
+  }
+};
+
+// The world.
+const params = new URLSearchParams(location.search);
+let skyOverride = params.get("sky");
+let sky = skyFor(new Date(), skyOverride);
+/** The far hills end this far above the ground; the sky's sun and clouds are placed against it. */
+const HORIZON_Y = GROUND_Y - 34;
+const links = readAppLinks();
+const doors = buildDoors(findDoorSpots());
+const signs = findSigns();
+const runes = findRunes();
+const sheep = createSheep(findSheep());
+const spawn = findSpawn();
+const body = createBody(spawn.x, spawn.bottom);
+const input = createInput();
+const sfx = createSfx();
+const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+view.reduced = reducedMotion.matches;
+reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
+const touch = matchMedia("(pointer: coarse)").matches;
+/** The double jump is a reward from the maze (order 4); `?feather` gives it for checking. */
+const abilities = { doubleJump: store.get("viking.feather") === "1" || params.has("feather") };
+
+// Physics runs in fixed steps. Drawing blends the last two steps, so motion is smooth on any screen.
+const before = { x: body.x, y: body.y };
+const shown = { ...body };
+
+interface Spark {
+  x: number;
+  y: number;
+  vx: number;
+  vy: number;
+  life: number;
+  color: string;
+}
+
+const run = newRun();
+const savedBest = Number(store.get("viking.best"));
+let best: number | null = savedBest > 0 ? savedBest : null;
+let crowned = store.get("viking.crowned") === "1";
+
+const state = {
+  mode: "play" as "play" | "enter" | "away",
+  modeSteps: 0,
+  door: null as Door | null,
+  fade: 0,
+  alpha: 1,
+  walk: 0,
+  steps: 0,
+  moved: false,
+  banner: null as { title: string; sub: string; since: number } | null,
+  district: districtAt(body.x) as District,
+  highlight: null as Door | null,
+  /** Where the visitor clicked or tapped: the player walks there, and goes in if it is a door. */
+  goal: null as { x: number; y0: number; door: Door | null; best: number; since: number } | null,
+  stuck: 0,
+  hover: null as Door | null,
+  sparks: [] as Spark[],
+  /** The last ground he stood on, where the water puts him back. */
+  lastGround: { x: spawn.x, bottom: spawn.bottom },
+  nearSign: null as string | null,
+  finished: false
+};
+
+state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: 0 };
+
+const LAST_DOOR = "lh:lastVikingDoor";
+function remember(id: string) {
+  try {
+    sessionStorage.setItem(LAST_DOOR, id);
+  } catch {
+    // private windows can refuse storage, and then Back just starts at the beginning
+  }
+}
+function recall() {
+  try {
+    return sessionStorage.getItem(LAST_DOOR);
+  } catch {
+    return null;
+  }
+}
+
+function place(centerX: number, bottom: number, announceDistrict = true) {
+  Object.assign(body, { x: centerX - PLAYER.w / 2, y: bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
+  before.x = body.x;
+  before.y = body.y;
+  state.lastGround = { x: centerX, bottom };
+  state.district = districtAt(body.x);
+  if (announceDistrict) state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: state.steps };
+}
+
+function standAt(d: Door) {
+  place(d.x + d.w / 2, d.bottom);
+}
+
+function resetScene() {
+  state.mode = "play";
+  state.fade = 0;
+  state.alpha = 1;
+  doors.forEach((d) => (d.open = false));
+  input.clear();
+}
+
+// Back from a door: start outside the one you went through, with nothing frozen or held.
+const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+if (navigation?.type === "back_forward") {
+  const d = doors.find((x) => x.id === recall());
+  if (d) standAt(d);
+}
+window.addEventListener("pageshow", (e) => e.persisted && resetScene());
+
+function say(text: string) {
+  announce.textContent = text;
+}
+
+// ---------------------------------------------------------------------------------------------
+// The header: ten rune slots, the clock, restart and mute.
+
+const runeSlots = [...document.querySelectorAll<HTMLElement>("#runes li")];
+const runesEl = $<HTMLElement>("runes");
+const clockEl = $<HTMLElement>("clock");
+const bestEl = $<HTMLElement>("best");
+const restartButton = $<HTMLButtonElement>("restart");
+const muteButton = $<HTMLButtonElement>("mute");
+const finishEl = $<HTMLElement>("finish");
+
+const SVG = "http://www.w3.org/2000/svg";
+const NAME_RUNES = "LARSHANSEN";
+runeSlots.forEach((li, i) => {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", "-1 -1 12 17");
+  svg.setAttribute("aria-hidden", "true");
+  for (const stroke of RUNE_STROKES[NAME_RUNES[i] as RuneChar]) {
+    const line = document.createElementNS(SVG, "polyline");
+    line.setAttribute("points", stroke.map(([x, y]) => `${x * 10},${y * 15}`).join(" "));
+    svg.appendChild(line);
+  }
+  li.appendChild(svg);
+});
+$<HTMLElement>("run").hidden = false;
+
+let shownClock = "";
+let shownCount = -1;
+function hud() {
+  const ms = elapsedMs(run);
+  const text = formatTime(ms);
+  if (text !== shownClock) {
+    shownClock = text;
+    clockEl.textContent = text;
+  }
+  const n = countOf(run);
+  if (n !== shownCount) {
+    shownCount = n;
+    runeSlots.forEach((li, i) => li.classList.toggle("lit", (run.mask & (1 << i)) !== 0));
+    runesEl.setAttribute("aria-label", n === RUNE_COUNT ? t.runesAll : t.runes(n));
+  }
+  bestEl.textContent = best !== null ? `${t.best} ${formatTime(best)}` : "";
+}
+
+function labelButtons() {
+  restartButton.setAttribute("aria-label", t.restart);
+  restartButton.title = `${t.restart} (R)`;
+  const muted = sfx.muted;
+  muteButton.setAttribute("aria-pressed", String(muted));
+  muteButton.setAttribute("aria-label", muted ? t.soundOn : t.soundOff);
+  muteButton.title = `${muted ? t.soundOn : t.soundOff} (M)`;
+}
+labelButtons();
+$<HTMLElement>("finish-title").textContent = t.finishTitle;
+$<HTMLElement>("finish-again").textContent = t.finishAgain;
+$<HTMLElement>("finish-back").textContent = t.finishBack;
+$<HTMLElement>("finish-close").setAttribute("aria-label", t.close);
+
+/** Runes back, clock at zero, and him at the start. */
+function restart() {
+  Object.assign(run, newRun());
+  state.finished = false;
+  state.goal = null;
+  state.sparks = [];
+  state.moved = false;
+  finishEl.hidden = true;
+  place(spawn.x, spawn.bottom);
+  input.clear();
+  hud();
+}
+
+function finish() {
+  state.finished = true;
+  crowned = true;
+  store.set("viking.crowned", "1");
+  const ms = elapsedMs(run);
+  const verdict = judge(best, ms);
+  best = verdict.best;
+  store.set("viking.best", String(Math.round(best)));
+  $<HTMLElement>("finish-time").textContent = formatTime(ms);
+  $<HTMLElement>("finish-best").textContent = verdict.isNew ? t.finishNew : t.finishBest(formatTime(best));
+  finishEl.hidden = false;
+  say(`${t.finishTitle} ${formatTime(ms)}`);
+  sfx.play("fanfare");
+  if (!view.reduced) fireworks();
+}
+
+function fireworks() {
+  // The same kind of sparks as the front page's fireworks: single pixels, in the colours of the flag.
+  const colors = ["#ba0c2f", "#ffffff", "#00205b", "#ffd36b"];
+  const cx = body.x + PLAYER.w / 2;
+  for (let burst = 0; burst < 3; burst++) {
+    const bx = cx - 40 + burst * 40;
+    const by = body.y - 50 - (burst % 2) * 10;
+    for (let i = 0; i < 22; i++) {
+      const a = (i / 22) * Math.PI * 2;
+      const v = 0.6 + Math.random() * 0.5;
+      state.sparks.push({ x: bx, y: by, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.2, life: 50 + burst * 12, color: colors[(i + burst) % 4] });
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------------------------
+// Rules.
+
+function tryEnter(d: Door) {
+  state.mode = "enter";
+  state.modeSteps = 0;
+  state.door = d;
+  body.vx = 0;
+  sfx.play("door");
+  say(t.opening(d.sign));
+}
+
+/** The y of the first thing to stand on at or below `fromY`, under world x: for the marker and ?x=. */
+function surfaceBelow(x: number, fromY: number): number | null {
+  const ramp = rampAt(x);
+  if (ramp !== null && ramp >= fromY - 1) return ramp;
+  const c = Math.floor(x / TILE);
+  for (let r = Math.max(0, Math.floor(fromY / TILE)); r < 16; r++) if (isSolid(c, r) || isOneWay(c, r)) return r * TILE;
+  return isWater(c, 16) ? null : GROUND_Y;
+}
+
+/** True when there is ground, a ledge or a slope right under his feet. */
+function supported(): boolean {
+  const cx = body.x + PLAYER.w / 2;
+  const feet = body.y + PLAYER.h;
+  const ramp = rampAt(cx);
+  if (ramp !== null && Math.abs(ramp - feet) < 1.5) return true;
+  const c = Math.floor(cx / TILE);
+  const r = Math.round(feet / TILE);
+  return Math.abs(feet - r * TILE) < 0.01 && (isSolid(c, r) || isOneWay(c, r));
+}
+
+function intoWater() {
+  const from = body.x + PLAYER.w / 2;
+  for (let i = 0; i < 8; i++)
+    state.sparks.push({ x: from + (i - 4) * 1.5, y: WATER_Y - 1, vx: (i - 3.5) * 0.18, vy: -0.8 - Math.random() * 0.6, life: 22, color: "#d6eef9" });
+  sfx.play("splash");
+  // Back on the last ground he stood on, turned towards the water, with nothing carried over.
+  const toward = from > state.lastGround.x ? 1 : from < state.lastGround.x ? -1 : body.facing;
+  place(state.lastGround.x, state.lastGround.bottom, false);
+  body.facing = toward;
+  state.goal = null;
+}
+
+function play() {
+  const door = doorAt(body, doors);
+  if (door && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
+  const intent = {
+    left: input.held.left,
+    right: input.held.right,
+    jumpHeld: input.held.jump || input.held.up,
+    jumpPressed: input.pressed("jump") || (input.pressed("up") && !door)
+  };
+  // Walking to a clicked spot or door. Any input of the visitor's own takes over again.
+  if (state.goal) {
+    const goal = state.goal;
+    const dx = goal.x - (body.x + PLAYER.w / 2);
+    // Getting closer resets the patience; three seconds without progress means it cannot be reached.
+    if (Math.abs(dx) < goal.best - 0.5) {
+      goal.best = Math.abs(dx);
+      goal.since = state.steps;
+    }
+    if (intent.left || intent.right || intent.jumpPressed || state.steps - goal.since > 180) state.goal = null;
+    else if (goal.door && door === goal.door) {
+      state.goal = null;
+      return tryEnter(goal.door);
+    } else if (!goal.door && Math.abs(dx) <= 1.5) state.goal = null;
+    else {
+      intent.left = dx < -1;
+      intent.right = dx > 1;
+      // Crates, rocks and walls in the way: hop over when walking gets nowhere.
+      state.stuck = body.onGround && Math.abs(body.vx) < 0.05 ? state.stuck + 1 : 0;
+      intent.jumpPressed = state.stuck > 4;
+      intent.jumpHeld = true; // always the full jump
+    }
+  }
+  const prevBottom = body.y + PLAYER.h;
+  const r = stepBody(body, intent, WORLD, abilities);
+  if (intent.left || intent.right || r.jumped) {
+    state.moved = true;
+    begin(run);
+  }
+  if (r.jumped) sfx.play("jump");
+  state.walk = body.onGround && Math.abs(body.vx) > 0.2 ? state.walk + 1 : 0;
+  if (state.walk > 0 && state.walk % 14 === 7) sfx.play("step");
+
+  // Sheep: coming down on one from above is a trampoline.
+  let bounced = false;
+  for (const s of sheep)
+    if (!bounced && stomped(body, prevBottom, s)) {
+      bounce(body, 7);
+      body.y = s.bottom - SHEEP.h - PLAYER.h;
+      s.squash = SHEEP.squashSteps;
+      sfx.play("bleat");
+      bounced = true;
+    }
+  if (!bounced && r.landed > 3) {
+    sfx.play("land");
+    if (!view.reduced)
+      for (let i = 0; i < 5; i++)
+        state.sparks.push({ x: body.x + PLAYER.w / 2, y: body.y + PLAYER.h - 1, vx: (i - 2) * 0.35, vy: -0.3 - Math.random() * 0.4, life: 18, color: "#ebe1cd" });
+  }
+
+  // Water: his feet in a water tile put him back on the last ground.
+  const feet = body.y + PLAYER.h;
+  if (feet > WATER_Y + 2 && isWater(Math.floor((body.x + PLAYER.w / 2) / TILE), Math.floor((feet - 1) / TILE))) intoWater();
+  else if (body.onGround && supported()) state.lastGround = { x: body.x + PLAYER.w / 2, bottom: feet };
+
+  // Runes: touching a rune's tile collects it.
+  for (const i of touched(body, runes, run.mask)) {
+    const got = collect(run, i);
+    if (!got.fresh) continue;
+    sfx.play("pickup", countOf(run) - 1);
+    say(t.runeAnnounce(countOf(run)));
+    if (!view.reduced) {
+      const rune = runes[i];
+      for (let k = 0; k < 8; k++) {
+        const a = (k / 8) * Math.PI * 2;
+        state.sparks.push({ x: rune.x + 8, y: rune.y + 8, vx: Math.cos(a) * 0.7, vy: Math.sin(a) * 0.7 - 0.1, life: 20, color: "#9fe3ff" });
+      }
+    }
+    if (got.finished) finish();
+  }
+
+  const here = districtAt(body.x + PLAYER.w / 2);
+  if (here !== state.district) {
+    state.district = here;
+    state.banner = { title: here.name, sub: here.landmark ? here.landmark[lang] : "", since: state.steps };
+  }
+}
+
+// Through a door: walk in, fade out, then open the place in this tab.
+function goThrough() {
+  const d = state.door!;
+  const s = ++state.modeSteps;
+  const quick = view.reduced;
+  const cx = d.x + d.w / 2 - PLAYER.w / 2;
+  if (!quick && s <= 10) body.x += (cx - body.x) * 0.35;
+  if (!quick && s > 10 && s <= 30) {
+    d.open = true;
+    state.alpha = Math.max(0, 1 - (s - 10) / 20);
+  }
+  if (!quick && s > 30) state.fade = Math.min(1, (s - 30) / 14);
+  if (quick || s >= 44) {
+    remember(d.id);
+    state.mode = "away";
+    state.modeSteps = 0;
+    location.assign(d.href);
+  }
+}
+
+function stepOnce() {
+  before.x = body.x;
+  before.y = body.y;
+  state.steps++;
+  input.pollPad();
+  tick(run);
+  if (state.mode === "play") play();
+  else if (state.mode === "enter") goThrough();
+  else if (++state.modeSteps > 300) resetScene(); // the place never opened
+  for (const s of sheep) stepSheep(s);
+  doors.forEach((d) => d.shake > 0 && d.shake--);
+  state.sparks = state.sparks.filter((p) => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.03;
+    return --p.life > 0;
+  });
+  input.endStep();
+  if (state.steps % 120 === 0) sky = skyFor(new Date(), skyOverride);
+}
+
+/** The camera follows the player smoothly, at the same pace on every screen, up the cliff as well. */
+function camera(elapsedMs: number, snap: boolean) {
+  const maxX = WORLD_W - view.w;
+  const maxY = GROUND_Y + TILE - view.h; // one tile of ground below the street, as on the front page
+  const tx = shown.x + PLAYER.w / 2 + body.facing * 22 - view.w / 2;
+  const wantX = maxX < 0 ? maxX / 2 : Math.max(0, Math.min(maxX, tx));
+  // A tall screen shows more sky, with the street kept at the bottom.
+  // The fixed header bar covers the top of the screen, so the camera may rise above the top of the
+  // world by the bar's height (it is only sky up there), and the tower and its rune show below it.
+  const bar = (header.getBoundingClientRect().height * view.dpr) / view.k;
+  const cx = shown.x + PLAYER.w / 2;
+  const onPlateau = cx >= 118 * TILE && cx <= 131 * TILE && shown.y + PLAYER.h <= 10 * TILE + 1;
+  const lookUp = onPlateau ? 24 : 0; // a hint of the tower's top and its rune
+  const wantY = maxY < 0 ? maxY : Math.max(-bar, Math.min(maxY, shown.y + PLAYER.h / 2 - view.h / 2 - lookUp));
+  const k = snap ? 1 : 1 - Math.exp(-elapsedMs / 130);
+  view.camXf += (wantX - view.camXf) * k;
+  view.camYf += (wantY - view.camYf) * k;
+  view.camX = Math.floor(view.camXf);
+  view.camY = Math.floor(view.camYf);
+}
+
+let boards: Board[] = [];
+const signLabels = { start: t.boardStart, jetty: t.boardJetty, smithy: t.boardSmithy, beacon: t.boardBeacon };
+const signLines = { start: t.signStart, jetty: t.signJetty, smithy: t.signSmithy, beacon: t.signBeacon };
+function layout() {
+  kit.resize();
+  boards = layoutBoards(doors, signs.map((s) => ({ ...s, label: signLabels[s.key] })));
+  camera(0, true);
+}
+
+const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, sky.phase, haze);
+const nudge = kit.nudge;
+const look = () => ({ outfit: "viking" as const, gold: crowned });
+
+/** The mound door's hint, while he has no feather: some runes hang too high. */
+const mound = doors.find((d) => d.id === "maze")!;
+
+function render() {
+  target(g);
+  drawSky(sky, state.steps, HORIZON_Y);
+  nudge(px, 0);
+
+  for (const d of kit.depths) {
+    d.g.clearRect(0, 0, view.w, view.h);
+    const origin = layerOrigin(d.factor);
+    nudge(d.canvas, origin - Math.floor(origin));
+  }
+  pass(kit.depth(0.12), () => drawMountains(sky), 0.35);
+  pass(kit.depth(0.2), () => drawFjord(state.steps), 0.3);
+  pass(kit.depth(0.4), () => drawHeadlands(sky), 0.2);
+  const street = kit.depth(1);
+  pass(street, () => drawBack(doors, sky, state.steps));
+  pass(street, () => {
+    drawBoards(boards);
+    drawWater(state.steps);
+    drawTiles(sky);
+    lightGround();
+  });
+  pass(street, () => drawActors(sheep, runes, run.mask, state.steps));
+  target(street);
+  for (const p of state.sparks) R(p.x, p.y, 1, 1, p.color);
+
+  const door = state.mode === "play" ? doorAt(body, doors) : null;
+  const age = state.banner ? state.steps - state.banner.since : 0;
+
+  // A sign he is standing by speaks in a bubble; so does the mound while he has no feather.
+  const cx = shown.x + PLAYER.w / 2;
+  let bubble: { x: number; y: number; lines: string[]; align?: "left" } | null = null;
+  if (state.mode === "play" && !door) {
+    const sign = signs.find((s) => Math.abs(cx - s.x) < 28 && Math.abs(shown.y + PLAYER.h - s.bottom) < 8);
+    // The start sign's bubble grows to the right of its post, so it leaves the title stone free.
+    if (sign) bubble = { x: sign.key === "start" ? sign.x - 4 : sign.x, y: sign.bottom - 30, lines: signLines[sign.key], align: sign.key === "start" ? "left" : undefined };
+    else if (!abilities.doubleJump && Math.abs(cx - (mound.x + mound.w / 2)) < 5 * TILE && body.onGround && Math.abs(shown.y + PLAYER.h - mound.bottom) < 8)
+      bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h, lines: t.moundNoFeather };
+  }
+  const nearKey = bubble ? bubble.lines[0] : null;
+  if (nearKey !== state.nearSign) {
+    state.nearSign = nearKey;
+    if (bubble) say(bubble.lines.join(" "));
+  }
+
+  drawText({
+    boards,
+    fade: state.fade,
+    snow: snowfall(sky, state.steps),
+    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
+    hint: door && !touch ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
+    bubble: door ? null : bubble,
+    banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
+    highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
+    marker: state.goal && !state.goal.door ? { x: state.goal.x, y: surfaceBelow(state.goal.x, state.goal.y0) ?? GROUND_Y } : null,
+    steps: state.steps
+  });
+
+  enterButton.classList.toggle("show", !!door);
+  // The header link of the door you are standing at lights up.
+  if (door !== nearDoor) {
+    nearDoor = door;
+    for (const link of links) link.el.classList.toggle("here", link.id === door?.id);
+  }
+  if (state.moved && !help.hidden) help.hidden = true;
+  hud();
+}
+
+let nearDoor: Door | null = null;
+const stepper = createStepper(stepOnce);
+let last = performance.now();
+function frame(now: number) {
+  const elapsed = Math.min(100, Math.max(0, now - last));
+  last = now;
+  stepper.advance(elapsed);
+  const a = stepper.alpha();
+  Object.assign(shown, body, { x: before.x + (body.x - before.x) * a, y: before.y + (body.y - before.y) * a });
+  camera(elapsed, false);
+  render();
+  requestAnimationFrame(frame);
+}
+
+// Touch buttons feed the same actions as the keyboard.
+if (touch) {
+  pad.hidden = false;
+  help.hidden = true;
+  document.body.classList.add("touch");
+}
+pad.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((b) => {
+  const action = b.dataset.action as Action;
+  const release = () => {
+    b.classList.remove("down");
+    input.hold(action, false);
+  };
+  b.addEventListener("pointerdown", (e) => {
+    e.preventDefault();
+    b.setPointerCapture?.(e.pointerId);
+    b.classList.add("down");
+    input.hold(action, true);
+  });
+  b.addEventListener("pointerup", release);
+  b.addEventListener("pointercancel", release);
+  b.addEventListener("lostpointercapture", release);
+  b.addEventListener("contextmenu", (e) => e.preventDefault());
+  b.addEventListener("click", (e) => e.detail === 0 && input.press(action)); // keyboard or switch access
+});
+
+// Pointing at a plain link lights up its door in the game.
+for (const link of links) {
+  const d = doors.find((x) => x.id === link.id);
+  if (!d) continue;
+  const on = () => (state.highlight = d);
+  const off = () => state.highlight === d && (state.highlight = null);
+  link.el.addEventListener("mouseenter", on);
+  link.el.addEventListener("mouseleave", off);
+  link.el.addEventListener("focus", on);
+  link.el.addEventListener("blur", off);
+}
+
+// Clicking or tapping sends the player there: into a door, or just along the ground.
+function worldAt(e: MouseEvent) {
+  const rect = stage.getBoundingClientRect();
+  return {
+    x: ((e.clientX - rect.left) * view.dpr) / view.k + view.camXf,
+    y: ((e.clientY - rect.top) * view.dpr) / view.k + view.camYf
+  };
+}
+function doorUnder(e: MouseEvent): Door | null {
+  const { x, y } = worldAt(e);
+  return doors.find((d) => x >= d.x - TILE && x <= d.x + d.w + TILE && y >= d.bottom - TILE * 3.5 && y <= d.bottom + 2) ?? null;
+}
+stage.addEventListener("click", (e) => {
+  if (state.mode !== "play") return;
+  const door = doorUnder(e);
+  const at = worldAt(e);
+  const x = door ? door.x + door.w / 2 : Math.max(PLAYER.w, Math.min(WORLD_W - PLAYER.w, at.x));
+  state.goal = { x, y0: at.y, door, best: Infinity, since: state.steps };
+  state.stuck = 0;
+  state.moved = true;
+  begin(run);
+});
+stage.addEventListener("mousemove", (e) => {
+  state.hover = state.mode === "play" ? doorUnder(e) : null;
+  stage.style.cursor = state.hover ? "pointer" : "";
+});
+stage.addEventListener("mouseleave", () => (state.hover = null));
+
+restartButton.addEventListener("click", () => {
+  restart();
+  restartButton.blur(); // give the keyboard back to the game
+});
+muteButton.addEventListener("click", () => {
+  sfx.toggleMute();
+  labelButtons();
+  muteButton.blur();
+});
+$<HTMLElement>("finish-again").addEventListener("click", restart);
+$<HTMLElement>("finish-close").addEventListener("click", () => (finishEl.hidden = true));
+
+// T steps through every sky and back to the real one; R starts the run again; M is the sound.
+const SKIES: (SkyName | null)[] = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
+window.addEventListener("keydown", (e) => {
+  if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.target instanceof Element && e.target.closest("a, button, input, textarea, select")) return;
+  if (e.code === "KeyT") {
+    const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
+    skyOverride = next;
+    sky = skyFor(new Date(), skyOverride);
+    state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
+  } else if (e.code === "KeyR") restart();
+  else if (e.code === "KeyM") {
+    sfx.toggleMute();
+    labelButtons();
+  }
+});
+
+// ?x=<art px> drops him at that x, on the highest thing there, so a reviewer can start anywhere.
+const startX = Number(params.get("x"));
+const startY = Number.isFinite(startX) ? surfaceBelow(startX, 0) : null;
+if (params.has("x") && startY !== null) place(startX, startY);
+
+Object.assign(shown, body);
+new ResizeObserver(layout).observe(stage);
+layout();
+hud();
+requestAnimationFrame((now) => {
+  last = now;
+  requestAnimationFrame(frame);
+});
+
+if (params.has("debug")) Object.assign(window, { __game: { body, shown, state, view, input, step: stepOnce, frame, doors, runes } });

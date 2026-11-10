@@ -15,7 +15,8 @@ import { drawBoards, drawTiles, lightStreet } from "./render/ground";
 import { R, layerOrigin, target, view } from "@larshansen/pixelkit/paint";
 import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
 import { createStage } from "@larshansen/pixelkit/stage";
-import { drawText, layoutBoards, textTarget, type Board } from "./render/text";
+import { drawText, layoutBoards, type Board } from "./render/text";
+import { textTarget } from "@larshansen/pixelkit/text";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
 const stage = $<HTMLElement>("stage");

@@ -1,14 +1,14 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Vikingfjorden · larshansen.dev</title>
     <meta
       name="description"
       content="A small viking platform game hidden behind the secret door on larshansen.dev: a fjord, a longship, ten runes to find, and doors back to everything else."
     />
-    <meta name="theme-color" content="#2a2757" />
+    <meta name="theme-color" content="#4f96d8" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://larshansen.dev/viking/" />
     <meta property="og:title" content="Vikingfjorden · larshansen.dev" />
@@ -16,15 +16,71 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <div id="root"></div>
-    <noscript>
-      <nav aria-label="Destinations">
-        <a href="/">Gamle Oslo</a>
-        <a href="/qr/">QR-verkstedet</a>
-        <a href="https://maze.larshansen.dev">Iron Maze</a>
-        <a href="https://github.com/larsekhansen">GitHub</a>
+    <header class="bar">
+      <h1 class="me">Lars Hansen</h1>
+      <!-- The doors. The game reads this list, so every link here is a door in the game. -->
+      <nav class="apps" aria-label="Destinations">
+        <ul>
+          <li><a href="/" data-door="home">Gamle Oslo</a></li>
+          <li><a href="/qr/" data-door="qr">QR-verkstedet</a></li>
+          <li><a href="https://maze.larshansen.dev/" data-door="maze">Iron Maze</a></li>
+          <li><a href="https://github.com/larsekhansen" data-door="github">GitHub</a></li>
+        </ul>
       </nav>
-    </noscript>
-    <script type="module" src="/src/main.tsx"></script>
+      <!-- The run: filled in by the game, so it stays hidden without JavaScript. -->
+      <div class="run" id="run" hidden>
+        <ol class="runes" id="runes" role="img">
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+        </ol>
+        <p class="clock"><span id="clock">0:00.0</span><small id="best"></small></p>
+        <button type="button" id="restart" class="tool">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5" /></svg>
+        </button>
+        <button type="button" id="mute" class="tool" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /><path class="cross" d="M16 9l5 6m0-6-5 6" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <p class="sr-only" id="blurb" data-i18n="blurb">You found the secret door. Find the ten runes, or take a door back out.</p>
+      <canvas id="px" aria-hidden="true"></canvas>
+      <canvas id="ui" aria-hidden="true"></canvas>
+      <p class="help" id="help" data-i18n="help">Arrow keys to walk, Space to jump, up arrow to go through a door. Or click where you want to go.</p>
+      <p class="sr-only" id="announce" aria-live="polite"></p>
+      <div class="finish" id="finish" role="status" hidden>
+        <button type="button" class="close" id="finish-close" aria-label="Close">×</button>
+        <strong id="finish-title">All ten runes!</strong>
+        <span class="result" id="finish-time">0:00.0</span>
+        <span id="finish-best"></span>
+        <span class="actions">
+          <button type="button" id="finish-again">Run again</button>
+          <a href="/" id="finish-back">Back to Gamle Oslo</a>
+        </span>
+      </div>
+      <noscript>
+        <p class="noscript">
+          Du fant den hemmelige døra. Finn de ti runene, eller ta en dør ut igjen. Spillet trenger JavaScript, men lenkene over fungerer uten.<br />
+          You found the secret door. Find the ten runes, or take a door back out. The game needs JavaScript, but the links above work without it.
+        </p>
+      </noscript>
+    </main>
+
+    <div class="pad" id="pad" hidden>
+      <div>
+        <button type="button" data-action="left" aria-label="Walk left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
+        </button>
+        <button type="button" data-action="right" aria-label="Walk right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+        </button>
+      </div>
+      <div>
+        <button type="button" data-action="enter" class="enter">Go in</button>
+        <button type="button" data-action="jump">Jump</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

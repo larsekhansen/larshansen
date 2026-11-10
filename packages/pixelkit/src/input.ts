@@ -1,6 +1,6 @@
 // Keyboard and touch buttons feed the same actions, so the game never asks where input came from.
 
-export type Action = "left" | "right" | "jump" | "up" | "enter";
+export type Action = "left" | "right" | "jump" | "up" | "down" | "enter";
 
 const KEYS: Record<string, Action> = {
   ArrowLeft: "left",
@@ -11,7 +11,9 @@ const KEYS: Record<string, Action> = {
   KeyZ: "jump",
   KeyK: "jump",
   ArrowUp: "up",
-  KeyW: "up"
+  KeyW: "up",
+  ArrowDown: "down",
+  KeyS: "down"
 };
 
 export interface Input {
@@ -27,7 +29,7 @@ export interface Input {
 }
 
 export function createInput(): Input {
-  const held: Record<Action, boolean> = { left: false, right: false, jump: false, up: false, enter: false };
+  const held: Record<Action, boolean> = { left: false, right: false, jump: false, up: false, down: false, enter: false };
   const started = new Set<Action>();
   // What the gamepad held last step, kept apart so it never lets go of a key the keyboard holds.
   const padHeld: Partial<Record<Action, boolean>> = {};
@@ -53,7 +55,8 @@ export function createInput(): Input {
         left: axis < -0.35 || !!pad.buttons[14]?.pressed,
         right: axis > 0.35 || !!pad.buttons[15]?.pressed,
         jump: !!pad.buttons[0]?.pressed,
-        up: !!pad.buttons[12]?.pressed || !!pad.buttons[2]?.pressed
+        up: !!pad.buttons[12]?.pressed || !!pad.buttons[2]?.pressed,
+        down: !!pad.buttons[13]?.pressed
       };
       for (const a of Object.keys(now) as Action[]) {
         if (!!padHeld[a] !== now[a]) input.hold(a, !!now[a]);
@@ -66,8 +69,8 @@ export function createInput(): Input {
     const a = KEYS[e.code];
     if (!a || e.metaKey || e.ctrlKey || e.altKey) return;
     // A focused link or button keeps Space for itself.
-    const t = e.target as HTMLElement | null;
-    if (e.code === "Space" && t?.closest("a, button, input, textarea, select")) return;
+    const t = e.target instanceof Element ? e.target.closest("a, button, input, textarea, select") : null;
+    if (e.code === "Space" && t) return;
     e.preventDefault(); // no page scrolling while playing
     if (!e.repeat) started.add(a);
     held[a] = true;

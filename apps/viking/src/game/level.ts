@@ -1,181 +1,193 @@
-// Single source of truth for the level: dimensions, tuning, geometry, doors
-// and collectibles. Pure data — no Pixi, no DOM — so tests and the HTML nav
-// can import it freely. See docs/DESIGN.md.
+import { TILE } from "@larshansen/pixelkit/config";
+import type { World } from "@larshansen/pixelkit/physics";
 
-export const VIEW_H = 600; // logical units; the canvas scales to fit
-export const MIN_VIEW_W = 420; // narrow screens zoom out to keep this much
-export const WORLD_W = 3600;
-export const GROUND_Y = 500;
-export const WATER_Y = 540;
-export const KILL_Y = 660; // below this the player has fallen in the fjord
-
-export const PLAYER_W = 26;
-export const PLAYER_H = 50;
-export const SPAWN = { x: 200, y: GROUND_Y - PLAYER_H };
-
-export const PHYS = {
-  runSpeed: 270,
-  groundAccel: 2400,
-  airAccel: 1700,
-  friction: 2800,
-  gravity: 2000,
-  fallGravityMul: 1.3,
-  jumpSpeed: 700,
-  doubleJumpSpeed: 600,
-  jumpCut: 0.45,
-  coyote: 0.1,
-  buffer: 0.12,
-  maxFall: 900,
-  step: 1 / 120
-} as const;
-
-export type BlockKind = "ground" | "ledge" | "island";
-
-export interface Block {
-  x: number;
-  y: number;
-  w: number;
-  h: number;
-  kind: BlockKind;
-}
-
-const ground = (x: number, w: number): Block => ({ x, y: GROUND_Y, w, h: 240, kind: "ground" });
-const island = (x: number, y: number, w: number): Block => ({ x, y, w, h: 14, kind: "island" });
-
-export const BLOCKS: Block[] = [
-  ground(-400, 1400), // spawn meadow, up to the fjord at x=1000
-  ground(1420, 580), // middle shore, 1420–2000
-  ground(2140, 1900), // far shore to the end of the world
-  { x: 1600, y: 420, w: 220, h: 80, kind: "ledge" }, // Runesmia sits on this
-
-  island(420, 400, 110),
-  island(560, 310, 110),
-  island(1090, 400, 90), // stepping stones over the fjord
-  island(1250, 360, 90),
-  island(1900, 400, 110), // the climb
-  island(2040, 320, 110),
-  island(2200, 240, 120),
-  island(2380, 170, 140),
-  island(2520, 290, 100),
-  island(3000, 390, 100),
-  island(3130, 300, 100)
+// The world as text, one character per 16 px tile: Vikingfjorden, from the landing stone at the left
+// to the beacon rock at the right. Built the same way as the front page's map.
+//
+//  #  ground     ~  water (not solid; falling in puts him back on the last ground he stood on)
+//  P  jetty planks (solid)   K  rock (solid)   B  crate (solid)   _  one-way ledge
+//  S  start   i  sign post   e  sheep   0-9  the ten runes, in the order L A R S H A N S E N
+//  h  door Hjem   q  door Runesmia   j  door Jernhaugen   v  door Verkstedet
+export const MAP = [
+  "................................................................................................................................................",
+  "................................................................................................................................................",
+  "................................................................................................................................................",
+  "..............................................................................................................................7.................",
+  "................................................................................................................................................",
+  "............................................................................................................................_____...............",
+  "................................................................................................................................................",
+  "......................................3.........................................................................................................",
+  "...........................................................................................................................................8....",
+  "..................................._______...............................................................................v...................i..",
+  "..................1................................................5..................................................KKKKKKKKKKKKK.....KKKKKKKK",
+  "........................................................................................6.............................KKKKKKKKKKKKK.....KKKKKKKK",
+  "...........................................2.......................................................................KKKKKKKKKKKKKKKK.....KKKKKKKK",
+  ".............0..................................4.............................................................9....KKKKKKKKKKKKKKKK.....KKKKKKKK",
+  "....................................B................................................B..........................KKKKKKKKKKKKKKKKKKK.....KKKKKKKK",
+  "....S.i...h.......e.......i....._____________............e..................i..q....BB........j.................KKKKKKKKKKKKKKKKKKK.....KKKKKKKK",
+  "#######################PPPPPP~~~~~~~~~~~~~~~~~~~KK~~~##############################################################################~~~~~########",
+  "#######################~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~##############################################################################~~~~~########",
+  "################################################################################################################################################",
+  "################################################################################################################################################"
 ];
 
-export const SHIP = { minX: 1020, maxX: 1250, y: 492, w: 150, speed: 70 };
+export const COLS = MAP[0].length;
+export const ROWS = MAP.length;
+export const WORLD_W = COLS * TILE;
+export const WORLD_H = ROWS * TILE;
+/** The top of the ground, where he stands on the flat parts. */
+export const GROUND_Y = 16 * TILE;
+/** Where the water begins: level with the top of the ground, and down to the bed two tiles below. */
+export const WATER_Y = GROUND_Y;
+
+const SOLID = new Set(["#", "P", "K", "B"]);
+const ONE_WAY = new Set(["_"]);
+
+// Slopes he can walk, as in the front page's Opera roof: corner points in tile units [column, row]
+// of the surface. The longhouse's turf roof, and the burial mound.
+const ramp = (...pts: [number, number][]) => ({ points: pts.map(([c, r]): [number, number] => [c * TILE, r * TILE]) });
+export interface Ramp {
+  points: [number, number][];
+}
+export const RAMPS: Ramp[] = [ramp([61, 16], [66, 12], [68, 12], [73, 16]), ramp([96, 16], [102, 13], [104, 13], [110, 16])];
 
 export interface DoorDef {
   id: string;
-  /** In-world sign text (Norwegian flavour). */
-  name: string;
-  /** Plain label for the HTML nav. */
-  label: string;
-  blurb: string;
+  /** The letter on the map. */
+  tile: string;
+  /** The name on the sign above the door, in both languages. */
+  sign: string;
   href: string;
-  rune: RuneChar;
-  x: number;
-  y: number; // y of the doorstep
-  color: number;
 }
 
+/** The doors. One table drives the doors in the world and, through the page's links, the header. */
 export const DOORS: DoorDef[] = [
-  {
-    id: "home",
-    name: "Hjem",
-    label: "Gamle Oslo",
-    blurb: "Back to the front page",
-    href: "/",
-    rune: "S",
-    x: 760,
-    y: GROUND_Y,
-    color: 0x4cc9f0
-  },
-  {
-    id: "qr",
-    name: "Runesmia",
-    label: "QR-verkstedet",
-    blurb: "QR code generator",
-    href: "/qr/",
-    rune: "R",
-    x: 1710,
-    y: 420,
-    color: 0xffd166
-  },
-  {
-    id: "maze",
-    name: "Labyrinten",
-    label: "Iron Maze",
-    blurb: "A maze game",
-    href: "https://maze.larshansen.dev",
-    rune: "L",
-    x: 2680,
-    y: GROUND_Y,
-    color: 0x80ed99
-  },
-  {
-    id: "github",
-    name: "Verkstedet",
-    label: "GitHub",
-    blurb: "Source code",
-    href: "https://github.com/larsekhansen",
-    rune: "H",
-    x: 3250,
-    y: GROUND_Y,
-    color: 0xc77dff
+  { id: "home", tile: "h", sign: "Hjem", href: "/" },
+  { id: "qr", tile: "q", sign: "Runesmia", href: "/qr/" },
+  // For now the maze's own address; later it becomes a scene in here.
+  { id: "maze", tile: "j", sign: "Jernhaugen", href: "https://maze.larshansen.dev/" },
+  { id: "github", tile: "v", sign: "Verkstedet", href: "https://github.com/larsekhansen" }
+];
+
+export interface DoorSpot {
+  id: string;
+  sign: string;
+  href: string;
+  x: number;
+  bottom: number;
+}
+
+export const RUNE_CHARS = "LARSHANSEN";
+export const RUNE_COUNT = RUNE_CHARS.length;
+
+/** Where each sign post stands, in map order from left to right. */
+export const SIGN_KEYS = ["start", "jetty", "smithy", "beacon"] as const;
+export type SignKey = (typeof SIGN_KEYS)[number];
+
+export interface District {
+  name: string;
+  /** The line under the name, in both languages. */
+  landmark: { nb: string; en: string } | null;
+  from: number;
+}
+// The place names show in the banner when he walks into each stretch. Names stay Norwegian in both languages.
+export const DISTRICTS: District[] = [
+  { name: "Landingsplassen", landmark: { nb: "Naustet", en: "The boathouse" }, from: 0 },
+  { name: "Fjorden", landmark: { nb: "Langskipet ligger fortøyd", en: "The longship lies moored" }, from: 23 * TILE },
+  { name: "Garden", landmark: { nb: "Langhuset", en: "The longhouse" }, from: 53 * TILE },
+  { name: "Runesmia", landmark: null, from: 76 * TILE },
+  { name: "Jernhaugen", landmark: { nb: "Gravhaugen", en: "The burial mound" }, from: 93 * TILE },
+  { name: "Klippen", landmark: { nb: "Stavkirketårnet", en: "The stave church tower" }, from: 111 * TILE },
+  { name: "Varden", landmark: null, from: 131 * TILE }
+];
+
+export function districtAt(x: number): District {
+  let found = DISTRICTS[0];
+  for (const d of DISTRICTS) if (x >= d.from) found = d;
+  return found;
+}
+
+export function tileAt(c: number, r: number): string {
+  if (c < 0 || c >= COLS || r >= ROWS) return "#";
+  if (r < 0) return ".";
+  return MAP[r][c];
+}
+
+export const isSolid = (c: number, r: number) => SOLID.has(tileAt(c, r));
+export const isOneWay = (c: number, r: number) => ONE_WAY.has(tileAt(c, r));
+export const isWater = (c: number, r: number) => tileAt(c, r) === "~";
+
+/** Height of the ramp surface at x, or null where there is no ramp. */
+export function rampAt(x: number): number | null {
+  let best: number | null = null;
+  for (const rp of RAMPS) {
+    const pts = rp.points;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const [x0, y0] = pts[i];
+      const [x1, y1] = pts[i + 1];
+      if (x >= x0 && x <= x1) {
+        const y = y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
+        if (best === null || y < best) best = y;
+      }
+    }
   }
-];
+  return best;
+}
 
-// Elder Futhark, as strokes in a 1×1 box so no runic font is needed.
-export type RuneChar = "L" | "A" | "R" | "S" | "H" | "N" | "E";
-type Stroke = [number, number][];
+export const WORLD: World = { width: WORLD_W, isSolid, isOneWay, rampAt };
 
-export const RUNE_STROKES: Record<RuneChar, Stroke[]> = {
-  L: [
-    [[0.35, 0], [0.35, 1]],
-    [[0.35, 0], [0.78, 0.36]]
-  ],
-  A: [
-    [[0.3, 0], [0.3, 1]],
-    [[0.3, 0], [0.76, 0.3]],
-    [[0.3, 0.3], [0.76, 0.6]]
-  ],
-  R: [
-    [[0.27, 0], [0.27, 1]],
-    [[0.27, 0], [0.72, 0.25], [0.27, 0.5], [0.76, 1]]
-  ],
-  S: [[[0.7, 0], [0.3, 0.34], [0.7, 0.62], [0.3, 1]]],
-  H: [
-    [[0.25, 0], [0.25, 1]],
-    [[0.75, 0], [0.75, 1]],
-    [[0.25, 0.36], [0.75, 0.64]]
-  ],
-  N: [
-    [[0.5, 0], [0.5, 1]],
-    [[0.24, 0.34], [0.76, 0.66]]
-  ],
-  E: [[[0.2, 1], [0.2, 0], [0.5, 0.36], [0.8, 0], [0.8, 1]]]
-};
+/** Every tile with this letter, left to right and top to bottom within a column order of the map. */
+function find(match: (ch: string) => boolean): { ch: string; c: number; r: number }[] {
+  const out: { ch: string; c: number; r: number }[] = [];
+  MAP.forEach((row, r) => [...row].forEach((ch, c) => match(ch) && out.push({ ch, c, r })));
+  return out;
+}
 
-/** The ten collectibles spell the name. */
-export const RUNES: { char: RuneChar; x: number; y: number }[] = [
-  { char: "L", x: 330, y: 440 },
-  { char: "A", x: 615, y: 255 },
-  { char: "R", x: 900, y: 375 },
-  { char: "S", x: 1295, y: 305 },
-  { char: "H", x: 1170, y: 462 },
-  { char: "A", x: 1710, y: 295 },
-  { char: "N", x: 2070, y: 440 },
-  { char: "S", x: 2450, y: 110 },
-  { char: "E", x: 3180, y: 240 },
-  { char: "N", x: 3500, y: 440 }
-];
-export const ALL_RUNES_MASK = (1 << RUNES.length) - 1;
+export function findSpawn(): { x: number; bottom: number } {
+  const s = find((ch) => ch === "S")[0];
+  if (!s) throw new Error("The map has no start tile");
+  return { x: s.c * TILE + TILE / 2, bottom: (s.r + 1) * TILE };
+}
 
-export const SHEEP = [
-  { minX: 430, maxX: 660 },
-  { minX: 2820, maxX: 3120 }
-];
+export function findDoorSpots(): DoorSpot[] {
+  return DOORS.map((d) => {
+    const t = find((ch) => ch === d.tile)[0];
+    if (!t) throw new Error(`The map has no door ${d.id}`);
+    return { id: d.id, sign: d.sign, href: d.href, x: t.c * TILE, bottom: (t.r + 1) * TILE };
+  });
+}
 
-export const SIGNS = [
-  { x: 95, y: GROUND_Y, lines: ["Velkommen!", "← → move · Space jump", "↑ enter a door"] },
-  { x: 965, y: GROUND_Y, lines: ["Fjorden", "wait for the ship"] }
-];
+export interface RuneSpot {
+  /** Which of the ten, 0 to 9, and so which letter of the name. */
+  index: number;
+  char: string;
+  /** Top left of its 16 x 16 tile. */
+  x: number;
+  y: number;
+}
+export function findRunes(): RuneSpot[] {
+  return find((ch) => ch >= "0" && ch <= "9")
+    .map((t) => ({ index: +t.ch, char: RUNE_CHARS[+t.ch], x: t.c * TILE, y: t.r * TILE }))
+    .sort((a, b) => a.index - b.index);
+}
+
+export interface SignSpot {
+  key: SignKey;
+  /** Centre x and the ground y it stands on. */
+  x: number;
+  bottom: number;
+}
+export function findSigns(): SignSpot[] {
+  return find((ch) => ch === "i")
+    .sort((a, b) => a.c - b.c)
+    .map((t, i) => ({ key: SIGN_KEYS[i], x: t.c * TILE + TILE / 2, bottom: (t.r + 1) * TILE }));
+}
+
+export interface SheepSpot {
+  /** Centre x of the stretch it grazes along, and the ground y it stands on. */
+  x: number;
+  bottom: number;
+}
+export function findSheep(): SheepSpot[] {
+  return find((ch) => ch === "e").map((t) => ({ x: t.c * TILE + TILE / 2, bottom: (t.r + 1) * TILE }));
+}

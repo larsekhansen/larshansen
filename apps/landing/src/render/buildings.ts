@@ -2,6 +2,7 @@ import type { Door } from "../game/doors";
 import { WORLD_W, districtFrom, rampAt } from "../game/level";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { R, gable, light, view, wdisc } from "@larshansen/pixelkit/paint";
+import { STONE, type Stone } from "@larshansen/pixelkit/palette";
 
 const reduced = () => view.reduced;
 
@@ -205,14 +206,7 @@ function toyen(gate: Door | undefined, sky: Sky) {
 
 // Ruined stone: irregular blocks with dark mortar, a little moss, and the same stones every visit.
 // Walls you can stand on are a little lighter and warmer than the ruins further back.
-export interface Stone {
-  base: string;
-  light: string;
-  dark: string;
-  mortar: string;
-  moss: string;
-}
-export const STONE: Stone = { base: "#7d776e", light: "#8c857a", dark: "#6c665e", mortar: "#4b4741", moss: "#5d7a45" };
+export { STONE };
 const STONE_BACK: Stone = { base: "#5f5c58", light: "#68645f", dark: "#56534f", mortar: "#474441", moss: "#4c5f40" };
 
 function stoneHash(x: number, y: number) {

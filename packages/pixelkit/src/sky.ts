@@ -19,8 +19,8 @@ const FLAKES = Array.from({ length: 110 }, () => ({ x: rnd(), y: rnd(), k: rnd()
 const CLOUDS = Array.from({ length: 7 }, () => ({ x: rnd(), y: rnd(), s: 0.6 + rnd() * 0.8 }));
 const CLOUD_COLOR = { day: "#ffffff", evening: "#f6c3a0", twilight: "#8a98cf", night: "rgba(28, 39, 80, 0.55)" } as const;
 
-/** World y of the horizon, so the low evening sun sinks behind the hills. */
-const HORIZON = 126;
+/** World y of the horizon (the front page's), so the low evening sun sinks behind the hills. */
+export const HORIZON = 126;
 const MOON_R = 6;
 
 /**
@@ -48,7 +48,8 @@ function crescent(cx: number, cy: number) {
   }
 }
 
-export function drawSky(sky: Sky, t: number) {
+/** `horizonY` is where the scene's far hills end in world pixels; a taller world passes its own. */
+export function drawSky(sky: Sky, t: number, horizonY = HORIZON) {
   const g = ctx();
   const tt = view.reduced ? 0 : t;
   const [top, bottom] = GRADIENT[sky.phase];
@@ -59,7 +60,7 @@ export function drawSky(sky: Sky, t: number) {
   g.fillRect(0, 0, view.w, view.h);
 
   const sunX = view.w * 0.78;
-  const high = Math.max(14, HORIZON - view.camY - 96);
+  const high = Math.max(14, horizonY - view.camY - 96);
 
   if (sky.phase === "night") {
     STARS.forEach((s, i) => {
@@ -77,7 +78,7 @@ export function drawSky(sky: Sky, t: number) {
     disc(sunX, high, 9, "rgba(255, 236, 150, 0.35)");
     disc(sunX, high, 6, "#fff3b8");
   } else if (sky.phase === "evening") {
-    const y = HORIZON - view.camY - 30;
+    const y = horizonY - view.camY - 30;
     disc(view.w * 0.62, y, 12, "rgba(255, 170, 100, 0.4)");
     disc(view.w * 0.62, y, 9, "#ffb26b");
   } else {
@@ -86,7 +87,7 @@ export function drawSky(sky: Sky, t: number) {
 
   if (sky.aurora) {
     const bands = ["rgba(90, 255, 170, 0.10)", "rgba(60, 220, 210, 0.08)", "rgba(180, 120, 255, 0.06)"];
-    const top0 = Math.max(8, HORIZON - view.camY - 112);
+    const top0 = Math.max(8, horizonY - view.camY - 112);
     bands.forEach((col, b) => {
       g.fillStyle = col;
       for (let x = 0; x < view.w; x += 2) {
@@ -98,7 +99,7 @@ export function drawSky(sky: Sky, t: number) {
   }
 
   // Clouds drift slowly from the west, further away the smaller they are.
-  const horizon = HORIZON - view.camY;
+  const horizon = horizonY - view.camY;
   for (const c of CLOUDS) {
     const span = view.w + 80;
     const x = (((c.x * span - view.camX * 0.06 * c.s + tt * 0.03 * c.s) % span) + span) % span - 40;

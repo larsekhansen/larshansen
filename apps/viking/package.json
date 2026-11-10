@@ -1,7 +1,8 @@
 {
   "name": "@larshansen/viking",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.2.0",
+  "private": true,
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",
@@ -9,17 +10,11 @@
     "test": "bun test"
   },
   "dependencies": {
-    "pixi.js": "^8.6.6",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "@larshansen/pixelkit": "workspace:*"
   },
   "devDependencies": {
     "@types/bun": "^1.4.2",
-    "@types/react": "^19.0.7",
-    "@types/react-dom": "^19.0.3",
-    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "^5.7.3",
     "vite": "^6.0.7"
-  },
-  "private": true
+  }
 }

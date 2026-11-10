@@ -1,0 +1,241 @@
+html,
+body {
+  /* Painted before the game has loaded: sky blue over fjord blue. */
+  background: linear-gradient(#4f96d8, #cde8f5 70%, #3d7fae 70%, #2d6590);
+}
+
+/* The run, in the header bar: ten rune slots, the clock, and two small buttons. */
+.run {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  margin-left: auto;
+}
+
+.run[hidden] {
+  display: none;
+}
+
+.runes {
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.runes li {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 22px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 6px;
+  background: #fff;
+}
+
+.runes li.lit {
+  border-color: #c9a227;
+  background: #ffe9a8;
+}
+
+.runes svg {
+  width: 9px;
+  height: 14px;
+  fill: none;
+  stroke: rgba(31, 26, 23, 0.25);
+  stroke-width: 1.6;
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  overflow: visible;
+}
+
+.runes li.lit svg {
+  stroke: var(--ink);
+}
+
+.clock {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  min-width: 4.6em;
+}
+
+.clock small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tool:hover,
+.tool:focus-visible {
+  border-color: #541321;
+  color: #541321;
+}
+
+.tool svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tool .cross,
+.tool[aria-pressed="true"] .waves {
+  display: none;
+}
+
+.tool[aria-pressed="true"] .cross {
+  display: inline;
+}
+
+/* The finish card: a small panel in the header bar's cream, centred over the fjord. */
+.finish {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 28px 18px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 12px;
+  background: #fffcf6;
+  box-shadow: 0 6px 24px rgba(31, 26, 23, 0.22);
+  text-align: center;
+  font-size: 14px;
+}
+
+.finish[hidden] {
+  display: none;
+}
+
+.finish strong {
+  font-size: 18px;
+}
+
+.finish .result {
+  font-size: 32px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.finish .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.finish .actions button,
+.finish .actions a {
+  padding: 6px 14px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.finish .actions button {
+  border-color: #541321;
+  background: #541321;
+  color: #fffcf6;
+}
+
+.finish .close {
+  position: absolute;
+  top: 4px;
+  right: 8px;
+  padding: 2px 6px;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* One row from 760 px up. Below that the bar may wrap, and the run group sits at the left. */
+@media (max-width: 759px) {
+  .run {
+    margin-left: 0;
+  }
+
+  .runes li {
+    width: 16px;
+    height: 20px;
+  }
+
+  .runes svg {
+    width: 8px;
+    height: 12px;
+  }
+}
+
+/* From 760 px up the bar is one row: the name, the links, then the run pushed to the right. */
+@media (min-width: 760px) {
+  .bar {
+    flex-wrap: nowrap;
+    gap: 6px 12px;
+  }
+
+  .apps,
+  .apps ul {
+    flex-wrap: nowrap;
+  }
+
+  .apps {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .apps a {
+    padding: 2px 8px;
+  }
+
+  .clock {
+    min-width: 0;
+  }
+
+  .run {
+    margin-left: auto;
+    flex-shrink: 0;
+  }
+}
+
+/* The best time is small print; the bar has no room for it until the window is wide. */
+@media (min-width: 760px) and (max-width: 999px) {
+  .clock small {
+    display: none;
+  }
+}
+
+/* The name stays on one line beside the links. */
+.me {
+  white-space: nowrap;
+}
