@@ -26,6 +26,31 @@ body {
   font-size: 14px;
 }
 
+.run button.level {
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.run button.level:hover,
+.run button.level:focus-visible {
+  color: #541321;
+}
+
+.clock small {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.clock small:empty {
+  display: none;
+}
+
 .clock {
   margin: 0;
   font-weight: 700;
@@ -152,4 +177,11 @@ body {
 .run .deaths,
 .run .clock {
   white-space: nowrap;
+}
+
+/* The best time is small print; the bar has no room for it until the window is wide. */
+@media (max-width: 999px) {
+  .clock small {
+    display: none;
+  }
 }

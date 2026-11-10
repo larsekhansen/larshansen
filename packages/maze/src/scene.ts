@@ -7,8 +7,10 @@ import type { Stage } from "@larshansen/pixelkit/stage";
 import { bubble, fontPx, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { strings } from "./i18n";
 import { COLS, LEVELS, ROWS, TILE } from "./levels";
-import { VOID, drawBright, drawHim, drawWorld, ravenAnchor, type Frame } from "./render";
-import { CURSE_STEPS, SPEED, levelDef, limit, newState, onStartPad, snakeAt, snakeHeading, snakeFlat, stepMaze, type MazeState } from "./rules";
+import { createLevelPanel } from "./panel";
+import { loadRecords, loadReached, recordClear, saveReached, type Records } from "./records";
+import { VOID, drawBright, drawDark, drawHim, drawWorld, ravenAnchor, type Frame } from "./render";
+import { CURSE_STEPS, SPEED, gateProgress, levelDef, limit, newState, onStartPad, snakeAt, snakeHeading, snakeFlat, stepMaze, type MazeState } from "./rules";
 
 // The maze as a scene. The host page owns the canvases, the loop and the header; this wires the
 // rules, the steering, the drawing and the sound, and is driven by `step` and `render`.
@@ -37,7 +39,14 @@ export interface Maze {
   resize(): void;
   /** Removes its listeners. */
   destroy(): void;
-  hud(): { level: number; of: number; name: string; ms: number; deaths: number };
+  /** What the header shows: where he is, the clock, the curses, and the best time for this level so far (null if none). */
+  hud(): { level: number; of: number; name: string; ms: number; deaths: number; best: number | null };
+  /** Starts a level he has reached (1 to the furthest). Returns false if it is not open to him yet. */
+  select(level: number): boolean;
+  /** The highest level he has entered. */
+  reached(): number;
+  /** The level list, opened from the level label in the header. */
+  readonly levels: { toggle(): void; open(): void; close(): void; readonly isOpen: boolean };
   /** The rules' state, the same object for the whole visit (for checking). */
   readonly state: MazeState;
 }
@@ -52,8 +61,14 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
   const { stage, input, sfx, el } = host;
   const t = strings(host.lang);
   const of = LEVELS.length;
-  const first = Math.max(1, Math.min(of, Math.round(opts?.level ?? 1)));
+  let reached = loadReached(of);
+  let records: Records = loadRecords();
+  const first = Math.max(1, Math.min(of, Math.round(opts?.level ?? reached)));
   const state = newState(first);
+  if (first > reached) reached = first;
+  saveReached(reached);
+  /** The step on which the gate's sound plays, a moment after the key's. */
+  let gateSoundAt = -1;
 
   let tick = 0;
   let prev = { x: state.x, y: state.y };
@@ -89,13 +104,26 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
   }
 
   function startLine(level: number) {
-    return level === 1 ? t.start1 : level === 2 ? t.start2 : t.start3;
+    return [t.start1, t.start2, t.start3, t.start4, t.start5, t.start6, t.start7][level - 1];
   }
 
   function cursedLine() {
-    if (state.level === 1) return t.curse1;
-    if (state.level === 3) return t.curse3;
-    return state.cause === "snake" ? t.curse2Snake : t.curse2Wall;
+    switch (state.level) {
+      case 1:
+        return t.curse1;
+      case 3:
+        return t.curse3;
+      case 4:
+        return state.cause === "pit" ? t.curse4Pit : t.curse2Wall;
+      case 5:
+        return t.curse5;
+      case 6:
+        return t.curse1;
+      case 7:
+        return t.curse7;
+      default:
+        return state.cause === "snake" ? t.curse2Snake : t.curse2Wall;
+    }
   }
 
   function clearSteering() {
@@ -104,6 +132,11 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
   }
 
   function loadLevel(level: number) {
+    if (level > reached) {
+      reached = level;
+      saveReached(reached);
+    }
+    gateSoundAt = -1;
     Object.assign(state, newState(level, 0));
     prev = { x: state.x, y: state.y };
     clearSteering();
@@ -149,7 +182,15 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
   const onKey = (e: KeyboardEvent) => {
     shift = e.shiftKey;
     if (e.type !== "keydown") return;
-    if (e.code === "Escape") return leave(false);
+    if (e.code === "Escape") {
+      if (panel.isOpen) return panel.close();
+      return leave(false);
+    }
+    // The keys 1 to 7 jump to a level he has reached.
+    const digit = /^(?:Digit|Numpad)([1-9])$/.exec(e.code);
+    if (digit && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !ending && !(e.target instanceof Element && e.target.closest("input, textarea, select"))) {
+      if (select(Number(digit[1]))) return;
+    }
     if (ending && !e.repeat) ending.dismissed = true;
   };
   const onBlur = () => (shift = false);
@@ -162,6 +203,23 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
   window.addEventListener("keydown", onKey);
   window.addEventListener("keyup", onKey);
   window.addEventListener("blur", onBlur);
+
+  const panel = createLevelPanel(el, {
+    t,
+    names: LEVELS.map((l) => l.name),
+    current: () => state.level,
+    reached: () => reached,
+    records: () => records,
+    pick: (n) => select(n)
+  });
+
+  /** Starts a level he has reached, from the beginning. */
+  function select(level: number): boolean {
+    if (ending || !Number.isInteger(level) || level < 1 || level > Math.min(of, reached)) return false;
+    panel.close();
+    loadLevel(level);
+    return true;
+  }
 
   function leave(cleared: boolean) {
     if (left) return;
@@ -201,7 +259,12 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
 
   function step() {
     prev = { x: state.x, y: state.y };
+    if (panel.isOpen) return; // the level list holds the game still
     tick++;
+    if (gateSoundAt >= 0 && tick >= gateSoundAt) {
+      gateSoundAt = -1;
+      sfx.play("gate");
+    }
     if (hissCool > 0) hissCool--;
     if (fading === "in" && (fade = Math.max(0, fade - 1 / 24)) === 0) fading = null;
 
@@ -251,17 +314,27 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
       clearSteering();
       speak(cursedLine());
     }
+    if (ev.key) {
+      sfx.play("pickup");
+      gateSoundAt = tick + 14;
+      speak(t.key);
+    }
+    if (ev.fell) sfx.play("land");
     if (ev.lit !== undefined) {
       sfx.play("stone");
       speak(t.stone);
     }
     if (ev.cleared) {
+      records = recordClear(state.level, state.steps * STEP_MS, state.deaths);
       sfx.play("door");
       host.say(t.cleared(state.level));
     }
   }
 
   function finish() {
+    // The whole mound is done: the next visit starts at the first level again.
+    reached = 1;
+    saveReached(1);
     try {
       localStorage.setItem(FEATHER_KEY, "1");
     } catch {
@@ -318,7 +391,11 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
         const flat = snakeFlat(s.def);
         return { x: at.x, y: at.y, flat, dir: snakeHeading(s.def, s.t) };
       }),
-      cursed: state.phase === "cursed"
+      cursed: state.phase === "cursed",
+      clock: state.steps,
+      keyTaken: state.keyTaken,
+      gate: gateProgress(state),
+      crumble: state.crumble
     };
 
     target(stage.g);
@@ -332,6 +409,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
     stage.pass(street, () => drawWorld(frame), "night");
     target(street);
     drawBright(frame);
+    drawDark(frame);
 
     // The sharp canvas: him, the raven's words, the fade.
     const u = textCtx();
@@ -375,6 +453,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
       cam.set = false;
     },
     destroy() {
+      panel.destroy();
       el.removeEventListener("pointerdown", onDown);
       el.removeEventListener("pointermove", onMove);
       el.removeEventListener("pointerup", onUp);
@@ -384,7 +463,10 @@ export function createMaze(host: MazeHost, opts?: { level?: number }): Maze {
       window.removeEventListener("blur", onBlur);
       el.style.touchAction = touchAction;
     },
-    hud: () => ({ level: state.level, of, name: levelDef(state.level).name, ms: state.steps * STEP_MS, deaths: state.deaths }),
+    hud: () => ({ level: state.level, of, name: levelDef(state.level).name, ms: state.steps * STEP_MS, deaths: state.deaths, best: records[state.level]?.ms ?? null }),
+    select,
+    reached: () => reached,
+    levels: panel,
     state
   };
 }

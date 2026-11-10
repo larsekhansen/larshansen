@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { TILE } from "@larshansen/pixelkit/config";
 import { LEVELS, centreOf, startCentre } from "./levels";
-import { BODY, CURSE_STEPS, formatTime, limit, levelDef, newState, onStartPad, snakeAt, snakeBox, stepMaze, touchesWall, type MazeState } from "./rules";
+import { BODY, CURSE_STEPS, FALL_STEPS, GATE_STEPS, RISE_STEPS, WARN_STEPS, crumbleAge, formatTime, gateOpen, gateProgress, isPit, limit, levelDef, newState, onStartPad, sliderRise, sliderSolid, sliderT, sliderWarning, snakeAt, snakeBox, solidCause, stepMaze, touchesWall, type MazeState } from "./rules";
 
 const none = { dx: 0, dy: 0 };
 
@@ -197,5 +197,197 @@ describe("limit", () => {
 
   test("zero stays zero", () => {
     expect(limit(0, 0, 1.6)).toEqual({ dx: 0, dy: 0 });
+  });
+});
+
+describe("the rune key and the iron gate", () => {
+  test("the gate is wall until the key is taken, then slides open over 30 steps", () => {
+    const s = newState(3);
+    at(s, 29, 13);
+    expect(solidCause(s, s.x, s.y)).toBe("wall");
+    expect(stepMaze(s, none).cursed).toBe("wall");
+    const t = newState(3);
+    at(t, 15, 10);
+    const ev = stepMaze(t, { dx: 0.1, dy: 0 });
+    expect(ev.key).toBe(true);
+    expect(t.keyTaken).toBe(true);
+    at(t, 29, 13);
+    expect(gateOpen(t)).toBe(false);
+    expect(solidCause(t, t.x, t.y)).toBe("wall");
+    wait(t, GATE_STEPS);
+    expect(gateOpen(t)).toBe(true);
+    expect(gateProgress(t)).toBe(1);
+    expect(solidCause(t, t.x, t.y)).toBeNull();
+  });
+
+  test("the key is picked up once, only with his centre in its tile", () => {
+    const s = newState(3);
+    s.x = 16 * TILE + 2; // body overlaps the tile, centre does not
+    s.y = 10 * TILE + 8;
+    expect(stepMaze(s, none).key).toBeUndefined();
+    s.x = 15 * TILE + 14;
+    expect(stepMaze(s, none).key).toBe(true);
+    expect(stepMaze(s, none).key).toBeUndefined();
+  });
+
+  test("a curse does not take the key back, and the gate keeps opening during it", () => {
+    const s = newState(3);
+    at(s, 15, 10);
+    stepMaze(s, none);
+    expect(s.keyTaken).toBe(true);
+    s.x = 4 * TILE; // inside a wall
+    s.y = 5 * TILE + 8;
+    s.x = 5 * TILE + 8;
+    expect(stepMaze(s, none).cursed).toBe("wall");
+    wait(s, CURSE_STEPS);
+    expect(s.phase).toBe("play");
+    expect(s.keyTaken).toBe(true);
+    expect(gateOpen(s)).toBe(true);
+  });
+
+  test("levels without a key have no gate to open", () => {
+    expect(newState(1).keyTaken).toBe(false);
+    expect(newState(1).gate).toBe(-1);
+  });
+});
+
+describe("crumbling floor", () => {
+  test("a tile shakes from the first step he overlaps it and falls 120 steps later", () => {
+    const s = newState(4);
+    at(s, 10, 16);
+    expect(crumbleAge(s, 10, 16)).toBe(-1);
+    stepMaze(s, none);
+    expect(crumbleAge(s, 10, 16)).toBe(0);
+    s.x = 4 * TILE + 8; // off it, onto floor
+    s.y = 16 * TILE + 8;
+    for (let i = 0; i < FALL_STEPS - 1; i++) stepMaze(s, none);
+    expect(crumbleAge(s, 10, 16)).toBe(FALL_STEPS - 1);
+    expect(isPit(s, 10, 16)).toBe(false);
+    const ev = stepMaze(s, none);
+    expect(ev.fell).toBe(true);
+    expect(isPit(s, 10, 16)).toBe(true);
+  });
+
+  test("a body that touches two tiles starts both", () => {
+    const s = newState(4);
+    s.x = 11 * TILE; // the edge between tiles 10 and 11
+    s.y = 16 * TILE + 8;
+    stepMaze(s, none);
+    expect(crumbleAge(s, 10, 16)).toBe(0);
+    expect(crumbleAge(s, 11, 16)).toBe(0);
+  });
+
+  test("standing still on it when it falls curses him as a pit; a pit is a wall to touch", () => {
+    const s = newState(4);
+    at(s, 12, 16);
+    let ev = {};
+    let n = 0;
+    while (s.phase === "play" && n++ < 200) ev = stepMaze(s, none);
+    expect(n).toBe(FALL_STEPS + 1);
+    expect(ev).toEqual({ cursed: "pit", fell: true });
+    expect(s.cause).toBe("pit");
+  });
+
+  test("a curse restores every crumbling tile", () => {
+    const s = newState(4);
+    at(s, 12, 16);
+    wait(s, 10);
+    expect(crumbleAge(s, 12, 16)).toBeGreaterThan(0);
+    s.x = 5 * TILE + 8;
+    s.y = 3 * TILE; // wall
+    stepMaze(s, none);
+    expect(s.phase).toBe("cursed");
+    wait(s, CURSE_STEPS);
+    expect(s.crumble.size).toBe(0);
+    expect(isPit(s, 12, 16)).toBe(false);
+  });
+
+  test("walking across at the slowest allowed speed keeps ahead of the fall", () => {
+    const s = newState(4);
+    at(s, 9, 16);
+    s.x = 9 * TILE + 8;
+    for (let i = 0; i < 230 && s.phase === "play"; i++) stepMaze(s, { dx: 0.6, dy: 0 });
+    expect(s.phase).toBe("play");
+    expect(s.x).toBeGreaterThan(17 * TILE);
+  });
+});
+
+describe("sliding walls", () => {
+  const d = LEVELS[4].sliders[0]; // [9, 2], period 180, offset 0
+
+  test("wall for the first half of the round, floor for the second", () => {
+    expect(sliderSolid(d, 0)).toBe(true);
+    expect(sliderSolid(d, 89)).toBe(true);
+    expect(sliderSolid(d, 90)).toBe(false);
+    expect(sliderSolid(d, 179)).toBe(false);
+    expect(sliderSolid(d, 180)).toBe(true);
+  });
+
+  test("the offset shifts the round", () => {
+    const e = LEVELS[4].sliders[1]; // offset 90
+    expect(sliderSolid(e, 0)).toBe(false);
+    expect(sliderSolid(e, 90)).toBe(true);
+    expect(sliderT(e, 100)).toBe(10);
+  });
+
+  test("it shimmers for the last 60 steps before it turns to wall, and not otherwise", () => {
+    expect(sliderWarning(d, 90)).toBe(false);
+    expect(sliderWarning(d, 119)).toBe(false);
+    expect(sliderWarning(d, 120)).toBe(true);
+    expect(sliderWarning(d, 179)).toBe(true);
+    expect(sliderWarning(d, 180)).toBe(false); // it is wall now
+    expect(sliderWarning(d, 60)).toBe(false);
+    expect(WARN_STEPS).toBe(60);
+  });
+
+  test("the stone rises over 6 steps and sinks over 6", () => {
+    expect(sliderRise(d, 0)).toBeGreaterThan(0);
+    expect(sliderRise(d, 0)).toBeLessThan(1);
+    expect(sliderRise(d, RISE_STEPS)).toBe(1);
+    expect(sliderRise(d, 89)).toBe(1);
+    expect(sliderRise(d, 90)).toBeLessThan(1);
+    expect(sliderRise(d, 90 + RISE_STEPS)).toBe(0);
+    expect(sliderRise(d, 150)).toBe(0);
+  });
+
+  test("touching it while it is wall curses him; while it is floor he walks through", () => {
+    const s = newState(5);
+    s.started = true;
+    s.x = 9 * TILE + 8;
+    s.y = 2 * TILE + 16;
+    s.steps = 100; // floor
+    expect(stepMaze(s, none).cursed).toBeUndefined();
+    const t = newState(5);
+    t.started = true;
+    t.x = 9 * TILE + 8;
+    t.y = 2 * TILE + 16;
+    t.steps = 0;
+    expect(stepMaze(t, none).cursed).toBe("slider");
+    expect(t.cause).toBe("slider");
+  });
+
+  test("if it turns to wall while he stands in it, he is cursed", () => {
+    const s = newState(5);
+    s.started = true;
+    s.x = 9 * TILE + 8;
+    s.y = 2 * TILE + 16;
+    s.steps = 170;
+    let ev = {};
+    for (let i = 0; i < 20 && s.phase === "play"; i++) ev = stepMaze(s, none);
+    expect(ev).toEqual({ cursed: "slider" });
+    expect(s.steps).toBeGreaterThanOrEqual(180);
+  });
+
+  test("sliders keep running through a curse and are not reset by it", () => {
+    const s = newState(5);
+    s.started = true;
+    s.steps = 50;
+    s.x = 8;
+    s.y = 3 * TILE + 8; // wall
+    stepMaze(s, none);
+    expect(s.phase).toBe("cursed");
+    wait(s, CURSE_STEPS);
+    expect(s.phase).toBe("play");
+    expect(s.steps).toBe(50 + 1 + CURSE_STEPS);
   });
 });

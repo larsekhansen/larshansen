@@ -32,6 +32,7 @@ import { createStage } from "@larshansen/pixelkit/stage";
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { textTarget } from "@larshansen/pixelkit/text";
 import type { Maze } from "@larshansen/maze/scene";
+import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { RUNE_STROKES, type RuneChar } from "./game/runes";
 import { begin, collect, countOf, elapsedMs, formatTime, judge, newRun, tick, touched } from "./game/run";
 import { createSheep, stepSheep, stomped, SHEEP } from "./game/sheep";
@@ -149,8 +150,16 @@ const state = {
   /** The last ground he stood on, where the water puts him back. */
   lastGround: { x: spawn.x, bottom: spawn.bottom },
   nearSign: null as string | null,
-  finished: false
+  finished: false,
+  /** The moment at the mound door after the last level: the raven's feather floats down onto him. */
+  feather: null as { since: number } | null
 };
+/** The first double jump of a visit lets three black feather pixels drift down. */
+let firstAirJump = true;
+/** Set when the maze reports a clear, for the moment at the door once the fjord is back. */
+let featherPending = false;
+const FEATHER_FALL = 100;
+const FEATHER_SHOWN = 340;
 
 state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: 0 };
 
@@ -218,18 +227,19 @@ const mazeUi = {
   hud: $<HTMLElement>("mazehud"),
   back: $<HTMLButtonElement>("mz-back"),
   name: $<HTMLElement>("mz-name"),
-  level: $<HTMLElement>("mz-level"),
+  level: $<HTMLButtonElement>("mz-level"),
   clock: $<HTMLElement>("mz-clock"),
+  best: $<HTMLElement>("mz-best"),
   deaths: $<HTMLElement>("mz-deaths")
 };
-const mazeShown = { name: "", level: "", clock: "", deaths: "" };
-let mazeText: { deaths(n: number): string; formatTime(ms: number): string } | null = null;
+const mazeShown = { name: "", level: "", clock: "", best: "", deaths: "" };
+let mazeText: { deaths(n: number): string; best(time: string): string; formatTime(ms: number): string } | null = null;
 const fjordHelp = { text: "", hidden: false };
 
 function showMazeHud() {
   if (!maze || !mazeText) return;
   const h = maze.hud();
-  const next = { name: h.name, level: `${h.level} / ${h.of}`, clock: mazeText.formatTime(h.ms), deaths: mazeText.deaths(h.deaths) };
+  const next = { name: h.name, level: `${h.level} / ${h.of}`, clock: mazeText.formatTime(h.ms), best: h.best === null ? "" : mazeText.best(mazeText.formatTime(h.best)), deaths: mazeText.deaths(h.deaths) };
   for (const key of Object.keys(next) as (keyof typeof next)[]) {
     if (mazeShown[key] === next[key]) continue;
     mazeShown[key] = next[key];
@@ -248,7 +258,9 @@ async function enterMaze() {
   try {
     const [mod, words, rules] = await Promise.all([import("@larshansen/maze/scene"), import("@larshansen/maze/i18n"), import("@larshansen/maze/rules")]);
     const mt = words.strings(lang);
-    mazeText = { deaths: mt.deaths, formatTime: rules.formatTime };
+    mazeText = { deaths: mt.deaths, best: mt.best, formatTime: rules.formatTime };
+    mazeUi.level.title = mt.levelsButton;
+    mazeUi.level.setAttribute("aria-label", mt.levelsButton);
     mazeUi.back.textContent = mt.back;
     mazeUi.back.setAttribute("aria-label", mt.leaving);
     mazeUi.deaths.title = mt.cursesLabel;
@@ -266,7 +278,7 @@ async function enterMaze() {
         topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
         onLeave: (r) => leaveMaze(r.cleared)
       },
-      { level: Number(params.get("level")) || 1 }
+      { level: Number(params.get("level")) || undefined }
     );
     scene = "maze";
     loading = false;
@@ -278,7 +290,7 @@ async function enterMaze() {
     help.textContent = mt.help;
     help.hidden = false;
     stage.style.cursor = "";
-    mazeShown.name = mazeShown.level = mazeShown.clock = mazeShown.deaths = "";
+    mazeShown.name = mazeShown.level = mazeShown.clock = mazeShown.best = mazeShown.deaths = "";
     showMazeHud();
     layout();
   } catch {
@@ -304,6 +316,10 @@ function backToFjord() {
   help.hidden = fjordHelp.text ? fjordHelp.hidden : help.hidden;
   standAt(mound);
   resetScene();
+  if (featherPending) {
+    featherPending = false;
+    state.feather = { since: state.steps };
+  }
   state.moved = state.moved || help.hidden;
   state.fade = 1; // fades back in
   Object.assign(shown, body);
@@ -312,7 +328,10 @@ function backToFjord() {
 
 /** Called by the maze when he walks out, or clears the last level. */
 function leaveMaze(cleared: boolean) {
-  if (cleared) abilities.doubleJump = true; // the raven's feather: the double jump is on at once
+  if (cleared) {
+    abilities.doubleJump = true; // the raven's feather: the double jump is on at once
+    featherPending = true;
+  }
   if (canGoBack && location.hash === MAZE_HASH) {
     history.back(); // the hashchange that follows takes him out
     return;
@@ -333,6 +352,10 @@ function syncScene() {
 window.addEventListener("hashchange", () => {
   if (location.hash === MAZE_HASH && scene === "fjord" && !loading) canGoBack = true;
   syncScene();
+});
+mazeUi.level.addEventListener("click", () => {
+  maze?.levels.toggle();
+  mazeUi.level.blur();
 });
 mazeUi.back.addEventListener("click", () => {
   leaveMaze(false);
@@ -518,7 +541,14 @@ function play() {
     }
   }
   const prevBottom = body.y + PLAYER.h;
+  const airJumps = body.airJumps;
   const r = stepBody(body, intent, WORLD, abilities);
+  if (r.jumped && body.airJumps < airJumps && firstAirJump) {
+    // His first jump in mid-air: three black feather pixels drift down from where he took it.
+    firstAirJump = false;
+    if (!view.reduced)
+      for (let i = 0; i < 3; i++) state.sparks.push({ x: body.x + PLAYER.w / 2 + (i - 1) * 3, y: body.y + PLAYER.h - 2 + i, vx: (i - 1) * 0.12, vy: 0.02, life: 70 + i * 12, color: "#14131a" });
+  }
   if (intent.left || intent.right || r.jumped) {
     state.moved = true;
     begin(run);
@@ -608,6 +638,7 @@ function stepOnce() {
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
   else if (!loading && ++state.modeSteps > 300) resetScene(); // the place never opened
+  if (state.feather && state.steps - state.feather.since > FEATHER_SHOWN) state.feather = null;
   if (state.mode === "play" && state.fade > 0) state.fade = Math.max(0, state.fade - 1 / 16); // coming back from the mound
   for (const s of sheep) stepSheep(s);
   doors.forEach((d) => d.shake > 0 && d.shake--);
@@ -683,6 +714,14 @@ function render() {
   pass(street, () => drawActors(sheep, runes, run.mask, state.steps));
   target(street);
   for (const p of state.sparks) R(p.x, p.y, 1, 1, p.color);
+  if (state.feather) {
+    const p = Math.min(1, (state.steps - state.feather.since) / FEATHER_FALL);
+    if (p < 1) {
+      // The feather floats down, swaying, and comes to rest on his shoulder.
+      const sway = view.reduced ? 0 : Math.round(Math.sin((state.steps - state.feather.since) * 0.11) * 5 * (1 - p));
+      drawFeather(Math.round(shown.x + PLAYER.w / 2 - FEATHER_W / 2 + sway), Math.round(shown.y - 60 * (1 - p) + 2 - FEATHER_H / 2 + 6 * p), "#14131a", "#4f9bd8", "rgba(255, 255, 255, 0.7)");
+    }
+  }
 
   const door = state.mode === "play" ? doorAt(body, doors) : null;
   const age = state.banner ? state.steps - state.banner.since : 0;
@@ -697,6 +736,9 @@ function render() {
     else if (!abilities.doubleJump && Math.abs(cx - (mound.x + mound.w / 2)) < 5 * TILE && body.onGround && Math.abs(shown.y + PLAYER.h - mound.bottom) < 8)
       bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h, lines: t.moundNoFeather };
   }
+  // The feather moment at the mound door: his own bubble, even though he stands at a door.
+  const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
+  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [t.featherLine] };
   const nearKey = bubble ? bubble.lines[0] : null;
   if (nearKey !== state.nearSign) {
     state.nearSign = nearKey;
@@ -708,8 +750,8 @@ function render() {
     fade: state.fade,
     snow: snowfall(sky, state.steps),
     player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
-    hint: door && !touch ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
-    bubble: door ? null : bubble,
+    hint: door && !touch && !speaking ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
+    bubble: door && !speaking ? null : bubble,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
     highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: surfaceBelow(state.goal.x, state.goal.y0) ?? GROUND_Y } : null,

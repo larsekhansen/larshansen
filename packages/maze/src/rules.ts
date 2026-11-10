@@ -1,5 +1,5 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { LEVELS, centreOf, findTiles, finishOf, isWall, startCentre, startOf, type LevelDef, type SnakeDef } from "./levels";
+import { LEVELS, centreOf, findTiles, finishOf, isWall, startCentre, startOf, tileAt, type LevelDef, type SliderDef, type SnakeDef } from "./levels";
 
 // The rules of the maze, with no DOM in them, so they can be tested without a browser.
 // Walls do not stop him: touching one is losing. That is the game.
@@ -15,6 +15,15 @@ export const SNAKE_SHORT = 6;
 /** The most he may move in one step, per way of steering, in art pixels. */
 export const SPEED = { pointer: 1.6, keys: 1.2, careful: 0.6 } as const;
 
+/** Steps the gate takes to slide open once the key is taken. */
+export const GATE_STEPS = 30;
+/** Steps a crumbling tile shakes before it falls. */
+export const FALL_STEPS = 120;
+/** The last steps before a slider turns to wall, in which it shimmers. */
+export const WARN_STEPS = 60;
+/** Steps a slider takes to rise out of the floor, or sink into it (drawing only: the wall is there at once). */
+export const RISE_STEPS = 6;
+
 export interface Stone {
   c: number;
   r: number;
@@ -28,10 +37,10 @@ export interface SnakeState {
 }
 
 export type Phase = "play" | "cursed" | "cleared";
-export type Cause = "wall" | "snake";
+export type Cause = "wall" | "snake" | "pit" | "slider";
 
 export interface MazeState {
-  /** 1 to 3. */
+  /** 1 to 7. */
   level: number;
   x: number;
   y: number;
@@ -49,6 +58,12 @@ export interface MazeState {
   started: boolean;
   /** What cursed him last, for the raven. */
   cause: Cause | null;
+  /** The rune key has been picked up; a curse does not take it back. */
+  keyTaken: boolean;
+  /** Steps since the key was taken, up to GATE_STEPS (when the gate is open), or -1 while it is shut. */
+  gate: number;
+  /** Crumbling tiles he has stepped on, "col,row" to the steps they have shaken. A tile at FALL_STEPS has fallen: a pit. */
+  crumble: Map<string, number>;
 }
 
 /** What he wants to move by this step, in art pixels, already limited to the allowed speed. */
@@ -62,6 +77,10 @@ export interface MazeEvents {
   cursed?: Cause;
   /** Index of a stone that was lit for the first time this step. */
   lit?: number;
+  /** He took the rune key. */
+  key?: boolean;
+  /** A crumbling tile fell this step. */
+  fell?: boolean;
   /** He woke at the last lit stone. */
   respawned?: boolean;
   cleared?: boolean;
@@ -89,9 +108,49 @@ export function newState(level: number, deaths = 0): MazeState {
     phase: "play",
     phaseSteps: 0,
     started: false,
-    cause: null
+    cause: null,
+    keyTaken: false,
+    gate: -1,
+    crumble: new Map()
   };
 }
+
+const tileKey = (c: number, r: number) => `${c},${r}`;
+
+/** True once the gate has slid all the way open. */
+export const gateOpen = (state: MazeState) => state.gate >= GATE_STEPS;
+
+/** How far the gate has slid open, 0 (shut) to 1 (open). */
+export const gateProgress = (state: MazeState) => (state.gate < 0 ? 0 : Math.min(1, state.gate / GATE_STEPS));
+
+/** Steps a crumbling tile has shaken: 0 if he has not stepped on it, FALL_STEPS or more once it has fallen. */
+export const crumbleAge = (state: MazeState, c: number, r: number) => state.crumble.get(tileKey(c, r)) ?? -1;
+
+/** A crumbling tile that has fallen is a pit. */
+export const isPit = (state: MazeState, c: number, r: number) => crumbleAge(state, c, r) >= FALL_STEPS;
+
+/** Where a slider is in its round: `t` in 0 to period. It is wall while `t < period / 2`. */
+export const sliderT = (d: SliderDef, steps: number) => (((steps + d.offset) % d.period) + d.period) % d.period;
+
+/** True while the slider is wall. */
+export const sliderSolid = (d: SliderDef, steps: number) => sliderT(d, steps) < d.period / 2;
+
+/** How tall the slider's stone stands, 0 to 1: it rises over RISE_STEPS and sinks over RISE_STEPS. */
+export function sliderRise(d: SliderDef, steps: number): number {
+  const t = sliderT(d, steps);
+  const half = d.period / 2;
+  if (t < RISE_STEPS) return (t + 1) / (RISE_STEPS + 1);
+  if (t < half) return 1;
+  if (t < half + RISE_STEPS) return 1 - (t - half + 1) / (RISE_STEPS + 1);
+  return 0;
+}
+
+/** True during the last WARN_STEPS before a floor slider turns to wall. */
+export const sliderWarning = (d: SliderDef, steps: number) => !sliderSolid(d, steps) && d.period - sliderT(d, steps) <= WARN_STEPS;
+
+/** The slider that covers tile (c, r), if there is one. */
+export const sliderAt = (def: LevelDef, c: number, r: number) =>
+  def.sliders.find((s) => c >= s.at[0] && c < s.at[0] + s.w && r >= s.at[1] && r < s.at[1] + s.h);
 
 /** Scales a movement down so that it is no longer than `max`, keeping its direction. */
 export function limit(dx: number, dy: number, max: number): { dx: number; dy: number } {
@@ -140,6 +199,39 @@ export function touchesWall(map: readonly string[], x: number, y: number): boole
   return false;
 }
 
+/** What a body centred at (x, y) is touching that would curse him: stone, a shut gate, a pit or a slider that is wall. */
+export function solidCause(state: MazeState, x: number, y: number): Cause | null {
+  const map = levelDef(state.level).map;
+  const def = levelDef(state.level);
+  const c0 = Math.floor((x - BODY / 2) / TILE);
+  const c1 = Math.floor((x + BODY / 2 - EDGE) / TILE);
+  const r0 = Math.floor((y - BODY / 2) / TILE);
+  const r1 = Math.floor((y + BODY / 2 - EDGE) / TILE);
+  let cause: Cause | null = null;
+  for (let r = r0; r <= r1; r++)
+    for (let c = c0; c <= c1; c++) {
+      const ch = tileAt(map, c, r);
+      if (ch === "#" || (ch === "g" && !gateOpen(state))) return "wall";
+      if (ch === "c" && isPit(state, c, r)) cause = "pit";
+      else if (ch === "." && !cause) {
+        const sl = sliderAt(def, c, r);
+        if (sl && sliderSolid(sl, state.steps)) cause = "slider";
+      }
+    }
+  return cause;
+}
+
+/** The crumbling tiles a body centred at (x, y) overlaps. */
+function crumblingUnder(map: readonly string[], x: number, y: number): string[] {
+  const out: string[] = [];
+  const c0 = Math.floor((x - BODY / 2) / TILE);
+  const c1 = Math.floor((x + BODY / 2 - EDGE) / TILE);
+  const r0 = Math.floor((y - BODY / 2) / TILE);
+  const r1 = Math.floor((y + BODY / 2 - EDGE) / TILE);
+  for (let r = r0; r <= r1; r++) for (let c = c0; c <= c1; c++) if (tileAt(map, c, r) === "c") out.push(tileKey(c, r));
+  return out;
+}
+
 /** True if a body centred at (x, y) overlaps the snake. */
 export function touchesSnake(s: SnakeState, x: number, y: number): boolean {
   const b = snakeBox(s);
@@ -166,6 +258,7 @@ export function stepMaze(state: MazeState, intent: Intent): MazeEvents {
 
   for (const s of state.snakes) s.t++;
   if (state.started) state.steps++;
+  if (state.gate >= 0 && state.gate < GATE_STEPS) state.gate++;
 
   if (state.phase === "cursed") {
     if (++state.phaseSteps >= CURSE_STEPS) {
@@ -177,25 +270,42 @@ export function stepMaze(state: MazeState, intent: Intent): MazeEvents {
       state.phase = "play";
       state.phaseSteps = 0;
       state.snakes = freshSnakes(def);
+      state.crumble = new Map(); // every crumbling tile is whole again
       events.respawned = true;
     }
     return events;
   }
 
   state.phaseSteps++;
+  for (const [k, age] of state.crumble)
+    if (age < FALL_STEPS) {
+      state.crumble.set(k, age + 1);
+      if (age + 1 === FALL_STEPS) events.fell = true;
+    }
   if (intent.dx !== 0 || intent.dy !== 0) {
     if (!state.started) state.started = true;
     state.x += intent.dx;
     state.y += intent.dy;
   }
 
-  const cause: Cause | null = touchesWall(def.map, state.x, state.y) ? "wall" : state.snakes.some((s) => touchesSnake(s, state.x, state.y)) ? "snake" : null;
+  for (const k of crumblingUnder(def.map, state.x, state.y)) if (!state.crumble.has(k)) state.crumble.set(k, 0);
+
+  const cause: Cause | null = solidCause(state, state.x, state.y) ?? (state.snakes.some((s) => touchesSnake(s, state.x, state.y)) ? "snake" : null);
   if (cause) {
     state.phase = "cursed";
     state.phaseSteps = 0;
     state.cause = cause;
     events.cursed = cause;
     return events;
+  }
+
+  if (!state.keyTaken) {
+    const k = findTiles(def.map, "k")[0];
+    if (k && insideTile(state.x, state.y, k.c, k.r)) {
+      state.keyTaken = true;
+      state.gate = 0;
+      events.key = true;
+    }
   }
 
   const i = state.stones.findIndex((s) => insideTile(state.x, state.y, s.c, s.r));

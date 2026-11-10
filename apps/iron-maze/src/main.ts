@@ -86,13 +86,20 @@ const maze = createMaze(
 
 // The header's level display.
 const nameEl = $<HTMLElement>("name");
-const levelEl = $<HTMLElement>("level");
+const levelEl = $<HTMLButtonElement>("level");
+const bestEl = $<HTMLElement>("best");
+levelEl.title = t.levelsButton;
+levelEl.setAttribute("aria-label", t.levelsButton);
+levelEl.addEventListener("click", () => {
+  maze.levels.toggle();
+  levelEl.blur();
+});
 const clockEl = $<HTMLElement>("clock");
 const deathsEl = $<HTMLElement>("deaths");
 deathsEl.title = t.cursesLabel;
 deathsEl.setAttribute("aria-label", t.cursesLabel);
 $<HTMLElement>("run").hidden = false;
-const shown = { name: "", level: "", clock: "", deaths: "" };
+const shown = { name: "", level: "", clock: "", deaths: "", best: "" };
 function hud() {
   const h = maze.hud();
   const set = (key: keyof typeof shown, el: HTMLElement, text: string) => {
@@ -104,6 +111,7 @@ function hud() {
   set("level", levelEl, `${h.level} / ${h.of}`);
   set("clock", clockEl, formatTime(h.ms));
   set("deaths", deathsEl, t.deaths(h.deaths));
+  set("best", bestEl, h.best === null ? "" : t.best(formatTime(h.best)));
 }
 
 function layout() {

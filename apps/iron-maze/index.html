@@ -6,7 +6,7 @@
     <title>Jernhaugen · larshansen.dev</title>
     <meta
       name="description"
-      content="A small maze game: steer a viking through a cursed burial mound without touching the walls. Three levels, a few snakes and a raven with opinions."
+      content="A small maze game: steer a viking through a cursed burial mound without touching the walls. Seven levels, a few snakes, a crumbling floor and a raven with opinions."
     />
     <meta name="theme-color" content="#14110f" />
     <meta property="og:type" content="website" />
@@ -27,8 +27,8 @@
       <!-- The level: filled in by the game, so it stays hidden without JavaScript. -->
       <div class="run" id="run" hidden>
         <span class="name" id="name"></span>
-        <span class="level" id="level"></span>
-        <p class="clock"><span id="clock">0:00.0</span></p>
+        <button type="button" class="level" id="level" aria-haspopup="dialog"></button>
+        <p class="clock"><span id="clock">0:00.0</span><small id="best"></small></p>
         <span class="deaths" id="deaths"></span>
         <button type="button" id="mute" class="tool" aria-pressed="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /><path class="cross" d="M16 9l5 6m0-6-5 6" /></svg>

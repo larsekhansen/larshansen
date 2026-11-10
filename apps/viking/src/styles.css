@@ -145,8 +145,38 @@ body {
 }
 
 .mazehud #mz-level,
-.mazehud #mz-deaths {
+.mazehud #mz-deaths,
+.mazehud #mz-best {
   color: var(--muted);
+}
+
+.mazehud #mz-best {
+  font-size: 12px;
+}
+
+.mazehud #mz-best:empty {
+  display: none;
+}
+
+@media (max-width: 999px) {
+  .mazehud #mz-best {
+    display: none;
+  }
+}
+
+/* The level label opens the list of levels. */
+.mazehud button.lvl {
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mazehud button.lvl:hover,
+.mazehud button.lvl:focus-visible {
+  color: #541321;
 }
 
 .mazehud .back {
