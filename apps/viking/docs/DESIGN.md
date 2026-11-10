@@ -77,7 +77,10 @@ collect.
 **The run.** Collecting all ten is timed. The clock starts on the first move
 and stops on the tenth rune; the best time is kept in `localStorage`
 (`viking.best`) and shown in the HUD. **R** restarts: runes back, clock at
-zero, viking at the start. Every visit starts a fresh run.
+zero, viking at the start. Every visit starts a fresh run. Finishing shows a
+card with the time, whether it is a new best, "Run again" and a link back to
+the front page; it can be closed to keep exploring. A ↻ button in the HUD
+restarts too, so touch devices are not left out.
 
 **Reward for all ten:** fanfare, fireworks, the aurora switches on permanently,
 and the viking gets a golden helmet (persisted as `viking.crowned`).
@@ -227,8 +230,16 @@ Still to be checked by a human in a normal browser:
 - [ ] Real-time feel of the controls, and frame rate on a phone.
 - [ ] Sound — nothing has been listened to.
 - [ ] Touch controls on an actual touch device, and a gamepad.
-- [ ] The timed run end to end (it was added after the screenshots above),
-  and a way to restart on touch devices — R is keyboard only.
+- [ ] The timed run in real time. (Stepped by hand it works: clock, best
+  time, finish card, restart by key and by button.)
+- [ ] The finish card's entrance animation and the HUD rune glow — CSS
+  animations do not advance in the headless browser.
+
+### Second pass (after the split)
+- Pixi loads after the page shell, in its own chunk: the first download went
+  from about 505 kB to about 200 kB, and the links are usable before the game is.
+- The sun warms from pale yellow to orange as it nears the horizon.
+- On short screens the HUD drops its tagline so it does not sit on the title.
 
 ### Dev helpers
 In `bun run dev:viking` only: `?x=1700` drops the viking at that x, and
@@ -260,7 +271,6 @@ apps/viking/
 
 - **Bifrost**: after all runes, a rainbow bridge to a cloud island with a
   secret door (needs something worth linking to).
-- A restart button for touch devices.
 - A door for **Quintle** once it has a public store page.
 - Ravens (Hugin & Munin) that follow the player and perch on door signs.
 - Weather from a real Oslo forecast instead of only the calendar.

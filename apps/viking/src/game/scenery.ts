@@ -238,6 +238,10 @@ export function createScenery(tex: Textures, opts: { winter: boolean; reducedMot
     sunGlow.position.copyFrom(s);
     sun.visible = sunGlow.visible = sunT > 0 && sunT < 1;
     sunGlow.alpha = 0.55;
+    // Low in the sky the sun goes from pale yellow to orange.
+    const low = 1 - clamp(Math.sin(Math.PI * clamp(sunT, 0, 1)) * 1.6, 0, 1);
+    sun.tint = lerpColor(0xfff7dc, 0xffb469, low);
+    sunGlow.tint = lerpColor(0xffe6a0, 0xff8a4a, low);
     const moonT = ((current.h + 4) % 24) / 10;
     const m = arc(moonT);
     moon.position.copyFrom(m);

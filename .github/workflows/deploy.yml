@@ -65,6 +65,6 @@ jobs:
           expect /qr/  'QR-verkstedet'
           # The game behind the Opera's secret door, and its script from /viking/assets/.
           expect /viking/ 'Vikingfjorden'
-          expect "$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')" 'Velkommen!'
+          expect "$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')" 'All ten runes!'
           # The QR app's script must load from /qr/assets/, not the landing page's /assets/.
           expect "$(fetch /qr/ | grep -o '/qr/assets/index-[^"]*\.js')" 'Lest av QR-leser'
