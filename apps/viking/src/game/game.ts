@@ -41,6 +41,8 @@ export interface GameHandle {
   destroy(): void;
   setTouch(button: TouchButton, down: boolean): void;
   toggleMute(): void;
+  /** Start the rune run again: runes back, clock at zero, viking at the start. */
+  restart(): void;
   /** Enter the door the player is standing at, if any. */
   enterNearest(): void;
 }
@@ -465,6 +467,9 @@ export async function initGame(host: HTMLElement, cb: GameCallbacks): Promise<Ga
       input.setTouch(button, down);
     },
     toggleMute,
+    restart: () => {
+      if (!entering) restart();
+    },
     enterNearest() {
       if (nearDoor) enter(nearDoor);
     }

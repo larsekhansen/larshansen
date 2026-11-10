@@ -1,9 +1,9 @@
 import "./styles.css";
 import { PLAYER, TILE } from "./game/config";
 import { buildDoors, doorAt, readAppLinks, type Door } from "./game/doors";
-import { pickLang, strings } from "./game/i18n";
+import { pickLang, strings, type SkyName } from "./game/i18n";
 import { createInput, type Action } from "./game/input";
-import { GROUND_Y, WORLD_W, districtAt, findDoorSpots, findSpawn, type District } from "./game/level";
+import { GROUND_Y, WORLD_W, districtAt, findDoorSpots, findSpawn, rampAt, type District } from "./game/level";
 import { createStepper } from "./game/loop";
 import { skyFor } from "./game/oslo";
 import { createBody, stepBody } from "./game/physics";
@@ -97,9 +97,8 @@ const state = {
   district: districtAt(body.x) as District,
   banner: null as { title: string; sub: string; since: number } | null,
   highlight: null as Door | null,
-  /** A house the visitor clicked or tapped: the player walks there and goes in. */
-  goal: null as Door | null,
-  goalSteps: 0,
+  /** Where the visitor clicked or tapped: the player walks there, and goes in if it is a house. */
+  goal: null as { x: number; door: Door | null; best: number; since: number } | null,
   stuck: 0,
   hover: null as Door | null,
   sparks: [] as Spark[]
@@ -203,12 +202,18 @@ function play() {
   // Walking to a clicked house. Any input of the visitor's own takes over again.
   if (state.goal) {
     const goal = state.goal;
-    if (intent.left || intent.right || intent.jumpPressed || ++state.goalSteps > 1200) state.goal = null;
-    else if (door === goal) {
+    const dx = goal.x - (body.x + PLAYER.w / 2);
+    // Getting closer resets the patience; three seconds without progress means it cannot be reached.
+    if (Math.abs(dx) < goal.best - 0.5) {
+      goal.best = Math.abs(dx);
+      goal.since = state.steps;
+    }
+    if (intent.left || intent.right || intent.jumpPressed || state.steps - goal.since > 180) state.goal = null;
+    else if (goal.door && door === goal.door) {
       state.goal = null;
-      return tryEnter(goal);
-    } else {
-      const dx = goal.x + goal.w / 2 - (body.x + PLAYER.w / 2);
+      return tryEnter(goal.door);
+    } else if (!goal.door && Math.abs(dx) <= 1.5) state.goal = null;
+    else {
       intent.left = dx < -1;
       intent.right = dx > 1;
       // Crates, hedges and walls in the way: hop over when walking gets nowhere.
@@ -386,7 +391,8 @@ function render() {
     hint: door && !touch ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
     bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, text: state.bubble.text } : null,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
-    highlight: state.highlight ?? state.hover ?? state.goal,
+    highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
+    marker: state.goal && !state.goal.door ? { x: state.goal.x, y: rampAt(state.goal.x) ?? GROUND_Y } : null,
     steps: state.steps
   });
 
@@ -450,19 +456,26 @@ for (const link of links) {
   link.el.addEventListener("blur", off);
 }
 
-// Clicking or tapping a house sends the player there. The secret door has to be found on foot.
-function houseAt(e: MouseEvent): Door | null {
+// Clicking or tapping sends the player there: into a house, or just along the street.
+// The secret door has to be found on foot.
+function worldAt(e: MouseEvent) {
   const rect = stage.getBoundingClientRect();
-  const x = ((e.clientX - rect.left) * view.dpr) / view.k + view.camXf;
-  const y = ((e.clientY - rect.top) * view.dpr) / view.k + view.camYf;
+  return {
+    x: ((e.clientX - rect.left) * view.dpr) / view.k + view.camXf,
+    y: ((e.clientY - rect.top) * view.dpr) / view.k + view.camYf
+  };
+}
+function houseAt(e: MouseEvent): Door | null {
+  const { x, y } = worldAt(e);
   return doors.find((d) => !d.secret && x >= d.x - TILE && x <= d.x + d.w + TILE && y >= d.bottom - TILE * 3.5 && y <= d.bottom + 2) ?? null;
 }
 stage.addEventListener("click", (e) => {
-  const d = houseAt(e);
-  if (!d || state.mode !== "play") return;
-  state.goal = d;
-  state.goalSteps = 0;
+  if (state.mode !== "play") return;
+  const door = houseAt(e);
+  const x = door ? door.x + door.w / 2 : Math.max(PLAYER.w, Math.min(WORLD_W - PLAYER.w, worldAt(e).x));
+  state.goal = { x, door, best: Infinity, since: state.steps };
   state.stuck = 0;
+  state.moved = true;
 });
 stage.addEventListener("mousemove", (e) => {
   state.hover = state.mode === "play" ? houseAt(e) : null;
@@ -471,12 +484,14 @@ stage.addEventListener("mousemove", (e) => {
 stage.addEventListener("mouseleave", () => (state.hover = null));
 
 // T steps through every sky, and back to the real one.
-const SKIES = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
+const SKIES: (SkyName | null)[] = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
 window.addEventListener("keydown", (e) => {
   if (e.code !== "KeyT" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-  if ((e.target as HTMLElement | null)?.closest("a, button, input, textarea, select")) return;
-  skyOverride = SKIES[(SKIES.indexOf(skyOverride) + 1) % SKIES.length];
+  if (e.target instanceof Element && e.target.closest("a, button, input, textarea, select")) return;
+  const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
+  skyOverride = next;
   sky = skyFor(new Date(), skyOverride);
+  state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
 });
 
 Object.assign(shown, body);

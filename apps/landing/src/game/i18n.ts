@@ -3,6 +3,8 @@
 const NORWEGIAN = /^(nb|nn|no)\b/i;
 
 export type Lang = "nb" | "en";
+/** The skies `?sky=` and the T key can show. */
+export type SkyName = "day" | "evening" | "twilight" | "night" | "winter" | "17mai";
 
 /** The first of the visitor's languages that the game speaks, in their order of preference. */
 export function pickLang(languages: readonly string[]): Lang {
@@ -23,7 +25,8 @@ const STRINGS = {
     quintleSoon: "Quintle flytter inn når det er ute på Google Play",
     secret: "Du kom deg helt opp på Operaen!",
     opening: (name: string) => `Åpner ${name}`,
-    help: "Piltastene for å gå, mellomrom for å hoppe, pil opp for å gå inn en dør",
+    help: "Piltastene for å gå, mellomrom for å hoppe, pil opp for å gå inn en dør. Eller bare klikk på et hus.",
+    skies: { now: "Oslo akkurat nå", day: "Dag", evening: "Kveld", twilight: "Sommernatt", night: "Natt", winter: "Vinternatt", "17mai": "17. mai" } as Record<SkyName | "now", string>,
     left: "Gå til venstre",
     right: "Gå til høyre",
     jump: "Hopp",
@@ -40,7 +43,8 @@ const STRINGS = {
     quintleSoon: "Quintle moves in once it is out on Google Play",
     secret: "You made it all the way up the Opera!",
     opening: (name: string) => `Opening ${name}`,
-    help: "Arrow keys to walk, Space to jump, up arrow to go through a door",
+    help: "Arrow keys to walk, Space to jump, up arrow to go through a door. Or just click a house.",
+    skies: { now: "Oslo right now", day: "Day", evening: "Evening", twilight: "Summer night", night: "Night", winter: "Winter night", "17mai": "17 May" } as Record<SkyName | "now", string>,
     left: "Walk left",
     right: "Walk right",
     jump: "Jump",

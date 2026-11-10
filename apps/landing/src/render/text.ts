@@ -115,6 +115,8 @@ export interface Overlay {
   bubble: { x: number; y: number; text: string } | null;
   banner: { title: string; sub: string; alpha: number } | null;
   highlight: Door | null;
+  /** Where the player is walking to after a click on the street. */
+  marker: { x: number; y: number } | null;
   steps: number;
 }
 
@@ -161,6 +163,24 @@ export function drawText(o: Overlay) {
       u.fillText(o.banner.sub, view.cssW / 2, top + fontPx() * 1.6);
     }
     u.globalAlpha = 1;
+  }
+
+  if (o.marker) {
+    // A small arrow bobbing over the spot.
+    const n = unit();
+    const bob = view.reduced ? 0 : Math.sin(o.steps * 0.15) * 1.5 * n;
+    const x = sx(o.marker.x);
+    const y = sy(o.marker.y) - 5 * n + bob;
+    u.fillStyle = "#ffd84d";
+    u.strokeStyle = "rgba(31, 26, 23, 0.7)";
+    u.lineWidth = 1.5;
+    u.beginPath();
+    u.moveTo(x, y);
+    u.lineTo(x - 3.5 * n, y - 5 * n);
+    u.lineTo(x + 3.5 * n, y - 5 * n);
+    u.closePath();
+    u.fill();
+    u.stroke();
   }
 
   const d = o.highlight;

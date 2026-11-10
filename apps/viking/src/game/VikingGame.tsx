@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
-import { initGame, type GameHandle, type RunState } from "./game";
+import type { GameHandle, RunState } from "./game";
 import type { TouchButton } from "./input";
 import { DOORS, RUNES, RUNE_STROKES, type RuneChar } from "./level";
 
@@ -24,18 +24,24 @@ const VikingGame = () => {
   const [nearDoor, setNearDoor] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
   const [failed, setFailed] = useState(false);
+  // The finish card can be closed to keep exploring; it comes back for the next finished run.
+  const [closedRun, setClosedRun] = useState<number | null>(null);
   const [time, setTime] = useState<{ ms: number; best: number | null; state: RunState }>({ ms: 0, best: null, state: "idle" });
 
   useEffect(() => {
     // The game starts asynchronously; if React unmounts first (StrictMode does
     // this in dev) the finished instance is destroyed as soon as it resolves.
     let cancelled = false;
-    initGame(hostRef.current!, {
-      onRunes: (mask, crowned) => setRunes({ mask, crowned }),
-      onNearDoor: setNearDoor,
-      onMuted: setMuted,
-      onTime: (ms, best, state) => setTime({ ms, best, state })
-    })
+    // Pixi is most of the download, so it loads after the links are already on screen.
+    import("./game")
+      .then(({ initGame }) =>
+        initGame(hostRef.current!, {
+          onRunes: (mask, crowned) => setRunes({ mask, crowned }),
+          onNearDoor: setNearDoor,
+          onMuted: setMuted,
+          onTime: (ms, best, state) => setTime({ ms, best, state })
+        })
+      )
       .then((game) => {
         if (cancelled) game.destroy();
         else gameRef.current = game;
@@ -63,6 +69,7 @@ const VikingGame = () => {
 
   const count = RUNES.filter((_, i) => runes.mask & (1 << i)).length;
   const door = DOORS.find((d) => d.id === nearDoor);
+  const newBest = time.state === "done" && time.best !== null && time.ms <= time.best;
 
   return (
     <div className={failed ? "page failed" : "page"}>
@@ -92,9 +99,8 @@ const VikingGame = () => {
           {!failed && (
             <p className={`timer ${time.state}`} aria-live={time.state === "done" ? "polite" : "off"}>
               <span className="now">{seconds(time.ms)}</span>
-              {time.state === "done" && time.best !== null && time.ms <= time.best && <span> · new best!</span>}
-              {time.best !== null && !(time.state === "done" && time.ms <= time.best) && <span> · best {seconds(time.best)}</span>}
-              {time.state === "done" && <span> · R to run again</span>}
+              {newBest && <span> · new best!</span>}
+              {time.best !== null && !newBest && <span> · best {seconds(time.best)}</span>}
             </p>
           )}
         </div>
@@ -105,6 +111,19 @@ const VikingGame = () => {
               {d.label}
             </a>
           ))}
+          {!failed && time.state !== "idle" && (
+            <button
+              type="button"
+              aria-label="Start the run again"
+              title="Restart (R)"
+              onClick={(e) => {
+                gameRef.current?.restart();
+                e.currentTarget.blur();
+              }}
+            >
+              ↻
+            </button>
+          )}
           {!failed && (
             <button
               type="button"
@@ -122,6 +141,23 @@ const VikingGame = () => {
           )}
         </nav>
       </header>
+
+      {!failed && time.state === "done" && closedRun !== time.ms && (
+        <div className="finish" role="status">
+          <button type="button" className="close" aria-label="Close" onClick={() => setClosedRun(time.ms)}>
+            ×
+          </button>
+          <strong>All ten runes!</strong>
+          <span className="result">{seconds(time.ms)}</span>
+          <span>{newBest ? "A new best time." : `Your best is ${seconds(time.best ?? time.ms)}.`}</span>
+          <span className="actions">
+            <button type="button" onClick={() => gameRef.current?.restart()}>
+              Run again
+            </button>
+            <a href="/">Back to Gamle Oslo</a>
+          </span>
+        </div>
+      )}
 
       {!failed && (
         <div className="touch" aria-hidden="true">
