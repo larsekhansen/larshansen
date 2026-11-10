@@ -21,6 +21,9 @@
     "apps/landing": {
       "name": "@larshansen/landing",
       "version": "0.2.0",
+      "dependencies": {
+        "@larshansen/pixelkit": "workspace:*",
+      },
       "devDependencies": {
         "@types/bun": "^1.4.2",
         "typescript": "^5.7.3",
@@ -82,6 +85,14 @@
         "@vitejs/plugin-react": "^4.3.4",
         "typescript": "^5.7.3",
         "vite": "^6.0.7",
+      },
+    },
+    "packages/pixelkit": {
+      "name": "@larshansen/pixelkit",
+      "version": "0.1.0",
+      "devDependencies": {
+        "@types/bun": "^1.4.2",
+        "typescript": "^5.7.3",
       },
     },
   },
@@ -197,6 +208,8 @@
     "@larshansen/iron-maze": ["@larshansen/iron-maze@workspace:apps/iron-maze"],
 
     "@larshansen/landing": ["@larshansen/landing@workspace:apps/landing"],
+
+    "@larshansen/pixelkit": ["@larshansen/pixelkit@workspace:packages/pixelkit"],
 
     "@larshansen/portfolio": ["@larshansen/portfolio@workspace:apps/portfolio"],
 

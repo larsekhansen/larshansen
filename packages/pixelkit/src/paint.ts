@@ -1,4 +1,4 @@
-import type { Phase } from "../game/oslo";
+import type { Phase } from "./oslo";
 
 // Shared drawing state. The world is drawn at low resolution into `world` and scaled up by
 // a whole number of device pixels, so every art pixel stays square and sharp.

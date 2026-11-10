@@ -1,5 +1,5 @@
-import type { Sky } from "../game/oslo";
-import { ctx, layerOrigin, layerX, light, seeded, view } from "./paint";
+import type { Sky } from "@larshansen/pixelkit/oslo";
+import { ctx, layerOrigin, layerX, light, seeded, view } from "@larshansen/pixelkit/paint";
 
 // Everything behind the street: the hills, Ekeberg, the fjord, Galgeberg, the skyline and the
 // tram. Each layer moves slower than the street the further away it is, and every layer is

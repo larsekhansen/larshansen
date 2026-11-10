@@ -1,7 +1,7 @@
 import type { Door } from "../game/doors";
 import { WORLD_W, districtFrom, rampAt } from "../game/level";
-import type { Sky } from "../game/oslo";
-import { R, gable, light, view, wdisc } from "./paint";
+import type { Sky } from "@larshansen/pixelkit/oslo";
+import { R, gable, light, view, wdisc } from "@larshansen/pixelkit/paint";
 
 const reduced = () => view.reduced;
 

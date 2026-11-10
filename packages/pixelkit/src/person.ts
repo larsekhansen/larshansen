@@ -1,6 +1,6 @@
-import { PLAYER } from "../game/config";
-import type { Phase } from "../game/oslo";
-import type { Body } from "../game/physics";
+import { PLAYER } from "./config";
+import type { Phase } from "./oslo";
+import type { Body } from "./physics";
 import { mix } from "./paint";
 
 // The player: a red knitted hat and a patterned sweater.

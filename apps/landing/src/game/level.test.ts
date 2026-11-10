@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { TILE } from "./config";
+import { TILE } from "@larshansen/pixelkit/config";
 import { buildDoors } from "./doors";
 import { COLS, DISTRICTS, DOOR_TILES, EXTRA_DOORS, MAP, findDoorSpots, findSpawn, isSolid, rampAt } from "./level";
 

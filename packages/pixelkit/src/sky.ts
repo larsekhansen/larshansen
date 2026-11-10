@@ -1,4 +1,4 @@
-import type { Phase, Sky } from "../game/oslo";
+import type { Phase, Sky } from "./oslo";
 import { S, ctx, disc, seeded, view } from "./paint";
 
 const GRADIENT = {

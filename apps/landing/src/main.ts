@@ -1,17 +1,20 @@
+import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
-import { PLAYER, TILE } from "./game/config";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door } from "./game/doors";
-import { pickLang, strings, type SkyName } from "./game/i18n";
-import { createInput, type Action } from "./game/input";
-import { GROUND_Y, WORLD_W, districtAt, findDoorSpots, findSpawn, rampAt, type District } from "./game/level";
-import { createStepper } from "./game/loop";
-import { skyFor } from "./game/oslo";
-import { createBody, stepBody } from "./game/physics";
+import { pickLang } from "@larshansen/pixelkit/i18n";
+import { strings, type SkyName } from "./game/i18n";
+import { createInput, type Action } from "@larshansen/pixelkit/input";
+import { GROUND_Y, WORLD, WORLD_W, districtAt, findDoorSpots, findSpawn, rampAt, type District } from "./game/level";
+import { createStepper } from "@larshansen/pixelkit/loop";
+import { skyFor } from "@larshansen/pixelkit/oslo";
+import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
 import { drawBuildings, drawRuins } from "./render/buildings";
 import { drawBoards, drawTiles, lightStreet } from "./render/ground";
-import { R, TINT, drawLights, layerOrigin, lights, target, view } from "./render/paint";
-import { drawSky, horizonColor, snowfall } from "./render/sky";
+import { R, layerOrigin, target, view } from "@larshansen/pixelkit/paint";
+import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
+import { createStage } from "@larshansen/pixelkit/stage";
 import { drawText, layoutBoards, textTarget, type Board } from "./render/text";
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -23,24 +26,9 @@ const help = $<HTMLElement>("help");
 const announce = $<HTMLElement>("announce");
 const enterButton = pad.querySelector<HTMLButtonElement>('[data-action="enter"]')!;
 
-const g = px.getContext("2d")!;
-const scratch = document.createElement("canvas");
-const sg = scratch.getContext("2d")!;
+const kit = createStage({ stage, px, ui, factors: [0.12, 0.2, 0.25, 0.4, 0.7, 1] });
+const g = kit.g;
 textTarget(ui.getContext("2d")!);
-
-/**
- * One canvas per depth, stacked between the sky and the text layer. Each is drawn at whole art
- * pixels and then moved by the fraction its depth has scrolled, so every depth glides smoothly
- * instead of jumping a whole, large pixel at a time.
- */
-const DEPTHS = [0.12, 0.2, 0.25, 0.4, 0.7, 1].map((factor) => {
-  const canvas = document.createElement("canvas");
-  canvas.setAttribute("aria-hidden", "true");
-  canvas.className = "depth";
-  stage.insertBefore(canvas, ui);
-  return { factor, canvas, g: canvas.getContext("2d")! };
-});
-const depth = (factor: number) => DEPTHS.find((d) => d.factor === factor)!;
 
 // Language: Norwegian for Norwegian browsers, English for everyone else.
 const lang = pickLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
@@ -222,7 +210,7 @@ function play() {
       intent.jumpHeld = true; // always the full jump
     }
   }
-  const r = stepBody(body, intent);
+  const r = stepBody(body, intent, WORLD);
   if (intent.left || intent.right || r.jumped) state.moved = true;
   state.walk = body.onGround && Math.abs(body.vx) > 0.2 ? state.walk + 1 : 0;
   if (r.landed > 3 && !view.reduced)
@@ -293,84 +281,31 @@ function camera(elapsedMs: number, snap: boolean) {
 
 let boards: Board[] = [];
 function layout() {
-  const rect = stage.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  const devW = Math.max(1, Math.round(rect.width * dpr));
-  const devH = Math.max(1, Math.round(rect.height * dpr));
-  // Whole device pixels per art pixel, keeping about 192 art pixels of height and 180 of width.
-  // A tall phone zooms in further, so the street is not a strip under an empty sky.
-  let k = Math.max(1, Math.floor(Math.min(devH / 192, devW / 180)));
-  if (devH > devW * 1.2) k = Math.max(k, Math.min(Math.ceil(devH / 280), Math.floor(devW / 120)));
-  // One art pixel more than the screen in each direction, so nudging a layer never shows an edge.
-  Object.assign(view, { k, dpr, w: Math.ceil(devW / k) + 1, h: Math.ceil(devH / k) + 1 });
-  view.cssW = (view.w * k) / dpr;
-  view.cssH = (view.h * k) / dpr;
-  for (const c of [px, ui, ...DEPTHS.map((d) => d.canvas)]) {
-    c.style.width = `${view.cssW}px`;
-    c.style.height = `${view.cssH}px`;
-  }
-  for (const c of [px, scratch, ...DEPTHS.map((d) => d.canvas)]) {
-    c.width = view.w;
-    c.height = view.h;
-  }
-  ui.width = Math.round(view.cssW * dpr);
-  ui.height = Math.round(view.cssH * dpr);
+  kit.resize();
   boards = layoutBoards(doors, "larshansen.dev");
   camera(0, true);
 }
 
-/**
- * Draws one pass of the scene onto a depth's canvas. Distant passes fade a little towards the
- * colour of the horizon, which keeps them calm behind the player. At dusk and night the pass is
- * darkened and then its own windows and lamps come on, before nearer things cover what they should.
- */
-function pass(onto: CanvasRenderingContext2D, draw: () => void, haze = 0) {
-  sg.globalCompositeOperation = "source-over";
-  sg.clearRect(0, 0, view.w, view.h);
-  target(sg);
-  lights.length = 0;
-  draw();
-  if (haze > 0) {
-    sg.globalCompositeOperation = "source-atop";
-    sg.globalAlpha = haze;
-    sg.fillStyle = horizonColor(sky.phase);
-    sg.fillRect(0, 0, view.w, view.h);
-    sg.globalAlpha = 1;
-  }
-  const tint = TINT[sky.phase];
-  if (tint) {
-    sg.globalCompositeOperation = "source-atop";
-    sg.fillStyle = tint;
-    sg.fillRect(0, 0, view.w, view.h);
-    sg.globalCompositeOperation = "source-over";
-    drawLights();
-  }
-  onto.drawImage(scratch, 0, 0);
-}
-
-/** Moves a canvas by what is left after drawing at whole art pixels, rounded to device pixels. */
-function nudge(canvas: HTMLCanvasElement, fracX: number) {
-  const toCss = (art: number) => Math.round(art * view.k) / view.dpr;
-  canvas.style.transform = `translate3d(${-toCss(fracX)}px, ${-toCss(view.camYf - view.camY)}px, 0)`;
-}
+const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, sky.phase, haze);
+const nudge = kit.nudge;
 
 function render() {
   target(g);
   drawSky(sky, state.steps);
   nudge(px, 0);
 
-  for (const d of DEPTHS) {
+  for (const d of kit.depths) {
     d.g.clearRect(0, 0, view.w, view.h);
     const origin = layerOrigin(d.factor);
     nudge(d.canvas, origin - Math.floor(origin));
   }
-  pass(depth(0.12).g, () => drawHills(sky), 0.35);
-  pass(depth(0.2).g, () => drawFjord(state.steps), 0.35);
-  pass(depth(0.25).g, () => drawGalgeberg(sky), 0.28);
-  pass(depth(0.4).g, drawSkylineBlocks, 0.25);
-  pass(depth(0.4).g, drawLandmarks, 0.18);
-  pass(depth(0.7).g, () => drawTram(state.steps), 0.08);
-  const street = depth(1).g;
+  pass(kit.depth(0.12), () => drawHills(sky), 0.35);
+  pass(kit.depth(0.2), () => drawFjord(state.steps), 0.35);
+  pass(kit.depth(0.25), () => drawGalgeberg(sky), 0.28);
+  pass(kit.depth(0.4), drawSkylineBlocks, 0.25);
+  pass(kit.depth(0.4), drawLandmarks, 0.18);
+  pass(kit.depth(0.7), () => drawTram(state.steps), 0.08);
+  const street = kit.depth(1);
   pass(street, () => drawRuins(sky), 0.12);
   pass(street, () => drawBuildings(doors, sky, state.steps));
   pass(street, () => {

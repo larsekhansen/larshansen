@@ -1,19 +1,9 @@
 // The few words the game says, in Norwegian for Norwegian browsers and English for everyone else.
 
-const NORWEGIAN = /^(nb|nn|no)\b/i;
+import type { Lang } from "@larshansen/pixelkit/i18n";
 
-export type Lang = "nb" | "en";
 /** The skies `?sky=` and the T key can show. */
 export type SkyName = "day" | "evening" | "twilight" | "night" | "winter" | "17mai";
-
-/** The first of the visitor's languages that the game speaks, in their order of preference. */
-export function pickLang(languages: readonly string[]): Lang {
-  for (const l of languages) {
-    if (NORWEGIAN.test(l)) return "nb";
-    if (/^en\b/i.test(l)) return "en";
-  }
-  return "en";
-}
 
 const STRINGS = {
   nb: {

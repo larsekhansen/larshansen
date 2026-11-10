@@ -1,0 +1,17 @@
+{
+  "name": "@larshansen/pixelkit",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts",
+    "./chrome.css": "./src/chrome.css"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "^5.7.3"
+  }
+}

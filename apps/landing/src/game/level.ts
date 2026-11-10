@@ -1,4 +1,5 @@
-import { TILE } from "./config";
+import { TILE } from "@larshansen/pixelkit/config";
+import type { World } from "@larshansen/pixelkit/physics";
 
 // The world as text, one character per 16 px tile. A walk through Gamle Oslo, from the
 // wooden houses at Vålerenga and Kampen, past Botanisk hage and the ruins in Gamlebyen,
@@ -120,6 +121,8 @@ export function rampAt(x: number): number | null {
   }
   return best;
 }
+
+export const WORLD: World = { width: WORLD_W, isSolid, isOneWay, rampAt };
 
 export function findSpawn(): { x: number; bottom: number } {
   for (let r = 0; r < ROWS; r++) {

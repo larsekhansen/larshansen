@@ -21,7 +21,7 @@ request at the end. Nothing deploys until that is merged.
 
 | Phase | Order | State |
 |---|---|---|
-| 1. Shared pixel kit, front page unchanged | `orders/01-pixelkit.md` | not started |
+| 1. Shared pixel kit, front page unchanged | `orders/01-pixelkit.md` | done: 28 tests, screenshots identical in four skies |
 | 2. Viking game rebuilt in the house style | `orders/02-viking-pixel.md` | not started |
 | 3. The maze as a scene: Jernhaugen | `orders/03-maze-core.md` | not started |
 | 4. Maze features and levels | `orders/04-maze-features.md` | not started |

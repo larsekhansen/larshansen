@@ -1,8 +1,8 @@
-import { TILE } from "../game/config";
+import { TILE } from "@larshansen/pixelkit/config";
 import { COLS, MAP, ROWS, districtFrom, isSolid, tileAt } from "../game/level";
-import type { Sky } from "../game/oslo";
+import type { Sky } from "@larshansen/pixelkit/oslo";
 import { LAMPS, STONE, stoneColumn } from "./buildings";
-import { R, light, view } from "./paint";
+import { R, light, view } from "@larshansen/pixelkit/paint";
 
 const SNOW = "#f2f5fa";
 

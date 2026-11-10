@@ -1,10 +1,10 @@
-import { PLAYER, TILE } from "../game/config";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "../game/doors";
 import { isOneWay, isSolid, rampAt } from "../game/level";
-import type { Phase } from "../game/oslo";
-import type { Body } from "../game/physics";
-import { view } from "./paint";
-import { playerPixels } from "./sprite";
+import type { Phase } from "@larshansen/pixelkit/oslo";
+import type { Body } from "@larshansen/pixelkit/physics";
+import { view } from "@larshansen/pixelkit/paint";
+import { playerPixels } from "@larshansen/pixelkit/person";
 
 // Words are drawn at full screen resolution on top of the pixel art, so they stay sharp. The player
 // is drawn here too, after the signs, so it is never hidden behind a sign's words.

@@ -1,5 +1,13 @@
 import { JUMP, MOVE, PLAYER, TILE } from "./config";
-import { WORLD_W, isOneWay, isSolid, rampAt } from "./level";
+
+/** What the body moves through. The scene supplies it; the kit knows nothing about any one map. */
+export interface World {
+  /** World width in art pixels. */
+  width: number;
+  isSolid(c: number, r: number): boolean;
+  isOneWay(c: number, r: number): boolean;
+  rampAt(x: number): number | null;
+}
 
 export interface Body {
   x: number;
@@ -42,7 +50,7 @@ export function createBody(centerX: number, bottom: number): Body {
 }
 
 /** One physics step at 60 steps per second. */
-export function stepBody(b: Body, intent: Intent): StepResult {
+export function stepBody(b: Body, intent: Intent, world: World): StepResult {
   const result: StepResult = { jumped: false, landed: 0 };
 
   b.buffer = intent.jumpPressed ? JUMP.bufferSteps : Math.max(0, b.buffer - 1);
@@ -69,19 +77,19 @@ export function stepBody(b: Body, intent: Intent): StepResult {
   b.vx = b.vx < target ? Math.min(target, b.vx + accel) : Math.max(target, b.vx - accel);
   b.vy = Math.min(JUMP.maxFall, b.vy + (b.vy < 0 ? JUMP.gravityUp : JUMP.gravityDown));
 
-  moveX(b, b.vx);
-  result.landed = moveY(b, b.vy);
+  moveX(b, b.vx, world);
+  result.landed = moveY(b, b.vy, world);
   return result;
 }
 
-function moveX(b: Body, dx: number) {
+function moveX(b: Body, dx: number, world: World) {
   b.x += dx;
   if (b.x < 0) {
     b.x = 0;
     b.vx = 0;
   }
-  if (b.x + PLAYER.w > WORLD_W) {
-    b.x = WORLD_W - PLAYER.w;
+  if (b.x + PLAYER.w > world.width) {
+    b.x = world.width - PLAYER.w;
     b.vx = 0;
   }
   const top = Math.floor(b.y / TILE);
@@ -89,7 +97,7 @@ function moveX(b: Body, dx: number) {
   if (dx > 0) {
     const c = Math.floor((b.x + PLAYER.w - 0.01) / TILE);
     for (let r = top; r <= bottom; r++)
-      if (isSolid(c, r)) {
+      if (world.isSolid(c, r)) {
         b.x = c * TILE - PLAYER.w;
         b.vx = 0;
         break;
@@ -97,7 +105,7 @@ function moveX(b: Body, dx: number) {
   } else if (dx < 0) {
     const c = Math.floor(b.x / TILE);
     for (let r = top; r <= bottom; r++)
-      if (isSolid(c, r)) {
+      if (world.isSolid(c, r)) {
         b.x = (c + 1) * TILE;
         b.vx = 0;
         break;
@@ -106,7 +114,7 @@ function moveX(b: Body, dx: number) {
 }
 
 /** Moves vertically and returns the landing speed, or 0 when the body did not land. */
-function moveY(b: Body, dy: number): number {
+function moveY(b: Body, dy: number, world: World): number {
   const prevBottom = b.y + PLAYER.h;
   const prevFoot = b.x + PLAYER.w / 2 - b.vx;
   const wasOnGround = b.onGround;
@@ -120,7 +128,7 @@ function moveY(b: Body, dy: number): number {
     const r = Math.floor((b.y + PLAYER.h - 0.01) / TILE);
     for (let c = left; c <= right; c++) {
       // Awnings and ledges only hold you when you come down onto them from above.
-      if (isSolid(c, r) || (isOneWay(c, r) && prevBottom <= r * TILE + 0.01)) {
+      if (world.isSolid(c, r) || (world.isOneWay(c, r) && prevBottom <= r * TILE + 0.01)) {
         b.y = r * TILE - PLAYER.h;
         b.vy = 0;
         b.onGround = true;
@@ -130,7 +138,7 @@ function moveY(b: Body, dy: number): number {
   } else if (dy < 0) {
     const r = Math.floor(b.y / TILE);
     for (let c = left; c <= right; c++)
-      if (isSolid(c, r)) {
+      if (world.isSolid(c, r)) {
         b.y = (r + 1) * TILE;
         b.vy = 0;
         break;
@@ -139,10 +147,10 @@ function moveY(b: Body, dy: number): number {
 
   // Slopes: land on them from above, walk up them, and stick to them on the way down.
   const foot = b.x + PLAYER.w / 2;
-  const surface = rampAt(foot);
+  const surface = world.rampAt(foot);
   if (surface !== null) {
     const bottom = b.y + PLAYER.h;
-    const prevSurface = rampAt(prevFoot) ?? surface;
+    const prevSurface = world.rampAt(prevFoot) ?? surface;
     const landing = b.vy >= 0 && prevBottom <= prevSurface + 0.5 && bottom >= surface;
     const walkingUp = wasOnGround && bottom >= surface && bottom - surface <= 4;
     const walkingDown = wasOnGround && bottom < surface && surface - bottom <= 3;

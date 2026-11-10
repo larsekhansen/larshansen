@@ -1,6 +1,6 @@
-import { PLAYER, TILE } from "./config";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { DoorKind, DoorSpot } from "./level";
-import type { Body } from "./physics";
+import type { Body } from "@larshansen/pixelkit/physics";
 
 export interface AppLink {
   id: string;
