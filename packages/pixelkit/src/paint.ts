@@ -1,4 +1,5 @@
 import type { Phase } from "./oslo";
+import { STONE, type Stone } from "./palette";
 
 // Shared drawing state. The world is drawn at low resolution into `world` and scaled up by
 // a whole number of device pixels, so every art pixel stays square and sharp.
@@ -131,4 +132,27 @@ export function seeded(seed: number) {
     s = (s * 16807) % 2147483647;
     return s / 2147483647;
   };
+}
+
+function stoneHash(x: number, y: number) {
+  const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+}
+
+/**
+ * One column of rough stonework from `top` to `bottom` in world coordinates, leaving a gap for an
+ * opening: irregular blocks with dark mortar, the same stones every visit. The front page's ruins
+ * and the maze's walls are both drawn with it.
+ */
+export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, gapBottom = 0, stone: Stone = STONE) {
+  for (let y = top; y < bottom; y++) {
+    if (y >= gapTop && y < gapBottom) continue;
+    const course = Math.floor(y / 4);
+    const offset = (course * 5) % 7;
+    const block = Math.floor((x + offset) / 6);
+    const isMortar = y % 4 === 3 || (x + offset) % 6 === 0;
+    const shade = stoneHash(block, course);
+    const color = isMortar ? stone.mortar : shade < 0.33 ? stone.dark : shade < 0.75 ? stone.base : stone.light;
+    R(x, y, 1, 1, color);
+  }
 }

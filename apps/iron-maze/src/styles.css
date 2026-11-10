@@ -1,0 +1,155 @@
+html,
+body {
+  /* Painted before the game has loaded: the mound's earth. */
+  background: #14110f;
+}
+
+/* The level, in the header bar: its name, how far, the clock, the curses, and the mute button. */
+.run {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  margin-left: auto;
+}
+
+.run[hidden] {
+  display: none;
+}
+
+.run .name {
+  font-weight: 700;
+}
+
+.run .level,
+.run .deaths {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.clock {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tool:hover,
+.tool:focus-visible {
+  border-color: #541321;
+  color: #541321;
+}
+
+.tool svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tool .cross,
+.tool[aria-pressed="true"] .waves {
+  display: none;
+}
+
+.tool[aria-pressed="true"] .cross {
+  display: inline;
+}
+
+/* The finish card: the header bar's cream, centred over the mound. */
+.finish {
+  position: absolute;
+  top: 24%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 28px 18px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 12px;
+  background: #fffcf6;
+  box-shadow: 0 6px 24px rgba(31, 26, 23, 0.22);
+  text-align: center;
+  font-size: 14px;
+}
+
+.finish[hidden] {
+  display: none;
+}
+
+.finish strong {
+  font-size: 18px;
+}
+
+.finish .actions {
+  margin-top: 8px;
+}
+
+.finish .actions a {
+  display: inline-block;
+  padding: 6px 14px;
+  border: 1px solid #541321;
+  border-radius: 99px;
+  background: #541321;
+  color: #fffcf6;
+  font: 600 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-decoration: none;
+}
+
+.me {
+  white-space: nowrap;
+}
+
+@media (min-width: 760px) {
+  .bar {
+    flex-wrap: nowrap;
+    gap: 6px 12px;
+  }
+
+  .apps,
+  .apps ul {
+    flex-wrap: nowrap;
+  }
+
+  .apps {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .apps a {
+    padding: 2px 8px;
+  }
+
+  .run {
+    flex-shrink: 0;
+  }
+}
+
+/* One row from 600 px: below 900 px the second link makes room for the level display. */
+@media (max-width: 899px) {
+  .apps .far {
+    display: none;
+  }
+}
+
+.run .level,
+.run .deaths,
+.run .clock {
+  white-space: nowrap;
+}

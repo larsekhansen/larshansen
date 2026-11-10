@@ -48,5 +48,22 @@ export const PALETTE = {
   crateEdge: "#3d2612",
   crateShade: "#7d5530",
   crateTop: "#d9a466",
-  snow: "#f2f5fa"
+  snow: "#f2f5fa",
+  // The burial mound (the maze): packed earth in two close browns, the curse, the creatures.
+  moundEarth: "#dca652", // daylight colour: after the night tint it lands near #5a4a3c, the lightest step of the mound
+  moundEarthDark: "#cf9a48",
+  moundEarthLight: "#e4b462",
+  moundDeep: "#15131b", // the solid earth around the carved tunnels
+  moundDeepSpeck: "#1d1b26",
+  skyBlue: "#8fc4ec",
+  curse: "#8a2a1e", // the rust-red line along every wall; it pulses between these two
+  curseBright: "#c8402b",
+  curseFlash: "#ff7a55",
+  daylight: "#e6f3f8",
+  snakeGreen: "#3f8f3a", // the old game's snakes
+  snakePurple: "#7a3f9a",
+  tongue: "#d23a3a",
+  raven: "#17141a",
+  ravenBeak: "#8f897d",
+  ravenEye: "#d9d4c8"
 } as const;

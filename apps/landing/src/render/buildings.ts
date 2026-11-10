@@ -1,7 +1,7 @@
 import type { Door } from "../game/doors";
 import { WORLD_W, districtFrom, rampAt } from "../game/level";
 import type { Sky } from "@larshansen/pixelkit/oslo";
-import { R, gable, light, view, wdisc } from "@larshansen/pixelkit/paint";
+import { R, gable, light, stoneColumn, view, wdisc } from "@larshansen/pixelkit/paint";
 import { STONE, type Stone } from "@larshansen/pixelkit/palette";
 
 const reduced = () => view.reduced;
@@ -206,27 +206,8 @@ function toyen(gate: Door | undefined, sky: Sky) {
 
 // Ruined stone: irregular blocks with dark mortar, a little moss, and the same stones every visit.
 // Walls you can stand on are a little lighter and warmer than the ruins further back.
-export { STONE };
+export { STONE, stoneColumn };
 const STONE_BACK: Stone = { base: "#5f5c58", light: "#68645f", dark: "#56534f", mortar: "#474441", moss: "#4c5f40" };
-
-function stoneHash(x: number, y: number) {
-  const n = Math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
-  return n - Math.floor(n);
-}
-
-/** One column of rough stonework from `top` to `bottom`, leaving a gap for an opening. */
-export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, gapBottom = 0, stone: Stone = STONE) {
-  for (let y = top; y < bottom; y++) {
-    if (y >= gapTop && y < gapBottom) continue;
-    const course = Math.floor(y / 4);
-    const offset = (course * 5) % 7;
-    const block = Math.floor((x + offset) / 6);
-    const isMortar = y % 4 === 3 || (x + offset) % 6 === 0;
-    const shade = stoneHash(block, course);
-    const color = isMortar ? stone.mortar : shade < 0.33 ? stone.dark : shade < 0.75 ? stone.base : stone.light;
-    R(x, y, 1, 1, color);
-  }
-}
 
 /**
  * Gamlebyen: what is left of Mariakirken in Middelalderparken, a broken arch and a ruined wall.

@@ -31,6 +31,7 @@ import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
 import { createStage } from "@larshansen/pixelkit/stage";
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { textTarget } from "@larshansen/pixelkit/text";
+import type { Maze } from "@larshansen/maze/scene";
 import { RUNE_STROKES, type RuneChar } from "./game/runes";
 import { begin, collect, countOf, elapsedMs, formatTime, judge, newRun, tick, touched } from "./game/run";
 import { createSheep, stepSheep, stomped, SHEEP } from "./game/sheep";
@@ -201,6 +202,142 @@ window.addEventListener("pageshow", (e) => e.persisted && resetScene());
 function say(text: string) {
   announce.textContent = text;
 }
+
+// ---------------------------------------------------------------------------------------------
+// The second scene: Jernhaugen, the maze in the burial mound. Its code is loaded the first time he
+// goes in, so the fjord's own script stays small. The address says where he is (#jernhaugen), so
+// the browser's Back button leaves the mound.
+
+const MAZE_HASH = "#jernhaugen";
+let scene: "fjord" | "maze" = "fjord";
+let maze: Maze | null = null;
+let loading = false;
+/** True when going back in history leaves the mound: false when the page was opened inside it. */
+let canGoBack = false;
+const mazeUi = {
+  hud: $<HTMLElement>("mazehud"),
+  back: $<HTMLButtonElement>("mz-back"),
+  name: $<HTMLElement>("mz-name"),
+  level: $<HTMLElement>("mz-level"),
+  clock: $<HTMLElement>("mz-clock"),
+  deaths: $<HTMLElement>("mz-deaths")
+};
+const mazeShown = { name: "", level: "", clock: "", deaths: "" };
+let mazeText: { deaths(n: number): string; formatTime(ms: number): string } | null = null;
+const fjordHelp = { text: "", hidden: false };
+
+function showMazeHud() {
+  if (!maze || !mazeText) return;
+  const h = maze.hud();
+  const next = { name: h.name, level: `${h.level} / ${h.of}`, clock: mazeText.formatTime(h.ms), deaths: mazeText.deaths(h.deaths) };
+  for (const key of Object.keys(next) as (keyof typeof next)[]) {
+    if (mazeShown[key] === next[key]) continue;
+    mazeShown[key] = next[key];
+    mazeUi[key].textContent = next[key];
+  }
+  if (maze.state.started && !help.hidden) help.hidden = true;
+}
+
+async function enterMaze() {
+  if (scene === "maze" || loading) return;
+  loading = true;
+  // The fjord goes dark and waits, however long the maze takes to arrive.
+  state.mode = "away";
+  state.fade = 1;
+  state.alpha = 0;
+  try {
+    const [mod, words, rules] = await Promise.all([import("@larshansen/maze/scene"), import("@larshansen/maze/i18n"), import("@larshansen/maze/rules")]);
+    const mt = words.strings(lang);
+    mazeText = { deaths: mt.deaths, formatTime: rules.formatTime };
+    mazeUi.back.textContent = mt.back;
+    mazeUi.back.setAttribute("aria-label", mt.leaving);
+    mazeUi.deaths.title = mt.cursesLabel;
+    mazeUi.deaths.setAttribute("aria-label", mt.cursesLabel);
+    if (!loading || location.hash !== MAZE_HASH) throw new Error("left before the mound opened");
+    input.clear();
+    maze = mod.createMaze(
+      {
+        stage: kit,
+        input,
+        sfx,
+        lang,
+        el: stage,
+        say,
+        topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
+        onLeave: (r) => leaveMaze(r.cleared)
+      },
+      { level: Number(params.get("level")) || 1 }
+    );
+    scene = "maze";
+    loading = false;
+    document.body.classList.add("in-maze");
+    document.body.classList.remove("touch");
+    pad.hidden = true;
+    fjordHelp.text = help.textContent ?? "";
+    fjordHelp.hidden = help.hidden;
+    help.textContent = mt.help;
+    help.hidden = false;
+    stage.style.cursor = "";
+    mazeShown.name = mazeShown.level = mazeShown.clock = mazeShown.deaths = "";
+    showMazeHud();
+    layout();
+  } catch {
+    // The maze did not load (or he left first): back to the fjord, standing at the mound door.
+    loading = false;
+    if (location.hash === MAZE_HASH) history.replaceState(null, "", location.pathname + location.search);
+    backToFjord();
+  }
+}
+
+/** He is out of the mound: the fjord again, with him standing at its door. */
+function backToFjord() {
+  maze?.destroy();
+  maze = null;
+  scene = "fjord";
+  loading = false;
+  document.body.classList.remove("in-maze");
+  if (touch) {
+    document.body.classList.add("touch");
+    pad.hidden = false;
+  }
+  help.textContent = fjordHelp.text || help.textContent;
+  help.hidden = fjordHelp.text ? fjordHelp.hidden : help.hidden;
+  standAt(mound);
+  resetScene();
+  state.moved = state.moved || help.hidden;
+  state.fade = 1; // fades back in
+  Object.assign(shown, body);
+  layout();
+}
+
+/** Called by the maze when he walks out, or clears the last level. */
+function leaveMaze(cleared: boolean) {
+  if (cleared) abilities.doubleJump = true; // the raven's feather: the double jump is on at once
+  if (canGoBack && location.hash === MAZE_HASH) {
+    history.back(); // the hashchange that follows takes him out
+    return;
+  }
+  if (location.hash === MAZE_HASH) history.replaceState(null, "", location.pathname + location.search);
+  backToFjord();
+}
+
+/** Keeps the scene in step with the address: Back, Forward, a typed address, or a click. */
+function syncScene() {
+  const wantMaze = location.hash === MAZE_HASH;
+  if (wantMaze && scene === "fjord" && !loading) void enterMaze();
+  else if (!wantMaze && (scene === "maze" || loading)) {
+    if (scene === "maze") backToFjord();
+    else loading = false; // left before it loaded: enterMaze notices and gives up
+  }
+}
+window.addEventListener("hashchange", () => {
+  if (location.hash === MAZE_HASH && scene === "fjord" && !loading) canGoBack = true;
+  syncScene();
+});
+mazeUi.back.addEventListener("click", () => {
+  leaveMaze(false);
+  mazeUi.back.blur();
+});
 
 // ---------------------------------------------------------------------------------------------
 // The header: ten rune slots, the clock, restart and mute.
@@ -448,10 +585,17 @@ function goThrough() {
   }
   if (!quick && s > 30) state.fade = Math.min(1, (s - 30) / 14);
   if (quick || s >= 44) {
-    remember(d.id);
     state.mode = "away";
     state.modeSteps = 0;
-    location.assign(d.href);
+    if (d.id === "maze") {
+      // The mound is a scene in this page: the address changes, and Back comes out again.
+      canGoBack = true;
+      location.hash = MAZE_HASH;
+      syncScene();
+    } else {
+      remember(d.id);
+      location.assign(d.href);
+    }
   }
 }
 
@@ -463,7 +607,8 @@ function stepOnce() {
   tick(run);
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
-  else if (++state.modeSteps > 300) resetScene(); // the place never opened
+  else if (!loading && ++state.modeSteps > 300) resetScene(); // the place never opened
+  if (state.mode === "play" && state.fade > 0) state.fade = Math.max(0, state.fade - 1 / 16); // coming back from the mound
   for (const s of sheep) stepSheep(s);
   doors.forEach((d) => d.shake > 0 && d.shake--);
   state.sparks = state.sparks.filter((p) => {
@@ -502,6 +647,7 @@ const signLabels = { start: t.boardStart, jetty: t.boardJetty, smithy: t.boardSm
 const signLines = { start: t.signStart, jetty: t.signJetty, smithy: t.signSmithy, beacon: t.signBeacon };
 function layout() {
   kit.resize();
+  maze?.resize();
   boards = layoutBoards(doors, signs.map((s) => ({ ...s, label: signLabels[s.key] })));
   camera(0, true);
 }
@@ -581,13 +727,25 @@ function render() {
 }
 
 let nearDoor: Door | null = null;
-const stepper = createStepper(stepOnce);
+const stepper = createStepper(() => {
+  if (scene === "maze" && maze) {
+    input.pollPad(0.35);
+    maze.step();
+    input.endStep();
+  } else stepOnce();
+});
 let last = performance.now();
 function frame(now: number) {
   const elapsed = Math.min(100, Math.max(0, now - last));
   last = now;
   stepper.advance(elapsed);
   const a = stepper.alpha();
+  if (scene === "maze" && maze) {
+    maze.render(a, elapsed);
+    showMazeHud();
+    requestAnimationFrame(frame);
+    return;
+  }
   Object.assign(shown, body, { x: before.x + (body.x - before.x) * a, y: before.y + (body.y - before.y) * a });
   camera(elapsed, false);
   render();
@@ -644,7 +802,7 @@ function doorUnder(e: MouseEvent): Door | null {
   return doors.find((d) => x >= d.x - TILE && x <= d.x + d.w + TILE && y >= d.bottom - TILE * 3.5 && y <= d.bottom + 2) ?? null;
 }
 stage.addEventListener("click", (e) => {
-  if (state.mode !== "play") return;
+  if (state.mode !== "play" || scene !== "fjord") return;
   const door = doorUnder(e);
   const at = worldAt(e);
   const x = door ? door.x + door.w / 2 : Math.max(PLAYER.w, Math.min(WORLD_W - PLAYER.w, at.x));
@@ -654,7 +812,7 @@ stage.addEventListener("click", (e) => {
   begin(run);
 });
 stage.addEventListener("mousemove", (e) => {
-  state.hover = state.mode === "play" ? doorUnder(e) : null;
+  state.hover = state.mode === "play" && scene === "fjord" ? doorUnder(e) : null;
   stage.style.cursor = state.hover ? "pointer" : "";
 });
 stage.addEventListener("mouseleave", () => (state.hover = null));
@@ -676,6 +834,13 @@ const SKIES: (SkyName | null)[] = [null, "day", "evening", "twilight", "night", 
 window.addEventListener("keydown", (e) => {
   if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.target instanceof Element && e.target.closest("a, button, input, textarea, select")) return;
+  if (scene !== "fjord") {
+    if (e.code === "KeyM") {
+      sfx.toggleMute();
+      labelButtons();
+    }
+    return;
+  }
   if (e.code === "KeyT") {
     const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
     skyOverride = next;
@@ -702,4 +867,34 @@ requestAnimationFrame((now) => {
   requestAnimationFrame(frame);
 });
 
-if (params.has("debug")) Object.assign(window, { __game: { body, shown, state, view, input, step: stepOnce, frame, doors, runes } });
+// The header link to the maze keeps its address for visitors without JavaScript; with it, a click goes in.
+links.find((l) => l.id === "maze")?.el.addEventListener("click", (e) => {
+  if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+  e.preventDefault();
+  if (scene === "maze" || loading) return;
+  canGoBack = true;
+  location.hash = MAZE_HASH;
+  syncScene();
+});
+
+// ?level=<n> opens the mound at that level. Opening /viking/#jernhaugen starts in it too.
+if (params.has("level") && location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + MAZE_HASH);
+syncScene();
+
+if (params.has("debug"))
+  Object.assign(window, {
+    __game: {
+      body,
+      shown,
+      state,
+      view,
+      input,
+      step: stepOnce,
+      frame,
+      doors,
+      runes,
+      get maze() {
+        return maze;
+      }
+    }
+  });

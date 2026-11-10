@@ -1,16 +1,62 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <link rel="manifest" href="/manifest.json" />
-    <title>Iron Maze</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Jernhaugen · larshansen.dev</title>
+    <meta
+      name="description"
+      content="A small maze game: steer a viking through a cursed burial mound without touching the walls. Three levels, a few snakes and a raven with opinions."
+    />
+    <meta name="theme-color" content="#14110f" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://maze.larshansen.dev/" />
+    <meta property="og:title" content="Jernhaugen · larshansen.dev" />
+    <meta property="og:description" content="Steer through the cursed mound. Don't touch the walls." />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   </head>
   <body>
-    <noscript>You need to enable JavaScript to run this app.</noscript>
-    <div id="root"></div>
-    <script type="module" src="/src/index.jsx"></script>
+    <header class="bar">
+      <h1 class="me">Lars Hansen</h1>
+      <nav class="apps" aria-label="Destinations">
+        <ul>
+          <li><a href="https://larshansen.dev/viking/" id="back">Vikingfjorden</a></li>
+          <li class="far"><a href="https://larshansen.dev/">Gamle Oslo</a></li>
+        </ul>
+      </nav>
+      <!-- The level: filled in by the game, so it stays hidden without JavaScript. -->
+      <div class="run" id="run" hidden>
+        <span class="name" id="name"></span>
+        <span class="level" id="level"></span>
+        <p class="clock"><span id="clock">0:00.0</span></p>
+        <span class="deaths" id="deaths"></span>
+        <button type="button" id="mute" class="tool" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /><path class="cross" d="M16 9l5 6m0-6-5 6" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <p class="sr-only" id="blurb" data-i18n="blurb">Steer through the cursed mound without touching the walls.</p>
+      <canvas id="px" aria-hidden="true"></canvas>
+      <canvas id="ui" aria-hidden="true"></canvas>
+      <p class="help" id="help"></p>
+      <p class="sr-only" id="announce" aria-live="polite"></p>
+      <div class="finish" id="finish" role="status" hidden>
+        <strong id="finish-title"></strong>
+        <span id="finish-line"></span>
+        <span class="actions">
+          <a href="https://larshansen.dev/viking/#jernhaugen" id="finish-link"></a>
+        </span>
+      </div>
+      <noscript>
+        <p class="noscript">
+          Jernhaugen trenger JavaScript, men lenkene over fungerer uten.<br />
+          The mound needs JavaScript, but the links above work without it.
+        </p>
+      </noscript>
+    </main>
+
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

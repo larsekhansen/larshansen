@@ -3,7 +3,7 @@
 // water and wind, and a pentatonic set for pickups. Nothing plays before the first key or pointer
 // event (browsers refuse it anyway), and the mute is shared by all the games.
 
-export type SfxName = "step" | "jump" | "land" | "door" | "pickup" | "splash" | "bleat" | "fanfare" | "curse" | "stone" | "gate";
+export type SfxName = "step" | "jump" | "land" | "door" | "pickup" | "splash" | "bleat" | "fanfare" | "curse" | "stone" | "gate" | "hiss";
 
 const MUTE_KEY = "larshansen.muted";
 const OLD_MUTE_KEY = "viking.muted"; // the viking game's own, read once as a fallback
@@ -128,6 +128,9 @@ export function createSfx(): Sfx {
       case "stone":
         tone("triangle", 220, 130, 0.14, 0.3);
         return hiss(600, 150, 0.06, 0.15);
+      case "hiss":
+        // A snake: 120 ms of filtered noise.
+        return hiss(5200, 2400, 0.12, 0.1);
       case "gate":
         hiss(300, 900, 0.3, 0.25);
         return tone("sine", 90, 50, 0.3, 0.3);

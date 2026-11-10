@@ -24,8 +24,11 @@ export interface Input {
   hold(action: Action, down: boolean): void;
   endStep(): void;
   clear(): void;
-  /** Reads a connected gamepad. Call once per physics step. */
-  pollPad(): void;
+  /**
+   * Reads a connected gamepad. Call once per physics step. The stick's up and down only count past
+   * `stickY` (0.6 unless the scene says otherwise), so a nudge of the stick does not jump or open a door.
+   */
+  pollPad(stickY?: number): void;
 }
 
 export function createInput(): Input {
@@ -47,16 +50,17 @@ export function createInput(): Input {
       (Object.keys(held) as Action[]).forEach((a) => (held[a] = false));
       started.clear();
     },
-    pollPad: () => {
+    pollPad: (stickY = 0.6) => {
       const pad = navigator.getGamepads?.().find((p) => p?.connected);
       if (!pad) return;
       const axis = pad.axes[0] ?? 0;
+      const axisY = pad.axes[1] ?? 0;
       const now: Partial<Record<Action, boolean>> = {
         left: axis < -0.35 || !!pad.buttons[14]?.pressed,
         right: axis > 0.35 || !!pad.buttons[15]?.pressed,
         jump: !!pad.buttons[0]?.pressed,
-        up: !!pad.buttons[12]?.pressed || !!pad.buttons[2]?.pressed,
-        down: !!pad.buttons[13]?.pressed
+        up: !!pad.buttons[12]?.pressed || !!pad.buttons[2]?.pressed || axisY < -stickY,
+        down: !!pad.buttons[13]?.pressed || axisY > stickY
       };
       for (const a of Object.keys(now) as Action[]) {
         if (!!padHeld[a] !== now[a]) input.hold(a, !!now[a]);

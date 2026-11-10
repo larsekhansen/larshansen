@@ -1,37 +1,13 @@
-# MOUSE-MAZE
+# Jernhaugen (Iron Maze)
 
-Mouse-Maze is a small game built in 4-5 days during a 2month long coding bootcamp with the Ironhack coding school. It was the first project of the bootcamp. Its currently not running, because its under reconstruction.
+At [maze.larshansen.dev](https://maze.larshansen.dev). This began as "Mouse Maze", built in a few days at Ironhack as the first project of the coding bootcamp: move the mouse pointer through a maze without touching the cursed walls, with a few snakes and some taunts, in React and jQuery.
 
-The purpose of the game is to get you computer pointer (Pointy) through the maze. But be careful, the walls are cursed with the social-life depraving Iron-curse, so don't go touching those. As You progress the levels get harder to complete, and you meet new challenges. 
+It is now a top-down pixel scene in a burial mound, built like the front page and the viking game on the shared kit (`packages/pixelkit`). The maze itself, with its three levels, rules, drawing, steering and the raven's voice, lives in [`packages/maze`](../../packages/maze) and is also what the door at the burial mound in [Vikingfjorden](../viking) opens. This app is only a thin page around it: the header bar, the level display, mute, and a small finish card that links to `/viking/#jernhaugen` on larshansen.dev, where the prize (the raven's feather) can be used. There are no image, font or audio files; the sound is synthesised.
 
-Try it! But be careful! Theres no guarantee that you and Pointy will be able to escape the cursed creatures that still dwell under the surface of THE MOUSE MAZE!!
-
-
-
-Appropriate for all ages. 
-
-## Building and running on localhost
-
-First install dependencies:
-```sh
-npm install
+```bash
+bun run dev:iron-maze    # from the repo root
+bun run build:iron-maze  # type-check + production build
+bun test                 # in packages/maze: levels and rules
 ```
 
-To run in hot module reloading mode:
-```sh
-npm start
-```
-
-To create a production build:
-```sh
-npm run build-prod
-```
-
-To create a development build:
-```sh
-npm run dev
-```
-
-## Running
-
-Open the file `dist/index.html` in your browser
+Useful URL parameters: `?debug` (exposes `window.__game = { maze, state, view, input, frame }`, and `frame(now)` steps the game by hand) and `?level=2` (starts at that level). Keys: arrows or WASD to steer, Shift for small steps, Esc to leave, M to mute.

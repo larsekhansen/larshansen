@@ -17,17 +17,21 @@ One text map of 144 columns x 20 rows of 16 px, in `src/game/level.ts`, read the
 | 93 to 110 | Jernhaugen | The burial mound (a ramp), standing stones on top, a stone-framed door at its foot. |
 | 111 to 143 | The cliff | Rock steps to a plateau, the cabin with the door **Verkstedet**, a stave-church-like tower with a rune on its gallery, a gap, and the beacon rock. |
 
-Doors (`DOORS`): `home` / Hjem to `/`, `qr` / Runesmia to `/qr/`, `maze` / Jernhaugen to `https://maze.larshansen.dev/` (for now), `github` / Verkstedet to `https://github.com/larsekhansen`. The same four are plain links in the header of `index.html`.
+Doors (`DOORS`): `home` / Hjem to `/`, `qr` / Runesmia to `/qr/`, `maze` / Jernhaugen to the maze scene below (its `href`, `https://maze.larshansen.dev/`, is only for visitors without JavaScript), `github` / Verkstedet to `https://github.com/larsekhansen`. The same four are plain links in the header of `index.html`.
 
 ## The rules
 
-- **Movement**: the kit's physics (`packages/pixelkit/src/physics.ts`) with the front page's constants, 60 steps a second. A **double jump** is a reward from the maze, which does not exist yet: it is on when `localStorage["viking.feather"] === "1"` or the URL has `?feather`. Without it, runes 3, 7 and 8 (the ship's yard, the church tower, the beacon) cannot be reached; a bubble at the mound door says so.
+- **Movement**: the kit's physics (`packages/pixelkit/src/physics.ts`) with the front page's constants, 60 steps a second. A **double jump** is a reward from the maze (Jernhaugen, below): it is on when `localStorage["viking.feather"] === "1"` or the URL has `?feather`. Without it, runes 3, 7 and 8 (the ship's yard, the church tower, the beacon) cannot be reached; a bubble at the mound door says so.
 - **Water**: feet in a `~` tile put him back on the last ground he stood on, facing the water. No penalty.
 - **Runes** (`run.ts`): touching a rune's tile collects it. The ten slots in the header fill in order. They are drawn from `RUNE_STROKES` (`runes.ts`) rasterised to 9 x 11 pixels, on a small stone that bobs one pixel; a collected rune leaves a faint outline.
 - **The run**: the clock starts on his first step and stops on the tenth rune. The best time is kept in `viking.best`. R or the header button starts again.
 - **All ten**: fanfare, sparks, the helmet turns gold and stays gold (`viking.crowned`), and the finish card shows.
 - **Sheep** (`sheep.ts`): they walk four tiles either side of where they stand, graze, and turn. Landing on one from above is a bounce (`bounce(body, 7)`) and a bleat; the sheep squashes one pixel for six steps.
 - **Doors, click to walk, signs, banners**: as on the front page (`main.ts` follows `apps/landing/src/main.ts`: `goal`, `stuck`, the marker, the highlight, the fade).
+
+## Jernhaugen: the second scene
+
+`main.ts` holds a `scene` of `"fjord"` or `"maze"`. The door `maze` fades out like the others and then sets `location.hash = "#jernhaugen"`; `syncScene` (on `hashchange` and at start) enters or leaves the mound to match the address, so Back works and `/viking/#jernhaugen` opens inside it. Entering does `import("@larshansen/maze/scene")` (and the maze's `i18n` and `rules`), so the fjord's entry script does not carry the maze. The maze gets the kit's `stage`, `input` and `sfx`, and `main.ts`'s loop calls its `step()` and `render()` instead of the fjord's, so the run timer is paused. The header swaps the rune slots, restart button and clock for the level name, `n / 3`, the level clock and the curse count (`body.in-maze`), the touch pad is hidden, and the help line shows the maze's. When the maze reports `cleared: true` the double jump is on at once and the mound's bubble stops showing. Leaving puts him at the mound door with a fade in. The code of the scene itself is in [`packages/maze`](../../../packages/maze/src): `levels.ts` (three maps), `rules.ts` (pure, tested), `render.ts`, `scene.ts` (steering, sound, the raven's words) and `i18n.ts`.
 
 ## Files
 

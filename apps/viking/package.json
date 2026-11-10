@@ -10,6 +10,7 @@
     "test": "bun test"
   },
   "dependencies": {
+    "@larshansen/maze": "workspace:*",
     "@larshansen/pixelkit": "workspace:*"
   },
   "devDependencies": {

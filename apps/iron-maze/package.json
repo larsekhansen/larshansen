@@ -1,20 +1,20 @@
 {
   "name": "@larshansen/iron-maze",
-  "version": "0.1.0",
-  "private": true,
   "type": "module",
+  "version": "0.2.0",
+  "private": true,
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc --noEmit && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
-    "jquery": "^3.7.1",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "@larshansen/maze": "workspace:*",
+    "@larshansen/pixelkit": "workspace:*"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.3.4",
+    "@types/bun": "^1.4.2",
+    "typescript": "^5.7.3",
     "vite": "^6.0.7"
   }
 }

@@ -10,10 +10,12 @@ Managed with **[Bun](https://bun.sh) workspaces — Bun only** (no npm/npx/pnpm/
 apps/
 ├── landing/      # the front page: a walk through Gamle Oslo, one house per app (TypeScript, Canvas 2D)
 ├── portfolio/    # CV / about site (React 18 + Vite + styled-components + zustand)
-├── iron-maze/    # React + jQuery maze game (migrated from CRA to Vite)
+├── iron-maze/    # Jernhaugen at maze.larshansen.dev: a thin page around the maze scene (plain TypeScript, Canvas 2D)
 ├── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)
 └── viking/       # Viking platform game at larshansen.dev/viking, behind the landing page's secret door (plain TypeScript + Canvas 2D, on the shared pixel kit)
-packages/         # shared code (empty for now)
+packages/
+├── pixelkit/     # the shared kit: stage, loop, input, physics, Oslo sky, the person, sound (TypeScript source, no build step)
+└── maze/         # Jernhaugen, the maze scene: levels, rules (tested), drawing, steering. Used by apps/viking (loaded on demand) and apps/iron-maze
 ```
 
 ## Getting started
@@ -23,7 +25,7 @@ bun install            # install all workspaces
 
 bun run dev:landing    # platform game        (http://localhost:5173)
 bun run dev:portfolio  # CV site              (http://localhost:3000)
-bun run dev:iron-maze  # maze game
+bun run dev:iron-maze  # the maze on its own (Jernhaugen)
 bun run dev:qr         # QR code generator    (http://localhost:5173/qr/)
 bun run dev:viking     # viking game          (http://localhost:5173/viking/)
 

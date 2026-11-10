@@ -23,7 +23,7 @@
         <ul>
           <li><a href="/" data-door="home">Gamle Oslo</a></li>
           <li><a href="/qr/" data-door="qr">QR-verkstedet</a></li>
-          <li><a href="https://maze.larshansen.dev/" data-door="maze">Iron Maze</a></li>
+          <li><a href="https://maze.larshansen.dev/" data-door="maze">Jernhaugen</a></li>
           <li><a href="https://github.com/larsekhansen" data-door="github">GitHub</a></li>
         </ul>
       </nav>
@@ -33,6 +33,14 @@
           <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
         </ol>
         <p class="clock"><span id="clock">0:00.0</span><small id="best"></small></p>
+        <!-- In the mound (Jernhaugen) these replace the runes and the clock. -->
+        <div class="mazehud" id="mazehud">
+          <button type="button" id="mz-back" class="back"></button>
+          <strong id="mz-name"></strong>
+          <span id="mz-level"></span>
+          <span class="mz-clock" id="mz-clock">0:00.0</span>
+          <span id="mz-deaths"></span>
+        </div>
         <button type="button" id="restart" class="tool">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5" /></svg>
         </button>
