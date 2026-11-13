@@ -1,3 +1,4 @@
+import { PLAYER } from "./config";
 import { doorNear, walkIn, type AppLink, type Door } from "./doors";
 import { runHarness, type Harness } from "./harness";
 import type { Lang } from "./i18n";
@@ -5,14 +6,15 @@ import type { Action, Input } from "./input";
 import { createStepper } from "./loop";
 import { SKY_NAMES, skyFor, type Sky, type SkyName } from "./oslo";
 import { layerOrigin, target, view } from "./paint";
-import type { Body } from "./physics";
+import type { Look } from "./person";
+import type { Body, Intent, StepResult } from "./physics";
 import type { Sfx } from "./sfx";
-import { drawSky } from "./sky";
-import type { Spark } from "./sparks";
+import { drawSky, snowfall } from "./sky";
+import { dust, stepSparks, type Spark } from "./sparks";
 import { createStage, type Stage } from "./stage";
 import { textTarget } from "./text";
 import type { District } from "./tilemap";
-import type { WalkGoal } from "./walkto";
+import { walkStep, type WalkGoal } from "./walkto";
 
 // What every side-view scene does around its own world: the page and its canvases, the words on it,
 // the touch pad and the header links, the sky and the T key, the banner, going through a door,
@@ -114,14 +116,19 @@ export function wireLinks<D extends { id: string }>(links: AppLink[], doors: D[]
   }
 }
 
-/** The page furniture that follows the door he stands at: the pad's enter button, and its header link lit up. */
-export function doorChrome(enterButton: HTMLElement, links: AppLink[]) {
+/**
+ * The page furniture that follows him, once a frame: the pad's enter button and the header link of
+ * the door he stands at, and the help line, which goes once he has moved.
+ */
+export function pageFollows(enterButton: HTMLElement, links: AppLink[], help: HTMLElement) {
   let near: { id: string } | null = null;
-  return (door: { id: string } | null) => {
+  return (door: { id: string } | null, moved: boolean) => {
     enterButton.classList.toggle("show", !!door);
-    if (door === near) return;
-    near = door;
-    for (const link of links) link.el.classList.toggle("here", link.id === door?.id);
+    if (door !== near) {
+      near = door;
+      for (const link of links) link.el.classList.toggle("here", link.id === door?.id);
+    }
+    if (moved && !help.hidden) help.hidden = true;
   };
 }
 
@@ -220,6 +227,15 @@ export function skyControl(name: string | null, now: () => Date) {
   };
 }
 
+/** The T key steps through every sky and back to the real one, and says which in the banner. */
+export function wireSkyKey(skies: ReturnType<typeof skyControl>, state: { banner: Banner | null; steps: number }, words: Record<SkyName | "now", string>, when: () => boolean = () => true) {
+  onKey("KeyT", () => {
+    if (!when()) return;
+    const next = skies.next();
+    state.banner = { title: words[next ?? "now"], sub: "", since: state.steps };
+  });
+}
+
 // --- The state every scene keeps ---------------------------------------------------------------------
 
 export interface Banner {
@@ -297,6 +313,66 @@ export function trackDistrict<D extends Door>(state: SceneState<D>, here: Distri
   if (here === state.district) return;
   state.district = here;
   state.banner = bannerFor(here, lang, state.steps);
+}
+
+/** The start of every physics step: remember where he was, for drawing between steps, and count it. */
+export function stepStart<D extends Door>(state: SceneState<D>, body: Body, before: { x: number; y: number }) {
+  before.x = body.x;
+  before.y = body.y;
+  state.steps++;
+}
+
+/** The end of every physics step: shaking doors settle, sparks fly, keys pressed this step are spent, the sky moves on. */
+export function stepEnd<D extends Door>(state: SceneState<D>, doors: D[], input: Input, skies: { tick(steps: number): void }) {
+  doors.forEach((d) => d.shake > 0 && d.shake--);
+  state.sparks = stepSparks(state.sparks);
+  input.endStep();
+  skies.tick(state.steps);
+}
+
+/** What the keys ask for this step. Up jumps, except at a door, where it goes in instead. */
+export function intentFrom(input: Input, atDoor: boolean): Intent {
+  return {
+    left: input.held.left,
+    right: input.held.right,
+    jumpHeld: input.held.jump || input.held.up,
+    jumpPressed: input.pressed("jump") || (input.pressed("up") && !atDoor)
+  };
+}
+
+/** Walking to a click, when there is a goal: the intent to step with, and the door to go in now if he has reached it. */
+export function followGoal<D extends Door>(state: SceneState<D>, b: Body, intent: Intent, here: D | null): { intent: Intent; enter: D | null } {
+  if (!state.goal) return { intent, enter: null };
+  const w = walkStep(state.goal, b, intent, here, state.steps);
+  state.goal = w.goal;
+  return { intent: w.intent, enter: w.enter };
+}
+
+/** After the body's step: the jump and the footsteps sound, and the help line may go. True when he moved himself. */
+export function afterStep<D extends Door>(state: SceneState<D>, b: Body, intent: Intent, r: StepResult, sfx: Sfx): boolean {
+  const moved = intent.left || intent.right || r.jumped;
+  if (moved) state.moved = true;
+  if (r.jumped) sfx.play("jump");
+  footsteps(state, b, sfx);
+  return moved;
+}
+
+/** A hard landing thuds, and kicks up dust from his feet. */
+export function hardLanding<D extends Door>(state: SceneState<D>, b: Body, r: StepResult, sfx: Sfx) {
+  if (r.landed > 3) sfx.play("land");
+  if (r.landed > 3 && !view.reduced) dust(state.sparks, b.x + PLAYER.w / 2, b.y + PLAYER.h - 1);
+}
+
+/** The parts of the text overlay every scene fills the same way: the fade, the snow, him, the banner, the lit door. */
+export function sceneOverlay<D extends Door>(state: SceneState<D>, shown: Body, sky: Sky, look?: Look) {
+  return {
+    fade: state.fade,
+    snow: snowfall(sky, state.steps),
+    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look },
+    banner: bannerShown(state.banner, state.steps),
+    highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
+    steps: state.steps
+  };
 }
 
 // --- Drawing and running ---------------------------------------------------------------------------

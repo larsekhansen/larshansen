@@ -13,37 +13,42 @@ import type { Look } from "@larshansen/pixelkit/person";
 import { bounce, createBody, placeBody, stepBody } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
 import {
+  afterStep,
   bannerFor,
-  bannerShown,
   beginLayers,
   blend,
   byId,
   createLoop,
-  doorChrome,
   doorLeftBy,
   dropParam,
+  followGoal,
   followReducedMotion,
-  footsteps,
+  hardLanding,
+  intentFrom,
   isTouch,
   launch,
   onKey,
   openPage,
+  pageFollows,
   putWords,
   rememberDoor,
   reopen,
+  sceneOverlay,
   sceneState,
   skyControl,
+  stepEnd,
+  stepStart,
   stepThrough,
   trackDistrict,
   wireLinks,
   wirePad,
-  wirePointer
+  wirePointer,
+  wireSkyKey
 } from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
-import { snowfall } from "@larshansen/pixelkit/sky";
-import { drawSparks, dust, fireworks, stepSparks } from "@larshansen/pixelkit/sparks";
+import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
 import { drawOverlay, type Board } from "@larshansen/pixelkit/text";
-import { walkStep, walkTo } from "@larshansen/pixelkit/walkto";
+import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
@@ -129,6 +134,8 @@ const state = {
 };
 /** Steps during which he stands there and input is ignored. */
 const ARRIVE_STEPS = 70;
+/** No keys: what he does while the outfit moment holds him still. */
+const STILL = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const frozen = () => !!state.arrive && state.arrive.t < ARRIVE_STEPS;
 /** The first double jump of a visit lets three black feather pixels drift down. */
 let firstAirJump = true;
@@ -425,20 +432,10 @@ function play() {
   const door = doorAt(body, doors);
   const held = frozen();
   if (door && !held && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
-  let intent = {
-    left: !held && input.held.left,
-    right: !held && input.held.right,
-    jumpHeld: !held && (input.held.jump || input.held.up),
-    jumpPressed: !held && (input.pressed("jump") || (input.pressed("up") && !door))
-  };
   // Walking to a clicked spot or door. Any input of the visitor's own takes over again.
   if (state.goal && held) state.goal = null;
-  if (state.goal) {
-    const w = walkStep(state.goal, body, intent, door, state.steps);
-    state.goal = w.goal;
-    if (w.enter) return tryEnter(w.enter);
-    intent = w.intent;
-  }
+  const { intent, enter } = followGoal(state, body, held ? STILL : intentFrom(input, !!door), door);
+  if (enter) return tryEnter(enter);
   const prevBottom = body.y + PLAYER.h;
   const airJumps = body.airJumps;
   const r = stepBody(body, intent, WORLD, abilities);
@@ -448,12 +445,7 @@ function play() {
     if (!view.reduced)
       for (let i = 0; i < 3; i++) state.sparks.push({ x: body.x + PLAYER.w / 2 + (i - 1) * 3, y: body.y + PLAYER.h - 2 + i, vx: (i - 1) * 0.12, vy: 0.02, life: 70 + i * 12, color: FEATHER.vane });
   }
-  if (intent.left || intent.right || r.jumped) {
-    state.moved = true;
-    begin(run);
-  }
-  if (r.jumped) sfx.play("jump");
-  footsteps(state, body, sfx);
+  if (afterStep(state, body, intent, r, sfx)) begin(run);
 
   // Sheep: coming down on one from above is a trampoline.
   let bounced = false;
@@ -465,10 +457,7 @@ function play() {
       sfx.play("bleat");
       bounced = true;
     }
-  if (!bounced && r.landed > 3) {
-    sfx.play("land");
-    if (!view.reduced) dust(state.sparks, body.x + PLAYER.w / 2, body.y + PLAYER.h - 1);
-  }
+  if (!bounced) hardLanding(state, body, r, sfx);
 
   // Water: his feet in a water tile put him back on the last ground.
   const feet = body.y + PLAYER.h;
@@ -510,9 +499,7 @@ function goThrough() {
 }
 
 function stepOnce() {
-  before.x = body.x;
-  before.y = body.y;
-  state.steps++;
+  stepStart(state, body, before);
   stepArrival();
   input.pollPad();
   tick(run);
@@ -522,10 +509,7 @@ function stepOnce() {
   if (state.feather && state.steps - state.feather.since > FEATHER_SHOWN) state.feather = null;
   if (state.mode === "play" && state.fade > 0) state.fade = Math.max(0, state.fade - 1 / 16); // coming back from the mound
   for (const s of sheep) stepSheep(s);
-  doors.forEach((d) => d.shake > 0 && d.shake--);
-  state.sparks = stepSparks(state.sparks);
-  input.endStep();
-  skies.tick(state.steps);
+  stepEnd(state, doors, input, skies);
 }
 
 /** The camera follows the player smoothly, at the same pace on every screen, up the cliff as well. */
@@ -551,7 +535,7 @@ function layout() {
 }
 
 const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, skies.sky.phase, haze);
-const atDoor = doorChrome(enterButton, links);
+const follows = pageFollows(enterButton, links, help);
 const look = (): Look => {
   const a = state.arrive;
   if (!a) return { outfit: "viking", gold: crowned };
@@ -632,22 +616,15 @@ function render() {
   }
 
   drawOverlay({
+    ...sceneOverlay(state, shown, sky, look()),
     world: WORLD,
     boards,
-    fade: state.fade,
-    snow: snowfall(sky, state.steps),
-    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
     hint: door && !touch && !speaking && !frozen() ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
     bubble: door && !speaking ? null : bubble,
-    banner: bannerShown(state.banner, state.steps),
-    highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
-    marker: state.goal && !state.goal.door ? { x: state.goal.x, y: surfaceBelow(state.goal.x, state.goal.y) ?? GROUND_Y } : null,
-    steps: state.steps
+    marker: state.goal && !state.goal.door ? { x: state.goal.x, y: surfaceBelow(state.goal.x, state.goal.y) ?? GROUND_Y } : null
   });
-
-  // The pad's enter button, and the header link of the door you are standing at.
-  atDoor(door);
-  if (state.moved && !help.hidden) help.hidden = true;
+  // The pad's enter button, the header link of the door you are standing at, and the help line.
+  follows(door, state.moved);
   hud();
 }
 
@@ -694,11 +671,7 @@ restartButton.addEventListener("click", () => {
 $<HTMLElement>("finish-again").addEventListener("click", restart);
 
 // T steps through every sky and back to the real one; R starts the run again (M, the sound, is wired by the kit).
-onKey("KeyT", () => {
-  if (scene !== "fjord") return;
-  const next = skies.next();
-  state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
-});
+wireSkyKey(skies, state, t.skies, () => scene === "fjord");
 onKey("KeyR", () => scene === "fjord" && restart());
 
 // Where he comes from. `from=oslo`: out of the boathouse door Hjem, with the outfit moment. `from=maze`: at the mound door.

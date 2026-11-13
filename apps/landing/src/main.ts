@@ -12,37 +12,41 @@ import { helmetPixels, type Look } from "@larshansen/pixelkit/person";
 import { createBody, placeBody, stepBody } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
 import {
+  afterStep,
   bannerFor,
-  bannerShown,
   beginLayers,
   blend,
   byId,
   createLoop,
-  doorChrome,
   doorLeftBy,
   dropParam,
+  followGoal,
   followReducedMotion,
-  footsteps,
+  hardLanding,
+  intentFrom,
   isTouch,
   launch,
-  onKey,
   openPage,
+  pageFollows,
   putWords,
   rememberDoor,
   reopen,
+  sceneOverlay,
   sceneState,
   skyControl,
+  stepEnd,
+  stepStart,
   stepThrough,
   trackDistrict,
   wireLinks,
   wirePad,
-  wirePointer
+  wirePointer,
+  wireSkyKey
 } from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
-import { snowfall } from "@larshansen/pixelkit/sky";
-import { drawSparks, dust, fireworks, stepSparks } from "@larshansen/pixelkit/sparks";
+import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
 import { drawOverlay, type Board } from "@larshansen/pixelkit/text";
-import { walkStep, walkTo } from "@larshansen/pixelkit/walkto";
+import { walkTo } from "@larshansen/pixelkit/walkto";
 import { strings } from "./game/i18n";
 import { GROUND_Y, LEVEL, WORLD, WORLD_W, findDoorSpots, rampAt, type DoorKind } from "./game/level";
 import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
@@ -178,25 +182,12 @@ function tryEnter(d: Building) {
 function play() {
   const door = doorAt(body, doors);
   if (door && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
-  let intent = {
-    left: input.held.left,
-    right: input.held.right,
-    jumpHeld: input.held.jump || input.held.up,
-    jumpPressed: input.pressed("jump") || (input.pressed("up") && !door)
-  };
   // Walking to a clicked house. Any input of the visitor's own takes over again.
-  if (state.goal) {
-    const w = walkStep(state.goal, body, intent, door, state.steps);
-    state.goal = w.goal;
-    if (w.enter) return tryEnter(w.enter);
-    intent = w.intent;
-  }
+  const { intent, enter } = followGoal(state, body, intentFrom(input, !!door), door);
+  if (enter) return tryEnter(enter);
   const r = stepBody(body, intent, WORLD);
-  if (intent.left || intent.right || r.jumped) state.moved = true;
-  if (r.jumped) sfx.play("jump");
-  footsteps(state, body, sfx);
-  if (r.landed > 3) sfx.play("land");
-  if (r.landed > 3 && !view.reduced) dust(state.sparks, body.x + PLAYER.w / 2, body.y + PLAYER.h - 1);
+  afterStep(state, body, intent, r, sfx);
+  hardLanding(state, body, r, sfx);
   trackDistrict(state, LEVEL.districtAt(body.x + PLAYER.w / 2), lang);
 }
 
@@ -209,19 +200,14 @@ function goThrough() {
 }
 
 function stepOnce() {
-  before.x = body.x;
-  before.y = body.y;
-  state.steps++;
+  stepStart(state, body, before);
   stepArrival();
   input.pollPad();
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
   else if (++state.modeSteps > 300) reopen(state, doors, input); // the app never opened
-  doors.forEach((d) => d.shake > 0 && d.shake--);
   if (state.bubble && state.steps > state.bubble.until) state.bubble = null;
-  state.sparks = stepSparks(state.sparks);
-  input.endStep();
-  skies.tick(state.steps);
+  stepEnd(state, doors, input, skies);
 }
 
 /** The camera follows the player smoothly, at the same pace on every screen. One tile of ground shows below the street. */
@@ -238,7 +224,7 @@ function layout() {
 }
 
 const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, skies.sky.phase, haze);
-const atDoor = doorChrome(enterButton, links);
+const follows = pageFollows(enterButton, links, help);
 
 function render() {
   const sky = skies.sky;
@@ -265,22 +251,15 @@ function render() {
 
   const door = state.mode === "play" ? doorAt(body, doors) : null;
   drawOverlay({
+    ...sceneOverlay(state, shown, sky, look()),
     world: WORLD,
     boards,
-    fade: state.fade,
-    snow: snowfall(sky, state.steps),
-    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
     hint: door && !touch && !state.arrive ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
     bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] } : null,
-    banner: bannerShown(state.banner, state.steps),
-    highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
-    marker: state.goal && !state.goal.door ? { x: state.goal.x, y: rampAt(state.goal.x) ?? GROUND_Y } : null,
-    steps: state.steps
+    marker: state.goal && !state.goal.door ? { x: state.goal.x, y: rampAt(state.goal.x) ?? GROUND_Y } : null
   });
-
-  // The pad's enter button, and the header link of the house you are standing at.
-  atDoor(door);
-  if (state.moved && !help.hidden) help.hidden = true;
+  // The pad's enter button, the header link of the house you are standing at, and the help line.
+  follows(door, state.moved);
 }
 
 const loop = createLoop(stepOnce, (a, elapsed) => {
@@ -304,10 +283,7 @@ wirePointer(stage, doors, state, {
 });
 
 // T steps through every sky, and back to the real one.
-onKey("KeyT", () => {
-  const next = skies.next();
-  state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
-});
+wireSkyKey(skies, state, t.skies);
 
 // ?debug&x=<art px> drops him at that x, on the highest thing there, so a reviewer can start anywhere.
 if (params.has("debug") && params.has("x")) {
