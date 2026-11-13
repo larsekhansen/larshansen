@@ -289,6 +289,22 @@ export function reopen<D extends Door>(state: SceneState<D>, doors: D[], input: 
   input.clear();
 }
 
+/** He has been put somewhere (at a door, by `?x=`, back on land): nothing to blend from, and the district is where he now is. */
+export function arrived<D extends Door>(state: SceneState<D>, body: Body, before: { x: number; y: number }, district: District, lang: Lang, announce = true) {
+  before.x = body.x;
+  before.y = body.y;
+  state.district = district;
+  if (announce) state.banner = bannerFor(district, lang, state.steps);
+}
+
+/** He sets off through door `d`: keys stop counting, and `stepThrough` takes him in, after `delay` steps when there is something to watch first. */
+export function startThrough<D extends Door>(state: SceneState<D>, body: Body, d: D, delay = 0) {
+  state.mode = "enter";
+  state.modeSteps = delay ? -delay : 0;
+  state.door = d;
+  body.vx = 0;
+}
+
 /** He walks into `state.door` and the scene fades. True on the step he is through. */
 export function stepThrough<D extends Door>(state: SceneState<D>, b: Body): boolean {
   const s = ++state.modeSteps;

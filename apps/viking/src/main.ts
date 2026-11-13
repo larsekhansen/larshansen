@@ -14,7 +14,7 @@ import { bounce, createBody, placeBody, stepBody } from "@larshansen/pixelkit/ph
 import { drawBoards } from "@larshansen/pixelkit/props";
 import {
   afterStep,
-  bannerFor,
+  arrived,
   beginLayers,
   blend,
   byId,
@@ -38,6 +38,7 @@ import {
   skyControl,
   stepEnd,
   stepStart,
+  startThrough,
   stepThrough,
   trackDistrict,
   wireLinks,
@@ -148,11 +149,8 @@ const LAST_DOOR = "lh:lastVikingDoor";
 
 function place(centerX: number, bottom: number, announceDistrict = true) {
   placeBody(body, centerX, bottom);
-  before.x = body.x;
-  before.y = body.y;
   state.lastGround = { x: centerX, bottom };
-  state.district = LEVEL.districtAt(body.x);
-  if (announceDistrict) state.banner = bannerFor(state.district, lang, state.steps);
+  arrived(state, body, before, LEVEL.districtAt(body.x), lang, announceDistrict);
 }
 
 const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
@@ -405,10 +403,7 @@ function finish() {
 // Rules.
 
 function tryEnter(d: Door) {
-  state.mode = "enter";
-  state.modeSteps = 0;
-  state.door = d;
-  body.vx = 0;
+  startThrough(state, body, d);
   sfx.play("door");
   say(t.opening(d.sign));
 }

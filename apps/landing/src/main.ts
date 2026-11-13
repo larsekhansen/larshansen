@@ -13,7 +13,7 @@ import { createBody, placeBody, stepBody } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
 import {
   afterStep,
-  bannerFor,
+  arrived,
   beginLayers,
   blend,
   byId,
@@ -36,6 +36,7 @@ import {
   skyControl,
   stepEnd,
   stepStart,
+  startThrough,
   stepThrough,
   trackDistrict,
   wireLinks,
@@ -99,10 +100,7 @@ const LAST_DOOR = "lh:lastDoor";
 
 function place(centerX: number, bottom: number) {
   placeBody(body, centerX, bottom);
-  before.x = body.x;
-  before.y = body.y;
-  state.district = LEVEL.districtAt(body.x);
-  state.banner = bannerFor(state.district, lang, state.steps);
+  arrived(state, body, before, LEVEL.districtAt(body.x), lang);
 }
 
 const standAt = (d: Building) => place(d.x + d.w / 2, d.bottom);
@@ -158,10 +156,7 @@ function tryEnter(d: Building) {
     if (!view.reduced) fireworks(state.sparks, (burst) => ({ x: d.x - 40 + burst * 40, y: 18 + (burst % 2) * 10 }));
     if (!d.href) return;
     // Let the fireworks play for a moment, then go through to the game behind the door.
-    state.mode = "enter";
-    state.modeSteps = view.reduced ? 0 : -80;
-    state.door = d;
-    body.vx = 0;
+    startThrough(state, body, d, view.reduced ? 0 : 80);
     return;
   }
   if (d.soon || !d.href) {
@@ -171,10 +166,7 @@ function tryEnter(d: Building) {
     say(text);
     return;
   }
-  state.mode = "enter";
-  state.modeSteps = 0;
-  state.door = d;
-  body.vx = 0;
+  startThrough(state, body, d);
   sfx.play("door");
   say(t.opening(d.name));
 }
