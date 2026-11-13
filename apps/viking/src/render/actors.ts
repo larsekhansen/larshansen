@@ -1,4 +1,4 @@
-import { INK, METAL, PALETTE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
+import { GHOST, INK, METAL, PALETTE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { SHEEP, type Sheep } from "../game/sheep";
 import { runeCells, type RuneChar } from "../game/runes";
@@ -36,7 +36,7 @@ export function drawSheep(s: Sheep) {
  */
 export function drawRune(x: number, y: number, char: string, state: "lit" | "dark" | "ghost", steps: number, seed = 0) {
   if (state === "ghost") {
-    const ghost = "rgba(255, 255, 255, 0.28)";
+    const ghost = GHOST;
     R(x + 2, y + 1, 12, 1, ghost);
     R(x + 2, y + 14, 12, 1, ghost);
     R(x + 1, y + 2, 1, 12, ghost);

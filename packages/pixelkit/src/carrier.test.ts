@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "./config";
-import { carrierAt, carrierState, carriersNear, liftPeriod, type CarrierDef, type Lift } from "./carrier";
+import { carrierAt, carrierDrawn, carrierState, carriersNear, liftPeriod, rideShown, type CarrierDef, type Lift } from "./carrier";
 import { createBody, stepBody, type Body, type Intent, type World } from "./physics";
 
 // Open air over a floor far below (row 30), so only the carrier holds him up.
@@ -132,5 +132,65 @@ describe("riding", () => {
       stepBody(c, intent, world, undefined, { carriers: [] });
     }
     expect(c).toEqual(a);
+  });
+});
+
+describe("more paths", () => {
+  test("a travel can bob as it goes, in step with its own clock", () => {
+    const d: CarrierDef = { kind: "travel", from: { x: 0, y: 100 }, to: { x: 64, y: 100 }, w: TILE, period: 400, bob: { rise: 3, period: 100 } };
+    const ys = Array.from({ length: 400 }, (_, t) => carrierAt(d, t).y);
+    expect(Math.min(...ys)).toBe(97);
+    expect(Math.max(...ys)).toBe(103);
+    expect(carrierAt(d, 200).x).toBe(64);
+  });
+});
+
+describe("drawn with him", () => {
+  test("between steps the carrier is drawn on whole pixels, and a rider on its drawn top", () => {
+    const d: CarrierDef = { kind: "travel", from: { x: 100, y: 200 }, to: { x: 300, y: 120 }, w: 3 * TILE, period: 300 };
+    const b = createBody(carrierAt(d, 0).x + 20, carrierAt(d, 0).y);
+    for (let t = 1; t < 120; t++) {
+      const before = { x: b.x, y: b.y };
+      stepBody(b, idle, world, undefined, { carriers: [carrierState(d, t)] });
+      for (const a of [0.25, 0.5, 0.75]) {
+        const shown = { x: before.x + (b.x - before.x) * a, y: before.y + (b.y - before.y) * a };
+        expect(rideShown([d], t, a, b, shown)).toBe(true);
+        const at = carrierDrawn(d, t, a);
+        expect(Number.isInteger(at.x) && Number.isInteger(at.y)).toBe(true);
+        // His feet are on its drawn top, and he keeps his place on it to the pixel.
+        expect(shown.y + PLAYER.h).toBe(at.y);
+        expect(shown.x - at.x).toBeCloseTo(b.x - carrierAt(d, t).x, 6);
+      }
+    }
+  });
+
+  test("not riding, he is drawn where he is", () => {
+    const d: CarrierDef = { kind: "bob", x: 0, y: 100, w: TILE, rise: 2, period: 60 };
+    const b = createBody(500, FLOOR);
+    const shown = { x: 1.5, y: 2.5 };
+    expect(rideShown([d], 10, 0.5, b, shown)).toBe(false);
+    expect(shown).toEqual({ x: 1.5, y: 2.5 });
+  });
+});
+
+describe("solid from below", () => {
+  test("a heavy platform stops a jump under it; a plain one lets him through", () => {
+    const low = 12 * TILE;
+    const lowWorld: World = { ...world, isSolid: (_c, r) => r >= 12 };
+    const run = (under?: number) => {
+      const b = createBody(5 * TILE, low);
+      const c = { x: 4 * TILE, y: low - 40, w: 3 * TILE, dx: 0, dy: 0, under };
+      let top = low;
+      for (let i = 0; i < 60; i++) {
+        stepBody(b, { ...idle, jumpHeld: true, jumpPressed: i === 0 }, lowWorld, undefined, { carriers: [c] });
+        top = Math.min(top, b.y);
+      }
+      return { top, feet: b.y + PLAYER.h };
+    };
+    const solid = run(6);
+    expect(solid.top).toBe(low - 40 + 6);
+    expect(solid.feet).toBe(low);
+    const plain = run();
+    expect(plain.feet).toBe(low - 40);
   });
 });

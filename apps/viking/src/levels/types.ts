@@ -99,6 +99,8 @@ export interface LevelDef {
   /** Which of the ten runes of LARS HANSEN it ends at, 0 to 9. */
   rune: number;
   name: string;
+  /** A shorter name for its board on the line map, when the full one is long. */
+  short?: string;
   landmark: Words;
   /** Where in Oslo, for the line map. */
   place: Words;

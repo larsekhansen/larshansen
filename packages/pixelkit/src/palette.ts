@@ -97,6 +97,8 @@ export const DUST = "#ebe1cd";
 export const WOOL_SHADE = "#8a8478";
 /** The blink of something about to change: the maze's sliding walls, and ledges on a beat. */
 export const SHIMMER = "#e7f3ff";
+/** The faint outline a taken rune leaves behind. */
+export const GHOST = "rgba(255, 255, 255, 0.28)";
 /** Ruined stone further back than the walls you can stand on: darker and cooler. */
 export const STONE_BACK: Stone = { base: "#5f5c58", light: "#68645f", dark: "#56534f", mortar: "#474441", moss: "#4c5f40" };
 

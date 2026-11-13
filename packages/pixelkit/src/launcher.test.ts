@@ -119,3 +119,16 @@ describe("launchers in the world", () => {
     expect(launcherHit(cannon(8 * TILE, FLOOR, 1), createBody(12 * TILE, FLOOR))).toBe(false);
   });
 });
+
+describe("a cannon's mouth", () => {
+  test("he leaves from the muzzle, his feet at its height, whichever way it faces", () => {
+    for (const dir of [1, -1] as const) {
+      const l = cannon(10 * TILE, FLOOR, dir);
+      const b = createBody(10 * TILE + 8, FLOOR);
+      expect(tryLaunch(l, b)).toBe(true);
+      expect(b.x + PLAYER.w / 2).toBe(l.from!.x);
+      expect(b.y + PLAYER.h).toBe(l.from!.bottom);
+      expect(Math.sign(b.vx)).toBe(dir);
+    }
+  });
+});

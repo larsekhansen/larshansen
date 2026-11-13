@@ -42,11 +42,8 @@ const ROUTE: Record<string, Move[]> = {
   akershus: [
     walk(mid(16) + 4),
     jump(0),
-    walk(tile(16) + 6),
-    leap(tile(16), -1),
-    walk(tile(15) - 6),
-    leap(tile(15), 1),
-    walk(tile(17) + 8),
+    jump(0),
+    jump(0),
     jump(1, { hold: 20 }),
     walk(mid(28)),
     cannonRide(1),

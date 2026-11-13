@@ -13,12 +13,13 @@ import { join } from "node:path";
 
 const TIMEOUT_MS = 90_000;
 
-/** `http://localhost:5181/viking/?debug&steps=1&sky=day` as `viking_debug_steps-1_sky-day`. */
+/** `http://localhost:5181/viking/?debug&steps=1&sky=day#kart` as `viking_debug_steps-1_sky-day_kart`. */
 export function nameFor(url: string): string {
   const u = new URL(url);
   const path = u.pathname.replace(/^\/+|\/+$/g, "") || "index";
   const query = u.search.replace(/^\?/, "");
-  return [path, query]
+  const hash = u.hash.replace(/^#/, "");
+  return [path, query, hash]
     .filter(Boolean)
     .join("_")
     .replace(/=/g, "-")

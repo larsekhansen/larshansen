@@ -9,9 +9,9 @@ import { buildDoors, doorAt, readAppLinks, type Door, type DoorSpot } from "@lar
 import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
-import { LOAD_STEPS, drawCannon } from "@larshansen/pixelkit/launcher";
+import { drawCannon } from "@larshansen/pixelkit/launcher";
 import { R, target, view } from "@larshansen/pixelkit/paint";
-import { DUST, FEATHER, METAL, PALETTE, SHIMMER } from "@larshansen/pixelkit/palette";
+import { DUST, FEATHER, INK, METAL, PALETTE, SHIMMER } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -355,6 +355,8 @@ async function enterMaze() {
     mazeShown.name = mazeShown.level = mazeShown.clock = mazeShown.best = mazeShown.deaths = "";
     showMazeHud();
     layout();
+    // A stepped page has no frames to come: the mound is drawn once as it opens.
+    if (harness) maze.render(1, 0);
   } catch {
     // The maze did not load (or he left first): back to the map, standing at the mound.
     loading = false;
@@ -688,9 +690,10 @@ function drawThings(v: View) {
     drawCannon(l, p.t, p.loaded?.i === i ? p.loaded.at : -999, p.firedAt[i]);
     if (p.loaded?.i === i) {
       // While he sits in the barrel: the first second of the arc, dotted.
-      const shownDots = Math.min(1, (p.t - p.loaded.at) / LOAD_STEPS);
-      const dots = cannonArc(p, i);
-      dots.slice(0, Math.ceil(dots.length * shownDots)).forEach((d, k) => k % 2 === 0 && R(Math.round(d.x), Math.round(d.y), 1, 1, SHIMMER));
+      for (const d of cannonArc(p, i, 60, 2)) {
+        R(Math.round(d.x), Math.round(d.y), 2, 2, SHIMMER);
+        R(Math.round(d.x) + 1, Math.round(d.y) + 2, 2, 1, INK);
+      }
     }
   });
   p.flags.forEach((f, i) => drawCheckpoint(f, p.raisedAt[i], p.t));
@@ -898,7 +901,12 @@ if (params.has("x")) {
   const x = Number(params.get("x"));
   const y = Number(params.get("y") ?? 0);
   const at = Number.isFinite(x) ? scene.play.map.surfaceBelow(x, Number.isFinite(y) ? y : 0) : null;
+  // Over water (a raft, a ferry) there is no ground below: with a y he is put there, and falls onto what moves under him.
   if (at !== null) place(x, at);
+  else if (Number.isFinite(x) && params.has("y") && Number.isFinite(y)) {
+    place(x, y);
+    scene.play.body.onGround = false;
+  }
 }
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */

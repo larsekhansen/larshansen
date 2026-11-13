@@ -17,7 +17,8 @@ import type { LevelDef, View } from "./types";
 // dips under the line to Jernhaugen, the burial mound with the maze. Stations four to ten stand
 // behind a construction fence. Hjem, the door home, is at the far left.
 //
-//   L  the line   #  the embankment   F  the fence   h Hjem   j Jernhaugen   1 to 9, 0  the stations
+//   L  the line, on a viaduct   #  the floor of the dip   F  the fence   h Hjem   j Jernhaugen
+//   1 to 9, 0  the stations
 
 export const KART_MAP = [
   "...........................F........................",
@@ -32,10 +33,10 @@ export const KART_MAP = [
   "...........................F........................",
   "..h.S.1.............2...3..F..4..5..6..7..8..9..0...",
   "LLLLLLLLL.........LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL",
-  "#########.........##################################",
-  "#########....j....##################################",
-  "####################################################",
-  "####################################################"
+  "....................................................",
+  ".............j......................................",
+  ".........#########..................................",
+  ".........#########.................................."
 ];
 
 const LINE_Y = 11 * TILE;
@@ -128,11 +129,16 @@ function mound(door: Door | undefined, snow: boolean) {
   plankDoor(door, DOORWAY.wood);
 }
 
-/** A station: a white square on the line (grey while closed), its rune above, its skyline behind. */
-function station(i: number, open: boolean, cleared: boolean, v: View) {
+/** Behind a station: its place's skyline, and its rune carved on a stone above, lit once the level is cleared. */
+function stationBack(i: number, cleared: boolean, v: View) {
   const x = stationX(i);
   skyline(i, x, LINE_Y);
   drawRune(x - 8, LINE_Y - 46, RUNE_CHARS[LINE[i].rune], cleared ? "lit" : "dark", v.t, i);
+}
+
+/** The station on the line: a white square in a red frame, as on a metro map; grey while closed. */
+function stationMark(i: number, open: boolean) {
+  const x = stationX(i);
   R(x - 6, LINE_Y - 2, 12, 10, open ? HAT_RED : mix(HAT_RED, INK, 0.4));
   R(x - 4, LINE_Y, 8, 6, open ? WHITE : mix(WHITE, STONE.base, 0.6));
 }
@@ -147,13 +153,25 @@ function fence() {
   for (let y = LINE_Y - 24; y < LINE_Y - 16; y++) for (let k = 0; k < TILE + 4; k++) if (((k + y) >> 2) % 2 === 0) R(x - 2 + k, y, 1, 1, PAINT.warning);
 }
 
-/** The line itself, over the dip on a light bridge, and the branch dipping under it to the mound. */
+/** The viaduct under the line: concrete piers every three tiles, the far city seen between them. */
+function viaduct() {
+  for (let x = 2 * TILE; x < KART_MAP[0].length * TILE; x += 3 * TILE) {
+    if (x > 8 * TILE && x < 18 * TILE) continue;
+    R(x, LINE_Y + 11, 8, 16 * TILE - LINE_Y - 11, FACADE.marbleWall);
+    R(x, LINE_Y + 11, 2, 16 * TILE - LINE_Y - 11, WHITE);
+    R(x + 6, LINE_Y + 11, 2, 16 * TILE - LINE_Y - 11, FACADE.marbleSeam);
+  }
+}
+
+/** The line crosses the dip on a light bridge in the back; the branch runs down to the mound and up again, and earth fills under it. */
 function branch() {
   for (let x = 9 * TILE; x < 18 * TILE; x++) {
-    R(x, LINE_Y + 1, 1, 3, mix(HAT_RED, WHITE, 0.45));
-    if (x % 24 === 0) R(x, LINE_Y + 4, 2, DIP - LINE_Y - 30, mix(STONE.light, WHITE, 0.3));
+    R(x, LINE_Y, 1, 4, mix(HAT_RED, WHITE, 0.45));
+    R(x, LINE_Y + 4, 1, 2, mix(FACADE.marbleWall, WHITE, 0.4));
+    if ((x - 9 * TILE) % 24 < 2) R(x, LINE_Y + 6, 1, DIP - LINE_Y - 30, mix(FACADE.marbleSeam, WHITE, 0.4));
     const s = rampHeight([DOWN, UP], x);
     const y = s === null ? DIP : Math.round(s);
+    if (s !== null) R(x, y + 4, 1, 16 * TILE - y - 4, PALETTE.earth);
     R(x, y, 1, 4, HAT_RED);
     R(x, y, 1, 1, mix(HAT_RED, WHITE, 0.3));
   }
@@ -178,7 +196,7 @@ export function kartDef(progress: Progress): LevelDef {
     doors: [
       { id: "home", tile: "h", sign: "Hjem", href: "/?from=viking" },
       { id: "maze", tile: "j", sign: "Jernhaugen", href: "#jernhaugen" },
-      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: l.name, href: isBuilt(l) ? `#${l.id}` : "" }))
+      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: ("short" in l && l.short) || l.name, href: isBuilt(l) ? `#${l.id}` : "" }))
     ],
     art: {
       far: (v) => drawOsloHills(v.sky, LINE_Y + 2 * TILE),
@@ -191,10 +209,14 @@ export function kartDef(progress: Progress): LevelDef {
           R(home.x, home.bottom - home.h, home.w, home.h, home.open ? DOORWAY.stage : FACADE.stageDoor);
           R(home.x + home.w - 4, home.bottom - 16, 2, 2, METAL.brass);
         }
+        viaduct();
         mound(v.doors.get("maze"), v.sky.snow);
         branch();
-        LINE.forEach((_, i) => station(i, isOpen(progress, ORDER, i) && i < 3, cleared(i), v));
+        LINE.forEach((_, i) => stationBack(i, cleared(i), v));
         fence();
+      },
+      front() {
+        LINE.forEach((_, i) => stationMark(i, isOpen(progress, ORDER, i) && i < 3));
       },
       ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }),
       ledges: {}

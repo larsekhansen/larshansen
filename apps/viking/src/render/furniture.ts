@@ -23,10 +23,10 @@ export function tbaneDoor(d: Door | undefined) {
   R(d.x - 3, top + 8, d.w + 6, 1, mix(FACADE.libraryFrame, WHITE, 0.4));
   R(d.x, top + 10, d.w, d.h - 10, d.open ? DOORWAY.stage : mix(DOORWAY.stage, PAINT.tbane, 0.25));
   for (let i = 0; i < 4; i++) R(d.x + 1, d.bottom - 3 - i * 4, d.w - 2, 1, mix(FACADE.libraryFrame, INK, 0.3));
-  // The sign on its post, by the entrance.
-  const px = d.x + d.w + 6;
-  R(px, top - 4, 1, d.h + 4, FACADE.libraryFrame);
-  wdisc(px, top - 9, 5, PAINT.tbane);
-  R(px - 3, top - 12, 7, 2, WHITE);
-  R(px, top - 10, 1, 6, WHITE);
+  // The round blue sign with its white T, on the entrance's left cheek.
+  const px = d.x - 8;
+  const py = top + 16;
+  wdisc(px, py, 5, PAINT.tbane);
+  R(px - 3, py - 3, 7, 2, WHITE);
+  R(px, py - 1, 1, 5, WHITE);
 }
