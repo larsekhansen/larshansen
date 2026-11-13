@@ -1,5 +1,5 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { LEVELS, centreOf, findTiles, finishOf, isWall, startCentre, startOf, tileAt, type LevelDef, type SliderDef, type SnakeDef } from "./levels";
+import { LEVELS, centreOf, findTiles, isWall, mapInfo, startCentre, tileAt, type Cell, type LevelDef, type SliderDef, type SnakeDef } from "./levels";
 
 // The rules of the maze, with no DOM in them, so they can be tested without a browser.
 // Walls do not stop him: touching one is losing. That is the game.
@@ -23,6 +23,8 @@ export const FALL_STEPS = 120;
 export const WARN_STEPS = 60;
 /** Steps a slider takes to rise out of the floor, or sink into it (drawing only: the wall is there at once). */
 export const RISE_STEPS = 6;
+/** Steps after a teleport before a teleport stone works again: one second, so he does not bounce back. */
+export const PORTAL_COOL = 60;
 
 export interface Stone {
   c: number;
@@ -64,6 +66,10 @@ export interface MazeState {
   gate: number;
   /** Crumbling tiles he has stepped on, "col,row" to the steps they have shaken. A tile at FALL_STEPS has fallen: a pit. */
   crumble: Map<string, number>;
+  /** Steps left before a teleport stone works again. */
+  portalCool: number;
+  /** False from a teleport until his centre has left the stone he arrived on, so standing still never sends him back. */
+  portalArmed: boolean;
 }
 
 /** What he wants to move by this step, in art pixels, already limited to the allowed speed. */
@@ -83,6 +89,8 @@ export interface MazeEvents {
   fell?: boolean;
   /** He woke at the last lit stone. */
   respawned?: boolean;
+  /** A teleport stone moved him to its twin this step. */
+  teleported?: { from: Cell; to: Cell };
   cleared?: boolean;
 }
 
@@ -111,8 +119,15 @@ export function newState(level: number, deaths = 0): MazeState {
     cause: null,
     keyTaken: false,
     gate: -1,
-    crumble: new Map()
+    crumble: new Map(),
+    portalCool: 0,
+    portalArmed: true
   };
+}
+
+/** A copy that can be stepped without changing the original (the scripted player looks ahead with it). */
+export function cloneState(s: MazeState): MazeState {
+  return { ...s, stones: s.stones.map((o) => ({ ...o })), snakes: s.snakes.map((n) => ({ def: n.def, t: n.t })), crumble: new Map(s.crumble) };
 }
 
 const tileKey = (c: number, r: number) => `${c},${r}`;
@@ -243,8 +258,19 @@ const insideTile = (x: number, y: number, c: number, r: number, size = 1) =>
 
 /** True when his centre is on the start pad. */
 export function onStartPad(state: MazeState): boolean {
-  const s = startOf(levelDef(state.level).map);
+  const s = mapInfo(levelDef(state.level).map).start;
   return insideTile(state.x, state.y, s.c, s.r, 2);
+}
+
+/** Curses him if his body touches anything that curses where he stands now. True if it did. */
+function curseCheck(state: MazeState, events: MazeEvents): boolean {
+  const cause: Cause | null = solidCause(state, state.x, state.y) ?? (state.snakes.some((s) => touchesSnake(s, state.x, state.y)) ? "snake" : null);
+  if (!cause) return false;
+  state.phase = "cursed";
+  state.phaseSteps = 0;
+  state.cause = cause;
+  events.cursed = cause;
+  return true;
 }
 
 /** One physics step, 60 a second. Changes `state` and says what happened. */
@@ -271,12 +297,15 @@ export function stepMaze(state: MazeState, intent: Intent): MazeEvents {
       state.phaseSteps = 0;
       state.snakes = freshSnakes(def);
       state.crumble = new Map(); // every crumbling tile is whole again
+      state.portalCool = 0;
+      state.portalArmed = true;
       events.respawned = true;
     }
     return events;
   }
 
   state.phaseSteps++;
+  if (state.portalCool > 0) state.portalCool--;
   for (const [k, age] of state.crumble)
     if (age < FALL_STEPS) {
       state.crumble.set(k, age + 1);
@@ -290,22 +319,29 @@ export function stepMaze(state: MazeState, intent: Intent): MazeEvents {
 
   for (const k of crumblingUnder(def.map, state.x, state.y)) if (!state.crumble.has(k)) state.crumble.set(k, 0);
 
-  const cause: Cause | null = solidCause(state, state.x, state.y) ?? (state.snakes.some((s) => touchesSnake(s, state.x, state.y)) ? "snake" : null);
-  if (cause) {
-    state.phase = "cursed";
-    state.phaseSteps = 0;
-    state.cause = cause;
-    events.cursed = cause;
-    return events;
-  }
+  if (curseCheck(state, events)) return events;
 
+  const info = mapInfo(def.map);
   if (!state.keyTaken) {
-    const k = findTiles(def.map, "k")[0];
+    const k = info.key;
     if (k && insideTile(state.x, state.y, k.c, k.r)) {
       state.keyTaken = true;
       state.gate = 0;
       events.key = true;
     }
+  }
+
+  // Teleport stones: his centre on one sends him to its twin, once he has stepped off the last one and the cool-down is over.
+  const portal = info.portals.find((p) => insideTile(state.x, state.y, p.c, p.r));
+  if (!portal) state.portalArmed = true;
+  else if (state.portalArmed && state.portalCool === 0) {
+    const to = centreOf(portal.twin.c, portal.twin.r);
+    state.x = to.x;
+    state.y = to.y;
+    state.portalArmed = false;
+    state.portalCool = PORTAL_COOL;
+    events.teleported = { from: { c: portal.c, r: portal.r }, to: { ...portal.twin } };
+    if (curseCheck(state, events)) return events;
   }
 
   const i = state.stones.findIndex((s) => insideTile(state.x, state.y, s.c, s.r));
@@ -317,7 +353,7 @@ export function stepMaze(state: MazeState, intent: Intent): MazeEvents {
     }
   }
 
-  const f = finishOf(def.map);
+  const f = info.finish;
   if (insideTile(state.x, state.y, f.c, f.r, 2)) {
     state.phase = "cleared";
     state.phaseSteps = 0;

@@ -65,5 +65,17 @@ export const PALETTE = {
   tongue: "#d23a3a",
   raven: "#17141a",
   ravenBeak: "#8f897d",
-  ravenEye: "#d9d4c8"
+  ravenEye: "#d9d4c8",
+  // The maze, later: the ghost of a best run, teleport stones, sparks, dust, the gold feather.
+  ghost: "#dfe9f2", // the ghost's colours are mixed this far toward pale blue-white
+  portalStone: "#8e9aa8", // a teleport stone's flat top, and its darker rim
+  portalRim: "#5b6573",
+  portalGlow: "#6fc3ff", // the blue of its rune and its shimmer
+  curseSpark: "#d0452f", // the rust-red burst when the curse takes him
+  curseSparkDark: "#7e2318",
+  dust: "#c9a878", // a puff of the mound's floor at his feet, as it looks in his torchlight (drawn after the night tint)
+  dustFaint: "#9c8160",
+  featherGold: "#e8b923", // the feather after all seven levels: GOLD
+  featherGoldDark: "#a8801a",
+  featherGoldSheen: "#fff1b8"
 } as const;

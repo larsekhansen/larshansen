@@ -50,6 +50,18 @@ body {
   white-space: nowrap;
 }
 
+/* The finish card: the seven levels' stones, each with its three notches, and the marks in all. */
+.marks-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.marks-total {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 @media (min-width: 760px) {
   .bar {
     flex-wrap: nowrap;

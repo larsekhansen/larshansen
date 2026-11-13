@@ -1,9 +1,9 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, S, ctx, light, mix, stoneColumn, target, view, wdisc } from "@larshansen/pixelkit/paint";
-import { PALETTE, STONE } from "@larshansen/pixelkit/palette";
+import { LAMP, PALETTE, STONE } from "@larshansen/pixelkit/palette";
 import { playerPixels, TOP_SIZE } from "@larshansen/pixelkit/person";
 import { snap, sx, sy, unit, textCtx } from "@larshansen/pixelkit/text";
-import { COLS, LEVELS, ROWS, findTiles, finishOf, isWall, ravenTile, startCentre, startOf, type Cell, type LevelDef } from "./levels";
+import { COLS, LEVELS, ROWS, findTiles, finishOf, isWall, mapInfo, ravenTile, startCentre, startOf, type Cell, type LevelDef, type Portal } from "./levels";
 import { drawFeather } from "./feather";
 import { FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, type Stone } from "./rules";
 
@@ -230,7 +230,20 @@ export interface Frame {
   gate: number;
   /** Steps each crumbling tile has shaken ("col,row" to steps); FALL_STEPS or more is a pit. */
   crumble: ReadonlyMap<string, number>;
+  /** Steps before the teleport stones work again: they burn low until then. */
+  portalCool: number;
+  /** The pair of teleport stones that just sent him, and how many steps ago (for their shimmer). */
+  portalFlash: { pair: number; age: number } | null;
+  /** Stones lit a moment ago, by index, and how many steps ago. */
+  stoneFlash: ReadonlyMap<number, number>;
+  /** Steps since he took the key, while it is still flying up out of sight; null otherwise. */
+  keyFly: number | null;
+  /** Steps since he stepped into the finish, while it flares; null otherwise. */
+  finishFlash: number | null;
 }
+
+/** Steps a flash lasts: a teleport's shimmer, a stone lighting, the key flying up, the finish flaring. */
+export const FLASH = { portal: 26, stone: 30, key: 24, finish: 30 } as const;
 
 // The curse line pulses slowly between two reds, and flashes when it has just caught him.
 function curseColor(f: Frame) {
@@ -247,13 +260,20 @@ const stoneOrigin = (s: Stone) => ({ x: s.c * TILE + 4, y: s.r * TILE + 2 });
 
 const RAVEN = ["..kkk..", ".kkkebb", "kkkkkb.", "kkkkkk.", ".kkkk..", "..f.f.."];
 
+/** The raven's head is its first three rows: it turns toward him, while the body keeps facing the start pad. */
+const RAVEN_HEAD = 3;
+
 function drawRaven(a: Art, f: Frame) {
   const x = a.raven.c * TILE + 4;
   const y = a.raven.r * TILE + 2;
   const blink = f.t % 200 < 7;
+  // It looks at him once he is more than a few pixels to one side; straight below, it keeps its pose.
+  const dx = f.x - (x + 3.5);
+  const head = dx > 6 ? 1 : dx < -6 ? -1 : a.ravenFacing;
   RAVEN.forEach((row, ry) => {
+    const facing = ry < RAVEN_HEAD ? head : a.ravenFacing;
     for (let cx = 0; cx < 7; cx++) {
-      const ch = row[a.ravenFacing > 0 ? cx : 6 - cx];
+      const ch = row[facing > 0 ? cx : 6 - cx];
       if (ch === ".") continue;
       R(x + cx, y + ry, 1, 1, ch === "e" ? (blink ? P.raven : P.ravenEye) : ch === "b" ? P.ravenBeak : ch === "f" ? P.ravenBeak : P.raven);
     }
@@ -315,7 +335,9 @@ export function drawWorld(f: Frame) {
     const y = r * TILE + 4;
     if (x < x0 || x > x1 || y < y0 || y > y1) continue;
     const hot = view.reduced || Math.floor((f.t + c * 5) / 5) % 3 !== 0;
-    light(x, y, 1, 1, hot ? "lamp" : "soft");
+    // The tip of the flame leans a pixel now and then.
+    const lean = view.reduced ? 0 : [0, 0, 1, 0, -1, 0, 0][Math.floor((f.t + c * 7 + r * 3) / 6) % 7];
+    light(x + lean, y, 1, 1, hot ? "lamp" : "soft");
     light(x, y + 1, 1, 1, "lamp");
     light(c * TILE - 8, (r + 1) * TILE + 1, 32, 3, "pool");
   }
@@ -348,11 +370,12 @@ export function drawBright(f: Frame) {
   const def = levelDef(f.level);
   const a = artFor(def);
 
-  // His light: three rings of warm light, added together.
+  // His light: three rings of warm light, added together, breathing by a pixel with the torch.
+  const breath = view.reduced ? 0 : [0, 0, 1, 0, 0, -1, 0, 1][Math.floor(f.t / 5) % 8];
   g.globalCompositeOperation = "lighter";
-  wdisc(f.x, f.y, 26, "rgba(255, 196, 120, 0.10)");
+  wdisc(f.x, f.y, 26 + breath, "rgba(255, 196, 120, 0.10)");
   wdisc(f.x, f.y, 18, "rgba(255, 196, 120, 0.14)");
-  wdisc(f.x, f.y, 10, "rgba(255, 196, 120, 0.18)");
+  wdisc(f.x, f.y, 10 + breath, "rgba(255, 196, 120, 0.18)");
   g.globalCompositeOperation = "source-over";
 
   const day = (x: number, y: number, w: number, h: number) => {
@@ -379,19 +402,24 @@ export function drawBright(f: Frame) {
     day(fin.c * TILE + FRAME, fin.r * TILE + FRAME, TILE * 2 - 2 * FRAME, TILE * 2 - 2 * FRAME);
     wedge(0, (fin.r + 2) * TILE, "y", 26, (fin.c + 1) * TILE);
   }
+  drawDoorGlow(a, f);
 
   drawFeatures(a, f);
 
-  for (const s of f.stones) {
+  f.stones.forEach((s, i) => {
     const o = stoneOrigin(s);
+    const age = f.stoneFlash.get(i);
+    // A stone just lit flares white for a few steps before its rune settles to blue.
+    const flare = age !== undefined && age < 6 && !view.reduced;
     R(o.x + 1, o.y + STONE_H, STONE_W - 1, 1, mix(P.moundEarth, "#000000", 0.4)); // its shadow
-    R(o.x, o.y + 1, STONE_W, STONE_H - 1, "#b7b2a8");
-    R(o.x + 1, o.y, STONE_W - 2, 1, "#d0cbc0");
-    R(o.x, o.y + 1, 1, STONE_H - 1, "#d0cbc0");
+    R(o.x, o.y + 1, STONE_W, STONE_H - 1, flare ? "#f4f1ea" : "#b7b2a8");
+    R(o.x + 1, o.y, STONE_W - 2, 1, flare ? "#ffffff" : "#d0cbc0");
+    R(o.x, o.y + 1, 1, STONE_H - 1, flare ? "#ffffff" : "#d0cbc0");
     R(o.x + STONE_W - 1, o.y + 1, 1, STONE_H - 1, "#8d887f");
     R(o.x, o.y + STONE_H - 1, STONE_W, 1, "#8d887f");
     for (const [dx, dy] of STONE_RUNE) R(o.x + dx, o.y + dy, 1, 1, s.lit ? P.runeGlow : STONE.mortar);
-  }
+    if (age !== undefined && !view.reduced) ring(o.x + STONE_W / 2, o.y + STONE_H / 2, 5 + age * 0.7, age / FLASH.stone, "159, 227, 255");
+  });
 
   drawRaven(a, f);
   for (const s of f.snakes) drawSnake(s, f.t);
@@ -421,9 +449,101 @@ function sprite(x: number, y: number, rows: readonly string[], colors: Record<st
 const KEY = [".hhh.", "hh.hh", "hrrrh", "hh.hh", ".hhh.", "..s..", "..s..", "..sss", "..s..", "..ssg"];
 const KEY_COLORS = { h: "#c3ccd6", s: "#9aa5b2", g: "#e8d27a", r: P.runeGlow };
 
-/** The iron gate: bars with a rune plate across `tiles` (one row of tiles side by side), retracting upward as `open` goes from 0 to 1. */
+/**
+ * A square ring of light round (cx, cy), its corners left out, fading as `done` goes from 0 to 1:
+ * how a stone lighting or a teleport stone sending him flares. Added light, so it glows on the dark.
+ */
+function ring(cx: number, cy: number, radius: number, done: number, rgb: string) {
+  if (done >= 1) return;
+  const g = ctx();
+  const r = Math.round(radius);
+  const x = Math.round(cx) - r;
+  const y = Math.round(cy) - r;
+  const s = r * 2 + 1;
+  const color = `rgba(${rgb}, ${(0.8 * (1 - done)).toFixed(3)})`;
+  g.globalCompositeOperation = "lighter";
+  R(x + 1, y, s - 2, 1, color);
+  R(x + 1, y + s - 1, s - 2, 1, color);
+  R(x, y + 1, 1, s - 2, color);
+  R(x + s - 1, y + 1, 1, s - 2, color);
+  g.globalCompositeOperation = "source-over";
+}
+
+/**
+ * The finish doorway brightens as he nears it (in quarter steps, so it reads as pixel light and not a
+ * gradient), and flares when he steps in. Warm torchlight on the way deeper, daylight on the last.
+ */
+function drawDoorGlow(a: Art, f: Frame) {
+  const fin = finishOf(a.def.map);
+  const d = Math.hypot(f.x - (fin.c + 1) * TILE, f.y - (fin.r + 1) * TILE);
+  const near = Math.max(0, Math.min(1, 1 - (d - 24) / 110));
+  const flare = f.finishFlash === null ? 0 : Math.max(0, 1 - f.finishFlash / FLASH.finish);
+  const k = Math.ceil(Math.max(near * 0.7, flare) * 4) / 4;
+  if (k <= 0) return;
+  const rgb = a.daylightFinish ? "214, 238, 249" : "255, 196, 110";
+  const ix = fin.c * TILE + FRAME;
+  const iy = fin.r * TILE + FRAME;
+  const iw = TILE * 2 - 2 * FRAME;
+  const g = ctx();
+  g.globalCompositeOperation = "lighter";
+  if (a.daylightFinish) {
+    // Daylight is bright already: it is the floor in front of it that lights up, in three widening steps.
+    for (let i = 0; i < 3; i++) R(ix - 2 - i * 3, iy + iw + FRAME + i * 3, iw + 4 + i * 6, 3, `rgba(${rgb}, ${(0.2 * k * (1 - i * 0.3)).toFixed(3)})`);
+  } else {
+    R(ix, iy, iw, iw, `rgba(${rgb}, ${(0.34 * k).toFixed(3)})`);
+    R(ix + 3, iy + 3, iw - 6, iw - 6, `rgba(${rgb}, ${(0.22 * k).toFixed(3)})`);
+  }
+  g.globalCompositeOperation = "source-over";
+  if (flare > 0 && !view.reduced) ring((fin.c + 1) * TILE, (fin.r + 1) * TILE, 15 + (1 - flare) * 10, 1 - flare, rgb);
+}
+
+/** The rune on each pair of teleport stones, 5 x 5, so the twins match and two pairs never look alike. */
+const PORTAL_RUNES = [
+  ["..x..", ".x.x.", "x...x", ".x.x.", "..x.."],
+  ["x...x", ".x.x.", "..x..", ".x.x.", "x...x"]
+];
+
+/** A teleport stone: a round flat stone set in the floor, a blue rune, a faint glow while it works, a shimmer when it sends him. */
+function drawPortal(p: Portal, f: Frame) {
+  const cx = p.c * TILE + TILE / 2;
+  const cy = p.r * TILE + TILE / 2;
+  const ready = f.portalCool === 0;
+  const flash = f.portalFlash && f.portalFlash.pair === p.pair && f.portalFlash.age < FLASH.portal ? f.portalFlash.age : null;
+  const g = ctx();
+  if (ready) {
+    // A steady glow, a step brighter every couple of seconds.
+    const pulse = view.reduced || Math.floor(f.t / 60) % 2 === 0 ? 0.1 : 0.16;
+    g.globalCompositeOperation = "lighter";
+    wdisc(cx, cy, 8, `rgba(111, 195, 255, ${pulse})`);
+    g.globalCompositeOperation = "source-over";
+  }
+  wdisc(cx, cy + 1, 6, mix(P.moundEarth, "#000000", 0.45)); // its shadow on the floor, as the standing stones have
+  wdisc(cx, cy, 6, P.portalRim);
+  wdisc(cx, cy, 5, P.portalStone);
+  R(cx - 3, cy - 4, 4, 1, mix(P.portalStone, "#ffffff", 0.35));
+  const rune = flash !== null && flash < 8 ? "#ffffff" : ready ? P.portalGlow : mix(P.portalRim, P.portalGlow, 0.3);
+  PORTAL_RUNES[p.pair % PORTAL_RUNES.length].forEach((row, ry) => {
+    for (let rx = 0; rx < 5; rx++) if (row[rx] === "x") R(cx - 2 + rx, cy - 2 + ry, 1, 1, rune);
+  });
+  if (flash !== null) {
+    const done = flash / FLASH.portal;
+    if (view.reduced) ring(cx, cy, 8, done, "111, 195, 255");
+    else {
+      ring(cx, cy, 7 + flash * 0.45, done, "159, 227, 255");
+      ring(cx, cy, 5 + flash * 0.25, Math.min(1, done * 1.4), "111, 195, 255");
+    }
+  }
+}
+
+/**
+ * The iron gate across `tiles` (one row of tiles side by side): two leaves of bars that meet in the
+ * middle under a rune plate, and slide apart into the walls on either side as `open` goes from 0 to
+ * 1. With motion reduced it stands shut until it is open.
+ */
 function drawGate(tiles: Cell[], open: number, f: Frame) {
-  if (open >= 1) return;
+  const shown = view.reduced ? (open >= 1 ? 1 : 0) : open;
+  if (shown >= 1) return;
+  const g = ctx();
   const rows = new Map<number, Cell[]>();
   for (const t of tiles) rows.set(t.r, [...(rows.get(t.r) ?? []), t]);
   for (const [r, row] of rows) {
@@ -432,40 +552,51 @@ function drawGate(tiles: Cell[], open: number, f: Frame) {
     const x = c0 * TILE;
     const y = r * TILE;
     const w = (c1 - c0 + 1) * TILE;
-    const h = Math.round(TILE * (1 - open));
-    if (h <= 0) continue;
-    R(x, y, w, h, P.moundDeep); // the dark behind the bars
-    R(x, y, w, 1, "#0c0a10");
-    for (let bx = 2; bx < w; bx += 4) {
-      R(x + bx, y, 2, h, "#8f99a6");
-      R(x + bx, y, 1, h, "#c3ccd6");
-      R(x + bx + 1, y, 1, h, "#5d646e");
-    }
-    // Rails across the bars, the lower one rising with them.
-    R(x, y + 2, w, 2, "#6b7480");
-    R(x, y + 2, w, 1, "#aeb8c4");
-    R(x, y + h - 3, w, 3, "#5d646e");
-    R(x, y + h - 3, w, 1, "#aeb8c4");
-    // The rune plate on the seam in the middle, slid up with the bars.
-    const px = x + Math.floor(w / 2) - 5;
-    const py = y + Math.round(3 - TILE * open);
-    const plate = (ox: number, oy: number, ww: number, hh: number, color: string) => {
-      const top = Math.max(py + oy, y);
-      const bottom = Math.min(py + oy + hh, y + h);
-      if (bottom > top) R(px + ox, top, ww, bottom - top, color);
+    const half = w / 2;
+    const off = Math.round(half * shown);
+    // Everything outside the gateway is inside the walls: clip to it.
+    g.save();
+    g.beginPath();
+    g.rect(x - view.camX, y - view.camY, w, TILE);
+    g.clip();
+    const leaf = (lx: number, side: -1 | 1) => {
+      R(lx, y, half, TILE, P.moundDeep); // the dark behind the bars
+      R(lx, y, half, 1, OUTLINE);
+      for (let bx = 1; bx < half; bx += 4) {
+        R(lx + bx, y, 2, TILE, "#8f99a6");
+        R(lx + bx, y, 1, TILE, "#c3ccd6");
+        R(lx + bx + 1, y, 1, TILE, "#5d646e");
+      }
+      R(lx, y + 2, half, 2, "#6b7480");
+      R(lx, y + 2, half, 1, "#aeb8c4");
+      R(lx, y + TILE - 4, half, 3, "#5d646e");
+      R(lx, y + TILE - 4, half, 1, "#aeb8c4");
+      // The edge where the two leaves meet: a heavier post.
+      const edge = side < 0 ? lx + half - 2 : lx;
+      R(edge, y, 2, TILE, "#5d646e");
+      R(side < 0 ? edge : edge + 1, y, 1, TILE, "#aeb8c4");
+      // Half of the rune plate on each leaf.
+      const px = side < 0 ? lx + half - 5 : lx - 5;
+      const plate = (ox: number, oy: number, ww: number, hh: number, color: string) => {
+        const a0 = Math.max(px + ox, lx);
+        const a1 = Math.min(px + ox + ww, lx + half);
+        if (a1 > a0) R(a0, y + 3 + oy, a1 - a0, hh, color);
+      };
+      plate(-1, -1, 12, 12, OUTLINE);
+      plate(0, 0, 10, 10, "#b7b2a8");
+      plate(0, 0, 10, 1, "#d6d1c6");
+      plate(0, 9, 10, 1, "#8d887f");
+      const glow = f.keyTaken ? P.runeGlow : P.curseBright;
+      for (const [dx, dy] of STONE_RUNE) plate(1 + dx, 1 + dy, 1, 1, glow);
     };
-    plate(-1, -1, 12, 12, OUTLINE);
-    plate(0, 0, 10, 10, "#b7b2a8");
-    plate(0, 0, 10, 1, "#d6d1c6");
-    plate(0, 9, 10, 1, "#8d887f");
-    const glow = f.keyTaken ? P.runeGlow : P.curseBright;
-    for (const [dx, dy] of STONE_RUNE) plate(1 + dx, 1 + dy, 1, 1, glow);
+    leaf(x - off, -1);
+    leaf(x + half + off, 1);
     if (f.keyTaken && !view.reduced) {
-      const g = ctx();
       g.globalCompositeOperation = "lighter";
-      R(x, y, w, h, "rgba(159, 227, 255, 0.08)");
+      R(x, y, w, TILE, "rgba(159, 227, 255, 0.08)");
       g.globalCompositeOperation = "source-over";
     }
+    g.restore();
   }
 }
 
@@ -578,6 +709,7 @@ function drawFeatures(a: Art, f: Frame) {
   for (const { c, r } of a.crumbles) if (seen(c, r)) drawCrumble(c, r, f.crumble.get(`${c},${r}`) ?? -1);
   if (a.gates.length) drawGate(a.gates, f.gate, f);
   for (const d of a.def.sliders) drawSlider(d, f);
+  for (const p of mapInfo(a.def.map).portals) if (seen(p.c, p.r)) drawPortal(p, f);
 
   if (a.key && !f.keyTaken) {
     const bob = view.reduced ? 0 : Math.round(Math.sin(f.t * 0.08));
@@ -589,6 +721,9 @@ function drawFeatures(a: Art, f: Frame) {
     g.globalCompositeOperation = "source-over";
     R(kx, a.key.r * TILE + 14, 5, 1, "rgba(0, 0, 0, 0.35)");
     sprite(kx, ky, KEY, KEY_COLORS);
+  } else if (a.key && f.keyFly !== null && f.keyFly < FLASH.key && !view.reduced && f.keyFly % 6 < 4) {
+    // Taken: the key flies up out of its tile, blinking, and is gone.
+    sprite(a.key.c * TILE + 5, a.key.r * TILE + 3 - Math.round(f.keyFly * 0.7), KEY, KEY_COLORS);
   }
 }
 
@@ -625,7 +760,7 @@ function drawChamber(f: Frame) {
   g.globalCompositeOperation = "lighter";
   wdisc(cx, ay + 4, 9, "rgba(159, 227, 255, 0.10)");
   g.globalCompositeOperation = "source-over";
-  drawFeather(ax, ay);
+  drawFeather(ax, ay, undefined, undefined, undefined, true); // the prize of all seven: the gold one
 }
 
 /**
@@ -670,22 +805,58 @@ export function drawDark(f: Frame) {
   }
 }
 
-/** Him from above, 10 x 10, on the sharp canvas, brighter than anything else; `x` and `y` are his centre in world pixels. */
-export function drawHim(x: number, y: number, walk: number, heading: { x: number; y: number }, cursed: boolean, alpha = 1) {
+const STILL_BODY: Parameters<typeof playerPixels>[0] = { x: 0, y: 0, vx: 0, vy: 0, onGround: true, facing: 1, coyote: 0, buffer: 0, cutReady: false, airJumps: 0 };
+
+/**
+ * Him from above, 10 x 10, on the sharp canvas, brighter than anything else; `x` and `y` are his
+ * centre in world pixels. `tick` makes his torch flicker: a second flame pixel above the first, now
+ * and then, leaning one way or the other.
+ */
+export function drawHim(x: number, y: number, walk: number, heading: { x: number; y: number }, cursed: boolean, alpha = 1, tick = 0) {
   const u = textCtx();
   const n = unit();
   const ox = snap(sx(x - TOP_SIZE / 2));
   const oy = snap(sy(y - TOP_SIZE / 2));
+  const flame = { c: -99, r: -99 };
   u.globalAlpha = alpha;
   playerPixels(
-    { x: 0, y: 0, vx: 0, vy: 0, onGround: true, facing: 1, coyote: 0, buffer: 0, cutReady: false, airJumps: 0 },
+    STILL_BODY,
     walk,
     "day",
     (c, r, color) => {
+      if (color === LAMP) Object.assign(flame, { c, r });
       u.fillStyle = color;
       u.fillRect(ox + c * n, oy + r * n, n, n);
     },
     { outfit: "viking", view: "top", heading, cursed }
+  );
+  const k = Math.floor(tick / 4) % 6;
+  if (flame.c > -99 && !cursed && !view.reduced && k < 3) {
+    u.fillStyle = k === 0 ? "#fff2c4" : LAMP;
+    u.fillRect(ox + (flame.c + [0, -1, 1][k]) * n, oy + (flame.r - 1) * n, n, n);
+  }
+  u.globalAlpha = 1;
+}
+
+/**
+ * The ghost of his best run: the same person from above, pale and half see-through, under him. No
+ * glow, no trail: it only shows where he was at this moment of the clock.
+ */
+export function drawGhost(x: number, y: number, walk: number, heading: { x: number; y: number }) {
+  const u = textCtx();
+  const n = unit();
+  const ox = snap(sx(x - TOP_SIZE / 2));
+  const oy = snap(sy(y - TOP_SIZE / 2));
+  u.globalAlpha = 0.45;
+  playerPixels(
+    STILL_BODY,
+    walk,
+    "day",
+    (c, r, color) => {
+      u.fillStyle = mix(color, P.ghost, 0.62);
+      u.fillRect(ox + c * n, oy + r * n, n, n);
+    },
+    { outfit: "viking", view: "top", heading }
   );
   u.globalAlpha = 1;
 }

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { TILE } from "@larshansen/pixelkit/config";
 import { LEVELS, centreOf, startCentre } from "./levels";
-import { BODY, CURSE_STEPS, FALL_STEPS, GATE_STEPS, RISE_STEPS, WARN_STEPS, crumbleAge, formatTime, gateOpen, gateProgress, isPit, limit, levelDef, newState, onStartPad, sliderRise, sliderSolid, sliderT, sliderWarning, snakeAt, snakeBox, solidCause, stepMaze, touchesWall, type MazeState } from "./rules";
+import { BODY, CURSE_STEPS, FALL_STEPS, GATE_STEPS, PORTAL_COOL, RISE_STEPS, WARN_STEPS, cloneState, crumbleAge, formatTime, gateOpen, gateProgress, isPit, limit, levelDef, newState, onStartPad, sliderRise, sliderSolid, sliderT, sliderWarning, snakeAt, snakeBox, solidCause, stepMaze, touchesWall, type MazeState } from "./rules";
 
 const none = { dx: 0, dy: 0 };
 
@@ -389,5 +389,93 @@ describe("sliding walls", () => {
     wait(s, CURSE_STEPS);
     expect(s.phase).toBe("play");
     expect(s.steps).toBe(50 + 1 + CURSE_STEPS);
+  });
+});
+
+describe("teleport stones", () => {
+  // Level 2: a stone at the bottom of the pocket under the hall (13, 10), its twin in the pocket under the snake corridor (18, 17).
+  const fromAbove = (s: MazeState) => {
+    s.x = 13 * TILE + 8;
+    s.y = 10 * TILE - 1; // just above the stone's tile, in the pocket
+  };
+
+  test("his centre on one moves him to the centre of its twin, and says so", () => {
+    const s = newState(2);
+    fromAbove(s);
+    const ev = stepMaze(s, { dx: 0, dy: 1.2 });
+    expect(ev.teleported).toEqual({ from: { c: 13, r: 10 }, to: { c: 18, r: 17 } });
+    expect(s.x).toBe(18 * TILE + 8);
+    expect(s.y).toBe(17 * TILE + 8);
+    expect(s.phase).toBe("play");
+  });
+
+  test("it works both ways", () => {
+    const s = newState(2);
+    s.x = 18 * TILE + 8;
+    s.y = 17 * TILE - 1;
+    expect(stepMaze(s, { dx: 0, dy: 1.2 }).teleported?.to).toEqual({ c: 13, r: 10 });
+  });
+
+  test("standing on the stone he arrived on never sends him back, however long he waits", () => {
+    const s = newState(2);
+    fromAbove(s);
+    stepMaze(s, { dx: 0, dy: 1.2 });
+    for (let i = 0; i < PORTAL_COOL * 3; i++) expect(stepMaze(s, none).teleported).toBeUndefined();
+    expect(s.x).toBe(18 * TILE + 8);
+  });
+
+  test("stepping off and back on within a second does nothing; after the cool-down it works again", () => {
+    const s = newState(2);
+    fromAbove(s);
+    stepMaze(s, { dx: 0, dy: 1.2 });
+    // Up out of the pocket (off the stone) and straight back down onto it.
+    for (let i = 0; i < 8; i++) stepMaze(s, { dx: 0, dy: -1.2 });
+    expect(s.y).toBeLessThan(17 * TILE);
+    let ev = {};
+    for (let i = 0; i < 8; i++) ev = { ...ev, ...stepMaze(s, { dx: 0, dy: 1.2 }) };
+    expect(ev).toEqual({});
+    expect(s.portalCool).toBeGreaterThan(0);
+    // Off again, wait out the cool-down, and on: now it sends him back.
+    for (let i = 0; i < 8; i++) stepMaze(s, { dx: 0, dy: -1.2 });
+    wait(s, PORTAL_COOL);
+    let to: unknown;
+    for (let i = 0; i < 10 && !to; i++) to = stepMaze(s, { dx: 0, dy: 1.2 }).teleported?.to;
+    expect(to).toEqual({ c: 13, r: 10 });
+  });
+
+  test("a stone is floor: standing beside it or on it never curses", () => {
+    const s = newState(2);
+    at(s, 13, 9);
+    expect(solidCause(s, 13 * TILE + 8, 10 * TILE + 8)).toBeNull();
+    expect(stepMaze(s, none).cursed).toBeUndefined();
+  });
+
+  test("a curse lets the stones work again at once", () => {
+    const s = newState(2);
+    fromAbove(s);
+    stepMaze(s, { dx: 0, dy: 1.2 });
+    s.x = 18 * TILE + 8;
+    s.y = 18 * TILE + 2; // into the wall under the pocket
+    expect(stepMaze(s, none).cursed).toBe("wall");
+    wait(s, CURSE_STEPS);
+    expect(s.portalCool).toBe(0);
+    expect(s.portalArmed).toBe(true);
+  });
+});
+
+describe("cloneState", () => {
+  test("a copy can be stepped without touching the original", () => {
+    const s = newState(4);
+    at(s, 12, 16);
+    stepMaze(s, none);
+    const copy = cloneState(s);
+    for (let i = 0; i < 30; i++) stepMaze(copy, none);
+    expect(crumbleAge(s, 12, 16)).toBe(0);
+    expect(crumbleAge(copy, 12, 16)).toBe(30);
+    const t = newState(2);
+    const u = cloneState(t);
+    stepMaze(u, none);
+    expect(t.snakes[0].t).toBe(0);
+    expect(u.snakes[0].t).toBe(1);
   });
 });

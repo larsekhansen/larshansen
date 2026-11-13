@@ -1,12 +1,19 @@
 import { TILE } from "@larshansen/pixelkit/config";
 
 // The maps of the mound, as text. `#` wall, `.` floor, `S` start pad (2 x 2), `F` finish (2 x 2), `o` standing
-// stone, `k` rune key, `g` iron gate (wall until the key is taken), `c` crumbling floor.
+// stone, `k` rune key, `g` iron gate (wall until the key is taken), `c` crumbling floor, and the teleport
+// stones, two letters per pair: `t` and its twin `u`, `v` and its twin `w`.
 // The edge of the map counts as wall: columns and rows outside it are solid.
 
 export const COLS = 32;
 export const ROWS = 20;
 export { TILE };
+
+/** Teleport stones come in pairs, each pair with its own two letters. Stepping onto one moves him to its twin. */
+export const PORTAL_PAIRS: readonly (readonly [string, string])[] = [
+  ["t", "u"],
+  ["v", "w"]
+];
 
 /** A snake patrols the line between two tile centres, there and back once per `period` steps. */
 export interface SnakeDef {
@@ -29,6 +36,11 @@ export interface SliderDef {
 
 export interface LevelDef {
   name: string;
+  /**
+   * Par in seconds: the scripted player's clear at key speed, times 1.6, rounded to 5 s
+   * (`play.test.ts` checks that it still is). Clearing under it is the third mark.
+   */
+  par: number;
   map: readonly string[];
   snakes: readonly SnakeDef[];
   sliders: readonly SliderDef[];
@@ -39,6 +51,7 @@ export interface LevelDef {
 export const LEVELS: readonly LevelDef[] = [
   {
     name: "Inngangen",
+    par: 25,
     snakes: [],
     sliders: [],
     map: [
@@ -66,6 +79,8 @@ export const LEVELS: readonly LevelDef[] = [
   },
   {
     name: "Ormegropa",
+    // Par needs the teleport: the long way round is 23 s even for the scripted player.
+    par: 25,
     snakes: [
       { from: [8, 7], to: [16, 7], period: 300 },
       { from: [27, 7], to: [18, 7], period: 300 },
@@ -84,20 +99,21 @@ export const LEVELS: readonly LevelDef[] = [
       "#..###........................##",
       "#..###.......................###",
       "#..###.######.########.#########",
-      "#..###.######.########.#########",
+      "#..###.######t########.#########",
       "#..###.#########################",
       "#..###o#########################",
       "#..###.#########################",
       "#....#.####################.....",
       "#....#..........................",
       "#.SS.#.......................FF.",
-      "#.SS.######################..FF.",
+      "#.SS.#############u########..FF.",
       "#....######################.....",
       "################################"
     ]
   },
   {
     name: "Jernporten",
+    par: 30,
     snakes: [],
     sliders: [],
     map: [
@@ -125,6 +141,7 @@ export const LEVELS: readonly LevelDef[] = [
   },
   {
     name: "Råttent gulv",
+    par: 15,
     snakes: [],
     sliders: [],
     map: [
@@ -152,6 +169,8 @@ export const LEVELS: readonly LevelDef[] = [
   },
   {
     name: "Skyveveggene",
+    // Par needs the teleport, reached from the groove of the slider under it.
+    par: 25,
     snakes: [],
     sliders: [
       { at: [9, 2], w: 1, h: 2, period: 180, offset: 0 },
@@ -169,7 +188,7 @@ export const LEVELS: readonly LevelDef[] = [
       "##...........................###",
       "##..#######################..###",
       "##..#######################..###",
-      "##..#######################..###",
+      "##..########t##############..###",
       "##..###......................###",
       "##..###......................###",
       "##..###..#######################",
@@ -181,12 +200,13 @@ export const LEVELS: readonly LevelDef[] = [
       "#.SS.################.......FF.#",
       "#.SS.################.......FF.#",
       "#....######################....#",
-      "################################",
+      "##############################u#",
       "################################"
     ]
   },
   {
     name: "Mørket",
+    par: 15,
     dark: true,
     snakes: [],
     sliders: [],
@@ -215,6 +235,7 @@ export const LEVELS: readonly LevelDef[] = [
   },
   {
     name: "Haugbonden",
+    par: 35,
     snakes: [
       // They cross the hall, so there is no lane to slip past them in: he has to time each one.
       { from: [10, 7], to: [10, 8], period: 110 },
@@ -286,6 +307,41 @@ export function startCentre(map: readonly string[]) {
 
 /** The centre of a tile in art pixels. */
 export const centreOf = (c: number, r: number) => ({ x: c * TILE + TILE / 2, y: r * TILE + TILE / 2 });
+
+/** A teleport stone: where it is, where its twin is, and which pair it belongs to. */
+export interface Portal extends Cell {
+  twin: Cell;
+  pair: number;
+}
+
+/** What the rules look up on every step, found once per map. */
+export interface MapInfo {
+  start: Cell;
+  finish: Cell;
+  key: Cell | null;
+  portals: Portal[];
+}
+
+const infos = new WeakMap<readonly string[], MapInfo>();
+
+/** The start, finish, key and teleport stones of a map, looked up once and kept. */
+export function mapInfo(map: readonly string[]): MapInfo {
+  let info = infos.get(map);
+  if (info) return info;
+  const portals: Portal[] = [];
+  PORTAL_PAIRS.forEach(([a, b], pair) => {
+    const one = findTiles(map, a);
+    const two = findTiles(map, b);
+    if (one.length !== 1 || two.length !== 1) return; // a pair needs both ends (levels.test.ts checks every map)
+    portals.push({ ...one[0], twin: two[0], pair }, { ...two[0], twin: one[0], pair });
+  });
+  info = { start: startOf(map), finish: finishOf(map), key: findTiles(map, "k")[0] ?? null, portals };
+  infos.set(map, info);
+  return info;
+}
+
+/** The teleport stone at tile (c, r), if there is one. */
+export const portalAt = (map: readonly string[], c: number, r: number) => mapInfo(map).portals.find((p) => p.c === c && p.r === r);
 
 /**
  * The wall the raven sits on: the wall tile with floor right below it that is nearest the start
