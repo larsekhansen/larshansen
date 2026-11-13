@@ -1,4 +1,5 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
+import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { ctx, layerX, seeded, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, GLASS, LAND, MASONRY, METAL, PAINT, PALETTE, ROOF, SNOW, TRAM as TRAMCAR } from "@larshansen/pixelkit/palette";
@@ -194,48 +195,14 @@ function kvaernerbyen(x: number) {
   }
 }
 
-function munch(x: number) {
-  // A tall aluminium-clad tower whose top bends towards the fjord.
-  box(x - 9, BASE - 78, 18, 78, FACADE.aluminium);
-  box(x - 6, BASE - 96, 18, 20, FACADE.aluminium);
-  for (let y = BASE - 76; y < BASE; y += 4) box(x - 9, y, 18, 1, FACADE.aluminiumLine);
-  for (let y = BASE - 94; y < BASE - 78; y += 4) box(x - 6, y, 18, 1, FACADE.aluminiumLine);
-  box(x - 3, BASE - 92, 12, 3, FACADE.munchWindow);
-  lit(x - 3, BASE - 92, 12, 3);
-}
-
-// The Barcode: a row of slim towers with narrow gaps between them, light and dark,
-// each with its own stripes, like the bars of a barcode.
-const BARCODE = [
-  { dx: 0, w: 9, h: 62, color: "#e9edef", stripe: "#a7b1b7", dark: false },
-  { dx: 11, w: 7, h: 78, color: "#26303a", stripe: "#3a4652", dark: true },
-  { dx: 20, w: 10, h: 70, color: "#d4dadd", stripe: "#8c98a0", dark: false },
-  { dx: 32, w: 6, h: 86, color: "#f1e9dc", stripe: "#b9ab95", dark: false },
-  { dx: 40, w: 9, h: 74, color: "#1f272f", stripe: "#34404b", dark: true },
-  { dx: 51, w: 8, h: 66, color: "#c3ccd1", stripe: "#7d8a92", dark: false },
-  { dx: 61, w: 10, h: 82, color: "#eef1f2", stripe: "#a3adb3", dark: false },
-  { dx: 73, w: 7, h: 72, color: "#2c3742", stripe: "#46525e", dark: true },
-  { dx: 82, w: 9, h: 64, color: "#dfe5e8", stripe: "#95a1a8", dark: false },
-  { dx: 93, w: 8, h: 76, color: "#384450", stripe: "#4f5c69", dark: true }
-];
-
-function barcode(x: number) {
-  for (const b of BARCODE) {
-    const bx = x + b.dx;
-    box(bx, BASE - b.h, b.w, b.h, b.color);
-    for (let i = 1; i < b.w; i += 2) box(bx + i, BASE - b.h, 1, b.h, b.stripe);
-    if (b.dark) for (let y = BASE - b.h + 6; y < BASE - 4; y += 12) lit(bx + 1, y, b.w - 2, 2);
-  }
-}
-
 export function drawLandmarks() {
   const at = (wx: number) => layerX(wx, SKYLINE);
   valerengaKirke(at(60));
   kampenKirke(at(250));
   kruttverket(at(425));
   kvaernerbyen(at(600));
-  munch(at(1025));
-  barcode(at(1090));
+  munch(at(1025), BASE);
+  barcode(at(1090), BASE);
 }
 
 /** The blue tram along Dronning Eufemias gate, in Bjørvika. */
