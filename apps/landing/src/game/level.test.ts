@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { TILE } from "./config";
-import { buildDoors } from "./doors";
+import { TILE } from "@larshansen/pixelkit/config";
+import { buildDoors } from "@larshansen/pixelkit/doors";
 import { COLS, DISTRICTS, DOOR_TILES, EXTRA_DOORS, MAP, findDoorSpots, findSpawn, isSolid, rampAt } from "./level";
 
 describe("the map", () => {
@@ -52,7 +52,7 @@ describe("the page and the map agree", () => {
 
   test("the secret door leads to the viking game", () => {
     const opera = buildDoors(findDoorSpots(), [], {}).find((d) => d.secret);
-    expect(opera?.href).toBe("/viking/");
+    expect(opera?.href).toBe("/viking/?from=oslo");
     expect(opera?.soon).toBe(false);
   });
 });

@@ -5,10 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>Lars Hansen</title>
     <meta name="description" content="A small game set in Gamle Oslo, where every house is one of Lars Hansen's apps." />
-    <meta name="theme-color" content="#4f96d8" />
+    <meta name="theme-color" content="#fffcf6" />
     <meta property="og:title" content="Lars Hansen" />
     <meta property="og:description" content="A small game set in Gamle Oslo, where every house is one of Lars Hansen's apps." />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lars Hansen" />
     <meta property="og:url" content="https://larshansen.dev/" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
@@ -25,6 +26,11 @@
           <li><span data-door="quintle" data-name="Quintle" data-soon>Quintle <small data-i18n="soon">coming soon</small></span></li>
         </ul>
       </nav>
+      <div class="run">
+        <button type="button" id="mute" class="tool" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /><path class="cross" d="M16 9l5 6m0-6-5 6" /></svg>
+        </button>
+      </div>
     </header>
 
     <main class="stage" id="stage">
@@ -33,7 +39,12 @@
       <canvas id="ui" aria-hidden="true"></canvas>
       <p class="help" id="help" data-i18n="help">Arrow keys to walk, Space to jump, up arrow to go through a door. Or just click a house.</p>
       <p class="sr-only" id="announce" aria-live="polite"></p>
-      <noscript><p class="noscript">The game needs JavaScript. The links above work without it.</p></noscript>
+      <noscript>
+        <p class="noscript">
+          Gamle Oslo trenger JavaScript, men lenkene over fungerer uten.<br />
+          Gamle Oslo needs JavaScript, but the links above work without it.
+        </p>
+      </noscript>
     </main>
 
     <div class="pad" id="pad" hidden>

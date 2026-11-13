@@ -1,30 +1,97 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Vikingfjorden · larshansen.dev</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Vikingfjorden · Lars Hansen</title>
     <meta
       name="description"
-      content="A small viking platform game hidden behind the secret door on larshansen.dev: a fjord, a longship, ten runes to find, and doors back to everything else."
+      content="A small viking platform game hidden behind the secret door on larshansen.dev: a T-bane line through Oslo, a level at each stop, ten runes to find, and doors back to everything else."
     />
-    <meta name="theme-color" content="#2a2757" />
+    <meta name="theme-color" content="#fffcf6" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lars Hansen" />
     <meta property="og:url" content="https://larshansen.dev/viking/" />
-    <meta property="og:title" content="Vikingfjorden · larshansen.dev" />
-    <meta property="og:description" content="A viking, a fjord, a longship and ten runes to find." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta property="og:title" content="Vikingfjorden · Lars Hansen" />
+    <meta property="og:description" content="A viking takes the T-bane through Oslo: the Opera's quay, Akershus festning, Rådhuset, and ten runes to find." />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
-    <div id="root"></div>
-    <noscript>
-      <nav aria-label="Destinations">
-        <a href="/">Gamle Oslo</a>
-        <a href="/qr/">QR-verkstedet</a>
-        <a href="https://maze.larshansen.dev">Iron Maze</a>
-        <a href="https://github.com/larsekhansen">GitHub</a>
+    <header class="bar">
+      <h1 class="me">Lars Hansen</h1>
+      <!-- The doors. The game reads this list, so every link here is a door in the game. -->
+      <nav class="apps" aria-label="Destinations">
+        <ul>
+          <li><a href="/" data-door="home">Gamle Oslo</a></li>
+          <li><a href="/qr/" data-door="qr">QR-verkstedet</a></li>
+          <li><a href="https://maze.larshansen.dev/" data-door="maze">Jernhaugen</a></li>
+          <li><a href="https://github.com/larsekhansen" data-door="github">GitHub</a></li>
+        </ul>
       </nav>
-    </noscript>
-    <script type="module" src="/src/main.tsx"></script>
+      <!-- The run: filled in by the game, so it stays hidden without JavaScript. -->
+      <div class="run" id="run" hidden>
+        <ol class="runes" id="runes" role="img">
+          <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
+        </ol>
+        <p class="clock"><span id="clock">0:00.0</span><small id="best"></small></p>
+        <p class="goldcount" id="goldcount" hidden><i aria-hidden="true"></i><span id="goldn">0</span></p>
+        <!-- In the mound (Jernhaugen) these replace the runes and the clock. -->
+        <div class="mazehud" id="mazehud">
+          <button type="button" id="mz-back" class="back"></button>
+          <strong id="mz-name"></strong>
+          <button type="button" id="mz-level" class="lvl" aria-haspopup="dialog"></button>
+          <span class="mz-clock" id="mz-clock">0:00.0</span>
+          <small id="mz-best"></small>
+          <span id="mz-deaths"></span>
+        </div>
+        <button type="button" id="restart" class="tool">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-2.6-5.9M20 4v5h-5" /></svg>
+        </button>
+        <button type="button" id="mute" class="tool" aria-pressed="false">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z" /><path class="waves" d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12" /><path class="cross" d="M16 9l5 6m0-6-5 6" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="stage" id="stage">
+      <p class="sr-only" id="blurb" data-i18n="blurb">You found the secret door. Take the T-bane through Oslo and find the ten runes of the name.</p>
+      <canvas id="px" aria-hidden="true"></canvas>
+      <canvas id="ui" aria-hidden="true"></canvas>
+      <p class="help" id="help" data-i18n="help">Arrow keys to walk, Space to jump, up arrow to go through a door. Or click where you want to go.</p>
+      <p class="sr-only" id="announce" aria-live="polite"></p>
+      <div class="card" id="finish" role="status" hidden>
+        <strong id="finish-title"></strong>
+        <p id="finish-line"></p>
+        <p id="finish-gold"></p>
+        <p id="finish-more" hidden></p>
+        <span class="actions">
+          <button type="button" class="primary" id="finish-on">Onward</button>
+          <button type="button" id="finish-again">Once more</button>
+        </span>
+      </div>
+      <noscript>
+        <p class="noscript">
+          Vikingfjorden er et spill: en T-banelinje gjennom Oslo, en bane på hvert stopp. Det trenger JavaScript, men lenkene over fungerer uten.<br />
+          Vikingfjorden is a game: a T-bane line through Oslo, a level at each stop. It needs JavaScript, but the links above work without it.
+        </p>
+      </noscript>
+    </main>
+
+    <div class="pad" id="pad" hidden>
+      <div>
+        <button type="button" data-action="left" aria-label="Walk left">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
+        </button>
+        <button type="button" data-action="right" aria-label="Walk right">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
+        </button>
+      </div>
+      <div>
+        <button type="button" data-action="enter" class="enter">Go in</button>
+        <button type="button" data-action="jump">Jump</button>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.ts"></script>
   </body>
 </html>

@@ -1,0 +1,19 @@
+{
+  "name": "@larshansen/maze",
+  "type": "module",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "scripts": {
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@larshansen/pixelkit": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "^5.7.3"
+  }
+}

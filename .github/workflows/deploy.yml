@@ -65,6 +65,10 @@ jobs:
           expect /qr/  'QR-verkstedet'
           # The game behind the Opera's secret door, and its script from /viking/assets/.
           expect /viking/ 'Vikingfjorden'
-          expect "$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')" 'All ten runes!'
+          expect "$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')" 'Langkaia'
           # The QR app's script must load from /qr/assets/, not the landing page's /assets/.
           expect "$(fetch /qr/ | grep -o '/qr/assets/index-[^"]*\.js')" 'Lest av QR-leser'
+
+          # The maze answers on its own host name, with the same scene that Vikingfjorden loads.
+          maze=$(curl -fsS --max-time 10 -H "Host: maze.larshansen.dev" "http://127.0.0.1:8090/")
+          if grep -qF 'Jernhaugen' <<<"$maze"; then echo "ok   maze.larshansen.dev /"; else echo "FAIL maze.larshansen.dev / does not contain: Jernhaugen"; exit 1; fi

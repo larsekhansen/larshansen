@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
-import { PLAYER, TILE } from "./config";
-import { GROUND_Y } from "./level";
-import { createStepper } from "./loop";
-import { createBody, stepBody, type Body, type Intent } from "./physics";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
+import { GROUND_Y, WORLD } from "./level";
+import { createStepper } from "@larshansen/pixelkit/loop";
+import { createBody, stepBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 
 const idle: Intent = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
@@ -10,7 +10,7 @@ const idle: Intent = { left: false, right: false, jumpHeld: false, jumpPressed: 
 function run(b: Body, steps: number, intent: (i: number) => Intent) {
   let top = b.y + PLAYER.h;
   for (let i = 0; i < steps; i++) {
-    stepBody(b, intent(i));
+    stepBody(b, intent(i), WORLD);
     top = Math.min(top, b.y + PLAYER.h);
   }
   return top;
@@ -38,7 +38,7 @@ describe("jumping", () => {
       let i = 0;
       let top = feet(b);
       const stepper = createStepper(() => {
-        stepBody(b, { ...idle, jumpHeld: true, jumpPressed: i === 0 });
+        stepBody(b, { ...idle, jumpHeld: true, jumpPressed: i === 0 }, WORLD);
         top = Math.min(top, feet(b));
         i++;
       });

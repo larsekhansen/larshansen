@@ -1,0 +1,331 @@
+:root {
+  --pad: 0px;
+  --ink: #1f1a17;
+  --muted: #6b625c;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--ink);
+}
+
+body.touch {
+  --pad: calc(96px + env(safe-area-inset-bottom));
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.bar {
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding: calc(8px + env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) 8px max(16px, env(safe-area-inset-left));
+  background: rgba(255, 252, 246, 0.86);
+  backdrop-filter: blur(6px);
+  border-bottom: 1px solid rgba(31, 26, 23, 0.08);
+}
+
+.me {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+.apps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 14px;
+}
+
+.apps .go {
+  color: var(--muted);
+}
+
+.apps ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.apps a,
+.apps li > span {
+  display: inline-block;
+  padding: 3px 11px;
+  border-radius: 99px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.apps a:hover,
+.apps a:focus-visible,
+.apps .here {
+  border-color: #541321;
+  color: #541321;
+}
+
+.apps li > span {
+  color: var(--muted);
+  font-weight: 500;
+  background: transparent;
+}
+
+.apps small {
+  font-size: 12px;
+}
+
+:focus-visible {
+  outline: 3px solid #1f4e8c;
+  outline-offset: 2px;
+}
+
+/* The right end of the bar: the game's own readouts and the icon buttons. */
+.run {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  margin-left: auto;
+}
+
+.run[hidden] {
+  display: none;
+}
+
+/* Round icon buttons (sound, start again). Their markup is an svg of stroked paths. */
+.tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tool:hover,
+.tool:focus-visible {
+  border-color: #541321;
+  color: #541321;
+}
+
+.tool svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tool .cross,
+.tool[aria-pressed="true"] .waves {
+  display: none;
+}
+
+.tool[aria-pressed="true"] .cross {
+  display: inline;
+}
+
+/* The card: finish and level panels. Cream, the bar's border and radius; one heading, one line, up to two actions. */
+.card {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 28px 18px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 12px;
+  background: #fffcf6;
+  box-shadow: 0 6px 24px rgba(31, 26, 23, 0.22);
+  color: var(--ink);
+  text-align: center;
+  font-size: 14px;
+}
+
+.card[hidden] {
+  display: none;
+}
+
+.card strong {
+  font-size: 18px;
+}
+
+.card p {
+  margin: 0;
+}
+
+.card .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.card .actions a,
+.card .actions button {
+  padding: 6px 14px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.card .actions .primary {
+  border-color: #541321;
+  background: #541321;
+  color: #fffcf6;
+}
+
+.stage {
+  position: fixed;
+  inset: 0 0 var(--pad) 0;
+  overflow: hidden;
+}
+
+.stage canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+  will-change: transform;
+}
+
+#px,
+.depth {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.help {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 6px 14px;
+  border-radius: 99px;
+  background: rgba(20, 22, 34, 0.72);
+  color: #fff;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.noscript {
+  position: absolute;
+  inset: auto 16px 24px;
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.pad {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 14px max(16px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(16px, env(safe-area-inset-left));
+  background: #16161c;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.pad[hidden] {
+  display: none;
+}
+
+.pad div {
+  display: flex;
+  gap: 10px;
+}
+
+.pad button {
+  min-width: 64px;
+  height: 64px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 20px;
+  background: #2c2c38;
+  color: #fff;
+  font: 600 17px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pad button.down {
+  background: #4a4a5c;
+}
+
+.pad svg {
+  width: 26px;
+  height: 26px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.pad .enter {
+  background: #8a2234;
+  visibility: hidden;
+}
+
+.pad .enter.show {
+  visibility: visible;
+}
+
+@media (max-width: 560px) {
+  .apps .go {
+    display: none;
+  }
+}

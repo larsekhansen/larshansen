@@ -1,0 +1,108 @@
+html,
+body {
+  /* Painted before the game has loaded: the mound's earth. */
+  background: #14110f;
+}
+
+/* The level, in the header bar: its name, how far, the clock, the curses, and the mute button. */
+.run .name {
+  font-weight: 700;
+}
+
+.run .level,
+.run .deaths {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.run button.level {
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px dotted currentColor;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.run button.level:hover,
+.run button.level:focus-visible {
+  color: #541321;
+}
+
+.clock small {
+  margin-left: 6px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.clock small:empty {
+  display: none;
+}
+
+.clock {
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.me {
+  white-space: nowrap;
+}
+
+/* The finish card: the seven levels' stones, each with its three notches, and the marks in all. */
+.marks-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.marks-total {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+@media (min-width: 760px) {
+  .bar {
+    flex-wrap: nowrap;
+    gap: 6px 12px;
+  }
+
+  .apps,
+  .apps ul {
+    flex-wrap: nowrap;
+  }
+
+  .apps {
+    font-size: 13px;
+    white-space: nowrap;
+  }
+
+  .apps a {
+    padding: 2px 8px;
+  }
+
+  .run {
+    flex-shrink: 0;
+  }
+}
+
+/* One row from 600 px: below 900 px the second link makes room for the level display. */
+@media (max-width: 899px) {
+  .apps .far {
+    display: none;
+  }
+}
+
+.run .level,
+.run .deaths,
+.run .clock {
+  white-space: nowrap;
+}
+
+/* The best time is small print; the bar has no room for it until the window is wide. */
+@media (max-width: 999px) {
+  .clock small {
+    display: none;
+  }
+}
