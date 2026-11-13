@@ -37,7 +37,20 @@ const STRINGS = {
     levelsClose: "Lukk",
     notReached: "Ikke nådd ennå",
     best: (time: string) => `Best ${time}`,
-    record: (time: string, deaths: number) => `${time} · × ${deaths}`
+    record: (time: string, deaths: number) => `${time} · × ${deaths}`,
+    // Bonus level: the feather after level 3, gold after all seven, the marks, teleport stones.
+    feather: "Haugbonden gir seg. Ravnefjæra er din: hopp en gang til i lufta.",
+    featherGold: "Alle sju. Fjæra di er gull nå.",
+    featherGoldStandalone: "Gullfjæra venter i Vikingfjorden.",
+    endAgain: "Haugbonden sover videre. Kom igjen når du vil.",
+    teleport: "Steinen flytter deg. Ikke spør hvordan.",
+    newBest: "Ny rekord",
+    markCleared: "Klart",
+    markClean: "Uten forbannelse",
+    markPar: (time: string) => `Under ${time}`,
+    marks: (n: number) => `${n} av 3 merker`,
+    marksTotal: (n: number, of: number) => `${n} av ${of} merker`,
+    next: "Videre"
   },
   en: {
     start1: "Guide yourself through the mound. Don't touch the walls.",
@@ -72,7 +85,19 @@ const STRINGS = {
     levelsClose: "Close",
     notReached: "Not reached yet",
     best: (time: string) => `Best ${time}`,
-    record: (time: string, deaths: number) => `${time} · × ${deaths}`
+    record: (time: string, deaths: number) => `${time} · × ${deaths}`,
+    feather: "The mound-dweller yields. The raven's feather is yours: jump once more in mid-air.",
+    featherGold: "All seven. Your feather is gold now.",
+    featherGoldStandalone: "The gold feather waits in Vikingfjorden.",
+    endAgain: "The mound-dweller sleeps on. Come back any time.",
+    teleport: "The stone moves you. Don't ask how.",
+    newBest: "New best",
+    markCleared: "Cleared",
+    markClean: "No curse",
+    markPar: (time: string) => `Under ${time}`,
+    marks: (n: number) => `${n} of 3 marks`,
+    marksTotal: (n: number, of: number) => `${n} of ${of} marks`,
+    next: "On"
   }
 };
 
