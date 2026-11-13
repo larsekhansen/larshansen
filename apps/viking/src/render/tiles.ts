@@ -145,6 +145,7 @@ function line(x: number, y: number) {
 
 export function drawTiles(map: TileMap, art: Art, sky: Sky) {
   forVisibleTiles(map, (t, c, r, x, y) => {
+    if (t === "." || art.tile?.(t, c, r, x, y, map, sky)) return;
     if (t === "#") {
       // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
       if (underWater(map, c, r)) return bed(c, r, x, y, map);

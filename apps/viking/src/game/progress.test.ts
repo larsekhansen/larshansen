@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { clearLevel, findBracteate, fresh, furthestOpen, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
+import { clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
 
 const ORDER = ["langkaia", "akershus", "radhuset", "slottet"];
 
@@ -14,8 +14,19 @@ describe("reading stored progress", () => {
   });
 
   test("wrong types inside are dropped, the rest kept", () => {
-    const p = readProgress(JSON.stringify({ cleared: ["langkaia", 3, null, "langkaia", ""], best: { langkaia: 41000, akershus: "fast", radhuset: -1, x: NaN }, bracteates: "all" }));
-    expect(p).toEqual({ cleared: ["langkaia"], best: { langkaia: 41000 }, bracteates: [] });
+    const p = readProgress(JSON.stringify({ cleared: ["langkaia", 3, null, "langkaia", ""], best: { langkaia: 41000, akershus: "fast", radhuset: -1, x: NaN }, bracteates: "all", skilling: { slottet: 12, x: -1, y: 2.5 }, clean: [1, "slottet"] }));
+    expect(p).toEqual({ cleared: ["langkaia"], best: { langkaia: 41000 }, bracteates: [], skilling: { slottet: 12 }, clean: ["slottet"] });
+  });
+
+  test("what the first three levels saved, before skilling and hearts, still reads as it was", () => {
+    const old = '{"cleared":["langkaia","akershus","radhuset"],"best":{"langkaia":41300,"akershus":65000,"radhuset":88000},"bracteates":["akershus"]}';
+    const p = readProgress(old);
+    expect(p.cleared).toEqual(["langkaia", "akershus", "radhuset"]);
+    expect(p.best).toEqual({ langkaia: 41300, akershus: 65000, radhuset: 88000 });
+    expect(p.bracteates).toEqual(["akershus"]);
+    expect(p.skilling).toEqual({});
+    expect(p.clean).toEqual([]);
+    expect(isOpen(p, [...ORDER, "holmenkollen"], 3)).toBe(true);
   });
 });
 
@@ -36,6 +47,20 @@ describe("clearing a level", () => {
     const a = clearLevel(fresh(), "langkaia", 50000, true).progress;
     expect(clearLevel(a, "langkaia", 40000, false).progress.bracteates).toEqual(["langkaia"]);
     expect(findBracteate(fresh(), "akershus").bracteates).toEqual(["akershus"]);
+  });
+
+  test("the most skilling is kept, and a clean run marks the level for good", () => {
+    let p = clearLevel(fresh(), "slottet", 70000, false, { skilling: 30, clean: false }).progress;
+    p = clearLevel(p, "slottet", 60000, false, { skilling: 20, clean: true }).progress;
+    p = clearLevel(p, "slottet", 80000, false, { skilling: 41, clean: false }).progress;
+    expect(p.skilling.slottet).toBe(41);
+    expect(p.clean).toEqual(["slottet"]);
+    expect(p.best.slottet).toBe(60000);
+  });
+
+  test("clearing Holmenkollen gives the ski pole", () => {
+    expect(hasPole(fresh())).toBe(false);
+    expect(hasPole(clearLevel(fresh(), "holmenkollen", 1, false).progress)).toBe(true);
   });
 
   test("progress is not changed in place", () => {

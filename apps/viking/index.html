@@ -6,14 +6,14 @@
     <title>Vikingfjorden · Lars Hansen</title>
     <meta
       name="description"
-      content="A small viking platform game hidden behind the secret door on larshansen.dev: a T-bane line through Oslo, a level at each stop, ten runes to find, and doors back to everything else."
+      content="A small viking platform game hidden behind the secret door on larshansen.dev: a T-bane line through Oslo, a level at each stop, ten runes to find, pigeons and snowballs in the way, and doors back to everything else."
     />
     <meta name="theme-color" content="#fffcf6" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Lars Hansen" />
     <meta property="og:url" content="https://larshansen.dev/viking/" />
     <meta property="og:title" content="Vikingfjorden · Lars Hansen" />
-    <meta property="og:description" content="A viking takes the T-bane through Oslo: the Opera's quay, Akershus festning, Rådhuset, and ten runes to find." />
+    <meta property="og:description" content="A viking takes the T-bane through Oslo: the Opera's quay, Akershus festning, Rådhuset, 17 May on Karl Johan, the ski jump at Holmenkollen, and ten runes to find." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
@@ -34,6 +34,8 @@
           <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
         </ol>
         <p class="clock"><span id="clock">0:00.0</span><small id="best"></small></p>
+        <p class="life" id="life"><span class="hearts" id="hearts" role="img"></span><span class="lives" id="lives" role="img"></span></p>
+        <p class="coins" id="coins" hidden><i aria-hidden="true"></i><span id="coinn">0</span></p>
         <p class="goldcount" id="goldcount" hidden><i aria-hidden="true"></i><span id="goldn">0</span></p>
         <!-- In the mound (Jernhaugen) these replace the runes and the clock. -->
         <div class="mazehud" id="mazehud">
@@ -63,6 +65,8 @@
         <strong id="finish-title"></strong>
         <p id="finish-line"></p>
         <p id="finish-gold"></p>
+        <p id="finish-coins" hidden></p>
+        <p id="finish-clean" hidden></p>
         <p id="finish-more" hidden></p>
         <span class="actions">
           <button type="button" class="primary" id="finish-on">Onward</button>
@@ -88,6 +92,7 @@
       </div>
       <div>
         <button type="button" data-action="enter" class="enter">Go in</button>
+        <button type="button" data-action="dash" class="dash" hidden>Dash</button>
         <button type="button" data-action="jump">Jump</button>
       </div>
     </div>

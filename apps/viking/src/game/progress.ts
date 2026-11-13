@@ -1,6 +1,8 @@
 // What a visitor has done across the levels, kept in localStorage["viking.progress"] as JSON: the
-// levels cleared, the best time per level, and the levels whose gold bracteate he found. Pure
-// functions, and forgiving: missing, old or broken data reads as a fresh start, never as an error.
+// levels cleared, the best time per level, the levels whose gold bracteate he found, the most
+// skilling found in each, and the levels cleared without losing a heart. Pure functions, and
+// forgiving: missing, old or broken data reads as a fresh start, never as an error, and what the
+// first three levels saved before skilling and hearts existed still reads as it was.
 
 export const PROGRESS_KEY = "viking.progress";
 
@@ -11,9 +13,13 @@ export interface Progress {
   best: Record<string, number>;
   /** Level ids whose bracteate he has found. */
   bracteates: string[];
+  /** The most skilling found in one run of each level. */
+  skilling: Record<string, number>;
+  /** Level ids cleared at least once without losing a heart: a waffle mark on the station's board. */
+  clean: string[];
 }
 
-export const fresh = (): Progress => ({ cleared: [], best: {}, bracteates: [] });
+export const fresh = (): Progress => ({ cleared: [], best: {}, bracteates: [], skilling: {}, clean: [] });
 
 const ids = (v: unknown): string[] => (Array.isArray(v) ? [...new Set(v.filter((x): x is string => typeof x === "string" && x.length > 0))] : []);
 
@@ -28,27 +34,45 @@ export function readProgress(raw: string | null | undefined): Progress {
   }
   if (!data || typeof data !== "object" || Array.isArray(data)) return fresh();
   const o = data as Record<string, unknown>;
-  const best: Record<string, number> = {};
-  if (o.best && typeof o.best === "object" && !Array.isArray(o.best))
-    for (const [k, v] of Object.entries(o.best as Record<string, unknown>)) if (typeof v === "number" && Number.isFinite(v) && v > 0) best[k] = v;
-  return { cleared: ids(o.cleared), best, bracteates: ids(o.bracteates) };
+  const numbers = (v: unknown, ok: (n: number) => boolean) => {
+    const out: Record<string, number> = {};
+    if (v && typeof v === "object" && !Array.isArray(v))
+      for (const [k, n] of Object.entries(v as Record<string, unknown>)) if (typeof n === "number" && Number.isFinite(n) && ok(n)) out[k] = n;
+    return out;
+  };
+  return {
+    cleared: ids(o.cleared),
+    best: numbers(o.best, (n) => n > 0),
+    bracteates: ids(o.bracteates),
+    skilling: numbers(o.skilling, (n) => n >= 0 && Number.isInteger(n)),
+    clean: ids(o.clean)
+  };
 }
 
 export const writeProgress = (p: Progress): string => JSON.stringify(p);
 
-/** A level cleared in `ms`, with or without its bracteate. Returns the new progress and whether the time is a new best. */
-export function clearLevel(p: Progress, id: string, ms: number, bracteate: boolean): { progress: Progress; newBest: boolean } {
+/**
+ * A level cleared in `ms`, with or without its bracteate, with `skilling` found and `clean` when no
+ * heart was lost. Returns the new progress and whether the time is a new best.
+ */
+export function clearLevel(p: Progress, id: string, ms: number, bracteate: boolean, run: { skilling?: number; clean?: boolean } = {}): { progress: Progress; newBest: boolean } {
   const old = p.best[id];
   const newBest = old === undefined || ms < old;
+  const found = run.skilling ?? 0;
   return {
     progress: {
       cleared: p.cleared.includes(id) ? p.cleared : [...p.cleared, id],
       best: newBest ? { ...p.best, [id]: ms } : p.best,
-      bracteates: bracteate && !p.bracteates.includes(id) ? [...p.bracteates, id] : p.bracteates
+      bracteates: bracteate && !p.bracteates.includes(id) ? [...p.bracteates, id] : p.bracteates,
+      skilling: found > (p.skilling[id] ?? 0) ? { ...p.skilling, [id]: found } : p.skilling,
+      clean: run.clean && !p.clean.includes(id) ? [...p.clean, id] : p.clean
     },
     newBest
   };
 }
+
+/** The ski pole is the prize for clearing Holmenkollen. */
+export const hasPole = (p: Progress) => p.cleared.includes("holmenkollen");
 
 /** A bracteate found, kept even before the level is cleared. */
 export function findBracteate(p: Progress, id: string): Progress {

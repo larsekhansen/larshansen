@@ -1,50 +1,45 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { R, mix } from "@larshansen/pixelkit/paint";
-import { BRICK, DOORWAY, FACADE, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, DOORWAY, FACADE, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, FOOD, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawRune } from "../render/actors";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
 import { RUNE_CHARS } from "../game/runes";
 import { isOpen, type Progress } from "../game/progress";
-import { LINE, ORDER, isBuilt } from "./index";
+import { mapBuilder } from "./build";
+import { LINE, ORDER } from "./index";
 import type { LevelDef, View } from "./types";
 
 // The line map: one T-bane line, thick and red, with a station for each of the ten levels. He walks
 // along it like anywhere else and goes in at a station. Its rune is carved above it, lit once the
 // level is cleared; its name is on a board under it, with the best time once there is one. A branch
-// dips under the line to Jernhaugen, the burial mound with the maze. Stations four to ten stand
-// behind a construction fence. Hjem, the door home, is at the far left.
+// dips under the line to Jernhaugen, the burial mound with the maze. The stations not built yet
+// stand behind a construction fence. Hjem, the door home, is at the far left. A level cleared
+// without losing a heart gets a small waffle heart beside its rune.
 //
 //   L  the line, on a viaduct   #  the floor of the dip   F  the fence   h Hjem   j Jernhaugen
 //   1 to 9, 0  the stations
 
-export const KART_MAP = [
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "...........................F........................",
-  "..h.S.1.............2...3..F..4..5..6..7..8..9..0...",
-  "LLLLLLLLL.........LLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLL",
-  "....................................................",
-  ".............j......................................",
-  ".........#########..................................",
-  ".........#########.................................."
-];
+/** Where the stations stand along the line, and the hoarding after the last built one. */
+const STATIONS = [6, 20, 24, 29, 34, 41, 44, 47, 50, 53];
+const k = mapBuilder(57, 16);
+k.fill(38, 38, 0, 10, "F");
+k.put(2, 10, "h").put(4, 10, "S").put(13, 13, "j");
+STATIONS.forEach((c, i) => k.put(c, 10, "1234567890"[i]));
+k.run(0, 56, 11, "L").run(9, 17, 11, ".");
+k.fill(9, 17, 14, 15, "#");
+export const KART_MAP = k.rows_();
 
 const LINE_Y = 11 * TILE;
 const DIP = 14 * TILE;
 const DOWN = { points: [[9 * TILE, LINE_Y], [12 * TILE, DIP]] as [number, number][] };
 const UP = { points: [[15 * TILE, DIP], [18 * TILE, LINE_Y]] as [number, number][] };
 const STATION_TILES = "1234567890";
-const FENCE_X = 27 * TILE;
+/** The hoarding stands across the line after the last built station. */
+export const FENCE_COL = KART_MAP[0].indexOf("F");
+const FENCE_X = FENCE_COL * TILE;
 
 /** The station's x on the line (its door's middle). */
 export const stationX = (i: number) => {
@@ -130,10 +125,17 @@ function mound(door: Door | undefined, snow: boolean) {
 }
 
 /** Behind a station: its place's skyline, and its rune carved on a stone above, lit once the level is cleared. */
-function stationBack(i: number, cleared: boolean, v: View) {
+function stationBack(i: number, cleared: boolean, clean: boolean, v: View) {
   const x = stationX(i);
   skyline(i, x, LINE_Y);
   drawRune(x - 8, LINE_Y - 46, RUNE_CHARS[LINE[i].rune], cleared ? "lit" : "dark", v.t, i);
+  if (clean) waffle(x + 9, LINE_Y - 44);
+}
+
+/** The waffle mark: a small heart of waffle, for a level cleared without losing a heart. */
+export function waffle(x: number, y: number) {
+  const rows = [".ww.ww.", "wwwwwww", "wwwwwww", ".wwwww.", "..www..", "...w..."];
+  rows.forEach((row, r) => [...row].forEach((ch, c) => ch === "w" && R(x + c, y + r, 1, 1, (c + r) % 2 ? FOOD.waffleDough : FOOD.waffleCrust)));
 }
 
 /** The station on the line: a white square in a red frame, as on a metro map; grey while closed. */
@@ -196,7 +198,7 @@ export function kartDef(progress: Progress): LevelDef {
     doors: [
       { id: "home", tile: "h", sign: "Hjem", href: "/?from=viking" },
       { id: "maze", tile: "j", sign: "Jernhaugen", href: "#jernhaugen" },
-      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: ("short" in l && l.short) || l.name, href: isBuilt(l) ? `#${l.id}` : "" }))
+      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: l.short ?? l.name, href: l.built ? `#${l.id}` : "" }))
     ],
     art: {
       far: (v) => drawOsloHills(v.sky, LINE_Y + 2 * TILE),
@@ -212,11 +214,11 @@ export function kartDef(progress: Progress): LevelDef {
         viaduct();
         mound(v.doors.get("maze"), v.sky.snow);
         branch();
-        LINE.forEach((_, i) => stationBack(i, cleared(i), v));
+        LINE.forEach((l, i) => stationBack(i, cleared(i), progress.clean.includes(l.id), v));
         fence();
       },
       front() {
-        LINE.forEach((_, i) => stationMark(i, isOpen(progress, ORDER, i) && i < 3));
+        LINE.forEach((l, i) => stationMark(i, isOpen(progress, ORDER, i) && l.built));
       },
       ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }),
       ledges: {}

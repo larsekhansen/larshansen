@@ -9,9 +9,9 @@ import { buildDoors, doorAt, readAppLinks, type Door, type DoorSpot } from "@lar
 import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
-import { drawCannon } from "@larshansen/pixelkit/launcher";
+import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, target, view } from "@larshansen/pixelkit/paint";
-import { DUST, FEATHER, INK, METAL, PALETTE, SHIMMER } from "@larshansen/pixelkit/palette";
+import { COIN, DUST, FEATHER, FOOD, INK, METAL, PALETTE, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -48,7 +48,7 @@ import {
   wireSkyKey
 } from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
-import { drawSparks } from "@larshansen/pixelkit/sparks";
+import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
 import { drawTimed } from "@larshansen/pixelkit/timed";
 import { boardWidth, doorBoard, drawOverlay, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
@@ -56,13 +56,14 @@ import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
-import { cannonArc, elapsedMs, formatTime, leftToRight, newPlay, stepPlay, type Events, type Play } from "./game/play";
-import { PROGRESS_KEY, clearLevel, findBracteate, fresh, furthestOpen, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
+import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
+import { PROGRESS_KEY, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
-import { BUILT, LINE, ORDER, isBuilt, levelById } from "./levels/index";
+import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
 import { kartDef } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawRune, drawSheep } from "./render/actors";
+import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { drawTiles, drawWater } from "./render/tiles";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
@@ -105,9 +106,9 @@ const now = () => harness?.now ?? new Date();
 
 /** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it. */
 function debugProgress(): Progress | null {
-  if (!debug || (!params.has("cleared") && !params.has("gold"))) return null;
+  if (!debug || (!params.has("cleared") && !params.has("gold") && !params.has("clean"))) return null;
   const list = (k: string) => (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id));
-  return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold") };
+  return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
 }
 const pretend = debugProgress();
 let progress: Progress = pretend ?? readProgress(store.get(PROGRESS_KEY));
@@ -123,14 +124,17 @@ wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 followReducedMotion();
 const touch = isTouch();
 /** The double jump is the raven's feather, from the maze; `?feather` gives it for checking. Read again on coming out of the mound. */
-const abilities = { doubleJump: false, gold: false };
+const abilities = { doubleJump: false, gold: false, pole: false };
 function readFeather() {
   abilities.doubleJump = store.get("viking.feather") === "1" || params.has("feather") || abilities.doubleJump;
   abilities.gold = store.get("viking.featherGold") === "1" || abilities.gold;
+  abilities.pole = hasPole(progress) || params.has("pole");
 }
 readFeather();
 /** The gold helmet from the old game's full run of ten runes is kept by those who earned it. */
 const crowned = store.get("viking.crowned") === "1";
+/** Lives and the purse of skilling go with him from level to level for this visit; a new visit starts with three lives. */
+const session = { lives: LIVES, purse: 0 };
 
 // ---------------------------------------------------------------------------------------------
 // The scene: the line map or a level, its rules, doors and boards.
@@ -159,7 +163,12 @@ function extraState() {
     flight: null as { from: { x: number; y: number }; since: number } | null,
     finished: false,
     /** Steps the dotted arc has been shown while he sits in a cannon. */
-    lastEvents: null as Events | null
+    lastEvents: null as Events | null,
+    /** Steps the world holds still after a stomp or a hit, and the little shake of the view. */
+    freeze: 0,
+    nudge: { x: 0, y: 0, until: 0 },
+    /** The card shown: a level cleared, or the game over. */
+    card: null as "clear" | "over" | null
   };
 }
 const before = { x: 0, y: 0 };
@@ -214,8 +223,9 @@ const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
 
 /** Opens the line map or a level. `at`: a door to stand at on arrival (on the map, a station or the mound). */
 function openScene(id: string, at?: string) {
-  const def = id === "kart" ? kartDef(progress) : levelById(id) ?? kartDef(progress);
-  const play = newPlay(def, { feather: abilities.doubleJump });
+  const def = id === "kart" ? kartDef(progress) : loadedLevel(id) ?? kartDef(progress);
+  readFeather();
+  const play = newPlay(def, { feather: abilities.doubleJump, pole: abilities.pole, lives: session.lives, purse: session.purse });
   const doors = buildDoors(doorSpots(def, play), links);
   const signs = leftToRight(play.map.find(MARKS.sign)).map((tile, i) => ({ ...footOf(tile), i }));
   const skies = skyControl(params.get("sky") ?? def.sky, now);
@@ -229,8 +239,11 @@ function openScene(id: string, at?: string) {
   if (door) standAt(door);
   document.body.classList.toggle("on-map", scene.map);
   finishEl.hidden = true;
+  dashButton.hidden = !abilities.pole || scene.map;
   layout();
   hud();
+  // On the map, the open levels' code is fetched while he walks, so going in is quick.
+  if (scene.map) for (const [i, l] of LINE.entries()) if (l.built && isOpen(progress, ORDER, i)) void loadLevel(l.id).catch(() => undefined);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -262,6 +275,22 @@ function sync() {
   }
   const want = ROUTES.includes(id) && (id === "kart" || levelOpen(id)) ? id : "kart";
   if (scene && scene.def.id === want && !arriveAt) return;
+  if (want !== "kart" && !loadedLevel(want)) {
+    // The level's code comes first: the scene goes dark while it does, and opens when it is here.
+    if (scene) {
+      state.mode = "away";
+      state.modeSteps = 0;
+      state.fade = 1;
+    }
+    loadLevel(want).then(
+      () => location.hash === `#${want}` && sync(),
+      () => {
+        history.replaceState(null, "", location.pathname + location.search + "#kart");
+        sync();
+      }
+    );
+    return;
+  }
   const at = arriveAt ?? undefined;
   arriveAt = null;
   openScene(want, want === "kart" ? at : undefined);
@@ -422,6 +451,13 @@ const clockEl = $<HTMLElement>("clock");
 const bestEl = $<HTMLElement>("best");
 const goldEl = $<HTMLElement>("goldcount");
 const goldN = $<HTMLElement>("goldn");
+const heartsEl = $<HTMLElement>("hearts");
+const livesEl = $<HTMLElement>("lives");
+const coinsEl = $<HTMLElement>("coins");
+const coinN = $<HTMLElement>("coinn");
+const dashButton = pad.querySelector<HTMLButtonElement>('[data-action="dash"]')!;
+dashButton.textContent = t.dash;
+dashButton.setAttribute("aria-label", t.dash);
 const restartButton = $<HTMLButtonElement>("restart");
 const finishEl = $<HTMLElement>("finish");
 
@@ -439,7 +475,33 @@ runeSlots.forEach((li, i) => {
 });
 $<HTMLElement>("run").hidden = false;
 
-const shownHud = { clock: "", lit: "", gold: -1, best: "" };
+/** A small picture in pixels for the header: rows of letters, a colour for each letter. */
+function pixelSvg(rows: string[], colors: Record<string, string>): SVGSVGElement {
+  const svg = document.createElementNS(SVG, "svg");
+  svg.setAttribute("viewBox", `0 0 ${rows[0].length} ${rows.length}`);
+  svg.setAttribute("aria-hidden", "true");
+  rows.forEach((row, y) =>
+    [...row].forEach((ch, x) => {
+      if (ch === ".") return;
+      const r = document.createElementNS(SVG, "rect");
+      r.setAttribute("x", String(x));
+      r.setAttribute("y", String(y));
+      r.setAttribute("width", "1");
+      r.setAttribute("height", "1");
+      r.setAttribute("fill", colors[ch]);
+      svg.appendChild(r);
+    })
+  );
+  return svg;
+}
+// A waffle heart: crust and dough in a grid, as the waffle iron leaves it.
+const WAFFLE_HEART = [".cc.cc.", "cdcdcdc", "dcdcdcd", "cdcdcdc", ".cdcdc.", "..cdc..", "...c..."];
+const hearts = Array.from({ length: HEARTS }, () => heartsEl.appendChild(pixelSvg(WAFFLE_HEART, { c: FOOD.waffleCrust, d: FOOD.waffleDough })));
+// The helmet over the hat, with the pompom on top: one for the lives, with the number beside it.
+livesEl.appendChild(pixelSvg(["...w...", "..iii..", ".iiiii.", "iiiiiii", "rrrrrrr", ".s...s."], { w: WHITE, i: PALETTE.ironDark, r: PALETTE.iron, s: PALETTE.ironDark }));
+const livesN = livesEl.appendChild(document.createElement("span"));
+
+const shownHud = { clock: "", lit: "", gold: -1, best: "", hearts: -1, lives: -1, coins: "" };
 /** The rune slots light for the levels cleared; the one a rune is flying to waits. */
 function hud() {
   const lit = LINE.map((l) => (progress.cleared.includes(l.id) && !(state.flight && scene.def.id === l.id) ? "1" : "0")).join("");
@@ -456,6 +518,26 @@ function hud() {
     const bestText = best !== undefined ? `${t.best} ${formatTime(best)}` : "";
     if (bestText !== shownHud.best) bestEl.textContent = shownHud.best = bestText;
   }
+  const p = scene.play;
+  const heartsShown = scene.map ? HEARTS : p.hearts;
+  if (heartsShown !== shownHud.hearts) {
+    shownHud.hearts = heartsShown;
+    hearts.forEach((h, i) => h.classList.toggle("gone", i >= heartsShown));
+    heartsEl.setAttribute("aria-label", t.hearts(heartsShown));
+  }
+  if (p.lives !== shownHud.lives) {
+    shownHud.lives = p.lives;
+    livesN.textContent = String(p.lives);
+    livesEl.setAttribute("aria-label", t.lives(p.lives));
+  }
+  const total = p.skilling.length;
+  const coins = scene.map || total === 0 ? "" : `${p.found}/${total}`;
+  if (coins !== shownHud.coins) {
+    shownHud.coins = coins;
+    coinsEl.hidden = coins === "";
+    coinN.textContent = coins;
+    coinsEl.setAttribute("aria-label", t.skilling(p.found, total));
+  }
   const gold = progress.bracteates.length;
   if (gold !== shownHud.gold) {
     shownHud.gold = gold;
@@ -470,33 +552,85 @@ restartButton.title = `${t.restart} (R)`;
 $<HTMLElement>("finish-on").textContent = t.finishOn;
 $<HTMLElement>("finish-again").textContent = t.finishAgain;
 
-/** The level again from its start, the clock at zero. */
+/** The level again from its start, the clock at zero. Lives stay as they are. */
 function restartLevel() {
   if (scene.map) return;
   openScene(scene.def.id);
 }
 
-/** The rune is in its slot: the card with the time, the best, and the bracteate. */
-function showCard(ms: number, newBest: boolean, gold: boolean) {
+const finishOn = $<HTMLButtonElement>("finish-on");
+const finishAgain = $<HTMLButtonElement>("finish-again");
+const finishCoins = $<HTMLElement>("finish-coins");
+const finishClean = $<HTMLElement>("finish-clean");
+
+/** The rune is in its slot: the card with the time, the best, the skilling, the bracteate, and a clean run. */
+function showCard(r: CardResult) {
   state.finished = true;
+  state.card = "clear";
   $<HTMLElement>("finish-title").textContent = `${RUNE_CHARS[scene.def.rune]} · ${scene.def.name}`;
-  $<HTMLElement>("finish-line").textContent = `${formatTime(ms)} · ${newBest ? t.finishNew : t.finishBest(formatTime(progress.best[scene.def.id] ?? ms))}`;
-  $<HTMLElement>("finish-gold").textContent = gold ? t.goldFound : t.goldMissed;
+  $<HTMLElement>("finish-line").textContent = `${formatTime(r.ms)} · ${r.newBest ? t.finishNew : t.finishBest(formatTime(progress.best[scene.def.id] ?? r.ms))}`;
+  const gold = $<HTMLElement>("finish-gold");
+  gold.hidden = false;
+  gold.textContent = r.gold ? t.goldFound : t.goldMissed;
+  finishCoins.hidden = r.total === 0;
+  finishCoins.textContent = t.finishSkilling(r.found, r.total);
+  finishClean.hidden = !r.clean && !r.pole;
+  finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? t.finishPole : ""].filter(Boolean).join(" ");
   const more = $<HTMLElement>("finish-more");
   more.hidden = scene.def.id !== BUILT[BUILT.length - 1].id;
-  more.textContent = t.moreToBuild;
+  more.textContent = t.moreToBuild(LINE.filter((l) => progress.cleared.includes(l.id)).length);
+  finishOn.textContent = t.finishOn;
+  finishAgain.textContent = t.finishAgain;
   finishEl.hidden = false;
-  say(`${scene.def.name}. ${formatTime(ms)}. ${newBest ? t.finishNew : ""}`);
+  say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""}`);
   sfx.play("clear");
-  $<HTMLButtonElement>("finish-on").focus({ preventScroll: true });
+  finishOn.focus({ preventScroll: true });
 }
-let cardResult: { ms: number; newBest: boolean; gold: boolean } | null = null;
 
-$<HTMLElement>("finish-on").addEventListener("click", () => {
+/** No lives left: a plain card, and the level starts over with three lives. */
+function showOver() {
+  state.finished = true;
+  state.card = "over";
+  $<HTMLElement>("finish-title").textContent = t.overTitle;
+  $<HTMLElement>("finish-line").textContent = t.overLine;
+  $<HTMLElement>("finish-gold").hidden = true;
+  finishCoins.hidden = true;
+  finishClean.hidden = true;
+  $<HTMLElement>("finish-more").hidden = true;
+  finishOn.textContent = t.overAgain;
+  finishAgain.textContent = t.overMap;
+  finishEl.hidden = false;
+  say(`${t.overTitle}. ${t.overLine}`);
+  sfx.play("over");
+  finishOn.focus({ preventScroll: true });
+}
+
+interface CardResult {
+  ms: number;
+  newBest: boolean;
+  gold: boolean;
+  found: number;
+  total: number;
+  clean: boolean;
+  pole: boolean;
+}
+let cardResult: CardResult | null = null;
+
+finishOn.addEventListener("click", () => {
+  if (state.card === "over") {
+    session.lives = LIVES;
+    return restartLevel();
+  }
   const next = ORDER[ORDER.indexOf(scene.def.id) + 1];
   go("kart", next && isBuilt(LINE[ORDER.indexOf(next)]) ? next : scene.def.id);
 });
-$<HTMLElement>("finish-again").addEventListener("click", restartLevel);
+finishAgain.addEventListener("click", () => {
+  if (state.card === "over") {
+    session.lives = LIVES;
+    return go("kart", scene.def.id);
+  }
+  restartLevel();
+});
 restartButton.addEventListener("click", () => {
   restartLevel();
   restartButton.blur(); // give the keyboard back to the game
@@ -566,6 +700,36 @@ function react(ev: Events) {
   }
   if (ev.bell !== null) sfx.play("bell", p.def.timed[ev.bell].note ?? ev.bell);
   if (ev.bleat) sfx.play("bleat");
+  if (ev.drum !== null) sfx.play("stomp");
+  if (ev.coin !== null) {
+    sfx.play("coin", ev.coin);
+    const s = p.skilling.find((k) => k.at === p.t);
+    if (s) sparksAt(s.box.x + 4, s.box.y + 4, 4, COIN.shine, 0.5);
+  }
+  if (ev.stomp !== null) {
+    sfx.play("stomp");
+    jolt(0, 2);
+  }
+  if (ev.hurt) {
+    sfx.play("hurt");
+    jolt(b.facing * -2, 0);
+    if (!ev.lifeLost && p.hearts > 0) say(t.hurt(p.hearts));
+  }
+  if (ev.lifeLost && !ev.over) say(t.lifeLost(p.lives));
+  if (ev.life) {
+    sfx.play("life");
+    say(t.lifeWon);
+    sparksAt(b.x + PLAYER.w / 2, b.y, 8, FOOD.cheeseLight, 0.7);
+  }
+  if (ev.bench !== null) {
+    sfx.play("bench");
+    say(t.benchSat);
+  }
+  if (ev.dash) sfx.play("dash");
+  if (ev.over) {
+    session.lives = 0;
+    showOver();
+  }
   if (ev.splash) {
     sfx.play("splash");
     if (!view.reduced)
@@ -579,13 +743,17 @@ function react(ev: Events) {
   }
   if (ev.rune && p.rune) {
     sfx.play("pickup", p.def.rune);
+    if (p.def.flourish) sfx.play("hurra");
     say(t.runeFound(RUNE_CHARS[p.def.rune], p.def.name));
     const ms = elapsedMs(p);
-    const r = clearLevel(progress, p.def.id, ms, p.bracteateAt !== null);
+    const hadPole = hasPole(progress);
+    const r = clearLevel(progress, p.def.id, ms, p.bracteateAt !== null, { skilling: p.found, clean: !p.hurt });
     saveProgress(r.progress);
-    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id) };
+    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole: !hadPole && hasPole(progress) };
     state.flight = { from: { x: p.rune.x + 8, y: p.rune.y + 8 }, since: state.steps };
     sparksAt(p.rune.x + 8, p.rune.y + 8, 8, PALETTE.runeGlow);
+    const bursts = p.def.fireworks;
+    if (bursts && !view.reduced) fireworks(state.sparks, (k) => ({ x: bursts[k % bursts.length][0], y: bursts[k % bursts.length][1] }));
   }
 }
 
@@ -595,12 +763,21 @@ function play() {
   const door = doorAt(b, scene.doors);
   const held = frozen() || state.finished || !!state.flight || !!p.loaded;
   if (door && !held && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
+  // At a bench, up sits down instead of jumping.
+  const bench = !held && !scene.map && !p.sitting ? benchAt(p) : null;
   // Walking to a clicked spot or door. Any input of the visitor's own takes over again.
   if (state.goal && held) state.goal = null;
-  const { intent, enter } = followGoal(state, b, held ? STILL : intentFrom(input, !!door), door);
+  const { intent: keys, enter } = followGoal(state, b, held ? STILL : intentFrom(input, !!door || bench !== null), door);
   if (enter) return tryEnter(enter);
+  const intent: PlayIntent = { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash") };
   const airJumps = b.airJumps;
+  const vx = b.vx;
   const ev = stepPlay(p, intent);
+  session.lives = p.lives;
+  session.purse = p.purse;
+  // Dust when he turns at speed, and a streak behind a dash.
+  if (b.onGround && Math.abs(vx) > 1.2 && Math.sign(b.vx) !== Math.sign(vx) && !view.reduced) state.sparks.push({ x: b.x + PLAYER.w / 2, y: b.y + PLAYER.h - 1, vx: -vx * 0.2, vy: -0.3, life: 14, color: DUST });
+  if (p.dash && !view.reduced) for (let k = 0; k < 2; k++) state.sparks.push({ x: b.x + PLAYER.w / 2 - p.dash.dir * (4 + k * 3), y: b.y + 4 + k * 5, vx: -p.dash.dir * 0.3, vy: 0, life: 10, color: WHITE });
   state.lastEvents = ev;
   if (ev.step.jumped && b.airJumps < airJumps && !view.reduced)
     for (let i = 0; i < 3; i++) state.sparks.push({ x: b.x + PLAYER.w / 2 + (i - 1) * 3, y: b.y + PLAYER.h - 2 + i, vx: (i - 1) * 0.12, vy: 0.02, life: 70 + i * 12, color: abilities.gold ? METAL.gold : FEATHER.vane });
@@ -609,19 +786,27 @@ function play() {
   react(ev);
 }
 
+/** A stomp or a hit: the world holds still for two steps and the view gives a little. */
+function jolt(dx: number, dy: number) {
+  if (view.reduced) return;
+  state.freeze = 2;
+  state.nudge = { x: dx, y: dy, until: state.steps + 6 };
+}
+
 function stepOnce() {
   stepStart(state, scene.play.body, before);
   stepArrival();
   input.pollPad();
-  if (state.mode === "play") play();
+  if (state.freeze > 0) state.freeze--;
+  else if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
   else if (!loading && ++state.modeSteps > 300) reopen(state, scene.doors, input); // the place never opened
   if (state.bubble && state.steps > state.bubble.until) state.bubble = null;
   if (state.feather && state.steps - state.feather.since > FEATHER_SHOWN) state.feather = null;
   if (state.mode === "play" && state.fade > 0) state.fade = Math.max(0, state.fade - 1 / 16); // coming back from the mound
-  if (state.flight && state.steps - state.flight.since === FLIGHT_STEPS && cardResult) {
+  if (state.flight && state.steps - state.flight.since === Math.max(FLIGHT_STEPS, scene.def.flourish ?? 0) && cardResult) {
     state.flight = null;
-    showCard(cardResult.ms, cardResult.newBest, cardResult.gold);
+    showCard(cardResult);
   }
   stepEnd(state, scene.doors, input, scene.skies);
 }
@@ -662,8 +847,12 @@ const look = (): Look => {
 function camera(elapsedMs: number, snap: boolean) {
   const bar = (header.getBoundingClientRect().height * view.dpr) / view.k;
   const focus = { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2, facing: scene.play.body.facing };
-  aim(follow({ x: view.camXf, y: view.camYf }, focus, { width: scene.play.map.width, bottom: scene.play.map.height, top: bar }, view, elapsedMs, snap));
+  const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom: scene.def.floor?.(focus.x) ?? scene.play.map.height, top: bar }, view, elapsedMs, snap);
+  shake.x = state.steps < state.nudge.until ? state.nudge.x : 0;
+  shake.y = state.steps < state.nudge.until ? state.nudge.y : 0;
+  aim({ x: at.x + shake.x, y: at.y + shake.y });
 }
+const shake = { x: 0, y: 0 };
 
 function layout() {
   kit.resize();
@@ -687,7 +876,9 @@ function drawThings(v: View) {
   });
   p.def.timed.forEach((l, i) => (art.timed ? art.timed(i, v) : drawTimed(l, p.t, v.sky.snow)));
   p.cannons.forEach((l, i) => {
-    drawCannon(l, p.t, p.loaded?.i === i ? p.loaded.at : -999, p.firedAt[i]);
+    const loadedAt = p.loaded?.i === i ? p.loaded.at : -999;
+    if (art.cannon) art.cannon(i, l, loadedAt, p.firedAt[i], v);
+    else drawCannon(l, p.t, loadedAt, p.firedAt[i]);
     if (p.loaded?.i === i) {
       // While he sits in the barrel: the first second of the arc, dotted.
       for (const d of cannonArc(p, i, 60, 2)) {
@@ -696,10 +887,17 @@ function drawThings(v: View) {
       }
     }
   });
+  p.drums.forEach((l, i) => drawDrum(l, p.t, p.drummedAt[i]));
   p.flags.forEach((f, i) => drawCheckpoint(f, p.raisedAt[i], p.t));
+  p.benches.forEach((s, i) => drawBench(s.x, s.bottom, p.sitting?.i === i));
   for (const s of p.sheep) drawSheep(s);
+  p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
+  if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
+  for (const e of p.enemies) if (!art.enemy?.(e, v)) drawEnemy(e, p.t);
+  for (const s of p.shots) drawShot(s);
   if (p.bracteate && p.bracteateAt === null) drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
   if (p.rune) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
+  if (v.flourish !== null) art.flourish?.(v.flourish, v);
 }
 
 function render(alpha: number) {
@@ -709,7 +907,7 @@ function render(alpha: number) {
   const horizon = p.map.height - 4 * TILE - 34;
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
-  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 } };
+  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null };
   if (art.far) pass(kit.depth(0.12), () => art.far!(v), 0.35);
   if (art.mid) pass(kit.depth(0.2), () => art.mid!(v), 0.3);
   if (art.near) pass(kit.depth(0.4), () => art.near!(v), 0.2);
@@ -736,6 +934,7 @@ function render(alpha: number) {
   }
 
   const door = state.mode === "play" && !state.flight && !state.finished ? doorAt(p.body, scene.doors) : null;
+  const bench = state.mode === "play" && !state.finished && !scene.map && !p.sitting ? benchAt(p) : null;
   // A sign he is standing by speaks in a bubble; so does the mound's stop while he has no feather.
   const cx = shown.x + PLAYER.w / 2;
   let bubble: { x: number; y: number; lines: string[]; align?: "left" } | null = null;
@@ -756,19 +955,29 @@ function render(alpha: number) {
     if (bubble) say(bubble.lines.join(" "));
   }
 
+  // Blinking after a hit; sitting, a little lower, on the bench.
+  const blink = blinking(p) && !view.reduced && Math.floor(p.t / 4) % 2 === 0;
+  const body = p.sitting ? { ...shown, y: shown.y + 3 } : shown;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
     world: p.map,
     boards: scene.boards,
-    player: { body: shown, walk: state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
-    hint: door && !touch && !speaking && !frozen() && !state.bubble ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
+    player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * (blink ? 0.25 : 1), phase: sky.phase, look: look() },
+    hint:
+      door && !touch && !speaking && !frozen() && !state.bubble
+        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` }
+        : bench !== null && !touch && !bubble
+          ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
+          : null,
     bubble: door && !speaking && !state.bubble ? null : bubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
   drawFlight();
-  follows(door, state.moved);
+  follows(door ?? (bench !== null ? benchStop : null), state.moved);
   hud();
 }
+/** What the pad's enter button stands for at a bench. */
+const benchStop = { id: "bench" };
 
 /** The rune on its way from the level to its slot in the header, on the text canvas. */
 function drawFlight() {
@@ -853,73 +1062,85 @@ links.find((l) => l.id === "maze")?.el.addEventListener("click", (e) => {
 
 const from = params.get("from");
 const levelParam = params.get("level");
-const debugLevel = debug && levelParam && levelById(levelParam) ? levelParam : null;
+const debugLevel = debug && levelParam && BUILT.some((l) => l.id === levelParam) ? levelParam : null;
 if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + MAZE_HASH); // ?level=<n>: the maze at that level
-const started = hasProgress(progress);
-const furthest = ORDER[furthestOpen(progress, ORDER, BUILT.length)];
-let first: string;
-let firstAt: string | undefined;
-if (location.hash === MAZE_HASH) {
-  first = "kart";
-  firstAt = "maze";
-} else if (debugLevel) first = debugLevel;
-else if (ROUTES.includes(location.hash.slice(1))) first = location.hash.slice(1);
-else if (from === "maze") {
-  first = "kart";
-  firstAt = "maze";
-} else if (from === "oslo" || !started) {
-  first = started ? "kart" : BUILT[0].id;
-  firstAt = started ? furthest : undefined;
-} else {
-  first = "kart";
-  firstAt = furthest;
-}
-if (first !== "kart" && !levelOpen(first)) {
-  first = "kart";
-  firstAt = furthest;
-}
-openScene(first, firstAt);
-if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
-
-// The helmet moment: out of the Opera's door in level 1, or at a station on the map.
-if (from === "oslo" && !view.reduced) {
-  const home = !scene.map ? scene.doors.find((d) => d.id === "home") ?? null : null;
-  if (home) standAt(home);
-  state.arrive = { t: 0, off: null, door: home };
-  state.alpha = 0;
-  if (home) home.open = true;
-}
-dropParam(params, "from");
-
-// Back from a door that leads off the page: stand outside it again, with nothing frozen or held.
-const cameBackBy = doorLeftBy(LAST_DOOR, scene.doors);
-if (cameBackBy) standAt(cameBackBy);
-window.addEventListener("pageshow", (e) => e.persisted && reopen(state, scene.doors, input));
-
-// ?x=<art px>[&y=<art px>] drops him at that x, on the first thing to stand on at or below y, so a reviewer can start anywhere.
-if (params.has("x")) {
-  const x = Number(params.get("x"));
-  const y = Number(params.get("y") ?? 0);
-  const at = Number.isFinite(x) ? scene.play.map.surfaceBelow(x, Number.isFinite(y) ? y : 0) : null;
-  // Over water (a raft, a ferry) there is no ground below: with a y he is put there, and falls onto what moves under him.
-  if (at !== null) place(x, at);
-  else if (Number.isFinite(x) && params.has("y") && Number.isFinite(y)) {
-    place(x, y);
-    scene.play.body.onGround = false;
-  }
-}
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
 function still() {
-  if (mode !== "scene") return;
+  if (mode !== "scene" || !scene) return;
   Object.assign(shown, scene.play.body);
   rideShown(scene.play.def.carriers, scene.play.t, 1, scene.play.body, shown);
   camera(0, true);
   render(1);
 }
 
-launch({ stage, layout, still, loop, harness, input, step: () => (mode === "maze" && maze ? maze.step() : stepOnce()) });
-if (location.hash === MAZE_HASH) sync();
+/** Where he arrives, the level's code if it is not here yet, and then the game runs. */
+async function start() {
+  const started = hasProgress(progress);
+  const furthest = ORDER[furthestOpen(progress, ORDER, BUILT.length)];
+  let first: string;
+  let firstAt: string | undefined;
+  if (location.hash === MAZE_HASH) {
+    first = "kart";
+    firstAt = "maze";
+  } else if (debugLevel) first = debugLevel;
+  else if (ROUTES.includes(location.hash.slice(1))) first = location.hash.slice(1);
+  else if (from === "maze") {
+    first = "kart";
+    firstAt = "maze";
+  } else if (from === "oslo" || !started) {
+    first = started ? "kart" : BUILT[0].id;
+    firstAt = started ? furthest : undefined;
+  } else {
+    first = "kart";
+    firstAt = furthest;
+  }
+  if (first !== "kart" && !levelOpen(first)) {
+    first = "kart";
+    firstAt = furthest;
+  }
+  if (first !== "kart")
+    try {
+      await loadLevel(first);
+    } catch {
+      first = "kart";
+      firstAt = furthest;
+    }
+  openScene(first, firstAt);
+  if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
+
+  // The helmet moment: out of the Opera's door in level 1, or at a station on the map.
+  if (from === "oslo" && !view.reduced) {
+    const home = !scene.map ? scene.doors.find((d) => d.id === "home") ?? null : null;
+    if (home) standAt(home);
+    state.arrive = { t: 0, off: null, door: home };
+    state.alpha = 0;
+    if (home) home.open = true;
+  }
+  dropParam(params, "from");
+
+  // Back from a door that leads off the page: stand outside it again, with nothing frozen or held.
+  const cameBackBy = doorLeftBy(LAST_DOOR, scene.doors);
+  if (cameBackBy) standAt(cameBackBy);
+  window.addEventListener("pageshow", (e) => e.persisted && reopen(state, scene.doors, input));
+
+  // ?x=<art px>[&y=<art px>] drops him at that x, on the first thing to stand on at or below y, so a reviewer can start anywhere.
+  if (params.has("x")) {
+    const x = Number(params.get("x"));
+    const y = Number(params.get("y") ?? 0);
+    const at = Number.isFinite(x) ? scene.play.map.surfaceBelow(x, Number.isFinite(y) ? y : 0) : null;
+    // Over water (a raft, a ferry) there is no ground below: with a y he is put there, and falls onto what moves under him.
+    if (at !== null) place(x, at);
+    else if (Number.isFinite(x) && params.has("y") && Number.isFinite(y)) {
+      place(x, y);
+      scene.play.body.onGround = false;
+    }
+  }
+
+  launch({ stage, layout, still, loop, harness, input, step: () => (mode === "maze" && maze ? maze.step() : stepOnce()) });
+  if (location.hash === MAZE_HASH) sync();
+}
+void start();
 
 if (debug)
   Object.assign(window, {

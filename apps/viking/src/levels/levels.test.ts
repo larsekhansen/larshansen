@@ -1,11 +1,14 @@
-import { describe, expect, test } from "bun:test";
-import { PLAYER } from "@larshansen/pixelkit/config";
+import { beforeAll, describe, expect, test } from "bun:test";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, leap, mid, on, playMoves, tile, wait, walk, type Move } from "../game/bot";
-import { bracteateOf, cannonsOf, flagsOf, levelMap, newPlay, runeOf, stepPlay } from "../game/play";
+import { KIND } from "../game/enemies";
+import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay } from "../game/play";
 import { fresh } from "../game/progress";
-import { search } from "../game/reach";
+import { HOLMENKOLLEN } from "./holmenkollen";
+import { HOLMENKOLLEN_ROUTE, SLOTTET_ROUTE } from "./routes";
+import { SLOTTET } from "./slottet";
 import { AKERSHUS, HOIST } from "./akershus";
 import { BUILT, LINE, ORDER } from "./index";
 import { kartDef } from "./kart";
@@ -13,9 +16,12 @@ import { LANGKAIA, RAFTS } from "./langkaia";
 import { BELLS, FERRY, LIFT, RADHUSET } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
 
-// The three levels: their maps make sense, a scripted player clears each with the front page's
-// single jump (and raises every flag on the way), the gold bracteate needs the raven's feather,
-// and the things that move do what the levels promise.
+// The built levels: their maps make sense, a scripted player clears each with the front page's
+// single jump (raising every flag, without a fall, and from level 4 on without losing a heart), the
+// gold bracteate needs the raven's feather, and the things that move do what the levels promise.
+// Levels 4 and 5 are held to the order's measure of a level: 220 to 280 columns, a minute or more
+// to clear, 40 to 80 skilling, eight to twenty enemies, one brown cheese, a bench or two, two to
+// four signs, and no enemy at a flag or a bench.
 
 const IDLE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
@@ -86,23 +92,30 @@ const ROUTE: Record<string, Move[]> = {
     jump(1, { release: 12 }),
     walk(mid(91)),
     jump(0)
-  ]
+  ],
+  slottet: SLOTTET_ROUTE,
+  holmenkollen: HOLMENKOLLEN_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
 const GOLD: Record<string, Move[]> = {
   langkaia: [walk(mid(2)), jump(0, { second: 18 })],
   akershus: [...ROUTE.akershus.slice(0, -2), walk(mid(94) + 4), jump(0, { second: 18 })],
-  radhuset: [...ROUTE.radhuset.slice(0, 9), jump(1, { second: 14 }), walk(mid(60))]
+  radhuset: [...ROUTE.radhuset.slice(0, 9), jump(1, { second: 14 }), walk(mid(60))],
+  // From the balcony's left end, two jumps up past the rune to the eaves; along to the flagpole and up.
+  slottet: [...SLOTTET_ROUTE.slice(0, -2), walk(tile(227) + 6), jump(0, { second: 18 }), walk(mid(229)), jump(0)],
+  // In the hut, up through its roof, then two jumps up the tower.
+  holmenkollen: [...HOLMENKOLLEN_ROUTE.slice(0, -1), walk(mid(210)), jump(0), jump(0, { second: 18 })]
 };
 
-/** Seconds a first-time player is given: the order's targets. */
+/** The first three levels: the scripted player has half the order's target. From level 4 on: at least a minute. */
 const TARGET: Record<string, number> = { langkaia: 60, akershus: 90, radhuset: 120 };
+const NEW = new Set(["slottet", "holmenkollen"]);
 
 describe("the line", () => {
   test("ten levels, one per rune of LARS HANSEN, three built", () => {
     expect(LINE.map((l) => "LARSHANSEN"[l.rune]).join("")).toBe("LARSHANSEN");
-    expect(BUILT.map((l) => l.id)).toEqual(["langkaia", "akershus", "radhuset"]);
+    expect(BUILT.map((l) => l.id)).toEqual(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen"]);
     expect(new Set(ORDER).size).toBe(10);
   });
 
@@ -114,7 +127,18 @@ describe("the line", () => {
   });
 });
 
-for (const def of BUILT) {
+/** The built levels, imported here as they are, not through the page's loaders. */
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN];
+
+test("the line's stations say the same as the built levels themselves", () => {
+  for (const def of LEVELS) {
+    const st = LINE.find((l) => l.id === def.id)!;
+    expect(st.built).toBe(true);
+    expect([st.rune, st.name, st.place]).toEqual([def.rune, def.name, def.place]);
+  }
+});
+
+for (const def of LEVELS) {
   describe(def.name, () => {
     const map = levelMap(def);
     const known = new Set([".", ...def.legend.solid, ...def.legend.oneWay, ...def.legend.water, ...Object.values(MARKS), ...def.doors.map((d) => d.tile)]);
@@ -140,15 +164,20 @@ for (const def of BUILT) {
       }
     });
 
-    test(`a scripted player clears it with one jump, raising every flag, inside ${TARGET[def.id]} seconds`, () => {
+    test(NEW.has(def.id) ? "a scripted player clears it with one jump, raising every flag, losing no heart, in a minute or more" : `a scripted player clears it with one jump, raising every flag, inside ${TARGET[def.id]} seconds`, () => {
       const p = newPlay(def);
-      const r = playMoves(p, ROUTE[def.id]);
+      const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
       expect(r.done).toBe(true);
       expect(p.runeAt).not.toBeNull();
       expect(r.events.filter((e) => e.splash).length).toBe(0);
       expect(r.events.filter((e) => e.flag !== null).map((e) => e.flag)).toEqual(flagsOf(map).map((_, i) => i));
-      expect(r.seconds).toBeLessThan(TARGET[def.id] / 2);
+      if (NEW.has(def.id)) {
+        expect(r.hurt).toEqual([]);
+        expect(r.seconds).toBeGreaterThanOrEqual(60);
+        expect(r.seconds).toBeLessThan(150);
+        console.log(`${def.name}: scripted clear ${r.seconds.toFixed(1)} s, ${p.found} of ${p.skilling.length} skilling on the way`);
+      } else expect(r.seconds).toBeLessThan(TARGET[def.id] / 2);
     });
 
     test("with the feather the bracteate can be reached", () => {
@@ -158,17 +187,63 @@ for (const def of BUILT) {
       expect(p.bracteateAt).not.toBeNull();
     });
 
-    test(
-      "without it the bracteate cannot be reached at all, while the rune can (a search with every moving thing everywhere at once)",
-      () => {
-        const s = map.spawn();
-        const r = search(def, { x: s.x - PLAYER.w / 2, feet: s.bottom }, false, [runeOf(map)!, bracteateOf(map)!]);
-        expect(r.hit).toEqual([true, false]);
-      },
-      { timeout: 60000 }
-    );
+    test("without it the bracteate cannot be reached at all, with the ski pole or not (a search with every moving thing everywhere at once and every enemy a trampoline)", () => {
+      const r = reach.get(def.id)!;
+      expect(r.bracteate).toBe(false);
+      // The search plays from where he can stand, at walking speed: it finds the rune where no speed
+      // is needed to get there. Holmenkollen's needs the inrun's speed, which the scripted player shows.
+      if (def.id !== "holmenkollen") expect(r.rune).toBe(true);
+    });
+
+    if (NEW.has(def.id))
+      test("it is a level the size the order asks: columns, skilling, enemies, cheese, benches, signs, flags", () => {
+        expect(map.cols).toBeGreaterThanOrEqual(220);
+        expect(map.cols).toBeLessThanOrEqual(280);
+        const skilling = map.find(MARKS.skilling).length;
+        expect(skilling).toBeGreaterThanOrEqual(40);
+        expect(skilling).toBeLessThanOrEqual(80);
+        expect(map.find(MARKS.cheese).length).toBe(1);
+        const benches = benchesOf(map);
+        expect(benches.length).toBeGreaterThanOrEqual(1);
+        expect(benches.length).toBeLessThanOrEqual(2);
+        expect(def.signs.length).toBeGreaterThanOrEqual(2);
+        expect(def.signs.length).toBeLessThanOrEqual(4);
+        const enemies = def.enemies ?? [];
+        expect(enemies.length).toBeGreaterThanOrEqual(8);
+        expect(enemies.length).toBeLessThanOrEqual(20);
+        expect(flagsOf(map).length).toBeGreaterThanOrEqual(2);
+        // No enemy's patrol comes within three tiles of a flag or a bench.
+        const spots = [...flagsOf(map), ...benches];
+        for (const e of enemies) {
+          const x = e.c * TILE + TILE / 2;
+          const reachX = ((e.range ?? 0) + 3) * TILE;
+          for (const f of spots) if (Math.abs(f.bottom - (e.r + 1) * TILE) < 3 * TILE) expect({ enemy: e.c, near: Math.abs(f.x - x) > reachX }).toEqual({ enemy: e.c, near: true });
+        }
+        // Every kind in it has a drawing of its own size.
+        for (const e of enemies) expect(KIND[e.kind]).toBeDefined();
+      });
   });
 }
+
+/** The reach searches, one worker per level, side by side: the slowest is what the suite waits for. */
+const reach = new Map<string, { rune: boolean; bracteate: boolean; spots: number; ms: number }>();
+beforeAll(async () => {
+  const results = await Promise.all(
+    LEVELS.map(
+      (def) =>
+        new Promise<{ id: string; rune: boolean; bracteate: boolean; spots: number; ms: number }>((resolve, reject) => {
+          const w = new Worker(new URL("../game/reach.worker.ts", import.meta.url).href);
+          w.onmessage = (e) => {
+            resolve(e.data);
+            w.terminate();
+          };
+          w.onerror = (e) => reject(e);
+          w.postMessage(def.id);
+        })
+    )
+  );
+  for (const r of results) reach.set(r.id, r);
+}, 240000);
 
 describe("what the levels promise", () => {
   test("Langkaia: the water puts him back on the last ground he stood on, as the old fjord did", () => {
@@ -228,6 +303,5 @@ describe("what the levels promise", () => {
 // The levels compile to the defs the page shows; the plan's other seven are listed, not built.
 test("the planned levels are on the line, not built", () => {
   expect(LINE.length).toBe(10);
-  expect(LINE.filter((l) => "map" in l).length).toBe(3);
-  void ({} as LevelDef);
+  expect(LINE.filter((l) => l.built).length).toBe(5);
 });
