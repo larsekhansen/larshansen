@@ -14,5 +14,9 @@ ingress:
     service: http://localhost:8090
   - hostname: maze.larshansen.dev
     service: http://localhost:8090
+  - hostname: larshansen.no
+    service: http://localhost:8090
+  - hostname: www.larshansen.no
+    service: http://localhost:8090
   # everything else gets a 404
   - service: http_status:404
