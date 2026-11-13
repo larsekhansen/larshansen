@@ -62,7 +62,7 @@ export interface DoorDef {
 
 /** The doors. One table drives the doors in the world and, through the page's links, the header. */
 export const DOORS: DoorDef[] = [
-  { id: "home", tile: "h", sign: "Hjem", href: "/" },
+  { id: "home", tile: "h", sign: "Hjem", href: "/?from=viking" },
   { id: "qr", tile: "q", sign: "Runesmia", href: "/qr/" },
   // For now the maze's own address; later it becomes a scene in here.
   { id: "maze", tile: "j", sign: "Jernhaugen", href: "https://maze.larshansen.dev/" },

@@ -110,6 +110,115 @@ body.touch {
   outline-offset: 2px;
 }
 
+/* The right end of the bar: the game's own readouts and the icon buttons. */
+.run {
+  display: flex;
+  align-items: center;
+  gap: 6px 12px;
+  margin-left: auto;
+}
+
+.run[hidden] {
+  display: none;
+}
+
+/* Round icon buttons (sound, start again). Their markup is an svg of stroked paths. */
+.tool {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.tool:hover,
+.tool:focus-visible {
+  border-color: #541321;
+  color: #541321;
+}
+
+.tool svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tool .cross,
+.tool[aria-pressed="true"] .waves {
+  display: none;
+}
+
+.tool[aria-pressed="true"] .cross {
+  display: inline;
+}
+
+/* The card: finish and level panels. Cream, the bar's border and radius; one heading, one line, up to two actions. */
+.card {
+  position: absolute;
+  top: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 28px 18px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 12px;
+  background: #fffcf6;
+  box-shadow: 0 6px 24px rgba(31, 26, 23, 0.22);
+  color: var(--ink);
+  text-align: center;
+  font-size: 14px;
+}
+
+.card[hidden] {
+  display: none;
+}
+
+.card strong {
+  font-size: 18px;
+}
+
+.card p {
+  margin: 0;
+}
+
+.card .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.card .actions a,
+.card .actions button {
+  padding: 6px 14px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+  color: var(--ink);
+  font: 600 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.card .actions .primary {
+  border-color: #541321;
+  background: #541321;
+  color: #fffcf6;
+}
+
 .stage {
   position: fixed;
   inset: 0 0 var(--pad) 0;

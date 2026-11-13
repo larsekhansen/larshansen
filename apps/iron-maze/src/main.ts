@@ -1,6 +1,7 @@
 import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
-import { pickLang } from "@larshansen/pixelkit/i18n";
+import { wireMute } from "@larshansen/pixelkit/chrome";
+import { pickLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { createStepper } from "@larshansen/pixelkit/loop";
 import { view } from "@larshansen/pixelkit/paint";
@@ -27,8 +28,10 @@ textTarget(ui.getContext("2d")!);
 const lang = pickLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
 const t = strings(lang);
 document.documentElement.lang = lang;
-help.textContent = t.help;
-$<HTMLElement>("blurb").textContent = lang === "nb" ? "Styr gjennom den forbannede haugen uten å røre veggene." : "Steer through the cursed mound without touching the walls.";
+document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
+  const text = t[el.dataset.i18n as keyof typeof t];
+  if (typeof text === "string") el.textContent = text;
+});
 
 const params = new URLSearchParams(location.search);
 const input = createInput();
@@ -38,26 +41,7 @@ view.reduced = reducedMotion.matches;
 reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
 
 const finishEl = $<HTMLElement>("finish");
-const muteButton = $<HTMLButtonElement>("mute");
-
-function labelMute() {
-  const label = sfx.muted ? (lang === "nb" ? "Lyd på" : "Sound on") : lang === "nb" ? "Lyd av" : "Sound off";
-  muteButton.setAttribute("aria-pressed", String(sfx.muted));
-  muteButton.setAttribute("aria-label", label);
-  muteButton.title = `${label} (M)`;
-}
-labelMute();
-muteButton.addEventListener("click", () => {
-  sfx.toggleMute();
-  labelMute();
-  muteButton.blur();
-});
-window.addEventListener("keydown", (e) => {
-  if (e.code === "KeyM" && !e.repeat && !e.metaKey && !e.ctrlKey && !e.altKey && !(e.target instanceof Element && e.target.closest("a, button"))) {
-    sfx.toggleMute();
-    labelMute();
-  }
-});
+wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 
 let over = false;
 const startLevel = Number(params.get("level")) || 1;
@@ -72,10 +56,10 @@ const maze = createMaze(
     standalone: true,
     topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
     onLeave({ cleared }) {
-      if (!cleared) return location.assign("https://larshansen.dev/viking/");
+      if (!cleared) return location.assign("https://larshansen.dev/viking/?from=maze");
       // A small card, since the feather cannot cross to larshansen.dev from here.
       over = true;
-      $<HTMLElement>("finish-title").textContent = lang === "nb" ? "Haugen er din" : "The mound is yours";
+      $<HTMLElement>("finish-title").textContent = t.endTitle;
       $<HTMLElement>("finish-line").textContent = t.endStandalone;
       $<HTMLElement>("finish-link").textContent = t.back;
       finishEl.hidden = false;

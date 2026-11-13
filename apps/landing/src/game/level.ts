@@ -68,7 +68,7 @@ export interface DoorSpot {
 // The door at the top of the Opera's stage tower is the secret. It leads to the viking game
 // (apps/viking), which is deliberately not listed in the header.
 export const EXTRA_DOORS: DoorSpot[] = [
-  { id: "opera", kind: "opera", x: 87 * TILE, bottom: 6 * TILE, href: "/viking/", name: "Vikingfjorden" }
+  { id: "opera", kind: "opera", x: 87 * TILE, bottom: 6 * TILE, href: "/viking/?from=oslo", name: "Vikingfjorden" }
 ];
 
 export interface District {

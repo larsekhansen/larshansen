@@ -3,24 +3,25 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Jernhaugen · larshansen.dev</title>
+    <title>Jernhaugen · Lars Hansen</title>
     <meta
       name="description"
       content="A small maze game: steer a viking through a cursed burial mound without touching the walls. Seven levels, a few snakes, a crumbling floor and a raven with opinions."
     />
-    <meta name="theme-color" content="#14110f" />
+    <meta name="theme-color" content="#fffcf6" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lars Hansen" />
     <meta property="og:url" content="https://maze.larshansen.dev/" />
-    <meta property="og:title" content="Jernhaugen · larshansen.dev" />
+    <meta property="og:title" content="Jernhaugen · Lars Hansen" />
     <meta property="og:description" content="Steer through the cursed mound. Don't touch the walls." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
     <header class="bar">
       <h1 class="me">Lars Hansen</h1>
       <nav class="apps" aria-label="Destinations">
         <ul>
-          <li><a href="https://larshansen.dev/viking/" id="back">Vikingfjorden</a></li>
+          <li><a href="https://larshansen.dev/viking/?from=maze" id="back">Vikingfjorden</a></li>
           <li class="far"><a href="https://larshansen.dev/">Gamle Oslo</a></li>
         </ul>
       </nav>
@@ -40,19 +41,19 @@
       <p class="sr-only" id="blurb" data-i18n="blurb">Steer through the cursed mound without touching the walls.</p>
       <canvas id="px" aria-hidden="true"></canvas>
       <canvas id="ui" aria-hidden="true"></canvas>
-      <p class="help" id="help"></p>
+      <p class="help" id="help" data-i18n="help">Mouse, finger or arrow keys to steer, Shift for small steps, Esc to leave.</p>
       <p class="sr-only" id="announce" aria-live="polite"></p>
-      <div class="finish" id="finish" role="status" hidden>
+      <div class="card" id="finish" role="status" hidden>
         <strong id="finish-title"></strong>
-        <span id="finish-line"></span>
+        <p id="finish-line"></p>
         <span class="actions">
-          <a href="https://larshansen.dev/viking/#jernhaugen" id="finish-link"></a>
+          <a href="https://larshansen.dev/viking/?from=maze" class="primary" id="finish-link"></a>
         </span>
       </div>
       <noscript>
         <p class="noscript">
           Jernhaugen trenger JavaScript, men lenkene over fungerer uten.<br />
-          The mound needs JavaScript, but the links above work without it.
+          Jernhaugen needs JavaScript, but the links above work without it.
         </p>
       </noscript>
     </main>

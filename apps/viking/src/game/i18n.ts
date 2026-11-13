@@ -8,7 +8,7 @@ export type SkyName = "day" | "evening" | "twilight" | "night" | "winter" | "17m
 
 const STRINGS = {
   nb: {
-    help: "Piltaster for å gå, mellomrom for å hoppe, pil opp for å gå inn en dør. Eller klikk dit du vil.",
+    help: "Piltastene for å gå, mellomrom for å hoppe, pil opp for å gå inn en dør. Eller klikk dit du vil.",
     blurb: "Du fant den hemmelige døra. Finn de ti runene, eller ta en dør ut igjen.",
     signStart: ["Vikingfjorden. Du fant den hemmelige døra.", "Ti runer ligger strødd. De staver noe."],
     signJetty: ["Skipet går ingen steder.", "Det gjør ikke du heller, uten å hoppe."],

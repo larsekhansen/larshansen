@@ -10,13 +10,15 @@ const OLD_MUTE_KEY = "viking.muted"; // the viking game's own, read once as a fa
 const PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
 const note = (semitones: number, base = 523) => base * 2 ** (semitones / 12);
 
-function readMuted(): boolean {
+/** The visitor's choice if they have ever made one, otherwise the page's own default. */
+function readMuted(whenUnset: boolean): boolean {
   try {
     const own = localStorage.getItem(MUTE_KEY);
     if (own !== null) return own === "1";
-    return localStorage.getItem(OLD_MUTE_KEY) === "1";
+    const old = localStorage.getItem(OLD_MUTE_KEY);
+    return old === null ? whenUnset : old === "1";
   } catch {
-    return false;
+    return whenUnset;
   }
 }
 
@@ -28,11 +30,12 @@ export interface Sfx {
   toggleMute(): boolean;
 }
 
-export function createSfx(): Sfx {
+/** `mutedUntilChosen`: the front page is silent until the visitor turns sound on; the games start with it on. */
+export function createSfx(opts: { mutedUntilChosen?: boolean } = {}): Sfx {
   let ctx: AudioContext | null = null;
   let master: GainNode | null = null;
   let noise: AudioBuffer | null = null;
-  let muted = readMuted();
+  let muted = readMuted(!!opts.mutedUntilChosen);
 
   function unlock() {
     if (ctx) {

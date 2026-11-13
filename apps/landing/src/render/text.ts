@@ -3,6 +3,7 @@ import { WORLD } from "../game/level";
 import type { Phase } from "@larshansen/pixelkit/oslo";
 import type { Body } from "@larshansen/pixelkit/physics";
 import { view } from "@larshansen/pixelkit/paint";
+import type { Look } from "@larshansen/pixelkit/person";
 import { FONT, bubble, drawBanner, drawHighlight, drawMarker, drawPlayer, drawSnow, fontPx, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 
 // The words on the front page: sign boards over the doors, the hint, the banner and the highlight.
@@ -33,7 +34,7 @@ export interface Overlay {
   boards: Board[];
   fade: number;
   snow: { x: number; y: number; size: number }[];
-  player: { body: Body; walk: number; alpha: number; phase: Phase };
+  player: { body: Body; walk: number; alpha: number; phase: Phase; look?: Look };
   hint: { x: number; y: number; text: string } | null;
   bubble: { x: number; y: number; text: string } | null;
   banner: { title: string; sub: string; alpha: number } | null;
@@ -60,7 +61,7 @@ export function drawText(o: Overlay) {
     u.fillRect(0, 0, view.cssW, view.cssH);
   }
 
-  drawPlayer(WORLD, o.player.body, o.player.walk, o.player.alpha, o.player.phase);
+  drawPlayer(WORLD, o.player.body, o.player.walk, o.player.alpha, o.player.phase, o.player.look);
 
   if (o.snow.length) drawSnow(o.snow);
 

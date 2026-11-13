@@ -52,7 +52,7 @@ describe("the page and the map agree", () => {
 
   test("the secret door leads to the viking game", () => {
     const opera = buildDoors(findDoorSpots(), [], {}).find((d) => d.secret);
-    expect(opera?.href).toBe("/viking/");
+    expect(opera?.href).toBe("/viking/?from=oslo");
     expect(opera?.soon).toBe(false);
   });
 });

@@ -2,11 +2,14 @@ import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door } from "./game/doors";
-import { pickLang } from "@larshansen/pixelkit/i18n";
+import { wireMute } from "@larshansen/pixelkit/chrome";
+import { pickLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { strings, type SkyName } from "./game/i18n";
 import { createInput, type Action } from "@larshansen/pixelkit/input";
 import { GROUND_Y, WORLD, WORLD_W, districtAt, findDoorSpots, findSpawn, rampAt, type District } from "./game/level";
 import { createStepper } from "@larshansen/pixelkit/loop";
+import { helmetPixels, type Look } from "@larshansen/pixelkit/person";
+import { createSfx } from "@larshansen/pixelkit/sfx";
 import { skyFor } from "@larshansen/pixelkit/oslo";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
@@ -55,6 +58,9 @@ const doors = buildDoors(findDoorSpots(), links, { cv: "CV", maze: t.maze, qr: "
 const spawn = findSpawn();
 const body = createBody(spawn.x, spawn.bottom);
 const input = createInput();
+// The front page is silent until the visitor asks for sound; the games start with it on.
+const sfx = createSfx({ mutedUntilChosen: true });
+wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 view.reduced = reducedMotion.matches;
 reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
@@ -90,8 +96,13 @@ const state = {
   goal: null as { x: number; door: Door | null; best: number; since: number } | null,
   stuck: 0,
   hover: null as Door | null,
-  sparks: [] as Spark[]
+  sparks: [] as Spark[],
+  /** Back from Vikingfjorden (`?from=viking`): the cape rolls up and the helmet comes off, over ARRIVAL steps. */
+  arrive: null as { t: number } | null,
+  /** The helmet once it has left his head: it drops behind the Opera and out of the picture. */
+  helmet: null as { x: number; y: number; vy: number; facing: number } | null
 };
+const ARRIVAL = 40;
 
 state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: 0 };
 
@@ -135,12 +146,51 @@ if (navigation?.type === "back_forward") {
 }
 window.addEventListener("pageshow", (e) => e.persisted && resetScene());
 
+// Back from Vikingfjorden through its door Hjem: he stands at the Opera's top door, facing left,
+// still in the helmet. The address is cleaned, so a reload starts at the beginning as usual.
+if (params.get("from") === "viking") {
+  const opera = doors.find((d) => d.secret);
+  if (opera) {
+    standAt(opera);
+    body.facing = -1;
+    if (!view.reduced) state.arrive = { t: 0 };
+  }
+}
+if (params.has("from")) {
+  params.delete("from");
+  const rest = params.toString();
+  history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
+}
+
+/** What he wears while the helmet comes off: undefined once it is done, which is the plain person. */
+function look(): Look | undefined {
+  const a = state.arrive;
+  if (!a) return undefined;
+  return { outfit: "viking", helmetOffset: a.t < 8 ? 0 : a.t < 20 ? Math.round((a.t - 8) * 0.75) : null, capeRows: Math.max(0, 4 - Math.floor(a.t / 4)) };
+}
+
+function stepArrival() {
+  const a = state.arrive;
+  if (a) {
+    a.t++;
+    if (a.t === 20) state.helmet = { x: Math.round(body.x), y: Math.round(body.y) - 9, vy: -0.6, facing: body.facing };
+    if (a.t >= ARRIVAL) state.arrive = null;
+  }
+  const h = state.helmet;
+  if (h) {
+    h.vy += 0.12;
+    h.y += h.vy;
+    if (h.y > view.camY + view.h + 4) state.helmet = null;
+  }
+}
+
 function say(text: string) {
   announce.textContent = text;
 }
 
 function tryEnter(d: Door) {
   if (d.secret) {
+    sfx.play("door");
     state.bubble = { text: t.secret, until: state.steps + 240, door: d };
     say(t.secret);
     if (!view.reduced) fireworks(d);
@@ -163,6 +213,7 @@ function tryEnter(d: Door) {
   state.modeSteps = 0;
   state.door = d;
   body.vx = 0;
+  sfx.play("door");
   say(t.opening(d.name));
 }
 
@@ -213,7 +264,10 @@ function play() {
   }
   const r = stepBody(body, intent, WORLD);
   if (intent.left || intent.right || r.jumped) state.moved = true;
+  if (r.jumped) sfx.play("jump");
   state.walk = body.onGround && Math.abs(body.vx) > 0.2 ? state.walk + 1 : 0;
+  if (state.walk > 0 && state.walk % 14 === 7) sfx.play("step");
+  if (r.landed > 3) sfx.play("land");
   if (r.landed > 3 && !view.reduced)
     for (let i = 0; i < 5; i++)
       state.sparks.push({ x: body.x + PLAYER.w / 2, y: body.y + PLAYER.h - 1, vx: (i - 2) * 0.35, vy: -0.3 - Math.random() * 0.4, life: 18, color: "#ebe1cd" });
@@ -249,6 +303,7 @@ function stepOnce() {
   before.x = body.x;
   before.y = body.y;
   state.steps++;
+  stepArrival();
   input.pollPad();
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
@@ -307,6 +362,9 @@ function render() {
   pass(kit.depth(0.4), drawLandmarks, 0.18);
   pass(kit.depth(0.7), () => drawTram(state.steps), 0.08);
   const street = kit.depth(1);
+  // The helmet that has come off falls behind the buildings.
+  const lost = state.helmet;
+  if (lost) pass(street, () => helmetPixels(lost.facing, "day", (c, r, color) => R(lost.x + c, Math.round(lost.y) + r, 1, 1, color), 1));
   pass(street, () => drawRuins(sky), 0.12);
   pass(street, () => drawBuildings(doors, sky, state.steps));
   pass(street, () => {
@@ -323,8 +381,8 @@ function render() {
     boards,
     fade: state.fade,
     snow: snowfall(sky, state.steps),
-    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase },
-    hint: door && !touch ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
+    player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
+    hint: door && !touch && !state.arrive ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
     bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, text: state.bubble.text } : null,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
     highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,

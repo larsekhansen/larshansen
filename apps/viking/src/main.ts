@@ -2,7 +2,8 @@ import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door } from "./game/doors";
-import { pickLang } from "@larshansen/pixelkit/i18n";
+import { wireMute } from "@larshansen/pixelkit/chrome";
+import { pickLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { strings, type SkyName } from "./game/i18n";
 import { createInput, type Action } from "@larshansen/pixelkit/input";
 import {
@@ -31,6 +32,7 @@ import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
 import { createStage } from "@larshansen/pixelkit/stage";
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { textTarget } from "@larshansen/pixelkit/text";
+import type { Look } from "@larshansen/pixelkit/person";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { RUNE_STROKES, type RuneChar } from "./game/runes";
@@ -105,6 +107,7 @@ const spawn = findSpawn();
 const body = createBody(spawn.x, spawn.bottom);
 const input = createInput();
 const sfx = createSfx();
+wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 view.reduced = reducedMotion.matches;
 reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
@@ -152,8 +155,13 @@ const state = {
   nearSign: null as string | null,
   finished: false,
   /** The moment at the mound door after the last level: the raven's feather floats down onto him. */
-  feather: null as { since: number } | null
+  feather: null as { since: number } | null,
+  /** Stepping out of Hjem (`?from=oslo`): bare-headed, then the helmet drops and the cape unrolls. `off` is the helmet's height above his head. */
+  arrive: null as { t: number; off: number | null } | null
 };
+/** Steps during which he stands there and input is ignored. */
+const ARRIVE_STEPS = 70;
+const frozen = () => !!state.arrive && state.arrive.t < ARRIVE_STEPS;
 /** The first double jump of a visit lets three black feather pixels drift down. */
 let firstAirJump = true;
 /** Set when the maze reports a clear, for the moment at the door once the fjord is back. */
@@ -370,7 +378,6 @@ const runesEl = $<HTMLElement>("runes");
 const clockEl = $<HTMLElement>("clock");
 const bestEl = $<HTMLElement>("best");
 const restartButton = $<HTMLButtonElement>("restart");
-const muteButton = $<HTMLButtonElement>("mute");
 const finishEl = $<HTMLElement>("finish");
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -409,16 +416,11 @@ function hud() {
 function labelButtons() {
   restartButton.setAttribute("aria-label", t.restart);
   restartButton.title = `${t.restart} (R)`;
-  const muted = sfx.muted;
-  muteButton.setAttribute("aria-pressed", String(muted));
-  muteButton.setAttribute("aria-label", muted ? t.soundOn : t.soundOff);
-  muteButton.title = `${muted ? t.soundOn : t.soundOff} (M)`;
 }
 labelButtons();
 $<HTMLElement>("finish-title").textContent = t.finishTitle;
 $<HTMLElement>("finish-again").textContent = t.finishAgain;
 $<HTMLElement>("finish-back").textContent = t.finishBack;
-$<HTMLElement>("finish-close").setAttribute("aria-label", t.close);
 
 /** Runes back, clock at zero, and him at the start. */
 function restart() {
@@ -441,8 +443,7 @@ function finish() {
   const verdict = judge(best, ms);
   best = verdict.best;
   store.set("viking.best", String(Math.round(best)));
-  $<HTMLElement>("finish-time").textContent = formatTime(ms);
-  $<HTMLElement>("finish-best").textContent = verdict.isNew ? t.finishNew : t.finishBest(formatTime(best));
+  $<HTMLElement>("finish-line").textContent = `${formatTime(ms)} · ${verdict.isNew ? t.finishNew : t.finishBest(formatTime(best))}`;
   finishEl.hidden = false;
   say(`${t.finishTitle} ${formatTime(ms)}`);
   sfx.play("fanfare");
@@ -510,14 +511,16 @@ function intoWater() {
 
 function play() {
   const door = doorAt(body, doors);
-  if (door && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
+  const still = frozen();
+  if (door && !still && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
   const intent = {
-    left: input.held.left,
-    right: input.held.right,
-    jumpHeld: input.held.jump || input.held.up,
-    jumpPressed: input.pressed("jump") || (input.pressed("up") && !door)
+    left: !still && input.held.left,
+    right: !still && input.held.right,
+    jumpHeld: !still && (input.held.jump || input.held.up),
+    jumpPressed: !still && (input.pressed("jump") || (input.pressed("up") && !door))
   };
   // Walking to a clicked spot or door. Any input of the visitor's own takes over again.
+  if (state.goal && still) state.goal = null;
   if (state.goal) {
     const goal = state.goal;
     const dx = goal.x - (body.x + PLAYER.w / 2);
@@ -633,6 +636,7 @@ function stepOnce() {
   before.x = body.x;
   before.y = body.y;
   state.steps++;
+  stepArrival();
   input.pollPad();
   tick(run);
   if (state.mode === "play") play();
@@ -685,7 +689,34 @@ function layout() {
 
 const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, sky.phase, haze);
 const nudge = kit.nudge;
-const look = () => ({ outfit: "viking" as const, gold: crowned });
+const look = (): Look => {
+  const a = state.arrive;
+  if (!a) return { outfit: "viking", gold: crowned };
+  return { outfit: "viking", gold: crowned, helmetOffset: a.off, capeRows: a.t < 45 ? 0 : Math.min(4, Math.floor((a.t - 45) / 4) + 1) };
+};
+
+/** The moment of putting the outfit on: the helmet falls from above the view at step 30, the cape unrolls from step 45. */
+function stepArrival() {
+  const a = state.arrive;
+  if (!a) return;
+  a.t++;
+  state.alpha = Math.min(1, a.t / 12);
+  const home = doors.find((d) => d.id === "home");
+  if (home) home.open = a.t < 16; // the door closes behind him
+  // From above the view; on a tall screen that is capped at 35 steps of falling, so it has landed before the input unlocks.
+  if (a.t === 30) a.off = Math.max(12, Math.min(105, Math.ceil(body.y - view.camY) + 4));
+  else if (a.off !== null && a.off > 0 && a.t > 30) {
+    a.off = Math.max(0, a.off - 3);
+    if (a.off === 0) {
+      sfx.play("land");
+      for (const dx of [-3, 3]) state.sparks.push({ x: body.x + PLAYER.w / 2 + dx, y: body.y + 2, vx: dx * 0.1, vy: -0.25, life: 18, color: "#ebe1cd" });
+    }
+  }
+  if (a.t >= ARRIVE_STEPS) {
+    state.arrive = null;
+    state.alpha = 1;
+  }
+}
 
 /** The mound door's hint, while he has no feather: some runes hang too high. */
 const mound = doors.find((d) => d.id === "maze")!;
@@ -750,7 +781,7 @@ function render() {
     fade: state.fade,
     snow: snowfall(sky, state.steps),
     player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
-    hint: door && !touch && !speaking ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
+    hint: door && !touch && !speaking && !frozen() ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` } : null,
     bubble: door && !speaking ? null : bubble,
     banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
     highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
@@ -844,7 +875,7 @@ function doorUnder(e: MouseEvent): Door | null {
   return doors.find((d) => x >= d.x - TILE && x <= d.x + d.w + TILE && y >= d.bottom - TILE * 3.5 && y <= d.bottom + 2) ?? null;
 }
 stage.addEventListener("click", (e) => {
-  if (state.mode !== "play" || scene !== "fjord") return;
+  if (state.mode !== "play" || scene !== "fjord" || frozen()) return;
   const door = doorUnder(e);
   const at = worldAt(e);
   const x = door ? door.x + door.w / 2 : Math.max(PLAYER.w, Math.min(WORLD_W - PLAYER.w, at.x));
@@ -863,37 +894,41 @@ restartButton.addEventListener("click", () => {
   restart();
   restartButton.blur(); // give the keyboard back to the game
 });
-muteButton.addEventListener("click", () => {
-  sfx.toggleMute();
-  labelButtons();
-  muteButton.blur();
-});
 $<HTMLElement>("finish-again").addEventListener("click", restart);
-$<HTMLElement>("finish-close").addEventListener("click", () => (finishEl.hidden = true));
 
-// T steps through every sky and back to the real one; R starts the run again; M is the sound.
+// T steps through every sky and back to the real one; R starts the run again (M, the sound, is wired by the kit).
 const SKIES: (SkyName | null)[] = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
 window.addEventListener("keydown", (e) => {
   if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.target instanceof Element && e.target.closest("a, button, input, textarea, select")) return;
-  if (scene !== "fjord") {
-    if (e.code === "KeyM") {
-      sfx.toggleMute();
-      labelButtons();
-    }
-    return;
-  }
+  if (scene !== "fjord") return;
   if (e.code === "KeyT") {
     const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
     skyOverride = next;
     sky = skyFor(new Date(), skyOverride);
     state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
   } else if (e.code === "KeyR") restart();
-  else if (e.code === "KeyM") {
-    sfx.toggleMute();
-    labelButtons();
-  }
 });
+
+// Where he comes from. `from=oslo`: out of the boathouse door Hjem, with the outfit moment. `from=maze`: at the mound door.
+// The address is cleaned afterwards, so a reload starts at the start as usual.
+const from = params.get("from");
+if (from === "oslo") {
+  const home = doors.find((d) => d.id === "home");
+  if (home) {
+    standAt(home);
+    if (!view.reduced) {
+      state.arrive = { t: 0, off: null };
+      state.alpha = 0;
+      home.open = true;
+    }
+  }
+} else if (from === "maze") standAt(mound);
+if (params.has("from")) {
+  params.delete("from");
+  const rest = params.toString();
+  history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
+}
 
 // ?x=<art px> drops him at that x, on the highest thing there, so a reviewer can start anywhere.
 const startX = Number(params.get("x"));

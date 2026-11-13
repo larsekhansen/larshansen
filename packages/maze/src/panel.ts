@@ -2,7 +2,7 @@ import type { Strings } from "./i18n";
 import { formatTime } from "./rules";
 import type { Records } from "./records";
 
-// The level list: a small cream panel in the finish card's style, opened from the level label in
+// The level list: a card (the kit's chrome.css), the same cream panel as the finish card, opened from the level label in
 // the header. The scene owns it, so both pages that host the maze get the same panel. Its styles
 // are put in the page once, here, so neither page needs to know about it.
 
@@ -13,20 +13,11 @@ const CSS = `
   left: 50%;
   z-index: 5;
   transform: translateX(-50%);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: stretch;
   min-width: min(320px, calc(100% - 24px));
   padding: 14px 16px 16px;
-  border: 1px solid rgba(31, 26, 23, 0.14);
-  border-radius: 12px;
-  background: #fffcf6;
-  box-shadow: 0 6px 24px rgba(31, 26, 23, 0.22);
-  color: #1f1a17;
-  font: 14px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-.mz-levels[hidden] { display: none; }
-.mz-levels strong { margin-bottom: 4px; font-size: 18px; text-align: center; }
+.mz-levels strong { margin-bottom: 4px; }
 .mz-levels .mz-close {
   position: absolute;
   top: 6px;
@@ -83,7 +74,7 @@ export function createLevelPanel(
     document.head.appendChild(style);
   }
   const el = document.createElement("div");
-  el.className = "mz-levels";
+  el.className = "card mz-levels";
   el.id = "mz-levels";
   el.setAttribute("role", "dialog");
   el.setAttribute("aria-label", opts.t.levelsTitle);

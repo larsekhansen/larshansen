@@ -12,3 +12,8 @@ export function pickLang(languages: readonly string[]): Lang {
   }
   return "en";
 }
+
+/** The labels of the mute button, the same on every page. */
+export function soundWords(lang: Lang): { on: string; off: string } {
+  return lang === "nb" ? { on: "Lyd på", off: "Lyd av" } : { on: "Sound on", off: "Sound off" };
+}

@@ -3,17 +3,18 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <title>Vikingfjorden · larshansen.dev</title>
+    <title>Vikingfjorden · Lars Hansen</title>
     <meta
       name="description"
       content="A small viking platform game hidden behind the secret door on larshansen.dev: a fjord, a longship, ten runes to find, and doors back to everything else."
     />
-    <meta name="theme-color" content="#4f96d8" />
+    <meta name="theme-color" content="#fffcf6" />
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Lars Hansen" />
     <meta property="og:url" content="https://larshansen.dev/viking/" />
-    <meta property="og:title" content="Vikingfjorden · larshansen.dev" />
+    <meta property="og:title" content="Vikingfjorden · Lars Hansen" />
     <meta property="og:description" content="A viking, a fjord, a longship and ten runes to find." />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
     <header class="bar">
@@ -57,20 +58,18 @@
       <canvas id="ui" aria-hidden="true"></canvas>
       <p class="help" id="help" data-i18n="help">Arrow keys to walk, Space to jump, up arrow to go through a door. Or click where you want to go.</p>
       <p class="sr-only" id="announce" aria-live="polite"></p>
-      <div class="finish" id="finish" role="status" hidden>
-        <button type="button" class="close" id="finish-close" aria-label="Close">×</button>
+      <div class="card" id="finish" role="status" hidden>
         <strong id="finish-title">All ten runes!</strong>
-        <span class="result" id="finish-time">0:00.0</span>
-        <span id="finish-best"></span>
+        <p id="finish-line"></p>
         <span class="actions">
-          <button type="button" id="finish-again">Run again</button>
+          <button type="button" class="primary" id="finish-again">Run again</button>
           <a href="/" id="finish-back">Back to Gamle Oslo</a>
         </span>
       </div>
       <noscript>
         <p class="noscript">
-          Du fant den hemmelige døra. Finn de ti runene, eller ta en dør ut igjen. Spillet trenger JavaScript, men lenkene over fungerer uten.<br />
-          You found the secret door. Find the ten runes, or take a door back out. The game needs JavaScript, but the links above work without it.
+          Vikingfjorden trenger JavaScript, men lenkene over fungerer uten.<br />
+          Vikingfjorden needs JavaScript, but the links above work without it.
         </p>
       </noscript>
     </main>
