@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "./config";
-import { carrierAt, carrierDrawn, carrierState, carriersNear, liftPeriod, rideShown, type CarrierDef, type Lift } from "./carrier";
+import { carrierAt, carrierDrawn, carrierShown, carrierState, carriersNear, liftPeriod, pathPeriod, pathSteps, rideShown, type CarrierDef, type Lift, type Path } from "./carrier";
 import { createBody, stepBody, type Body, type Intent, type World } from "./physics";
 
 // Open air over a floor far below (row 30), so only the carrier holds him up.
@@ -192,5 +192,42 @@ describe("solid from below", () => {
     expect(solid.feet).toBe(low);
     const plain = run();
     expect(plain.feet).toBe(low - 40);
+  });
+});
+
+describe("a path, one way and round again", () => {
+  // A banner that rises out of the crowd, goes six tiles along, sinks, and is away for a while.
+  const banner: Path = { kind: "path", points: [{ x: 64, y: 200 }, { x: 64, y: 180 }, { x: 160, y: 180 }, { x: 160, y: 220 }], w: 2 * TILE, speed: 1, wait: 40 };
+
+  test("it goes along its points at its speed, then is away, then starts again", () => {
+    expect(pathSteps(banner)).toBe(156);
+    expect(carrierAt(banner, 0)).toEqual({ x: 64, y: 200 });
+    expect(carrierAt(banner, 20)).toEqual({ x: 64, y: 180 });
+    expect(carrierAt(banner, 70)).toEqual({ x: 114, y: 180 });
+    expect(carrierShown(banner, 155)).toBe(true);
+    expect(carrierShown(banner, 170)).toBe(false);
+    expect(carrierShown(banner, pathPeriod(banner))).toBe(true);
+    expect(carrierAt(banner, pathPeriod(banner))).toEqual({ x: 64, y: 200 });
+  });
+
+  test("away, it holds nobody up and is not near anybody", () => {
+    const b = createBody(170, 200);
+    expect(carriersNear([banner], 170, b, 200)).toEqual([]);
+    expect(carriersNear([banner], 100, b, 200).length).toBe(1);
+  });
+
+  test("back from being away it starts still, and drags nobody from where it left", () => {
+    const s = carrierState(banner, pathPeriod(banner));
+    expect(s.dx).toBe(0);
+    expect(s.dy).toBe(0);
+  });
+
+  test("he rides it along, and is let down when it sinks onto the floor below", () => {
+    const low: World = { ...world, isSolid: (_c, r) => r >= 13 };
+    const b = createBody(90, 180);
+    for (let step = 40; step < 170; step++) stepBody(b, idle, low, undefined, { carriers: carriersNear([banner], step, b) });
+    expect(b.x + PLAYER.w / 2).toBeGreaterThan(150);
+    expect(b.y + PLAYER.h).toBe(13 * TILE);
+    expect(b.onGround).toBe(true);
   });
 });

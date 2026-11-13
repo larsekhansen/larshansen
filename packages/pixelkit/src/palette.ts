@@ -118,3 +118,8 @@ export * as FIRE from "./swatches/fire";
 export * as FLAG from "./swatches/flag";
 export * as TRAM from "./swatches/tram";
 export * as FEATHER from "./swatches/feather";
+export * as FOOD from "./swatches/food";
+export * as COIN from "./swatches/coin";
+export * as CREATURE from "./swatches/creature";
+export * as PARADE from "./swatches/parade";
+export * as ICY from "./swatches/ice";

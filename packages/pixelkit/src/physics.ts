@@ -1,4 +1,5 @@
 import { JUMP, LAUNCH, MOVE, PLAYER, TILE } from "./config";
+import { keepsSpeed, surfaceSpeed, type Surface } from "./surface";
 
 /** What the body moves through. The scene supplies it; the kit knows nothing about any one map. */
 export interface World {
@@ -91,6 +92,8 @@ export interface Carrier {
 /** What else holds the body this step, beyond the world's tiles. */
 export interface Extra {
   carriers?: readonly Carrier[];
+  /** The ground under his feet (centre x, feet y) when it is not plain ground: ice, an inrun, a belt. Null for plain ground. */
+  surfaceAt?(x: number, y: number): Surface | null;
 }
 
 /**
@@ -115,6 +118,9 @@ export function stepBody(b: Body, intent: Intent, world: World, abilities?: Abil
   // Standing on moving ground: it takes him along before anything else happens.
   if (carriers && b.onGround) ride(b, carriers, world);
   if (b.onGround) b.airJumps = 1;
+  // What he stands on as the step begins: plain ground, unless the scene says otherwise.
+  const wasOnGround = b.onGround;
+  const surface = b.onGround && extra?.surfaceAt ? extra.surfaceAt(b.x + PLAYER.w / 2, b.y + PLAYER.h) : null;
 
   b.buffer = intent.jumpPressed ? JUMP.bufferSteps : Math.max(0, b.buffer - 1);
   b.coyote = b.onGround ? JUMP.coyoteSteps : Math.max(0, b.coyote - 1);
@@ -146,6 +152,8 @@ export function stepBody(b: Body, intent: Intent, world: World, abilities?: Abil
     // Thrown: the keys lean on the flight, but never speed it past what it has, or a run.
     const v = b.vx + dir * LAUNCH.steer;
     if (Math.abs(v) <= Math.max(Math.abs(b.vx), MOVE.run)) b.vx = v;
+  } else if (surface && b.onGround) {
+    b.vx = surfaceSpeed(b.vx, dir, surface);
   } else {
     const target = dir * MOVE.run;
     const accel = b.onGround ? (dir ? MOVE.accel : MOVE.decel) : MOVE.airAccel;
@@ -155,8 +163,32 @@ export function stepBody(b: Body, intent: Intent, world: World, abilities?: Abil
 
   moveX(b, b.vx, world);
   result.landed = moveY(b, b.vy, world, carriers);
+  // Off the ground faster than he can run (the lip of an inrun): the speed is kept in the air, as after a throw.
+  if (wasOnGround && !b.onGround && keepsSpeed(b.vx)) b.launched = true;
   if (b.launched && b.onGround) b.launched = false;
   return result;
+}
+
+/**
+ * One step of a dash: level flight at `speed` the way `dir` points, stopped by walls. Going up a
+ * slope it rises onto it, so he never ends a dash inside a ramp. Returns false when a wall stopped him.
+ * Gravity waits until the dash is over; the caller counts its steps.
+ */
+export function dashStep(b: Body, dir: 1 | -1, speed: number, world: World): boolean {
+  const x0 = b.x;
+  b.vx = dir * speed;
+  b.vy = 0;
+  b.onGround = false;
+  b.coyote = 0;
+  b.cutReady = false;
+  b.launched = false;
+  moveX(b, b.vx, world);
+  const ramp = world.rampAt(b.x + PLAYER.w / 2);
+  if (ramp !== null && ramp < b.y + PLAYER.h && b.y + PLAYER.h - ramp <= speed * 2 + 1) {
+    b.y = ramp - PLAYER.h;
+    b.onGround = true;
+  }
+  return Math.abs(b.x - x0) >= speed - 0.01;
 }
 
 /** If the body stands on a carrier where it was last step, moves the body with it. */

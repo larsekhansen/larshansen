@@ -1,6 +1,6 @@
 // Keyboard and touch buttons feed the same actions, so the game never asks where input came from.
 
-export type Action = "left" | "right" | "jump" | "up" | "down" | "enter";
+export type Action = "left" | "right" | "jump" | "up" | "down" | "enter" | "dash";
 
 const KEYS: Record<string, Action> = {
   ArrowLeft: "left",
@@ -13,7 +13,11 @@ const KEYS: Record<string, Action> = {
   ArrowUp: "up",
   KeyW: "up",
   ArrowDown: "down",
-  KeyS: "down"
+  KeyS: "down",
+  // The viking game's ski pole; the other scenes have no use for it.
+  ShiftLeft: "dash",
+  ShiftRight: "dash",
+  KeyX: "dash"
 };
 
 export interface Input {
@@ -32,7 +36,7 @@ export interface Input {
 }
 
 export function createInput(): Input {
-  const held: Record<Action, boolean> = { left: false, right: false, jump: false, up: false, down: false, enter: false };
+  const held: Record<Action, boolean> = { left: false, right: false, jump: false, up: false, down: false, enter: false, dash: false };
   const started = new Set<Action>();
   // What the gamepad held last step, kept apart so it never lets go of a key the keyboard holds.
   const padHeld: Partial<Record<Action, boolean>> = {};
@@ -60,7 +64,8 @@ export function createInput(): Input {
         right: axis > 0.35 || !!pad.buttons[15]?.pressed,
         jump: !!pad.buttons[0]?.pressed,
         up: !!pad.buttons[12]?.pressed || !!pad.buttons[2]?.pressed || axisY < -stickY,
-        down: !!pad.buttons[13]?.pressed || axisY > stickY
+        down: !!pad.buttons[13]?.pressed || axisY > stickY,
+        dash: !!pad.buttons[1]?.pressed || !!pad.buttons[5]?.pressed
       };
       for (const a of Object.keys(now) as Action[]) {
         if (!!padHeld[a] !== now[a]) input.hold(a, !!now[a]);

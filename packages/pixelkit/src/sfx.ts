@@ -21,7 +21,15 @@ export type SfxName =
   | "cannon"
   | "bell"
   | "clear"
-  | "gold";
+  | "gold"
+  | "coin"
+  | "stomp"
+  | "hurt"
+  | "life"
+  | "dash"
+  | "bench"
+  | "over"
+  | "hurra";
 
 const MUTE_KEY = "larshansen.muted";
 const OLD_MUTE_KEY = "viking.muted"; // the viking game's own, read once as a fallback
@@ -131,7 +139,39 @@ export function createSfx(opts: { mutedUntilChosen?: boolean } = {}): Sfx {
       case "door":
         hiss(300, 1200, 0.25, 0.25);
         return tone("sine", 110, 60, 0.3, 0.3);
-      case "pickup": {
+      case "coin": {
+      // A skilling: one short triangle blip, a step up the pentatonic set for each one taken in a row.
+      const s = PENTATONIC[n % PENTATONIC.length] + 12 * Math.floor(n / PENTATONIC.length);
+      return tone("triangle", note(s), note(s), 0.07, 0.18);
+    }
+    case "stomp":
+      // Coming down on something: a soft thump and a short squeak up.
+      hiss(800, 150, 0.06, 0.25);
+      return tone("square", 220, 440, 0.07, 0.1);
+    case "hurt":
+      // A heart lost: a falling square and a burst of noise.
+      tone("square", 330, 110, 0.18, 0.12);
+      return hiss(1500, 200, 0.12, 0.2);
+    case "life":
+      // A life: the pickup's two notes and a third above them.
+      [0, 7, 12].forEach((s, i) => tone("triangle", note(s), note(s), 0.12, 0.22, i * 0.08));
+      return;
+    case "dash":
+      // The ski pole: a quick rush of high noise.
+      return hiss(6000, 1200, 0.14, 0.18);
+    case "bench":
+      // Sitting down: two low, slow notes.
+      tone("triangle", note(-5), note(-5), 0.25, 0.2);
+      return tone("triangle", note(0), note(0), 0.4, 0.18, 0.18);
+    case "over":
+      // Game over: four notes going down, quietly.
+      [7, 4, 0, -5].forEach((s, i) => tone("triangle", note(s, 392), note(s, 392), i === 3 ? 0.5 : 0.16, 0.18, i * 0.16));
+      return;
+    case "hurra":
+      // A crowd's cheer, far off: noise rising and falling three times.
+      for (let i = 0; i < 3; i++) hiss(900, 2600, 0.3, 0.12, i * 0.42);
+      return;
+    case "pickup": {
         const s = PENTATONIC[n % PENTATONIC.length];
         tone("triangle", note(s), note(s), 0.1, 0.3);
         return tone("triangle", note(s + 7), note(s + 7), 0.2, 0.22, 0.06);
