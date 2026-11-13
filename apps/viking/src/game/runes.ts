@@ -2,6 +2,9 @@
 // needed. `runeCells` turns the strokes into a small pixel grid with one-pixel lines.
 
 export type RuneChar = "L" | "A" | "R" | "S" | "H" | "N" | "E";
+
+/** The ten runes in the order of the name: L A R S H A N S E N. */
+export const RUNE_CHARS = "LARSHANSEN";
 type Stroke = [number, number][];
 
 export const RUNE_STROKES: Record<RuneChar, Stroke[]> = {

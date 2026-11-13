@@ -1,10 +1,15 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { seeded } from "@larshansen/pixelkit/paint";
 import type { Body } from "@larshansen/pixelkit/physics";
-import type { SheepSpot } from "./level";
 
 // Sheep walk back and forth four tiles either side of where they were placed, stop to graze, and
 // turn. Landing on one from above is a trampoline. Touching one from the side does nothing.
+
+/** Where a sheep stands: the centre of the stretch it grazes along, and the ground y. */
+export interface SheepSpot {
+  x: number;
+  bottom: number;
+}
 
 export const SHEEP = { w: 12, h: 7, range: 4 * TILE, speed: 0.3, squashSteps: 6 };
 

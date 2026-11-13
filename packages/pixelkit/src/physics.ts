@@ -84,6 +84,8 @@ export interface Carrier {
   w: number;
   dx: number;
   dy: number;
+  /** Solid from below as well, this many pixels thick: he bumps his head on its underside. */
+  under?: number;
 }
 
 /** What else holds the body this step, beyond the world's tiles. */
@@ -179,6 +181,19 @@ function ride(b: Body, carriers: readonly Carrier[], world: World) {
   }
 }
 
+/** Stops a rising body under a carrier that is solid from below, if its head was under it before. */
+function bumpCarrier(b: Body, prevTop: number, carriers: readonly Carrier[]) {
+  for (const c of carriers) {
+    if (!c.under || b.x + PLAYER.w <= c.x || b.x >= c.x + c.w) continue;
+    const under = c.y + c.under;
+    if (prevTop >= Math.min(under, under - c.dy) - 0.01 && b.y < under && b.y + PLAYER.h > c.y) {
+      b.y = under;
+      b.vy = 0;
+      return;
+    }
+  }
+}
+
 /** Lands a falling body on a carrier whose top it was above, before or after the carrier's move. */
 function landOnCarrier(b: Body, prevBottom: number, carriers: readonly Carrier[]) {
   if (b.vy < 0) return;
@@ -256,6 +271,7 @@ function moveY(b: Body, dy: number, world: World, carriers?: readonly Carrier[])
         b.vy = 0;
         break;
       }
+    if (carriers) bumpCarrier(b, prevBottom - PLAYER.h, carriers);
   }
 
   if (carriers) landOnCarrier(b, prevBottom, carriers);

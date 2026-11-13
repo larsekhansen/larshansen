@@ -1,7 +1,8 @@
 import { PLAYER, TILE } from "./config";
 import { R, view } from "./paint";
-import { FLAG, METAL } from "./palette";
+import { FLAG, METAL, STONE } from "./palette";
 import type { Body } from "./physics";
+import { flagCloth } from "./props";
 
 // Flags along a level. Touching one raises it, and from then on a fall into water or off the bottom
 // of the map puts him back at it instead of at the start. Flags count only forwards: going back to
@@ -19,7 +20,7 @@ export interface Checkpoints {
 }
 
 /** How tall a pole is, and how near it counts as touching. */
-export const POLE = { h: 28, reach: 6 };
+export const POLE = { h: 32, reach: 6 };
 
 export function touches(f: Flag, b: Body): boolean {
   const cx = b.x + PLAYER.w / 2;
@@ -48,15 +49,30 @@ export function fellOut(b: Body, map: { height: number; isWater(c: number, r: nu
   return map.isWater(Math.floor((b.x + PLAYER.w / 2) / TILE), Math.floor((feet - 3) / TILE));
 }
 
-/** A white pole with a pennant: low and grey until it is reached, then up at the top in red, flapping. */
-export function drawCheckpoint(f: Flag, reached: boolean, steps: number) {
+/** Steps the flag takes to go up the pole. */
+export const HOIST_STEPS = 36;
+
+/**
+ * A white flagpole on a stone foot. Until it is reached the flag lies folded at the foot; when he
+ * touches it (`raisedAt`, a step) the front page's Norwegian flag goes up the pole, and flies.
+ */
+export function drawCheckpoint(f: Flag, raisedAt: number | null, steps: number) {
   const top = f.bottom - POLE.h;
-  R(f.x, top, 1, POLE.h, METAL.flagpole);
+  R(f.x - 2, f.bottom - 2, 5, 2, STONE.dark);
+  R(f.x - 2, f.bottom - 2, 5, 1, STONE.light);
+  R(f.x, top, 1, POLE.h - 2, METAL.flagpole);
   R(f.x - 1, top - 2, 3, 2, METAL.brass);
-  if (!reached) {
-    for (let i = 0; i < 5; i++) R(f.x + 1, f.bottom - 12 + i, 5 - i, 1, METAL.shackle);
+  if (raisedAt === null) {
+    // Folded at the foot of the pole: a red bundle with a white and blue fold.
+    R(f.x + 1, f.bottom - 7, 4, 5, FLAG.red);
+    R(f.x + 1, f.bottom - 5, 4, 1, FLAG.white);
+    R(f.x + 2, f.bottom - 7, 1, 5, FLAG.blue);
     return;
   }
-  const flap = view.reduced ? 0 : Math.floor(steps / 10) % 2;
-  for (let i = 0; i < 7; i++) R(f.x + 1, top + i, 9 - Math.abs(3 - i) - (i % 3 === flap ? 1 : 0), 1, FLAG.red);
+  const p = view.reduced ? 1 : Math.max(0, Math.min(1, (steps - raisedAt) / HOIST_STEPS));
+  const eased = p * p * (3 - 2 * p);
+  const y = Math.round(f.bottom - 12 - (f.bottom - 12 - top) * eased);
+  flagCloth(f.x + 1, y);
+  // Up and flying: the free end lifts and drops a pixel in the wind.
+  if (p >= 1 && !view.reduced) R(f.x + 14, y + (Math.floor(steps / 12) % 2), 1, 8, FLAG.red);
 }

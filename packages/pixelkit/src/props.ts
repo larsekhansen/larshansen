@@ -181,11 +181,16 @@ export function lampPool(x: number, ground: number) {
 export function flagPole(x: number, top: number, ground: number) {
   R(x, top, 1, ground - top, METAL.flagpole);
   R(x - 1, top - 2, 3, 2, METAL.brass);
-  R(x + 1, top, 13, 9, FLAG.red);
-  R(x + 4, top, 3, 9, FLAG.white);
-  R(x + 1, top + 3, 13, 3, FLAG.white);
-  R(x + 5, top, 1, 9, FLAG.blue);
-  R(x + 1, top + 4, 13, 1, FLAG.blue);
+  flagCloth(x + 1, top);
+}
+
+/** The Norwegian flag itself, 13 x 9, its top left at (x, top). */
+export function flagCloth(x: number, top: number) {
+  R(x, top, 13, 9, FLAG.red);
+  R(x + 3, top, 3, 9, FLAG.white);
+  R(x, top + 3, 13, 3, FLAG.white);
+  R(x + 4, top, 1, 9, FLAG.blue);
+  R(x, top + 4, 13, 1, FLAG.blue);
 }
 
 /** A leaf tree or a birch, by the season: green, autumn colours from September, bare from December to March. */

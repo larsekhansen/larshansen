@@ -27,3 +27,7 @@ export const balcony = "#9aa3a8";
 export const blocks = ["#b9c2ca", "#c8b8a4", "#aab5a2", "#c3a69a", "#d4ccbe"];
 /** Book spines on Deichman's shelves. */
 export const books = ["#b8433a", "#2f6db5", "#e0b23a", "#3f8a4f", "#7a4fa0", "#d9734a"];
+/** The palace, pale yellow, and Stortinget's yellow brick. */
+export const palace = "#e9d9a8";
+export const storting = "#d8b46a";
+export const stortingDark = "#c9a45e";

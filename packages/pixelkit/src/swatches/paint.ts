@@ -17,3 +17,15 @@ export const homeDoorPanel = "#4b7a5c";
 export const shopFrame = "#5a3b22";
 export const shopDoor = "#7a4b2a";
 export const shopDoorPanel = "#8a5a33";
+// The island ferry: white, a red band.
+export const ferryWhite = "#f1f4f6";
+export const ferryShade = "#d3dbe1";
+export const ferryRed = "#c8302b";
+// The blue of the T-bane sign.
+export const tbane = "#2a5ba8";
+// Sauna rafts: tarred timber, and the warm light behind their windows.
+export const tar = "#3a2a20";
+// A building site's hoarding: plywood boards and the yellow of a warning stripe.
+export const hoarding = "#c9a46a";
+export const hoardingLine = "#a8844f";
+export const warning = "#f2c200";

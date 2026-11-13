@@ -3,7 +3,25 @@
 // water and wind, and a pentatonic set for pickups. Nothing plays before the first key or pointer
 // event (browsers refuse it anyway), and the mute is shared by all the games.
 
-export type SfxName = "step" | "jump" | "land" | "door" | "pickup" | "splash" | "bleat" | "fanfare" | "curse" | "stone" | "gate" | "hiss" | "teleport";
+export type SfxName =
+  | "step"
+  | "jump"
+  | "land"
+  | "door"
+  | "pickup"
+  | "splash"
+  | "bleat"
+  | "fanfare"
+  | "curse"
+  | "stone"
+  | "gate"
+  | "hiss"
+  | "teleport"
+  | "flag"
+  | "cannon"
+  | "bell"
+  | "clear"
+  | "gold";
 
 const MUTE_KEY = "larshansen.muted";
 const OLD_MUTE_KEY = "viking.muted"; // the viking game's own, read once as a fallback
@@ -23,7 +41,7 @@ function readMuted(whenUnset: boolean): boolean {
 }
 
 export interface Sfx {
-  /** `n` picks the note of the pentatonic set for "pickup", so pickups can climb. */
+  /** `n` picks the note of the pentatonic set for "pickup" and "bell", so they can climb. */
   play(name: SfxName, n?: number): void;
   readonly muted: boolean;
   /** Flips the mute, remembers it, and returns the new state. */
@@ -142,6 +160,28 @@ export function createSfx(opts: { mutedUntilChosen?: boolean } = {}): Sfx {
         tone("triangle", note(4), note(16), 0.12, 0.2);
         tone("triangle", note(9), note(21), 0.12, 0.14, 0.06);
         return hiss(7000, 3000, 0.16, 0.05);
+      case "flag":
+        // A flag going up: three rising square notes.
+        [0, 4, 7].forEach((s, i) => tone("square", note(s, 392), note(s, 392), 0.09, 0.1, i * 0.09));
+        return;
+      case "cannon":
+        // A thump of low noise and a falling sine under it.
+        hiss(900, 60, 0.35, 0.5);
+        return tone("sine", 120, 40, 0.3, 0.35);
+      case "bell": {
+        // One of the carillon's bells: a soft triangle note with a long tail, an octave below the pickups.
+        const s = PENTATONIC[n % PENTATONIC.length];
+        tone("triangle", note(s, 262), note(s, 262), 0.6, 0.24);
+        return tone("sine", note(s + 12, 262), note(s + 12, 262), 0.35, 0.08, 0.01);
+      }
+      case "clear":
+        // The end of a level: a short climbing phrase, quieter and shorter than the fanfare.
+        [0, 2, 4, 7, 12].forEach((s, i) => tone("triangle", note(s, 392), note(s, 392), i === 4 ? 0.4 : 0.1, 0.22, i * 0.08));
+        return;
+      case "gold":
+        // The bracteate: two high, bright blips.
+        tone("square", note(12), note(12), 0.06, 0.08);
+        return tone("triangle", note(19), note(19), 0.18, 0.2, 0.05);
     }
   }
 

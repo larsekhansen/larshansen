@@ -145,15 +145,16 @@ export function pointerAt(stage: HTMLElement, e: MouseEvent) {
  * Clicking or tapping sends him there, into a door or along the ground (`walk` decides); the mouse
  * over a door lights it up and makes the pointer a hand. Only while `active`.
  */
-export function wirePointer<D extends Door>(stage: HTMLElement, doors: D[], state: { hover: D | null }, o: { active(): boolean; walk(at: { x: number; y: number }, door: D | null): void }) {
+export function wirePointer<D extends Door>(stage: HTMLElement, doors: D[] | (() => D[]), state: { hover: D | null }, o: { active(): boolean; walk(at: { x: number; y: number }, door: D | null): void }) {
+  const list = () => (typeof doors === "function" ? doors() : doors);
   stage.addEventListener("click", (e) => {
     if (!o.active()) return;
     const at = pointerAt(stage, e);
-    o.walk(at, doorNear(doors, at.x, at.y));
+    o.walk(at, doorNear(list(), at.x, at.y));
   });
   stage.addEventListener("mousemove", (e) => {
     const at = pointerAt(stage, e);
-    state.hover = o.active() ? doorNear(doors, at.x, at.y) : null;
+    state.hover = o.active() ? doorNear(list(), at.x, at.y) : null;
     stage.style.cursor = state.hover ? "pointer" : "";
   });
   stage.addEventListener("mouseleave", () => (state.hover = null));
@@ -227,11 +228,11 @@ export function skyControl(name: string | null, now: () => Date) {
   };
 }
 
-/** The T key steps through every sky and back to the real one, and says which in the banner. */
-export function wireSkyKey(skies: ReturnType<typeof skyControl>, state: { banner: Banner | null; steps: number }, words: Record<SkyName | "now", string>, when: () => boolean = () => true) {
+/** The T key steps through every sky and back to the real one, and says which in the banner. `skies` may be a getter, for a page whose scenes each have their own. */
+export function wireSkyKey(skies: ReturnType<typeof skyControl> | (() => ReturnType<typeof skyControl>), state: { banner: Banner | null; steps: number }, words: Record<SkyName | "now", string>, when: () => boolean = () => true) {
   onKey("KeyT", () => {
     if (!when()) return;
-    const next = skies.next();
+    const next = (typeof skies === "function" ? skies() : skies).next();
     state.banner = { title: words[next ?? "now"], sub: "", since: state.steps };
   });
 }

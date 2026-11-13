@@ -14,3 +14,13 @@ export const keyhole = "#5a4a2a";
 export const flagpole = "#e9e9e9";
 export const rail = "#6c7378";
 export const wire = "#2b2f33";
+// Gold: the bracteates, the carillon's bells.
+export const gold = "#e8b923";
+export const goldDark = "#a8801a";
+export const goldLight = "#f6dc7a";
+// Copper gone green: the spires of Akershus.
+export const copper = "#4f8f7a";
+export const copperLight = "#6fae96";
+export const copperDark = "#34665a";
+// Chains and the iron of a hoist.
+export const chain = "#3a3e43";

@@ -1,6 +1,6 @@
 import { TILE } from "./config";
 import { R } from "./paint";
-import { SHIMMER } from "./palette";
+import { PALETTE, SHIMMER } from "./palette";
 import type { Carrier } from "./physics";
 import { STONE_LEDGE, ledge, type LedgeLook } from "./props";
 
@@ -40,6 +40,11 @@ export function timedCarriers(ledges: readonly TimedLedge[], step: number): Carr
 /** The ledge while it is there, blinking its outline while it warns; nothing while it is gone. */
 export function drawTimed(l: TimedLedge, step: number, snow: boolean, look: LedgeLook = STONE_LEDGE) {
   const phase = timedPhase(step, l);
+  // The iron brackets it sits on stay, so the eye knows where it comes back.
+  for (const bx of [l.x + 1, l.x + l.w - 4]) {
+    R(bx, l.y + 5, 3, 1, PALETTE.ironDark);
+    R(bx + 1, l.y + 6, 1, 2, PALETTE.ironDark);
+  }
   if (phase === "off") return;
   const n = Math.max(1, Math.round(l.w / TILE));
   for (let i = 0; i < n; i++) ledge(l.x + i * TILE, l.y, look, i === 0, i === n - 1, snow);

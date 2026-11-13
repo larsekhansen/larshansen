@@ -1,26 +1,24 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { GLASS, LAND, PAINT, PALETTE, PLANTS, ROOF, SNOW } from "@larshansen/pixelkit/palette";
-import { ctx, layerX, seeded, view } from "@larshansen/pixelkit/paint";
-import { GROUND_Y } from "../game/level";
+import { ctx, layerOrigin, layerX, seeded, view } from "@larshansen/pixelkit/paint";
 
 // Everything behind the street: mountains, the far shore of the fjord, and near headlands. Each
 // layer moves slower than the street the further away it is, and each is drawn on its own canvas,
 // so nearer things always cover the lights of things behind them. Same layer system as the front page.
+// Each takes `ground`: the world y of the level's water line, which the far water lines up with.
 
 const MOUNTAINS = 0.12;
 const FJORD = 0.2;
 const HEADLANDS = 0.4;
 
-const SHORE = GROUND_Y - 22; // where the far shore meets its water
-const WATER_LINE = GROUND_Y - 18; // the far water, which runs down behind the street
 
 /**
  * Hills and a few far peaks, as seen down the Oslofjord: two broad ranges, the far one paler and
  * bluer, with snow only on the top few pixels of its highest peaks.
  */
-export function drawMountains(sky: Sky) {
-  const base = SHORE;
+export function drawMountains(sky: Sky, ground: number) {
+  const base = ground - 22; // where the far shore meets its water
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, MOUNTAINS);
     const h = 30 + 14 * Math.sin(wx * 0.003 + 0.6) + 8 * Math.sin(wx * 0.0085 + 1) + 3 * Math.sin(wx * 0.021 + 2);
@@ -41,12 +39,14 @@ const FAR_HOUSES = Array.from({ length: 9 }, (_, i) => ({ wx: 200 + i * 230 + Ma
 const bank = (wx: number) => 7 + 4 * Math.sin(wx * 0.011 + 1) + 3 * Math.sin(wx * 0.037 + 2);
 
 /** The far shore of the fjord and its water, with glints that move. */
-export function drawFjord(t: number) {
+export function drawFjord(t: number, ground: number) {
+  const SHORE = ground - 22;
+  const WATER_LINE = ground - 18; // the far water, which runs down behind the street
   const g = ctx();
   const tt = view.reduced ? 0 : t;
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, FJORD);
-    column(x, WATER_LINE, GROUND_Y + 8, PALETTE.water);
+    column(x, WATER_LINE, ground + 8, PALETTE.water);
     const h = bank(wx);
     column(x, SHORE - h, WATER_LINE, LAND.forest);
     if ((Math.floor(wx / 3) + Math.floor(h)) % 7 === 0) column(x, SHORE - h, SHORE - h + 2, LAND.forestDark);
@@ -54,12 +54,12 @@ export function drawFjord(t: number) {
   for (const h of FAR_HOUSES) {
     const x = layerX(h.wx, FJORD);
     if (x < -8 || x > view.w + 2) continue;
-    const ground = SHORE - bank(h.wx) + 4;
-    box(x, ground - 5, 6, 5, h.color);
-    box(x - 1, ground - 6, 8, 1, ROOF.far);
-    box(x, ground - 7, 6, 1, ROOF.far);
-    box(x + 2, ground - 4, 2, 2, GLASS.farWindow);
-    lit(x + 2, ground - 4, 2, 2);
+    const foot = SHORE - bank(h.wx) + 4;
+    box(x, foot - 5, 6, 5, h.color);
+    box(x - 1, foot - 6, 8, 1, ROOF.far);
+    box(x, foot - 7, 6, 1, ROOF.far);
+    box(x + 2, foot - 4, 2, 2, GLASS.farWindow);
+    lit(x + 2, foot - 4, 2, 2);
   }
   g.fillStyle = PALETTE.foam;
   for (let i = 0; i < 22; i++) {
@@ -91,8 +91,8 @@ const ISLETS = [
   { at: 740, w: 26, h: 6 }
 ];
 
-export function drawHeadlands(sky: Sky) {
-  const foot = GROUND_Y - 3; // meets the water just behind the street
+export function drawHeadlands(sky: Sky, ground: number) {
+  const foot = ground - 3; // meets the water just behind the street
   const worldX = (at: number) => at / HEADLANDS; // a position in the layer's own pixels as a world x
   for (const h of HEADS) {
     const x0 = layerX(worldX(h.at), HEADLANDS);
@@ -120,5 +120,42 @@ export function drawHeadlands(sky: Sky) {
       if (top > 3) column(x0 + i, foot - top, foot - top + 1, sky.snow ? SNOW.lying : LAND.island);
     }
     spruce(x0 + Math.floor(s.w / 2), foot - s.h + 2, 8, sky.snow);
+  }
+}
+
+/** Low hills along the far side of the Oslofjord, with a darker band of forest at their foot. */
+export function drawOsloHills(sky: Sky, ground: number) {
+  const base = ground - 20;
+  for (let x = 0; x < view.w; x++) {
+    const wx = layerWorldX(x, MOUNTAINS);
+    const h = 26 + 9 * Math.sin(wx * 0.004 + 1.2) + 5 * Math.sin(wx * 0.013 + 0.4);
+    column(x, base - h, base, LAND.farHills);
+    if (sky.snow && h > 34) column(x, base - h, base - h + 2, SNOW.far);
+    const f = 6 + 3 * Math.sin(wx * 0.021);
+    column(x, base - f, base, LAND.forest);
+    if ((Math.floor(wx / 3) + Math.floor(f)) % 6 === 0) column(x, base - f, base - f + 2, LAND.forestDark);
+  }
+}
+
+// Gulls: a few that drift across the near sky, wings up and down, in the layer's own pixels.
+const GULLS = Array.from({ length: 5 }, (_, i) => ({ x: 40 + i * 97, y: 30 + ((i * 37) % 50), speed: 0.12 + (i % 3) * 0.05 }));
+
+/** A gull of three pixels' span: wings up, level or down. */
+export function gull(x: number, y: number, wing: number, color: string = PALETTE.wool) {
+  box(x, y, 1, 1, color);
+  box(x - 1, y - wing, 1, 1, color);
+  box(x + 1, y - wing, 1, 1, color);
+  box(x - 2, y - wing * 2, 1, 1, color);
+  box(x + 2, y - wing * 2, 1, 1, color);
+}
+
+/** Gulls over the water: `top` is the world y of the highest of them. */
+export function drawGulls(t: number, top: number) {
+  const tt = view.reduced ? 0 : t;
+  const span = view.w + 40;
+  for (const [i, g] of GULLS.entries()) {
+    const x = ((((g.x + tt * g.speed - layerOrigin(HEADLANDS) * 0.2) % span) + span) % span) - 20;
+    const wing = view.reduced ? 0 : Math.floor(tt / 8 + i * 3) % 2 ? 1 : -1;
+    gull(Math.round(x), top + g.y + Math.round(Math.sin(tt * 0.02 + i) * 3), wing);
   }
 }

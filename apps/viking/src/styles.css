@@ -205,3 +205,38 @@ body {
 .me {
   white-space: nowrap;
 }
+
+/* The count of gold bracteates found, once there is one: a small gold disc and a number. */
+.goldcount {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.goldcount[hidden] {
+  display: none;
+}
+
+.goldcount i {
+  width: 12px;
+  height: 12px;
+  border: 2px solid #a8801a;
+  border-radius: 50%;
+  background: #e8b923;
+  box-sizing: border-box;
+}
+
+/* On the line map there is no clock to run, and no level to start again. */
+.on-map .clock,
+.on-map #restart {
+  display: none;
+}
+
+/* While the rune flies to its slot, the slot it is going to waits unlit. */
+.runes li.coming {
+  border-color: rgba(31, 26, 23, 0.14);
+  background: #fff;
+}

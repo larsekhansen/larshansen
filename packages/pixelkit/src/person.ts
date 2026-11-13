@@ -33,6 +33,8 @@ export interface Look {
   heading?: { x: number; y: number };
   /** Rust red all over, while the iron curse has him (top view). */
   cursed?: boolean;
+  /** The pompom in another colour than white (side view): gold, for the gold feather. */
+  pompom?: string;
 }
 
 /** The size of the top view's box. */
@@ -142,12 +144,13 @@ export function playerPixels(b: Body, walkSteps: number, phase: Phase, dot: (c: 
   // With the helmet apart from his head the hat shows, in its own red: the viking colours turn the hat's `r` into the rim.
   const loose = helmetLoose(look);
   const colors: Record<string, string> = look?.outfit === "viking" ? (loose ? { ...COLORS, c: PALETTE.woodDark } : vikingColors(look)) : COLORS;
+  const pompom = look?.pompom;
   rowsFor(look)
     .concat(legs)
     .forEach((row, r) => {
       for (let c = 0; c < PLAYER.w; c++) {
         const ch = row[b.facing > 0 ? c : PLAYER.w - 1 - c];
-        if (ch !== ".") dot(c, r, mix(colors[ch], "#141c46", DIM[phase]));
+        if (ch !== ".") dot(c, r, mix(pompom && r === 0 && ch === "w" ? pompom : colors[ch], "#141c46", DIM[phase]));
       }
     });
   if (loose && look?.helmetOffset != null) helmetPixels(b.facing, phase, dot, 1 - Math.round(look.helmetOffset), look);
