@@ -25,8 +25,12 @@ request at the end. Nothing deploys until that is merged.
 | 2. Viking game rebuilt in the house style | `orders/02-viking-pixel.md` | done after one round of corrections: 22 tests, 59 kB script (was 505 kB), front page still identical |
 | 3. The maze as a scene: Jernhaugen | `orders/03-maze-core.md` | done after one round of corrections: 35 tests, old audio, images and fonts deleted, front page still identical |
 | 4. Maze features and levels | `orders/04-maze-features.md` | done: seven levels, 93 tests, every level cleared by a scripted player at key and pointer speed; level 7's snakes turned to cross the hall in review |
-| 5. One person, one journey: the joins between the games | `orders/05-joins.md` | not started |
-| 6. Cleanup, docs, deploy checks | `orders/06-cleanup.md` | not started |
+| 5. One person, one journey: the joins between the games | `orders/05-joins.md` | done |
+| 6. Cleanup, docs, deploy checks | folded into orders 7 to 9 | done: READMEs and the deploy check updated with each order |
+| 7. The level kit: moving ground, flags, launchers, timed ledges | `orders/07-level-kit.md` | done: 100 kit tests, front page screenshots identical (28 of 28) |
+| 8. The line map and the first three levels: Langkaia, Akershus, Rådhuset | `orders/08-three-levels.md` | done: 32 tests, each level cleared by a scripted player with the single jump; not yet played by a person |
+| 9. Jernhaugen as the bonus stop: ghosts, marks, teleport stones, the feather | `orders/09-maze-bonus.md` | done: 211 tests, no audio files; not yet played by a person |
+| 10. Levels 4 to 10 | planned in `LEVELS.html`, no order yet | not started |
 
 ## 1. Where things stand
 
