@@ -293,6 +293,9 @@ cards in the house style, favicons and titles.
 - Headless: Firefox on the Pi can draw Canvas 2D but fires no animation frames, so each app keeps
   `?debug` with `window.__game.frame(now)` and the reviewer steps the game by hand and takes
   screenshots. Chromium cannot render headless here. After phase 2 nothing needs WebGL.
+- Screenshots: `bun tools/shots.ts <outDir> <url>...` shoots each address with headless Firefox
+  (1280 x 800, fresh profile each), named after its path and query. Use built previews and
+  `?debug&steps=N` (N steps at load, one still frame, frozen clock), `&keys=r60,j1,r30`, `&sky=`, `&x=`.
 - Phase 1 has a stricter check: pixel-identical front page screenshots before and after.
 - Still needs a person in a real browser at the end: feel at real speed, sound, touch, gamepad.
 

@@ -30,6 +30,7 @@ import { bounce, createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { R, layerOrigin, target, view } from "@larshansen/pixelkit/paint";
 import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
 import { createStage } from "@larshansen/pixelkit/stage";
+import { readHarness, runHarness } from "@larshansen/pixelkit/harness";
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { textTarget } from "@larshansen/pixelkit/text";
 import type { Look } from "@larshansen/pixelkit/person";
@@ -95,7 +96,10 @@ const store = {
 // The world.
 const params = new URLSearchParams(location.search);
 let skyOverride = params.get("sky");
-let sky = skyFor(new Date(), skyOverride);
+/** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
+const harness = readHarness(params);
+const now = () => harness?.now ?? new Date();
+let sky = skyFor(now(), skyOverride);
 /** The far hills end this far above the ground; the sky's sun and clouds are placed against it. */
 const HORIZON_Y = GROUND_Y - 34;
 const links = readAppLinks();
@@ -653,7 +657,7 @@ function stepOnce() {
     return --p.life > 0;
   });
   input.endStep();
-  if (state.steps % 120 === 0) sky = skyFor(new Date(), skyOverride);
+  if (state.steps % 120 === 0) sky = skyFor(now(), skyOverride);
 }
 
 /** The camera follows the player smoothly, at the same pace on every screen, up the cliff as well. */
@@ -905,7 +909,7 @@ window.addEventListener("keydown", (e) => {
   if (e.code === "KeyT") {
     const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
     skyOverride = next;
-    sky = skyFor(new Date(), skyOverride);
+    sky = skyFor(now(), skyOverride);
     state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
   } else if (e.code === "KeyR") restart();
 });
@@ -935,14 +939,29 @@ const startX = Number(params.get("x"));
 const startY = Number.isFinite(startX) ? surfaceBelow(startX, 0) : null;
 if (params.has("x") && startY !== null) place(startX, startY);
 
+/** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
+function still() {
+  Object.assign(shown, body);
+  camera(0, true);
+  render();
+}
+
 Object.assign(shown, body);
-new ResizeObserver(layout).observe(stage);
+// A resize clears the canvases; a stepped page has no next frame to draw them again, so it redraws here.
+new ResizeObserver(() => {
+  layout();
+  if (harness && scene === "fjord") still();
+}).observe(stage);
 layout();
 hud();
-requestAnimationFrame((now) => {
-  last = now;
-  requestAnimationFrame(frame);
-});
+if (harness) {
+  runHarness(harness, input, stepOnce);
+  still();
+} else
+  requestAnimationFrame((now) => {
+    last = now;
+    requestAnimationFrame(frame);
+  });
 
 // The header link to the maze keeps its address for visitors without JavaScript; with it, a click goes in.
 links.find((l) => l.id === "maze")?.el.addEventListener("click", (e) => {
@@ -968,6 +987,7 @@ if (params.has("debug"))
       input,
       step: stepOnce,
       frame,
+      still,
       doors,
       runes,
       get maze() {

@@ -6,7 +6,7 @@ import { wireMute } from "@larshansen/pixelkit/chrome";
 import { pickLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { strings, type SkyName } from "./game/i18n";
 import { createInput, type Action } from "@larshansen/pixelkit/input";
-import { GROUND_Y, WORLD, WORLD_W, districtAt, findDoorSpots, findSpawn, rampAt, type District } from "./game/level";
+import { GROUND_Y, WORLD, WORLD_W, districtAt, findDoorSpots, findSpawn, isOneWay, isSolid, rampAt, type District } from "./game/level";
 import { createStepper } from "@larshansen/pixelkit/loop";
 import { helmetPixels, type Look } from "@larshansen/pixelkit/person";
 import { createSfx } from "@larshansen/pixelkit/sfx";
@@ -18,6 +18,7 @@ import { drawBoards, drawTiles, lightStreet } from "./render/ground";
 import { R, layerOrigin, target, view } from "@larshansen/pixelkit/paint";
 import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
 import { createStage } from "@larshansen/pixelkit/stage";
+import { readHarness, runHarness } from "@larshansen/pixelkit/harness";
 import { drawText, layoutBoards, type Board } from "./render/text";
 import { textTarget } from "@larshansen/pixelkit/text";
 
@@ -52,7 +53,10 @@ pad.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((b) => {
 // The world.
 const params = new URLSearchParams(location.search);
 let skyOverride = params.get("sky");
-let sky = skyFor(new Date(), skyOverride);
+/** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
+const harness = readHarness(params);
+const now = () => harness?.now ?? new Date();
+let sky = skyFor(now(), skyOverride);
 const links = readAppLinks();
 const doors = buildDoors(findDoorSpots(), links, { cv: "CV", maze: t.maze, qr: "QR-verkstedet", quintle: "Quintle", opera: "?" });
 const spawn = findSpawn();
@@ -123,7 +127,11 @@ function recall() {
 }
 
 function standAt(d: Door) {
-  Object.assign(body, { x: d.x + d.w / 2 - PLAYER.w / 2, y: d.bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
+  place(d.x + d.w / 2, d.bottom);
+}
+
+function place(centerX: number, bottom: number) {
+  Object.assign(body, { x: centerX - PLAYER.w / 2, y: bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
   before.x = body.x;
   before.y = body.y;
   state.district = districtAt(body.x);
@@ -317,7 +325,7 @@ function stepOnce() {
     return --p.life > 0;
   });
   input.endStep();
-  if (state.steps % 120 === 0) sky = skyFor(new Date(), skyOverride);
+  if (state.steps % 120 === 0) sky = skyFor(now(), skyOverride);
 }
 
 /** The camera follows the player smoothly, at the same pace on every screen. */
@@ -484,16 +492,41 @@ window.addEventListener("keydown", (e) => {
   if (e.target instanceof Element && e.target.closest("a, button, input, textarea, select")) return;
   const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
   skyOverride = next;
-  sky = skyFor(new Date(), skyOverride);
+  sky = skyFor(now(), skyOverride);
   state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
 });
 
-Object.assign(shown, body);
-new ResizeObserver(layout).observe(stage);
-layout();
-requestAnimationFrame((now) => {
-  last = now;
-  requestAnimationFrame(frame);
-});
+// ?debug&x=<art px> drops him at that x, on the highest thing there, so a reviewer can start anywhere.
+if (params.has("debug") && params.has("x")) {
+  const x = Number(params.get("x"));
+  const ramp = rampAt(x);
+  const c = Math.floor(x / TILE);
+  let r = 0;
+  while (r < 64 && !isSolid(c, r) && !isOneWay(c, r)) r++;
+  if (Number.isFinite(x)) place(x, ramp !== null ? Math.min(ramp, r * TILE) : r * TILE);
+}
 
-if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce, frame } });
+/** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
+function still() {
+  Object.assign(shown, body);
+  camera(0, true);
+  render();
+}
+
+Object.assign(shown, body);
+// A resize clears the canvases; a stepped page has no next frame to draw them again, so it redraws here.
+new ResizeObserver(() => {
+  layout();
+  if (harness) still();
+}).observe(stage);
+layout();
+if (harness) {
+  runHarness(harness, input, stepOnce);
+  still();
+} else
+  requestAnimationFrame((now) => {
+    last = now;
+    requestAnimationFrame(frame);
+  });
+
+if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce, frame, still } });
