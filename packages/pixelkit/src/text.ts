@@ -3,6 +3,7 @@ import type { Phase } from "./oslo";
 import type { Body, World } from "./physics";
 import { view } from "./paint";
 import { playerPixels, type Look } from "./person";
+import { SIGN_PAINT } from "./palette";
 
 // Words are drawn at full screen resolution on top of the pixel art, so they stay sharp. The player
 // is drawn on the same canvas, after the signs, so it is never hidden behind a sign's words.
@@ -162,4 +163,74 @@ export function drawHighlight(d: { x: number; bottom: number; w: number; h: numb
     u.fill();
     bubble(left ? 80 : view.cssW - 80, ay - 16, d.sign === "?" ? "?" : d.sign);
   }
+}
+
+/** A sign board: its words, centre x, top y and width, and the ground its post stands on when it has one. */
+export interface Board {
+  text: string;
+  cx: number;
+  y: number;
+  w: number;
+  post?: number;
+}
+
+/** A board's width for its words, in art pixels. Even, so a board sits square on its post. */
+export function boardWidth(text: string) {
+  u.font = `600 ${fontPx()}px ${FONT}`;
+  return Math.ceil((u.measureText(text).width / unit() + 8) / 2) * 2;
+}
+
+/** The board over a door, `lift` art pixels above its top. */
+export function doorBoard(d: { sign: string; x: number; w: number; h: number; bottom: number }, lift: number): Board {
+  return { text: d.sign, cx: d.x + d.w / 2, y: d.bottom - d.h - lift, w: boardWidth(d.sign) };
+}
+
+/** Everything on the text canvas of a side-view scene, in the order it stacks. */
+export interface Overlay {
+  /** What the player's shadow lies on. */
+  world: World;
+  boards: Board[];
+  /** Going through a door fades everything behind the player to black. */
+  fade: number;
+  snow: { x: number; y: number; size: number }[];
+  player: { body: Body; walk: number; alpha: number; phase: Phase; look?: Look };
+  hint: { x: number; y: number; text: string } | null;
+  /** Lines in speech bubbles stacked upwards, the first line on top. Shown instead of the hint. */
+  bubble: { x: number; y: number; lines: string[]; align?: "left" } | null;
+  banner: { title: string; sub: string; alpha: number } | null;
+  highlight: { x: number; bottom: number; w: number; h: number; sign: string } | null;
+  /** Where the player is walking to after a click on the ground. */
+  marker: { x: number; y: number } | null;
+  steps: number;
+}
+
+export function drawOverlay(o: Overlay) {
+  u.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
+  u.clearRect(0, 0, view.cssW, view.cssH);
+  u.textAlign = "center";
+  u.textBaseline = "middle";
+
+  u.font = `600 ${fontPx()}px ${FONT}`;
+  u.fillStyle = SIGN_PAINT;
+  for (const b of o.boards) u.fillText(b.text, sx(b.cx), sy(b.y + 5) + 0.5);
+
+  if (o.fade > 0) {
+    u.fillStyle = `rgba(5, 5, 12, ${o.fade.toFixed(3)})`;
+    u.fillRect(0, 0, view.cssW, view.cssH);
+  }
+
+  drawPlayer(o.world, o.player.body, o.player.walk, o.player.alpha, o.player.phase, o.player.look);
+
+  if (o.snow.length) drawSnow(o.snow);
+
+  if (o.bubble) {
+    const b = o.bubble;
+    const h = Math.max(24, fontPx() + 12) + 4;
+    const last = b.lines.length - 1;
+    b.lines.forEach((line, i) => bubble(sx(b.x), sy(b.y) - 8 - (last - i) * h, line, b.align));
+  } else if (o.hint) bubble(sx(o.hint.x), sy(o.hint.y) - 8, o.hint.text);
+
+  if (o.banner && o.banner.alpha > 0) drawBanner(o.banner);
+  if (o.marker) drawMarker(o.marker, o.steps);
+  if (o.highlight) drawHighlight(o.highlight, o.steps);
 }

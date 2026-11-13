@@ -1,4 +1,4 @@
-import { PALETTE } from "@larshansen/pixelkit/palette";
+import { INK, PALETTE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import type { RuneSpot } from "../game/level";
 import { SHEEP, type Sheep } from "../game/sheep";
@@ -7,7 +7,6 @@ import { runeCells, type RuneChar } from "../game/runes";
 // The things that move or can be picked up: sheep, and the ten runes on their small floating stones.
 
 const P = PALETTE;
-const INK = "#1f1a17";
 const EDGE = mix(P.rockDark, INK, 0.5);
 
 // A sheep facing right: wool (w), a dark face and ears (f), and legs (k). Twelve across, seven down.
@@ -25,7 +24,7 @@ function sheep(s: Sheep) {
       if (ch === ".") continue;
       // Grazing: the head goes down to the grass.
       const dip = s.grazing > 0 && (s.dir > 0 ? c >= 9 : c < SHEEP.w - 9) && ch === "f" ? 2 : 0;
-      const shade = ch === "w" && r >= 3 ? mix(P.wool, "#8a8478", 0.35) : SHEEP_COLORS[ch];
+      const shade = ch === "w" && r >= 3 ? mix(P.wool, WOOL_SHADE, 0.35) : SHEEP_COLORS[ch];
       R(left + c, top + r + dip + (ch === "k" ? 0 : squash), 1, 1, shade);
     }
   });

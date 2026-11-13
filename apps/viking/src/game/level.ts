@@ -1,5 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import type { World } from "@larshansen/pixelkit/physics";
+import type { DoorSpot } from "@larshansen/pixelkit/doors";
+import { footOf, tileMap, type District, type Ramp } from "@larshansen/pixelkit/tilemap";
 
 // The world as text, one character per 16 px tile: Vikingfjorden, from the landing stone at the left
 // to the beacon rock at the right. Built the same way as the front page's map.
@@ -40,15 +41,9 @@ export const GROUND_Y = 16 * TILE;
 /** Where the water begins: level with the top of the ground, and down to the bed two tiles below. */
 export const WATER_Y = GROUND_Y;
 
-const SOLID = new Set(["#", "P", "K", "B"]);
-const ONE_WAY = new Set(["_"]);
-
 // Slopes he can walk, as in the front page's Opera roof: corner points in tile units [column, row]
 // of the surface. The longhouse's turf roof, and the burial mound.
-const ramp = (...pts: [number, number][]) => ({ points: pts.map(([c, r]): [number, number] => [c * TILE, r * TILE]) });
-export interface Ramp {
-  points: [number, number][];
-}
+const ramp = (...pts: [number, number][]): Ramp => ({ points: pts.map(([c, r]): [number, number] => [c * TILE, r * TILE]) });
 export const RAMPS: Ramp[] = [ramp([61, 16], [66, 12], [68, 12], [73, 16]), ramp([96, 16], [102, 13], [104, 13], [110, 16])];
 
 export interface DoorDef {
@@ -69,14 +64,6 @@ export const DOORS: DoorDef[] = [
   { id: "github", tile: "v", sign: "Verkstedet", href: "https://github.com/larsekhansen" }
 ];
 
-export interface DoorSpot {
-  id: string;
-  sign: string;
-  href: string;
-  x: number;
-  bottom: number;
-}
-
 export const RUNE_CHARS = "LARSHANSEN";
 export const RUNE_COUNT = RUNE_CHARS.length;
 
@@ -84,12 +71,6 @@ export const RUNE_COUNT = RUNE_CHARS.length;
 export const SIGN_KEYS = ["start", "jetty", "smithy", "beacon"] as const;
 export type SignKey = (typeof SIGN_KEYS)[number];
 
-export interface District {
-  name: string;
-  /** The line under the name, in both languages. */
-  landmark: { nb: string; en: string } | null;
-  from: number;
-}
 // The place names show in the banner when he walks into each stretch. Names stay Norwegian in both languages.
 export const DISTRICTS: District[] = [
   { name: "Landingsplassen", landmark: { nb: "Naustet", en: "The boathouse" }, from: 0 },
@@ -101,59 +82,16 @@ export const DISTRICTS: District[] = [
   { name: "Varden", landmark: null, from: 131 * TILE }
 ];
 
-export function districtAt(x: number): District {
-  let found = DISTRICTS[0];
-  for (const d of DISTRICTS) if (x >= d.from) found = d;
-  return found;
-}
-
-export function tileAt(c: number, r: number): string {
-  if (c < 0 || c >= COLS || r >= ROWS) return "#";
-  if (r < 0) return ".";
-  return MAP[r][c];
-}
-
-export const isSolid = (c: number, r: number) => SOLID.has(tileAt(c, r));
-export const isOneWay = (c: number, r: number) => ONE_WAY.has(tileAt(c, r));
-export const isWater = (c: number, r: number) => tileAt(c, r) === "~";
-
-/** Height of the ramp surface at x, or null where there is no ramp. */
-export function rampAt(x: number): number | null {
-  let best: number | null = null;
-  for (const rp of RAMPS) {
-    const pts = rp.points;
-    for (let i = 0; i < pts.length - 1; i++) {
-      const [x0, y0] = pts[i];
-      const [x1, y1] = pts[i + 1];
-      if (x >= x0 && x <= x1) {
-        const y = y0 + ((x - x0) / (x1 - x0)) * (y1 - y0);
-        if (best === null || y < best) best = y;
-      }
-    }
-  }
-  return best;
-}
-
-export const WORLD: World = { width: WORLD_W, isSolid, isOneWay, rampAt };
-
-/** Every tile with this letter, left to right and top to bottom within a column order of the map. */
-function find(match: (ch: string) => boolean): { ch: string; c: number; r: number }[] {
-  const out: { ch: string; c: number; r: number }[] = [];
-  MAP.forEach((row, r) => [...row].forEach((ch, c) => match(ch) && out.push({ ch, c, r })));
-  return out;
-}
-
-export function findSpawn(): { x: number; bottom: number } {
-  const s = find((ch) => ch === "S")[0];
-  if (!s) throw new Error("The map has no start tile");
-  return { x: s.c * TILE + TILE / 2, bottom: (s.r + 1) * TILE };
-}
+/** The map, read by the kit: the world the physics walks, and where everything is. */
+export const LEVEL = tileMap({ map: MAP, legend: { solid: "#PKB", oneWay: "_", water: "~" }, ramps: RAMPS, districts: DISTRICTS });
+export const WORLD = LEVEL;
+export const { tileAt, isSolid, isOneWay, isWater, rampAt, districtAt, spawn: findSpawn } = LEVEL;
 
 export function findDoorSpots(): DoorSpot[] {
   return DOORS.map((d) => {
-    const t = find((ch) => ch === d.tile)[0];
+    const t = LEVEL.find(d.tile)[0];
     if (!t) throw new Error(`The map has no door ${d.id}`);
-    return { id: d.id, sign: d.sign, href: d.href, x: t.c * TILE, bottom: (t.r + 1) * TILE };
+    return { id: d.id, kind: d.id, sign: d.sign, href: d.href, x: t.c * TILE, bottom: (t.r + 1) * TILE };
   });
 }
 
@@ -166,7 +104,7 @@ export interface RuneSpot {
   y: number;
 }
 export function findRunes(): RuneSpot[] {
-  return find((ch) => ch >= "0" && ch <= "9")
+  return LEVEL.find((ch) => ch >= "0" && ch <= "9")
     .map((t) => ({ index: +t.ch, char: RUNE_CHARS[+t.ch], x: t.c * TILE, y: t.r * TILE }))
     .sort((a, b) => a.index - b.index);
 }
@@ -178,9 +116,9 @@ export interface SignSpot {
   bottom: number;
 }
 export function findSigns(): SignSpot[] {
-  return find((ch) => ch === "i")
+  return LEVEL.find("i")
     .sort((a, b) => a.c - b.c)
-    .map((t, i) => ({ key: SIGN_KEYS[i], x: t.c * TILE + TILE / 2, bottom: (t.r + 1) * TILE }));
+    .map((t, i) => ({ key: SIGN_KEYS[i], ...footOf(t) }));
 }
 
 export interface SheepSpot {
@@ -189,5 +127,5 @@ export interface SheepSpot {
   bottom: number;
 }
 export function findSheep(): SheepSpot[] {
-  return find((ch) => ch === "e").map((t) => ({ x: t.c * TILE + TILE / 2, bottom: (t.r + 1) * TILE }));
+  return LEVEL.find("e").map(footOf);
 }

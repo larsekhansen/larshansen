@@ -1,27 +1,18 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { COLS, MAP, ROWS, WATER_Y, isSolid, tileAt } from "../game/level";
 import type { Sky } from "@larshansen/pixelkit/oslo";
-import { PALETTE } from "@larshansen/pixelkit/palette";
 import { R, mix, view } from "@larshansen/pixelkit/paint";
+import { INK, PALETTE, SNOW, WHITE } from "@larshansen/pixelkit/palette";
+import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
+import { LEVEL, WATER_Y, isSolid, tileAt } from "../game/level";
 
 // Everything he can stand on, and the water, drawn from the map one tile at a time, so each thing
 // is exactly where the map puts it. Platforms share one look: a bright top edge and a dark outline.
 
 const P = PALETTE;
-const SNOW = P.snow;
-const PLANK_LIGHT = mix(P.wood, "#ffffff", 0.25);
-const ROCK_EDGE = mix(P.rockDark, "#1f1a17", 0.5);
-const ROCK_LIGHT = mix(P.rock, "#ffffff", 0.22);
-const LANDING_TOP = mix(P.rock, "#ffffff", 0.15);
-
-function visible() {
-  return {
-    c0: Math.max(0, Math.floor(view.camX / TILE)),
-    c1: Math.min(COLS - 1, Math.floor((view.camX + view.w) / TILE)),
-    r0: Math.max(0, Math.floor(view.camY / TILE)),
-    r1: Math.min(ROWS - 1, Math.floor((view.camY + view.h) / TILE))
-  };
-}
+const PLANK_LIGHT = WOOD_LEDGE.top;
+const ROCK_EDGE = mix(P.rockDark, INK, 0.5);
+const ROCK_LIGHT = mix(P.rock, WHITE, 0.22);
+const LANDING_TOP = mix(P.rock, WHITE, 0.15);
 
 /** What the ground looks like along the way: landing stone, grass, sand, grass, rock. */
 function surface(c: number) {
@@ -34,7 +25,7 @@ function surface(c: number) {
 
 /** The water you see: two tiles deep, a foam line on top, and glints that drift slowly. */
 export function drawWater(steps: number) {
-  const { c0, c1 } = visible();
+  const { c0, c1 } = visibleTiles(LEVEL);
   const t = view.reduced ? 0 : steps;
   for (let c = c0; c <= c1; c++) {
     if (tileAt(c, 17) !== "~") continue; // water runs under the jetty and the skerry too
@@ -49,13 +40,6 @@ export function drawWater(steps: number) {
   }
 }
 
-function outline(c: number, r: number, x: number, y: number, t: string, edge: string) {
-  const same = (cc: number, rr: number) => MAP[rr]?.[cc] === t;
-  if (!same(c - 1, r)) R(x, y, 1, TILE, edge);
-  if (!same(c + 1, r)) R(x + TILE - 1, y, 1, TILE, edge);
-  if (!same(c, r - 1)) R(x, y, TILE, 1, edge);
-}
-
 function ground(c: number, r: number, x: number, y: number, sky: Sky) {
   const above = tileAt(c, r - 1);
   if (above === "~") {
@@ -65,33 +49,30 @@ function ground(c: number, r: number, x: number, y: number, sky: Sky) {
     return;
   }
   const s = surface(c);
-  R(x, y, TILE, TILE, s.fill);
-  R(x + ((c * 7 + r * 3) % 12) + 1, y + ((c * 5 + r * 11) % 9) + 5, 2, 1, "rgba(0, 0, 0, 0.25)");
+  groundFill(x, y, c, r, s.fill);
   if (r >= 18) R(x + ((c * 3 + r) % 11) + 2, y + ((c * 7 + r * 5) % 8) + 4, 3, 2, P.rockDark);
   // Shores: the side facing the water is darker.
-  if (tileAt(c + 1, r) === "~") R(x + TILE - 2, y, 2, TILE, mix(s.fill, "#1f1a17", 0.35));
-  if (tileAt(c - 1, r) === "~") R(x, y, 2, TILE, mix(s.fill, "#1f1a17", 0.35));
+  if (tileAt(c + 1, r) === "~") R(x + TILE - 2, y, 2, TILE, mix(s.fill, INK, 0.35));
+  if (tileAt(c - 1, r) === "~") R(x, y, 2, TILE, mix(s.fill, INK, 0.35));
   if (isSolid(c, r - 1)) return;
-  const snow = sky.snow;
-  R(x, y, TILE, 4, snow ? SNOW : s.top);
-  R(x, y + 4, TILE, 1, snow ? "#cfd8e6" : s.dot);
-  if (!snow) for (let i = 1; i < TILE; i += 4) R(x + i + (c % 2), y + 1 + (i % 3), 1, 1, s.dot);
-  if (s.slabs && !snow) R(x + TILE - 1, y, 1, 4, s.dot);
+  groundTop(x, y, c, s.top, s.dot, sky.snow);
+  if (s.slabs && !sky.snow) R(x + TILE - 1, y, 1, 4, s.dot);
 }
 
 /** The landing stone under the start: three slabs, a little brighter and edged. */
 function landingStone(c: number, x: number, y: number, sky: Sky) {
   if (c < 3 || c > 5) return;
   if (sky.snow) return;
-  R(x, y, TILE, 1, mix(P.rock, "#ffffff", 0.4));
-  R(x, y + 1, TILE, 3, mix(P.rock, "#ffffff", 0.22));
+  R(x, y, TILE, 1, mix(P.rock, WHITE, 0.4));
+  R(x, y + 1, TILE, 3, mix(P.rock, WHITE, 0.22));
   if (c === 3) R(x, y, 1, 5, P.rockDark);
   if (c === 5) R(x + TILE - 1, y, 1, 5, P.rockDark);
 }
 
+/** The jetty: solid planks level with the water. */
 function plank(c: number, r: number, x: number, y: number, sky: Sky) {
   R(x, y, TILE, 4, P.wood);
-  R(x, y, TILE, 1, sky.snow ? SNOW : PLANK_LIGHT);
+  R(x, y, TILE, 1, sky.snow ? SNOW.lying : PLANK_LIGHT);
   R(x, y + 4, TILE, 1, P.woodDark);
   R(x + 7, y + 1, 1, 3, P.woodDark);
   if (tileAt(c - 1, r) !== "P") R(x, y, 1, 5, P.woodDark);
@@ -115,7 +96,7 @@ const hash = (c: number, r: number, k: number) => {
   return n - Math.floor(n);
 };
 const ROCK_B = mix(P.rock, P.rockDark, 0.35);
-const ROCK_C = mix(P.rock, "#ffffff", 0.12);
+const ROCK_C = mix(P.rock, WHITE, 0.12);
 
 /** Natural rock: a flat fill in three close greys, and sparse strata of uneven length. No masonry. */
 function rock(c: number, r: number, x: number, y: number, sky: Sky) {
@@ -125,53 +106,35 @@ function rock(c: number, r: number, x: number, y: number, sky: Sky) {
   R(x + Math.floor(hash(c, r, 4) * 8) + 2, y + Math.floor(hash(c, r, 5) * 12), 4 + Math.floor(hash(c, r, 6) * 4), 2, ROCK_C);
   // One stratum line, 3 to 9 px long, at a random place in the tile.
   R(x + Math.floor(hash(c, r, 7) * 7), y + 2 + Math.floor(hash(c, r, 8) * 12), 3 + Math.floor(hash(c, r, 9) * 7), 1, P.rockDark);
-  outline(c, r, x, y, "K", ROCK_EDGE);
+  outlineTile(x, y, edgesOf(tileAt, c, r), ROCK_EDGE);
   if (tileAt(c, r + 1) === "~") R(x, y + TILE, TILE, TILE, mix(P.rock, P.waterDeep, 0.5)); // the skerry goes down to the bed
   if (isSolid(c, r - 1)) return;
   if (r >= 16) {
     // A skerry: bare rock, a little foam at its foot.
-    R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW : ROCK_LIGHT);
+    R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW.lying : ROCK_LIGHT);
     return;
   }
   // Grass, or snow, on top.
-  R(x + 1, y + 1, TILE - 2, 3, sky.snow ? SNOW : P.grass);
+  R(x + 1, y + 1, TILE - 2, 3, sky.snow ? SNOW.lying : P.grass);
   if (!sky.snow) {
     R(x + 1, y + 4, TILE - 2, 1, P.grassDark);
     for (let i = 0; i < TILE - 2; i += 5) R(x + 1 + ((i + c * 3) % (TILE - 3)), y + 5, 1, 2, P.grassDark);
   }
 }
 
-function crate(c: number, r: number, x: number, y: number, sky: Sky) {
-  R(x, y, TILE, TILE, P.crate);
-  R(x + 1, y + 1, TILE - 2, TILE - 2, P.wood);
-  for (let i = 0; i < TILE - 2; i++) R(x + 1 + i, y + 1 + i, 1, 1, P.crateShade);
-  outline(c, r, x, y, "B", P.crateEdge);
-  if (!isSolid(c, r - 1)) R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW : P.crateTop);
-}
-
-/** One-way ledges: the ship's deck, its yard, and the gallery of the church tower. */
-function ledge(c: number, r: number, x: number, y: number, sky: Sky) {
+/**
+ * One-way ledges: the ship's deck, its yard, and the gallery of the church tower. All three are the
+ * kit's plank ledge; the yard has its ends lashed down, the gallery rests on corbels between two posts.
+ */
+function ledgeTile(c: number, r: number, x: number, y: number, sky: Sky) {
   const first = tileAt(c - 1, r) !== "_";
   const last = tileAt(c + 1, r) !== "_";
-  if (r === 15) {
-    // The deck of the longship: planks.
-    R(x, y, TILE, 5, P.wood);
-    R(x, y, TILE, 1, sky.snow ? SNOW : PLANK_LIGHT);
-    R(x, y + 4, TILE, 1, P.woodDark);
-    R(x + 5, y + 1, 1, 3, P.woodDark);
-    R(x + 12, y + 1, 1, 3, P.woodDark);
-  } else if (r === 9) {
-    // The yard: a spar across the mast.
-    R(x, y, TILE, 3, P.wood);
-    R(x, y, TILE, 1, sky.snow ? SNOW : PLANK_LIGHT);
-    R(x, y + 3, TILE, 1, P.woodDark);
+  ledge(x, y, WOOD_LEDGE, first, last, sky.snow);
+  if (r === 9) {
+    // The yard: a spar across the mast, its ends lashed down.
     if (first || last) R(first ? x : x + TILE - 2, y - 1, 2, 5, P.woodDark);
-  } else {
+  } else if (r !== 15) {
     // The gallery under the bells: planks on corbels, a post at each end.
-    R(x, y, TILE, 4, P.wood);
-    R(x, y, TILE, 1, sky.snow ? SNOW : PLANK_LIGHT);
-    R(x, y + 4, TILE, 1, P.woodDark);
-    R(x + 7, y + 1, 1, 3, P.woodDark);
     R(x + 5, y + 5, 6, 2, P.woodDark);
     R(x + 7, y + 7, 2, 2, P.woodDark);
     if (first || last) {
@@ -180,25 +143,18 @@ function ledge(c: number, r: number, x: number, y: number, sky: Sky) {
       R(px - (first ? 0 : 1), y - 12, 3, 2, P.woodDark);
     }
   }
-  if (first) R(x, y, 1, 5, P.woodDark);
-  if (last) R(x + TILE - 1, y, 1, 5, P.woodDark);
 }
 
 export function drawTiles(sky: Sky) {
-  const { c0, c1, r0, r1 } = visible();
-  for (let r = r0; r <= r1; r++)
-    for (let c = c0; c <= c1; c++) {
-      const t = MAP[r][c];
-      const x = c * TILE;
-      const y = r * TILE;
-      if (t === "#") {
-        ground(c, r, x, y, sky);
-        if (r === 16) landingStone(c, x, y, sky);
-      } else if (t === "P") {
-        jettyPosts(c, x, y);
-        plank(c, r, x, y, sky);
-      } else if (t === "K") rock(c, r, x, y, sky);
-      else if (t === "B") crate(c, r, x, y, sky);
-      else if (t === "_") ledge(c, r, x, y, sky);
-    }
+  forVisibleTiles(LEVEL, (t, c, r, x, y) => {
+    if (t === "#") {
+      ground(c, r, x, y, sky);
+      if (r === 16) landingStone(c, x, y, sky);
+    } else if (t === "P") {
+      jettyPosts(c, x, y);
+      plank(c, r, x, y, sky);
+    } else if (t === "K") rock(c, r, x, y, sky);
+    else if (t === "B") crate(x, y, edgesOf(tileAt, c, r), !isSolid(c, r - 1), sky.snow);
+    else if (t === "_") ledgeTile(c, r, x, y, sky);
+  });
 }

@@ -1,106 +1,89 @@
 import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
-import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { buildDoors, doorAt, readAppLinks, type Door } from "./game/doors";
+import { aim, follow } from "@larshansen/pixelkit/camera";
 import { wireMute } from "@larshansen/pixelkit/chrome";
-import { pickLang, soundWords } from "@larshansen/pixelkit/i18n";
-import { strings, type SkyName } from "./game/i18n";
-import { createInput, type Action } from "@larshansen/pixelkit/input";
-import { GROUND_Y, WORLD, WORLD_W, districtAt, findDoorSpots, findSpawn, isOneWay, isSolid, rampAt, type District } from "./game/level";
-import { createStepper } from "@larshansen/pixelkit/loop";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
+import { buildDoors, doorAt, readAppLinks, type Door } from "@larshansen/pixelkit/doors";
+import { readHarness } from "@larshansen/pixelkit/harness";
+import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
+import { createInput } from "@larshansen/pixelkit/input";
+import { R, target, view } from "@larshansen/pixelkit/paint";
 import { helmetPixels, type Look } from "@larshansen/pixelkit/person";
+import { createBody, placeBody, stepBody } from "@larshansen/pixelkit/physics";
+import { drawBoards } from "@larshansen/pixelkit/props";
+import {
+  bannerFor,
+  bannerShown,
+  beginLayers,
+  blend,
+  byId,
+  createLoop,
+  doorChrome,
+  doorLeftBy,
+  dropParam,
+  followReducedMotion,
+  footsteps,
+  isTouch,
+  launch,
+  onKey,
+  openPage,
+  putWords,
+  rememberDoor,
+  reopen,
+  sceneState,
+  skyControl,
+  stepThrough,
+  trackDistrict,
+  wireLinks,
+  wirePad,
+  wirePointer
+} from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
-import { skyFor } from "@larshansen/pixelkit/oslo";
-import { createBody, stepBody } from "@larshansen/pixelkit/physics";
+import { snowfall } from "@larshansen/pixelkit/sky";
+import { drawSparks, dust, fireworks, stepSparks } from "@larshansen/pixelkit/sparks";
+import { drawOverlay, type Board } from "@larshansen/pixelkit/text";
+import { walkStep, walkTo } from "@larshansen/pixelkit/walkto";
+import { strings } from "./game/i18n";
+import { GROUND_Y, LEVEL, WORLD, WORLD_W, findDoorSpots, rampAt, type DoorKind } from "./game/level";
 import { drawFjord, drawGalgeberg, drawHills, drawLandmarks, drawSkylineBlocks, drawTram } from "./render/backdrop";
 import { drawBuildings, drawRuins } from "./render/buildings";
-import { drawBoards, drawTiles, lightStreet } from "./render/ground";
-import { R, layerOrigin, target, view } from "@larshansen/pixelkit/paint";
-import { drawSky, snowfall } from "@larshansen/pixelkit/sky";
-import { createStage } from "@larshansen/pixelkit/stage";
-import { readHarness, runHarness } from "@larshansen/pixelkit/harness";
-import { drawText, layoutBoards, type Board } from "./render/text";
-import { textTarget } from "@larshansen/pixelkit/text";
+import { drawTiles, lightStreet } from "./render/ground";
+import { layoutBoards } from "./render/text";
 
-const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
-const stage = $<HTMLElement>("stage");
-const px = $<HTMLCanvasElement>("px");
-const ui = $<HTMLCanvasElement>("ui");
-const pad = $<HTMLElement>("pad");
-const help = $<HTMLElement>("help");
-const announce = $<HTMLElement>("announce");
-const enterButton = pad.querySelector<HTMLButtonElement>('[data-action="enter"]')!;
+// The front page: a walk through Gamle Oslo, where every house is a door to one of the apps.
+// The scene's own parts are here and in game/ and render/; what every scene does is the kit's.
 
-const kit = createStage({ stage, px, ui, factors: [0.12, 0.2, 0.25, 0.4, 0.7, 1] });
-const g = kit.g;
-textTarget(ui.getContext("2d")!);
+const { stage, pad, help, announce, enterButton, kit } = openPage([0.12, 0.2, 0.25, 0.4, 0.7, 1]);
 
 // Language: Norwegian for Norwegian browsers, English for everyone else.
-const lang = pickLang(navigator.languages?.length ? navigator.languages : [navigator.language]);
+const lang = browserLang();
 const t = strings(lang);
-document.documentElement.lang = lang;
-document.querySelectorAll<HTMLElement>("[data-i18n]").forEach((el) => {
-  const text = t[el.dataset.i18n as keyof typeof t];
-  if (typeof text === "string") el.textContent = text;
-});
-const actionLabels: Record<string, string> = { left: t.left, right: t.right, jump: t.jump, enter: t.enter };
-pad.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((b) => {
-  b.setAttribute("aria-label", actionLabels[b.dataset.action ?? ""]);
-  if (b.dataset.action === "jump") b.textContent = t.jump;
-  if (b.dataset.action === "enter") b.textContent = t.enter;
-});
+putWords(lang, t, pad);
 
 // The world.
 const params = new URLSearchParams(location.search);
-let skyOverride = params.get("sky");
 /** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
 const harness = readHarness(params);
-const now = () => harness?.now ?? new Date();
-let sky = skyFor(now(), skyOverride);
+const skies = skyControl(params.get("sky"), () => harness?.now ?? new Date());
 const links = readAppLinks();
 const doors = buildDoors(findDoorSpots(), links, { cv: "CV", maze: t.maze, qr: "QR-verkstedet", quintle: "Quintle", opera: "?" });
-const spawn = findSpawn();
+const spawn = LEVEL.spawn();
 const body = createBody(spawn.x, spawn.bottom);
 const input = createInput();
 // The front page is silent until the visitor asks for sound; the games start with it on.
 const sfx = createSfx({ mutedUntilChosen: true });
-wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
-const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
-view.reduced = reducedMotion.matches;
-reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
-const touch = matchMedia("(pointer: coarse)").matches;
+wireMute(byId<HTMLButtonElement>("mute"), sfx, soundWords(lang));
+followReducedMotion();
+const touch = isTouch();
 
 // Physics runs in fixed steps. Drawing blends the last two steps, so motion is smooth on any screen.
 const before = { x: body.x, y: body.y };
 const shown = { ...body };
 
-interface Spark {
-  x: number;
-  y: number;
-  vx: number;
-  vy: number;
-  life: number;
-  color: string;
-}
-
+type Building = Door<DoorKind>;
 const state = {
-  mode: "play" as "play" | "enter" | "away",
-  modeSteps: 0,
-  door: null as Door | null,
-  fade: 0,
-  alpha: 1,
-  walk: 0,
-  steps: 0,
-  moved: false,
-  bubble: null as { text: string; until: number; door: Door } | null,
-  district: districtAt(body.x) as District,
-  banner: null as { title: string; sub: string; since: number } | null,
-  highlight: null as Door | null,
-  /** Where the visitor clicked or tapped: the player walks there, and goes in if it is a house. */
-  goal: null as { x: number; door: Door | null; best: number; since: number } | null,
-  stuck: 0,
-  hover: null as Door | null,
-  sparks: [] as Spark[],
+  ...sceneState<Building>(LEVEL.districtAt(body.x), lang),
+  bubble: null as { text: string; until: number; door: Building } | null,
   /** Back from Vikingfjorden (`?from=viking`): the cape rolls up and the helmet comes off, over ARRIVAL steps. */
   arrive: null as { t: number } | null,
   /** The helmet once it has left his head: it drops behind the Opera and out of the picture. */
@@ -108,51 +91,22 @@ const state = {
 };
 const ARRIVAL = 40;
 
-state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: 0 };
-
 const LAST_DOOR = "lh:lastDoor";
-function remember(id: string) {
-  try {
-    sessionStorage.setItem(LAST_DOOR, id);
-  } catch {
-    // private windows can refuse storage, and then Back just starts at the beginning
-  }
-}
-function recall() {
-  try {
-    return sessionStorage.getItem(LAST_DOOR);
-  } catch {
-    return null;
-  }
-}
-
-function standAt(d: Door) {
-  place(d.x + d.w / 2, d.bottom);
-}
 
 function place(centerX: number, bottom: number) {
-  Object.assign(body, { x: centerX - PLAYER.w / 2, y: bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
+  placeBody(body, centerX, bottom);
   before.x = body.x;
   before.y = body.y;
-  state.district = districtAt(body.x);
-  state.banner = { title: state.district.name, sub: state.district.landmark ? state.district.landmark[lang] : "", since: state.steps };
+  state.district = LEVEL.districtAt(body.x);
+  state.banner = bannerFor(state.district, lang, state.steps);
 }
 
-function resetScene() {
-  state.mode = "play";
-  state.fade = 0;
-  state.alpha = 1;
-  doors.forEach((d) => (d.open = false));
-  input.clear();
-}
+const standAt = (d: Building) => place(d.x + d.w / 2, d.bottom);
 
 // Back from an app: start outside the door you went through, with nothing frozen or held.
-const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
-if (navigation?.type === "back_forward") {
-  const d = doors.find((x) => x.id === recall());
-  if (d) standAt(d);
-}
-window.addEventListener("pageshow", (e) => e.persisted && resetScene());
+const cameBackBy = doorLeftBy(LAST_DOOR, doors);
+if (cameBackBy) standAt(cameBackBy);
+window.addEventListener("pageshow", (e) => e.persisted && reopen(state, doors, input));
 
 // Back from Vikingfjorden through its door Hjem: he stands at the Opera's top door, facing left,
 // still in the helmet. The address is cleaned, so a reload starts at the beginning as usual.
@@ -164,11 +118,7 @@ if (params.get("from") === "viking") {
     if (!view.reduced) state.arrive = { t: 0 };
   }
 }
-if (params.has("from")) {
-  params.delete("from");
-  const rest = params.toString();
-  history.replaceState(null, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
-}
+dropParam(params, "from");
 
 /** What he wears while the helmet comes off: undefined once it is done, which is the plain person. */
 function look(): Look | undefined {
@@ -196,12 +146,12 @@ function say(text: string) {
   announce.textContent = text;
 }
 
-function tryEnter(d: Door) {
+function tryEnter(d: Building) {
   if (d.secret) {
     sfx.play("door");
     state.bubble = { text: t.secret, until: state.steps + 240, door: d };
     say(t.secret);
-    if (!view.reduced) fireworks(d);
+    if (!view.reduced) fireworks(state.sparks, (burst) => ({ x: d.x - 40 + burst * 40, y: 18 + (burst % 2) * 10 }));
     if (!d.href) return;
     // Let the fireworks play for a moment, then go through to the game behind the door.
     state.mode = "enter";
@@ -225,23 +175,10 @@ function tryEnter(d: Door) {
   say(t.opening(d.name));
 }
 
-function fireworks(d: Door) {
-  const colors = ["#ba0c2f", "#ffffff", "#00205b", "#ffd36b"];
-  for (let burst = 0; burst < 3; burst++) {
-    const cx = d.x - 40 + burst * 40;
-    const cy = 18 + (burst % 2) * 10;
-    for (let i = 0; i < 22; i++) {
-      const a = (i / 22) * Math.PI * 2;
-      const v = 0.6 + Math.random() * 0.5;
-      state.sparks.push({ x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 0.2, life: 50 + burst * 12, color: colors[(i + burst) % 4] });
-    }
-  }
-}
-
 function play() {
   const door = doorAt(body, doors);
   if (door && (input.pressed("up") || input.pressed("enter"))) return tryEnter(door);
-  const intent = {
+  let intent = {
     left: input.held.left,
     right: input.held.right,
     jumpHeld: input.held.jump || input.held.up,
@@ -249,62 +186,26 @@ function play() {
   };
   // Walking to a clicked house. Any input of the visitor's own takes over again.
   if (state.goal) {
-    const goal = state.goal;
-    const dx = goal.x - (body.x + PLAYER.w / 2);
-    // Getting closer resets the patience; three seconds without progress means it cannot be reached.
-    if (Math.abs(dx) < goal.best - 0.5) {
-      goal.best = Math.abs(dx);
-      goal.since = state.steps;
-    }
-    if (intent.left || intent.right || intent.jumpPressed || state.steps - goal.since > 180) state.goal = null;
-    else if (goal.door && door === goal.door) {
-      state.goal = null;
-      return tryEnter(goal.door);
-    } else if (!goal.door && Math.abs(dx) <= 1.5) state.goal = null;
-    else {
-      intent.left = dx < -1;
-      intent.right = dx > 1;
-      // Crates, hedges and walls in the way: hop over when walking gets nowhere.
-      state.stuck = body.onGround && Math.abs(body.vx) < 0.05 ? state.stuck + 1 : 0;
-      intent.jumpPressed = state.stuck > 4;
-      intent.jumpHeld = true; // always the full jump
-    }
+    const w = walkStep(state.goal, body, intent, door, state.steps);
+    state.goal = w.goal;
+    if (w.enter) return tryEnter(w.enter);
+    intent = w.intent;
   }
   const r = stepBody(body, intent, WORLD);
   if (intent.left || intent.right || r.jumped) state.moved = true;
   if (r.jumped) sfx.play("jump");
-  state.walk = body.onGround && Math.abs(body.vx) > 0.2 ? state.walk + 1 : 0;
-  if (state.walk > 0 && state.walk % 14 === 7) sfx.play("step");
+  footsteps(state, body, sfx);
   if (r.landed > 3) sfx.play("land");
-  if (r.landed > 3 && !view.reduced)
-    for (let i = 0; i < 5; i++)
-      state.sparks.push({ x: body.x + PLAYER.w / 2, y: body.y + PLAYER.h - 1, vx: (i - 2) * 0.35, vy: -0.3 - Math.random() * 0.4, life: 18, color: "#ebe1cd" });
-  const here = districtAt(body.x + PLAYER.w / 2);
-  if (here !== state.district) {
-    state.district = here;
-    state.banner = { title: here.name, sub: here.landmark ? here.landmark[lang] : "", since: state.steps };
-  }
+  if (r.landed > 3 && !view.reduced) dust(state.sparks, body.x + PLAYER.w / 2, body.y + PLAYER.h - 1);
+  trackDistrict(state, LEVEL.districtAt(body.x + PLAYER.w / 2), lang);
 }
 
 // Through a door: walk in, fade out, then open the app in this tab.
 function goThrough() {
   const d = state.door!;
-  const s = ++state.modeSteps;
-  if (s <= 0) return; // still celebrating
-  const quick = view.reduced;
-  const cx = d.x + d.w / 2 - PLAYER.w / 2;
-  if (!quick && s <= 10) body.x += (cx - body.x) * 0.35;
-  if (!quick && s > 10 && s <= 30) {
-    d.open = true;
-    state.alpha = Math.max(0, 1 - (s - 10) / 20);
-  }
-  if (!quick && s > 30) state.fade = Math.min(1, (s - 30) / 14);
-  if (quick || s >= 44) {
-    remember(d.id);
-    state.mode = "away";
-    state.modeSteps = 0;
-    if (d.href) location.assign(d.href);
-  }
+  if (!stepThrough(state, body)) return;
+  rememberDoor(LAST_DOOR, d.id);
+  if (d.href) location.assign(d.href);
 }
 
 function stepOnce() {
@@ -315,32 +216,18 @@ function stepOnce() {
   input.pollPad();
   if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
-  else if (++state.modeSteps > 300) resetScene(); // the app never opened
+  else if (++state.modeSteps > 300) reopen(state, doors, input); // the app never opened
   doors.forEach((d) => d.shake > 0 && d.shake--);
   if (state.bubble && state.steps > state.bubble.until) state.bubble = null;
-  state.sparks = state.sparks.filter((p) => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.03;
-    return --p.life > 0;
-  });
+  state.sparks = stepSparks(state.sparks);
   input.endStep();
-  if (state.steps % 120 === 0) sky = skyFor(now(), skyOverride);
+  skies.tick(state.steps);
 }
 
-/** The camera follows the player smoothly, at the same pace on every screen. */
+/** The camera follows the player smoothly, at the same pace on every screen. One tile of ground shows below the street. */
 function camera(elapsedMs: number, snap: boolean) {
-  const maxX = WORLD_W - view.w;
-  const maxY = GROUND_Y + TILE - view.h; // one tile of ground below the street
-  const tx = shown.x + PLAYER.w / 2 + body.facing * 22 - view.w / 2;
-  const wantX = maxX < 0 ? maxX / 2 : Math.max(0, Math.min(maxX, tx));
-  // A tall screen shows more sky, with the street kept at the bottom.
-  const wantY = maxY < 0 ? maxY : Math.max(0, Math.min(maxY, shown.y + PLAYER.h / 2 - view.h / 2));
-  const k = snap ? 1 : 1 - Math.exp(-elapsedMs / 130);
-  view.camXf += (wantX - view.camXf) * k;
-  view.camYf += (wantY - view.camYf) * k;
-  view.camX = Math.floor(view.camXf);
-  view.camY = Math.floor(view.camYf);
+  const focus = { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2, facing: body.facing };
+  aim(follow({ x: view.camXf, y: view.camYf }, focus, { width: WORLD_W, bottom: GROUND_Y + TILE }, view, elapsedMs, snap));
 }
 
 let boards: Board[] = [];
@@ -350,19 +237,12 @@ function layout() {
   camera(0, true);
 }
 
-const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, sky.phase, haze);
-const nudge = kit.nudge;
+const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, skies.sky.phase, haze);
+const atDoor = doorChrome(enterButton, links);
 
 function render() {
-  target(g);
-  drawSky(sky, state.steps);
-  nudge(px, 0);
-
-  for (const d of kit.depths) {
-    d.g.clearRect(0, 0, view.w, view.h);
-    const origin = layerOrigin(d.factor);
-    nudge(d.canvas, origin - Math.floor(origin));
-  }
+  const sky = skies.sky;
+  beginLayers(kit, sky, state.steps);
   pass(kit.depth(0.12), () => drawHills(sky), 0.35);
   pass(kit.depth(0.2), () => drawFjord(state.steps), 0.35);
   pass(kit.depth(0.25), () => drawGalgeberg(sky), 0.28);
@@ -381,129 +261,59 @@ function render() {
     lightStreet();
   });
   target(street);
-  for (const p of state.sparks) R(p.x, p.y, 1, 1, p.color);
+  drawSparks(state.sparks);
 
   const door = state.mode === "play" ? doorAt(body, doors) : null;
-  const age = state.banner ? state.steps - state.banner.since : 0;
-  drawText({
+  drawOverlay({
+    world: WORLD,
     boards,
     fade: state.fade,
     snow: snowfall(sky, state.steps),
     player: { body: shown, walk: state.walk, alpha: state.alpha * (1 - state.fade), phase: sky.phase, look: look() },
     hint: door && !touch && !state.arrive ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon ? t.locked : t.goIn}` } : null,
-    bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, text: state.bubble.text } : null,
-    banner: state.banner ? { title: state.banner.title, sub: state.banner.sub, alpha: view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, age / 15, (165 - age) / 30)) } : null,
+    bubble: state.bubble ? { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] } : null,
+    banner: bannerShown(state.banner, state.steps),
     highlight: state.highlight ?? state.hover ?? state.goal?.door ?? null,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: rampAt(state.goal.x) ?? GROUND_Y } : null,
     steps: state.steps
   });
 
-  enterButton.classList.toggle("show", !!door);
-  // The header link of the house you are standing at lights up.
-  if (door !== nearDoor) {
-    nearDoor = door;
-    for (const link of links) link.el.classList.toggle("here", link.id === door?.id);
-  }
+  // The pad's enter button, and the header link of the house you are standing at.
+  atDoor(door);
   if (state.moved && !help.hidden) help.hidden = true;
 }
 
-let nearDoor: Door | null = null;
-const stepper = createStepper(stepOnce);
-let last = performance.now();
-function frame(now: number) {
-  const elapsed = Math.min(100, Math.max(0, now - last));
-  last = now;
-  stepper.advance(elapsed);
-  const a = stepper.alpha();
-  Object.assign(shown, body, { x: before.x + (body.x - before.x) * a, y: before.y + (body.y - before.y) * a });
+const loop = createLoop(stepOnce, (a, elapsed) => {
+  blend(shown, body, before, a);
   camera(elapsed, false);
   render();
-  requestAnimationFrame(frame);
-}
-
-// Touch buttons feed the same actions as the keyboard.
-if (touch) {
-  pad.hidden = false;
-  help.hidden = true;
-  document.body.classList.add("touch");
-}
-pad.querySelectorAll<HTMLButtonElement>("[data-action]").forEach((b) => {
-  const action = b.dataset.action as Action;
-  const release = () => {
-    b.classList.remove("down");
-    input.hold(action, false);
-  };
-  b.addEventListener("pointerdown", (e) => {
-    e.preventDefault();
-    b.setPointerCapture?.(e.pointerId);
-    b.classList.add("down");
-    input.hold(action, true);
-  });
-  b.addEventListener("pointerup", release);
-  b.addEventListener("pointercancel", release);
-  b.addEventListener("lostpointercapture", release);
-  b.addEventListener("contextmenu", (e) => e.preventDefault());
-  b.addEventListener("click", (e) => e.detail === 0 && input.press(action)); // keyboard or switch access
 });
 
+wirePad(pad, input, touch, help);
 // Pointing at a plain link lights up its house in the game.
-for (const link of links) {
-  const d = doors.find((x) => x.id === link.id);
-  if (!d) continue;
-  const on = () => (state.highlight = d);
-  const off = () => state.highlight === d && (state.highlight = null);
-  link.el.addEventListener("mouseenter", on);
-  link.el.addEventListener("mouseleave", off);
-  link.el.addEventListener("focus", on);
-  link.el.addEventListener("blur", off);
-}
+wireLinks(links, doors, state);
 
 // Clicking or tapping sends the player there: into a house, or just along the street.
 // The secret door has to be found on foot.
-function worldAt(e: MouseEvent) {
-  const rect = stage.getBoundingClientRect();
-  return {
-    x: ((e.clientX - rect.left) * view.dpr) / view.k + view.camXf,
-    y: ((e.clientY - rect.top) * view.dpr) / view.k + view.camYf
-  };
-}
-function houseAt(e: MouseEvent): Door | null {
-  const { x, y } = worldAt(e);
-  return doors.find((d) => !d.secret && x >= d.x - TILE && x <= d.x + d.w + TILE && y >= d.bottom - TILE * 3.5 && y <= d.bottom + 2) ?? null;
-}
-stage.addEventListener("click", (e) => {
-  if (state.mode !== "play") return;
-  const door = houseAt(e);
-  const x = door ? door.x + door.w / 2 : Math.max(PLAYER.w, Math.min(WORLD_W - PLAYER.w, worldAt(e).x));
-  state.goal = { x, door, best: Infinity, since: state.steps };
-  state.stuck = 0;
-  state.moved = true;
+wirePointer(stage, doors, state, {
+  active: () => state.mode === "play",
+  walk: (at, door) => {
+    state.goal = walkTo(at, door, WORLD_W, state.steps);
+    state.moved = true;
+  }
 });
-stage.addEventListener("mousemove", (e) => {
-  state.hover = state.mode === "play" ? houseAt(e) : null;
-  stage.style.cursor = state.hover ? "pointer" : "";
-});
-stage.addEventListener("mouseleave", () => (state.hover = null));
 
 // T steps through every sky, and back to the real one.
-const SKIES: (SkyName | null)[] = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
-window.addEventListener("keydown", (e) => {
-  if (e.code !== "KeyT" || e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.target instanceof Element && e.target.closest("a, button, input, textarea, select")) return;
-  const next = SKIES[(SKIES.indexOf(skyOverride as SkyName | null) + 1) % SKIES.length];
-  skyOverride = next;
-  sky = skyFor(now(), skyOverride);
+onKey("KeyT", () => {
+  const next = skies.next();
   state.banner = { title: t.skies[next ?? "now"], sub: "", since: state.steps };
 });
 
 // ?debug&x=<art px> drops him at that x, on the highest thing there, so a reviewer can start anywhere.
 if (params.has("debug") && params.has("x")) {
   const x = Number(params.get("x"));
-  const ramp = rampAt(x);
-  const c = Math.floor(x / TILE);
-  let r = 0;
-  while (r < 64 && !isSolid(c, r) && !isOneWay(c, r)) r++;
-  if (Number.isFinite(x)) place(x, ramp !== null ? Math.min(ramp, r * TILE) : r * TILE);
+  const y = Number.isFinite(x) ? LEVEL.surfaceBelow(x, 0) : null;
+  if (y !== null) place(x, y);
 }
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
@@ -514,19 +324,6 @@ function still() {
 }
 
 Object.assign(shown, body);
-// A resize clears the canvases; a stepped page has no next frame to draw them again, so it redraws here.
-new ResizeObserver(() => {
-  layout();
-  if (harness) still();
-}).observe(stage);
-layout();
-if (harness) {
-  runHarness(harness, input, stepOnce);
-  still();
-} else
-  requestAnimationFrame((now) => {
-    last = now;
-    requestAnimationFrame(frame);
-  });
+launch({ stage, layout, still, loop, harness, input, step: stepOnce });
 
-if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce, frame, still } });
+if (params.has("debug")) Object.assign(window, { __game: { body, shown, doors, state, view, input, step: stepOnce, frame: loop.frame, still } });

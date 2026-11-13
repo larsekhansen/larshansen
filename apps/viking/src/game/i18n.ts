@@ -1,13 +1,11 @@
 // The words the game says, in Norwegian for Norwegian browsers and English for everyone else.
 // Place names stay Norwegian in both.
 
-import type { Lang } from "@larshansen/pixelkit/i18n";
-
-/** The skies `?sky=` and the T key can show. */
-export type SkyName = "day" | "evening" | "twilight" | "night" | "winter" | "17mai";
+import { SCENE_WORDS, type Lang } from "@larshansen/pixelkit/i18n";
 
 const STRINGS = {
   nb: {
+    ...SCENE_WORDS.nb,
     help: "Piltastene for å gå, mellomrom for å hoppe, pil opp for å gå inn en dør. Eller klikk dit du vil.",
     blurb: "Du fant den hemmelige døra. Finn de ti runene, eller ta en dør ut igjen.",
     signStart: ["Vikingfjorden. Du fant den hemmelige døra.", "Ti runer ligger strødd. De staver noe."],
@@ -33,15 +31,9 @@ const STRINGS = {
     runes: (n: number) => `${n} av 10 runer`,
     runesAll: "Alle ti runene funnet",
     runeAnnounce: (n: number) => `Rune ${n} av 10`,
-    goIn: "gå inn",
-    opening: (name: string) => `Åpner ${name}`,
-    skies: { now: "Oslo akkurat nå", day: "Dag", evening: "Kveld", twilight: "Sommernatt", night: "Natt", winter: "Vinternatt", "17mai": "17. mai" } as Record<SkyName | "now", string>,
-    left: "Gå til venstre",
-    right: "Gå til høyre",
-    jump: "Hopp",
-    enter: "Gå inn"
   },
   en: {
+    ...SCENE_WORDS.en,
     help: "Arrow keys to walk, Space to jump, up arrow to go through a door. Or click where you want to go.",
     blurb: "You found the secret door. Find the ten runes, or take a door back out.",
     signStart: ["Vikingfjorden. You found the secret door.", "Ten runes lie scattered. They spell something."],
@@ -67,13 +59,6 @@ const STRINGS = {
     runes: (n: number) => `${n} of 10 runes`,
     runesAll: "All ten runes found",
     runeAnnounce: (n: number) => `Rune ${n} of 10`,
-    goIn: "go in",
-    opening: (name: string) => `Opening ${name}`,
-    skies: { now: "Oslo right now", day: "Day", evening: "Evening", twilight: "Summer night", night: "Night", winter: "Winter night", "17mai": "17 May" } as Record<SkyName | "now", string>,
-    left: "Walk left",
-    right: "Walk right",
-    jump: "Jump",
-    enter: "Go in"
   }
 };
 

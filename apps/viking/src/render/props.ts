@@ -1,11 +1,11 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import type { Door } from "../game/doors";
-import { RAMPS, rampAt } from "../game/level";
+import type { Door } from "@larshansen/pixelkit/doors";
 import type { Sky } from "@larshansen/pixelkit/oslo";
-import { PALETTE, STONE } from "@larshansen/pixelkit/palette";
 import { R, gable, light, mix, view } from "@larshansen/pixelkit/paint";
+import { DOORWAY, FIRE, INK, PALETTE, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { STOVE_SMOKE, pane, plankDoor, smoke } from "@larshansen/pixelkit/props";
+import { RAMPS, rampAt } from "../game/level";
 import { runeCells, type RuneChar } from "../game/runes";
-import type { Board } from "./text";
 
 // The things the map only marks with a letter: the boathouse, the longship, the longhouse, the
 // smithy, the mound, the cabin and the church tower, the beacon, doors and signs. Each is placed
@@ -14,45 +14,18 @@ import type { Board } from "./text";
 
 const P = PALETTE;
 const G = 256;
-const INK = "#1f1a17";
 const DARK = mix(P.woodDark, INK, 0.45);
 const STAVE = mix(P.woodDark, INK, 0.25);
-const LIGHT_WOOD = mix(P.wood, "#ffffff", 0.25);
+const LIGHT_WOOD = mix(P.wood, WHITE, 0.25);
 const EAVE = mix(P.woodDark, INK, 0.2);
 const TILE_X = (c: number) => c * TILE;
 
 const reduced = () => view.reduced;
+/** The forge's smoke: darker, quicker and closer together than a stove's. */
+const FORGE_SMOKE = { rate: 0.6, spacing: 22, period: 66, rise: 22, sway: 5, drift: 4, rgb: FIRE.soot, alpha: 0.5 };
 
-/** A small window with a wooden frame and a cross; it lights up after dark. */
-function window(x: number, y: number, w: number, h: number) {
-  R(x - 1, y - 1, w + 2, h + 2, P.woodDark);
-  R(x, y, w, h, "#a9d2e6");
-  R(x + Math.floor(w / 2), y, 1, h, P.woodDark);
-  R(x, y + Math.floor(h / 2), w, 1, P.woodDark);
-  light(x, y, w, h);
-}
-
-/** A plank door with two iron bands. It stands open, as a dark hole, while he goes through. */
-function plankDoor(d: Door, frame: string) {
-  const ox = d.shake ? (d.shake % 4 < 2 ? 1 : -1) : 0;
-  const top = d.bottom - d.h;
-  R(d.x - 2 + ox, top - 2, d.w + 4, d.h + 2, frame);
-  R(d.x + ox, top, d.w, d.h, d.open ? "#140d08" : P.wood);
-  if (d.open) return;
-  for (let i = 4; i < d.w; i += 4) R(d.x + ox + i, top, 1, d.h, P.woodDark);
-  R(d.x + ox, top + 6, d.w, 2, P.iron);
-  R(d.x + ox, top + 22, d.w, 2, P.iron);
-  R(d.x + ox + d.w - 4, top + 15, 2, 3, P.iron);
-}
-
-/** Wooden sign boards on the walls and on posts. The words are drawn sharp by the text layer. */
-export function drawBoards(boards: Board[]) {
-  for (const b of boards) {
-    if (b.post) R(b.cx - 1, b.y + 10, 2, b.post.bottom - b.y - 10, P.woodDark);
-    R(b.cx - b.w / 2, b.y, b.w, 10, P.board);
-    R(b.cx - b.w / 2, b.y + 10, b.w, 1, P.boardEdge);
-  }
-}
+/** A small window in a timber wall: the kit's window, framed in dark wood. */
+const window = (x: number, y: number, w: number, h: number) => pane(x, y, w, h, P.woodDark);
 
 /** A tall standing stone left of the start, with LARS HANSEN carved on it in runes. */
 function titleStone(sky: Sky) {
@@ -64,9 +37,9 @@ function titleStone(sky: Sky) {
   for (let i = 0; i < 8; i++) R(x0 - 1 + 8 - i, top - 8 + i, w + 2 - (8 - i) * 2, 1, edge);
   R(x0, top, w, G - top, P.rock);
   for (let i = 0; i < 8; i++) R(x0 + 8 - i, top - 8 + i, w - (8 - i) * 2, 1, P.rock);
-  R(x0, top - 7, 1, G - top + 7, mix(P.rock, "#ffffff", 0.2));
+  R(x0, top - 7, 1, G - top + 7, mix(P.rock, WHITE, 0.2));
   R(x0 + w - 5, top, 5, G - top, mix(P.rock, INK, 0.15));
-  R(x0 + 4, top - 4, 12, 1, mix(P.rock, "#ffffff", 0.25));
+  R(x0 + 4, top - 4, 12, 1, mix(P.rock, WHITE, 0.25));
   if (sky.snow) R(x0 + 8, top - 8, w - 16, 2, P.snow);
   // The name, carved: LARS above HANSEN, in the dark of the stone.
   const carve = mix(P.rockDark, INK, 0.5);
@@ -187,18 +160,14 @@ function farm(sky: Sky, steps: number) {
   const vx = 1120;
   R(vx, Math.round(rampAt(vx + 3) ?? 0) - 6, 6, 14, P.woodDark);
   R(vx - 1, Math.round(rampAt(vx + 3) ?? 0) - 7, 8, 2, DARK);
-  if (!reduced())
-    for (let i = 0; i < 3; i++) {
-      const ph = ((steps * 0.5 + i * 24) % 72) / 72;
-      R(vx + 1 + Math.round(Math.sin(ph * 6 + i) * 2 + ph * 5), Math.round(rampAt(vx + 3) ?? 0) - 9 - ph * 22, 4, 3, `rgba(200, 196, 190, ${(0.55 * (1 - ph)).toFixed(2)})`);
-    }
+  if (!reduced()) smoke(vx + 1, Math.round(rampAt(vx + 3) ?? 0) - 9, steps, { ...STOVE_SMOKE, rise: 22 });
   for (let x = x0; x < x1; x++) {
     const s = Math.round(rampAt(x) ?? G);
     if (s >= G) continue;
     // The turf and its sod, then the timber wall beneath.
-    R(x, s, 1, 1, sky.snow ? P.snow : mix(P.grass, "#ffffff", 0.15));
+    R(x, s, 1, 1, sky.snow ? P.snow : mix(P.grass, WHITE, 0.15));
     R(x, s + 1, 1, 2, sky.snow ? P.snow : P.grass);
-    R(x, s + 3, 1, 1, sky.snow ? "#cfd8e6" : P.grassDark);
+    R(x, s + 3, 1, 1, sky.snow ? SNOW.shade : P.grassDark);
     R(x, s + 4, 1, 4, P.turf);
     if ((x * 7) % 5 === 0) R(x, s + 5, 1, 1, P.grassDark);
     R(x, s + 8, 1, 1, EAVE);
@@ -230,9 +199,9 @@ function smithy(door: Door | undefined, sky: Sky, steps: number) {
   for (let y = 232; y < G; y += 4) R(fx + 12 + (y % 8 === 0 ? 0 : 4), y, 1, 3, STONE.mortar);
   R(fx + 5, 238, 16, 11, INK);
   const flick = reduced() ? 0 : Math.round(Math.sin(steps * 0.25));
-  R(fx + 6, 244 - flick, 14, 5 + flick, "#ff7a2a");
-  R(fx + 8, 243 - flick, 10, 3, "#ffc24a");
-  R(fx + 10, 242 - flick, 6, 1, "#fff0b0");
+  R(fx + 6, 244 - flick, 14, 5 + flick, FIRE.flame);
+  R(fx + 8, 243 - flick, 10, 3, FIRE.glow);
+  R(fx + 10, 242 - flick, 6, 1, FIRE.core);
   light(fx + 4, 239, 18, 10, "soft");
   light(fx + 8, 246, 10, 3, "window");
   for (let y = 190; y < 232; y += 4) R(fx + 8, y, 10, 3, y % 8 === 0 ? STONE.base : STONE.light);
@@ -241,7 +210,7 @@ function smithy(door: Door | undefined, sky: Sky, steps: number) {
   R(1327, 245, 14, 4, P.iron);
   R(1330, 249, 8, 2, mix(P.iron, INK, 0.3));
   R(1341, 246, 4, 2, P.iron);
-  R(1327, 245, 14, 1, mix(P.iron, "#ffffff", 0.3));
+  R(1327, 245, 14, 1, mix(P.iron, WHITE, 0.3));
   // Tools on the back wall.
   for (const tx of [1352 - 4, 1346 - 4]) R(tx, 222, 1, 12, P.iron);
   R(1336, 222, 5, 2, P.iron);
@@ -257,11 +226,7 @@ function smithy(door: Door | undefined, sky: Sky, steps: number) {
   // The chimney stack comes up through the roof.
   for (let y = 176; y < 190; y += 4) R(fx + 8, y, 10, 3, y % 8 === 0 ? STONE.base : STONE.light);
   R(fx + 7, 174, 12, 2, STONE.dark);
-  if (!reduced())
-    for (let i = 0; i < 3; i++) {
-      const ph = ((steps * 0.6 + i * 22) % 66) / 66;
-      R(fx + 10 + Math.round(Math.sin(ph * 5 + i) * 2 + ph * 4), 170 - ph * 22, 4, 3, `rgba(70, 66, 62, ${(0.5 * (1 - ph)).toFixed(2)})`);
-    }
+  if (!reduced()) smoke(fx + 10, 170, steps, FORGE_SMOKE);
   if (door) plankDoor(door, STONE.base);
   // A woodpile beyond the crates.
   for (let row = 0; row < 3; row++) {
@@ -278,12 +243,12 @@ function turfColumn(x: number, top: number, sky: Sky) {
   const h = G - top;
   if (h <= 0) return;
   R(x, top, 1, h, sky.snow ? mix(P.grass, P.snow, 0.7) : P.grass);
-  R(x, top, 1, 2, sky.snow ? P.snow : mix(P.grass, "#ffffff", 0.15));
+  R(x, top, 1, 2, sky.snow ? P.snow : mix(P.grass, WHITE, 0.15));
   if (sky.snow) return;
   R(x, top + 2, 1, 1, P.grassDark);
   const k = (x * 7919) % 23;
   if (k < 5) R(x, top + 4 + ((x * 13) % Math.max(1, h - 6)), 1, 2, P.grassDark);
-  else if (k < 8) R(x, top + 3 + ((x * 29) % Math.max(1, h - 5)), 1, 1, mix(P.grass, "#ffffff", 0.18));
+  else if (k < 8) R(x, top + 3 + ((x * 29) % Math.max(1, h - 5)), 1, 1, mix(P.grass, WHITE, 0.18));
 }
 
 /** Jernhaugen: the burial mound, a turf hill whose slope is the ramp, standing stones on top, and a stone-framed doorway set into a turf shoulder at its foot. */
@@ -296,7 +261,7 @@ function mound(door: Door | undefined, sky: Sky) {
   for (const [dx, h] of [[1633, 13], [1646, 15], [1658, 11]] as const) {
     R(dx - 1, topY - 2 - h, 6, h + 3, mix(P.rockDark, INK, 0.4));
     R(dx, topY - 1 - h, 4, h + 1, P.rock);
-    R(dx, topY - 1 - h, 1, h + 1, mix(P.rock, "#ffffff", 0.25));
+    R(dx, topY - 1 - h, 1, h + 1, mix(P.rock, WHITE, 0.25));
     R(dx + 3, topY - 1 - h, 1, h + 1, P.rockDark);
     if (sky.snow) R(dx, topY - 2 - h, 4, 1, P.snow);
   }
@@ -327,8 +292,8 @@ function mound(door: Door | undefined, sky: Sky) {
     R(door.x + door.w + 3, top - 3, 3, door.h + 3, P.rock);
     R(door.x - 9, top - 6, door.w + 18, 6, edge);
     R(door.x - 8, top - 5, door.w + 16, 4, P.rock);
-    R(door.x - 8, top - 5, door.w + 16, 1, mix(P.rock, "#ffffff", 0.25));
-    plankDoor(door, "#140d08");
+    R(door.x - 8, top - 5, door.w + 16, 1, mix(P.rock, WHITE, 0.25));
+    plankDoor(door, DOORWAY.wood);
   }
 }
 
@@ -350,11 +315,7 @@ function cabin(door: Door | undefined, sky: Sky, steps: number) {
   // A stone chimney, with smoke.
   R(x + 46, top - 20, 6, 14, STONE.base);
   R(x + 45, top - 21, 8, 2, STONE.dark);
-  if (!reduced())
-    for (let i = 0; i < 3; i++) {
-      const ph = ((steps * 0.5 + i * 26) % 78) / 78;
-      R(x + 48 + Math.round(Math.sin(ph * 6 + i) * 2 + ph * 5), top - 24 - ph * 22, 4, 3, `rgba(200, 196, 190, ${(0.55 * (1 - ph)).toFixed(2)})`);
-    }
+  if (!reduced()) smoke(x + 48, top - 24, steps, { ...STOVE_SMOKE, spacing: 26, period: 78, rise: 22 });
   if (door) plankDoor(door, P.woodDark);
 }
 
@@ -419,10 +380,10 @@ function beacon(steps: number) {
   R(x - 5, top - 22, 11, 3, mix(P.iron, INK, 0.3));
   for (let i = 0; i < 5; i++) {
     const h = 7 + (reduced() ? 1 : Math.round(3 * Math.sin(steps * 0.21 + i * 1.7)));
-    R(x - 5 + i * 2 + (i % 2), top - 26 - h, 3, h, "#ff7a2a");
-    R(x - 4 + i * 2 + (i % 2), top - 26 - Math.round(h * 0.6), 2, Math.round(h * 0.6), "#ffc24a");
+    R(x - 5 + i * 2 + (i % 2), top - 26 - h, 3, h, FIRE.flame);
+    R(x - 4 + i * 2 + (i % 2), top - 26 - Math.round(h * 0.6), 2, Math.round(h * 0.6), FIRE.glow);
   }
-  R(x - 3, top - 28, 7, 3, "#fff0b0");
+  R(x - 3, top - 28, 7, 3, FIRE.core);
   light(x - 6, top - 36, 14, 12, "soft");
 }
 

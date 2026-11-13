@@ -52,6 +52,11 @@ export function createBody(centerX: number, bottom: number): Body {
   };
 }
 
+/** Puts the body standing still with its feet at (centerX, bottom). */
+export function placeBody(b: Body, centerX: number, bottom: number) {
+  Object.assign(b, { x: centerX - PLAYER.w / 2, y: bottom - PLAYER.h, vx: 0, vy: 0, onGround: true });
+}
+
 /** What the person can do beyond the front page's single jump. */
 export interface Abilities {
   doubleJump?: boolean;

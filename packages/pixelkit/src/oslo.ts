@@ -57,6 +57,11 @@ export function sunTimes(c: OsloClock): { rise: number; set: number } {
 
 export type Phase = "day" | "evening" | "night" | "twilight";
 
+/** The skies `?sky=` and the T key can show. */
+export type SkyName = "day" | "evening" | "twilight" | "night" | "winter" | "17mai";
+/** The order the T key steps through them; null is the real sky. */
+export const SKY_NAMES: (SkyName | null)[] = [null, "day", "evening", "twilight", "night", "winter", "17mai"];
+
 export interface Sky {
   phase: Phase;
   month: number;

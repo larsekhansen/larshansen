@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync } from "node:fs";
 import { TILE } from "@larshansen/pixelkit/config";
-import { buildDoors } from "./doors";
+import { buildDoors } from "@larshansen/pixelkit/doors";
 import { COLS, DISTRICTS, DOOR_TILES, EXTRA_DOORS, MAP, findDoorSpots, findSpawn, isSolid, rampAt } from "./level";
 
 describe("the map", () => {
