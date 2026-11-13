@@ -23,3 +23,8 @@ export const JUMP = {
   coyoteSteps: 6, // a jump still works this long after walking off an edge
   bufferSteps: 6 // a jump pressed this long before landing still happens
 };
+
+/** A body thrown by a launcher keeps its speed until it lands; the keys only lean on it, this much per step. */
+export const LAUNCH = {
+  steer: 0.05
+};
