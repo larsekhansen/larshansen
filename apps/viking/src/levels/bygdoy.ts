@@ -35,6 +35,8 @@ const COLS = 256;
 const ROWS = 24;
 /** The water line and the floor: the top of row 19. */
 export const W = 19;
+/** The loft over the passage out of the ship hall: its first and last column. */
+export const LOFT = [203, 210] as const;
 const FLOOR = W * TILE;
 const b = mapBuilder(COLS, ROWS);
 const water = (c0: number, c1: number) => b.fill(c0, c1, W, W + 1, "~").ground(c0, c1, W + 2);
@@ -66,15 +68,17 @@ b.fill(138, 139, W, ROWS - 1, "K");
 // --- The longship's hall: its hull on the cradle, the yard on its mast ------------------------------
 b.fill(172, 199, 14, W - 1, "H");
 b.run(182, 190, 10, "_");
-// --- The yard: three storehouses on stilts behind him, the ridges of their turf roofs the slingers' perches -
-for (const c of [208, 217, 226]) b.run(c, c + 1, 13, "^");
+// --- The yard: out of the hall through the low passage under the loft (too low to jump in), then two
+// storehouses on stilts behind him, the ridges of their turf roofs the slingers' perches -
+b.fill(LOFT[0], LOFT[1], 11, W - 2, "L");
+for (const c of [222, 231]) b.run(c, c + 1, 13, "^");
 // --- The museum's stepped gable, up to the roof's ridge ---------------------------------------------
 b.run(238, 240, 17, "-").run(241, 243, 15, "-").run(244, 246, 13, "-").run(247, 249, 11, "-").run(250, 255, 9, "-");
 
 // Marks: the start, the door, signs, flags, the bench, the rune, the bracteate, the cheese, the shield.
 b.put(2, W - 1, "t").put(4, W - 1, "S");
 b.put(37, W - 1, "i").put(72, 14, "i").put(119, W - 1, "i").put(162, W - 1, "i");
-b.put(31, W - 1, "f").put(69, W - 1, "f").put(90, 10, "f").put(121, W - 1, "f").put(158, W - 1, "f").put(196, 13, "f").put(235, W - 1, "f");
+b.put(31, W - 1, "f").put(69, W - 1, "f").put(90, 10, "f").put(121, W - 1, "f").put(158, W - 1, "f").put(196, 13, "f").put(239, 16, "f");
 b.put(95, 10, "b");
 b.put(252, 8, "r").put(186, 5, "o").put(93, 6, "&").put(198, 13, "y");
 
@@ -100,8 +104,8 @@ const COINS: [number, number][] = [
   [149, 16], [150, 15],
   [165, 16], [167, 15], [169, 14],
   [176, 13], [178, 13], [180, 13], [190, 13], [192, 13], [194, 13],
-  [205, 18], [214, 18], [223, 18],
-  [239, 16], [242, 14], [245, 12], [248, 10], [253, 8]
+  [205, 18], [218, 18], [227, 18],
+  [238, 15], [242, 14], [245, 12], [248, 10], [253, 8]
 ];
 for (const [c, r] of COINS) b.put(c, r, "$");
 
@@ -179,7 +183,8 @@ export const OARS: Oar[] = oarBank({ x: 164 * TILE, y: FLOOR - 20, n: 4, dx: 24,
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "pigeon", c: 6, r: W - 1, range: 1 },
   { kind: "walker", look: "crab", c: 42, r: W - 1, range: 1, speed: 0.3 },
-  { kind: "flyer", look: "gull", c: 42, r: 14, range: 2, rise: 3, period: 150 },
+  // High over the first boathouse: a man walking its roof has his head well clear of it.
+  { kind: "flyer", look: "gull", c: 42, r: 12, range: 2, rise: 3, period: 150 },
   { kind: "flyer", look: "gull", c: 58, r: 13, range: 3, rise: 6, period: 170 },
   { kind: "walker", look: "crab", c: 65, r: W - 1, range: 0.5, speed: 0.3 },
   { kind: "walker", look: "rat", c: 82, r: W - 1, range: 3 },
@@ -187,12 +192,15 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "penguin", c: 114, r: W - 1, range: 1, speed: 0.3 },
   { kind: "walker", look: "rat", c: 164, r: W - 1, range: 1 },
   { kind: "walker", look: "rat", c: 184, r: 13, range: 3 },
-  // Nine tiles apart, the first two in step and the third a little behind: their beats chosen (by a
-  // search over every pair) so that a man who walks on through the yard meets a throw coming at him
-  // as often as can be, about every other time.
-  { kind: "thrower", look: "slinger", c: 208, r: 12, period: 170, lead: true, faces: -1 },
-  { kind: "thrower", look: "slinger", c: 217, r: 12, period: 170, lead: true, faces: -1 },
-  { kind: "thrower", look: "slinger", c: 226, r: 12, period: 170, offset: 10, lead: true, faces: -1 },
+  // The lesson: the first slinger alone, on the floor past the low passage under the loft, throwing
+  // straight along it on a short steady beat. In the passage a man cannot jump, so walking on without
+  // the shield is always hit, and stopping to raise it as a stone comes never is.
+  { kind: "thrower", look: "slinger", c: 214, r: W - 1, period: 100, faces: -1, straight: true, reach: 14 },
+  // Then the other two on the storehouses' ridges, nine tiles apart, the second a little behind: their
+  // beats chosen (by a search over every pair) so that a man who walks on through the yard meets a
+  // throw coming at him as often as can be, a little under every other time.
+  { kind: "thrower", look: "slinger", c: 222, r: 12, period: 110, lead: true, faces: -1 },
+  { kind: "thrower", look: "slinger", c: 231, r: 12, period: 110, offset: 40, lead: true, faces: -1 },
   { kind: "flyer", look: "gull", c: 246, r: 4, range: 2, rise: 6, period: 150 }
 ];
 
@@ -645,6 +653,57 @@ function storehouse(c: number) {
   }
 }
 
+/**
+ * The loft over the passage out of the hall: a two-storey storehouse of tarred logs on corner posts,
+ * a shingle roof, a gallery with carved posts; under it the passage he walks through, a row high,
+ * planked at the back and lit at both ends.
+ */
+function loft() {
+  const x = LOFT[0] * TILE;
+  const w = (LOFT[1] - LOFT[0] + 1) * TILE;
+  const top = 11 * TILE;
+  const floor = (W - 1) * TILE;
+  // The passage: planks at the back, darker in the middle, light from either end.
+  for (let xx = x; xx < x + w; xx++) {
+    const k = Math.min(xx - x, x + w - 1 - xx) / (w / 2);
+    R(xx, floor, 1, TILE, mix(M.tarLight, P.wood, 0.55 - 0.25 * k));
+    if ((xx - x) % 6 === 0) R(xx, floor, 1, TILE, mix(M.tar, P.wood, 0.4));
+  }
+  R(x, floor + TILE - 2, w, 2, mix(STONE.base, M.tar, 0.3));
+  // The log walls over it: courses, the ends of the logs at the corners.
+  for (let y = top; y < floor; y += 5) {
+    R(x, y, w, Math.min(5, floor - y), (y >> 2) % 2 ? M.tar : M.tarLight);
+    R(x, y + 4, w, 1, mix(M.tar, INK, 0.3));
+    R(x - 3, y + 1, 4, 3, M.tarLight);
+    R(x + w - 1, y + 1, 4, 3, M.tarLight);
+  }
+  // The gallery round the upper storey: a rail on carved posts, the beam it stands on.
+  R(x - 6, top + 34, w + 12, 3, M.oakDark);
+  for (let xx = x - 4; xx < x + w + 4; xx += 9) {
+    R(xx, top + 18, 3, 16, M.oakLight);
+    R(xx + 1, top + 24, 1, 4, M.oakDark);
+  }
+  R(x - 6, top + 17, w + 12, 2, M.oakLight);
+  // Two small windows, lit, in the storey below the gallery.
+  for (const wx of [x + 24, x + w - 36]) {
+    R(wx, top + 46, 12, 10, GLASS.pane);
+    R(wx + 5, top + 46, 1, 10, M.oakDark);
+    light(wx, top + 46, 12, 10);
+  }
+  // The beam over the passage and the corner posts at either end of it.
+  R(x, floor - 3, w, 3, M.oakDark);
+  for (const px of [x, x + w - 4]) {
+    R(px, floor, 4, TILE, M.oakDark);
+    R(px + 1, floor, 1, TILE, M.oakLight);
+  }
+  // The roof: shingle in rows, rising to its ridge, a carved dragon's head at each end.
+  for (let k = 0; k < 14; k++) R(x - 10 + k * 2, top - 1 - k, w + 20 - k * 4, 1, k % 3 === 0 ? mix(M.tar, INK, 0.35) : M.tar);
+  for (const [ex, d] of [[x - 10, -1], [x + w + 9, 1]] as const) {
+    R(ex, top - 6, 2, 6, M.oakDark);
+    R(ex + d * 2, top - 9, 3, 3, M.oakDark);
+  }
+}
+
 /** The yard's ground and its fence; the museum's stepped gable at the far end. */
 function gableEnd() {
   const x0 = 237 * TILE;
@@ -753,7 +812,7 @@ export const BYGDOY: LevelDef = {
   place: { nb: "Museene på Bygdøy", en: "The museums on Bygdøy" },
   sky: "day",
   map: MAP,
-  legend: { solid: "QPHK#B", oneWay: "=_-^", water: "~" },
+  legend: { solid: "QPHK#BL", oneWay: "=_-^", water: "~" },
   ramps: [],
   carriers: CARRIERS,
   timed: OARS,
@@ -803,7 +862,8 @@ export const BYGDOY: LevelDef = {
       kontikiHall();
       shipHall();
       longship();
-      for (const c of [207, 216, 225]) storehouse(c);
+      loft();
+      for (const c of [221, 230]) storehouse(c);
       gableEnd();
     },
     front(v) {
@@ -817,7 +877,7 @@ export const BYGDOY: LevelDef = {
         rowboat(x, y);
         return true;
       }
-      if (t === "H") return true;
+      if (t === "H" || t === "L") return true;
       if (t === "K") {
         rock(c, r, x, y);
         return true;

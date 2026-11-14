@@ -14,7 +14,7 @@ import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
 import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
-import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, OARS, PADS, RAFT as BALSA, REED } from "./bygdoy";
+import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, LOFT, OARS, PADS, RAFT as BALSA, REED, W } from "./bygdoy";
 import { SHIELD_RULES } from "../game/shield";
 import { deckTops } from "@larshansen/pixelkit/deck";
 import { SINK } from "@larshansen/pixelkit/sink";
@@ -323,7 +323,7 @@ for (const def of LEVELS) {
           for (const f of spots) if (Math.abs(f.bottom - (e.r + 1) * TILE) < 3 * TILE) expect({ enemy: e.c, near: Math.abs(f.x - x) > reachX }).toEqual({ enemy: e.c, near: true });
           if (e.kind === "thrower")
             for (const f of [...spots, ...signs]) {
-              const inReach = Math.abs(f.x - x) < THROW_REACH.x + TILE / 2 && Math.abs(f.bottom - PLAYER.h - (e.r + 1) * TILE) < THROW_REACH.y;
+              const inReach = Math.abs(f.x - x) < (e.reach ?? 7) * TILE + TILE / 2 && Math.abs(f.bottom - PLAYER.h - (e.r + 1) * TILE) < THROW_REACH.y;
               expect({ thrower: e.c, at: Math.floor(f.x / TILE), inReach }).toEqual({ thrower: e.c, at: Math.floor(f.x / TILE), inReach: false });
             }
         }
@@ -792,14 +792,42 @@ describe("Bygdøy, the first of line 2", () => {
     expect(r.hurt).toEqual([]);
   });
 
-  test("past the slingers, a man who walks on without raising the shield is hit at many of the moments he could come", () => {
+  test("in the passage under the loft, a man who walks on without the shield is hit whenever he comes; one who stops and raises it as each stone comes never is", () => {
+    // From the prow, at every moment of the slinger's beat.
+    let careless = 0;
+    let shielded = 0;
+    const from = { x: tile(199) + 8, bottom: tile(14) };
+    for (let t0 = 0; t0 < 100; t0++) {
+      const p = newPlay(BYGDOY, { pole: true, shield: SHIELD_RULES, hasShield: true, start: from });
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 600 && cx(p) < tile(LOFT[1] + 3); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      if (hurt) careless++;
+      const q = newPlay(BYGDOY, { pole: true, shield: SHIELD_RULES, hasShield: true, start: from });
+      q.t = t0;
+      let hold = 0;
+      hurt = false;
+      for (let i = 0; i < 1200 && cx(q) < tile(LOFT[1] + 3); i++) {
+        if (q.shots.some((s) => s.by === 10 && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - (q.body.x + PLAYER.w) < 72)) hold = 4;
+        hurt = stepPlay(q, hold-- > 0 ? { ...IDLE, shield: true } : { ...IDLE, right: true }).hurt || hurt;
+      }
+      if (hurt) shielded++;
+    }
+    expect(careless).toBe(100);
+    expect(shielded).toBe(0);
+    // In the passage he cannot jump: the loft's floor is a row over his head.
+    const map = levelMap(BYGDOY);
+    for (let c = LOFT[0]; c <= LOFT[1]; c++) expect([map.isSolid(c, W - 2), map.isSolid(c, W - 1)]).toEqual([true, false]);
+  });
+
+  test("past the other two slingers, a man who walks on without raising the shield is hit at many of the moments he could come", () => {
     let hit = 0;
     let tries = 0;
     for (let t0 = 0; t0 < 170; t0 += 5) {
-      const p = P({ x: tile(201), bottom: tile(19) });
+      const p = P({ x: tile(216), bottom: tile(19) });
       p.t = t0;
       let hurt = false;
-      for (let i = 0; i < 400 && p.body.x < tile(234); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      for (let i = 0; i < 400 && p.body.x < tile(236); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
       tries++;
       if (hurt) hit++;
     }
