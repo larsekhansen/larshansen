@@ -4,7 +4,7 @@ import { timedPhase } from "@larshansen/pixelkit/timed";
 import { carrier, jump, jumpTo, leap, mid, on, sit, stomp, tile, wait, walk, type Move } from "../../game/bot";
 import { untilThrow } from "../../game/enemies";
 import type { Play } from "../../game/play";
-import { BELLS, CLOCK, FERRY, HANDS, LIFT, SWING } from "../radhuset";
+import { BELLS, CLOCK, FERRY, FERRY_QUAYS, HANDS, LIFT, SWING, SWING_ENDS } from "../radhuset";
 import { rides, riding } from "./common";
 
 // Rådhuset's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
@@ -49,9 +49,9 @@ export const RADHUSET_ROUTE: Move[] = [
   walk(mid(60)),
   sit(),
   walk(tile(75) + 8),
-  wait("the ferry at the quay", (q) => carrier(q, FERRY).x <= FERRY.from.x + 2),
+  wait("the ferry at the quay", (q) => carrier(q, FERRY).x <= FERRY_QUAYS.from + 2),
   jump(1, { release: 10 }),
-  wait("the ferry across", (q) => carrier(q, FERRY).x >= FERRY.to.x - 2),
+  wait("the ferry across", (q) => carrier(q, FERRY).x >= FERRY_QUAYS.to - 2),
   walk(tile(97)),
   stomp(4),
   walk(tile(107)),
@@ -65,7 +65,8 @@ export const RADHUSET_ROUTE: Move[] = [
   jumpTo(mid(132)),
   walk(tile(133)),
   stomp(6),
-  walk(tile(142)),
+  // Out of the second gull's reach while it throws, then onto it.
+  walk(tile(138)),
   ...stompThrower(7),
   walk(LIFT.x - 10),
   wait("the lift at the bottom", (q) => carrier(q, LIFT).y >= LIFT.bottom),
@@ -75,17 +76,18 @@ export const RADHUSET_ROUTE: Move[] = [
   sit(),
   walk(mid(182)),
   // Up the first four bells in step with the swinging bell, so it comes back for him as he reaches the fourth.
-  wait("the first bell of the carillon, in step with the swing", (q) => steady(q, 6) && q.t % SWING.period >= 300 && q.t % SWING.period < 380),
+  // (The swing goes round in the bells' own five seconds, so it is always in step with them.)
+  wait("the first bell of the carillon, in step with the swing", (q) => steady(q, 6)),
   jump(0),
   ...toBell(7, tile(184) - 6),
   ...toBell(8, tile(187) - 6),
   // The ninth bell and the swinging bell come together: onto the bell as the swing comes back this way.
-  wait("bell 9 there, the swinging bell coming back", (q) => steady(q, 9) && carrier(q, SWING).x >= 192 * TILE && carrier(q, SWING).x > carrierAt(SWING, q.t - 1).x),
+  wait("bell 9 there, the swinging bell coming back", (q) => steady(q, 9) && carrierAt(SWING, q.t + 40).x >= SWING_ENDS.right - 1),
   jumpTo(BELLS[9].x + TILE),
   walk(tile(193) - 6),
-  wait("the swinging bell at this end", (q) => carrier(q, SWING).x >= SWING.from.x - 6),
-  jumpTo(SWING.from.x + TILE),
-  wait("the swinging bell at the far end, the next bell there", (q) => !riding(q) || (carrier(q, SWING).x <= SWING.to.x + 2 && steady(q, 10))),
+  wait("the swinging bell at this end", (q) => carrier(q, SWING).x >= SWING_ENDS.right - 1 && carrierAt(SWING, q.t + 20).x >= SWING_ENDS.right - 1),
+  jumpTo(SWING_ENDS.right + TILE),
+  wait("the swinging bell at the far end, the next bell there", (q) => !riding(q) || (carrier(q, SWING).x <= SWING_ENDS.left + 2 && steady(q, 10))),
   jumpTo(BELLS[10].x + TILE),
   ...toBell(11, tile(178) - 6),
   ...toBell(12, tile(181) - 6),

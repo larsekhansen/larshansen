@@ -55,6 +55,7 @@ artifact on Lars's claude.ai account.
 | 2026-11-13 | Lars: make the games share style, art and physics; make the viking game ten levels on the theme "Oslo, and me"; make the maze much better and a bonus level without its music; keep the original. Plan page, orders 7 to 9, the level kit, the line map, three short levels, the maze bonus | `LEVELS.html`, `orders/07` to `09`, PR #49 |
 | 2026-11-13 to 14 | Lars: build levels 4 to 10; each as good and long as a Mario level; enemies, lives, pits; a splash of Hollow Knight; "be a game designer, plan out something amazing; remember the pixel style from the front page". Order 10 in four batches | `orders/10`, PRs #50 (A: levels 4, 5), #51 (B: 6, 7), #52 (C: 8, 9, 10, ending), #53 (D: 1 to 3 lengthened) |
 | 2026-11-14 | Lars gives the personal details: the school banner, home, Kruttverket. This handover and the decision records | branch `personal-touches` |
+| 2026-11-14 | An adversarial review plays every level with a sloppy scripted player (`reviews/2026-11-14-adversarial.md`); order 12 fixes what it found about rules, fairness, pacing, the joins and the engineering | `orders/12-make-it-fair.md`, branch `make-it-fair` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`
@@ -101,11 +102,23 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
 
 - **Scripted players.** Each level has a route (`apps/viking/src/levels/routes/`) played by
   `game/bot.ts` through the real rules in `game/play.ts`. Tests assert it clears with the single
-  jump (levels 6 to 10 with the pole), raises every flag, loses no heart, and takes at least 60 s
-  (Nabolaget 90 s).
+  jump (levels 6 to 10 with the pole), raises every flag, loses no heart, and takes at least 40 s
+  (Nabolaget 80 s; ADR 0020).
 - **Reach search** (`game/reach.ts`): proves each bracteate cannot be reached without the
   feather. It is approximate: 4 px buckets, a fixed set of moves, enemies as trampolines along
-  their whole patrol. It does not try a dash straight after a stomp.
+  their whole patrol. It does not try a dash straight after a stomp. The same search keeps its
+  graph, and the tests look in it for **dead ends**: no spot he can get to with what he is sure to
+  have from which neither the rune nor a fall that puts him back can be reached (this found
+  Rådhuset's sealed pit and Slottet's slot). Holmenkollen's goal is the hut at the top of the
+  inrun, since the search does not model the inrun's speed.
+- **The sloppy player and the review's other tools** (`apps/viking/tools/review/`, with a README):
+  each route with a person's timing laid over every key (±2, ±4, ±8 steps), every jump on its own,
+  naive strategies against the bosses, the worst wait on arrival at every wait. Not part of
+  `bun test`. `before/` and `after/` hold the numbers from the review and after order 12;
+  `./runall.sh` reruns the study in about 13 minutes. The review itself is
+  [`reviews/2026-11-14-adversarial.md`](reviews/2026-11-14-adversarial.md). Remember what the
+  sloppy player is: the route's plan with a person's timing. It never finds a better line, and
+  "off route" and "gave up" mostly mean it fell somewhere the route never goes.
 - **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame;
   `?debug&auto&steps=N` plays the scripted route in the page; `bun tools/shots.ts <dir> <url>…`
   takes the pictures with headless Firefox.
@@ -115,36 +128,50 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   not survive a reboot, so re-create them from a commit you trust if they are gone: build
   `apps/landing`, serve it with `bunx vite preview --port 5180 --strictPort`, and shoot those
   addresses.
-- **The deploy's own smoke test** (`.github/workflows/deploy.yml`) greps the live viking script
-  for `Langkaia` and the maze host for `Jernhaugen`.
+- **The deploy** (`.github/workflows/deploy.yml`) runs the tests of `packages/pixelkit`,
+  `packages/maze`, `apps/landing` and `apps/viking` before publishing (about 90 s on the Pi) and
+  stops on red. Its smoke test greps the live viking script for `Langkaia`, fetches a level chunk
+  and the maze's scene chunk named in it, and greps the maze host for `Jernhaugen`. Bun is pinned
+  to the Pi's version (1.4.4).
 
 What none of this can tell you: whether a jump feels fair, whether timing windows are humane,
 whether sound, touch, gamepad or reduced motion work, whether the maze inside the viking page
 behaves (it loads by dynamic import after the screenshot is taken).
 
-## Known weak spots, as of the last merge
+## Known weak spots, as of order 12
 
 Most important first. Lars had not yet played when this was written; expect his comments to
 reorder this list.
 
-1. **Unplayed.** See above.
-2. **Rådhuset is hard for a third level.** A fall from the upper bells costs 20 to 30 s of
-   climbing; the swinging bell must be met in step.
-3. **The bosses.** The troll is hit by facing it with the headlamp while its club is stuck in the
-   dawn light; only a sign says so. The plough fight has about 11 s of waiting. Neither enforces
-   its intended three moves.
-4. **Waiting.** Akershus reaches a minute only with a hoist wait; Stortinget has about 6 s of
-   train waits; Holmenkollen leans on slow lifts.
-5. **Throwers aim at where he stands,** so waiting near one gets him hit (Holmenkollen's kids,
-   the gull by Rådhuset's lift).
-6. **Art.** Large plain stone, brick and earth areas; repeated window grids on Karl Johan; the
-   Scream bands on Ekeberg are loud; trams leave by sinking into slots; the yellow house reads
-   brown under the night tint; the moose and troll are small.
-7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
-   save; the feather moment after the maze; the touch dash button.
-8. **Margins.** The first script is at 57.4 kB gzipped of a 60 kB budget. The viking test suite
-   takes about 70 s of a two-minute budget.
-9. **The viking header is solid cream,** not the front page's frosted bar
+1. **Unplayed.** See above. Every number below is the sloppy player's, not a person's.
+2. **The line is not quite a rising line.** Hearts lost per run by the sloppy player at ±4 after
+   order 12 (`tools/review/after/summary.md`): Slottet is still the easiest level by far (about
+   0.5) and Stortinget is a little under its band (about 1.6); Langkaia, level 1, is at about 1.8,
+   over its 1.5 target. Holmenkollen and Nordmarka are the hardest; see the hand-back of order 12
+   for the exact table.
+3. **Rådhuset's carillon** is still where the sloppy player most often gives up (the swinging
+   bell and the bells must be met in step); a missed bell now costs a few seconds, not nine.
+4. **Standing still.** Rådhuset, Akerselva, Nordmarka and Stortinget still stand still a little
+   over a third of the route (rides count as standing); no forced wait is much over 5 s except
+   Stortinget's locals as the route waits for them (about 6 s with the route's margin; the
+   timetable's own longest gap is under 5.5 s, tested).
+5. **The bosses** explain themselves now (the dawn shaft, bubbles, hints) and Game over at a boss
+   goes on from its bench (ADR 0017). Against the plough, three naive strategies still reach Game
+   over in 43 to 46 s (holding right, or running to the far end), and running at it and jumping can
+   beat it by accident.
+6. **Upright phones** get a view at least 240 art px wide (ADR 0019): more sky, a smaller person.
+   Seen only in a 390 × 844 headless window at a device pixel ratio of 1, not on a phone.
+7. **Art.** Large plain stone, brick and earth areas; repeated window grids on Karl Johan; the
+   Scream bands on Ekeberg are loud; trams leave by sinking into slots (now also into the street
+   beside Nabolaget's narrower last slot); the yellow house reads brown under the night tint; the
+   moose and troll are small; level 1's enemies are dark on dark at night. Order 13 is the look.
+8. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
+   save; the feather moment after the maze; the touch dash button and the Sit button; the loading
+   board on a slow line (seen only with `?debug&fetch=hang`).
+9. **Margins.** The first script is 57.84 kB gzipped of a 60 kB budget (the scripted player, the
+   routes, `?debug`'s code and the troll's rules are no longer in it). The viking test suite takes
+   about 90 s of a two-minute budget, nearly all of it the reach and dead-end searches in workers.
+10. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)).
 
 ## Things considered and not done

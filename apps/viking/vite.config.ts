@@ -1,16 +1,16 @@
 import { defineConfig } from "vite";
 
 // Served from larshansen.dev/viking/, next to the landing page (see .github/workflows/deploy.yml).
-// Each level after the first is one file, fetched when it is first needed, and its scripted route
-// (for `?debug&auto`) goes in the same file; everything the levels share (the kit, the shared
-// swatches, the map builder) stays with the page, so a level is one fetch. The last three levels'
-// own swatches, and the snow plough's rules, go with their level. The maze splits as it likes.
-const LEVEL = /\/src\/levels\/(?:routes\/)?(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget)\.ts$/;
+// Each level after the first is one file, fetched when it is first needed; everything the levels
+// share (the kit, the shared swatches, the map builder) stays with the page, so a level is one
+// fetch. The last three levels' own swatches, and the bosses' rules, go with their level. The
+// scripted routes (for `?debug&auto`) and the scripted player are files of their own, fetched
+// only under `?debug&auto`; what only `?debug` needs is one more. The maze splits as it likes.
+const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget)\.ts$/;
+const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 // A level's own swatches and its boss come with it: they are imported by that level alone.
-const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "game/plough": "nabolaget" };
-const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|game\/plough)\.ts$/;
-// Langkaia comes with the page, as the level a fresh visitor starts in; its scripted route does not.
-const FIRST_ROUTE = /\/src\/levels\/routes\/langkaia\.ts$/;
+const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "game/plough": "nabolaget", "game/troll": "nordmarka" };
+const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|game\/plough|game\/troll)\.ts$/;
 
 export default defineConfig({
   base: "/viking/",
@@ -19,7 +19,10 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (/\/packages\/maze\//.test(id)) return undefined;
-          if (FIRST_ROUTE.test(id)) return "langkaia-route";
+          const route = ROUTE.exec(id);
+          if (route) return route[1] === "common" ? "routes" : `${route[1]}-route`;
+          if (/\/src\/game\/bot\.ts$/.test(id)) return "routes";
+          if (/\/src\/debug\.ts$/.test(id)) return "debug";
           const level = LEVEL.exec(id);
           const owned = OWNED.exec(id);
           return level ? level[1] : owned ? OWN[owned[1]] : "index";

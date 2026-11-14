@@ -104,6 +104,8 @@ b.put(88, G - 1, "b").put(75, G - 1, "e").put(91, G - 1, "c");
 b.put(122, WALL - 1, "c").put(136, WALL - 1, "f").put(141, TURRET - 1, "i").put(143, TURRET - 1, "c");
 b.put(159, WALL - 1, "f").put(161, WALL - 1, "i").put(163, WALL - 1, "c").put(172, WALL - 1, "c").put(181, WALL - 1, "c");
 b.put(194, WALL - 1, "f").put(209, WALL - 2, "b").put(211, WALL - 1, "i");
+// A flag in the first gap of the battlements, so a slip up here costs a short walk, not the keep again.
+b.put(235, TOP + 1, "f");
 b.run(208, 210, WALL - 1, "_");
 b.put(SPIRE + 3, TOP - 2, "r").put(SPIRE - 1, 1, "o").put(63, G + 2, "&");
 
@@ -152,7 +154,7 @@ const SLATE: LedgeLook = { body: ROOF.slate, top: mix(ROOF.slate, WHITE, 0.2), e
 const COPPER: LedgeLook = { body: METAL.copper, top: METAL.copperLight, edge: METAL.copperDark, joint: METAL.copperDark };
 
 /** The hoist over the moat: up into the fourth cannon's line of fire and down into the water, solid underneath. */
-export const HOIST = { kind: "lift" as const, x: 148 * TILE, top: 64, bottom: WATER + 10, w: 3 * TILE, speed: 2, wait: 60, under: 6 };
+export const HOIST = { kind: "lift" as const, x: 148 * TILE, top: 64, bottom: WATER + 10, w: 3 * TILE, speed: 3, wait: 45, under: 6 };
 
 /**
  * The cannons, left to right: onto the gate tower; over the ward to the higher wall; over the ditch;
@@ -172,20 +174,19 @@ export const BATTERY = [4, 5, 6];
 
 // --- Enemies: a brazier on its own, guards on the walls, crows over the gaps, rats in the ward ------------
 export const ENEMIES: EnemyDef[] = [
+  { kind: "spiky", look: "brazier", c: 14, r: G - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 23, r: G - 1, range: 2, speed: 0.3, w: 10, h: 14 },
-  { kind: "spiky", look: "brazier", c: 35, r: RAMP - 1, speed: 0, w: 10, h: 12 },
   { kind: "flyer", look: "crow", c: 66, r: GATE - 3, range: 1, rise: 6, period: 150 },
   { kind: "walker", look: "guard", c: 77, r: GATE - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 82, r: GATE - 1, range: 1, speed: 0.3, w: 10, h: 14, dir: -1 },
   { kind: "walker", look: "rat", c: 103, r: G - 1, range: 3 },
   { kind: "walker", look: "guard", c: 110, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
-  { kind: "spiky", look: "brazier", c: 119, r: WALL - 1, speed: 0, w: 10, h: 12 },
+  { kind: "spiky", look: "brazier", c: 58, r: GATE - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "rat", c: 128, r: G - 1, range: 2 },
   { kind: "walker", look: "guard", c: 200, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 223, r: KEEP_FLOOR - 1, range: 2, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 229, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
-  { kind: "walker", look: "guard", c: 244, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "flyer", look: "crow", c: 233, r: TOP - 2, range: 1, rise: 5, period: 140 },
   { kind: "spiky", look: "brazier", c: 259, r: TOP - 1, speed: 0, w: 10, h: 12 }
 ];

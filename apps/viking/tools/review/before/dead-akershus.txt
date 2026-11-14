@@ -1,0 +1,2 @@
+akershus: 5600 spots, 42 s; dead ends (no rune, no fall): 0
+   no way to the rune except by dying: 0

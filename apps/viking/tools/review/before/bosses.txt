@@ -1,0 +1,20 @@
+nordmarka walk in, then stand still facing it     300 s  boss walk hits 0      hits 0 (first -), hearts lost 1, lives lost 0 
+nordmarka hold right all the time (hops when blocked)  300 s  boss walk hits 0      hits 0 (first -), hearts lost 1, lives lost 0 
+nordmarka hold right, jump whenever down          300 s  boss walk hits 0      hits 0 (first -), hearts lost 1, lives lost 0 
+nordmarka walk in, then stand still (any facing)  300 s  boss walk hits 0      hits 0 (first -), hearts lost 1, lives lost 0 
+nordmarka walk in, jump in place facing it        300 s  boss walk hits 0      hits 0 (first -), hearts lost 0, lives lost 0 
+nordmarka go to the middle, stand facing it        36 s  boss stuck hits 0     hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nordmarka go to the middle, jump constantly        29 s  boss stuck hits 0     hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nordmarka wake it, hide at the left edge facing it   48 s  boss stuck hits 0     hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nordmarka run to the far right edge, stand facing it   37 s  boss stuck hits 0     hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nordmarka run at it, jump when close (stomp-minded)   22 s  boss stuck hits 0     hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nabolaget walk in, then stand still facing it     300 s  boss windup hits 0    hits 0 (first -), hearts lost 0, lives lost 0 
+nabolaget hold right all the time (hops when blocked)   42 s  boss stuck hits 1     hits 1 (first 13s), hearts lost 9, lives lost 3 GAME OVER
+nabolaget hold right, jump whenever down          300 s  boss windup hits 1    hits 1 (first 13s), hearts lost 4, lives lost 1 
+nabolaget walk in, then stand still (any facing)  300 s  boss windup hits 0    hits 0 (first -), hearts lost 0, lives lost 0 
+nabolaget walk in, jump in place facing it        300 s  boss windup hits 0    hits 0 (first -), hearts lost 0, lives lost 0 
+nabolaget go to the middle, stand facing it        59 s  boss charge hits 0    hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nabolaget go to the middle, jump constantly        58 s  boss charge hits 0    hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER
+nabolaget wake it, hide at the left edge facing it  300 s  boss windup hits 0    hits 0 (first -), hearts lost 0, lives lost 0 
+nabolaget run to the far right edge, stand facing it   41 s  boss stuck hits 1     hits 1 (first 13s), hearts lost 9, lives lost 3 GAME OVER
+nabolaget run at it, jump when close (stomp-minded)   26 s  boss stuck hits 0     hits 0 (first -), hearts lost 9, lives lost 3 GAME OVER

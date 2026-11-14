@@ -8,7 +8,7 @@ import { CREATURE, DOORWAY, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLAN
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { EnemyDef } from "../game/enemies";
-import { TROLL, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
+import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { enemyEyes } from "../render/pickups";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
@@ -76,7 +76,7 @@ b.ground(229, COLS - 1, 6, "K");
 
 // Marks: the start, the doors, signs, flags (blue trunks), benches, the rune, the bracteate, the cheese.
 b.put(2, G - 1, "t").put(4, G - 1, "S").put(20, G - 1, "i").put(32, G - 1, "f");
-b.put(86, G - 1, "f").put(121, G - 1, "f").put(127, G - 3, "b").put(131, G - 1, "i");
+b.put(58, G - 1, "f").put(86, G - 1, "f").put(121, G - 1, "f").put(127, G - 3, "b").put(131, G - 1, "i");
 b.put(148, G - 1, "j").put(153, G - 1, "f").put(190, G - 1, "i").put(192, G - 1, "f").put(194, G - 1, "b");
 b.put(218, G - 4, "r").put(95, 11, "o").put(139, G - 9, "&");
 
@@ -107,7 +107,7 @@ export const MAP = b.rows_();
 // --- The moose -------------------------------------------------------------------------------------------------
 /** Its back, the ledge he rides: three tiles wide, a little over his head above the bog. */
 export const MOOSE_BACK = G * TILE - 20;
-export const MOOSE: Travel = { kind: "travel", from: { x: 87 * TILE, y: MOOSE_BACK }, to: { x: 101 * TILE, y: MOOSE_BACK }, w: 3 * TILE, period: 640 };
+export const MOOSE: Travel = { kind: "travel", from: { x: 87 * TILE, y: MOOSE_BACK }, to: { x: 101 * TILE, y: MOOSE_BACK }, w: 3 * TILE, period: 320 };
 const CARRIERS: CarrierDef[] = [MOOSE];
 
 // --- The troll ---------------------------------------------------------------------------------------------------
@@ -133,14 +133,13 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "spiky", look: "hedgehog", c: 25, r: G - 1, range: 2 },
   { kind: "walker", look: "fox", c: 42, r: G - 1, range: 3, w: 12 },
   { kind: "flyer", look: "owl", c: 56, r: 13, range: 2, rise: 6, period: 170 },
-  { kind: "spiky", look: "hedgehog", c: 68, r: G - 1, range: 1 },
   { kind: "walker", look: "fox", c: 107, r: G - 1, range: 2, w: 12 },
   { kind: "thrower", look: "squirrel", c: 111, r: G - 4, period: 200 },
   { kind: "flyer", look: "owl", c: 141, r: 13, range: 3, rise: 6, period: 180, offset: 50 },
   { kind: "walker", look: "fox", c: 172, r: G - 1, range: 2, w: 12 },
   { kind: "flyer", look: "bat", c: 178, r: 14, range: 3, rise: 10, period: 120 },
   { kind: "spiky", look: "anthill", c: 183, r: G - 1, speed: 0, w: 14, h: 8 },
-  { kind: "thrower", look: "squirrel", c: 186, r: G - 1, period: 210, offset: 70 }
+  { kind: "thrower", look: "squirrel", c: 176, r: G - 1, period: 210, offset: 70 }
 ];
 
 
@@ -203,8 +202,8 @@ function lights(v: View): Light[] {
   if (t) {
     const d = dawnNow(t);
     if (d) {
-      out.push({ rect: { x: d[0] - 10, y: 0, w: d[1] - d[0] + 20, h: G * TILE + 4 }, dark: 0.5 });
-      out.push({ rect: { x: d[0], y: 0, w: d[1] - d[0], h: G * TILE + 4 }, dark: 0.12 });
+      out.push({ rect: { x: d[0] - 10, y: 0, w: d[1] - d[0] + 20, h: G * TILE + 4 }, dark: 0.4 });
+      out.push({ rect: { x: d[0], y: 0, w: d[1] - d[0], h: G * TILE + 4 }, dark: 0 });
     }
     // The troll's eyes are what you see of it in the dark; once stone, the rune on it shines.
     if (t.phase === "stone") out.push({ x: t.x, y: TROLL_DEF.floor - TROLL.h - 12, rings: [[16, 0.3], [10, 0]] });
@@ -433,22 +432,32 @@ function clearing(v: View) {
   for (const [c, h] of [[197, 150], [207.5, 170], [215.5, 160], [227, 180]] as const) spruce(c * TILE, G * TILE, h, Math.floor(c));
 }
 
-/** The dawn falling through the gap, drawn over the dark: a shaft of warm light added to what is there, brightest on the floor, and its motes. */
+/**
+ * The dawn falling through the gap, drawn over the dark: a shaft of warm light added to what is there,
+ * brightest on the floor where it makes a pool, and its motes. It cannot be missed: it is the way to
+ * beat the troll. While the troll's club is stuck the shaft and its pool pulse (with reduced motion
+ * they burn steadily brighter instead).
+ */
 function dawnShaft(v: View) {
   const t = v.troll;
   const d = t ? dawnNow(t) : null;
-  if (!d) return;
+  if (!d || !t) return;
   const g = ctx();
   g.globalCompositeOperation = "lighter";
   const top = view.camY;
+  const stuck = t.phase === "stuck";
+  const pulse = stuck ? (view.reduced ? 1 : 0.5 + 0.5 * Math.sin(v.t * 0.18)) : 0;
   for (let x = d[0]; x < d[1]; x++) {
     const edge = Math.min(x - d[0], d[1] - 1 - x);
-    const a = edge < 3 ? 0.04 : 0.08;
-    R(x, top, 1, G * TILE - top, `rgba(255, 190, 110, ${a})`);
+    const a = (edge < 3 ? 0.08 : 0.16) + pulse * 0.1;
+    R(x, top, 1, G * TILE - top, `rgba(255, 190, 110, ${a.toFixed(3)})`);
     // A slant of rays across it, as light through branches falls.
-    if ((x + Math.floor(v.t / 30)) % 9 < 2) R(x, top, 1, G * TILE - top, "rgba(255, 210, 150, 0.05)");
+    if ((x + Math.floor(v.t / 30)) % 9 < 2) R(x, top, 1, G * TILE - top, "rgba(255, 210, 150, 0.07)");
   }
-  R(d[0] - 6, G * TILE - 2, d[1] - d[0] + 12, 2, "rgba(255, 200, 120, 0.25)");
+  // The pool of light on the floor, and its edges, where it has to stand.
+  R(d[0] - 6, G * TILE - 3, d[1] - d[0] + 12, 3, `rgba(255, 200, 120, ${(0.35 + pulse * 0.35).toFixed(3)})`);
+  R(d[0], G * TILE - 1, d[1] - d[0], 3, `rgba(255, 225, 160, ${(0.45 + pulse * 0.4).toFixed(3)})`);
+  for (const ex of [d[0], d[1] - 1]) R(ex, G * TILE - 10, 1, 10, `rgba(255, 220, 150, ${(0.2 + pulse * 0.3).toFixed(3)})`);
   g.globalCompositeOperation = "source-over";
   if (!view.reduced)
     for (let i = 0; i < 12; i++) {
@@ -727,6 +736,7 @@ export const NORDMARKA: LevelDef = {
   cannons: [],
   enemies: ENEMIES,
   troll: TROLL_DEF,
+  trollRules: TROLL_RULES,
   dark,
   flourish: FLOURISH,
   floor: () => (G + 4) * TILE,

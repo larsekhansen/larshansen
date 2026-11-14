@@ -3,12 +3,13 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
-import { KIND, leap as leapOf } from "../game/enemies";
+import { KIND, THROW_REACH, leap as leapOf } from "../game/enemies";
+import { footOf } from "@larshansen/pixelkit/tilemap";
 import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
 import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
-import { carrierAt } from "@larshansen/pixelkit/carrier";
+import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
@@ -26,7 +27,7 @@ import { AKERSHUS, BATTERY, HOIST } from "./akershus";
 import { BUILT, LINE, ORDER } from "./index";
 import { kartDef } from "./kart";
 import { LANGKAIA, RAFT } from "./langkaia";
-import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING } from "./radhuset";
+import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING, SWING_ENDS } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
 
 // The built levels: their maps make sense, a scripted player clears each with the front page's
@@ -96,8 +97,13 @@ const GOLD: Record<string, Move[]> = {
 const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
-/** The last level is held to a longer clear: ninety seconds or more. */
-const LONGEST: Record<string, number> = { nabolaget: 90 };
+/**
+ * The scripted clear's floor: forty seconds, the last level eighty. (It was sixty and ninety; order 12
+ * cut the long waits on rides and bosses, which took ten to eighteen seconds off some levels without
+ * taking away anything to do. The size of a level is held by its columns, 220 to 280.)
+ */
+const SHORTEST = 40;
+const LONGEST: Record<string, number> = { nabolaget: 80 };
 
 describe("the line", () => {
   test("ten levels, one per rune of LARS HANSEN, all ten built", () => {
@@ -151,7 +157,7 @@ for (const def of LEVELS) {
       }
     });
 
-    test("a scripted player clears it with one jump, raising every flag, losing no heart, in a minute or more", () => {
+    test("a scripted player clears it with one jump, raising every flag, losing no heart, in forty seconds or more", () => {
       const p = newPlay(def, { pole: POLE.has(def.id) });
       const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
@@ -160,7 +166,7 @@ for (const def of LEVELS) {
       expect(r.events.filter((e) => e.splash).length).toBe(0);
       expect(r.events.filter((e) => e.flag !== null).map((e) => e.flag)).toEqual(flagsOf(map).map((_, i) => i));
       expect(r.hurt).toEqual([]);
-      expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? 60);
+      expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? SHORTEST);
       expect(r.seconds).toBeLessThan(150);
       console.log(`${def.name}: scripted clear ${r.seconds.toFixed(1)} s, ${p.found} of ${p.skilling.length} skilling on the way`);
     });
@@ -180,6 +186,13 @@ for (const def of LEVELS) {
       if (def.id !== "holmenkollen") expect(r.rune).toBe(true);
     });
 
+    test("no dead ends: from everywhere he can get to with what he is sure to have, the rune can be reached without a fall, and a fall at least puts him back", () => {
+      const r = reach.get(def.id)!;
+      expect(r.reached).toBeGreaterThan(100);
+      expect(r.dead).toEqual([]);
+      expect(r.onlyByFalling).toEqual([]);
+    });
+
     if (NEW.has(def.id))
       test("it is a level the size the order asks: columns, skilling, enemies, cheese, benches, signs, flags", () => {
         expect(map.cols).toBeGreaterThanOrEqual(220);
@@ -197,12 +210,19 @@ for (const def of LEVELS) {
         expect(enemies.length).toBeGreaterThanOrEqual(8);
         expect(enemies.length).toBeLessThanOrEqual(20);
         expect(flagsOf(map).length).toBeGreaterThanOrEqual(2);
-        // No enemy's patrol comes within three tiles of a flag or a bench.
+        // No enemy's patrol comes within three tiles of a flag or a bench, and no thrower can reach
+        // him standing at one, or at a sign while he reads it.
         const spots = [...flagsOf(map), ...benches];
+        const signs = map.find(MARKS.sign).map(footOf);
         for (const e of enemies) {
           const x = e.c * TILE + TILE / 2;
           const reachX = ((e.range ?? 0) + 3) * TILE;
           for (const f of spots) if (Math.abs(f.bottom - (e.r + 1) * TILE) < 3 * TILE) expect({ enemy: e.c, near: Math.abs(f.x - x) > reachX }).toEqual({ enemy: e.c, near: true });
+          if (e.kind === "thrower")
+            for (const f of [...spots, ...signs]) {
+              const inReach = Math.abs(f.x - x) < THROW_REACH.x + TILE / 2 && Math.abs(f.bottom - PLAYER.h - (e.r + 1) * TILE) < THROW_REACH.y;
+              expect({ thrower: e.c, at: Math.floor(f.x / TILE), inReach }).toEqual({ thrower: e.c, at: Math.floor(f.x / TILE), inReach: false });
+            }
         }
         // Every kind in it has a drawing of its own size.
         for (const e of enemies) expect(KIND[e.kind]).toBeDefined();
@@ -211,19 +231,19 @@ for (const def of LEVELS) {
 }
 
 /** The reach searches, one worker per level, side by side: the slowest is what the suite waits for. */
-const reach = new Map<string, { rune: boolean; bracteate: boolean; spots: number; ms: number }>();
+const reach = new Map<string, { rune: boolean; bracteate: boolean; spots: number; reached: number; dead: string[]; onlyByFalling: string[]; ms: number }>();
 beforeAll(async () => {
   const results = await Promise.all(
     LEVELS.map(
       (def) =>
-        new Promise<{ id: string; rune: boolean; bracteate: boolean; spots: number; ms: number }>((resolve, reject) => {
+        new Promise<{ id: string; rune: boolean; bracteate: boolean; spots: number; reached: number; dead: string[]; onlyByFalling: string[]; ms: number }>((resolve, reject) => {
           const w = new Worker(new URL("../game/reach.worker.ts", import.meta.url).href);
           w.onmessage = (e) => {
             resolve(e.data);
             w.terminate();
           };
           w.onerror = (e) => reject(e);
-          w.postMessage(def.id);
+          w.postMessage({ id: def.id, pole: POLE.has(def.id) });
         })
     )
   );
@@ -281,7 +301,7 @@ describe("what the levels promise", () => {
     expect(feet(p)).toBeGreaterThan(LIP.y);
     const missed = p.t;
     // Back: up the hill, under the inrun to the lift, up in it, into the hut.
-    const back = playMoves(p, [walk(TOWER_LIFT.x - 8), wait("the lift at the bottom", (q) => carrier(q, TOWER_LIFT).y >= TOWER_LIFT.bottom), walk(TOWER_LIFT.x + 16), wait("the lift at the top", (q) => carrierAt(TOWER_LIFT, q.t).y <= TOWER_LIFT.top), walk(tile(210))], { max: 60 * 60, until: (q) => q.body.onGround && feet(q) === tile(16) && cx(q) > tile(208) });
+    const back = playMoves(p, [walk(TOWER_LIFT.x - 8), wait("the lift at the bottom", (q) => carrier(q, TOWER_LIFT).y >= TOWER_LIFT.bottom && carrierAt(TOWER_LIFT, q.t + 45).y >= TOWER_LIFT.bottom), walk(TOWER_LIFT.x + 16), wait("the lift at the top", (q) => carrierAt(TOWER_LIFT, q.t).y <= TOWER_LIFT.top), walk(tile(210))], { max: 60 * 60, until: (q) => q.body.onGround && feet(q) === tile(16) && cx(q) > tile(208) });
     expect(back.stuck).toBeNull();
     expect(feet(p)).toBe(tile(16));
     expect((p.t - missed) / 60).toBeLessThan(25);
@@ -502,7 +522,8 @@ describe("what the levels promise", () => {
     expect(ev.lastIndexOf("line", hits[0])).toBeGreaterThan(hits[0] - 120);
     expect(r.events.slice(hits[1] - 60, hits[1]).some((e) => e.dash)).toBe(true);
     const map = levelMap(NABOLAGET);
-    for (const s of [flagsOf(map).at(-1)!, benchesOf(map).at(-1)!]) {
+    // The last flag before the plough's street (another stands past the tram's slot), and the last bench.
+    for (const s of [flagsOf(map).filter((f) => f.x < TERRACE.right).at(-1)!, benchesOf(map).at(-1)!]) {
       expect(s.x).toBeLessThan(TERRACE.right);
       expect(PLOUGH_DEF.rounds[0].x0 - s.x).toBeLessThan(24 * TILE);
     }
@@ -539,7 +560,7 @@ describe("what the levels promise", () => {
     let together = 0;
     let longest = 0;
     for (let t = 0; t < 2000; t++) {
-      const gap = carrierAt(RAFT.meetB, t).x - (carrierAt(RAFT.meetA, t).x + 4 * TILE);
+      const gap = carrierAt(RAFT.meetB, t).x - (carrierAt(RAFT.meetA, t).x + 5 * TILE);
       together = gap <= 1 ? together + 1 : 0;
       longest = Math.max(longest, together);
     }
@@ -561,7 +582,8 @@ describe("what the levels promise", () => {
     const p = newPlay(AKERSHUS);
     const route = AKERSHUS_ROUTE;
     const upTo = route.findIndex((m) => m.name === "the hoist down");
-    playMoves(p, [...route.slice(0, upTo), wait("the hoist at the top", (q) => carrier(q, HOIST).y <= HOIST.top), cannonRide(1)], { max: 60 * 120 });
+    // Into the cannon just as the hoist comes to the top (it stands there under a second).
+    playMoves(p, [...route.slice(0, upTo), wait("the hoist coming to the top", (q) => carrier(q, HOIST).y <= HOIST.top + 40 && carrierAt(HOIST, q.t + 1).y < carrier(q, HOIST).y), cannonRide(1)], { max: 60 * 120 });
     const flags = flagsOf(levelMap(AKERSHUS));
     expect(p.checkpoints.reached).toBe(1);
     expect(p.hearts).toBe(2);
@@ -610,7 +632,11 @@ describe("what the levels promise", () => {
   test("Rådhuset: the swinging bell comes back to the fourth bell while it is there, and the clock's hand passes within a jump of the first ledge and under the balcony", () => {
     // The swing stands at its right end while the fourth bell of the carillon is on, once a round.
     let together = 0;
-    for (let t = 0; t < SWING.period; t++) if (carrierAt(SWING, t).x >= SWING.from.x - 8 && timedPhase(t, CARILLON[3]) !== "off") together++;
+    for (let t = 0; t < carrierPeriod(SWING); t++) if (carrierAt(SWING, t).x >= SWING_ENDS.right - 8 && timedPhase(t, CARILLON[3]) !== "off") together++;
+    // ... and stands at its left end while the bell after it is there.
+    let across = 0;
+    for (let t = 0; t < carrierPeriod(SWING); t++) if (carrierAt(SWING, t).x <= SWING_ENDS.left + 2 && timedPhase(t, CARILLON[4]) === "on") across++;
+    expect(across).toBeGreaterThan(20);
     expect(together).toBeGreaterThan(30);
     // The hand: its bottom a short hop from the tower's first ledge, its top a jump under the balcony.
     const map = levelMap(RADHUSET);
@@ -619,6 +645,41 @@ describe("what the levels promise", () => {
     expect(CLOCK.cy - CLOCK.r - 8 * TILE).toBeGreaterThan(0);
     expect(CLOCK.cy - CLOCK.r - 8 * TILE).toBeLessThan(40);
     expect(HANDS.length).toBe(2);
+  });
+});
+
+describe("no way out but the restart button, fixed", () => {
+  test("Rådhuset: east of the clock tower is the harbour, so a fall off the tower costs a heart and puts him back at the flag by the clock", () => {
+    const map = levelMap(RADHUSET);
+    for (let c = 209; c < map.cols; c++) expect(map.isWater(c, 48)).toBe(true);
+    const flag = flagsOf(map).at(-1)!;
+    const p = newPlay(RADHUSET, { start: { x: tile(204), bottom: tile(16) } });
+    p.save = { ...flag };
+    let splash = false;
+    for (let i = 0; i < 600 && !splash; i++) splash = stepPlay(p, { ...IDLE, right: true }).splash;
+    expect(splash).toBe(true);
+    expect(p.hearts).toBe(2);
+    expect(Math.abs(cx(p) - flag.x)).toBeLessThan(2);
+  });
+
+  test("Rådhuset: a missed clock hand drops him on the tower roof, where a hop catches a tip as it comes round the bottom", () => {
+    const p = newPlay(RADHUSET, { start: { x: tile(202), bottom: tile(16) } });
+    const low = (q: Play) => HANDS.some((d) => carrierAt(d, q.t).y >= CLOCK.cy + CLOCK.r - 6);
+    let rode = -1;
+    for (let i = 0; i < 60 * 10 && rode < 0; i++) {
+      stepPlay(p, { ...IDLE, jumpHeld: true, jumpPressed: p.body.onGround && low(p) });
+      if (p.body.onGround && !p.map.supports(p.body)) rode = i;
+    }
+    expect(rode).toBeGreaterThanOrEqual(0);
+    expect(rode / 60).toBeLessThan(8);
+    // And it carries him up the side of the clock.
+    for (let i = 0; i < 90; i++) stepPlay(p, IDLE);
+    expect(feet(p)).toBeLessThan(tile(14));
+  });
+
+  test("Slottet: the palace's terrace goes on to the edge of the map, so there is no slot beside it to fall into", () => {
+    const map = levelMap(SLOTTET);
+    for (let c = 212; c < map.cols; c++) for (const r of [16, 17, 18]) expect(map.isSolid(c, r)).toBe(true);
   });
 });
 

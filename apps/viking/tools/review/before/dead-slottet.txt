@@ -1,0 +1,4 @@
+slottet: 5991 spots, 35 s; dead ends (no rune, no fall): 19
+   row 19.0 cols 247-251 (19)
+   no way to the rune except by dying: 19
+   row 19.0 cols 247-251 (19)

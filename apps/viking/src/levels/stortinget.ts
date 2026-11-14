@@ -100,7 +100,7 @@ b.fill(269, 271, U - 3, U - 1, "Z");
 // Marks: the start, doors, signs, flags, benches, the rune, the bracteate, the cheese.
 b.put(2, H - 1, "t").put(4, H - 1, "S").put(7, H - 1, "i");
 b.put(61, P - 1, "i").put(66, P - 1, "b").put(70, P - 1, "k").put(84, P - 1, "f");
-b.put(133, P - 1, "f").put(136, P - 1, "i").put(161, 15, "b").put(159, P - 1, "f");
+b.put(133, P - 1, "f").put(136, P - 1, "i").put(161, 15, "b").put(159, P - 1, "f").put(239, U - 1, "f");
 b.put(270, U - 4, "r").put(200, 9, "o").put(29, 1, "&");
 
 /** Steps down an escalator, just over its steps: for skilling along it. */
@@ -236,8 +236,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "jumper", look: "trackrat", c: 80, r: P, rise: 30, period: 200 },
   { kind: "walker", look: "rat", c: 92, r: P - 1, range: 2 },
   { kind: "walker", look: "scooter", c: 139, r: P - 1, range: 2, w: 14, h: 12 },
-  { kind: "spiky", look: "umbrella", c: 144, r: P - 1, range: 1, w: 12, h: 9 },
-  { kind: "spiky", look: "umbrella", c: 148, r: P - 1, range: 1, w: 12, h: 9, dir: -1 },
+  { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9 },
   { kind: "jumper", look: "trackrat", c: 155, r: P, rise: 36, period: 180, offset: 90 },
   { kind: "walker", look: "rat", c: 244, r: U - 1, range: 1 },
   { kind: "jumper", look: "trackrat", c: 259, r: P, rise: 28, period: 190, offset: 40 }

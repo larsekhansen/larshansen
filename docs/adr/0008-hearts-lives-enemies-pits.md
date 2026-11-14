@@ -3,6 +3,10 @@
 Lars, 2026-11-14: "I want enemies, lives, pitfalls, platforming, etc. Mario. But me in Oslo."
 Supersedes the planner's earlier rule that nothing can hurt (in `LEVELS.html` and order 8).
 
+State: holds, adjusted by [0017](0017-game-over-at-a-boss.md) (Game over in a boss's fight goes on
+from the bench before it) and [0018](0018-the-blinking-fall-and-the-visit.md) (a fall while he
+blinks takes no heart; a visit remembers the cheese and the skilling paid).
+
 ## Decision
 As built (order 10 rule 4; `game/play.ts`, `game/enemies.ts`):
 - Three hearts (waffle hearts). A hit knocks him back and leaves him safe for 1.5 s.
@@ -14,7 +18,9 @@ As built (order 10 rule 4; `game/play.ts`, `game/enemies.ts`):
   beaten by landing on them. Casts are from Oslo: pigeons, gulls, rats, an e-scooter, guards,
   braziers, snowball kids, hedgehogs, salmon, wasps, foxes, magpies, cats.
 - An enemy is visible for a second before it can reach him, never on a blind landing, never at
-  a flag or bench.
+  a flag or bench. (Order 12 added: no thrower can reach a flag, a bench or a sign; no enemy's
+  patrol within three tiles of a jump's take-off or landing over water, a pit or a drop; nothing
+  spiky on or beside ice. On an upright phone the second holds only with 0019.)
 
 ## Consequences
 - Lives and skilling carry from level to level during a visit, not across visits.

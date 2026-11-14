@@ -1,5 +1,5 @@
 import { box, lit } from "@larshansen/pixelkit/backdrop";
-import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Travel } from "@larshansen/pixelkit/carrier";
+import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { osloClock } from "@larshansen/pixelkit/oslo";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
@@ -36,6 +36,8 @@ const G = 48;
 const ROOF_ROW = 32;
 /** The east tower's solid lower block ends here; above it the tower is drawn behind him. */
 const BLOCK = 16;
+/** Where the harbour comes in again, east of the clock tower's block. */
+const EAST_BASIN = 209;
 const b = mapBuilder(COLS, ROWS);
 
 // --- The harbour front, the ferry's water, the square with its fountain --------------------------------
@@ -43,6 +45,9 @@ b.ground(0, 75, G, "Q");
 b.fill(76, 95, G, G + 1, "~").ground(76, 95, G + 2);
 b.ground(96, COLS - 1, G);
 b.fill(121, 130, G, G + 1, "~").ground(121, 130, G + 2);
+// East of the clock tower the square ends at the harbour: a fall from the tower is not free, it is a
+// splash, a heart, and back at the flag by the clock.
+b.fill(EAST_BASIN, COLS - 1, G, G + 1, "~").ground(EAST_BASIN, COLS - 1, G + 2);
 // The ferry terminal's roof, up the three low bells; a deck with a bench a step up.
 b.run(28, 34, G - 7, "_");
 b.run(59, 61, G - 1, "_");
@@ -63,7 +68,7 @@ b.fill(206, 208, 3, 5, "N");
 // Marks.
 b.put(2, G - 1, "t").put(4, G - 1, "S");
 b.put(60, G - 2, "b").put(70, G - 1, "i").put(73, G - 1, "f");
-b.put(114, G - 1, "i").put(116, G - 1, "f").put(155, G - 1, "i");
+b.put(114, G - 1, "i").put(116, G - 1, "f").put(133, G - 1, "f").put(155, G - 1, "i");
 b.put(175, ROOF_ROW - 1, "f").put(177, ROOF_ROW - 1, "i").put(180, ROOF_ROW - 1, "b");
 b.put(195, BLOCK - 2, "f");
 b.put(203, 4, "r").put(207, 1, "o").put(31, G - 8, "&");
@@ -88,6 +93,8 @@ const COINS: [number, number][] = [
   [184, 23], [186, 23], [188, 23],
   [176, 21], [179, 20], [182, 19], [185, 17], [188, 16], [191, 14],
   [200, 9], [203, 7], [206, 9],
+  // Over the bottom of the hand's round, a hop above the tower roof: the way back up after a miss.
+  [202, 14], [203, 14],
   [199, 5], [201, 5], [205, 5],
   [206, 2]
 ];
@@ -101,20 +108,57 @@ const SQUARE = WATER;
 
 // --- Things that move ----------------------------------------------------------------------------------
 
-/** The island ferry: its roof is the way over, and it crosses and comes back, easing in at each quay. */
-export const FERRY: Travel = { kind: "travel", from: { x: 76 * TILE, y: WATER - 28 }, to: { x: 92 * TILE, y: WATER - 28 }, w: 4 * TILE, period: 720, offset: 570 };
+/** The island ferry: its roof is the way over; it crosses and comes back, standing a second at each quay. */
+export const FERRY_QUAYS = { from: 76 * TILE, to: 92 * TILE };
+export const FERRY: Path = {
+  kind: "path",
+  points: [
+    { x: FERRY_QUAYS.from, y: WATER - 28 },
+    { x: FERRY_QUAYS.to, y: WATER - 28 },
+    { x: FERRY_QUAYS.from, y: WATER - 28 }
+  ],
+  w: 4 * TILE,
+  speed: 2,
+  wait: 0,
+  offset: 200,
+  stops: [
+    { at: 0, steps: 60 },
+    { at: 1, steps: 60 }
+  ]
+};
 /** The window-cleaner's lift up the west tower's face, from the square to the passage through the tower. */
 export const LIFT = { kind: "lift" as const, x: 158 * TILE, top: ROOF_ROW * TILE, bottom: WATER, w: 3 * TILE, speed: 2, wait: 45 };
 /** The bell that swings back across between the towers on its long rod: from the right, over the bells, to the left. */
-export const SWING: Travel = { kind: "travel", from: { x: 194 * TILE, y: 24 * TILE }, to: { x: 179 * TILE, y: 24 * TILE }, w: 2 * TILE, period: 600, offset: -60 };
+export const SWING_ENDS = { right: 194 * TILE, left: 179 * TILE };
+/**
+ * It goes round in the bells' own five seconds, standing a second at each end: at the right
+ * end while the fourth bell is there, at the left while the bell after the swing is. So a missed
+ * swing comes again in a few seconds, not ten.
+ */
+export const SWING: Path = {
+  kind: "path",
+  points: [
+    { x: SWING_ENDS.right, y: 24 * TILE },
+    { x: SWING_ENDS.left, y: 24 * TILE },
+    { x: SWING_ENDS.right, y: 24 * TILE }
+  ],
+  w: 2 * TILE,
+  speed: 3,
+  wait: 0,
+  offset: -20,
+  stops: [
+    { at: 0, steps: 70 },
+    { at: 1, steps: 70 }
+  ]
+};
 /** The clock's gilded hand, two tips going round fast: ridden up its left side and over the top. */
 export const CLOCK = { cx: 202 * TILE + 8, cy: 12 * TILE + 8, r: 46, period: 480 };
 export const HANDS: Orbit[] = [0, 0.5].map((turn) => ({ kind: "orbit", cx: CLOCK.cx, cy: CLOCK.cy, r: CLOCK.r, w: 2 * TILE, period: CLOCK.period, turn }));
 const CARRIERS: CarrierDef[] = [FERRY, LIFT, SWING, ...HANDS];
 const SWING_INDEX = 2;
 
-/** A bell's beat: on for two seconds, a second's warning, gone for two; `k` steps it after the one before. */
-const bellAt = (c: number, row: number, k: number, note: number): BellLedge => ({ x: c * TILE, y: Math.round(row * TILE), w: 2 * TILE, on: 120, warn: 60, off: 120, offset: -100 * k, note: note % 5 });
+/** A bell's beat: on for two seconds, a second's warning, gone for two; `k` steps it after the one before (and a row may be `shift`ed as a whole). */
+const bellAt = (c: number, row: number, k: number, note: number, shift = 0): BellLedge => ({ x: c * TILE, y: Math.round(row * TILE), w: 2 * TILE, on: 120, warn: 60, off: 120, offset: -100 * k + shift, note: note % 5 });
 /** Three low bells over the promenade, up to the terminal's roof: nothing lost by a fall. */
 export const LOW_BELLS = [bellAt(16, G - 2, 0, 0), bellAt(20, G - 3.5, 1, 1), bellAt(24, G - 5, 2, 2)];
 /** Three over the fountain's pool. */
@@ -125,12 +169,13 @@ export const CARILLON = [
   bellAt(185, ROOF_ROW - 3.5, 1, 1),
   bellAt(188, ROOF_ROW - 5, 2, 2),
   bellAt(191, ROOF_ROW - 6.5, 3, 3),
-  bellAt(176, 22.5, 0, 4),
-  bellAt(179, 21, 1, 0),
-  bellAt(182, 19.5, 2, 1),
-  bellAt(185, 18, 3, 2),
-  bellAt(188, 16.5, 4, 3),
-  bellAt(191, 15, 5, 4)
+  // The five after the swing, two and a half seconds behind the first four: there when the swing has crossed.
+  bellAt(176, 22.5, 0, 4, -150),
+  bellAt(179, 21, 1, 0, -150),
+  bellAt(182, 19.5, 2, 1, -150),
+  bellAt(185, 18, 3, 2, -150),
+  bellAt(188, 16.5, 4, 3, -150),
+  bellAt(191, 15, 5, 4, -150)
 ];
 export const BELLS: BellLedge[] = [...LOW_BELLS, ...POOL_BELLS, ...CARILLON];
 
@@ -140,10 +185,10 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "thrower", look: "gull", c: 40, r: G - 1, period: 180 },
   { kind: "walker", look: "pigeon", c: 52, r: G - 1, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 85, r: G - 5, range: 3, rise: 6, period: 170 },
-  { kind: "walker", look: "scooter", c: 102, r: G - 1, range: 3, speed: 1, w: 14, h: 12 },
+  { kind: "walker", look: "scooter", c: 105, r: G - 1, range: 2, speed: 0.7, w: 14, h: 12 },
   { kind: "walker", look: "pigeon", c: 110, r: G - 1, range: 1 },
-  { kind: "walker", look: "pigeon", c: 136, r: G - 1, range: 2 },
-  { kind: "thrower", look: "gull", c: 150, r: G - 1, period: 200, offset: 60 },
+  { kind: "walker", look: "pigeon", c: 140, r: G - 1, range: 1 },
+  { kind: "thrower", look: "gull", c: 146, r: G - 1, period: 200, offset: 60 },
   { kind: "flyer", look: "gull", c: 180, r: 27, range: 1, rise: 6, period: 160 }
 ];
 

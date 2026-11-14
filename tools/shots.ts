@@ -2,9 +2,10 @@
 // a change. Chromium cannot render headless on the Pi; Firefox can draw Canvas 2D but fires no
 // animation frames, so the pages are opened with `?debug&steps=N` (see packages/pixelkit/src/harness.ts).
 //
-//   bun tools/shots.ts <outDir> <url>...
+//   bun tools/shots.ts [--size=390x844] <outDir> <url>...
 //
-// Each file is named after the address's path and query. Every run gets a fresh Firefox profile,
+// The window is 1280 x 800 unless `--size` says otherwise (an upright phone: 390x844); a shot at
+// another size has the size at the end of its name. Each file is named after the address's path and query. Every run gets a fresh Firefox profile,
 // so nothing is remembered between pages (no stored best times, no lock on a shared profile).
 
 import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
@@ -26,10 +27,10 @@ export function nameFor(url: string): string {
     .replace(/[^A-Za-z0-9.-]+/g, "_");
 }
 
-async function shoot(url: string, file: string): Promise<boolean> {
+async function shoot(url: string, file: string, size = "1280,800"): Promise<boolean> {
   const profile = mkdtempSync(join(tmpdir(), "shots-"));
   try {
-    const proc = Bun.spawn(["firefox", "--headless", "--no-remote", "--profile", profile, "--window-size=1280,800", "--screenshot", file, url], {
+    const proc = Bun.spawn(["firefox", "--headless", "--no-remote", "--profile", profile, `--window-size=${size}`, "--screenshot", file, url], {
       stdout: "ignore",
       stderr: "ignore"
     });
@@ -43,18 +44,25 @@ async function shoot(url: string, file: string): Promise<boolean> {
 }
 
 if (import.meta.main) {
-  const [outDir, ...urls] = process.argv.slice(2);
+  const args = process.argv.slice(2);
+  const sizeArg = args.find((a) => a.startsWith("--size="));
+  const size = sizeArg ? /^--size=(\d+)x(\d+)$/.exec(sizeArg) : null;
+  if (sizeArg && !size) {
+    console.error("--size wants WIDTHxHEIGHT, as --size=390x844");
+    process.exit(2);
+  }
+  const [outDir, ...urls] = args.filter((a) => a !== sizeArg);
   if (!outDir || urls.length === 0) {
-    console.error("usage: bun tools/shots.ts <outDir> <url>...");
+    console.error("usage: bun tools/shots.ts [--size=390x844] <outDir> <url>...");
     process.exit(2);
   }
   mkdirSync(outDir, { recursive: true });
   let failed = 0;
   for (const url of urls) {
-    const file = join(outDir, `${nameFor(url)}.png`);
+    const file = join(outDir, `${nameFor(url)}${size ? `_${size[1]}x${size[2]}` : ""}.png`);
     rmSync(file, { force: true });
     const started = performance.now();
-    const ok = await shoot(url, file);
+    const ok = await shoot(url, file, size ? `${size[1]},${size[2]}` : undefined);
     const secs = ((performance.now() - started) / 1000).toFixed(1);
     console.log(`${ok ? "ok    " : "FAILED"} ${secs.padStart(5)} s  ${file}`);
     if (!ok) failed++;

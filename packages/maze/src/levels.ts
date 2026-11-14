@@ -169,8 +169,9 @@ export const LEVELS: readonly LevelDef[] = [
   },
   {
     name: "Skyveveggene",
-    // Par needs the teleport, reached from the groove of the slider under it.
-    par: 25,
+    // Par needs the teleport, reached from beside the groove of the slider (the twin stands a tile
+    // clear of the slider, so arriving and pressing down never meets it; that makes it a little quicker).
+    par: 20,
     snakes: [],
     sliders: [
       { at: [9, 2], w: 1, h: 2, period: 180, offset: 0 },
@@ -188,7 +189,7 @@ export const LEVELS: readonly LevelDef[] = [
       "##...........................###",
       "##..#######################..###",
       "##..#######################..###",
-      "##..########t##############..###",
+      "##..#########t#############..###",
       "##..###......................###",
       "##..###......................###",
       "##..###..#######################",

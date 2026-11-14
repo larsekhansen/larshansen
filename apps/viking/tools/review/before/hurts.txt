@@ -1,0 +1,230 @@
+out/t-akerselva.jsonl k=(2, 0, 0): 30 runs; hearts/run 2.2; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 36
+    cols 224-227: fall: 14 hearts (0.47/run), 3 lives
+    cols 116-119: flyer:wasp: 13 hearts (0.43/run), 4 lives
+    cols 148-151: spiky:hedgehog: 13 hearts (0.43/run), 0 lives
+    cols 200-203: fall: 8 hearts (0.27/run), 1 lives
+    cols 96-99: walker:rat: 6 hearts (0.20/run), 0 lives
+    cols 64-67: fall: 6 hearts (0.20/run), 0 lives
+    walk back after a fall/life: median 3.6 s, 90th pct 11.4 s, max 13.2 s (37 respawns)
+out/t-akerselva.jsonl k=(4, 0, 0): 30 runs; hearts/run 4.1; knocked into a pit 2; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 58
+    cols 116-119: flyer:wasp: 30 hearts (1.00/run), 6 lives
+    cols 224-227: fall: 16 hearts (0.53/run), 5 lives
+    cols 200-203: fall: 13 hearts (0.43/run), 1 lives
+    cols 64-67: fall: 13 hearts (0.43/run), 3 lives
+    cols 72-75: fall: 11 hearts (0.37/run), 1 lives
+    cols 148-151: spiky:hedgehog: 8 hearts (0.27/run), 5 lives
+    walk back after a fall/life: median 4.7 s, 90th pct 10.0 s, max 13.3 s (81 respawns)
+out/t-akerselva.jsonl k=(8, 0, 0): 30 runs; hearts/run 6.3; knocked into a pit 0; hurt within 2 s of being put back 6; enemy hits warned <30 steps: 0 of 56
+    cols 72-75: fall: 39 hearts (1.30/run), 11 lives
+    cols 64-67: fall: 33 hearts (1.10/run), 8 lives
+    cols 116-119: flyer:wasp: 23 hearts (0.77/run), 9 lives
+    cols 216-219: fall: 11 hearts (0.37/run), 5 lives
+    cols 68-71: fall: 11 hearts (0.37/run), 2 lives
+    cols 96-99: walker:rat: 9 hearts (0.30/run), 1 lives
+    walk back after a fall/life: median 4.5 s, 90th pct 7.9 s, max 13.4 s (132 respawns)
+out/t-akershus.jsonl k=(2, 0, 0): 30 runs; hearts/run 1.6; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 49
+    cols 240-243: walker:guard: 19 hearts (0.63/run), 3 lives
+    cols 32-35: spiky:brazier: 11 hearts (0.37/run), 0 lives
+    cols 76-79: walker:guard: 4 hearts (0.13/run), 0 lives
+    cols 80-83: walker:guard: 3 hearts (0.10/run), 0 lives
+    cols 244-247: walker:guard: 3 hearts (0.10/run), 0 lives
+    cols 220-223: walker:guard: 3 hearts (0.10/run), 0 lives
+    walk back after a fall/life: median 19.9 s, 90th pct 19.9 s, max 19.9 s (3 respawns)
+out/t-akershus.jsonl k=(4, 0, 0): 30 runs; hearts/run 1.5; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 1 of 44
+    cols 32-35: spiky:brazier: 11 hearts (0.37/run), 0 lives
+    cols 76-79: walker:guard: 8 hearts (0.27/run), 1 lives
+    cols 80-83: walker:guard: 4 hearts (0.13/run), 0 lives
+    cols 108-111: walker:guard: 3 hearts (0.10/run), 0 lives
+    cols 240-243: walker:guard: 3 hearts (0.10/run), 0 lives
+    cols 244-247: walker:guard: 3 hearts (0.10/run), 0 lives
+    walk back after a fall/life: median 4.8 s, 90th pct 4.8 s, max 4.8 s (2 respawns)
+out/t-akershus.jsonl k=(8, 0, 0): 30 runs; hearts/run 0.9; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 27
+    cols 32-35: spiky:brazier: 7 hearts (0.23/run), 0 lives
+    cols 64-67: flyer:crow: 6 hearts (0.20/run), 0 lives
+    cols 76-79: walker:guard: 4 hearts (0.13/run), 0 lives
+    cols 80-83: walker:guard: 3 hearts (0.10/run), 1 lives
+    cols 20-23: walker:guard: 2 hearts (0.07/run), 0 lives
+    cols 108-111: walker:guard: 2 hearts (0.07/run), 0 lives
+    walk back after a fall/life: median 6.3 s, 90th pct 6.3 s, max 6.3 s (1 respawns)
+out/t-ekeberg.jsonl k=(2, 0, 0): 30 runs; hearts/run 3.0; knocked into a pit 3; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 81
+    cols 196-199: flyer:crow: 20 hearts (0.67/run), 6 lives
+    cols 104-107: shot:squirrel: 18 hearts (0.60/run), 2 lives
+    cols 60-63: spiky:hedgehog: 14 hearts (0.47/run), 0 lives
+    cols 192-195: flyer:crow: 8 hearts (0.27/run), 1 lives
+    cols 88-91: fall: 8 hearts (0.27/run), 1 lives
+    cols 80-83: spiky:hedgehog: 7 hearts (0.23/run), 2 lives
+    walk back after a fall/life: median 11.2 s, 90th pct 13.8 s, max 18.8 s (24 respawns)
+out/t-ekeberg.jsonl k=(4, 0, 0): 30 runs; hearts/run 5.9; knocked into a pit 5; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 147
+    cols 80-83: spiky:hedgehog: 59 hearts (1.97/run), 14 lives
+    cols 88-91: fall: 22 hearts (0.73/run), 9 lives
+    cols 84-87: spiky:hedgehog: 14 hearts (0.47/run), 2 lives
+    cols 104-107: shot:squirrel: 12 hearts (0.40/run), 4 lives
+    cols 88-91: shot:squirrel: 11 hearts (0.37/run), 3 lives
+    cols 92-95: thrower:squirrel: 9 hearts (0.30/run), 5 lives
+    walk back after a fall/life: median 8.5 s, 90th pct 11.2 s, max 16.6 s (60 respawns)
+out/t-ekeberg.jsonl k=(8, 0, 0): 30 runs; hearts/run 8.9; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 259
+    cols 80-83: spiky:hedgehog: 172 hearts (5.73/run), 56 lives
+    cols 84-87: spiky:hedgehog: 56 hearts (1.87/run), 21 lives
+    cols 60-63: spiky:hedgehog: 7 hearts (0.23/run), 0 lives
+    cols 8-11: walker:magpie: 5 hearts (0.17/run), 0 lives
+    cols 88-91: fall: 4 hearts (0.13/run), 1 lives
+    cols 84-87: shot:squirrel: 3 hearts (0.10/run), 1 lives
+    walk back after a fall/life: median 2.5 s, 90th pct 3.2 s, max 12.3 s (64 respawns)
+out/t-holmenkollen.jsonl k=(2, 0, 0): 30 runs; hearts/run 2.7; knocked into a pit 0; hurt within 2 s of being put back 1; enemy hits warned <30 steps: 0 of 72
+    cols 60-63: spiky:hedgehog: 23 hearts (0.77/run), 0 lives
+    cols 96-99: shot:kid: 18 hearts (0.60/run), 2 lives
+    cols 92-95: shot:kid: 10 hearts (0.33/run), 2 lives
+    cols 196-199: spiky:grill: 8 hearts (0.27/run), 2 lives
+    cols 100-103: fall: 5 hearts (0.17/run), 3 lives
+    cols 92-95: spiky:grill: 5 hearts (0.17/run), 0 lives
+    walk back after a fall/life: median 8.4 s, 90th pct 9.2 s, max 9.2 s (16 respawns)
+out/t-holmenkollen.jsonl k=(4, 0, 0): 30 runs; hearts/run 5.7; knocked into a pit 0; hurt within 2 s of being put back 2; enemy hits warned <30 steps: 0 of 98
+    cols 92-95: spiky:grill: 31 hearts (1.03/run), 2 lives
+    cols 164-167: fall: 29 hearts (0.97/run), 14 lives
+    cols 160-163: fall: 21 hearts (0.70/run), 8 lives
+    cols 60-63: spiky:hedgehog: 20 hearts (0.67/run), 1 lives
+    cols 168-171: fall: 13 hearts (0.43/run), 5 lives
+    cols 88-91: spiky:hedgehog: 9 hearts (0.30/run), 3 lives
+    walk back after a fall/life: median 4.1 s, 90th pct 7.4 s, max 8.8 s (84 respawns)
+out/t-holmenkollen.jsonl k=(8, 0, 0): 30 runs; hearts/run 5.8; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 135
+    cols 92-95: spiky:grill: 57 hearts (1.90/run), 15 lives
+    cols 28-31: shot:kid: 21 hearts (0.70/run), 1 lives
+    cols 60-63: spiky:hedgehog: 16 hearts (0.53/run), 1 lives
+    cols 160-163: fall: 15 hearts (0.50/run), 5 lives
+    cols 156-159: fall: 12 hearts (0.40/run), 6 lives
+    cols 96-99: shot:kid: 10 hearts (0.33/run), 6 lives
+    walk back after a fall/life: median 5.6 s, 90th pct 8.4 s, max 9.4 s (56 respawns)
+out/t-langkaia.jsonl k=(2, 0, 0): 30 runs; hearts/run 1.5; knocked into a pit 2; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 36
+    cols 216-219: flyer:gull: 17 hearts (0.57/run), 2 lives
+    cols 128-131: flyer:gull: 10 hearts (0.33/run), 0 lives
+    cols 72-75: fall: 3 hearts (0.10/run), 0 lives
+    cols 104-107: walker:pigeon: 3 hearts (0.10/run), 0 lives
+    cols 124-127: fall: 2 hearts (0.07/run), 1 lives
+    cols 44-47: walker:pigeon: 2 hearts (0.07/run), 0 lives
+    walk back after a fall/life: median 4.9 s, 90th pct 12.4 s, max 12.5 s (11 respawns)
+out/t-langkaia.jsonl k=(4, 0, 0): 30 runs; hearts/run 5.3; knocked into a pit 8; hurt within 2 s of being put back 3; enemy hits warned <30 steps: 0 of 50
+    cols 96-99: fall: 26 hearts (0.87/run), 7 lives
+    cols 72-75: fall: 20 hearts (0.67/run), 4 lives
+    cols 128-131: flyer:gull: 19 hearts (0.63/run), 5 lives
+    cols 216-219: flyer:gull: 13 hearts (0.43/run), 5 lives
+    cols 64-67: fall: 13 hearts (0.43/run), 2 lives
+    cols 76-79: fall: 12 hearts (0.40/run), 5 lives
+    walk back after a fall/life: median 5.8 s, 90th pct 12.3 s, max 12.3 s (115 respawns)
+out/t-langkaia.jsonl k=(8, 0, 0): 30 runs; hearts/run 6.4; knocked into a pit 0; hurt within 2 s of being put back 3; enemy hits warned <30 steps: 0 of 17
+    cols 64-67: fall: 68 hearts (2.27/run), 23 lives
+    cols 72-75: fall: 46 hearts (1.53/run), 13 lives
+    cols 76-79: fall: 29 hearts (0.97/run), 8 lives
+    cols 96-99: fall: 8 hearts (0.27/run), 5 lives
+    cols 92-95: fall: 7 hearts (0.23/run), 3 lives
+    cols 48-51: walker:pigeon: 4 hearts (0.13/run), 0 lives
+    walk back after a fall/life: median 2.2 s, 90th pct 7.3 s, max 12.3 s (157 respawns)
+out/t-nabolaget.jsonl k=(2, 0, 0): 30 runs; hearts/run 3.1; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 48
+    cols 32-35: flyer:crow: 16 hearts (0.53/run), 2 lives
+    cols 36-39: fall: 12 hearts (0.40/run), 2 lives
+    cols 204-207: fall: 11 hearts (0.37/run), 7 lives
+    cols 104-107: shot:kid: 9 hearts (0.30/run), 2 lives
+    cols 28-31: walker:cat: 7 hearts (0.23/run), 0 lives
+    cols 176-179: boss:stuck: 6 hearts (0.20/run), 0 lives
+    walk back after a fall/life: median 16.0 s, 90th pct 21.1 s, max 41.2 s (37 respawns)
+out/t-nabolaget.jsonl k=(4, 0, 0): 30 runs; hearts/run 3.2; knocked into a pit 2; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 74
+    cols 56-59: walker:cat: 12 hearts (0.40/run), 2 lives
+    cols 28-31: walker:cat: 11 hearts (0.37/run), 0 lives
+    cols 32-35: flyer:crow: 11 hearts (0.37/run), 0 lives
+    cols 104-107: shot:kid: 6 hearts (0.20/run), 2 lives
+    cols 104-107: thrower:kid: 6 hearts (0.20/run), 3 lives
+    cols 48-51: shot:kid: 6 hearts (0.20/run), 0 lives
+    walk back after a fall/life: median 18.7 s, 90th pct 21.7 s, max 23.1 s (22 respawns)
+out/t-nabolaget.jsonl k=(8, 0, 0): 30 runs; hearts/run 4.1; knocked into a pit 4; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 92
+    cols 104-107: shot:kid: 19 hearts (0.63/run), 4 lives
+    cols 100-103: shot:kid: 15 hearts (0.50/run), 7 lives
+    cols 28-31: walker:cat: 14 hearts (0.47/run), 0 lives
+    cols 56-59: walker:cat: 13 hearts (0.43/run), 2 lives
+    cols 32-35: fall: 10 hearts (0.33/run), 2 lives
+    cols 32-35: flyer:crow: 9 hearts (0.30/run), 2 lives
+    walk back after a fall/life: median 11.3 s, 90th pct 21.7 s, max 26.1 s (50 respawns)
+out/t-nordmarka.jsonl k=(2, 0, 0): 30 runs; hearts/run 2.1; knocked into a pit 6; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 33
+    cols 24-27: spiky:hedgehog: 11 hearts (0.37/run), 0 lives
+    cols 68-71: spiky:hedgehog: 10 hearts (0.33/run), 4 lives
+    cols 72-75: fall: 9 hearts (0.30/run), 3 lives
+    cols 68-71: fall: 5 hearts (0.17/run), 0 lives
+    cols 76-79: fall: 5 hearts (0.17/run), 1 lives
+    cols 180-183: shot:squirrel: 3 hearts (0.10/run), 2 lives
+    walk back after a fall/life: median 7.5 s, 90th pct 11.8 s, max 24.8 s (28 respawns)
+out/t-nordmarka.jsonl k=(4, 0, 0): 30 runs; hearts/run 5.4; knocked into a pit 17; hurt within 2 s of being put back 1; enemy hits warned <30 steps: 0 of 57
+    cols 68-71: spiky:hedgehog: 24 hearts (0.80/run), 7 lives
+    cols 72-75: fall: 23 hearts (0.77/run), 6 lives
+    cols 68-71: fall: 21 hearts (0.70/run), 7 lives
+    cols 200-203: troll:stuck: 10 hearts (0.33/run), 0 lives
+    cols 200-203: troll:windup: 9 hearts (0.30/run), 0 lives
+    cols 76-79: fall: 8 hearts (0.27/run), 3 lives
+    walk back after a fall/life: median 8.1 s, 90th pct 23.6 s, max 24.8 s (73 respawns)
+out/t-nordmarka.jsonl k=(8, 0, 0): 30 runs; hearts/run 8.7; knocked into a pit 16; hurt within 2 s of being put back 1; enemy hits warned <30 steps: 0 of 92
+    cols 60-63: fall: 63 hearts (2.10/run), 21 lives
+    cols 68-71: fall: 53 hearts (1.77/run), 16 lives
+    cols 72-75: fall: 36 hearts (1.20/run), 14 lives
+    cols 68-71: spiky:hedgehog: 28 hearts (0.93/run), 11 lives
+    cols 52-55: flyer:owl: 15 hearts (0.50/run), 4 lives
+    cols 56-59: flyer:owl: 13 hearts (0.43/run), 7 lives
+    walk back after a fall/life: median 7.5 s, 90th pct 8.4 s, max 24.8 s (168 respawns)
+out/t-radhuset.jsonl k=(2, 0, 0): 30 runs; hearts/run 0.7; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 22
+    cols 100-103: walker:scooter: 16 hearts (0.53/run), 0 lives
+    cols 132-135: walker:pigeon: 3 hearts (0.10/run), 0 lives
+    cols 48-51: walker:pigeon: 2 hearts (0.07/run), 0 lives
+    cols 8-11: walker:pigeon: 1 hearts (0.03/run), 0 lives
+out/t-radhuset.jsonl k=(4, 0, 0): 30 runs; hearts/run 2.3; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 48
+    cols 100-103: walker:scooter: 19 hearts (0.63/run), 1 lives
+    cols 128-131: fall: 10 hearts (0.33/run), 3 lives
+    cols 148-151: thrower:gull: 8 hearts (0.27/run), 1 lives
+    cols 120-123: fall: 8 hearts (0.27/run), 2 lives
+    cols 36-39: thrower:gull: 5 hearts (0.17/run), 0 lives
+    cols 48-51: walker:pigeon: 4 hearts (0.13/run), 0 lives
+    walk back after a fall/life: median 0.9 s, 90th pct 6.8 s, max 14.6 s (25 respawns)
+out/t-radhuset.jsonl k=(8, 0, 0): 30 runs; hearts/run 2.6; knocked into a pit 0; hurt within 2 s of being put back 2; enemy hits warned <30 steps: 0 of 16
+    cols 120-123: fall: 33 hearts (1.10/run), 11 lives
+    cols 124-127: fall: 12 hearts (0.40/run), 5 lives
+    cols 128-131: fall: 12 hearts (0.40/run), 5 lives
+    cols 8-11: walker:pigeon: 8 hearts (0.27/run), 0 lives
+    cols 76-79: fall: 6 hearts (0.20/run), 1 lives
+    cols 100-103: walker:scooter: 3 hearts (0.10/run), 0 lives
+    walk back after a fall/life: median 0.8 s, 90th pct 6.8 s, max 6.8 s (59 respawns)
+out/t-slottet.jsonl k=(2, 0, 0): 30 runs; hearts/run 0.4; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 11
+    cols 76-79: walker:pigeon: 10 hearts (0.33/run), 0 lives
+    cols 128-131: walker:scooter: 1 hearts (0.03/run), 0 lives
+out/t-slottet.jsonl k=(4, 0, 0): 30 runs; hearts/run 0.6; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 18
+    cols 128-131: walker:scooter: 6 hearts (0.20/run), 0 lives
+    cols 76-79: walker:pigeon: 6 hearts (0.20/run), 0 lives
+    cols 172-175: flyer:gull: 4 hearts (0.13/run), 0 lives
+    cols 216-219: flyer:gull: 1 hearts (0.03/run), 0 lives
+    cols 212-215: flyer:gull: 1 hearts (0.03/run), 0 lives
+out/t-slottet.jsonl k=(8, 0, 0): 30 runs; hearts/run 1.5; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 41
+    cols 172-175: flyer:gull: 14 hearts (0.47/run), 1 lives
+    cols 128-131: walker:scooter: 8 hearts (0.27/run), 0 lives
+    cols 124-127: walker:scooter: 4 hearts (0.13/run), 2 lives
+    cols 116-119: fall: 4 hearts (0.13/run), 0 lives
+    cols 64-67: flyer:gull: 3 hearts (0.10/run), 0 lives
+    cols 76-79: walker:pigeon: 3 hearts (0.10/run), 0 lives
+    walk back after a fall/life: median 3.1 s, 90th pct 8.9 s, max 8.9 s (9 respawns)
+out/t-stortinget.jsonl k=(2, 0, 0): 30 runs; hearts/run 1.1; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 30
+    cols 148-151: spiky:umbrella: 10 hearts (0.33/run), 0 lives
+    cols 28-31: flyer:pigeonfly: 5 hearts (0.17/run), 0 lives
+    cols 136-139: walker:scooter: 5 hearts (0.17/run), 0 lives
+    cols 140-143: spiky:umbrella: 4 hearts (0.13/run), 0 lives
+    cols 44-47: walker:trolley: 3 hearts (0.10/run), 0 lives
+    cols 144-147: spiky:umbrella: 3 hearts (0.10/run), 0 lives
+    walk back after a fall/life: median 2.3 s, 90th pct 2.3 s, max 2.3 s (1 respawns)
+out/t-stortinget.jsonl k=(4, 0, 0): 30 runs; hearts/run 1.9; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 45
+    cols 144-147: spiky:umbrella: 9 hearts (0.30/run), 0 lives
+    cols 44-47: walker:trolley: 8 hearts (0.27/run), 0 lives
+    cols 148-151: spiky:umbrella: 7 hearts (0.23/run), 3 lives
+    cols 260-263: rail: 4 hearts (0.13/run), 0 lives
+    cols 76-79: jumper:trackrat: 4 hearts (0.13/run), 0 lives
+    cols 136-139: walker:scooter: 4 hearts (0.13/run), 0 lives
+    walk back after a fall/life: median 4.9 s, 90th pct 20.4 s, max 20.4 s (7 respawns)
+out/t-stortinget.jsonl k=(8, 0, 0): 30 runs; hearts/run 3.0; knocked into a pit 0; hurt within 2 s of being put back 0; enemy hits warned <30 steps: 0 of 67
+    cols 28-31: walker:pigeon: 10 hearts (0.33/run), 1 lives
+    cols 12-15: walker:pigeon: 8 hearts (0.27/run), 0 lives
+    cols 144-147: spiky:umbrella: 7 hearts (0.23/run), 0 lives
+    cols 44-47: walker:trolley: 6 hearts (0.20/run), 2 lives
+    cols 76-79: rail: 6 hearts (0.20/run), 1 lives
+    cols 80-83: rail: 6 hearts (0.20/run), 0 lives
+    walk back after a fall/life: median 4.3 s, 90th pct 17.1 s, max 20.4 s (15 respawns)

@@ -63,9 +63,12 @@ b.run(121, 122, 10, "u");
 // --- The quarry -------------------------------------------------------------------------------------------
 b.fill(142, 157, 18, 19, "~");
 b.ground(142, 157, 20, "K");
-/** The knolls the three sheep stand on, in the quarry's pond. */
+/**
+ * The knolls the three sheep stand on, in the quarry's pond: each a rock three tiles wide, so a
+ * bounce that misses a sheep's back lands on the rock beside it, to try again from, not in the water.
+ */
 export const KNOLLS = [145, 150, 155];
-for (const c of KNOLLS) b.fill(c, c, 18, ROWS - 1, "K");
+for (const c of KNOLLS) b.fill(c - 1, c + 1, 18, ROWS - 1, "K");
 
 // --- The bank, and the viewpoint ---------------------------------------------------------------------------
 b.ground(158, 164, QR);
@@ -86,7 +89,7 @@ b.fill(251, 251, T - 2, T - 1, "K");
 
 // Marks: the start, the doors, signs, flags, benches, sheep, the rune, the bracteate, the cheese.
 b.put(2, G0 - 1, "t").put(4, G0 - 1, "S").put(7, G0 - 1, "i");
-b.put(57, G1 - 1, "i").put(71, G1 - 1, "f").put(84, G1 - 1, "i").put(127, G1 - 1, "b").put(133, G1 - 1, "f");
+b.put(54, G1 - 1, "f").put(57, G1 - 1, "i").put(71, G1 - 1, "f").put(123, G1 - 1, "f").put(84, G1 - 1, "i").put(127, G1 - 1, "b").put(133, G1 - 1, "f");
 for (const c of KNOLLS) b.put(c, 17, "e");
 b.put(161, QR - 1, "f").put(202, T - 1, "f").put(220, T - 3, "b").put(212, T - 1, "i");
 b.put(251, T - 3, "r").put(86, 3, "o").put(112, 5, "&");
@@ -166,14 +169,14 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "wasp", c: 28, r: G0 - 3, range: 3, rise: 6, period: 150 },
   { kind: "flyer", look: "wasp", c: 38, r: G0 - 4, range: 2, rise: 8, period: 140, offset: 40 },
   { kind: "spiky", look: "hedgehog", c: 64, r: G1 - 1, range: 2 },
-  { kind: "spiky", look: "hedgehog", c: 83, r: G1 - 1, range: 1 },
-  { kind: "thrower", look: "squirrel", c: 93, r: 9, period: 200 },
+  { kind: "spiky", look: "hedgehog", c: 137, r: G1 - 1, range: 0, speed: 0 },
+  { kind: "thrower", look: "squirrel", c: 97, r: G1 - 1, period: 200 },
   { kind: "flyer", look: "crow", c: 100, r: 9, range: 3, rise: 8, period: 170 },
   { kind: "walker", look: "magpie", c: 116, r: G1 + 1, range: 1 },
   { kind: "thrower", look: "squirrel", c: 107, r: 9, period: 210, offset: 80 },
   { kind: "walker", look: "magpie", c: 168, r: 11, range: 2 },
   { kind: "spiky", look: "hedgehog", c: 178, r: 12, range: 0, speed: 0 },
-  { kind: "flyer", look: "crow", c: 196, r: 6, range: 2, rise: 6, period: 160 },
+  { kind: "flyer", look: "crow", c: 196, r: 4, range: 2, rise: 6, period: 160 },
   { kind: "walker", look: "magpie", c: 230, r: T - 1, range: 3 },
   { kind: "flyer", look: "crow", c: 243, r: 5, range: 2, rise: 6, period: 180, offset: 60 }
 ];

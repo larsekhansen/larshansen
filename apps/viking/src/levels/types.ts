@@ -12,7 +12,7 @@ import type { Hazard } from "@larshansen/pixelkit/hazard";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import type { Troll, TrollDef } from "../game/troll";
+import type { Troll, TrollDef, TrollEvent } from "../game/troll";
 
 // What a level is, as data: its map and legend, the things in it, its words, and how it is drawn.
 // One runner (game/play.ts for the rules, main.ts and render/ for the page) plays any of them.
@@ -47,6 +47,8 @@ export interface SignDef {
   label: Words;
   /** What the sign says in a bubble when he stands by it, first line on top. */
   lines: { nb: string[]; en: string[] };
+  /** The same for a touch screen with no keyboard, where the lines name keys. */
+  touch?: { nb: string[]; en: string[] };
 }
 
 export interface DoorDef {
@@ -147,6 +149,20 @@ export interface Art {
 }
 
 /**
+ * The troll's rules, from its own module (`game/troll.ts`), which comes with Nordmarka's file: play.ts
+ * runs them through the level, so the page does not carry them until the level is fetched.
+ */
+export interface TrollRules {
+  create(def: TrollDef): Troll;
+  /** He lost a life: back to sleep, the stone it has turned to kept. */
+  reset(t: Troll, step: number): void;
+  step(t: Troll, step: number, him: Body): TrollEvent;
+  /** Its body (and, stone, what he stands on). */
+  box(t: Troll): { x: number; y: number; w: number; h: number };
+  hurts(t: Troll, step: number, him: Body): { fromX: number } | null;
+}
+
+/**
  * The last boss's rules, from its own module, which comes with its level: play.ts runs them each
  * step as it runs the troll's. The state is the module's own.
  */
@@ -164,6 +180,10 @@ export interface Boss<S = unknown> {
   hurts(s: S, t: number, him: Body): { fromX: number } | null;
   /** He lost a life: back to where it waits, keeping the hits it has taken. */
   reset(s: S, t: number): void;
+  /** In its fight: woken, and not back asleep or parked. */
+  awake(s: S): boolean;
+  /** The top of it, in the middle (world x, y): where its words are shown. */
+  top(s: S): { x: number; y: number };
   /** Beaten for good: the rune shows. */
   beaten(s: S): boolean;
 }
@@ -214,6 +234,8 @@ export interface LevelDef {
   dark?(x: number, v: View): number;
   /** The boss at the end, in the level that has one: the troll of Nordmarka. The rune shows when it has turned to stone. */
   troll?: TrollDef;
+  /** Its rules, which come with the level (see `TrollRules`); needed with `troll`. */
+  trollRules?: TrollRules;
   /** The last boss, in Nabolaget: its rules come with the level. The rune shows when it is beaten. */
   boss?: Boss<any>;
   /** What the page says when the boss does something, by its event's name. */

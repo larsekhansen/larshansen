@@ -103,8 +103,9 @@ b.ground(152, 155, S);
 b.fill(156, 158, S, S + 1, "v");
 b.ground(156, 158, S + 2);
 b.ground(159, 206, S);
-b.fill(207, 209, S, S + 1, "v");
-b.ground(207, 209, S + 2);
+// The last slot is two tiles: the last jump of the game is not its hardest.
+b.fill(207, 208, S, S + 1, "v");
+b.ground(207, 208, S + 2);
 b.ground(210, COLS - 1, S);
 // A crate up to the house's terrace, the terrace he waits on, a bank of snow by the washing line.
 b.put(167, S - 1, "W").put(174, S - 1, "W");
@@ -113,7 +114,9 @@ b.fill(177, 178, S - 1, S - 1, "B");
 
 // Marks: the start, the doors, signs, flags, benches, the rune, the bracteate, the cheese.
 b.put(2, S - 1, "t").put(4, S - 1, "S").put(7, S - 1, "i");
-b.put(10, S - 3, "f").put(83, S - 3, "b").put(100, S - 1, "f").put(108, S - 1, "i");
+b.put(10, S - 3, "f").put(44, 7, "f").put(83, S - 3, "b").put(98, S - 1, "f").put(108, S - 1, "i");
+// A flag on the church tower's top, and one past the tram's slot by the yellow house.
+b.put(128, 1, "f").put(211, S - 1, "f");
 // A stone plinth by the lane's wall, a bench on it: a little off the path.
 b.run(82, 84, S - 2, "=");
 // Kruttverket's sign at the foot of the snow; then the flag, the bench and the plough's sign.
@@ -175,11 +178,12 @@ const TRAM_LINE: Path = {
     { x: 207 * TILE, y: S * TILE + 50 }
   ],
   w: TRAM_W,
-  speed: 1.5,
+  speed: 2,
   wait: 0,
   stops: [{ at: 2, steps: 120 }]
 };
-TRAM_LINE.wait = 2 - (pathPeriod(TRAM_LINE) % 2) + 90;
+// Two on the line, a short turn at the depot: one is never long in coming.
+TRAM_LINE.wait = 2 - (pathPeriod(TRAM_LINE) % 2) + 30;
 export const TRAMS: Path[] = [0, 1].map((i) => ({ ...TRAM_LINE, offset: (i * pathPeriod(TRAM_LINE)) / 2 }));
 const CARRIERS: CarrierDef[] = TRAMS;
 
@@ -194,26 +198,25 @@ export const PLOUGH_DEF: PloughDef = {
     { x0: 179 * TILE + CAB, x1: 203 * TILE + CAB, sticks: true },
     { x0: 187 * TILE + CAB, x1: 203 * TILE + CAB, sticks: false }
   ],
-  line: { x0: 178 * TILE, x1: 181 * TILE, y: 15 * TILE + 4, speed: 7 }
+  line: { x0: 178 * TILE, x1: 181 * TILE, y: 15 * TILE + 4, speed: 7 },
+  backOff: 6 * TILE
 };
 /** The terrace he waits on: its edge, toward the street. */
 export const TERRACE = { right: 174 * TILE, top: (S - 3) * TILE };
 
 /**
  * Cats on the roofs, the first alone on its ridge; crows over the yards; a snowball kid on the block's
- * roof; a fox, an owl and another kid in the lane behind the church.
+ * roof; a fox and an owl in the lane behind the church.
  */
 export const ENEMIES: EnemyDef[] = [
-  { kind: "walker", look: "cat", c: 30, r: 10, range: 1, w: 12 },
-  { kind: "flyer", look: "crow", c: 35, r: 7, range: 2, rise: 8, period: 160 },
-  { kind: "thrower", look: "kid", c: 50, r: 7, period: 210 },
-  { kind: "walker", look: "cat", c: 58, r: 9, range: 1, w: 12 },
+  { kind: "flyer", look: "crow", c: 35, r: 5, range: 2, rise: 8, period: 160 },
+  { kind: "thrower", look: "kid", c: 52, r: 7, period: 210 },
   { kind: "flyer", look: "crow", c: 72, r: 6, range: 3, rise: 6, period: 170, offset: 60 },
   { kind: "walker", look: "cat", c: 153, r: S - 1, range: 1, w: 12 },
   { kind: "walker", look: "fox", c: 90, r: S - 1, range: 2, w: 12 },
   { kind: "flyer", look: "owl", c: 96, r: 13, range: 2, rise: 6, period: 170 },
-  { kind: "thrower", look: "kid", c: 106, r: S - 1, period: 220, offset: 90 },
-  { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 }
+  { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 },
+  { kind: "walker", look: "cat", c: 104, r: S - 1, range: 1, w: 12 }
 ];
 
 export const NABOLAGET_RULES = { COLS, ROWS, CARRIERS };
@@ -763,11 +766,11 @@ function street(v: View, p: Plough | null) {
     R(l.x0 + 20, g - 3, 8, 3, WINTER.sheet);
   }
   // The tram's slots in the street: dark, with rails going down.
-  for (const c of [156, 207]) {
-    R(c * TILE, g, 3 * TILE, 2 * TILE, mix(INK, GROUND.cobbleFill, 0.3));
-    for (let k = 0; k < 3 * TILE; k += 5) R(c * TILE + k, g + 6 + (k % 3), 3, 1, METAL.rail);
+  for (const [c, n] of [[156, 3], [207, 2]]) {
+    R(c * TILE, g, n * TILE, 2 * TILE, mix(INK, GROUND.cobbleFill, 0.3));
+    for (let k = 0; k < n * TILE; k += 5) R(c * TILE + k, g + 6 + (k % 3), 3, 1, METAL.rail);
     R(c * TILE - 2, g, 2, 2 * TILE, GROUND.cobbleDot);
-    R((c + 3) * TILE, g, 2, 2 * TILE, GROUND.cobbleDot);
+    R((c + n) * TILE, g, 2, 2 * TILE, GROUND.cobbleDot);
   }
   home(v);
 }
@@ -912,22 +915,26 @@ function plough(p: Plough, v: View) {
     wdisc(at(wx), g - 7, 3, P.iron);
     R(at(wx) - 1 + roll, g - 13, 2, 2, P.iron);
   }
-  // The blade: yellow, black stripes, angled out in front.
+  // The blade: yellow, black stripes, angled out in front; raised off the snow while it revs, a sign
+  // that holds still (for reduced motion too).
   const bx = at(32);
+  const raised = p.phase === "windup" ? 5 : 0;
   for (let k = 0; k < 20; k++) {
-    const yy = g - 20 + k;
+    const yy = g - 20 + k - raised;
     const out = Math.round(k * 0.4) + 2;
     R(f > 0 ? bx : bx - out - 4, yy, out + 4, 1, ((k + Math.floor((bx + k) / 4)) >> 2) % 2 ? WINTER.blade : INK);
   }
-  // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when beaten.
+  // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when
+  // beaten. With reduced motion they do not flash: one is lit while it drives, both (with their glow)
+  // while it revs.
   const fast = p.phase === "windup";
   const beat = view.reduced ? 1 : Math.floor(v.t / (fast ? 4 : 12)) % 2;
   for (const [k, dx] of [[0, -28], [1, -10]] as const) {
-    const hot = !beaten && (beat + k) % 2 === 0;
+    const hot = !beaten && ((fast && view.reduced) || (beat + k) % 2 === 0);
     span(dx, dx + 6, y0 - 4, 4, hot ? WINTER.beacon : mix(WINTER.beacon, INK, 0.55));
     if (hot) {
       light(Math.min(at(dx), at(dx + 6)), y0 - 4, 6, 4, "lamp");
-      if (fast && !view.reduced) span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)");
+      if (fast) span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)");
     }
   }
   // Headlights: lit, and a pool of light on the snow ahead of the blade.
@@ -1005,7 +1012,12 @@ export const NABOLAGET: LevelDef = {
   bossWords: {
     wake: { nb: "Brøytebilen våkner. Den er det siste før du er hjemme.", en: "The snow plough wakes. It is the last thing between you and home." },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
-    beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." }
+    beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
+    // Shown over it when a round goes by with no hit (by round), and when it backs off to wait.
+    miss1: { nb: "Den står fast i brøytekanten.\nKlessnora kaster deg høyere enn et hopp.", en: "It is stuck in the bank.\nThe washing line throws you higher than a jump." },
+    miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },
+    miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." },
+    rest: { nb: "Brøytebilen venter.\nDen kommer når den kommer.", en: "The plough waits.\nIt comes when it comes." }
   },
   surfaceAt: (x, y) => {
     const h = rampHeight(ROOFS, x);
@@ -1131,7 +1143,7 @@ function tram(at: { x: number; y: number }) {
   for (let dx = 0; dx < TRAM_W; dx++) {
     const wx = x + dx;
     const c = Math.floor(wx / TILE);
-    const clip = (c >= 156 && c <= 158) || (c >= 207 && c <= 209) ? g : g + 2;
+    const clip = (c >= 156 && c <= 158) || (c >= 207 && c <= 208) ? g : g + 2;
     const col = (yy: number, h: number, colour: string) => {
       const top = y + yy;
       const end = Math.min(top + h, clip);

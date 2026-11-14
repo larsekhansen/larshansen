@@ -50,7 +50,6 @@ export const NABOLAGET_ROUTE: Move[] = [
       return steer(q, tile(29) + 8);
     }
   },
-  stomp(0),
   walk(tile(33) + 6),
   leap(tile(34), 1),
   // Up the fourth roof, over the chimney into its warm air, up to the block's roof.
@@ -63,10 +62,9 @@ export const NABOLAGET_ROUTE: Move[] = [
       return { ...steer(q, q.body.y < 7 * 16 ? tile(46) : tile(41) + 4), jumpPressed: s.i === 0 };
     }
   },
-  stomp(2),
+  stomp(1),
   walk(tile(52) + 6),
   leap(tile(53), 1),
-  stomp(3),
   // Off the fifth roof onto the line, up to the sixth.
   walk(tile(62) + 4, { careless: true }),
   {
@@ -78,17 +76,20 @@ export const NABOLAGET_ROUTE: Move[] = [
     }
   },
   walk(tile(70) + 6),
-  wait("the crow out of the way", (q) => q.enemies[4].x > tile(74) && q.enemies[4].dir > 0),
+  wait("the crow out of the way", (q) => {
+    const crow = q.enemies.find((e) => e.def.c === 72)!;
+    return crow.x > tile(74) && crow.dir > 0;
+  }),
   leap(tile(71), 1),
   // Down into the lane behind the church, in the dark.
   walk(tile(80)),
   walk(tile(86) + 4),
   jump(1, { release: 16 }),
-  stomp(6),
+  stomp(4),
   walk(tile(92) + 4),
   jump(1, { release: 16 }),
+  stomp(7),
   walk(tile(104)),
-  stomp(8),
   // Up the church's west end, its roof, the tower's ledges, the tower.
   walk(tile(108) + 8),
   jump(1, { release: 12 }),
@@ -104,8 +105,8 @@ export const NABOLAGET_ROUTE: Move[] = [
   jump(1, { release: 12 }),
   walk(tile(131) + 12),
   // Down the snow on the far side, the crow over it, the tram's slot.
-  stomp(9),
-  stomp(5),
+  stomp(6),
+  stomp(3),
   walk(tile(155) + 4),
   leap(tile(156), 1),
   // The flag and the bench; up the crate onto the terrace. The plough wakes.
@@ -115,7 +116,8 @@ export const NABOLAGET_ROUTE: Move[] = [
   jump(1, { release: 10 }),
   walk(TERRACE.right - 6),
   // Round one: it sticks in the bank by the washing line. Onto the line, and off it onto the cab.
-  wait("the plough stuck by the washing line", (q) => plough(q).phase === "stuck"),
+  // (Each round's wait lets a round already won go by, so the route can be picked up anywhere.)
+  wait("the plough stuck by the washing line", (q) => plough(q).phase === "stuck" || plough(q).hits >= 1),
   {
     name: "the bounce: off the terrace, onto the line, onto the cab",
     keys(q, s) {
@@ -129,7 +131,7 @@ export const NABOLAGET_ROUTE: Move[] = [
   },
   ...backUp(1),
   // Round two: the line is down; it sticks further along. A jump and the dash from the terrace.
-  wait("the plough stuck, nearer", (q) => plough(q).phase === "stuck" && plough(q).hits === 1),
+  wait("the plough stuck, nearer", (q) => (plough(q).phase === "stuck" && plough(q).hits === 1) || plough(q).hits >= 2),
   {
     name: "the dash: off the terrace's edge, the dash, onto the cab",
     keys(q, s) {

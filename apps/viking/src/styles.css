@@ -328,6 +328,13 @@ body {
 }
 
 /* The tenth rune: the card says so, plainly, in both languages, the visitor's own first. */
+/* The board while a level's file is fetched. */
+.card.loading {
+  top: 40%;
+  padding: 10px 22px;
+  font-weight: 600;
+}
+
 #finish-more.home:not([hidden]) {
   display: flex;
   flex-direction: column;

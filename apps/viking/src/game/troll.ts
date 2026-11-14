@@ -1,5 +1,6 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Body } from "@larshansen/pixelkit/physics";
+import type { TrollRules } from "../levels/types";
 
 // The troll of Nordmarka: the boss at the end of level 7, as a small pure rule over the step count.
 //
@@ -12,7 +13,10 @@ import type { Body } from "@larshansen/pixelkit/physics";
 // comes again. Three hits, and it is a boulder for good; the rune shows on it.
 //
 // Touching it hurts, as any enemy does. Losing a life sends it back to sleep where it started; the
-// stone it has already turned to stays.
+// stone it has already turned to stays. A round with no hit says so ("miss": the page shows a hint)
+// and it backs off to the far end to come again; if he waits it out where it cannot reach him (a
+// rock, a ledge, the edge of the clearing), after ten seconds it gives up and backs off the same way
+// ("rest").
 
 export interface TrollDef {
   /** The floor of the clearing (world y), and the ends it walks between (world x). */
@@ -40,31 +44,37 @@ export interface Troll {
   hits: number;
   /** The wave from the last slam: where it started and when; its two fronts run out from there. */
   wave: { x: number; at: number } | null;
+  /** Steps it has waited under him while he stays up out of its reach. */
+  waited: number;
 }
 
 /** Its size: two tiles wide, two and a half tall, three times his height. */
 export const TROLL = { w: 30, h: 40 };
-/** Steps it takes to wake, to raise its club (the telegraph before every slam: a full second), to pull the club out, to flinch in the light. */
-export const TROLL_STEPS = { waking: 90, windup: 60, stuck: 120, hit: 80 };
+/**
+ * Steps it takes to wake, to raise its club (the telegraph before every slam: a full second), to pull
+ * the club out (three seconds to look at it), to flinch in the light; and how long it waits under him
+ * while he stays up out of reach before it backs off.
+ */
+export const TROLL_STEPS = { waking: 90, windup: 60, stuck: 180, hit: 80, stalemate: 600 };
 /** How fast it walks, faster each time it is hit; how fast it backs off from the light. */
 export const TROLL_SPEED = { walk: [0.8, 0.95, 1.1], retreat: 1.5 };
 /** It raises the club when he is this close (centre to centre) and on the floor. */
 export const TROLL_REACH = TROLL.w / 2 + 22;
 /** The club, in front of it when it comes down, and how long the blow hurts. */
-export const CLUB = { reach: 24, h: 16, hurts: 10 };
-/** The wave in the ground: how fast each front runs, how far, how high it is. */
-export const WAVE = { speed: 1.4, steps: 70, h: 7, w: 6 };
+export const CLUB = { reach: 20, h: 16, hurts: 8 };
+/** The wave in the ground: how fast each front runs, how far, how high it is, and how many steps after the slam it leaves the club's head. */
+export const WAVE = { speed: 1.4, steps: 70, h: 6, w: 6, delay: 0 };
 /** How far his headlamp reaches along the floor. */
-export const LAMP_REACH = 6 * TILE;
+export const LAMP_REACH = 7 * TILE;
 
 export function createTroll(def: TrollDef): Troll {
-  return { def, x: def.x, dir: -1, phase: "asleep", since: 0, hits: 0, wave: null };
+  return { def, x: def.x, dir: -1, phase: "asleep", since: 0, hits: 0, wave: null, waited: 0 };
 }
 
 /** Back to sleep where it started (he lost a life), keeping the stone it has turned to. */
 export function resetTroll(t: Troll, step: number) {
   if (t.phase === "stone") return;
-  Object.assign(t, { x: t.def.x, dir: -1, phase: "asleep", since: step, wave: null });
+  Object.assign(t, { x: t.def.x, dir: -1, phase: "asleep", since: step, wave: null, waited: 0 });
 }
 
 const to = (t: Troll, phase: TrollPhase, step: number) => {
@@ -85,7 +95,7 @@ export function clubBox(t: Troll, step: number) {
 /** The two fronts of the wave at a step, as boxes on the floor; stopped by the ends of the clearing. */
 export function waveFronts(t: Troll, step: number): { x: number; y: number; w: number; h: number }[] {
   if (!t.wave) return [];
-  const age = step - t.wave.at;
+  const age = step - t.wave.at - WAVE.delay;
   if (age < 0 || age > WAVE.steps) return [];
   const out = [];
   for (const way of [-1, 1]) {
@@ -112,7 +122,7 @@ export function lampOn(t: Troll, him: Body): boolean {
   return Math.abs(feet - t.def.floor) < 1.5 * TILE && Math.abs(t.x - hx) <= LAMP_REACH && Math.sign(t.x - hx) === him.facing;
 }
 
-export type TrollEvent = "wake" | "windup" | "slam" | "hit" | "stone" | null;
+export type TrollEvent = "wake" | "windup" | "slam" | "hit" | "miss" | "rest" | "stone" | null;
 
 /** One step of the troll. `him` is where he is. Returns what happened, for the sound and the shake. */
 export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
@@ -121,7 +131,7 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
   const onFloor = Math.abs(him.y + PLAYER.h - d.floor) < TILE;
   const age = step - t.since;
   const clamp = (x: number) => Math.max(d.x0 + TROLL.w / 2, Math.min(d.x1 - TROLL.w / 2, x));
-  if (t.wave && step - t.wave.at > WAVE.steps) t.wave = null;
+  if (t.wave && step - t.wave.at > WAVE.delay + WAVE.steps) t.wave = null;
   switch (t.phase) {
     case "stone":
       return null;
@@ -139,11 +149,21 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
       const dx = hx - t.x;
       if (Math.abs(dx) > 2) t.dir = dx < 0 ? -1 : 1;
       if (onFloor && Math.abs(dx) <= TROLL_REACH) {
+        t.waited = 0;
         to(t, "windup", step);
         return "windup";
       }
-      // He is up out of reach: it waits under him.
+      // He is out of its reach (up on a rock or a ledge, or just outside the clearing): it waits as
+      // near as it can get; for ten seconds, then it gives up and backs off.
+      const was = t.x;
       if (Math.abs(dx) > 4) t.x = clamp(t.x + t.dir * TROLL_SPEED.walk[Math.min(t.hits, TROLL_SPEED.walk.length - 1)]);
+      t.waited = t.x !== was ? 0 : t.waited + 1;
+      if (t.waited >= TROLL_STEPS.stalemate) {
+        t.waited = 0;
+        t.dir = hx < (d.x0 + d.x1) / 2 ? 1 : -1;
+        to(t, "retreat", step);
+        return "rest";
+      }
       return null;
     }
     case "windup":
@@ -156,10 +176,18 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
     case "stuck":
       if (inDawn(t) && lampOn(t, him)) {
         t.hits++;
+        // The light stills the ground: the wave stops where it is.
+        t.wave = null;
         to(t, "hit", step);
         return "hit";
       }
-      if (age >= TROLL_STEPS.stuck) to(t, "walk", step);
+      // Pulled free with no harm done to it: it backs off to the far end, out of the light, and
+      // comes again from there (so a round always starts with it coming at him across the clearing).
+      if (age >= TROLL_STEPS.stuck) {
+        t.dir = hx < (d.x0 + d.x1) / 2 ? 1 : -1;
+        to(t, "retreat", step);
+        return "miss";
+      }
       return null;
     case "hit":
       if (age >= TROLL_STEPS.hit) {
@@ -182,13 +210,21 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
   }
 }
 
-/** What hurts him this step: its body, the club as it comes down, the wave. Null when nothing does. Stone hurts nobody. */
+/**
+ * What hurts him this step: its body, the club as it comes down, the wave. Null when nothing does.
+ * Stone hurts nobody; nor does its body while its club is stuck or it flinches in the light (it has
+ * its hands full), so he can stand right up to it to look at it, nor while it backs off.
+ */
 export function trollHurts(t: Troll, step: number, him: Body): { fromX: number } | null {
   if (t.phase === "stone") return null;
   const over = (r: { x: number; y: number; w: number; h: number }) => him.x < r.x + r.w && him.x + PLAYER.w > r.x && him.y < r.y + r.h && him.y + PLAYER.h > r.y;
-  if (t.phase !== "asleep" && over(trollBox(t))) return { fromX: t.x };
+  const busy = t.phase === "asleep" || t.phase === "stuck" || t.phase === "hit" || t.phase === "retreat";
+  if (!busy && over(trollBox(t))) return { fromX: t.x };
   const club = clubBox(t, step);
   if (club && over(club)) return { fromX: t.x };
   for (const f of waveFronts(t, step)) if (over(f)) return { fromX: f.x + f.w / 2 };
   return null;
 }
+
+/** The troll's rules for its level's slot (`LevelDef.trollRules`): play.ts runs them through the level. */
+export const TROLL_RULES: TrollRules = { create: createTroll, reset: resetTroll, step: stepTroll, box: trollBox, hurts: trollHurts };

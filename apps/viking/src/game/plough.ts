@@ -15,9 +15,11 @@ import type { Boss } from "../levels/types";
 //   the house beside the street.
 //   Round three: it has learnt; it turns at once, and keeps to the middle of the street, out of reach
 //   of both. The tram's roof passes over it: ride it, and step off onto the cab.
-// Each landing on its roof is a hit; it reels, then backs off to the far end and comes again. Three
+// Each landing on its roof is a hit; it reels, then backs off a little way and comes again. Three
 // hits and it parks for good, its beacon out. Touching it hurts, as any enemy does; a lost life sends
-// it back to where it was parked, the hits it has taken kept.
+// it back to where it was parked, the hits it has taken kept. A stuck (or a turn) that ends with no
+// hit says so ("miss1", "miss2", "miss3" by round: the page shows a hint); and after ten seconds of
+// that it backs off to the far end of its stretch and comes again from there ("rest").
 
 export interface PloughDef {
   /** The street (world y), and where it waits parked (its centre x). */
@@ -27,11 +29,13 @@ export interface PloughDef {
   wakeAt: number;
   /** For each round: the stretch its centre keeps to, and whether a charge ends stuck in the bank (or with a turn). */
   rounds: { x0: number; x1: number; sticks: boolean }[];
+  /** How far it backs off after a hit (from where it was hit, towards the far end of the next round's stretch). */
+  backOff: number;
   /** The clothesline by the bank: across from x0 to x1, its top at y; it throws him up at `speed` while it holds (the first round). */
   line: { x0: number; x1: number; y: number; speed: number };
 }
 
-export type PloughPhase = "parked" | "waking" | "drive" | "windup" | "charge" | "stuck" | "turn" | "hit" | "retreat" | "beaten";
+export type PloughPhase = "parked" | "waking" | "drive" | "windup" | "charge" | "stuck" | "turn" | "hit" | "retreat" | "rest" | "beaten";
 
 export interface Plough {
   def: PloughDef;
@@ -43,19 +47,27 @@ export interface Plough {
   hits: number;
   /** The step the clothesline last threw him, for the drawing. */
   lineAt: number;
+  /** Steps awake since its last hit (or since it woke): ten seconds of nothing, and it backs off. */
+  stale: number;
+  /** Where it backs off to, this time. */
+  backTo: number;
+  /** It ran into him last step: now it brakes and backs off to the far end, rests, and comes again from there. */
+  struck: boolean;
+  /** Backing off to rest at the far end (after running into him, or ten seconds of nothing), not just to come again. */
+  toRest: boolean;
 }
 
 /** Its size: four tiles long, its cab's roof well over a jump from the street. */
 export const PLOUGH = { w: 64, h: 52 };
-/** Steps to wake, to telegraph a charge (a full second), stuck in the bank, to turn, to reel from a hit. */
-export const PLOUGH_STEPS = { waking: 90, windup: 60, stuck: 170, turn: 36, hit: 70 };
+/** Steps to wake, to telegraph a charge (a full second), stuck in the bank, to turn, to reel from a hit, to rest at the far end; and ten seconds with no hit, before it backs off. */
+export const PLOUGH_STEPS = { waking: 60, windup: 60, stuck: 170, turn: 36, hit: 70, rest: 120, stalemate: 600 };
 /** How fast it drives (faster each round), charges, and backs off. */
 export const PLOUGH_SPEED = { drive: [1.2, 1.35, 1.5], charge: 2.8, retreat: 2.2 };
 /** It telegraphs a charge when he is this close in front of it. */
 export const PLOUGH_REACH = PLOUGH.w / 2 + 28;
 
 export function createPlough(def: PloughDef): Plough {
-  return { def, x: def.x, dir: -1, phase: "parked", since: 0, hits: 0, lineAt: -999 };
+  return { def, x: def.x, dir: -1, phase: "parked", since: 0, hits: 0, lineAt: -999, stale: 0, backTo: def.x, struck: false, toRest: false };
 }
 
 const to = (p: Plough, phase: PloughPhase, step: number) => {
@@ -72,6 +84,19 @@ const awake = (p: Plough) => p.phase !== "parked" && p.phase !== "beaten";
 
 /** One step. `him` is where he is. What it did, for the sound and the words. */
 export function stepPlough(p: Plough, step: number, him: Body): string | null {
+  const ev = stepPloughOnly(p, step, him);
+  // Having run into him (he took the hurt last step), it brakes and backs off to the far end to rest.
+  if (p.struck) {
+    p.struck = false;
+    // (Unless he came down on its roof in that step: then it reels, as it should.)
+    if (p.phase === "drive" || p.phase === "windup" || p.phase === "charge") backOffToRest(p, step);
+    return ev;
+  }
+  if (ploughHurts(p, him)) p.struck = true;
+  return ev;
+}
+
+function stepPloughOnly(p: Plough, step: number, him: Body): string | null {
   const hx = him.x + PLAYER.w / 2;
   const age = step - p.since;
   const r = round(p);
@@ -89,6 +114,11 @@ export function stepPlough(p: Plough, step: number, him: Body): string | null {
       if (age >= PLOUGH_STEPS.waking) to(p, "drive", step);
       return null;
     case "drive": {
+      // Ten seconds of nothing: it backs off to the far end of its stretch, and comes again from there.
+      if (++p.stale >= PLOUGH_STEPS.stalemate) {
+        backOffToRest(p, step);
+        return "rest";
+      }
       const target = Math.max(r.x0, Math.min(r.x1, hx));
       if (Math.abs(target - p.x) > 2) p.dir = target < p.x ? -1 : 1;
       const atEnd = (p.dir < 0 && p.x <= r.x0 + 0.5) || (p.dir > 0 && p.x >= r.x1 - 0.5);
@@ -119,12 +149,18 @@ export function stepPlough(p: Plough, step: number, him: Body): string | null {
       return null;
     }
     case "stuck":
-      if (age >= PLOUGH_STEPS.stuck) to(p, "drive", step);
+      p.stale++;
+      if (age >= PLOUGH_STEPS.stuck) {
+        to(p, "drive", step);
+        return `miss${p.hits + 1}`;
+      }
       return null;
     case "turn":
+      p.stale++;
       if (age >= PLOUGH_STEPS.turn) {
         p.dir = (p.dir * -1) as 1 | -1;
         to(p, "drive", step);
+        return `miss${p.hits + 1}`;
       }
       return null;
     case "hit":
@@ -134,19 +170,33 @@ export function stepPlough(p: Plough, step: number, him: Body): string | null {
           return "beaten";
         }
         p.dir = 1;
+        p.backTo = Math.min(round(p).x1, p.x + p.def.backOff);
         to(p, "retreat", step);
       }
       return null;
     case "retreat": {
-      const home = round(p).x1;
+      const home = p.backTo;
       p.x = Math.min(home, p.x + PLOUGH_SPEED.retreat);
       if (p.x >= home) {
         p.dir = -1;
-        to(p, "drive", step);
+        to(p, p.toRest ? "rest" : "drive", step);
+        p.toRest = false;
       }
       return null;
     }
+    case "rest":
+      if (age >= PLOUGH_STEPS.rest) to(p, "drive", step);
+      return null;
   }
+}
+
+/** To the far end of its stretch, to stand there a while before it comes again. */
+function backOffToRest(p: Plough, step: number) {
+  p.stale = 0;
+  p.dir = 1;
+  p.backTo = round(p).x1;
+  p.toRest = true;
+  to(p, "retreat", step);
 }
 
 /** Did he come down on it, or on the clothesline, this step? Where its top is, and whether that was a hit. */
@@ -164,13 +214,17 @@ export function ploughStomped(p: Plough, step: number, him: Body, prevBottom: nu
   if (!over(box.x, box.x + box.w) || prevBottom > box.y + 2 || feet < box.y) return null;
   if (p.phase === "hit") return { top: box.y, hit: false };
   p.hits++;
+  p.stale = 0;
   to(p, "hit", step);
   return { top: box.y, hit: true };
 }
 
-/** Its body hurts to touch while it is awake. */
+/**
+ * Its body hurts to touch while it comes at him: driving, revving, charging. Stuck in the bank,
+ * turning, reeling from a hit or backing off, it is a stopped machine, and harmless to bump into.
+ */
 export function ploughHurts(p: Plough, him: Body): { fromX: number } | null {
-  if (!awake(p)) return null;
+  if (p.phase !== "drive" && p.phase !== "windup" && p.phase !== "charge") return null;
   const b = ploughBox(p);
   return him.x < b.x + b.w && him.x + PLAYER.w > b.x && him.y < b.y + b.h && him.y + PLAYER.h > b.y ? { fromX: p.x } : null;
 }
@@ -178,7 +232,7 @@ export function ploughHurts(p: Plough, him: Body): { fromX: number } | null {
 /** He lost a life: back to where it was parked, asleep, the hits it has taken kept. */
 export function resetPlough(p: Plough, step: number) {
   if (p.phase === "beaten") return;
-  Object.assign(p, { x: p.def.x, dir: -1, phase: "parked", since: step });
+  Object.assign(p, { x: p.def.x, dir: -1, phase: "parked", since: step, stale: 0, struck: false, toRest: false });
 }
 
 /** The plough's rules for the level's boss slot. */
@@ -189,6 +243,8 @@ export function ploughBoss(def: PloughDef): Boss<Plough> {
     stomped: ploughStomped,
     hurts: (p, _t, him) => ploughHurts(p, him),
     reset: resetPlough,
+    awake,
+    top: (p) => ({ x: p.x, y: p.def.floor - PLOUGH.h }),
     beaten: (p) => p.phase === "beaten"
   };
 }

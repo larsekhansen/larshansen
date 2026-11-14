@@ -17,8 +17,8 @@ Lars before reversing one of his.
 | [0005](0005-checking-without-a-player.md) | Scripted players, a reach search, a debug harness and byte-identical screenshots stand in for playtests | planner | holds, with known limits |
 | [0006](0006-ten-levels-lars-hansen-line-map.md) | Ten levels spelling LARS HANSEN, on a T-bane line map of Oslo | Lars (ten, Oslo, him); planner (the rest) | holds |
 | [0007](0007-maze-as-optional-bonus.md) | The maze is a bonus stop, never required; no music; the original kept on a branch | Lars (bonus, no music, keep a copy); planner (the rest) | holds |
-| [0008](0008-hearts-lives-enemies-pits.md) | Enemies, hearts, lives and pits | Lars | holds; supersedes "nothing kills" |
-| [0009](0009-mario-length-levels.md) | Each level about as long and as good as a Mario level | Lars | holds; supersedes the plan's column counts |
+| [0008](0008-hearts-lives-enemies-pits.md) | Enemies, hearts, lives and pits | Lars | holds, adjusted by 0017 and 0018; supersedes "nothing kills" |
+| [0009](0009-mario-length-levels.md) | Each level about as long and as good as a Mario level | Lars | holds (its clear-time floor adjusted by 0020); supersedes the plan's column counts |
 | [0010](0010-benches-dash-bosses.md) | Benches, an earned dash, two bosses: mechanics borrowed, nothing recognisable | Lars (a splash of Hollow Knight); planner (which) | holds |
 | [0011](0011-levels-on-demand-60kb.md) | Levels load on demand; the first script stays under 60 kB gzipped | planner | holds |
 | [0012](0012-saved-progress.md) | What is saved, under which keys, and how old saves are treated | planner | holds |
@@ -26,6 +26,10 @@ Lars before reversing one of his.
 | [0014](0014-personal-details-discreetly.md) | Personal details go in quietly; no addresses, nothing explained | Lars | holds |
 | [0015](0015-solid-header-in-viking.md) | The viking game's header is solid, not frosted | implementer, accepted by planner | holds; Lars has not seen it |
 | [0016](0016-two-languages-dry-voice.md) | Norwegian and English, in a dry voice | earlier work, kept | holds |
+| [0017](0017-game-over-at-a-boss.md) | Game over at a boss goes on from its bench, three lives, the boss whole again | planner (order 12) | holds; adjusts 0008 |
+| [0018](0018-the-blinking-fall-and-the-visit.md) | A fall while blinking is free; a visit remembers the cheese and paid skilling | planner (order 12) | holds; adjusts 0008 |
+| [0019](0019-the-view-on-an-upright-phone.md) | On an upright phone the viking view stays 240 art px wide | planner (order 12) | holds |
+| [0020](0020-waiting-is-not-length.md) | The scripted clear's floor is 40 s (80 s), now that waits are cut | planner (order 12) | holds; adjusts 0009's measure |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

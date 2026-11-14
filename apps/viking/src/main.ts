@@ -14,7 +14,7 @@ import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, S, ctx, mix, target, view } from "@larshansen/pixelkit/paint";
 import { COIN, DUST, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
-import { placeBody, type Body } from "@larshansen/pixelkit/physics";
+import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
 import {
   afterStep,
@@ -56,15 +56,16 @@ import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
-import { autopilot, type Move } from "./game/bot";
+import type { Move } from "./game/bot";
 import { strings } from "./game/i18n";
-import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
+import { carefulStep } from "./game/careful";
+import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
 import { FENCE_COL, kartDef } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
-import { drawBracteate, drawRune, drawSheep } from "./render/actors";
+import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { drawTiles, drawWater } from "./render/tiles";
 
@@ -73,8 +74,10 @@ import { drawTiles, drawWater } from "./render/tiles";
 // (#jernhaugen) as before. The rules of a level are in game/play.ts, the levels in levels/.
 
 const $ = byId;
-// Four depths: hills, the far water, a near layer, and the ground he walks on.
-const { stage, pad, help, announce, enterButton, kit } = openPage([0.12, 0.2, 0.4, 1]);
+// Four depths: hills, the far water, a near layer, and the ground he walks on. On an upright phone
+// the view stays at least 240 art pixels wide, wider than a thrower's reach either side of him, so
+// what comes at him is seen in time (ADR 0019); there is more sky over it.
+const { stage, pad, help, announce, enterButton, kit } = openPage([0.12, 0.2, 0.4, 1], { minWidth: 240 });
 const header = document.querySelector<HTMLElement>(".bar")!;
 
 // Language: Norwegian for Norwegian browsers, English for everyone else.
@@ -102,26 +105,22 @@ const store = {
 
 const params = new URLSearchParams(location.search);
 const debug = params.has("debug");
-// Under ?debug an error shows on the help line, so a headless screenshot says what went wrong.
-if (debug)
-  for (const ev of ["error", "unhandledrejection"] as const)
-    window.addEventListener(ev, (e) => {
-      const reason = e instanceof ErrorEvent ? e.message : String((e as PromiseRejectionEvent).reason);
-      help.textContent = `Error: ${reason}`;
-      help.hidden = false;
-    });
+/** `?debug`'s own code (errors on the help line, pretended progress, `window.__game`), fetched only under `?debug`. */
+const debugging = debug ? import("./debug") : null;
+void debugging?.then((d) => d.showErrors(help));
+// A stepped page is photographed once its files are in; the level it names is fetched alongside the
+// debug code, not after it, so both are here in one round.
+if (debug) {
+  const named = params.get("level") ?? location.hash.slice(1);
+  if (named) void loadLevel(named).catch(() => undefined);
+}
 /** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
 const harness = readHarness(params);
 const now = () => harness?.now ?? new Date();
 
-/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it. */
-function debugProgress(): Progress | null {
-  if (!debug || (!params.has("cleared") && !params.has("gold") && !params.has("clean"))) return null;
-  const list = (k: string) => (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id));
-  return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
-}
-const pretend = debugProgress();
-let progress: Progress = pretend ?? readProgress(store.get(PROGRESS_KEY));
+/** Progress pretended under `?debug&cleared=...` (set at start, once the debug code is here): never stored. */
+let pretend: Progress | null = null;
+let progress: Progress = readProgress(store.get(PROGRESS_KEY));
 function saveProgress(p: Progress) {
   progress = p;
   if (!pretend) store.set(PROGRESS_KEY, writeProgress(p));
@@ -132,6 +131,15 @@ const input = createInput();
 const sfx = createSfx();
 wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 followReducedMotion();
+// `?debug&reduced`: reduced motion, for looking at it in a browser that cannot be asked for it.
+if (debug && params.has("reduced")) view.reduced = true;
+/** A level's file, fetched; `?debug&fetch=hang` (or `fail`) holds it back for ever (or fails it), to look at the board and the card. */
+const fetchLevel = (id: string) => {
+  const mode = debug ? params.get("fetch") : null;
+  if (mode === "hang") return new Promise<never>(() => undefined);
+  if (mode === "fail") return Promise.reject(new Error("held back by ?debug&fetch=fail"));
+  return loadLevel(id);
+};
 const touch = isTouch();
 /** The double jump is the raven's feather, from the maze; `?feather` gives it for checking. Read again on coming out of the mound. */
 const abilities = { doubleJump: false, gold: false, pole: false };
@@ -144,8 +152,12 @@ readFeather();
 /** The gold helmet: all ten runes, now or in the old game (`viking.crowned`, kept by those who earned it). */
 const CROWNED = "viking.crowned";
 const crowned = () => store.get(CROWNED) === "1" || allRunes(progress, ORDER);
-/** Lives and the purse of skilling go with him from level to level for this visit; a new visit starts with three lives. */
-const session = { lives: debug && params.has("lives") ? Math.max(1, Number(params.get("lives")) || LIVES) : LIVES, purse: 0 };
+/**
+ * Lives and the purse of skilling go with him from level to level for this visit; a new visit starts
+ * with three lives. What a level has given already in this visit is remembered, so restarting it is
+ * no way to farm lives: its brown cheese once, each of its skilling (and each enemy beaten) once.
+ */
+const session = { lives: debug && params.has("lives") ? Math.max(1, Number(params.get("lives")) || LIVES) : LIVES, purse: 0, cheese: new Set<string>(), paid: new Map<string, number[]>() };
 
 // ---------------------------------------------------------------------------------------------
 // The scene: the line map or a level, its rules, doors and boards.
@@ -178,8 +190,10 @@ function extraState() {
     /** Steps the world holds still after a stomp or a hit, and the little shake of the view. */
     freeze: 0,
     nudge: { x: 0, y: 0, until: 0 },
-    /** The card shown: a level cleared, or the game over. */
-    card: null as "clear" | "over" | null
+    /** The card shown: a level cleared, the game over, or a level's file that would not come. */
+    card: null as "clear" | "over" | "failed" | null,
+    /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
+    bossLine: null as { lines: string[]; until: number } | null
   };
 }
 const before = { x: 0, y: 0 };
@@ -238,7 +252,10 @@ function openScene(id: string, at?: string) {
   readFeather();
   // Past Holmenkollen he has the ski pole whatever the progress says: the levels there are only open to those who cleared it.
   const pole = abilities.pole || ORDER.indexOf(def.id) > ORDER.indexOf("holmenkollen");
-  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse });
+  // After a Game over (lives at nought) any way back into a level starts with three lives: the card's
+  // buttons, R, the header's restart, Back, a header link.
+  if (session.lives <= 0) session.lives = LIVES;
+  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse, cheeseTaken: session.cheese.has(def.id), paid: session.paid.get(def.id) });
   // `?debug&hearts=1&lives=1`: start a level with fewer, to look at a hit, a lost life or the game over.
   if (debug && params.has("hearts")) play.hearts = Math.max(1, Math.min(HEARTS, Number(params.get("hearts")) || HEARTS));
   const doors = buildDoors(doorSpots(def, play), links);
@@ -255,6 +272,7 @@ function openScene(id: string, at?: string) {
   document.body.classList.toggle("on-map", scene.map);
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
+  help.textContent = scene.map ? t.help : t.helpLevel(pole);
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
@@ -271,6 +289,19 @@ let arriveAt: string | null = null;
 let mode: "scene" | "maze" = "scene";
 let maze: Maze | null = null;
 let loading = false;
+/** A level whose file is being fetched: the scene holds dark under a board until it is here. */
+let fetching: string | null = null;
+const loadingEl = $<HTMLElement>("loading");
+/** While a level's file is on its way: a board with its name; null takes it down. */
+function showFetching(id: string | null) {
+  fetching = id;
+  const name = id ? LINE.find((l) => l.id === id)?.name ?? id : "";
+  loadingEl.hidden = !id;
+  if (id) {
+    loadingEl.textContent = t.loading(name);
+    say(t.loading(name));
+  }
+}
 /** True when going back in history leaves the mound: false when the page was opened inside it. */
 let canGoBack = false;
 
@@ -289,19 +320,27 @@ function sync() {
     else loading = false;
   }
   const want = ROUTES.includes(id) && (id === "kart" || levelOpen(id)) ? id : "kart";
+  if (fetching && fetching !== want) showFetching(null);
   if (scene && scene.def.id === want && !arriveAt) return;
   if (want !== "kart" && !loadedLevel(want)) {
-    // The level's code comes first: the scene goes dark while it does, and opens when it is here.
+    // The level's code comes first: the scene goes dark under a board while it does, and opens when
+    // it is here, unless he has gone somewhere else meanwhile. Failing, a card says so, with a retry.
     if (scene) {
       state.mode = "away";
       state.modeSteps = 0;
       state.fade = 1;
     }
-    loadLevel(want).then(
-      () => location.hash === `#${want}` && sync(),
+    showFetching(want);
+    fetchLevel(want).then(
       () => {
-        history.replaceState(null, "", location.pathname + location.search + "#kart");
-        sync();
+        if (fetching !== want) return;
+        showFetching(null);
+        if (location.hash === `#${want}`) sync();
+      },
+      () => {
+        if (fetching !== want) return;
+        showFetching(null);
+        showLoadFailed(want);
       }
     );
     return;
@@ -384,7 +423,8 @@ async function enterMaze() {
         el: stage,
         say,
         topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
-        onLeave: (r) => leaveMaze(r.feather ?? (r.cleared ? "plain" : null))
+        // Only a feather newly won (or newly gold) gets the moment; a level cleared again does not.
+        onLeave: (r) => leaveMaze(r.feather ?? null)
       },
       { level: Number.isFinite(level) && level > 0 ? level : undefined }
     );
@@ -437,6 +477,7 @@ function resumeScene(s: Scene) {
   document.body.classList.remove("on-map");
   finishEl.hidden = true;
   dashButton.hidden = !s.play.pole;
+  help.textContent = t.helpLevel(s.play.pole);
   layout();
   hud();
 }
@@ -602,10 +643,26 @@ restartButton.title = `${t.restart} (R)`;
 $<HTMLElement>("finish-on").textContent = t.finishOn;
 $<HTMLElement>("finish-again").textContent = t.finishAgain;
 
-/** The level again from its start, the clock at zero. Lives stay as they are. */
+/** The level again from its start, the clock at zero. Lives stay as they are. On the card after a Game over in a boss's fight: on again from the bench before it. */
 function restartLevel() {
   if (scene.map) return;
+  if (state.card === "over" && scene.play.overAtBoss) return tryAgainAtBoss();
   openScene(scene.def.id);
+}
+
+/** After a Game over in a boss's fight: from the bench before it, three lives, the boss asleep and whole again (ADR 0017). */
+function tryAgainAtBoss() {
+  const p = scene.play;
+  againAtBoss(p);
+  session.lives = p.lives;
+  state.finished = false;
+  state.card = null;
+  finishEl.hidden = true;
+  Object.assign(shown, p.body);
+  before.x = p.body.x;
+  before.y = p.body.y;
+  layout();
+  hud();
 }
 
 const finishOn = $<HTMLButtonElement>("finish-on");
@@ -625,7 +682,7 @@ function showCard(r: CardResult) {
   finishCoins.hidden = r.total === 0;
   finishCoins.textContent = t.finishSkilling(r.found, r.total);
   finishClean.hidden = !r.clean && !r.pole;
-  finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? t.finishPole : ""].filter(Boolean).join(" ");
+  finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? (touch ? t.finishPoleTouch : t.finishPole) : ""].filter(Boolean).join(" ");
   // The last line counts honestly: the runes he has, on the last level built; and with the tenth, the name, plainly, in both languages.
   const more = $<HTMLElement>("finish-more");
   const runes = LINE.filter((l) => progress.cleared.includes(l.id)).length;
@@ -648,8 +705,9 @@ function showCard(r: CardResult) {
 function showOver() {
   state.finished = true;
   state.card = "over";
+  const line = scene.play.overAtBoss ? t.overLineBoss : t.overLine;
   $<HTMLElement>("finish-title").textContent = t.overTitle;
-  $<HTMLElement>("finish-line").textContent = t.overLine;
+  $<HTMLElement>("finish-line").textContent = line;
   $<HTMLElement>("finish-gold").hidden = true;
   finishCoins.hidden = true;
   finishClean.hidden = true;
@@ -657,8 +715,25 @@ function showOver() {
   finishOn.textContent = t.overAgain;
   finishAgain.textContent = t.overMap;
   finishEl.hidden = false;
-  say(`${t.overTitle}. ${t.overLine}`);
+  say(`${t.overTitle}. ${line}`);
   sfx.play("over");
+  finishOn.focus({ preventScroll: true });
+}
+
+/** A level's file did not come: a plain card, "Try again" (the page again, at that level) and "To the map". */
+let failedLevel: string | null = null;
+function showLoadFailed(id: string) {
+  failedLevel = id;
+  const name = LINE.find((l) => l.id === id)?.name ?? id;
+  state.finished = true;
+  state.card = "failed";
+  $<HTMLElement>("finish-title").textContent = t.loadFailedTitle;
+  $<HTMLElement>("finish-line").textContent = t.loadFailedLine(name);
+  for (const el of ["finish-gold", "finish-coins", "finish-clean", "finish-more"]) $<HTMLElement>(el).hidden = true;
+  finishOn.textContent = t.overAgain;
+  finishAgain.textContent = t.overMap;
+  finishEl.hidden = false;
+  say(`${t.loadFailedTitle}. ${t.loadFailedLine(name)}`);
   finishOn.focus({ preventScroll: true });
 }
 
@@ -676,6 +751,11 @@ interface CardResult {
 let cardResult: CardResult | null = null;
 
 finishOn.addEventListener("click", () => {
+  // A level's file that would not come: the whole page again, at that level (a failed import is not retried in place).
+  if (state.card === "failed") {
+    history.replaceState(null, "", location.pathname + location.search + `#${failedLevel ?? "kart"}`);
+    return location.reload();
+  }
   if (state.card === "over") {
     session.lives = LIVES;
     return restartLevel();
@@ -684,6 +764,12 @@ finishOn.addEventListener("click", () => {
   go("kart", next && isBuilt(LINE[ORDER.indexOf(next)]) ? next : scene.def.id);
 });
 finishAgain.addEventListener("click", () => {
+  if (state.card === "failed") {
+    finishEl.hidden = true;
+    state.finished = false;
+    state.card = null;
+    return go("kart", failedLevel ?? undefined);
+  }
   if (state.card === "over") {
     session.lives = LIVES;
     return go("kart", scene.def.id);
@@ -757,6 +843,29 @@ function sparksAt(x: number, y: number, n: number, color: string, speed = 0.7) {
   }
 }
 
+/** How long a boss's line, and a hint after a round with no hit, stay over it. */
+const BOSS_LINE_STEPS = 180;
+const BOSS_HINT_STEPS = 300;
+
+/** A boss says something: over it in a bubble, and to a screen reader. */
+function bossSays(lines: string[], steps = BOSS_LINE_STEPS) {
+  state.bossLine = { lines, until: state.steps + steps };
+  say(lines.join(" "));
+}
+
+/** Where a boss's bubble points: over the troll's head, or the top of the last boss. */
+function bossTop(p: Play): { x: number; y: number } | null {
+  if (p.troll && p.def.trollRules) return { x: p.troll.x, y: p.def.trollRules.box(p.troll).y - 6 };
+  if (p.boss) {
+    const top = p.boss.rules.top(p.boss.state);
+    return { x: top.x, y: top.y - 6 };
+  }
+  return null;
+}
+
+/** This level's bracteate was found on an earlier visit: drawn as a pale outline, and quiet. */
+const owned = (p: Play) => progress.bracteates.includes(p.def.id);
+
 /** What the level's rules did this step, made audible and visible. */
 function react(ev: Events) {
   const p = scene.play;
@@ -798,7 +907,7 @@ function react(ev: Events) {
   if (ev.dash) sfx.play("dash");
   if (ev.troll === "wake") {
     sfx.play("gate");
-    say(t.trollWakes);
+    bossSays([t.trollWakes]);
   }
   if (ev.troll === "slam") {
     sfx.play("cannon");
@@ -807,18 +916,19 @@ function react(ev: Events) {
   if (ev.troll === "hit") {
     sfx.play("stone");
     jolt(2, 0);
-    say(t.trollHit(p.troll?.hits ?? 0));
+    bossSays([t.trollHit(p.troll?.hits ?? 0)]);
   }
+  if (ev.troll === "miss" || ev.troll === "rest") bossSays(t.trollHint, BOSS_HINT_STEPS);
   if (ev.troll === "stone") {
     sfx.play("fanfare");
-    say(t.trollStone);
+    bossSays([t.trollStone]);
   }
   if (ev.boss) {
     const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", slam: "cannon", hit: "stone", line: "stomp", beaten: "fanfare" };
     if (sound[ev.boss]) sfx.play(sound[ev.boss]);
     if (ev.boss === "hit" || ev.boss === "slam") jolt(0, 3);
     const words = p.def.bossWords?.[ev.boss];
-    if (words) say(words[lang]);
+    if (words) bossSays(words[lang].split("\n"), /^miss|^rest/.test(ev.boss) ? BOSS_HINT_STEPS : BOSS_LINE_STEPS);
   }
   if (ev.zap && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + PLAYER.h - 2, 8, PAINT.warning, 1.1);
   if (ev.over) {
@@ -830,7 +940,7 @@ function react(ev: Events) {
     if (!view.reduced)
       for (let i = 0; i < 8; i++) state.sparks.push({ x: b.x + PLAYER.w / 2 + (i - 4) * 1.5, y: b.y + PLAYER.h - 1, vx: (i - 3.5) * 0.18, vy: -0.8 - Math.random() * 0.6, life: 22, color: PALETTE.foam });
   }
-  if (ev.bracteate && p.bracteate) {
+  if (ev.bracteate && p.bracteate && !owned(p)) {
     sfx.play("gold");
     say(t.goldAnnounce);
     saveProgress(findBracteate(progress, p.def.id));
@@ -867,8 +977,10 @@ function play() {
   const bench = !held && !scene.map && !p.sitting ? benchAt(p) : null;
   // Walking to a clicked spot or door. Any input of the visitor's own takes over again.
   if (state.goal && held) state.goal = null;
-  const { intent: keys, enter } = followGoal(state, b, held ? STILL : intentFrom(input, !!door || bench !== null), door);
-  if (enter) return tryEnter(enter);
+  const walked = followGoal(state, b, held ? STILL : intentFrom(input, !!door || bench !== null), door);
+  if (walked.enter) return tryEnter(walked.enter);
+  // In a level, walking to a click never jumps, and stops at an edge or before an enemy.
+  const keys = state.goal && !scene.map ? carefully(p, walked.intent) : walked.intent;
   // The scripted route (under ?debug&auto) is asked every step, held or not, as the tests ask it.
   const scripted = auto?.(p) ?? null;
   const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash") };
@@ -877,6 +989,8 @@ function play() {
   const ev = stepPlay(p, intent);
   session.lives = p.lives;
   session.purse = p.purse;
+  if (ev.life && p.cheese?.at === p.t) session.cheese.add(p.def.id);
+  if (ev.coin !== null || ev.stomp !== null) session.paid.set(p.def.id, [...p.paid]);
   // Dust when he turns at speed, and a streak behind a dash.
   if (b.onGround && Math.abs(vx) > 1.2 && Math.sign(b.vx) !== Math.sign(vx) && !view.reduced) state.sparks.push({ x: b.x + PLAYER.w / 2, y: b.y + PLAYER.h - 1, vx: -vx * 0.2, vy: -0.3, life: 14, color: DUST });
   if (p.dash && !view.reduced)
@@ -895,6 +1009,14 @@ function play() {
   }
 }
 
+/** Walking to a clicked spot in a level: the walk's keys without its hops; at an edge or before an enemy, no keys, and the walk ends. */
+function carefully(p: Play, k: Intent): Intent {
+  const walk = carefulStep(p, k);
+  if (walk) return walk;
+  state.goal = null;
+  return STILL;
+}
+
 /** A stomp or a hit: the world holds still for two steps and the view gives a little. */
 function jolt(dx: number, dy: number) {
   if (view.reduced) return;
@@ -909,7 +1031,7 @@ function stepOnce() {
   if (state.freeze > 0) state.freeze--;
   else if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
-  else if (!loading && ++state.modeSteps > 300) reopen(state, scene.doors, input); // the place never opened
+  else if (!loading && !fetching && ++state.modeSteps > 300) reopen(state, scene.doors, input); // the place never opened
   if (state.bubble && state.steps > state.bubble.until) state.bubble = null;
   if (state.feather && state.steps - state.feather.since > FEATHER_SHOWN) state.feather = null;
   if (state.mode === "play" && state.fade > 0) state.fade = Math.max(0, state.fade - 1 / 16); // coming back from the mound
@@ -1008,7 +1130,10 @@ function drawThings(v: View) {
   for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
   if (p.troll) art.troll?.(p.troll, v);
   if (p.boss) art.boss?.(p.boss.state, v);
-  if (p.bracteate && p.bracteateAt === null) drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
+  if (p.bracteate && p.bracteateAt === null) {
+    if (owned(p)) drawBracteateOutline(p.bracteate.x, p.bracteate.y);
+    else drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
+  }
   if (p.rune && runeFree(p)) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
   if (p.pole && !p.loaded) skiPole(v);
@@ -1166,12 +1291,18 @@ function render(alpha: number) {
   let bubble: { x: number; y: number; lines: string[]; align?: "left" } | null = null;
   if (state.mode === "play" && !door) {
     const sign = scene.signs.find((s) => Math.abs(cx - s.x) < 28 && Math.abs(shown.y + PLAYER.h - s.bottom) < 8);
-    if (sign) bubble = { x: sign.x, y: sign.bottom - 30, lines: scene.def.signs[sign.i]?.lines[lang] ?? [] };
+    if (sign) {
+      const def = scene.def.signs[sign.i];
+      bubble = { x: sign.x, y: sign.bottom - 30, lines: (touch && def?.touch ? def.touch[lang] : def?.lines[lang]) ?? [] };
+    }
     const mound = scene.map ? doorsById.get("maze") : undefined;
     if (!bubble && mound && !abilities.doubleJump && Math.abs(cx - (mound.x + mound.w / 2)) < 3 * TILE && p.body.onGround && Math.abs(shown.y + PLAYER.h - mound.bottom) < 8)
       bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h - 14, lines: t.moundNoFeather };
   }
   if (state.bubble) bubble = { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] };
+  // A boss's line or hint, over it, while nothing else is speaking.
+  const boss = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? bossTop(p) : null;
+  if (!bubble && boss && state.bossLine) bubble = { x: boss.x, y: boss.y, lines: state.bossLine.lines };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
   if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [t.featherLine] };
@@ -1181,14 +1312,14 @@ function render(alpha: number) {
     if (bubble) say(bubble.lines.join(" "));
   }
 
-  // Blinking after a hit; sitting, a little lower, on the bench.
-  const blink = blinking(p) && !view.reduced && Math.floor(p.t / 4) % 2 === 0;
+  // Blinking after a hit (with reduced motion, drawn at half strength the whole time instead); sitting, a little lower, on the bench.
+  const safe = blinking(p) ? (view.reduced ? 0.5 : Math.floor(p.t / 4) % 2 === 0 ? 0.25 : 1) : 1;
   const body = p.sitting ? { ...shown, y: shown.y + 3 } : shown;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
     world: p.map,
     boards: scene.boards,
-    player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * (blink ? 0.25 : 1), phase: sky.phase, look: look() },
+    player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * safe, phase: sky.phase, look: look() },
     hint:
       door && !touch && !speaking && !frozen() && !state.bubble
         ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
@@ -1200,6 +1331,12 @@ function render(alpha: number) {
   });
   drawFlight();
   follows(door ?? (bench !== null ? benchStop : null), state.moved);
+  // The touch pad's button says what up does here: go in at a door, sit at a bench.
+  const label = !door && bench !== null ? t.sitButton : t.enter;
+  if (enterButton.textContent !== label) {
+    enterButton.textContent = label;
+    enterButton.setAttribute("aria-label", label);
+  }
   hud();
 }
 /** What the pad's enter button stands for at a bench. */
@@ -1317,6 +1454,11 @@ function still() {
 
 /** Where he arrives, the level's code if it is not here yet, and then the game runs. */
 async function start() {
+  if (debugging) {
+    pretend = (await debugging).debugProgress(params);
+    if (pretend) progress = pretend;
+    readFeather();
+  }
   const started = hasProgress(progress);
   const furthest = ORDER[furthestOpen(progress, ORDER, BUILT.length)];
   let first: string;
@@ -1342,23 +1484,31 @@ async function start() {
   }
   // The scripted routes for `?debug&auto` are fetched alongside the level, not after it, so a
   // stepped page has both before it steps.
-  const route = debug && params.has("auto") ? AUTO[first]?.().catch(() => null) ?? null : null;
-  if (first !== "kart")
+  // The scripted player itself comes with them, on demand: no visitor's first script carries it.
+  const route = debug && params.has("auto") ? Promise.all([AUTO[first]?.(), import("./game/bot")]).catch(() => null) : null;
+  let failedAtStart: string | null = null;
+  if (first !== "kart") {
+    showFetching(first);
     try {
-      await loadLevel(first);
+      await fetchLevel(first);
     } catch {
+      failedAtStart = first;
       first = "kart";
       firstAt = furthest;
     }
-  const moves = await route;
+    showFetching(null);
+  }
+  const scripted = await route;
   openScene(first, firstAt);
   if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
-  if (moves && !scene.map) auto = autopilot(moves);
+  if (failedAtStart) showLoadFailed(failedAtStart);
+  if (scripted?.[0] && !scene.map) auto = scripted[1].autopilot(scripted[0]);
 
-  // The helmet moment: out of the Opera's door in level 1, or at a station on the map.
+  // The helmet moment: out of the Opera's door in level 1, or at a station on the map. In level 1 he
+  // stands at the start, a step clear of the door he came out of, which closes behind him: so his
+  // first press of up is a jump, not the way home.
   if (from === "oslo" && !view.reduced) {
     const home = !scene.map ? scene.doors.find((d) => d.id === "home") ?? null : null;
-    if (home) standAt(home);
     state.arrive = { t: 0, off: null, door: home };
     state.alpha = 0;
     if (home) home.open = true;
@@ -1388,9 +1538,9 @@ async function start() {
 }
 void start();
 
-if (debug)
-  Object.assign(window, {
-    __game: {
+if (debugging)
+  void debugging.then((d) =>
+    d.expose({
       get body() {
         return scene.play.body;
       },
@@ -1417,5 +1567,5 @@ if (debug)
       },
       progress: () => progress,
       fresh
-    }
-  });
+    })
+  );

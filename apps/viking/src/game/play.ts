@@ -10,7 +10,7 @@ import { zonePush } from "@larshansen/pixelkit/zone";
 import { MARKS, type Boss, type LevelDef } from "../levels/types";
 import { KIND, createEnemies, enemyBox, shotBox, stepEnemies, type Enemy, type Shot } from "./enemies";
 import { SHEEP, createSheep, stepSheep, stomped, type Sheep } from "./sheep";
-import { TROLL, createTroll, resetTroll, stepTroll, trollBox, trollHurts, type Troll, type TrollEvent } from "./troll";
+import type { Troll, TrollEvent } from "./troll";
 
 // The rules of a level, as pure state and one step function: no page, no sound, no drawing. The
 // page plays it, and the tests play it with a scripted player, so both run exactly the same rules.
@@ -97,6 +97,12 @@ export interface Play {
   found: number;
   /** All skilling taken, carried from level to level until a hundred make a life. */
   purse: number;
+  /**
+   * What has gone into the purse from this level in this visit: skilling by their index on the map,
+   * beaten enemies as -1 - their index. Taken again after a restart they still count on the card,
+   * but they pay nothing towards a life twice.
+   */
+  paid: Set<number>;
   /** For the chime that climbs: how many were taken close together, and when the last was. */
   chain: { n: number; at: number };
   cheese: { box: Box; at: number | null } | null;
@@ -108,6 +114,8 @@ export interface Play {
   troll: Troll | null;
   /** The last boss, in the level that has one: its rules (from the level's own module) and its state. */
   boss: { rules: Boss; state: unknown } | null;
+  /** The level is over in a boss's fight (the boss was awake when the last life went): he may go on from the bench before it. */
+  overAtBoss: boolean;
 }
 
 export interface Events {
@@ -206,6 +214,10 @@ export interface PlayOptions {
   /** Lives and skilling carried from the level before. */
   lives?: number;
   purse?: number;
+  /** The brown cheese was taken earlier in this visit: it is not there again. */
+  cheeseTaken?: boolean;
+  /** What this level has paid into the purse earlier in this visit (see `Play.paid`). */
+  paid?: readonly number[];
 }
 
 export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
@@ -250,13 +262,15 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     skilling: skillingOf(map).map((box) => ({ box, at: null })),
     found: 0,
     purse: Math.max(0, opts.purse ?? 0),
+    paid: new Set(opts.paid ?? []),
     chain: { n: 0, at: -999 },
-    cheese: cheese ? { box: cheese, at: null } : null,
+    cheese: cheese ? { box: cheese, at: opts.cheeseTaken ? -1 : null } : null,
     dash: null,
     dashSpent: false,
     dashEnded: -999,
-    troll: def.troll ? createTroll(def.troll) : null,
-    boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null
+    troll: def.troll && def.trollRules ? def.trollRules.create(def.troll) : null,
+    boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null,
+    overAtBoss: false
   };
 }
 
@@ -266,8 +280,8 @@ export const overlaps = (b: Body, r: Box) => b.x < r.x + r.w && b.x + PLAYER.w >
 export function extraGround(p: Play, t = p.t): Carrier[] {
   const out = [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t)];
   // The troll turned to stone is a boulder he can stand on.
-  if (p.troll?.phase === "stone") {
-    const box = trollBox(p.troll);
+  if (p.troll?.phase === "stone" && p.def.trollRules) {
+    const box = p.def.trollRules.box(p.troll);
     out.push({ x: box.x, y: box.y, w: box.w, dx: 0, dy: 0 });
   }
   return out;
@@ -306,13 +320,14 @@ function loseLife(p: Play, ev: Events) {
   if (p.lives <= 0) {
     p.lives = 0;
     p.run.state = "over";
+    p.overAtBoss = bossAwake(p);
     ev.over = true;
     return;
   }
   p.hearts = HEARTS;
   putBack(p, p.save ?? p.start);
   p.safeUntil = p.t + SAFE_STEPS;
-  if (p.troll) resetTroll(p.troll, p.t);
+  if (p.troll) p.def.trollRules?.reset(p.troll, p.t);
   if (p.boss) p.boss.rules.reset(p.boss.state, p.t);
 }
 
@@ -330,8 +345,10 @@ function hit(p: Play, ev: Events, fromX: number) {
   launch(p.body, away * KNOCK.vx, -KNOCK.vy);
 }
 
-/** A skilling for the purse: every hundred is a life. */
-function addToPurse(p: Play, ev: Events) {
+/** A skilling for the purse: every hundred is a life. `what` is the coin or the beaten enemy (see `Play.paid`): each pays once a visit. */
+function addToPurse(p: Play, ev: Events, what: number) {
+  if (p.paid.has(what)) return;
+  p.paid.add(what);
   p.purse++;
   if (p.purse >= PURSE_LIFE) {
     p.purse -= PURSE_LIFE;
@@ -362,7 +379,7 @@ function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number
       bounce(b, intent.jumpHeld ? STOMP.held : STOMP.plain);
       b.y = box.y - PLAYER.h;
       p.dashSpent = false;
-      addToPurse(p, ev);
+      addToPurse(p, ev, -1 - i);
       break;
     }
     // Landing on a spiky thing hurts, and throws him up off it so he is not left standing on it.
@@ -380,10 +397,11 @@ function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number
 /** The troll: it moves, it hurts, and the dawn hits it. Once it is stone the rune shows on top of it. */
 function meetTroll(p: Play, ev: Events) {
   const t = p.troll;
-  if (!t || p.run.state === "done") return;
-  ev.troll = stepTroll(t, p.t, p.body);
-  if (ev.troll === "stone" && p.rune) p.rune = { ...p.rune, x: t.x - p.rune.w / 2, y: t.def.floor - TROLL.h - p.rune.h - 4 };
-  const hurt = trollHurts(t, p.t, p.body);
+  const rules = p.def.trollRules;
+  if (!t || !rules || p.run.state === "done") return;
+  ev.troll = rules.step(t, p.t, p.body);
+  if (ev.troll === "stone" && p.rune) p.rune = { ...p.rune, x: t.x - p.rune.w / 2, y: rules.box(t).y - p.rune.h - 4 };
+  const hurt = rules.hurts(t, p.t, p.body);
   if (hurt) hit(p, ev, hurt.fromX);
 }
 
@@ -405,6 +423,33 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
   }
   const hurt = bs.rules.hurts(bs.state, p.t, b);
   if (hurt) hit(p, ev, hurt.fromX);
+}
+
+/** True while a boss is in its fight: awake, and not yet stone or beaten. */
+export const bossAwake = (p: Play) => (!!p.troll && p.troll.phase !== "asleep" && p.troll.phase !== "stone") || (!!p.boss && !p.boss.rules.beaten(p.boss.state) && p.boss.rules.awake(p.boss.state));
+
+/** The bench right before the boss, where a Game over in its fight lets him go on from: the last bench in the level. */
+export const bossBench = (p: Play) => p.benches.at(-1) ?? null;
+
+/**
+ * After a Game over in a boss's fight: on again from the bench before it, with three lives and full
+ * hearts, and the boss asleep again with none of its hits, as if he had just come. The clock, the
+ * flags, the skilling and what else he has found stay as they were.
+ */
+export function againAtBoss(p: Play) {
+  const bench = bossBench(p);
+  if (!p.overAtBoss || !bench) return;
+  p.lives = LIVES;
+  p.hearts = HEARTS;
+  p.run.state = "running";
+  p.overAtBoss = false;
+  p.save = { ...bench };
+  putBack(p, bench);
+  p.lastGround = { ...bench };
+  p.shots = [];
+  p.safeUntil = p.t + SAFE_STEPS;
+  if (p.def.troll && p.def.trollRules) p.troll = p.def.trollRules.create(p.def.troll);
+  if (p.boss) p.boss.state = p.boss.rules.create();
 }
 
 /** True when nothing stands between him and the rune any more: no troll, or it is stone; no boss, or it is beaten. */
@@ -556,14 +601,14 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
   if (ev.step.landed > 0) ev.bell = bellUnder(p);
 
   // Skilling, the brown cheese, the bracteate and the rune.
-  for (const s of p.skilling)
-    if (s.at === null && overlaps(b, s.box)) {
-      s.at = p.t;
-      p.found++;
-      p.chain = { n: p.t - p.chain.at < 40 ? p.chain.n + 1 : 0, at: p.t };
-      ev.coin = p.chain.n;
-      addToPurse(p, ev);
-    }
+  p.skilling.forEach((s, i) => {
+    if (s.at !== null || !overlaps(b, s.box)) return;
+    s.at = p.t;
+    p.found++;
+    p.chain = { n: p.t - p.chain.at < 40 ? p.chain.n + 1 : 0, at: p.t };
+    ev.coin = p.chain.n;
+    addToPurse(p, ev, i);
+  });
   if (p.cheese && p.cheese.at === null && overlaps(b, p.cheese.box)) {
     p.cheese.at = p.t;
     p.lives++;
@@ -586,13 +631,18 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
       putBack(p, p.lastGround);
       return ev;
     }
-    p.hearts--;
-    p.hurt = true;
-    ev.hurt = true;
-    if (p.hearts <= 0) loseLife(p, ev);
+    const back = p.save ?? (p.checkpoints.reached === null ? p.lastGround : respawnAt(p.checkpoints, p.flags, p.start));
+    // Knocked in while he still blinks from a hit: the hit was the heart; the fall only puts him back.
+    if (p.t < p.safeUntil) putBack(p, back);
     else {
-      putBack(p, p.save ?? (p.checkpoints.reached === null ? p.lastGround : respawnAt(p.checkpoints, p.flags, p.start)));
-      p.safeUntil = p.t + SAFE_STEPS;
+      p.hearts--;
+      p.hurt = true;
+      ev.hurt = true;
+      if (p.hearts <= 0) loseLife(p, ev);
+      else {
+        putBack(p, back);
+        p.safeUntil = p.t + SAFE_STEPS;
+      }
     }
   } else if (b.onGround && firmUnder(p.map, b)) p.lastGround = { x: b.x + PLAYER.w / 2, bottom: b.y + PLAYER.h };
   return ev;
