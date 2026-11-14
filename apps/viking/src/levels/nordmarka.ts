@@ -235,7 +235,9 @@ const TREES = Array.from({ length: 70 }, (_, i) => {
   const c = 15 + i * 3 + ((i * 7) % 3);
   return { i, c, x: c * TILE + ((i * 5) % 9), foot: surfaceRow(c) * TILE, h: 70 + ((i * 37) % 60) };
 }).filter((tr) => !((tr.c > 86 && tr.c < 104) || (tr.c > 118 && tr.c < 141) || (tr.c > 156 && tr.c < 164) || tr.c > 195));
-const MARKS_ON_TRUNKS = TREES.filter((tr) => tr.i % 3 === 1 && tr.c > 24).map((tr) => ({ x: tr.x - 1, y: tr.foot - 26 }));
+/** The trail's marks: on every third tree, and on the trunk just past the gorge, to show where the far side is. */
+const GORGE_MARK = { x: 163 * TILE + 10, y: G * TILE - 26 };
+const MARKS_ON_TRUNKS = [...TREES.filter((tr) => tr.i % 3 === 1 && tr.c > 24).map((tr) => ({ x: tr.x - 1, y: tr.foot - 26 })), GORGE_MARK];
 /** The bog's surface tiles, which catch the light. */
 const BOG_TOPS = Array.from({ length: COLS }, (_, c) => c).filter((c) => at(c, G) === "w");
 /** Ullevålseter's hut: its left end and the ground it stands on. */
@@ -448,6 +450,26 @@ function dawnShaft(v: View) {
     }
 }
 
+/** Once the troll is stone the sun comes up: slanting rays through the trees of the clearing, stronger after the rune. */
+function sunrise(v: View) {
+  const t = v.troll;
+  if (!t || t.phase !== "stone") return;
+  const k = Math.min(1, (v.t - t.since) / 150) * 0.5 + (v.flourish !== null ? Math.min(1, v.flourish / 100) * 0.5 : 0);
+  if (k <= 0) return;
+  const g = ctx();
+  g.globalCompositeOperation = "lighter";
+  const top = view.camY;
+  for (let s = 0; s < 5; s++) {
+    const x0 = (198 + s * 6.5) * TILE;
+    for (let y = top; y < G * TILE; y += 2) {
+      const x = Math.round(x0 + (y - top) * 0.35);
+      R(x, y, 10 + (s % 2) * 6, 2, `rgba(255, 196, 120, ${(0.07 * k).toFixed(3)})`);
+    }
+  }
+  R(196 * TILE, G * TILE - 3, 33 * TILE, 3, `rgba(255, 200, 120, ${(0.25 * k).toFixed(3)})`);
+  g.globalCompositeOperation = "source-over";
+}
+
 /** The trail's mark: a spruce trunk with a blue band painted on it; once raised, the band shines and a little blue flag hangs on it. */
 function blueTrunk(f: { x: number; bottom: number }, raisedAt: number | null, t: number) {
   const x = f.x - 2;
@@ -601,6 +623,7 @@ function troll(t: Troll, v: View) {
 /** Over the dark: eyes that shine, the troll's eyes, the fireflies, the wave of the troll's slam in the dust. */
 function overDark(v: View) {
   dawnShaft(v);
+  sunrise(v);
   for (const e of v.enemies) for (const [x, y] of enemyEyes(e, v.t)) R(x, y, 1, 1, CREATURE.eye);
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);
   const t = v.troll;
@@ -734,6 +757,9 @@ export const NORDMARKA: LevelDef = {
         spruce(tr.x, tr.foot, tr.h, tr.i);
         undergrowth(tr.x - 14, tr.foot, tr.i);
       }
+      // The trunk past the gorge that carries a mark.
+      R(GORGE_MARK.x - 1, G * TILE - 70, 4, 70, FOREST.trunk);
+      R(GORGE_MARK.x - 1, G * TILE - 70, 1, 70, FOREST.trunkDark);
       for (const m of MARKS_ON_TRUNKS) {
         R(m.x - 1, m.y, 4, 4, FOREST.blaze);
         R(m.x - 1, m.y, 4, 1, FOREST.blazeLight);
