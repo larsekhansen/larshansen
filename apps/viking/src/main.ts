@@ -3,6 +3,7 @@ import "./styles.css";
 import { aim, follow } from "@larshansen/pixelkit/camera";
 import { carrierDrawn, drawCarrier, rideShown } from "@larshansen/pixelkit/carrier";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
+import { drawDark, type Light, type Ring } from "@larshansen/pixelkit/dark";
 import { wireMute } from "@larshansen/pixelkit/chrome";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door, type DoorSpot } from "@larshansen/pixelkit/doors";
@@ -213,7 +214,7 @@ function layoutBoards(s: Scene): Board[] {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
   });
-  if (s.map) {
+  if (s.map && FENCE_COL >= 0) {
     const text = t.building;
     boards.push({ text, cx: FENCE_COL * TILE + 8, y: 6 * TILE, w: boardWidth(text) });
   }
@@ -234,7 +235,9 @@ const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
 function openScene(id: string, at?: string) {
   const def = id === "kart" ? kartDef(progress) : loadedLevel(id) ?? kartDef(progress);
   readFeather();
-  const play = newPlay(def, { feather: abilities.doubleJump, pole: abilities.pole, lives: session.lives, purse: session.purse });
+  // Past Holmenkollen he has the ski pole whatever the progress says: the levels there are only open to those who cleared it.
+  const pole = abilities.pole || ORDER.indexOf(def.id) > ORDER.indexOf("holmenkollen");
+  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse });
   // `?debug&hearts=1&lives=1`: start a level with fewer, to look at a hit, a lost life or the game over.
   if (debug && params.has("hearts")) play.hearts = Math.max(1, Math.min(HEARTS, Number(params.get("hearts")) || HEARTS));
   const doors = buildDoors(doorSpots(def, play), links);
@@ -250,7 +253,7 @@ function openScene(id: string, at?: string) {
   if (door) standAt(door);
   document.body.classList.toggle("on-map", scene.map);
   finishEl.hidden = true;
-  dashButton.hidden = !abilities.pole || scene.map;
+  dashButton.hidden = !pole || scene.map;
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
@@ -337,6 +340,8 @@ let mazeText: { deaths(n: number): string; best(time: string): string; formatTim
 const fjordHelp = { text: "", hidden: false };
 /** The feather the maze reported, for the moment at the mound's stop once the map is back. */
 let featherPending: "plain" | "gold" | null = null;
+/** The level he went into the mound from (Nordmarka's door to Jernhaugen), to come back out into, as he left it. */
+let moundFrom: Scene | null = null;
 
 function showMazeHud() {
   if (!maze || !mazeText) return;
@@ -398,12 +403,41 @@ async function enterMaze() {
     // A stepped page has no frames to come: the mound is drawn once as it opens.
     if (harness) maze.render(1, 0);
   } catch {
-    // The maze did not load (or he left first): back to the map, standing at the mound.
+    // The maze did not load (or he left first): back to the map, standing at the mound, or to the level he came from.
     loading = false;
+    if (moundFrom) {
+      const back = moundFrom;
+      moundFrom = null;
+      if (location.hash === MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${back.def.id}`);
+      resumeScene(back);
+      return;
+    }
     arriveAt = "maze";
     if (location.hash === MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + "#kart");
     sync();
   }
+}
+
+/** Back out of the mound into the level he went in from, as he left it: the clock, the flags, the skilling all where they were. */
+function resumeScene(s: Scene) {
+  scene = s;
+  s.play.feather = abilities.doubleJump;
+  s.play.pole = s.play.pole || abilities.pole;
+  Object.assign(state, sceneState<Door>({ name: s.def.name, landmark: s.def.landmark, from: 0 }, lang), extraState());
+  shown = { ...s.play.body };
+  const door = s.doors.find((d) => d.id === "maze");
+  if (door) {
+    door.open = false;
+    standAt(door);
+  }
+  before.x = s.play.body.x;
+  before.y = s.play.body.y;
+  s.play.body.facing = 1;
+  document.body.classList.remove("on-map");
+  finishEl.hidden = true;
+  dashButton.hidden = !s.play.pole;
+  layout();
+  hud();
 }
 
 /** Out of the mound: the page is the map again, with him at the mound's stop. */
@@ -420,7 +454,10 @@ function leaveMazeNow() {
   help.textContent = fjordHelp.text || help.textContent;
   help.hidden = fjordHelp.text ? fjordHelp.hidden : help.hidden;
   readFeather();
-  openScene("kart", "maze");
+  const back = moundFrom;
+  moundFrom = null;
+  if (back) resumeScene(back);
+  else openScene("kart", "maze");
   reopen(state, scene.doors, input);
   if (featherPending) {
     state.feather = { since: state.steps, gold: featherPending === "gold" };
@@ -440,7 +477,7 @@ function leaveMaze(feather: "plain" | "gold" | null) {
     history.back(); // the hashchange that follows takes him out
     return;
   }
-  history.replaceState(null, "", location.pathname + location.search + "#kart");
+  history.replaceState(null, "", location.pathname + location.search + (moundFrom ? `#${moundFrom.def.id}` : "#kart"));
   leaveMazeNow();
 }
 
@@ -682,7 +719,10 @@ function goThrough() {
   const d = state.door!;
   if (!stepThrough(state, scene.play.body)) return;
   const href = d.href ?? "";
-  if (d.id === "maze") intoMaze();
+  if (d.id === "maze") {
+    moundFrom = scene.map ? null : scene;
+    intoMaze();
+  }
   else if (href.startsWith("#")) go(href.slice(1), scene.map ? undefined : scene.def.id);
   else if (href) {
     rememberDoor(LAST_DOOR, d.id);
@@ -737,6 +777,23 @@ function react(ev: Events) {
     say(t.benchSat);
   }
   if (ev.dash) sfx.play("dash");
+  if (ev.troll === "wake") {
+    sfx.play("gate");
+    say(t.trollWakes);
+  }
+  if (ev.troll === "slam") {
+    sfx.play("cannon");
+    jolt(0, 3);
+  }
+  if (ev.troll === "hit") {
+    sfx.play("stone");
+    jolt(2, 0);
+    say(t.trollHit(p.troll?.hits ?? 0));
+  }
+  if (ev.troll === "stone") {
+    sfx.play("fanfare");
+    say(t.trollStone);
+  }
   if (ev.over) {
     session.lives = 0;
     showOver();
@@ -904,17 +961,51 @@ function drawThings(v: View) {
     }
   });
   p.drums.forEach((l, i) => drawDrum(l, p.t, p.drummedAt[i]));
-  p.flags.forEach((f, i) => drawCheckpoint(f, p.raisedAt[i], p.t));
+  p.flags.forEach((f, i) => art.flag?.(i, f, p.raisedAt[i], v) || drawCheckpoint(f, p.raisedAt[i], p.t));
   p.benches.forEach((s, i) => drawBench(s.x, s.bottom, p.sitting?.i === i));
   for (const s of p.sheep) drawSheep(s);
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
   for (const e of p.enemies) if (!art.enemy?.(e, v)) drawEnemy(e, p.t);
-  for (const s of p.shots) drawShot(s);
+  for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
+  if (p.troll) art.troll?.(p.troll, v);
   if (p.bracteate && p.bracteateAt === null) drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
-  if (p.rune) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
+  if (p.rune && (!p.troll || p.troll.phase === "stone")) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
-  if (abilities.pole && !p.loaded) skiPole(v);
+  if (p.pole && !p.loaded) skiPole(v);
+}
+
+/** His headlamp: a small ring of light round him, and the beam ahead the way he looks. */
+const AROUND: Ring[] = [
+  [20, 0.5],
+  [15, 0]
+];
+const BEAM: Ring[] = [
+  [46, 0.55],
+  [40, 0.25],
+  [34, 0]
+];
+
+/**
+ * Under the trees at night: the dark over everything the street layer shows (the far layers and the
+ * sky too), with his headlamp and the level's own lights punched through it, then what shines over
+ * it (eyes in the dark, a flame). The person is drawn after, on the text layer, so he always shows.
+ */
+function drawNight(v: View) {
+  const p = scene.play;
+  const art = scene.def.art;
+  const dark = scene.def.dark!;
+  const night = Array.from({ length: view.w }, (_, x) => Math.round(Math.max(0, Math.min(1, dark(x + view.camX, v))) * 20) / 20);
+  const hx = Math.round(shown.x + PLAYER.w / 2) - view.camX;
+  const hy = Math.round(shown.y + 4) - view.camY;
+  const lights: Light[] = [
+    { x: hx, y: hy, rings: AROUND },
+    { x: hx + p.body.facing * 28, y: hy + 3, rings: BEAM }
+  ];
+  for (const l of art.lights?.(v) ?? [])
+    lights.push("rect" in l ? { rect: { ...l.rect, x: l.rect.x - view.camX, y: l.rect.y - view.camY }, dark: l.dark } : { x: l.x - view.camX, y: l.y - view.camY, rings: l.rings });
+  drawDark(lights, night, "4, 6, 18");
+  art.overDark?.(v);
 }
 
 /** Once he has it, the ski pole goes with him everywhere: held at his side, its basket near the ground. */
@@ -936,7 +1027,7 @@ function render(alpha: number) {
   const horizon = p.map.height - 4 * TILE - 34;
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
-  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null };
+  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll };
   if (art.far) pass(kit.depth(0.12), () => art.far!(v), 0.35);
   if (art.mid) pass(kit.depth(0.2), () => art.mid!(v), 0.3);
   if (art.near) pass(kit.depth(0.4), () => art.near!(v), 0.2);
@@ -952,6 +1043,7 @@ function render(alpha: number) {
     art.front?.(v);
   });
   target(street);
+  if (p.def.dark) drawNight(v);
   drawSparks(state.sparks);
   if (state.feather) {
     const f = Math.min(1, (state.steps - state.feather.since) / FEATHER_FALL);
@@ -1098,7 +1190,8 @@ if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceSta
 let auto: ((p: Play) => PlayIntent | null) | null = null;
 const AUTO: Record<string, () => Promise<Move[]>> = {
   slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
-  holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE)
+  holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE),
+  akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE)
 };
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */

@@ -1,7 +1,7 @@
 import { LANGKAIA } from "./langkaia";
 import type { LevelDef, Words } from "./types";
 
-// The ten levels, one per rune of LARS HANSEN, in the order the line runs. Five are built; the rest
+// The ten levels, one per rune of LARS HANSEN, in the order the line runs. Six are built; the rest
 // are on the plan (docs/games/LEVELS.html) and stand behind the hoarding on the line map.
 //
 // What the line map needs of a level (its name, rune and place) is here, so the map can be drawn
@@ -25,7 +25,7 @@ export const LINE: Station[] = [
   { id: "radhuset", rune: 2, name: "Rådhuset", place: { nb: "De to tårnene på Rådhusplassen", en: "The two towers on Rådhusplassen" }, built: true },
   { id: "slottet", rune: 3, name: "Slottet", place: { nb: "Karl Johan, opp til Slottet", en: "Karl Johan, uphill to the palace" }, built: true },
   { id: "holmenkollen", rune: 4, name: "Holmenkollen", place: { nb: "Hoppbakken", en: "The ski jump" }, built: true },
-  { id: "akerselva", rune: 5, name: "Akerselva", place: { nb: "Nedover elva fra Nydalen til Vaterland", en: "Down the river from Nydalen to Vaterland" }, built: false },
+  { id: "akerselva", rune: 5, name: "Akerselva", place: { nb: "Nedover elva fra Nydalen til Vaterland", en: "Down the river from Nydalen to Vaterland" }, built: true },
   { id: "nordmarka", rune: 6, name: "Nordmarka", place: { nb: "Skogen nord for byen", en: "The forest north of the city" }, built: false },
   { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: false },
   { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: false },
@@ -42,7 +42,8 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   akershus: () => import("./akershus").then((m) => m.AKERSHUS),
   radhuset: () => import("./radhuset").then((m) => m.RADHUSET),
   slottet: () => import("./slottet").then((m) => m.SLOTTET),
-  holmenkollen: () => import("./holmenkollen").then((m) => m.HOLMENKOLLEN)
+  holmenkollen: () => import("./holmenkollen").then((m) => m.HOLMENKOLLEN),
+  akerselva: () => import("./akerselva").then((m) => m.AKERSELVA)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);

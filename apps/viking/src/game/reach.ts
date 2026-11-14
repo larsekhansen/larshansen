@@ -3,6 +3,7 @@ import { fellOut } from "@larshansen/pixelkit/checkpoint";
 import { DASH, MOVE, PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { fire, launcherHit } from "@larshansen/pixelkit/launcher";
 import { bounce, createBody, dashStep, stepBody, type Body, type Carrier, type World } from "@larshansen/pixelkit/physics";
+import { zonePush } from "@larshansen/pixelkit/zone";
 import { MARKS, type LevelDef } from "../levels/types";
 import { KIND } from "./enemies";
 import { STOMP, cannonsOf, drumsOf, levelMap, type Box } from "./play";
@@ -13,7 +14,8 @@ import { SHEEP } from "./sheep";
 // the second jump when he has the feather, and the dash when he has the ski pole. Moving ground is
 // put everywhere it ever goes at once, ledges on a beat are always there, and every enemy he can
 // land on, and every sheep, is a trampoline all along its patrol and at all its heights at once, at
-// the highest bounce: a world with more to stand on and bounce off than the real one. So what this
+// the highest bounce: a world with more to stand on and bounce off than the real one. Zones push as
+// they do in the level (they never move). So what this
 // search cannot reach, he cannot reach either. (What it can reach is shown by the scripted players,
 // which play the real level.)
 
@@ -179,7 +181,8 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
       buckets.get(k)!.push(c);
     }
   const surfaceAt = def.surfaceAt ? (x: number, y: number) => def.surfaceAt!(x, y, 0) : undefined;
-  const near = (b: Body) => ({ carriers: buckets.get(Math.floor((b.x + PLAYER.w / 2) / 64)) ?? [], surfaceAt });
+  // Zones push as they do in the level: they are always there.
+  const near = (b: Body) => ({ carriers: buckets.get(Math.floor((b.x + PLAYER.w / 2) / 64)) ?? [], surfaceAt, push: zonePush(def.zones, b) });
   const launchers = [...cannonsOf(def, map), ...drumsOf(def, map)];
   const trampolines = pads(def);
   const hit = boxes.map(() => false);

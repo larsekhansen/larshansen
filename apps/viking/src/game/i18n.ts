@@ -47,7 +47,10 @@ const STRINGS = {
     overMap: "Til kartet",
     sit: "sett deg",
     benchSat: "Du hviler. Hjertene er fulle, og benken husker deg.",
-    dash: "Rykk"
+    dash: "Rykk",
+    trollWakes: "Steinen reiser seg. Det er et troll.",
+    trollHit: (n: number): string => (n >= 3 ? "Trollet blir til stein." : n === 2 ? "To tredjedeler stein." : "En tredjedel av trollet er stein."),
+    trollStone: "Trollet er stein. Sola er oppe."
   },
   en: {
     ...SCENE_WORDS.en,
@@ -89,7 +92,10 @@ const STRINGS = {
     overMap: "To the map",
     sit: "sit down",
     benchSat: "You rest. The hearts are full, and the bench will remember you.",
-    dash: "Dash"
+    dash: "Dash",
+    trollWakes: "The boulder stands up. It is a troll.",
+    trollHit: (n: number): string => (n >= 3 ? "The troll turns to stone." : n === 2 ? "Two thirds stone." : "A third of the troll is stone."),
+    trollStone: "The troll is stone. The sun is up."
   }
 };
 

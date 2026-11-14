@@ -5,9 +5,11 @@ import { LOAD_STEPS, cannon, drum, fire, launcherHit, type Launcher } from "@lar
 import { bounce, createBody, dashStep, launch, placeBody, stepBody, type Body, type Carrier, type Intent, type StepResult } from "@larshansen/pixelkit/physics";
 import { timedCarriers, timedPhase } from "@larshansen/pixelkit/timed";
 import { footOf, tileMap, type TileMap } from "@larshansen/pixelkit/tilemap";
+import { zonePush } from "@larshansen/pixelkit/zone";
 import { MARKS, type LevelDef } from "../levels/types";
 import { KIND, createEnemies, enemyBox, shotBox, stepEnemies, type Enemy, type Shot } from "./enemies";
 import { SHEEP, createSheep, stepSheep, stomped, type Sheep } from "./sheep";
+import { TROLL, createTroll, resetTroll, stepTroll, trollBox, trollHurts, type Troll, type TrollEvent } from "./troll";
 
 // The rules of a level, as pure state and one step function: no page, no sound, no drawing. The
 // page plays it, and the tests play it with a scripted player, so both run exactly the same rules.
@@ -16,7 +18,8 @@ import { SHEEP, createSheep, stepSheep, stomped, type Sheep } from "./sheep";
 // heart; with no hearts left a life goes, and with no lives left the level is over (and starts
 // again from the beginning). Flags keep the spot when touched; a bench keeps it and fills the
 // hearts when he sits on it. Skilling are counted, 100 make a life, and a slice of brown cheese is
-// a life. With the ski pole (from Holmenkollen) he can dash.
+// a life. With the ski pole (from Holmenkollen) he can dash. Zones push him (a waterfall down), and
+// in Nordmarka the troll waits at the end: the rune shows when it has turned to stone.
 
 /** Hearts he has when a level starts or a life begins; lives he starts the game with. */
 export const HEARTS = 3;
@@ -100,6 +103,8 @@ export interface Play {
   dash: { left: number; dir: 1 | -1 } | null;
   dashSpent: boolean;
   dashEnded: number;
+  /** The troll, in the level that has one. */
+  troll: Troll | null;
 }
 
 export interface Events {
@@ -129,6 +134,8 @@ export interface Events {
   dash: boolean;
   /** Throwers that threw this step. */
   thrown: number[];
+  /** What the troll did this step: woke, raised its club, slammed it down, was hit by the dawn, turned to stone. */
+  troll: TrollEvent;
 }
 
 /** The tiles marked with a letter, as boxes or feet. */
@@ -240,7 +247,8 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     cheese: cheese ? { box: cheese, at: null } : null,
     dash: null,
     dashSpent: false,
-    dashEnded: -999
+    dashEnded: -999,
+    troll: def.troll ? createTroll(def.troll) : null
   };
 }
 
@@ -248,7 +256,13 @@ export const overlaps = (b: Body, r: Box) => b.x < r.x + r.w && b.x + PLAYER.w >
 
 /** Moving ground this step: the carriers near him and the ledges on a beat that are there. */
 export function extraGround(p: Play, t = p.t): Carrier[] {
-  return [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t)];
+  const out = [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t)];
+  // The troll turned to stone is a boulder he can stand on.
+  if (p.troll?.phase === "stone") {
+    const box = trollBox(p.troll);
+    out.push({ x: box.x, y: box.y, w: box.w, dx: 0, dy: 0 });
+  }
+  return out;
 }
 
 /** The ledge on a beat he stands on, if any. */
@@ -290,6 +304,7 @@ function loseLife(p: Play, ev: Events) {
   p.hearts = HEARTS;
   putBack(p, p.save ?? p.start);
   p.safeUntil = p.t + SAFE_STEPS;
+  if (p.troll) resetTroll(p.troll, p.t);
 }
 
 /** A touch from something that hurts, from `fromX`: a heart, a knock away from it, and a moment of safety. */
@@ -353,6 +368,16 @@ function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number
     }
 }
 
+/** The troll: it moves, it hurts, and the dawn hits it. Once it is stone the rune shows on top of it. */
+function meetTroll(p: Play, ev: Events) {
+  const t = p.troll;
+  if (!t || p.run.state === "done") return;
+  ev.troll = stepTroll(t, p.t, p.body);
+  if (ev.troll === "stone" && p.rune) p.rune = { ...p.rune, x: t.x - p.rune.w / 2, y: t.def.floor - TROLL.h - p.rune.h - 4 };
+  const hurt = trollHurts(t, p.t, p.body);
+  if (hurt) hit(p, ev, hurt.fromX);
+}
+
 /** One step of the level. Pure apart from `p`, which it moves on. */
 export function stepPlay(p: Play, intent: PlayIntent): Events {
   const ev: Events = {
@@ -375,7 +400,8 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     over: false,
     bench: null,
     dash: false,
-    thrown: []
+    thrown: [],
+    troll: null
   };
   if (p.run.state === "over") return ev;
   p.t++;
@@ -431,7 +457,7 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
       p.dashEnded = p.t;
     }
   } else {
-    ev.step = stepBody(b, intent, p.map, { doubleJump: p.feather }, { carriers: extraGround(p), surfaceAt: p.def.surfaceAt ? (x, y) => p.def.surfaceAt!(x, y, p.t) : undefined });
+    ev.step = stepBody(b, intent, p.map, { doubleJump: p.feather }, { carriers: extraGround(p), surfaceAt: p.def.surfaceAt ? (x, y) => p.def.surfaceAt!(x, y, p.t) : undefined, push: zonePush(p.def.zones, b) });
     if (b.onGround) p.dashSpent = false;
   }
   ev.moved = ev.moved || intent.left || intent.right || ev.step.jumped;
@@ -471,6 +497,8 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
 
   meetEnemies(p, ev, intent, prevBottom);
   if (ev.over) return ev;
+  meetTroll(p, ev);
+  if (ev.over) return ev;
 
   const before = p.checkpoints.reached;
   p.checkpoints = touchFlags(p.checkpoints, p.flags, b);
@@ -500,7 +528,7 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     p.bracteateAt = p.t;
     ev.bracteate = true;
   }
-  if (p.rune && p.runeAt === null && overlaps(b, p.rune)) {
+  if (p.rune && p.runeAt === null && (!p.troll || p.troll.phase === "stone") && overlaps(b, p.rune)) {
     p.runeAt = p.t;
     p.run.state = "done";
     ev.rune = true;

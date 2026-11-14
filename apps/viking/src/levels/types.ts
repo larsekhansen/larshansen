@@ -1,4 +1,6 @@
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
+import type { Flag } from "@larshansen/pixelkit/checkpoint";
+import type { Light } from "@larshansen/pixelkit/dark";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import type { Surface as Footing } from "@larshansen/pixelkit/surface";
 import type { Enemy, EnemyDef } from "../game/enemies";
@@ -7,6 +9,8 @@ import type { Sky, SkyName } from "@larshansen/pixelkit/oslo";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import type { TimedLedge } from "@larshansen/pixelkit/timed";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
+import type { Zone } from "@larshansen/pixelkit/zone";
+import type { Troll, TrollDef } from "../game/troll";
 
 // What a level is, as data: its map and legend, the things in it, its words, and how it is drawn.
 // One runner (game/play.ts for the rules, main.ts and render/ for the page) plays any of them.
@@ -86,6 +90,10 @@ export interface View {
   him: { x: number; y: number };
   /** Steps since the rune was taken, while the level's flourish plays; otherwise null. */
   flourish: number | null;
+  /** The way he faces, for a headlamp. */
+  facing: 1 | -1;
+  /** The troll, in a level that has one. */
+  troll: Troll | null;
 }
 
 export interface Art {
@@ -113,6 +121,14 @@ export interface Art {
   enemy?(e: Enemy, v: View): boolean;
   /** The flourish after the rune, `age` steps in: lights coming on, a flag going up. */
   flourish?(age: number, v: View): void;
+  /** Draws flag `i` its own way (a blue-painted trunk) and says so; false leaves it to the kit's flagpole. */
+  flag?(i: number, f: Flag, raisedAt: number | null, v: View): boolean;
+  /** In a dark level: what shows through the dark besides his headlamp (lit windows, painted trunks), in world pixels. */
+  lights?(v: View): Light[];
+  /** In a dark level: what is drawn over the dark, so it shines (eyes, a lamp's own flame). */
+  overDark?(v: View): void;
+  /** Draws the troll. */
+  troll?(t: Troll, v: View): void;
 }
 
 export interface LevelDef {
@@ -153,6 +169,12 @@ export interface LevelDef {
   flourishLook?: number;
   /** Where fireworks burst when the rune is taken, if anywhere: world x and y. */
   fireworks?: [number, number][];
+  /** Zones that push him while he is in them: a waterfall pushes down, a current along. */
+  zones?: Zone[];
+  /** A level under the trees at night: how dark it is at world x, 0 (open sky) to 1 (black), as things are now. */
+  dark?(x: number, v: View): number;
+  /** The boss at the end, in the level that has one: the troll of Nordmarka. The rune shows when it has turned to stone. */
+  troll?: TrollDef;
   art: Art;
 }
 

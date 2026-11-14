@@ -1,4 +1,5 @@
 import { PLAYER } from "@larshansen/pixelkit/config";
+import { AKERSELVA } from "../levels/akerselva";
 import { AKERSHUS } from "../levels/akershus";
 import { HOLMENKOLLEN } from "../levels/holmenkollen";
 import { LANGKAIA } from "../levels/langkaia";
@@ -12,7 +13,7 @@ import { search } from "./reach";
 // Without the feather, with the ski pole: what the bracteate must be out of reach of.
 
 declare const self: Worker;
-const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN };
+const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA };
 
 self.onmessage = (e: MessageEvent<string>) => {
   const def = LEVELS[e.data];

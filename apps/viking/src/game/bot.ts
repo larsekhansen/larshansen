@@ -79,8 +79,8 @@ export const jump = (dir: -1 | 0 | 1, opts: { hold?: number; release?: number; s
   }
 });
 
-/** Runs towards `edge` (a number, or worked out each step) and jumps there, holding the direction until he lands. */
-export const leap = (edge: number | ((p: Play) => number), dir: -1 | 1, opts: { release?: number } = {}): Move => ({
+/** Runs towards `edge` (a number, or worked out each step) and jumps there, holding the direction until he lands; with `dash`, the ski pole's dash that many steps into the air. */
+export const leap = (edge: number | ((p: Play) => number), dir: -1 | 1, opts: { release?: number; dash?: number } = {}): Move => ({
   name: `leap at ${typeof edge === "number" ? edge : "a moving edge"}`,
   keys(p, s) {
     if (s.air && p.body.onGround) return "done";
@@ -92,7 +92,7 @@ export const leap = (edge: number | ((p: Play) => number), dir: -1 | 1, opts: { 
       else return keys(dir);
     }
     const k = s.i - (s.took as number);
-    return keys(k < (opts.release ?? 999) ? dir : 0, k < 40, k === 0);
+    return { ...keys(k < (opts.release ?? 999) ? dir : 0, k < 40, k === 0), dash: opts.dash !== undefined && k === opts.dash };
   }
 });
 
