@@ -249,8 +249,8 @@ function city(v: View) {
       const roof = n % 5 === 0 ? HILL.roofRed : n % 7 === 0 ? HILL.roofTeal : mix(wall, INK, 0.25);
       box(x, base - h, w, h + 14, wall);
       for (let k = 0; k < 3; k++) box(x + k, base - h - 3 + k, w - k * 2, 1, roof);
-      if (n % 3 !== 1) lit(x + 2, base - h + 2, 1, 1);
-      if (n % 4 === 0 && w > 7) lit(x + w - 3, base - h + 2, 1, 1);
+      if (n % 3 !== 1) lit(x + 2, base - h + 2 + (n % 3), 1, 1);
+      if (n % 4 === 0 && w > 7) lit(x + w - 3, base - h + 3, 1, 1);
       if (h > 9) lit(x + 2, base - h + 6, 1, 1);
       x += w + 1;
     }
@@ -529,9 +529,9 @@ function gustLeaves(z: Zone, t: number) {
     const x = dir < 0 ? z.x + z.w - run + 20 : z.x + run - 20;
     if (x < z.x - 4 || x > z.x + z.w + 4) continue;
     const y = z.y + ((i * 37) % Math.max(8, z.h - 8)) + Math.round(Math.sin(tt * 0.1 + i) * 3);
-    R(x, y, 2, 1, i % 3 ? HILL.leaf : HILL.leafRed);
-    R(x + (dir < 0 ? 2 : -1), y + 1, 1, 1, i % 3 ? HILL.leaf : HILL.leafRed);
-    if (phase === "live" && i % 4 === 0) R(x - dir * 6, y + 1, 5, 1, "rgba(255, 255, 255, 0.35)");
+    R(x, y, 3, 2, i % 3 ? HILL.leaf : HILL.leafRed);
+    R(x + (dir < 0 ? 3 : -1), y + 1, 1, 1, i % 3 ? HILL.leaf : HILL.leafRed);
+    if (phase === "live" && i % 3 === 0) R(x - dir * 4 + (dir < 0 ? 0 : -8), y + 3, 10, 1, "rgba(255, 255, 255, 0.5)");
   }
 }
 

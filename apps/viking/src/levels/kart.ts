@@ -15,9 +15,9 @@ import type { LevelDef, View } from "./types";
 // The line map: one T-bane line, thick and red, with a station for each of the ten levels. He walks
 // along it like anywhere else and goes in at a station. Its rune is carved above it, lit once the
 // level is cleared; its name is on a board under it, with the best time once there is one. A branch
-// dips under the line to Jernhaugen, the burial mound with the maze. The stations not built yet
-// stand behind a construction fence. Hjem, the door home, is at the far left. A level cleared
-// without losing a heart gets a small waffle heart beside its rune.
+// dips under the line to Jernhaugen, the burial mound with the maze. Stations not built would stand
+// behind a construction fence; with all ten built there is none. Hjem, the door home, is at the far
+// left. A level cleared without losing a heart gets a small waffle heart beside its rune.
 //
 //   L  the line, on a viaduct   #  the floor of the dip   F  the fence   h Hjem   j Jernhaugen
 //   1 to 9, 0  the stations

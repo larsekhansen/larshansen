@@ -111,7 +111,9 @@ b.fill(177, 178, S - 1, S - 1, "B");
 
 // Marks: the start, the doors, signs, flags, benches, the rune, the bracteate, the cheese.
 b.put(2, S - 1, "t").put(4, S - 1, "S").put(7, S - 1, "i");
-b.put(10, S - 3, "f").put(84, S - 1, "b").put(100, S - 1, "f").put(108, S - 1, "i");
+b.put(10, S - 3, "f").put(83, S - 3, "b").put(100, S - 1, "f").put(108, S - 1, "i");
+// A stone plinth by the lane's wall, a bench on it: a little off the path.
+b.run(82, 84, S - 2, "=");
 b.put(161, S - 1, "f").put(163, S - 1, "b").put(165, S - 1, "i");
 b.put(214, S - 1, "h").put(218, S - 2, "r").put(42, 0, "o").put(130, 0, "&");
 
@@ -225,7 +227,7 @@ const HOME = { x: 211 * TILE, w: 8 * TILE, top: S * TILE - 64, window: { x: 216 
 /** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. */
 function dark(x: number, v: View) {
   const c = x / TILE;
-  const n = c < 80 ? 0 : c < 84 ? ((c - 80) / 4) * 0.82 : c < 110 ? 0.82 : c < 116 ? 0.82 - ((c - 110) / 6) * 0.82 : 0;
+  const n = c < 80 ? 0 : c < 84 ? ((c - 80) / 4) * 0.72 : c < 110 ? 0.72 : c < 116 ? 0.72 - ((c - 110) / 6) * 0.72 : 0;
   return v.flourish !== null ? n * Math.max(0, 1 - v.flourish / 60) : n;
 }
 

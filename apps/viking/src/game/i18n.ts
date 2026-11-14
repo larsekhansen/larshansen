@@ -53,7 +53,7 @@ const STRINGS = {
     trollStone: "Trollet er stein. Sola er oppe.",
     locked: "kommer snart",
     quintleSoon: "Quintle flytter inn når det er ute på Google Play",
-    runesLeft: (n: number) => `${NB_COUNT[n] ?? n} av ti runer. Resten ligger langs linja.`,
+    runesLeft: (n: number) => (n >= 10 ? "Ti av ti runer." : `${NB_COUNT[n] ?? n} av ti runer. Resten ligger langs linja.`),
     homeLine: "Ti av ti runer: LARS HANSEN. Velkommen hjem."
   },
   en: {
@@ -102,7 +102,7 @@ const STRINGS = {
     trollStone: "The troll is stone. The sun is up.",
     locked: "coming soon",
     quintleSoon: "Quintle moves in once it is out on Google Play",
-    runesLeft: (n: number) => `${EN_COUNT[n] ?? n} of ten runes. The rest are along the line.`,
+    runesLeft: (n: number) => (n >= 10 ? "Ten of ten runes." : `${EN_COUNT[n] ?? n} of ten runes. The rest are along the line.`),
     homeLine: "Ten of ten runes: LARS HANSEN. Welcome home."
   }
 };
