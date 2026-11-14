@@ -76,6 +76,8 @@ const OVERRIDES: Record<string, Omit<Sky, "month"> & { month?: number }> = {
   night: { phase: "night", snow: false, aurora: true, flags: false },
   twilight: { phase: "twilight", month: 6, snow: false, aurora: false, flags: false },
   winter: { phase: "night", month: 1, snow: true, aurora: true, flags: false },
+  // A winter's day with snow falling: pinned by the viking game's ski jump; not in the T key's round.
+  winterday: { phase: "day", month: 1, snow: true, aurora: false, flags: false },
   "17mai": { phase: "day", month: 5, snow: false, aurora: false, flags: true }
 };
 

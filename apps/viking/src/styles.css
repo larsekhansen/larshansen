@@ -240,3 +240,74 @@ body {
   border-color: rgba(31, 26, 23, 0.14);
   background: #fff;
 }
+
+/* Hearts and lives: three waffle hearts, and a small helmet with the lives beside it. */
+.life {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.hearts,
+.lives {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.hearts svg {
+  width: 14px;
+  height: 12px;
+  shape-rendering: crispEdges;
+}
+
+.hearts svg.gone {
+  opacity: 0.22;
+}
+
+.lives svg {
+  width: 13px;
+  height: 12px;
+  shape-rendering: crispEdges;
+}
+
+.on-map .hearts {
+  display: none;
+}
+
+/* Skilling found in this level: a small copper coin and a count. Hidden in levels without any. */
+.coins {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin: 0;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.coins[hidden] {
+  display: none;
+}
+
+.coins i {
+  width: 10px;
+  height: 10px;
+  border: 2px solid #8f5326;
+  border-radius: 50%;
+  background: #d08443;
+  box-sizing: border-box;
+}
+
+.in-maze .life,
+.in-maze .coins {
+  display: none;
+}
+
+@media (max-width: 999px) and (min-width: 760px) {
+  .coins span small {
+    display: none;
+  }
+}

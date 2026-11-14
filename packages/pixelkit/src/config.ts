@@ -28,3 +28,9 @@ export const JUMP = {
 export const LAUNCH = {
   steer: 0.05
 };
+
+/** The ski pole's dash: level flight, three tiles in ten steps, once each time he is in the air. Added on top of the run and the jump, which stay as they are. */
+export const DASH = {
+  speed: 4.8,
+  steps: 10
+};

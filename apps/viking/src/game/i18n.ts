@@ -3,6 +3,9 @@
 
 import { SCENE_WORDS, type Lang } from "@larshansen/pixelkit/i18n";
 
+const NB_COUNT = ["Null", "Én", "To", "Tre", "Fire", "Fem", "Seks", "Sju", "Åtte", "Ni", "Ti"];
+const EN_COUNT = ["None", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten"];
+
 const STRINGS = {
   nb: {
     ...SCENE_WORDS.nb,
@@ -20,7 +23,7 @@ const STRINGS = {
     finishBest: (t: string) => `Bestetida di er ${t}.`,
     goldFound: "Brakteaten: funnet.",
     goldMissed: "Brakteaten: ikke funnet. Den henger høyt.",
-    moreToBuild: "Tre av ti runer. Resten av byen er under bygging.",
+    moreToBuild: (n: number) => `${NB_COUNT[n] ?? n} av ti runer. Resten av byen er under bygging.`,
     restart: "Start banen på nytt",
     best: "best",
     runes: (n: number) => `${n} av 10 runer`,
@@ -28,7 +31,23 @@ const STRINGS = {
     runeFound: (ch: string, name: string) => `Rune ${ch}, ${name}.`,
     goldAnnounce: "En gullbrakteat.",
     flagAnnounce: "Flagget er heist. Faller du, starter du her.",
-    gold: (n: number) => `${n} gullbrakteater`
+    gold: (n: number) => `${n} gullbrakteater`,
+    hearts: (n: number) => `${n} av 3 hjerter`,
+    lives: (n: number) => (n === 1 ? "1 liv" : `${n} liv`),
+    skilling: (n: number, of: number) => `${n} av ${of} skilling`,
+    finishSkilling: (n: number, of: number) => `Skilling: ${n} av ${of}.`,
+    finishClean: "Uten å miste et hjerte.",
+    finishPole: "Du har fått skistaven: Shift eller X for et kort rykk, også i lufta.",
+    hurt: (n: number) => (n === 1 ? "Au. Ett hjerte igjen." : `Au. ${n} hjerter igjen.`),
+    lifeLost: (n: number) => (n === 1 ? "Et liv mindre. Ett igjen." : `Et liv mindre. ${n} igjen.`),
+    lifeWon: "Et liv til.",
+    overTitle: "Game over",
+    overLine: "Banen starter forfra, med tre liv. Runene du har, beholder du.",
+    overAgain: "Prøv igjen",
+    overMap: "Til kartet",
+    sit: "sett deg",
+    benchSat: "Du hviler. Hjertene er fulle, og benken husker deg.",
+    dash: "Rykk"
   },
   en: {
     ...SCENE_WORDS.en,
@@ -46,7 +65,7 @@ const STRINGS = {
     finishBest: (t: string) => `Your best is ${t}.`,
     goldFound: "The bracteate: found.",
     goldMissed: "The bracteate: not found. It hangs high.",
-    moreToBuild: "Three of ten runes. The rest of the city is being built.",
+    moreToBuild: (n: number) => `${EN_COUNT[n] ?? n} of ten runes. The rest of the city is being built.`,
     restart: "Start the level again",
     best: "best",
     runes: (n: number) => `${n} of 10 runes`,
@@ -54,7 +73,23 @@ const STRINGS = {
     runeFound: (ch: string, name: string) => `Rune ${ch}, ${name}.`,
     goldAnnounce: "A gold bracteate.",
     flagAnnounce: "The flag is up. Fall, and you start here.",
-    gold: (n: number) => `${n} gold bracteates`
+    gold: (n: number) => `${n} gold bracteates`,
+    hearts: (n: number) => `${n} of 3 hearts`,
+    lives: (n: number) => (n === 1 ? "1 life" : `${n} lives`),
+    skilling: (n: number, of: number) => `${n} of ${of} skilling`,
+    finishSkilling: (n: number, of: number) => `Skilling: ${n} of ${of}.`,
+    finishClean: "Without losing a heart.",
+    finishPole: "You have the ski pole: Shift or X for a short dash, in the air too.",
+    hurt: (n: number) => (n === 1 ? "Ouch. One heart left." : `Ouch. ${n} hearts left.`),
+    lifeLost: (n: number) => (n === 1 ? "A life lost. One left." : `A life lost. ${n} left.`),
+    lifeWon: "One more life.",
+    overTitle: "Game over",
+    overLine: "The level starts over, with three lives. The runes you have, you keep.",
+    overAgain: "Try again",
+    overMap: "To the map",
+    sit: "sit down",
+    benchSat: "You rest. The hearts are full, and the bench will remember you.",
+    dash: "Dash"
   }
 };
 

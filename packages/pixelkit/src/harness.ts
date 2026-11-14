@@ -3,13 +3,13 @@ import { seeded } from "./paint";
 
 // A way to look at a scene where nothing fires animation frames (headless Firefox on the Pi).
 // `?debug&steps=N` runs N physics steps at load, in one go, and then draws one frame; nothing moves
-// after that. `&keys=r60,j1,r30` holds keys while stepping: r right, l left, j jump, u up, n nothing,
-// each for the number of steps after it. Everything that moves on screen (water, smoke, clouds,
+// after that. `&keys=r60,j1,r30` holds keys while stepping: r right, l left, j jump, u up, d dash,
+// n nothing, each for the number of steps after it. Everything that moves on screen (water, smoke, clouds,
 // snow) runs on the step count, the date is fixed and the dice are loaded, so two runs give the
 // same pixels.
 
-const LETTERS: Record<string, Action[]> = { r: ["right"], l: ["left"], j: ["jump"], u: ["up"], n: [] };
-const KEYS: Action[] = ["left", "right", "jump", "up"];
+const LETTERS: Record<string, Action[]> = { r: ["right"], l: ["left"], j: ["jump"], u: ["up"], d: ["dash"], n: [] };
+const KEYS: Action[] = ["left", "right", "jump", "up", "dash"];
 
 /** The moment the frozen clock shows: midsummer, at noon in Oslo. */
 export const FROZEN_NOW = new Date("2026-06-15T10:00:00Z");
