@@ -1,54 +1,126 @@
+import { box, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { DOORWAY, FACADE, GLASS, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { DOORWAY, FACADE, GLASS, INK, LAMP, LAND, METAL, PAINT, PALETTE, ROOF as ROOFS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, WOOD_LEDGE, ledge, pane, plankDoor, smoke, type LedgeLook } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
+import type { EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { drawLongship } from "../render/ship";
 import { tbaneDoor, walls } from "../render/furniture";
+import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
-// Level 1, rune L: Langkaia, the quay on the water side of the Opera. He comes out of the stage
-// tower's door, walks down the marble roof to the quay, past two harbour sheds, out along a jetty,
-// over three floating sauna rafts, and up the moored longship's mast to the rune over the yard.
-// Teaches: walking, the jump, ledges you jump up through, water that puts you back, moving ground.
+// Level 1, rune L: Langkaia, the quay on the water side of the Opera, and the first level anyone
+// plays. He comes out of the stage tower's door, walks down the marble roof to the quay, past the
+// two harbour sheds, and out over the harbour: the sauna rafts, the sauna club's pier, two rafts
+// that drift towards each other, Sørenga's floating promenade with its diving tower, a stone quay,
+// and up the moored longship's mast to the rune over the yard.
 //
-//   M  Opera marble   -  the stage tower's roof   Q  quay   P  jetty   B  crate   _  wooden ledge
-//   ~  harbour water  #  the harbour bed   t T-banen  h Hjem  q Runesmia  v Verkstedet
+// It teaches from nothing, gently: walking (down the roof), the jump (a crate in the way), ledges
+// you jump up through (the sheds' roofs, with skilling on them), the first skilling, a pigeon on its
+// own, the first bench and the first flag; then the first water, right after the flag, two tiles
+// wide. Nothing here needs the dash or the feather; only the bracteate over the Opera does.
+//
+//   M  Opera marble   -  the stage tower's roof   Q  quay   P  jetty and pontoons   B  crate
+//   _  wooden ledges (roofs, the deck, the mast)   =  the diving tower's platforms   ~  harbour water
+//   #  the harbour bed   t T-banen  h Hjem  q Runesmia  v Verkstedet   b  bench   $  skilling   &  cheese
+//
+// Sections: the quay (teach: everything above, where nothing can be lost), the sauna rafts
+// (practise: over the water on moving ground, the middle flag on the club's pier), the drifting
+// rafts and Sørenga (twist: moving ground onto moving ground, a high road over the cabin roofs, gulls,
+// the diving tower), and the longship (set piece: aboard, up the mast, the yard, the rune).
 
-export const MAP = [
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "....................................................................................................",
-  "..o.................................................................................................",
-  "-----...............................................................................................",
-  "....................................................................................................",
-  "..................................................................................r.................",
-  ".t..hS..............................................................................................",
-  "MMMMMMM......................................................................._________.............",
-  "MMMMMMM.............................................................................................",
-  "MMMMMMM............................................................................__...............",
-  "MMMMMMM.............................................................................................",
-  "MMMMMMM........................................................................__...................",
-  "MMMMMMM.................______.B.______.............................................................",
-  "MMMMMMM..............i....q...BB...v.....i..i.............................________________..........",
-  "MMMMMMMQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQPPPPPP~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-  "MMMMMMMQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~",
-  "MMMMMMMQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ##########################################################",
-  "MMMMMMMQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQQ##########################################################"
+const COLS = 250;
+const ROWS = 20;
+/** The water line, the quay's top, as a row. */
+const W = 16;
+const b = mapBuilder(COLS, ROWS);
+
+// --- The Opera and the quay ------------------------------------------------------------------------
+b.fill(0, 6, 9, ROWS - 1, "M");
+b.run(0, 4, 5, "-");
+b.ground(7, 61, W, "Q");
+// The harbour from the quay's end on: water two tiles deep over its bed.
+b.fill(62, COLS - 1, W, W + 1, "~");
+b.ground(62, COLS - 1, W + 2);
+// The sheds' flat roofs, the crates between them (the first jump), the sauna club's deck with a bench.
+b.run(24, 29, 14, "_").run(33, 38, 14, "_");
+b.put(30, 15, "B").put(31, 15, "B").put(31, 14, "B");
+b.run(54, 57, 15, "_");
+
+// --- The sauna rafts: the jetty, two rafts, a pontoon, a raft that drifts, the club's pier --------------
+b.run(62, 66, W, "P");
+b.run(81, 88, W, "P");
+b.run(101, 121, W, "P");
+b.run(110, 113, 14, "_");
+
+// --- Two rafts that drift together, the sailboat's crosstree, Sørenga's promenade and diving tower ----
+b.run(137, 139, 12, "_");
+b.run(142, 165, W, "P");
+b.run(158, 159, 14, "=").run(155, 156, 12, "=").run(158, 159, 10, "=").run(155, 159, 8, "=");
+
+// --- The stone quay, a rowing boat, and the longship: its deck, a chest and barrels, the ledges up its
+// mast, the yard, the lookout at the masthead ----------------------------------------------------------
+b.ground(168, 187, W, "Q");
+b.run(193, 229, 15, "_");
+b.put(197, 14, "B").put(201, 14, "B").put(201, 13, "B");
+b.run(211, 212, 13, "_").run(214, 215, 11, "_").run(211, 212, 9, "_");
+b.run(207, 219, 7, "_");
+b.run(212, 214, 5, "_");
+
+// Marks: the start, the doors, signs, benches, flags, the rune, the bracteate, the cheese.
+b.put(1, 8, "t").put(4, 8, "h").put(5, 8, "S").put(2, 4, "o");
+b.put(21, 15, "i").put(26, 15, "q").put(35, 15, "v").put(41, 15, "i");
+b.put(55, 14, "b").put(59, 15, "i").put(61, 15, "f");
+b.put(119, 15, "f").put(144, 15, "f").put(157, 7, "&");
+b.put(172, 15, "b").put(175, 15, "i").put(178, 15, "f");
+b.put(213, 2, "r");
+
+// Skilling: down the roof, the first two on the quay, the sheds' roofs (up through them), over the
+// crates and the pigeon, over every gap and on the rafts' roofs, the hut on the pier, the high road
+// over the drifting rafts, the crosstree, over the rat, the diving tower's top, the deck, up the mast,
+// the far end of the yard; and four by the bracteate over the Opera.
+const COINS: [number, number][] = [
+  [0, 4], [1, 4], [3, 4], [4, 4],
+  [13, 11], [15, 12], [17, 13],
+  [22, 15], [23, 15],
+  [25, 13], [26, 13], [27, 13], [28, 13],
+  [31, 13],
+  [34, 13], [35, 13], [36, 13], [37, 13],
+  [47, 13], [48, 12], [49, 13],
+  [67, 14], [68, 14], [70, 13], [71, 13], [73, 14], [74, 14], [76, 13], [77, 13], [79, 14], [80, 14],
+  [82, 15], [83, 15],
+  [94, 13], [95, 13], [99, 14], [100, 14],
+  [110, 13], [111, 13], [112, 13], [113, 13],
+  [125, 13], [127, 13], [129, 13], [131, 13], [133, 13], [135, 13],
+  [137, 11], [138, 11], [139, 11],
+  [140, 14], [141, 14],
+  [149, 13], [150, 12], [151, 13],
+  [155, 7], [156, 7], [158, 7], [159, 7],
+  [166, 14], [167, 14],
+  [170, 15], [171, 15],
+  [188, 14], [189, 14], [192, 13],
+  [197, 12], [201, 11], [204, 12], [205, 11], [206, 12],
+  [211, 12], [215, 10], [211, 8], [212, 4], [214, 4],
+  [218, 6], [219, 6], [220, 6]
 ];
+for (const [c, r] of COINS) b.put(c, r, "$");
+
+export const MAP = b.rows_();
 
 const P = PALETTE;
 /** The water line, the quay's top. */
-const WATER = 16 * TILE;
+const WATER = W * TILE;
 const RAMP = { points: [[7 * TILE, 9 * TILE], [21 * TILE, WATER]] as [number, number][] };
 
-// Three sauna rafts that bob three pixels on a slow beat, out of step; the third also drifts four
-// tiles away from the second and back. Each has a cabin whose roof is a ledge riding with it.
+// --- Things that move ----------------------------------------------------------------------------------
+
+// Sauna rafts bob three pixels on a slow beat, out of step. Each has a cabin whose roof is a ledge
+// riding with it. Some drift: across a gap and back, easing at each end.
 const DECK = WATER - 4;
 const ROOF = DECK - 20;
 const BOB = { rise: 3, period: 200 };
@@ -56,14 +128,65 @@ const raft = (x: number, offset: number): CarrierDef[] => [
   { kind: "bob", x, y: DECK, w: 4 * TILE, rise: BOB.rise, period: BOB.period, offset },
   { kind: "bob", x: x + TILE, y: ROOF, w: 2 * TILE, rise: BOB.rise, period: BOB.period, offset }
 ];
-const drift = (x: number, offset: number): CarrierDef[] => [
-  { kind: "travel", from: { x, y: DECK }, to: { x: x + 4 * TILE, y: DECK }, w: 4 * TILE, period: 420, offset, bob: BOB },
-  { kind: "travel", from: { x: x + TILE, y: ROOF }, to: { x: x + 5 * TILE, y: ROOF }, w: 2 * TILE, period: 420, offset, bob: BOB }
+const drift = (from: number, to: number, offset: number, period: number): CarrierDef[] => [
+  { kind: "travel", from: { x: from, y: DECK }, to: { x: to, y: DECK }, w: 4 * TILE, period, offset, bob: BOB },
+  { kind: "travel", from: { x: from + TILE, y: ROOF }, to: { x: to + TILE, y: ROOF }, w: 2 * TILE, period, offset, bob: BOB }
 ];
-export const RAFTS: CarrierDef[] = [...raft(50 * TILE, 0), ...raft(57 * TILE, 70), ...drift(1016, 140)];
+/**
+ * The two rafts that drift towards each other: each waits at its own end, comes over at a steady
+ * pace, and the two stand side by side in the middle for a second and a half before they part.
+ */
+export const TOGETHER = { speed: 0.4, atEnd: 60, together: 90 };
+const meeting = (from: number, to: number): CarrierDef[] =>
+  [0, 1].map((k) => ({
+    kind: "path",
+    points: [
+      { x: from + k * TILE, y: k ? ROOF : DECK },
+      { x: to + k * TILE, y: k ? ROOF : DECK },
+      { x: from + k * TILE, y: k ? ROOF : DECK }
+    ],
+    w: (4 - 2 * k) * TILE,
+    speed: TOGETHER.speed,
+    wait: 0,
+    stops: [
+      { at: 0, steps: TOGETHER.atEnd },
+      { at: 1, steps: TOGETHER.together }
+    ],
+    bob: BOB
+  }));
+export const RAFTS: CarrierDef[] = [
+  ...raft(69 * TILE, 0),
+  ...raft(75 * TILE, 70),
+  ...drift(91 * TILE, 95 * TILE, 140, 420),
+  ...meeting(124 * TILE, 128 * TILE),
+  ...meeting(136 * TILE, 132 * TILE)
+];
+/** The rowing boat between the quay and the longship: a small raft with no cabin. */
+export const BOAT: CarrierDef = { kind: "bob", x: 190 * TILE, y: DECK, w: 2 * TILE, rise: 2, period: 160, offset: 30 };
+const CARRIERS: CarrierDef[] = [...RAFTS, BOAT];
+const BOAT_INDEX = CARRIERS.length - 1;
+/** The rafts by name, as the scripted player looks for them: their decks. */
+export const RAFT = { first: RAFTS[0], second: RAFTS[2], drift: RAFTS[4], meetA: RAFTS[6], meetB: RAFTS[8] };
+
+// --- Enemies: a pigeon on its own on the quay, then gulls over the water, pigeons and a rat --------------
+export const ENEMIES: EnemyDef[] = [
+  { kind: "walker", look: "pigeon", c: 48, r: 15, range: 2 },
+  { kind: "flyer", look: "gull", c: 85, r: 13, range: 2, rise: 8, period: 160 },
+  { kind: "walker", look: "pigeon", c: 107, r: 15, range: 2 },
+  { kind: "flyer", look: "gull", c: 131, r: 13, range: 2, rise: 6, period: 150 },
+  { kind: "walker", look: "rat", c: 150, r: 15, range: 2 },
+  { kind: "flyer", look: "gull", c: 153, r: 11, range: 1, rise: 8, period: 170, offset: 40 },
+  { kind: "walker", look: "pigeon", c: 184, r: 15, range: 2 },
+  { kind: "walker", look: "pigeon", c: 205, r: 14, range: 2 },
+  { kind: "flyer", look: "gull", c: 219, r: 6, range: 1, rise: 4, period: 140 }
+];
+
+// --- Art ------------------------------------------------------------------------------------------------
 
 /** The stage tower's roof: white like the rest of the Opera. */
 const MARBLE_LEDGE: LedgeLook = { body: FACADE.stageTower, top: FACADE.marble, edge: FACADE.stageTowerDot, joint: FACADE.stageTowerTop };
+/** The diving tower's concrete platforms, painted white. */
+const CONCRETE: LedgeLook = { body: FACADE.marbleWall, top: WHITE, edge: FACADE.marbleSeam, joint: FACADE.marbleSeam };
 
 /** A sauna raft: pontoons, a plank deck, and a tarred cabin with a warm window and a smoking stove pipe. */
 function saunaRaft(x: number, y: number, t: number) {
@@ -125,8 +248,75 @@ function shed(x0: number, color: string, line: string, door: Door | undefined) {
   if (door) plankDoor(door, PAINT.trim);
 }
 
+/** Posts under a wooden ledge down to the ground or the water, so a deck or a roof stands on something. */
+function posts(c0: number, c1: number, r: number, ground: number) {
+  const y = r * TILE + 5;
+  for (const x of [c0 * TILE + 2, (c1 + 1) * TILE - 5]) {
+    R(x, y, 3, ground - y, P.woodDark);
+    R(x, y, 1, ground - y, mix(P.woodDark, WHITE, 0.15));
+  }
+}
+
+/** The sauna club's hut on its pier: black-tarred planks, a lit window, a stove pipe smoking. Its roof is the map's ledge. */
+function clubHut(t: number) {
+  const x = 110 * TILE;
+  const top = 14 * TILE + 5;
+  walls(x, top, 4 * TILE, PAINT.tar, mix(PAINT.tar, INK, 0.35), WATER);
+  R(x - 2, top, 4 * TILE + 4, 1, INK);
+  R(x + 8, top + 4, 12, 7, P.woodDark);
+  R(x + 9, top + 5, 10, 5, LAMP);
+  light(x + 9, top + 5, 10, 5, "soft");
+  R(x + 40, top + 3, 9, 16, mix(PAINT.tar, INK, 0.5));
+  R(x + 52, top - 14, 3, 13, METAL.pipe);
+  R(x + 51, top - 15, 5, 1, METAL.pipeCap);
+  if (!view.reduced) smoke(x + 52, top - 18, t + 30, STOVE_SMOKE);
+}
+
+/** A small sailboat at its buoy behind the drifting rafts: a white hull, the mast, the furled sail; its crosstree is a ledge. */
+function sailboat() {
+  const x = 134 * TILE;
+  const deck = WATER - 6;
+  for (let i = 0; i < 6; i++) R(x + i * 2, deck + i, 7 * TILE - i * 4, 1, i < 2 ? PAINT.ferryWhite : PAINT.ferryShade);
+  R(x, deck, 7 * TILE, 1, WHITE);
+  R(x + 6, deck + 2, 7 * TILE - 12, 1, PAINT.tbane);
+  const mx = 138 * TILE + 8;
+  R(mx, 8 * TILE, 2, deck - 8 * TILE, METAL.pipeShine);
+  R(mx - 1, 8 * TILE - 2, 4, 2, METAL.pipe);
+  // The boom with the sail furled on it, and the stays.
+  R(mx - 40, deck - 14, 42, 2, METAL.pipe);
+  R(mx - 38, deck - 18, 38, 4, P.sail);
+  R(mx - 38, deck - 18, 38, 1, mix(P.sail, WHITE, 0.5));
+  for (let i = 0; i < 40; i += 2) R(mx + 2 + Math.round(i * 0.9), 8 * TILE + Math.round(i * 2.1), 1, 1, METAL.wire);
+}
+
+/** Sørenga's diving tower: two white concrete legs out of the water, a ladder, its platforms (the map's ledges). */
+function divingTower() {
+  const x0 = 155 * TILE;
+  const top = 8 * TILE;
+  for (const lx of [x0 + 4, x0 + 5 * TILE - 10]) {
+    R(lx, top, 6, WATER - top, FACADE.marbleWall);
+    R(lx, top, 2, WATER - top, WHITE);
+    R(lx + 5, top, 1, WATER - top, FACADE.marbleSeam);
+  }
+  // The ladder up the middle.
+  const lx = x0 + 2 * TILE + 6;
+  R(lx, top, 1, WATER - top, METAL.rail);
+  R(lx + 6, top, 1, WATER - top, METAL.rail);
+  for (let y = top + 3; y < WATER; y += 5) R(lx, y, 7, 1, METAL.rail);
+  // A railing round the top platform, and the board out over the water.
+  R(x0, top - 9, 5 * TILE, 1, METAL.rail);
+  for (let x = x0; x < x0 + 5 * TILE; x += 8) R(x, top - 9, 1, 9, METAL.rail);
+  R(x0 + 5 * TILE, top + 2, 24, 3, PAINT.ochre);
+  R(x0 + 5 * TILE, top + 2, 24, 1, mix(PAINT.ochre, WHITE, 0.4));
+}
+
+/** A low wooden deck on legs: the sauna club's, with its bench. */
+function deckLegs() {
+  posts(54, 57, 15, WATER);
+}
+
 /** A gull standing on the jetty's last post, who takes off when he comes close. */
-const PERCH = { x: 47 * TILE + 8, y: WATER - 6 };
+const PERCH = { x: 66 * TILE + 8, y: WATER - 6 };
 let scaredAt: number | null = null;
 function perchedGull(v: View, near: boolean) {
   if (scaredAt !== null && v.t < scaredAt) scaredAt = null; // the level began again
@@ -145,13 +335,102 @@ function perchedGull(v: View, near: boolean) {
   const a = v.t - scaredAt;
   if (a > 160) return;
   const wing = view.reduced ? 0 : Math.floor(a / 5) % 2 ? 1 : -1;
-  const x = PERCH.x - a * 0.9;
+  const x = PERCH.x + a * 0.9;
   const y = PERCH.y - 4 - a * 0.6 - Math.sin(a * 0.2) * 2;
   R(Math.round(x), Math.round(y), 1, 1, P.wool);
   R(Math.round(x) - 1, Math.round(y) - wing, 1, 1, P.wool);
   R(Math.round(x) + 1, Math.round(y) - wing, 1, 1, P.wool);
   R(Math.round(x) - 2, Math.round(y) - wing * 2, 1, 1, P.wool);
   R(Math.round(x) + 2, Math.round(y) - wing * 2, 1, 1, P.wool);
+}
+
+/** Where the rune is taken: over the lookout at the masthead, above the yard. */
+const MAST = 213 * TILE + 8;
+const YARD = 7 * TILE;
+const MAST_TOP = 5 * TILE - 10;
+const SHIP = { x0: 192 * TILE + 8, x1: 229 * TILE + 8, deck: 15 * TILE, mast: MAST, yard: YARD, sail0: 207 * TILE, sailW: 13 * TILE, mastTop: MAST_TOP };
+
+/** The rowing boat: a varnished hull, its oars shipped. Its thwart is what he stands on. */
+function rowingBoat(at: { x: number; y: number }) {
+  const { x, y } = at;
+  for (let i = 0; i < 6; i++) R(x - 2 + i, y + i, 2 * TILE + 4 - i * 2, 1, i < 1 ? mix(P.wood, WHITE, 0.3) : i % 2 ? P.woodDark : P.wood);
+  R(x + 2, y, 2 * TILE - 4, 2, P.wood);
+  R(x + 4, y - 2, 1, 2, P.woodDark);
+  R(x + 2 * TILE - 5, y - 2, 1, 2, P.woodDark);
+  R(x + 3, y - 3, 2 * TILE - 6, 1, P.woodDark);
+}
+
+/** The lookout round the masthead: a ring of planks on brackets, its rail. The floor is the map's ledge. */
+function lookout() {
+  const x = 212 * TILE;
+  const y = 5 * TILE;
+  R(x + 6, y + 5, 3 * TILE - 12, 3, P.woodDark);
+  R(x, y - 8, 3 * TILE, 1, P.woodDark);
+  for (const px of [x, x + 3 * TILE - 1, x + 12, x + 3 * TILE - 13]) R(px, y - 8, 1, 8, P.woodDark);
+}
+
+/**
+ * The flourish: the wind gets into the sail, a red and cream pennant runs up the masthead and
+ * streams out, and the gulls on the yard's ends take off.
+ */
+function flourish(age: number) {
+  const k = Math.min(1, age / 50);
+  const top = MAST_TOP;
+  const y = Math.round(top - 2 - 22 * k);
+  // The staff over the masthead, and the pennant on it.
+  R(MAST, top - 26, 1, 26, P.woodDark);
+  const flap = view.reduced ? 0 : Math.floor(age / 6) % 2;
+  for (let i = 0; i < 22; i++) {
+    const h = Math.max(1, 5 - Math.floor(i / 5));
+    R(MAST + 1 + i, y + (i > 8 ? flap : 0), 1, h, Math.floor(i / 4) % 2 ? P.sail : P.sailStripe);
+  }
+  // Gulls up off the yard's ends.
+  if (view.reduced) return;
+  for (const [x0, dir] of [
+    [207 * TILE + 4, -1],
+    [220 * TILE - 4, 1],
+    [209 * TILE, -1]
+  ] as const) {
+    const a = age - (x0 === 209 * TILE ? 12 : 0);
+    if (a < 0 || a > 140) continue;
+    const gx = Math.round(x0 + dir * a * 0.8);
+    const gy = Math.round(YARD - 4 - a * 0.7);
+    const wing = Math.floor(a / 5) % 2 ? 1 : -1;
+    for (const [dx, dy] of [[0, 0], [-1, -wing], [1, -wing], [-2, -wing * 2], [2, -wing * 2]] as const) R(gx + dx, gy + dy, 1, 1, P.wool);
+  }
+}
+
+/** Across the water, in the near layer: Sørenga's blocks, and at the far end the fortress on its hill, the next stop. */
+function sorenga(x: number, base: number) {
+  const blocks = [
+    { dx: 0, w: 26, h: 44, c: FACADE.blocks[0] },
+    { dx: 30, w: 22, h: 56, c: FACADE.blocks[2] },
+    { dx: 56, w: 30, h: 38, c: FACADE.blocks[1] },
+    { dx: 90, w: 24, h: 50, c: FACADE.blocks[3] }
+  ];
+  for (const k of blocks) {
+    box(x + k.dx, base - k.h, k.w, k.h, k.c);
+    box(x + k.dx, base - k.h, k.w, 2, mix(k.c, WHITE, 0.3));
+    for (let y = base - k.h + 5; y < base - 5; y += 6)
+      for (let wx = x + k.dx + 3; wx < x + k.dx + k.w - 3; wx += 5) {
+        box(wx, y, 2, 3, mix(k.c, INK, 0.3));
+        lit(wx, y, 2, 3);
+      }
+  }
+}
+function fortressHill(x: number, base: number) {
+  for (let i = 0; i < 120; i++) {
+    const h = Math.round(22 * Math.pow(Math.sin((Math.PI * i) / 120), 0.6));
+    box(x + i, base - h, 1, h, i % 9 === 0 ? LAND.forestDark : LAND.forest);
+  }
+  box(x + 18, base - 34, 80, 14, STONE.base);
+  for (let y = base - 31; y < base - 20; y += 4) box(x + 18, y, 80, 1, STONE.dark);
+  for (let y = base - 34, k = 0; y < base - 20; y += 4, k++) for (let i = (k % 2) * 4; i < 80; i += 8) box(x + 18 + i, y, 1, 3, STONE.dark);
+  for (let i = 0; i < 80; i += 6) box(x + 18 + i, base - 37, 3, 3, STONE.base);
+  box(x + 40, base - 56, 36, 22, PAINT.trim);
+  box(x + 38, base - 62, 40, 6, ROOFS.slate);
+  box(x + 56, base - 74, 4, 12, METAL.copper);
+  for (let i = 0; i < 4; i++) box(x + 44 + i * 8, base - 50, 3, 4, GLASS.farWindow);
 }
 
 export const LANGKAIA: LevelDef = {
@@ -162,11 +441,14 @@ export const LANGKAIA: LevelDef = {
   place: { nb: "Bjørvika, på vannsida av Operaen", en: "Bjørvika, on the water side of the Opera" },
   sky: null,
   map: MAP,
-  legend: { solid: "MQPB#", oneWay: "_-", water: "~" },
+  legend: { solid: "MQPB#", oneWay: "_-=", water: "~" },
   ramps: [RAMP],
-  carriers: RAFTS,
+  carriers: CARRIERS,
   timed: [],
   cannons: [],
+  enemies: ENEMIES,
+  flourish: 150,
+  flourishLook: 30,
   signs: [
     {
       label: { nb: "Operaen", en: "The Opera" },
@@ -178,7 +460,11 @@ export const LANGKAIA: LevelDef = {
     },
     {
       label: { nb: "Badstuene", en: "The saunas" },
-      lines: { nb: ["Flytende badstuer. Hopp fra flåte til flåte.", "Vannet er kaldt, men det setter deg bare på brygga igjen."], en: ["Floating saunas. Hop from raft to raft.", "The water is cold, but it only puts you back on the jetty."] }
+      lines: { nb: ["Flytende badstuer. Hopp fra flåte til flåte.", "Vannet er kaldt: det koster et hjerte. Flagget husker hvor du var."], en: ["Floating saunas. Hop from raft to raft.", "The water is cold: it costs a heart. The flag remembers where you were."] }
+    },
+    {
+      label: { nb: "Langskipet", en: "The longship" },
+      lines: { nb: ["Skipet fra det gamle spillet, flyttet hit.", "Runen henger over råa."], en: ["The ship from the old game, moved here.", "The rune hangs over the yard."] }
     }
   ],
   doors: [
@@ -191,10 +477,13 @@ export const LANGKAIA: LevelDef = {
     far: (v) => drawOsloHills(v.sky, WATER),
     mid: (v) => drawFjord(v.t, WATER),
     near(v) {
-      // MUNCH and the Barcode across the water, where the front page has them too.
+      // MUNCH and the Barcode across the water, where the front page has them too; Sørenga; the fortress.
       const at = (wx: number) => layerX(wx, 0.4);
       munch(at(300), WATER - 2);
       barcode(at(360), WATER - 2);
+      sorenga(at(1500), WATER - 2);
+      sorenga(at(2500) + 40, WATER - 2);
+      fortressHill(at(3500), WATER - 2);
       drawGulls(v.t, 20);
     },
     back(v) {
@@ -202,14 +491,22 @@ export const LANGKAIA: LevelDef = {
       tbaneDoor(v.doors.get("tbane"));
       shed(24 * TILE, PAINT.red, PAINT.redLine, v.doors.get("qr"));
       shed(33 * TILE, PAINT.ochre, PAINT.ochreLine, v.doors.get("github"));
-      drawLongship({ x0: 1164, x1: 1452, deck: 15 * TILE, mast: 82 * TILE + 8, yard: 9 * TILE, sail0: 78 * TILE + 8, sailW: 128 });
+      deckLegs();
+      clubHut(v.t);
+      sailboat();
+      divingTower();
+      const belly = v.flourish === null ? 3 : 3 + Math.min(6, Math.floor(v.flourish / 8));
+      drawLongship({ ...SHIP, belly });
+      lookout();
       perchedGull(v, Math.abs(v.him.x - PERCH.x) < 56 && Math.abs(v.him.y - PERCH.y) < 40);
     },
     ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth }),
-    ledges: { _: WOOD_LEDGE, "-": MARBLE_LEDGE },
+    ledges: { _: WOOD_LEDGE, "-": MARBLE_LEDGE, "=": CONCRETE },
     carrier(i, at, v) {
-      if (i % 2 === 0) saunaRaft(at.x, at.y, v.t + i * 40);
+      if (i === BOAT_INDEX) rowingBoat(at);
+      else if (i % 2 === 0) saunaRaft(at.x, at.y, v.t + i * 40);
       else for (let k = 0; k < 2; k++) ledge(at.x + k * TILE, at.y, SAUNA_ROOF, k === 0, k === 1, v.sky.snow);
-    }
+    },
+    flourish: (age) => flourish(age)
   }
 };

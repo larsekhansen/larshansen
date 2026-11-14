@@ -1288,6 +1288,7 @@ if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceSta
 /** `?debug&auto`: the page plays the level's scripted route from the tests, for looking at. */
 let auto: ((p: Play) => PlayIntent | null) | null = null;
 const AUTO: Record<string, () => Promise<Move[]>> = {
+  langkaia: () => import("./levels/routes/langkaia").then((m) => m.LANGKAIA_ROUTE),
   slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
   holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE),
   akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE),

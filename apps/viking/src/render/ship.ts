@@ -18,6 +18,10 @@ export interface Ship {
   yard: number;
   sail0: number;
   sailW: number;
+  /** How far the sail bellies out at its foot, in pixels: 3 at rest, more in a wind. */
+  belly?: number;
+  /** The top of the mast, when it goes on above the yard (to a lookout). */
+  mastTop?: number;
 }
 
 export function drawLongship(s: Ship) {
@@ -52,7 +56,7 @@ export function drawLongship(s: Ship) {
   const sailTop = s.yard + 3;
   const sailH = top - 34 - sailTop;
   for (let i = 0; i < s.sailW; i++) {
-    const belly = Math.round(3 * Math.sin((Math.PI * i) / s.sailW));
+    const belly = Math.round((s.belly ?? 3) * Math.sin((Math.PI * i) / s.sailW));
     const stripe = Math.floor(i / 12) % 2 === 0;
     R(s.sail0 + i, sailTop, 1, sailH + belly, stripe ? P.sail : P.sailStripe);
     if (i % 12 === 0) R(s.sail0 + i, sailTop, 1, sailH + belly, mix(stripe ? P.sail : P.sailStripe, INK, 0.25));
@@ -60,7 +64,7 @@ export function drawLongship(s: Ship) {
   R(s.sail0, sailTop, s.sailW, 1, mix(P.sail, INK, 0.3));
   for (let y = sailTop + 12; y < sailTop + sailH - 1; y += 12) R(s.sail0, y, s.sailW, 1, mix(P.sail, INK, 0.12));
   // The mast, and the stays down to the prow and the stern.
-  const mastTop = s.yard - 8;
+  const mastTop = s.mastTop ?? s.yard - 8;
   R(s.mast - 1, mastTop, 4, top - mastTop, P.woodDark);
   R(s.mast, mastTop, 1, top - mastTop, P.wood);
   R(s.mast - 2, mastTop - 2, 6, 2, P.woodDark);

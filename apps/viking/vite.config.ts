@@ -9,6 +9,8 @@ const LEVEL = /\/src\/levels\/(?:routes\/)?(akershus|radhuset|slottet|holmenkoll
 // A level's own swatches and its boss come with it: they are imported by that level alone.
 const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "game/plough": "nabolaget" };
 const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|game\/plough)\.ts$/;
+// Langkaia comes with the page, as the level a fresh visitor starts in; its scripted route does not.
+const FIRST_ROUTE = /\/src\/levels\/routes\/langkaia\.ts$/;
 
 export default defineConfig({
   base: "/viking/",
@@ -17,6 +19,7 @@ export default defineConfig({
       output: {
         manualChunks: (id) => {
           if (/\/packages\/maze\//.test(id)) return undefined;
+          if (FIRST_ROUTE.test(id)) return "langkaia-route";
           const level = LEVEL.exec(id);
           const owned = OWNED.exec(id);
           return level ? level[1] : owned ? OWN[owned[1]] : "index";

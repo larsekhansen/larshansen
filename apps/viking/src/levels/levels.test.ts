@@ -12,7 +12,7 @@ import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
 import { NABOLAGET, PLOUGH_DEF, SMOKE, TERRACE } from "./nabolaget";
 import type { Plough } from "../game/plough";
 import { EKEBERG, GUSTS, KNOLLS, TRAMS } from "./ekeberg";
@@ -25,7 +25,7 @@ import { SLOTTET } from "./slottet";
 import { AKERSHUS, HOIST } from "./akershus";
 import { BUILT, LINE, ORDER } from "./index";
 import { kartDef } from "./kart";
-import { LANGKAIA, RAFTS } from "./langkaia";
+import { LANGKAIA, RAFT } from "./langkaia";
 import { BELLS, FERRY, LIFT, RADHUSET } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
 
@@ -40,24 +40,7 @@ const IDLE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
 /** The route through each level, as a scripted player plays it. */
 const ROUTE: Record<string, Move[]> = {
-  langkaia: [
-    walk(tile(46) + 4),
-    leap(tile(48), 1),
-    walk(tile(50) + 8),
-    leap(tile(54), 1),
-    walk(tile(57) + 8),
-    wait("raft 3 near", (q) => carrier(q, RAFTS[4]).x <= 1020),
-    leap(tile(61), 1),
-    wait("raft 3 far", (q) => carrier(q, RAFTS[4]).x >= 1072),
-    leap((q) => carrier(q, RAFTS[4]).x + 4 * 16, 1),
-    walk(1272),
-    jump(0),
-    walk(1270),
-    leap(tile(81), 1),
-    jump(0),
-    walk(mid(82)),
-    jump(0)
-  ],
+  langkaia: LANGKAIA_ROUTE,
   akershus: [
     walk(mid(16) + 4),
     jump(0),
@@ -154,8 +137,8 @@ const GOLD: Record<string, Move[]> = {
 };
 
 /** The first three levels: the scripted player has half the order's target. From level 4 on: at least a minute. */
-const TARGET: Record<string, number> = { langkaia: 60, akershus: 90, radhuset: 120 };
-const NEW = new Set(["slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
+const TARGET: Record<string, number> = { akershus: 90, radhuset: 120 };
+const NEW = new Set(["langkaia", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** The last level is held to a longer clear: ninety seconds or more. */
@@ -580,16 +563,34 @@ describe("what the levels promise", () => {
     expect(PLOUGH_DEF.rounds[1].x0 - 32 - TERRACE.right).toBeLessThan(54 + 48);
   });
 
-  test("Langkaia: the water puts him back on the last ground he stood on, as the old fjord did", () => {
+  test("Langkaia: the first water comes right after the first flag; falling in costs a heart and puts him back at it", () => {
+    const map = levelMap(LANGKAIA);
+    const flag = flagsOf(map)[0];
+    const water = map.find((ch) => ch === "~").map((t) => t.c);
+    const firstWater = Math.min(...water);
+    expect(firstWater * TILE - flag.x).toBeLessThan(8 * TILE);
+    // Nothing before that flag can drop him: no water, no pit.
+    expect(flag.x).toBeLessThan(firstWater * TILE);
     const p = newPlay(LANGKAIA);
-    playMoves(p, [walk(tile(47) + 6)]);
-    for (let i = 0; i < 80; i++) {
-      const ev = stepPlay(p, { ...IDLE, right: true });
-      if (ev.splash) break;
+    playMoves(p, [...LANGKAIA_ROUTE.slice(0, LANGKAIA_ROUTE.findIndex((m) => m.name === `walk to ${tile(66) + 6}`) + 1)], { max: 60 * 60 });
+    expect(p.checkpoints.reached).toBe(0);
+    let splash = false;
+    for (let i = 0; i < 120 && !splash; i++) splash = stepPlay(p, { ...IDLE, right: true }).splash;
+    expect(splash).toBe(true);
+    expect(p.hearts).toBe(2);
+    expect(Math.abs(cx(p) - flag.x)).toBeLessThan(2);
+    expect(feet(p)).toBe(flag.bottom);
+  });
+
+  test("Langkaia: the two drifting rafts stand side by side in the middle long enough to walk from one to the other", () => {
+    let together = 0;
+    let longest = 0;
+    for (let t = 0; t < 2000; t++) {
+      const gap = carrierAt(RAFT.meetB, t).x - (carrierAt(RAFT.meetA, t).x + 4 * TILE);
+      together = gap <= 1 ? together + 1 : 0;
+      longest = Math.max(longest, together);
     }
-    expect(p.body.onGround).toBe(true);
-    expect(Math.abs(cx(p) - (tile(47) + 6))).toBeLessThan(24);
-    expect(feet(p)).toBe(tile(16));
+    expect(longest).toBeGreaterThanOrEqual(80);
   });
 
   test("Akershus: the first cannon cannot miss", () => {
