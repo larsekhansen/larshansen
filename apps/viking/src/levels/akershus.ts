@@ -21,7 +21,8 @@ import type { LevelDef, View } from "./types";
 // next. Set piece: the keep, a climb inside past its guard, out on its top floor beside the copper
 // spire, rune A. The bracteate is on the spire's tip.
 //
-//   Q  quay   W  fortress stone   #  grass and earth   _  stone ledge   =  ivy   -  copper   ~  water
+//   Q  quay   W  fortress stone   #  grass and earth   K  the rock the fortress stands on   B  crate
+//   _  stone ledge   =  ivy   -  copper   ^  the castle's slate roof   ~  water
 //   c  a cannon facing right   f  a flag   b  a bench   e  a sheep   $  skilling   &  cheese   t T-banen
 
 const COLS = 280;
@@ -93,8 +94,8 @@ b.fill(238, 239, TOP - 3, TOP - 1, "W").fill(250, 251, TOP - 3, TOP - 1, "W");
 b.run(232, 266, TOP + 2, "^");
 b.ground(232, 266, TOP + 3, "W");
 b.run(SPIRE - 1, SPIRE, 2, "-");
-// Beyond the turret, the hill.
-b.ground(267, COLS - 1, WALL + 4);
+// Beyond the turret, the hill, a step down from the battlements, so he can always walk back.
+b.ground(267, COLS - 1, TOP + 1, "K");
 
 // Marks: the start, doors, signs, flags, benches, cannons, the sheep, the rune, the bracteate, the cheese.
 b.put(5, G - 1, "t").put(7, G - 1, "S").put(11, G - 1, "i");
@@ -458,7 +459,7 @@ export const AKERSHUS: LevelDef = {
   place: { nb: "Festningen over havna", en: "The fortress above the harbour" },
   sky: "day",
   map: MAP,
-  legend: { solid: "QWB#", oneWay: "_=-^", water: "~" },
+  legend: { solid: "QWBK#", oneWay: "_=-^", water: "~" },
   ramps: [],
   carriers: [HOIST],
   timed: [],

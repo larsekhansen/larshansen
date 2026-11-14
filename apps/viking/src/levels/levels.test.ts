@@ -58,7 +58,7 @@ const GOLD: Record<string, Move[]> = {
   // From the last stretch of the battlements, beside the brazier, two jumps up the spire to its tip.
   akershus: [...AKERSHUS_ROUTE.slice(0, -2), walk(mid(261) + 6, { careless: true }), jump(0, { second: 18 })],
   // From the parapet, under the lantern, two jumps up past its roof.
-  radhuset: [...RADHUSET_ROUTE.slice(0, -2), walk(mid(206)), jump(0, { second: 18 })],
+  radhuset: [...RADHUSET_ROUTE.slice(0, -2), walk(mid(205)), jump(1, { second: 18 })],
   // From the balcony's left end, two jumps up past the rune to the eaves; along to the flagpole and up.
   slottet: [...SLOTTET_ROUTE.slice(0, -2), walk(tile(227) + 6), jump(0, { second: 18 }), walk(mid(229)), jump(0)],
   // In the hut, up through its roof, then two jumps up the tower.

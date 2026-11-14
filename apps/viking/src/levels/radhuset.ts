@@ -57,7 +57,8 @@ b.run(193, 196, BLOCK - 1, "=");
 // Up the clock tower: the balcony over the clock, the parapet, the lantern's roof.
 b.run(199, 206, 8, "=");
 b.run(197, 208, 6, "=");
-b.run(206, 207, 3, "_");
+// The lantern on the parapet's corner: too tall to jump onto, so it stops him walking off the tower.
+b.fill(206, 208, 3, 5, "N");
 
 // Marks.
 b.put(2, G - 1, "t").put(4, G - 1, "S");
@@ -65,7 +66,7 @@ b.put(60, G - 2, "b").put(70, G - 1, "i").put(73, G - 1, "f");
 b.put(114, G - 1, "i").put(116, G - 1, "f").put(155, G - 1, "i");
 b.put(175, ROOF_ROW - 1, "f").put(177, ROOF_ROW - 1, "i").put(180, ROOF_ROW - 1, "b");
 b.put(195, BLOCK - 2, "f");
-b.put(203, 4, "r").put(206, 1, "o").put(31, G - 8, "&");
+b.put(203, 4, "r").put(207, 1, "o").put(31, G - 8, "&");
 
 // Skilling: up the low bells and along the terminal's roof, over the pigeons and past the thrower, the
 // ferry's crossing, the fountain's bells, by the lift, up the carillon, round the clock, the parapet.
@@ -88,7 +89,7 @@ const COINS: [number, number][] = [
   [176, 21], [179, 20], [182, 19], [185, 17], [188, 16], [191, 14],
   [200, 9], [203, 7], [206, 9],
   [199, 5], [201, 5], [205, 5],
-  [207, 1]
+  [206, 2]
 ];
 for (const [c, r] of COINS) b.put(c, r, "$");
 
@@ -309,21 +310,41 @@ function clock(v: View) {
   R(cx - 2, cy - 2, 4, 4, METAL.gold);
 }
 
-/** The east tower's top: the parapet's merlons, and the lantern at its corner. Its roof is the map's ledge. */
-function towerTop(v: View) {
+/** The east tower's top: the parapet's merlons (the lantern on its corner is the map's), the balcony's railing. */
+function towerTop() {
   const y = 6 * TILE;
-  for (let x = 197 * TILE; x < 209 * TILE - 4; x += 8) {
+  for (let x = 197 * TILE; x < 206 * TILE - 4; x += 8) {
     R(x, y - 5, 5, 5, BRICK.red);
     R(x, y - 5, 5, 1, mix(BRICK.red, WHITE, 0.3));
   }
-  const lx = 206 * TILE;
-  R(lx + 2, 3 * TILE + 5, 2 * TILE - 4, y - 3 * TILE - 5, PAINT.trim);
-  R(lx + 7, 4 * TILE, 2 * TILE - 14, 18, LAMP);
-  light(lx + 7, 4 * TILE, 2 * TILE - 14, 18, "soft");
-  for (let i = 0; i < 6; i++) R(lx - 1 + i, 3 * TILE - 6 + i, 2 * TILE + 2 - i * 2, 1, v.sky.snow && i < 2 ? SNOW.lying : METAL.copper);
   // The balcony's railing over the clock.
   R(199 * TILE, 8 * TILE - 8, 8 * TILE, 1, METAL.castIron);
   for (let x = 199 * TILE; x < 207 * TILE; x += 4) R(x, 8 * TILE - 8, 1, 8, METAL.castIron);
+}
+
+/** The lantern on the clock tower's corner, a tile at a time: white walls, its lit window, a copper roof. */
+function lantern(c: number, r: number, x: number, y: number, snow: boolean) {
+  R(x, y, TILE, TILE, PAINT.trim);
+  // Plaster in courses, a pilaster at each corner, a cornice under the roof.
+  for (let yy = y + 5; yy < y + TILE; yy += 6) R(x, yy, TILE, 1, mix(PAINT.trim, INK, 0.08));
+  if (c === 206) R(x, y, 3, TILE, mix(PAINT.trim, INK, 0.12));
+  if (c === 208) R(x + TILE - 3, y, 3, TILE, mix(PAINT.trim, INK, 0.25));
+  if (r === 5) R(x, y + TILE - 3, TILE, 3, MASONRY.lintel);
+  if (r === 3) {
+    const wide = c === 206 || c === 208 ? 2 : 0;
+    const left = c === 206 ? 2 : 0;
+    R(x - left, y + 5, TILE + wide, 2, MASONRY.worn);
+    R(x - left, y, TILE + wide, 4, snow ? SNOW.lying : METAL.copper);
+    R(x - left, y, TILE + wide, 1, METAL.copperLight);
+    R(x - left, y + 4, TILE + wide, 1, METAL.copperDark);
+  }
+  if (r === 4 && c === 207) {
+    // Its window, lit: two tall panes under a round head.
+    R(x - 6, y + 1, 28, 14, MASONRY.lintel);
+    R(x - 4, y + 3, 10, 11, LAMP);
+    R(x + 10, y + 3, 10, 11, LAMP);
+    light(x - 4, y + 3, 24, 11, "soft");
+  }
 }
 
 /** The passage through the west tower: dark, with a lamp on its wall. */
@@ -413,7 +434,7 @@ export const RADHUSET: LevelDef = {
   place: { nb: "De to tårnene på Rådhusplassen", en: "The two towers on Rådhusplassen" },
   sky: "day",
   map: MAP,
-  legend: { solid: "QX#", oneWay: "=_", water: "~" },
+  legend: { solid: "QX#N", oneWay: "=_", water: "~" },
   ramps: [],
   carriers: CARRIERS,
   timed: BELLS,
@@ -461,11 +482,16 @@ export const RADHUSET: LevelDef = {
       windows(174, 195, 35, 45, 3);
       windows(198, 207, 19, 45, 3);
       clock(v);
-      towerTop(v);
+      towerTop();
       fountain(v.t);
       for (const x of LAMPS) lampPool(x, SQUARE);
     },
     ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: MASONRY.gatePost }),
+    tile(t, c, r, x, y, _map, sky) {
+      if (t !== "N") return false;
+      lantern(c, r, x, y, sky.snow);
+      return true;
+    },
     ledges: { "=": BRICK_LEDGE, _: WOOD_LEDGE },
     carrier(i, at, v) {
       if (i === 0) ferry(at);
