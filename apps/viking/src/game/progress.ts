@@ -3,8 +3,17 @@
 // skilling found in each, and the levels cleared without losing a heart. Pure functions, and
 // forgiving: missing, old or broken data reads as a fresh start, never as an error, and what the
 // first three levels saved before skilling and hearts existed still reads as it was.
+//
+// A save carries a version mark, `v`. Levels 1 to 3 were rebuilt at version 2, four times as long:
+// a save from before that keeps their runes and bracteates, but their best times (and best skilling
+// and clean marks, if any) were set on the short levels and are cleared, once, when it is read.
 
 export const PROGRESS_KEY = "viking.progress";
+
+/** The version of the save written now. 2: Langkaia, Akershus and Rådhuset rebuilt to full length. */
+export const PROGRESS_VERSION = 2;
+/** The levels rebuilt at version 2, whose times from before mean nothing now. */
+export const REBUILT_AT_2 = ["langkaia", "akershus", "radhuset"] as const;
 
 export interface Progress {
   /** Level ids, in the order they were first cleared. */
@@ -34,22 +43,32 @@ export function readProgress(raw: string | null | undefined): Progress {
   }
   if (!data || typeof data !== "object" || Array.isArray(data)) return fresh();
   const o = data as Record<string, unknown>;
+  const version = typeof o.v === "number" && Number.isFinite(o.v) ? o.v : 1;
   const numbers = (v: unknown, ok: (n: number) => boolean) => {
     const out: Record<string, number> = {};
     if (v && typeof v === "object" && !Array.isArray(v))
       for (const [k, n] of Object.entries(v as Record<string, unknown>)) if (typeof n === "number" && Number.isFinite(n) && ok(n)) out[k] = n;
     return out;
   };
-  return {
+  const p: Progress = {
     cleared: ids(o.cleared),
     best: numbers(o.best, (n) => n > 0),
     bracteates: ids(o.bracteates),
     skilling: numbers(o.skilling, (n) => n >= 0 && Number.isInteger(n)),
     clean: ids(o.clean)
   };
+  return version < 2 ? forgetShortLevels(p) : p;
 }
 
-export const writeProgress = (p: Progress): string => JSON.stringify(p);
+/** A save from before version 2: the first three levels' times, skilling and clean marks go; their runes and bracteates stay. */
+function forgetShortLevels(p: Progress): Progress {
+  const old = new Set<string>(REBUILT_AT_2);
+  const keep = (r: Record<string, number>) => Object.fromEntries(Object.entries(r).filter(([id]) => !old.has(id)));
+  return { ...p, best: keep(p.best), skilling: keep(p.skilling), clean: p.clean.filter((id) => !old.has(id)) };
+}
+
+/** The save as stored: with the version mark, so it is only ever cleared once. */
+export const writeProgress = (p: Progress): string => JSON.stringify({ v: PROGRESS_VERSION, ...p });
 
 /**
  * A level cleared in `ms`, with or without its bracteate, with `skilling` found and `clean` when no
