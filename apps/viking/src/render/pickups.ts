@@ -1,6 +1,6 @@
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { COIN, CREATURE, FIRE, FOOD, INK, METAL, PALETTE, PLANTS, SKIN, WHITE } from "@larshansen/pixelkit/palette";
-import { KIND, SHOT, leap, windingUp, type Enemy, type Shot } from "../game/enemies";
+import { KIND, SHOT, windingUp, type Enemy, type Shot } from "../game/enemies";
 
 // The small things of a level from Slottet on: skilling, the brown cheese, park benches, and the
 // enemies and what they throw. At the person's scale, two or three colours each, a two-frame walk.
@@ -181,22 +181,6 @@ function kid(e: Enemy, t: number) {
   else R(at(7), y - 7, 2, 4, jacket);
 }
 
-function duck(e: Enemy) {
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 10 - dx);
-  // A mallard waddling: brown body, a green head bobbing, a yellow bill, orange feet.
-  R(x + 1, y - 5, 8, 4, CREATURE.duck);
-  R(at(0), y - 4, 2, 2, mix(CREATURE.duck, INK, 0.3));
-  R(x + 2, y - 4, 4, 1, mix(CREATURE.duck, WHITE, 0.25));
-  const bob = stride(e);
-  R(at(7), y - 8 + bob, 3, 3, CREATURE.duckHead);
-  R(at(9) + (e.dir > 0 ? 1 : -1), y - 7 + bob, 2, 1, CREATURE.duckBill);
-  R(at(8), y - 7 + bob, 1, 1, INK);
-  R(at(3) + bob, y - 1, 2, 1, CREATURE.beak);
-  R(at(6) - bob, y - 1, 2, 1, CREATURE.beak);
-}
-
 function rat(e: Enemy) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
@@ -280,19 +264,6 @@ function owl(e: Enemy, t: number) {
   }
 }
 
-function bat(e: Enemy, t: number) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y) - 3;
-  const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
-  R(x - 1, y - 2, 3, 4, CREATURE.bat);
-  R(x - 1, y - 3, 1, 1, CREATURE.bat);
-  R(x + 1, y - 3, 1, 1, CREATURE.bat);
-  R(x - 6, y - 1 - flap * 2, 5, 2, CREATURE.bat);
-  R(x + 2, y - 1 - flap * 2, 5, 2, CREATURE.bat);
-  R(x - 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
-  R(x + 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
-}
-
 function squirrel(e: Enemy, t: number) {
   const x = Math.round(e.x - 4);
   const y = Math.round(e.y);
@@ -311,24 +282,29 @@ function squirrel(e: Enemy, t: number) {
   else R(at(6), y - 7, 2, 2, CREATURE.cone);
 }
 
-function anthill(e: Enemy, t: number) {
-  const x = Math.round(e.x - 7);
-  const y = Math.round(e.y);
-  // A heap of needles, alive: ants running over it.
-  for (let k = 0; k < 8; k++) R(x + 7 - k, y - 8 + k, 1 + k * 2, 1, k % 2 ? CREATURE.hedgehog : mix(CREATURE.hedgehog, INK, 0.2));
-  if (view.reduced) return;
-  for (let i = 0; i < 4; i++) {
-    const k = ((t * 0.3 + i * 7) % 16) / 16;
-    R(x + 2 + Math.round(k * 10), y - 2 - Math.round(Math.sin(k * Math.PI) * 6), 1, 1, INK);
-  }
-}
-
-/** Where an enemy's eyes are (world pixels), for the ones that shine in the headlamp in the dark. */
+/** Where an enemy's eyes are (world pixels): they shine in the headlamp in the dark, and after dusk. */
 export function enemyEyes(e: Enemy, t: number): [number, number][] {
   if (!e.alive) return [];
   const ex = Math.round(e.x);
   const ey = Math.round(e.y);
+  const f = e.dir > 0;
   switch (e.def.look) {
+    case "pigeon":
+      return [[f ? ex + 3 : ex - 4, ey - 9 + stride(e)]];
+    case "rat":
+      return [[f ? ex + 3 : ex - 3, ey - 5]];
+    case "duck":
+      return [[f ? ex + 3 : ex - 3, ey - 7 + stride(e)]];
+    case "kid":
+      return [[f ? ex + 1 : ex - 1, ey - 10]];
+    case "guard":
+      return [[f ? ex + 1 : ex - 2, ey - 11]];
+    case "gull":
+    case "crow":
+      if (e.def.kind === "thrower") return [[f ? ex + 3 : ex - 2, ey - 11 - (windingUp(e, t) ? 1 : 0)]];
+      return [[ex + e.dir * 5, ey - 6]];
+    case "scooter":
+      return [[f ? ex + 3 : ex - 4, ey - 10]];
     case "fox":
       return [[e.dir > 0 ? ex + 6 : ex - 7, ey - 8]];
     case "owl":
@@ -345,36 +321,6 @@ export function enemyEyes(e: Enemy, t: number): [number, number][] {
   void t;
 }
 
-const SALMON = ["..bb..", ".bbbb.", ".bebs.", "bbbbss", "bbbsss", "bbssss", ".bbss.", ".bbss.", "..bs..", "..bb..", ".b..b.", "bb..bb"];
-
-/**
- * A salmon leaping: nose up on the way out of the water, nose down on the way back, a dark back, a
- * pale side, the tail fin spread. `water`: the y of the surface, below which nothing of it shows.
- */
-export function drawSalmon(e: Enemy, t: number, water = Infinity) {
-  const l = leap(e, t);
-  const x = Math.round(e.x - 3);
-  const y = Math.round(e.y) - 12;
-  if (l.ripple && !view.reduced && Math.floor(t / 6) % 2) {
-    R(Math.round(e.x - 5), Math.min(water, Math.round(e.y)) - 1, 10, 1, P.foam);
-    R(Math.round(e.x - 3), Math.min(water, Math.round(e.y)) - 2, 6, 1, mix(P.foam, P.water, 0.4));
-  }
-  if (l.up <= 0) return;
-  // Past the top of its leap it turns over.
-  const falling = leap(e, t + 1).up < l.up;
-  const colors: Record<string, string> = { b: mix(CREATURE.salmon, INK, 0.12), s: mix(CREATURE.salmon, WHITE, 0.45), e: INK };
-  SALMON.forEach((row, r) =>
-    [...row].forEach((ch, c) => {
-      if (ch === ".") return;
-      const yy = y + (falling ? 11 - r : r);
-      if (yy >= water) return;
-      R(x + (e.dir > 0 ? c : 5 - c), yy, 1, 1, ch === "b" && (r < 2 || c === 0) ? mix(CREATURE.salmon, INK, 0.35) : colors[ch]);
-    })
-  );
-  // The splash it leaves where it broke the surface.
-  if (water < Infinity && l.up < 14 && !view.reduced) for (const dx of [-5, 5]) R(Math.round(e.x) + dx, water - 2 - (l.up % 3), 2, 2, P.foam);
-}
-
 /** An enemy in its own look; the level may draw its own looks instead. */
 export function drawEnemy(e: Enemy, t: number) {
   if (!e.alive) return puff(e, t);
@@ -383,8 +329,6 @@ export function drawEnemy(e: Enemy, t: number) {
       return pigeon(e);
     case "gull":
       return e.def.kind === "thrower" ? gullStanding(e, t) : gull(e, t, P.wool, CREATURE.gullGrey);
-    case "duck":
-      return duck(e);
     case "rat":
       return rat(e);
     case "wasp":
@@ -393,12 +337,8 @@ export function drawEnemy(e: Enemy, t: number) {
       return fox(e);
     case "owl":
       return owl(e, t);
-    case "bat":
-      return bat(e, t);
     case "squirrel":
       return squirrel(e, t);
-    case "anthill":
-      return anthill(e, t);
     case "crow":
       return gull(e, t, CREATURE.crow, CREATURE.crowGrey);
     case "scooter":
@@ -409,8 +349,6 @@ export function drawEnemy(e: Enemy, t: number) {
       return grill(e, t);
     case "kid":
       return kid(e, t);
-    case "salmon":
-      return drawSalmon(e, t);
     default:
       R(e.x - e.w / 2, e.y - e.h, e.w, e.h, KIND[e.def.kind].stomp ? PLANTS.hedge : FIRE.flame);
   }

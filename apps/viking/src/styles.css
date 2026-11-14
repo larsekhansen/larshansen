@@ -346,3 +346,12 @@ body {
   font-weight: 400;
   color: var(--muted);
 }
+
+/* The help line: on one line where it fits, wrapped and centred on a narrow screen, never off its edges. */
+.help {
+  width: max-content;
+  max-width: calc(100% - 24px);
+  white-space: normal;
+  text-align: center;
+  box-sizing: border-box;
+}

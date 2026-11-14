@@ -96,9 +96,13 @@ export function bubble(x: number, y: number, text: string, align: "center" | "le
   u.fillText(text, left + w / 2, y - h / 2 + 0.5);
 }
 
-/** The place name banner near the top of the screen. */
-export function drawBanner(b: { title: string; sub: string; alpha: number }) {
-  const top = Math.min(110, view.cssH * 0.18);
+/**
+ * The place name banner near the top of the screen. With `plate` it stands on a dark rounded plate, so
+ * it reads over any sky, bright snow or banded sunset alike (the viking game's banner).
+ */
+export function drawBanner(b: { title: string; sub: string; alpha: number; plate?: boolean; top?: number }) {
+  const top = b.top ?? Math.min(110, view.cssH * 0.18);
+  if (b.plate) return drawPlatedBanner(b, top);
   u.globalAlpha = b.alpha;
   u.fillStyle = "rgba(10, 14, 30, 0.45)";
   u.font = `700 ${Math.round(fontPx() * 1.7)}px ${FONT}`;
@@ -110,6 +114,38 @@ export function drawBanner(b: { title: string; sub: string; alpha: number }) {
   if (b.sub) {
     u.font = `500 ${Math.round(fontPx() * 1.05)}px ${FONT}`;
     u.strokeText(b.sub, view.cssW / 2, top + fontPx() * 1.6);
+    u.fillText(b.sub, view.cssW / 2, top + fontPx() * 1.6);
+  }
+  u.globalAlpha = 1;
+}
+
+function drawPlatedBanner(b: { title: string; sub: string; alpha: number }, top: number) {
+  const titleFont = `700 ${Math.round(fontPx() * 1.7)}px ${FONT}`;
+  const subFont = `500 ${Math.round(fontPx() * 1.05)}px ${FONT}`;
+  u.font = titleFont;
+  let w = u.measureText(b.title).width;
+  if (b.sub) {
+    u.font = subFont;
+    w = Math.max(w, u.measureText(b.sub).width);
+  }
+  const padX = Math.round(fontPx() * 1.1);
+  const half = Math.round(fontPx() * 1.25);
+  const h = half * 2 + (b.sub ? fontPx() * 1.6 : 0);
+  const plateW = Math.min(view.cssW - 12, w + padX * 2);
+  const x = view.cssW / 2 - plateW / 2;
+  const y = top - half;
+  u.globalAlpha = b.alpha;
+  u.fillStyle = "rgba(20, 22, 34, 0.74)";
+  u.beginPath();
+  if (u.roundRect) u.roundRect(x, y, plateW, h, Math.min(14, h / 2));
+  else u.rect(x, y, plateW, h);
+  u.fill();
+  u.fillStyle = "#ffffff";
+  u.font = titleFont;
+  u.fillText(b.title, view.cssW / 2, top);
+  if (b.sub) {
+    u.font = subFont;
+    u.fillStyle = "rgba(255, 255, 255, 0.88)";
     u.fillText(b.sub, view.cssW / 2, top + fontPx() * 1.6);
   }
   u.globalAlpha = 1;
@@ -197,7 +233,7 @@ export interface Overlay {
   hint: { x: number; y: number; text: string } | null;
   /** Lines in speech bubbles stacked upwards, the first line on top. Shown instead of the hint. */
   bubble: { x: number; y: number; lines: string[]; align?: "left" } | null;
-  banner: { title: string; sub: string; alpha: number } | null;
+  banner: { title: string; sub: string; alpha: number; plate?: boolean; top?: number } | null;
   highlight: { x: number; bottom: number; w: number; h: number; sign: string } | null;
   /** Where the player is walking to after a click on the ground. */
   marker: { x: number; y: number } | null;

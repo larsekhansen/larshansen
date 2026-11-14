@@ -105,6 +105,54 @@ const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabola
 const SHORTEST = 40;
 const LONGEST: Record<string, number> = { nabolaget: 80 };
 
+/**
+ * Enemies allowed by a route's jump over a pit or water, by name, and why:
+ * - Nabolaget's snowball kid stands at the edge of the block's roof, where the leap over the gap begins:
+ *   the route stomps him first, and further back his reach would cover the flag on the same roof.
+ * - Nabolaget's cat at the foot of the drift, before the tram's first slot: the route stomps it first.
+ *   The street there is four tiles; a cat sitting still a tile further back was hit twice as often by
+ *   the sloppy player coming down the drift (order 13), so it walks where it did.
+ */
+const JUMP_EXCEPTIONS: Record<string, string[]> = { nabolaget: ["thrower:kid@52", "walker:cat@153"] };
+
+/**
+ * The route's jumps (its "jump" and "leap" moves) that go over a pit or water: where he left the ground
+ * and where he landed, played through the real rules. A gap is a column between the two with water
+ * under them, or nothing at all.
+ */
+function jumpsOverGaps(def: LevelDef, moves: Move[]) {
+  const map = levelMap(def);
+  const out: { move: string; from: { x: number; bottom: number }; to: { x: number; bottom: number } }[] = [];
+  const watched = moves.map((m): Move =>
+    /^(jump|leap)/.test(m.name)
+      ? {
+          name: m.name,
+          keys(q, s) {
+            const rec = (s.rec ??= { from: null, last: null }) as { from: { x: number; bottom: number } | null; last: { x: number; bottom: number } | null };
+            if (!rec.from && !q.body.onGround && rec.last) rec.from = rec.last;
+            if (q.body.onGround) rec.last = { x: cx(q), bottom: feet(q) };
+            const k = m.keys(q, s);
+            if (k === "done" && rec.from) out.push({ move: m.name, from: rec.from, to: { x: cx(q), bottom: feet(q) } });
+            return k;
+          }
+        }
+      : m
+  );
+  playMoves(newPlay(def, { pole: POLE.has(def.id) }), watched, { max: 60 * 300 });
+  const gapAt = (c: number, top: number) => {
+    for (let r = top; r < map.rows; r++) {
+      if (def.legend.water.includes(map.tileAt(c, r))) return true;
+      if (map.isSolid(c, r) || map.isOneWay(c, r)) return false;
+    }
+    return true;
+  };
+  return out.filter((j) => {
+    const top = Math.floor(Math.min(j.from.bottom, j.to.bottom) / TILE);
+    for (let c = Math.floor(Math.min(j.from.x, j.to.x) / TILE); c <= Math.floor(Math.max(j.from.x, j.to.x) / TILE); c++) if (gapAt(c, top)) return true;
+    return false;
+  });
+}
+
 describe("the line", () => {
   test("ten levels, one per rune of LARS HANSEN, all ten built", () => {
     expect(LINE.map((l) => "LARSHANSEN"[l.rune]).join("")).toBe("LARSHANSEN");
@@ -191,6 +239,19 @@ for (const def of LEVELS) {
       expect(r.reached).toBeGreaterThan(100);
       expect(r.dead).toEqual([]);
       expect(r.onlyByFalling).toEqual([]);
+    });
+
+    test("no enemy's patrol comes within three tiles of where a route's jump over a pit or water takes off or lands", () => {
+      const near = jumpsOverGaps(def, ROUTE[def.id]).flatMap((j) =>
+        (def.enemies ?? []).flatMap((e) => {
+          const name = `${e.kind}:${e.look}@${e.c}`;
+          if (JUMP_EXCEPTIONS[def.id]?.includes(name)) return [];
+          const x = e.c * TILE + TILE / 2;
+          const span = (e.range ?? 0) * TILE;
+          return [j.from, j.to].flatMap((s) => (Math.max(0, Math.abs(s.x - x) - span) <= 3 * TILE && Math.abs(s.bottom - (e.r + 1) * TILE) <= 2 * TILE ? [`${name} by "${j.move}" at column ${Math.floor(s.x / TILE)}`] : []));
+        })
+      );
+      expect(near).toEqual([]);
     });
 
     if (NEW.has(def.id))

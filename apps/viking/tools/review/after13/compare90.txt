@@ -1,0 +1,13 @@
+Hearts lost per run, timing errors only, 90 runs each (seeds 1 to 90), for the three levels whose
+30-run numbers came out a little worse than after order 12. "Order 12" is origin/main at the merge
+of PR #57 (0c23c09), run in a worktree with the same tools; "order 13" is this branch.
+
+| Level      | ±2 order 12 | ±2 order 13 | ±4 order 12 | ±4 order 13 |
+|------------|-------------|-------------|-------------|-------------|
+| ekeberg    | 1.9         | 1.2         | 3.0         | 2.8         |
+| stortinget | 1.0         | 1.0         | 1.9         | 1.7         |
+| nabolaget  | 1.0         | 1.1         | 1.7         | 1.6         |
+
+Clears at ±2 / ±4 out of 90: ekeberg 46/32 → 45/35; stortinget 85/60 → 84/59; nabolaget 66/42 →
+57/34 (the difference is time-outs: a sloppy player resynchronised past the plough's fight leans on
+the resting plough, which does not set off while he does; ADR 0022).

@@ -67,8 +67,9 @@ export const LANGKAIA_ROUTE: Move[] = [
   leap(tile(166), 1),
   walk(tile(187) + 6),
   leap(tile(188), 1),
-  walk(tile(191) + 8),
-  leap(tile(192), 1),
+  // The boat lies against the longship's stern: up onto it from the boat's bow.
+  walk(tile(192) + 2),
+  jump(1, { release: 16 }),
   walk(tile(201)),
   stomp(6),
   walk(mid(211)),

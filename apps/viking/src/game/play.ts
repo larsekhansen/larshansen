@@ -423,6 +423,12 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
   }
   const hurt = bs.rules.hurts(bs.state, p.t, b);
   if (hurt) hit(p, ev, hurt.fromX);
+  // Standing still, it is a wall: he cannot walk through it to what lies behind.
+  const wall = bs.rules.blocks?.(bs.state);
+  if (wall && b.x + PLAYER.w > wall.x && b.x < wall.x + wall.w && b.y + PLAYER.h > wall.y + 2 && b.y < wall.y + wall.h) {
+    b.x = b.x + PLAYER.w / 2 < wall.x + wall.w / 2 ? wall.x - PLAYER.w : wall.x + wall.w;
+    b.vx = 0;
+  }
 }
 
 /** True while a boss is in its fight: awake, and not yet stone or beaten. */

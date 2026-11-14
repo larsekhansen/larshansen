@@ -183,7 +183,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "guard", c: 110, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "spiky", look: "brazier", c: 58, r: GATE - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "rat", c: 128, r: G - 1, range: 2 },
-  { kind: "walker", look: "guard", c: 200, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
+  // He stands his post between the flag and the end of the wall, clear of both: the leap over the water is its own problem.
+  { kind: "walker", look: "guard", c: 198, r: WALL - 1, range: 0, speed: 0, w: 10, h: 14 },
   { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 223, r: KEEP_FLOOR - 1, range: 2, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 229, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
@@ -321,6 +322,7 @@ function wallDetails() {
     const h = Math.round(Math.sqrt(Math.max(0, 256 - dx * dx)));
     R(gx + dx - 1, WATER - 32 - h, 3, 2, STONE.light);
   }
+  outerWall();
   // Ivy hangs from its ledge down the wall.
   for (let i = 0; i < 9; i++) {
     const x = 28 * TILE + 2 + i * 3;
@@ -338,6 +340,53 @@ function wallDetails() {
       light(x, y, 3, 10);
       light(x + 4, y, 2, 10);
     }
+}
+
+/**
+ * The outer wall's face (columns 30 to 45), so it is a wall seven hundred years old and not a pattern:
+ * a course of darker stone where it was raised later, damp and moss running down from the wall-walk,
+ * iron ties holding it together, and a drainpipe from the wall-walk down to the quay.
+ */
+function outerWall() {
+  const x0 = 30 * TILE;
+  const x1 = 46 * TILE;
+  const top = RAMP * TILE;
+  // The later courses: a band of darker, squarer stone, with a weathered top edge.
+  const band = top + 3 * TILE + 6;
+  for (let x = x0; x < x1; x++) {
+    const ragged = ((x * 7) % 5 === 0 ? 1 : 0) + ((x * 13) % 11 === 0 ? 1 : 0);
+    R(x, band - ragged, 1, 9 + ragged, (Math.floor((x + 3) / 9) % 2 ? STONE.dark : mix(STONE.dark, INK, 0.12)));
+  }
+  for (let x = x0 + 4; x < x1; x += 9) R(x, band, 1, 9, STONE.mortar);
+  R(x0, band + 4, x1 - x0, 1, STONE.mortar);
+  R(x0, band - 1, x1 - x0, 1, mix(STONE.light, STONE.dark, 0.4));
+  // Damp running down from the top, where water stands on the wall-walk, and green where it stays.
+  for (const [c, len] of [[31, 34], [34.5, 22], [36, 46], [40.5, 28], [44, 38]] as const) {
+    const x = Math.round(c * TILE);
+    for (let k = 0; k < len; k++) {
+      const w = k < len * 0.6 ? 2 : 1;
+      R(x + (k % 7 === 3 ? 1 : 0), top + 2 + k, w, 1, k < 6 ? STONE.moss : mix(STONE.dark, STONE.moss, 0.25));
+    }
+  }
+  // Iron ties: the plates that hold the wall to its core, in a row under the band.
+  for (const c of [32, 35, 39, 42]) {
+    const x = c * TILE + 6;
+    const y = band + 14;
+    R(x - 3, y, 7, 1, P.ironDark);
+    R(x, y - 3, 1, 7, P.ironDark);
+    R(x - 1, y - 1, 3, 3, P.iron);
+    R(x, y + 4, 1, 4, mix(STONE.dark, P.ironDark, 0.4));
+  }
+  // The drainpipe: down from a hopper under the wall-walk to a spout over the quay, on its brackets.
+  const px = 41 * TILE + 9;
+  R(px - 2, top + 3, 6, 4, P.ironDark);
+  R(px - 1, top + 3, 4, 1, P.iron);
+  R(px, top + 7, 2, WATER - top - 13, P.ironDark);
+  R(px, top + 7, 1, WATER - top - 13, P.iron);
+  for (let y = top + 16; y < WATER - 10; y += 22) R(px - 1, y, 4, 2, P.ironDark);
+  R(px, WATER - 6, 5, 2, P.ironDark);
+  R(px + 3, WATER - 4, 2, 1, P.ironDark);
+  R(px - 1, WATER - 4, 4, 4, mix(STONE.dark, STONE.moss, 0.35));
 }
 
 /** The well in the ward: a stone ring round the shaft, a little roof on posts, the chain down. */
@@ -479,7 +528,7 @@ export const AKERSHUS: LevelDef = {
     },
     {
       label: { nb: "Saluttbatteriet", en: "The saluting battery" },
-      lines: { nb: ["Tre kanoner på rad, og den ene skyter deg i den neste.", "Ikke len deg bakover."], en: ["Three cannons in a row, each firing you into the next.", "Do not lean back."] }
+      lines: { nb: ["Tre kanoner på rad, hver skyter deg inn i den neste.", "Ikke len deg bakover."], en: ["Three cannons in a row, each firing you into the next.", "Do not lean back."] }
     },
     {
       label: { nb: "Tårnet", en: "The keep" },

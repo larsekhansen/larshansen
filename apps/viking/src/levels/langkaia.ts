@@ -67,6 +67,9 @@ b.run(158, 159, 14, "=").run(155, 156, 12, "=").run(158, 159, 10, "=").run(155, 
 // mast, the yard, the lookout at the masthead ----------------------------------------------------------
 b.ground(168, 187, W, "Q");
 b.run(193, 229, 15, "_");
+// The longship's stern: solid, so the rowing boat lies right against it and a step too far bumps into
+// the hull instead of going into the harbour.
+b.put(193, 15, "H");
 b.put(197, 14, "B").put(201, 14, "B").put(201, 13, "B");
 b.run(211, 212, 13, "_").run(214, 215, 11, "_").run(211, 212, 9, "_");
 b.run(207, 219, 7, "_");
@@ -178,8 +181,8 @@ export const RAFTS: CarrierDef[] = [
   ...meeting(123 * TILE, 127 * TILE),
   ...meeting(136 * TILE, 132 * TILE)
 ];
-/** The rowing boat between the quay and the longship: a small raft with no cabin. */
-export const BOAT: CarrierDef = { kind: "bob", x: 189 * TILE, y: DECK, w: 3 * TILE, rise: 2, period: 160, offset: 30 };
+/** The rowing boat between the quay and the longship, moored against its stern: a small raft with no cabin. */
+export const BOAT: CarrierDef = { kind: "bob", x: 189 * TILE, y: DECK, w: 4 * TILE, rise: 2, period: 160, offset: 30 };
 const CARRIERS: CarrierDef[] = [...RAFTS, BOAT];
 const BOAT_INDEX = CARRIERS.length - 1;
 /** The rafts by name, as the scripted player looks for them: their decks. */
@@ -407,6 +410,34 @@ function rowingBoat(at: { x: number; y: number }) {
   R(x + 3, y - 3, w - 6, 1, P.woodDark);
 }
 
+/**
+ * Past the longship's prow, out in the harbour: a red buoy on its chain and a small motor boat moored
+ * to it, both bobbing on the swell. Only to look at; they are past the end of the walk.
+ */
+function mooring(t: number) {
+  const bob = (k: number) => (view.reduced ? 0 : Math.round(Math.sin((t + k) * 0.04) * 1.5));
+  // The buoy: a red float with a white band, a pole with a small light on top.
+  const bx = 238 * TILE + 4;
+  const by = WATER - 3 + bob(0);
+  R(bx, by - 6, 9, 6, PAINT.red);
+  R(bx + 1, by - 7, 7, 1, PAINT.red);
+  R(bx, by - 4, 9, 1, WHITE);
+  R(bx + 4, by - 13, 1, 6, METAL.pipe);
+  R(bx + 3, by - 15, 3, 2, LAMP);
+  light(bx + 3, by - 15, 3, 2, "soft");
+  for (let k = 0; k < 4; k++) R(bx + 4 - k * 3, by + 2 + k * 2, 2, 1, METAL.chain);
+  // The motor boat: a white hull with a green rail, a little wheelhouse, its line to the buoy.
+  const mx = 242 * TILE;
+  const my = WATER - 4 + bob(40);
+  for (let i = 0; i < 5; i++) R(mx - 2 + i, my + i, 44 - i * 2, 1, i === 0 ? WHITE : i < 3 ? mix(WHITE, P.water, 0.15) : mix(PAINT.mint, INK, 0.2));
+  R(mx, my - 1, 40, 1, PAINT.mint);
+  R(mx + 22, my - 9, 12, 8, WHITE);
+  R(mx + 24, my - 7, 8, 3, GLASS.pane);
+  light(mx + 24, my - 7, 8, 3);
+  R(mx + 21, my - 10, 14, 1, PAINT.mint);
+  for (let k = 0; k < 6; k++) R(mx - 3 - k * 2, my - 1 + Math.round(k * 0.4), 2, 1, METAL.chain);
+}
+
 /** The lookout round the masthead: a ring of planks on brackets, its rail. The floor is the map's ledge. */
 function lookout() {
   const x = 212 * TILE;
@@ -488,7 +519,7 @@ export const LANGKAIA: LevelDef = {
   place: { nb: "Bjørvika, på vannsida av Operaen", en: "Bjørvika, on the water side of the Opera" },
   sky: null,
   map: MAP,
-  legend: { solid: "MQPB#", oneWay: "_-=", water: "~" },
+  legend: { solid: "MQPBH#", oneWay: "_-=", water: "~" },
   ramps: [RAMP],
   carriers: CARRIERS,
   timed: [],
@@ -548,7 +579,14 @@ export const LANGKAIA: LevelDef = {
       lookout();
       perchedGull(v, Math.abs(v.him.x - PERCH.x) < 56 && Math.abs(v.him.y - PERCH.y) < 40);
     },
+    front: (v) => mooring(v.t),
     ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth }),
+    // The stern, solid under its deck: drawn as the deck, the hull behind it.
+    tile(t, _c, _r, x, y, _map, sky) {
+      if (t !== "H") return false;
+      ledge(x, y, WOOD_LEDGE, false, false, sky.snow);
+      return true;
+    },
     ledges: { _: WOOD_LEDGE, "-": MARBLE_LEDGE, "=": CONCRETE },
     carrier(i, at, v) {
       if (i === BOAT_INDEX) rowingBoat(at);

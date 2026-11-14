@@ -1,0 +1,132 @@
+out/t-akerselva.jsonl (2, 0, 0) {'clear': 30}
+out/t-akerselva.jsonl (4, 0, 0) {'clear': 27, 'offroute': 2, 'over': 1}
+     2 ('offroute', 142, 23, 'walk to 2260')
+     1 ('over', 228, 0, 'a log past the small rock: on')
+out/t-akerselva.jsonl (8, 0, 0) {'offroute': 17, 'over': 11, 'clear': 2}
+     10 ('offroute', 142, 23, 'walk to 2260')
+     6 ('offroute', 39, 14, 'leap at 560')
+     6 ('over', 216, 0, 'walk to 3450')
+     2 ('over', 225, 0, 'leap at a moving edge')
+     1 ('over', 227, 0, 'leap at a moving edge')
+     1 ('over', 195, 0, 'walk to 3096')
+out/t-akershus.jsonl (2, 0, 0) {'clear': 22, 'offroute': 8}
+     5 ('offroute', 128, 35, 'walk to 1940')
+     2 ('offroute', 124, 33, 'walk to 1940')
+     1 ('offroute', 124, 31, 'walk to 1940')
+out/t-akershus.jsonl (4, 0, 0) {'offroute': 22, 'clear': 8}
+     7 ('offroute', 128, 35, 'walk to 1940')
+     4 ('offroute', 50, 35, 'walk to 648')
+     2 ('offroute', 124, 33, 'walk to 1940')
+     2 ('offroute', 129, 35, 'walk to 1940')
+     2 ('offroute', 112, 35, 'walk to 1796')
+     1 ('offroute', 68, 38, 'walk to 1092')
+out/t-akershus.jsonl (8, 0, 0) {'offroute': 27, 'timeout': 2, 'over': 1}
+     9 ('offroute', 50, 35, 'walk to 648')
+     3 ('offroute', 133, 35, 'into the cannon')
+     3 ('offroute', 118, 35, 'leap at 1808')
+     2 ('offroute', 111, 35, 'walk to 1796')
+     2 ('offroute', 68, 37, 'walk to 1092')
+     1 ('offroute', 109, 35, 'leap at 1680')
+out/t-ekeberg.jsonl (2, 0, 0) {'clear': 15, 'offroute': 15}
+     5 ('offroute', 154, 18, 'across on the sheep')
+     5 ('offroute', 149, 18, 'across on the sheep')
+     4 ('offroute', 146, 18, 'across on the sheep')
+     1 ('offroute', 144, 18, 'across on the sheep')
+out/t-ekeberg.jsonl (4, 0, 0) {'clear': 13, 'offroute': 16, 'over': 1}
+     6 ('offroute', 144, 18, 'across on the sheep')
+     6 ('offroute', 146, 18, 'across on the sheep')
+     2 ('offroute', 154, 18, 'across on the sheep')
+     1 ('over', 105, 0, 'stomp enemy 7')
+     1 ('offroute', 179, 13, 'leap at 2831')
+     1 ('offroute', 149, 18, 'across on the sheep')
+out/t-ekeberg.jsonl (8, 0, 0) {'gaveup': 8, 'offroute': 9, 'clear': 1, 'timeout': 12}
+     4 ('offroute', 149, 18, 'across on the sheep')
+     4 ('gaveup', 83, 12, 'walk to 1322')
+     2 ('gaveup', 84, 12, 'walk to 1322')
+     2 ('offroute', 144, 18, 'across on the sheep')
+     2 ('offroute', 154, 18, 'across on the sheep')
+     1 ('timeout', 118, 13, 'walk to 1894')
+out/t-holmenkollen.jsonl (2, 0, 0) {'clear': 30}
+out/t-holmenkollen.jsonl (4, 0, 0) {'clear': 19, 'offroute': 7, 'timeout': 4}
+     5 ('offroute', 242, 25, 'down the inrun, and the jump at the lip')
+     4 ('timeout', 214, 14, 'down the inrun, and the jump at the lip')
+     2 ('offroute', 244, 26, 'down the inrun, and the jump at the lip')
+out/t-holmenkollen.jsonl (8, 0, 0) {'offroute': 18, 'clear': 8, 'timeout': 4}
+     8 ('offroute', 31, 13, 'walk to 482')
+     4 ('timeout', 214, 14, 'down the inrun, and the jump at the lip')
+     2 ('offroute', 242, 25, 'down the inrun, and the jump at the lip')
+     2 ('offroute', 139, 14, 'across on the chair')
+     2 ('offroute', 138, 14, 'across on the chair')
+     2 ('offroute', 31, 13, 'leap at 496')
+out/t-langkaia.jsonl (2, 0, 0) {'clear': 30}
+out/t-langkaia.jsonl (4, 0, 0) {'clear': 27, 'offroute': 1, 'gaveup': 2}
+     1 ('offroute', 30, 15, 'walk to 468')
+     1 ('gaveup', 114, 16, 'walk to 1830')
+     1 ('gaveup', 115, 16, 'walk to 1830')
+out/t-langkaia.jsonl (8, 0, 0) {'timeout': 4, 'offroute': 9, 'over': 7, 'gaveup': 5, 'clear': 5}
+     7 ('offroute', 30, 15, 'walk to 468')
+     3 ('gaveup', 115, 16, 'walk to 1830')
+     2 ('offroute', 30, 15, 'jump 1')
+     2 ('over', 133, 0, 'walk to 2144')
+     2 ('gaveup', 114, 16, 'walk to 1830')
+     1 ('timeout', 211, 13, 'walk to 3402')
+out/t-nabolaget.jsonl (2, 0, 0) {'offroute': 7, 'clear': 18, 'gaveup': 2, 'timeout': 3}
+     5 ('offroute', 132, 4, 'walk to 2108')
+     2 ('gaveup', 173, 14, 'the plough stuck, nearer')
+     2 ('timeout', 202, 14, 'walk to 3496')
+     1 ('offroute', 125, 9, 'walk to 1994')
+     1 ('offroute', 124, 9, 'walk to 1994')
+     1 ('timeout', 202, 15, 'walk to 3300')
+out/t-nabolaget.jsonl (4, 0, 0) {'offroute': 13, 'gaveup': 2, 'clear': 14, 'timeout': 1}
+     6 ('offroute', 125, 9, 'walk to 1994')
+     5 ('offroute', 132, 4, 'walk to 2108')
+     2 ('gaveup', 173, 14, 'the plough stuck, nearer')
+     2 ('offroute', 133, 4, 'walk to 2108')
+     1 ('timeout', 202, 15, 'walk to 3496')
+out/t-nabolaget.jsonl (8, 0, 0) {'offroute': 26, 'timeout': 2, 'clear': 1, 'gaveup': 1}
+     10 ('offroute', 125, 9, 'walk to 1994')
+     7 ('offroute', 132, 4, 'walk to 2108')
+     5 ('offroute', 126, 10, 'walk to 1994')
+     3 ('offroute', 124, 9, 'walk to 1994')
+     1 ('timeout', 175, 14, 'jump -1')
+     1 ('offroute', 126, 10, 'jump 1')
+out/t-nordmarka.jsonl (2, 0, 0) {'clear': 29, 'over': 1}
+     1 ('over', 218, 0, 'back from the club, jump the wave, look ')
+out/t-nordmarka.jsonl (4, 0, 0) {'clear': 29, 'over': 1}
+     1 ('over', 218, 0, 'back from the club, jump the wave, look ')
+out/t-nordmarka.jsonl (8, 0, 0) {'over': 7, 'clear': 21, 'offroute': 2}
+     2 ('offroute', 217, 15, 'onto the stone troll, to the rune')
+     1 ('over', 207, 0, 'back from the club, jump the wave, look ')
+     1 ('over', 102, 0, 'walk to 1648')
+     1 ('over', 210, 0, 'walk to 3352')
+     1 ('over', 216, 0, 'the troll comes, round 3')
+     1 ('over', 215, 0, 'back from the club, jump the wave, look ')
+out/t-radhuset.jsonl (2, 0, 0) {'clear': 26, 'offroute': 4}
+     4 ('offroute', 200, 16, 'leap at 3151')
+out/t-radhuset.jsonl (4, 0, 0) {'clear': 16, 'gaveup': 6, 'offroute': 8}
+     6 ('gaveup', 182, 32, 'walk to 2938')
+     5 ('offroute', 200, 16, 'leap at 3151')
+     3 ('offroute', 199, 16, 'leap at 3151')
+out/t-radhuset.jsonl (8, 0, 0) {'gaveup': 27, 'timeout': 3}
+     24 ('gaveup', 16, 48, 'walk to 282')
+     3 ('gaveup', 182, 32, 'walk to 2938')
+     1 ('timeout', 183, 29, 'walk to 2938')
+     1 ('timeout', 183, 32, 'jump 0')
+     1 ('timeout', 182, 27, 'jump 0')
+out/t-slottet.jsonl (2, 0, 0) {'clear': 30}
+out/t-slottet.jsonl (4, 0, 0) {'clear': 30}
+out/t-slottet.jsonl (8, 0, 0) {'clear': 30}
+out/t-stortinget.jsonl (2, 0, 0) {'clear': 28, 'offroute': 2}
+     2 ('offroute', 80, 19, 'stomp enemy 5')
+out/t-stortinget.jsonl (4, 0, 0) {'offroute': 10, 'clear': 20}
+     5 ('offroute', 80, 19, 'stomp enemy 5')
+     2 ('offroute', 155, 19, 'leap at 2446')
+     2 ('offroute', 258, 19, 'leap at 4126')
+     1 ('offroute', 79, 19, 'leap at 1262')
+out/t-stortinget.jsonl (8, 0, 0) {'offroute': 16, 'timeout': 9, 'clear': 5}
+     5 ('offroute', 155, 19, 'leap at 2446')
+     2 ('offroute', 258, 19, 'leap at 4126')
+     2 ('offroute', 80, 19, 'stomp enemy 5')
+     2 ('offroute', 259, 19, 'walk to 4110')
+     1 ('timeout', 159, 18, 'jump 1')
+     1 ('timeout', 159, 15, 'jump 1')

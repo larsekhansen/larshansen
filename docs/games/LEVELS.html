@@ -164,7 +164,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
     <div><strong>Five kinds of enemy</strong><p>Walkers, flyers, throwers and jumpers are beaten by landing on them. Spiky things hurt from above too. Throwers lob on a beat after a one-second wind-up, and never at a flag, a bench or a sign. Jumpers leap out of water after a ripple. A beaten enemy gives a skilling. Each kind first appears alone, and none stands at the take-off or landing of a jump over water, or on ice.</p></div>
     <div><strong>Skilling, cheese, bracteates</strong><p>52 to 79 copper skilling per level; a hundred is a life. One slice of brown cheese per level, in a secret, is a life. One gold bracteate per level can only be reached with the raven's feather from the maze.</p></div>
     <div><strong>The ski pole</strong><p>Clearing Holmenkollen gives a dash: three tiles in ten steps, level, once each time he is in the air and again on the ground after a short rest (Shift or X, or the Dash button). From Akerselva on some gaps need it.</p></div>
-    <div><strong>Two bosses</strong><p>The troll in Nordmarka and the snow plough in Nabolaget. Three hits each. Both show what they are about to do for a full second first, say their lines in a bubble, and after a round with no hit give a short hint; the troll's dawn falls as a bright shaft on the floor.</p></div>
+    <div><strong>Two bosses</strong><p>The troll in Nordmarka and the snow plough in Nabolaget. Three hits each. Both show what they are about to do for a full second first, say their lines in a bubble beside them, and after a round with no hit give a short hint; the troll's dawn falls as a bright shaft on the floor. The plough hurts only while it moves at him, and standing still it is in his way.</p></div>
   </div>
 </section>
 
@@ -238,6 +238,8 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
       <tr><td class="num">10 C</td><td>Stortinget, Ekeberg and Nabolaget. Belts, trains, the third rail, gusts, the plough, the ending.</td><td>PR #52</td></tr>
       <tr><td class="num">10 D</td><td>Langkaia, Akershus and Rådhuset lengthened to the same measure as the rest.</td><td>PR #53</td></tr>
       <tr><td class="num">11</td><td>Høyenhall's banner, Kværnertoppen, Kruttverket; the handover and sixteen decision records.</td><td>PR #54</td></tr>
+      <tr><td class="num">12</td><td>Made fair after an adversarial review with a sloppy scripted player: rules at the edges, Game over at a boss, waits cut, the joins, the engineering.</td><td>PR #57</td></tr>
+      <tr><td class="num">13</td><td>The look and the words: flat areas broken, trams on their rails, a plated banner, enemies that read at night, upright phones; every line read again; the last unfair places.</td><td>branch <code>look-and-words</code></td></tr>
     </tbody>
   </table></div>
 </section>
@@ -251,7 +253,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
     <div><strong>The old fjord <span class="tag done">split</span></strong><p>As planned: the longship to Langkaia, the smithy to Akerselva, the beacon became the Pi's light in the yellow house, red until the last rune is taken and green after.</p></div>
     <div><strong>One clock or ten <span class="tag">partly</span></strong><p>There is a best time per level. The total for all ten in one sitting was not built. The gold helmet is for having all ten runes, not for a single run.</p></div>
     <div><strong>Added along the way</strong><p>The ski pole's dash, benches, two bosses, skilling and brown cheese, a Game over card, and levels that load one at a time so the first page stays under 60 kB.</p></div>
-    <div><strong>Known weak spots</strong><p>Nobody has played it. Rådhuset is hard for a third level. The bosses lean on one sign to explain themselves and have waits. Throwers aim at where he stands. The full list is in the handover.</p></div>
+    <div><strong>Known weak spots</strong><p>Nobody has played it at real speed. Rådhuset's carillon is where a sloppy player still gives up most. The routes stand still a little over a third of the way in Rådhuset, Akerselva and Nordmarka, mostly riding. Upright phones were seen only in a headless browser. The full list is in the handover.</p></div>
     <div><strong>Left out on purpose</strong><p>Your childhood street, and any explanation of the personal details, are not in the game or the public repository.</p></div>
   </div>
 </section>
@@ -311,73 +313,88 @@ function rune(x, y, ch) {
   }
 }
 
-// ---- the game as data: counts and times are read from the built levels and their tests ----
+// ---- FACTS: written by apps/viking/tools/facts.ts from the levels; do not edit by hand ----
+const FACTS = {
+  "langkaia":{"cols":250,"clear":62,"enemies":8,"coins":79,"flags":5,"benches":2},
+  "akershus":{"cols":280,"clear":57,"enemies":15,"coins":79,"flags":5,"benches":2},
+  "radhuset":{"cols":228,"clear":77,"enemies":9,"coins":67,"flags":5,"benches":2},
+  "slottet":{"cols":252,"clear":61,"enemies":13,"coins":61,"flags":5,"benches":2},
+  "holmenkollen":{"cols":280,"clear":44,"enemies":8,"coins":62,"flags":7,"benches":2},
+  "akerselva":{"cols":250,"clear":65,"enemies":13,"coins":57,"flags":6,"benches":2},
+  "nordmarka":{"cols":236,"clear":61,"enemies":10,"coins":52,"flags":6,"benches":2},
+  "stortinget":{"cols":274,"clear":63,"enemies":11,"coins":73,"flags":4,"benches":2},
+  "ekeberg":{"cols":256,"clear":63,"enemies":13,"coins":60,"flags":6,"benches":2},
+  "nabolaget":{"cols":224,"clear":83,"enemies":8,"coins":66,"flags":6,"benches":2}
+};
+// ---- end of FACTS ----
+
+// ---- the game as data: the words by hand, the numbers from FACTS above ----
 const LEVELS = [
-  { ch: "L", id: "langkaia", name: "Langkaia", where: "Bjørvika, on the water side of the Opera", sky: "Oslo right now", cols: 250, clear: 61, foes: "8: pigeons, gulls, a rat", coins: 79, ride: "on foot along the harbour promenade",
+  { ch: "L", id: "langkaia", name: "Langkaia", where: "Bjørvika, on the water side of the Opera", sky: "Oslo right now", foes: "pigeons, gulls, a rat", ride: "on foot along the harbour promenade",
     shot: "Two sauna rafts drifting side by side in the harbour, him on the first, skilling over the cabin roofs and a gull between them",
     cap: "The two rafts that drift together: moving ground onto moving ground.",
     add: "Everything from nothing: walking, the jump, ledges you jump up through, the first skilling, one pigeon on its own, the first bench and flag. Then the first water, two tiles wide, and the first ground that moves: sauna rafts.",
     beats: ["Out of the stage tower's door, down the Opera's marble roof to the quay and its two sheds, Runesmia and Verkstedet. Nothing can be lost here.", "The sauna rafts, over water on moving ground, to the sauna club's pier and the middle flag.", "Two rafts that drift towards each other, a high road over the cabin roofs, gulls, and Sørenga's diving tower with the brown cheese on top.", "The moored longship: aboard, up the mast, along the yard to rune L."],
     oslo: "Langkaia is the quay beside the Opera where the floating saunas are tied up. MUNCH and the Barcode stand behind, as on the front page.",
     you: "It starts where the front page ends: the same Opera, seen from the other side. The longship is the one from the old game.", kit: "carrier (bob, drift)" },
-  { ch: "A", id: "akershus", name: "Akershus festning", where: "The fortress above the harbour", sky: "Day", cols: 280, clear: 59, foes: "15: guards, braziers, crows, rats", coins: 79, ride: "three hundred metres along the quay",
+  { ch: "A", id: "akershus", name: "Akershus festning", where: "The fortress above the harbour", sky: "Day", foes: "guards, braziers, crows, rats", ride: "three hundred metres along the quay",
     shot: "He flies through the air between three cannons standing on stone piers in the harbour",
     cap: "The saluting battery: each cannon fires him into the next.",
     add: "The cannon. Walk in, a third of a second in the barrel with the arc shown dotted, then the shot; in the air the keys only lean on the flight. And the brazier, the first thing that hurts to land on.",
     beats: ["Up the outer wall on stone ledges and ivy, past a brazier on its own, into a cannon that cannot miss, onto the gate tower and the first flag.", "The wall-walk with guards on it, a cannon over the ward and one over the dry ditch. A fall only lands him below, with ledges back up and a bench by the well. The well goes down to a cellar with the cheese.", "The moat, where a hoist goes up and down through the cannon's line of fire, and the saluting battery: three cannons on piers, each firing him into the next.", "The keep: a climb inside past its guard, out beside the copper spire, rune A."],
     oslo: "Begun in 1299. The sign reads: “Never taken by siege. You are welcome to try.”",
     you: "The first A of your name.", kit: "checkpoint, launcher" },
-  { ch: "R", id: "radhuset", name: "Rådhuset", where: "The two brick towers on Rådhusplassen", sky: "Day", cols: 228, clear: 77, foes: "9: pigeons, gulls that throw chips, an e-scooter", coins: 67, ride: "up Karl Johans gate",
+  { ch: "R", id: "radhuset", name: "Rådhuset", where: "The two brick towers on Rådhusplassen", sky: "Day", foes: "pigeons, gulls that throw chips, an e-scooter", ride: "up Karl Johans gate",
     shot: "He stands on the tip of the gilded hand of the clock on the brick tower, a flag and a swinging bell to the left",
     cap: "Up the clock tower on the tip of the clock's own hand.",
     add: "Ledges on a beat. The carillon's bells are there for two seconds, shimmer for one, and are gone for two. And the first thrower: a gull with chips. The level climbs; it is 52 rows tall.",
     beats: ["Along Rådhusbrygga: three low bells over the promenade, where a fall costs nothing, and a chip-throwing gull on its own.", "Across the water on the island ferry's roof, over the square past an e-scooter, three bells over the fountain.", "The window cleaners' lift up the west tower while a second gull throws, then the carillon: bells rising between the towers, one that swings on its rod.", "The clock tower, ridden up on the tip of the clock's gilded hand, to the parapet and rune R."],
     oslo: "The east tower holds 49 bells that play on the hour. Here they also ring when he lands on them.",
     you: "Known to be hard for a third level: a fall from the upper bells is a long climb back.", kit: "timed, carrier (lift, swing, orbit)" },
-  { ch: "S", id: "slottet", name: "Slottet", where: "Karl Johan, uphill to the palace", sky: "Always 17 May", cols: 252, clear: 61, foes: "13: pigeons, gulls, a hot-dog cart", coins: 61, ride: "T-bane line 1 from Nationaltheatret",
-    shot: "Karl Johan on 17 May: a crowd with flags, a roadworks pit, and a navy school banner reading Høyenhall skole carried above the street",
+  { ch: "S", id: "slottet", name: "Slottet", where: "Karl Johan, uphill to the palace", sky: "Always 17 May", foes: "pigeons, gulls, a hot-dog cart", ride: "T-bane line 1 from Nationaltheatret",
+    shot: "Karl Johan on 17 May: he stands on the navy school banner reading Høyenhall skole, carried high over a crowd with flags",
     cap: "The second roadworks dig. Høyenhall skole's banner is the way over.",
     add: "Ground that travels. The parade's banners are ledges carried up the street; stand on a crossbar and it takes him over the crowd. The band's bass drum throws him straight up. The breather after the towers.",
     beats: ["Egertorget: the first banners, over plain street.", "Spikersuppa: a banner over the pond.", "Past Nationaltheatret and the University: the drum up to the high banner over the roadworks (“Digging in progress. Since 2019.”).", "Slottsparken and the palace: the King's Guard march in step and their hats lift him to the terrace; up the front to the balcony and rune S. The royals wave."],
     oslo: "Flags on every pole, whatever the real date: the kit's 17 May sky, pinned.",
     you: "The high banner is Høyenhall skole's.", kit: "carrier (path), launcher (drum)" },
-  { ch: "H", id: "holmenkollen", name: "Holmenkollen", where: "The ski jump", sky: "Always winter, snowing", cols: 280, clear: 44, foes: "8: snowball kids, foxes, a hedgehog, a fire basket, crows", coins: 62, ride: "on skis through the forest to the river",
+  { ch: "H", id: "holmenkollen", name: "Holmenkollen", where: "The ski jump", sky: "Always winter, snowing", foes: "snowball kids, foxes, a hedgehog, a fire basket, crows", ride: "on skis through the forest to the river",
     shot: "He is in the air off the ski jump, rune H ahead of him and the city far below",
     cap: "Off the lip. Rune H hangs in the flight path.",
     add: "Ice and the inrun. On ice he keeps sliding after you let go; red rails stop a slide. On an inrun there is no steering, the speed climbs past a run, and one button matters: the jump at the lip.",
     beats: ["Off the train at the top, along a path where the snow has turned to ice and nothing can go wrong.", "The icy steps, over small drops and gaps. Nobody has gritted. Nobody will.", "Two gullies: one crossed by the snow cannon, one by the chairlift. A children's hill to practise the lip.", "The start hut, the inrun, the flight. Miss the rune and the landing hill lets him down; the steps under the inrun take him back up."],
     oslo: "Line 1 climbs past the jump on its way to Frognerseteren. The city lies below in the backdrop, the reverse of the front page's view.",
     you: "The H of Hansen. Clearing it gives the ski pole.", kit: "surface (ice, inrun), launcher" },
-  { ch: "A", id: "akerselva", name: "Akerselva", where: "Down the river from Nydalen to Vaterland", sky: "Day, summer", cols: 250, clear: 67, foes: "13: salmon, rats, wasps, a gull, a duck", coins: 57, ride: "T-bane line 5 to Sognsvann",
+  { ch: "A", id: "akerselva", name: "Akerselva", where: "Down the river from Nydalen to Vaterland", sky: "Day, summer", foes: "salmon, rats, wasps, a gull, a duck", ride: "T-bane line 5 to Sognsvann",
     shot: "The water wheel at Hjula with him standing in one of its buckets, the brick mill behind",
     cap: "The wheel at Hjula: on at the bottom, off at the top.",
     add: "Current, and the dash. Logs drift downstream and come round again; a waterfall pushes down so hard a jump barely leaves the ground. The ski pole's dash goes straight through one. The salmon is the first jumper.",
     beats: ["Nydalen: a salmon on its own, a fall over dry ground, the dash over a dry mill race, the first logs.", "Bjølsen: logs between rocks, the first fall over its pool.", "Hjula: the water wheel, Runesmia by the falls (the door to the QR maker), the middle flag. Then a curtain of falling water to dash through, with a cave behind it.", "Vaterland: Aamodt bru, off the last fall onto the logs, the last pool, rune A on the far bank."],
     oslo: "The sign on Aamodt bru is real: a hundred men it can carry, but not marching in step. The only level that goes downhill all the way.",
     you: "The second A, and your QR maker gets a proper workshop.", kit: "zone (push), carrier (drift, orbit), dash" },
-  { ch: "N", id: "nordmarka", name: "Nordmarka", where: "The forest north of the city", sky: "Always a summer night", cols: 236, clear: 63, foes: "10: foxes, owls, a hedgehog, squirrels, a bat, an anthill; and the troll", coins: 52, ride: "line 5 back down to the centre",
+  { ch: "N", id: "nordmarka", name: "Nordmarka", where: "The forest north of the city", sky: "Always a summer night", foes: "foxes, owls, a hedgehog, squirrels, a bat, an anthill; and the troll", ride: "line 5 back down to the centre",
     shot: "A dark spruce forest lit only by his headlamp; a green troll raises its club in a shaft of dawn light",
     cap: "The clearing. The troll's club is up, and the dawn is coming through the trees.",
     add: "The dark. Under the spruces only the headlamp's circle shows, more the way he faces; lit windows, the blue trail marks, signs and eyes show through. Then the first boss.",
     beats: ["From Sognsvann into the trees: the dark where nothing can go wrong, the first blue-painted trunk (this level's flag), a fox's eyes.", "Bog pits in the dark, stones over a bog, and a moose that crosses the marsh and does not care that he rides its back.", "Ullevålseter with one lit window, Jernhaugen's mound with its door into the maze, and a gorge in the darkest part, crossed with the dash.", "The clearing. A boulder that is a troll: it raises its club for a second, slams, and the club sticks. Caught in the dawn with the headlamp on it, a third of it turns to stone. Three times, and rune N is on the boulder."],
     oslo: "The level starts at the end of the line, where the city stops and the forest begins. “Waffles for everyone, every day. Not now. It is night.”",
     you: "Your 2019 maze gets a place on the ground, not only on the map.", kit: "dark, carrier (walk), troll" },
-  { ch: "S", id: "stortinget", name: "Stortinget", where: "The T-bane station under the centre", sky: "None: underground", cols: 274, clear: 64, foes: "11: rats, pigeons, an umbrella, a trolley, an e-scooter", coins: 73, ride: "the tram up Ekebergbakken",
-    shot: "A tiled station platform with a white T-bane train standing at it and him stepping onto its roof",
+  { ch: "S", id: "stortinget", name: "Stortinget", where: "The T-bane station under the centre", sky: "None: underground", foes: "rats, pigeons, an umbrella, a trolley, an e-scooter", ride: "the tram up Ekebergbakken",
+    shot: "A tiled station platform, STORTINGET in white on its blue band, a white T-bane train standing at it and him beside it",
     cap: "The train stands. Its roof is the only way through the tunnel.",
     add: "Belts and a timetable. Escalators and a walkway add to his speed or take from it. Trains stand at the platforms on a schedule the board counts down to. The third rail is the first hazard: a heart, and it throws him clear.",
     beats: ["The ticket hall and the escalators: one with him, one against, where nothing can go wrong.", "Platform 1: the board, the first crossing of the open track, the first train roof through a tunnel. A low beam sweeps a rider off at the next platform.", "Platform 2: the kiosk that is Quintle's door, the middle flag, a walkway against him with umbrellas on it, and a track too wide for a jump.", "The cavern where the lines cross: two trains pass, and the lower one goes to the depot, so he changes roofs on the way. Rune S past the gate."],
-    oslo: "Every line in the city passes through this station. “The doors are closing. They always say that.”",
+    oslo: "Every line in the city passes through this station. “Doors closing. They always say so.”",
     you: "Quintle's kiosk is padlocked with the front page's words until it is out.", kit: "surface (belt), carrier (stops), hazard" },
-  { ch: "E", id: "ekeberg", name: "Ekeberg", where: "The hillside above Gamle Oslo", sky: "Always evening", cols: 256, clear: 63, foes: "14: magpies, crows, hedgehogs, squirrels, wasps", coins: 60, ride: "on foot down through Gamlebyen",
+  { ch: "E", id: "ekeberg", name: "Ekeberg", where: "The hillside above Gamle Oslo", sky: "Always evening", foes: "magpies, crows, hedgehogs, squirrels, wasps", ride: "on foot down through Gamlebyen",
     shot: "Under a banded orange evening sky he bounces across a quarry on the backs of sheep",
     cap: "The quarry: three sheep are the only way over.",
     add: "Wind. Leaves stream through for a second as a warning, then for a second and a half the gust pushes him sideways. And sheep chains: bounce to bounce, steering through the gust.",
     beats: ["Up from Gamlebyen on the tram's roof as it climbs its trestle, and one gust over flat ground.", "The sculpture park: the sculptures are the ledges (“Do not climb on the art. It says nothing about jumping.”), with gusts over small drops and a pond.", "The old quarry, on the backs of three sheep.", "Up the bank to the viewpoint. Every place he has cleared shows a light in the city below. Rune E at the end of the railing."],
     oslo: "Munch set The Scream on this hillside. The evening sky here gets the bands.",
     you: "From here he can see home.", kit: "zone (gust on a beat), launcher (sheep)" },
-  { ch: "N", id: "nabolaget", name: "Nabolaget", where: "From Vålerenga home to Kværnertoppen", sky: "Always a winter night, northern lights", cols: 224, clear: 83, foes: "8: cats, crows, a snowball kid, a fox, an owl; and the snow plough", coins: 66, ride: "the door Hjem, to the front page's first house",
-    shot: "A winter night: he comes down a snowdrift beside Kruttverket, a long brick building with arched lit windows and people at café tables",
+  { ch: "N", id: "nabolaget", name: "Nabolaget", where: "From Vålerenga home to Kværnertoppen", sky: "Always a winter night, northern lights", foes: "cats, crows, a snowball kid, a fox, an owl; and the snow plough", ride: "the door Hjem, to the front page's first house",
+    shot: "A winter night: he stands by Kruttverket, a long brick building with arched lit windows and people at café tables, reading its sign",
     cap: "Down the snow from the church, past Kruttverket.",
     add: "Nothing new. Everything from the nine levels before, once each: icy roofs, washing lines that throw him, warm chimney air that lifts, a dark lane, a tram roof. Then the last boss.",
     beats: ["Up onto the roofs of the front page's wooden houses, icy, seen from above the eaves.", "Roof to roof over the back yards on washing lines and chimney air.", "Down into the lane behind Vålerenga kirke, dark but for the church windows and his headlamp, and up the tower: the spire is the last climb.", "Down the snow into Kværnerdalen, past Kruttverket, to a flag and a bench. Then the snow plough: a bounce off the washing line, the dash from a roof, a ride on the tram. Three times on its cab and it parks for good.", "The yellow house on Kværnertoppen. In the window, a Raspberry Pi serving the game you are playing; its light turns green when rune N is taken. The helmet turns gold."],
@@ -399,8 +416,8 @@ const LADDER = [
 
 // ---- put it on the page ----
 const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
-const total = LEVELS.reduce((n, l) => n + l.cols, 0);
-const secs = LEVELS.reduce((n, l) => n + l.clear, 0);
+const total = LEVELS.reduce((n, l) => n + FACTS[l.id].cols, 0);
+const secs = LEVELS.reduce((n, l) => n + FACTS[l.id].clear, 0);
 const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 document.getElementById("spell").innerHTML = LEVELS.map((l, i) => `<li><a href="#level-${i + 1}"><canvas width="11" height="13" data-rune="${l.ch}" aria-hidden="true"></canvas><b>${l.ch}</b><span>${esc(l.name.split(" ")[0])}</span></a></li>`).join("");
 document.getElementById("line").innerHTML = LEVELS.map((l, i) => `<li><b>${l.ch}</b><strong>${esc(l.name)}</strong><span>${i < 9 ? "then " + esc(l.ride) : esc(l.ride)}</span></li>`).join("") + `<li class="bonus"><b>+</b><strong>Jernhaugen</strong><span>the bonus stop: the maze, open from the start</span></li>`;
@@ -409,7 +426,7 @@ document.getElementById("levels").innerHTML = LEVELS.map((l, i) => `
   <header>
     <canvas width="11" height="13" data-rune="${l.ch}" aria-hidden="true"></canvas>
     <div class="name"><p class="eyebrow">Level ${i + 1} · rune ${l.ch} · built</p><h3>${esc(l.name)}</h3><p class="where">${esc(l.where)}</p></div>
-    <dl class="facts"><div><dt>Sky</dt><dd>${esc(l.sky)}</dd></div><div><dt>Length</dt><dd>${l.cols} columns</dd></div><div><dt>Scripted clear</dt><dd>${mmss(l.clear)}</dd></div><div><dt>Skilling</dt><dd>${l.coins}</dd></div><div><dt>Enemies</dt><dd>${esc(l.foes)}</dd></div></dl>
+    <dl class="facts"><div><dt>Sky</dt><dd>${esc(l.sky)}</dd></div><div><dt>Length</dt><dd>${FACTS[l.id].cols} columns</dd></div><div><dt>Scripted clear</dt><dd>${mmss(FACTS[l.id].clear)}</dd></div><div><dt>Skilling</dt><dd>${FACTS[l.id].coins}</dd></div><div><dt>Flags, benches</dt><dd>${FACTS[l.id].flags}, ${FACTS[l.id].benches}</dd></div><div><dt>Enemies</dt><dd>${FACTS[l.id].enemies}: ${esc(l.foes)}</dd></div></dl>
   </header>
   <figure><img class="shot" src="shots/${String(i + 1).padStart(2, "0")}-${l.id}.png" width="1280" height="800" loading="lazy" alt="${esc(l.shot)}"><figcaption class="cap">${esc(l.cap)} <a href="https://larshansen.dev/viking/?debug&amp;level=${l.id}">Open the level</a></figcaption></figure>
   <div class="notes">

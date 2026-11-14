@@ -2,13 +2,12 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { CREATURE, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import type { EnemyDef } from "../game/enemies";
+import { leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { drawSalmon } from "../render/pickups";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -142,9 +141,12 @@ export const MAP = b.rows_();
 const FLOAT = 3;
 const LOG_W = 2 * TILE;
 const LOG_SPEED = 0.45;
+/** Steps a log lies against the rock at the end of its stretch before it goes under: room for a late jump. */
+const LOG_HOLD = 60;
 /**
  * Logs on a stretch of river from column c0 to c1 (the log's left end, first to last), on water whose
- * top is at row `r`: each comes up out of the water, drifts downstream, sinks, and comes round again.
+ * top is at row `r`: each comes up out of the water, drifts downstream, lies a moment against the rock
+ * at the end, sinks, and comes round again.
  */
 function logs(c0: number, c1: number, r: number, n: number, wait: number, phase = 0): Path[] {
   const y = r * TILE - FLOAT;
@@ -158,14 +160,15 @@ function logs(c0: number, c1: number, r: number, n: number, wait: number, phase 
     ],
     w: LOG_W,
     speed: LOG_SPEED,
-    wait
+    wait,
+    stops: [{ at: 2, steps: LOG_HOLD }]
   };
   const period = logPeriod(c0, c1, wait);
   return Array.from({ length: n }, (_, i) => ({ ...one, offset: Math.round(((i + phase) * period) / n) }));
 }
 
 /** Steps in one round of a stretch's logs, for the salmon that leap on the same beat. */
-const logPeriod = (c0: number, c1: number, wait: number) => Math.ceil((8 + (c1 - c0) * TILE + 10) / LOG_SPEED) + wait;
+const logPeriod = (c0: number, c1: number, wait: number) => Math.ceil((8 + (c1 - c0) * TILE + 10) / LOG_SPEED) + LOG_HOLD + wait;
 export const LOG_PERIOD = { bjolsen: [logPeriod(61, 64, 40), logPeriod(68, 72, 40), logPeriod(75, 78, 40)], pool: [logPeriod(196, 202, 30), logPeriod(205, 212, 30), logPeriod(216, 220, 30), logPeriod(227, 230, 30), logPeriod(233, 237, 30)] };
 
 /** The three stretches at Bjølsen. */
@@ -213,6 +216,57 @@ export const ENEMIES: EnemyDef[] = [
 ];
 
 export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
+
+// --- The river's own creatures: the salmon and the duck (drawn here, as no other level has them) -------------
+
+/** Two frames of walking, by its place. */
+const stride = (e: Enemy) => (view.reduced ? 0 : Math.floor(e.x / 3) % 2);
+
+function duck(e: Enemy) {
+  const x = Math.round(e.x - 5);
+  const y = Math.round(e.y);
+  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 10 - dx);
+  // A mallard waddling: brown body, a green head bobbing, a yellow bill, orange feet.
+  R(x + 1, y - 5, 8, 4, CREATURE.duck);
+  R(at(0), y - 4, 2, 2, mix(CREATURE.duck, INK, 0.3));
+  R(x + 2, y - 4, 4, 1, mix(CREATURE.duck, WHITE, 0.25));
+  const bob = stride(e);
+  R(at(7), y - 8 + bob, 3, 3, CREATURE.duckHead);
+  R(at(9) + (e.dir > 0 ? 1 : -1), y - 7 + bob, 2, 1, CREATURE.duckBill);
+  R(at(8), y - 7 + bob, 1, 1, INK);
+  R(at(3) + bob, y - 1, 2, 1, CREATURE.beak);
+  R(at(6) - bob, y - 1, 2, 1, CREATURE.beak);
+}
+
+const SALMON = ["..bb..", ".bbbb.", ".bebs.", "bbbbss", "bbbsss", "bbssss", ".bbss.", ".bbss.", "..bs..", "..bb..", ".b..b.", "bb..bb"];
+
+/**
+ * A salmon leaping: nose up on the way out of the water, nose down on the way back, a dark back, a
+ * pale side, the tail fin spread. `water`: the y of the surface, below which nothing of it shows.
+ */
+function drawSalmon(e: Enemy, t: number, water = Infinity) {
+  const l = leap(e, t);
+  const x = Math.round(e.x - 3);
+  const y = Math.round(e.y) - 12;
+  if (l.ripple && !view.reduced && Math.floor(t / 6) % 2) {
+    R(Math.round(e.x - 5), Math.min(water, Math.round(e.y)) - 1, 10, 1, P.foam);
+    R(Math.round(e.x - 3), Math.min(water, Math.round(e.y)) - 2, 6, 1, mix(P.foam, P.water, 0.4));
+  }
+  if (l.up <= 0) return;
+  // Past the top of its leap it turns over.
+  const falling = leap(e, t + 1).up < l.up;
+  const colors: Record<string, string> = { b: mix(CREATURE.salmon, INK, 0.12), s: mix(CREATURE.salmon, WHITE, 0.45), e: INK };
+  SALMON.forEach((row, r) =>
+    [...row].forEach((ch, c) => {
+      if (ch === ".") return;
+      const yy = y + (falling ? 11 - r : r);
+      if (yy >= water) return;
+      R(x + (e.dir > 0 ? c : 5 - c), yy, 1, 1, ch === "b" && (r < 2 || c === 0) ? mix(CREATURE.salmon, INK, 0.35) : colors[ch]);
+    })
+  );
+  // The splash it leaves where it broke the surface.
+  if (water < Infinity && l.up < 14 && !view.reduced) for (const dx of [-5, 5]) R(Math.round(e.x) + dx, water - 2 - (l.up % 3), 2, 2, P.foam);
+}
 
 // --- Art ------------------------------------------------------------------------------------------------
 const P = PALETTE;
@@ -974,8 +1028,10 @@ export const AKERSELVA: LevelDef = {
       else if (carrierShown(d, v.t)) drawLog(at, (i < FIRST_BUCKET ? T1 : POOL) * TILE);
     },
     enemy(e, v) {
-      if (e.def.look !== "salmon" || !e.alive) return false;
-      drawSalmon(e, v.t, waterTop(e.x));
+      if (!e.alive) return false;
+      if (e.def.look === "salmon") drawSalmon(e, v.t, waterTop(e.x));
+      else if (e.def.look === "duck") duck(e);
+      else return false;
       return true;
     },
     flourish: (age) => flourish(age)

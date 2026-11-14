@@ -19,6 +19,7 @@ Run everything from this folder.
 | `standflag.ts`, `savepoints.ts`, `throwers.ts` | throwers against flags, benches and the route's waits | `bun standflag.ts` |
 | `bosses.ts`, `bossref.ts` | naive strategies against the troll and the plough; the perfect fights' timing | `bun bosses.ts` |
 | `waits.ts`, `worstwait.ts`, `quiet.ts` | the perfect route's standing still; the worst wait on arrival at each wait; quiet stretches | `bun waits.ts` |
+| `standing.ts` | the perfect route's standing still, split into standing on the map's own ground and standing on what is not the map's: moving ground, the bells on their beat ("riding") | `bun standing.ts [level...]` |
 | `mazesloppy.ts`, `mazegeo.ts` | the maze with a sloppy player; stones and arrivals against snakes and sliders | `bun mazesloppy.ts ks=0,2,4 seeds=20` |
 | `urls.ts` | screenshot addresses at six standable spots per level | `bun ../../../../tools/shots.ts <dir> $(bun urls.ts 6)` with `apps/viking` built and served on 5181 |
 
@@ -26,7 +27,8 @@ Run everything from this folder.
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
 `before/` holds the review's own numbers (the tables, the per-jump results, the dead ends, the boss
-strategies and waits as measured at `b5d1a3a`); `after/` the same after order 12. The raw `.jsonl`
+strategies and waits as measured at `b5d1a3a`); `after/` the same after order 12; `after13/` the same
+after order 13, with `standing.txt` (the routes' standing still split into fixed ground and riding). The raw `.jsonl`
 runs are not kept; `out/` is where a new run writes them and is not committed.
 
 Limits: the sloppy player is the route's plan with a person's timing, not a person. It never finds a

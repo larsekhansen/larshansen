@@ -11,7 +11,7 @@ import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
-import { R, S, ctx, mix, target, view } from "@larshansen/pixelkit/paint";
+import { R, S, TINT, ctx, lights, mix, target, view } from "@larshansen/pixelkit/paint";
 import { COIN, DUST, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
@@ -51,7 +51,7 @@ import {
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
 import { drawTimed } from "@larshansen/pixelkit/timed";
-import { boardWidth, doorBoard, drawOverlay, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
+import { boardWidth, doorBoard, drawOverlay, fontPx, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
@@ -66,7 +66,7 @@ import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/in
 import { FENCE_COL, kartDef } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
-import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
+import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling, enemyEyes } from "./render/pickups";
 import { drawTiles, drawWater } from "./render/tiles";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
@@ -853,14 +853,24 @@ function bossSays(lines: string[], steps = BOSS_LINE_STEPS) {
   say(lines.join(" "));
 }
 
-/** Where a boss's bubble points: over the troll's head, or the top of the last boss. */
-function bossTop(p: Play): { x: number; y: number } | null {
-  if (p.troll && p.def.trollRules) return { x: p.troll.x, y: p.def.trollRules.box(p.troll).y - 6 };
-  if (p.boss) {
-    const top = p.boss.rules.top(p.boss.state);
-    return { x: top.x, y: top.y - 6 };
+/**
+ * Where a boss's words go: beside it, at the height of its top, on the side away from him, so the
+ * bubble is never over him, nor over its head or its cab, where he has to look to beat it.
+ */
+function bossBubbleAt(p: Play, lines: string[]): { x: number; y: number } | null {
+  let top: { x: number; y: number; w: number } | null = null;
+  if (p.troll && p.def.trollRules) {
+    const box = p.def.trollRules.box(p.troll);
+    top = { x: p.troll.x, y: box.y, w: box.w };
+  } else if (p.boss) {
+    const t = p.boss.rules.top(p.boss.state);
+    top = { x: t.x, y: t.y, w: t.w ?? 32 };
   }
-  return null;
+  if (!top) return null;
+  const wide = Math.max(...lines.map((l) => boardWidth(l))) + 6;
+  const him = shown.x + PLAYER.w / 2;
+  const side = him <= top.x ? 1 : -1;
+  return { x: top.x + side * (top.w / 2 + 6 + wide / 2), y: top.y + 2 };
 }
 
 /** This level's bracteate was found on an earlier visit: drawn as a pale outline, and quiet. */
@@ -1074,13 +1084,19 @@ const look = (): Look => {
 // ---------------------------------------------------------------------------------------------
 // The camera and drawing.
 
-/** The camera follows him, at the same pace on every screen, up and down as well; the header bar covers the top, and only sky is up there. */
+/**
+ * The camera follows him, at the same pace on every screen, up and down as well; the header bar covers
+ * the top, and only sky is up there. On an upright screen he stands about two thirds of the way down,
+ * with ground under him (the bottom of the map goes on down), not at the very bottom under a tall sky.
+ */
 function camera(elapsedMs: number, snap: boolean) {
   const bar = (header.getBoundingClientRect().height * view.dpr) / view.k;
   const p = scene.play;
   const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
   const focus = { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2, facing: p.body.facing, lookUp: look };
-  const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom: scene.def.floor?.(focus.x) ?? scene.play.map.height, top: bar }, view, elapsedMs, snap);
+  const floor = scene.def.floor?.(focus.x) ?? scene.play.map.height;
+  const bottom = view.h > view.w ? Math.max(floor, Math.round(focus.y + view.h / 3)) : floor;
+  const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom, top: bar }, view, elapsedMs, snap);
   shake.x = state.steps < state.nudge.until ? state.nudge.x : 0;
   shake.y = state.steps < state.nudge.until ? state.nudge.y : 0;
   aim({ x: at.x + shake.x, y: at.y + shake.y });
@@ -1096,6 +1112,37 @@ function layout() {
 }
 
 const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, scene.skies.sky.phase, haze);
+
+/** The height of view the far layers are drawn for. */
+const FAR_VIEW_H = 220;
+/**
+ * A far layer's pass. The far layers are placed for a view of the usual height, with him about in its
+ * middle; on an upright screen he stands two thirds of the way down a much taller view, so a layer
+ * placed by the screen (hills that sink as the view climbs) would hang high in the sky. There it is
+ * drawn as for a view of the usual height round him and moved down to where he stands; what is
+ * placed in the world (the far shore at the water line) stays where it is.
+ */
+function farPass(onto: CanvasRenderingContext2D, draw: () => void, haze: number) {
+  const him = shown.y + PLAYER.h / 2 - view.camYf;
+  const dy = view.h > view.w && view.h > FAR_VIEW_H && !scene.def.underground ? Math.max(0, Math.round(him - FAR_VIEW_H / 2)) : 0;
+  if (!dy) return pass(onto, draw, haze);
+  view.camY += dy;
+  view.camYf += dy;
+  pass(
+    onto,
+    () => {
+      const g = ctx();
+      g.setTransform(1, 0, 0, 1, 0, dy);
+      draw();
+      // The haze and the night's tint go over the whole layer; its windows come on where they were drawn.
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      for (const l of lights) l.y += dy;
+    },
+    haze
+  );
+  view.camY -= dy;
+  view.camYf -= dy;
+}
 const follows = pageFollows(enterButton, links, help);
 
 /** The things of a level: moving ground, ledges on a beat, cannons and their arc, flags, sheep, gold and the rune. */
@@ -1137,6 +1184,67 @@ function drawThings(v: View) {
   if (p.rune && runeFree(p)) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
   if (p.pole && !p.loaded) skiPole(v);
+}
+
+/** Eye-shine: the one bright pixel that answers a light in the dark; and the moonlit rim round what can hurt him. */
+const EYE_SHINE = "#fff1c2";
+const RIM = "#c9d8ff";
+/** A scratch canvas the size of the view, for the enemies' outlines after dark. */
+const rimCanvas = document.createElement("canvas");
+const rimG = rimCanvas.getContext("2d")!;
+
+/**
+ * After dusk the street layer has the night's tint over it, and a pigeon on dark planks is a dark shape
+ * on dark. So what can hurt him and what he can pick up keep some light: each enemy, and what it throws,
+ * gets a one-pixel pale rim round its top and sides and is a little lighter than its tinted self, with
+ * eye-shine where it has eyes; the hazards get a lit edge; the skilling and the cheese shine nearly as
+ * by day. In a level under the trees, the dark that comes after covers all of it but the lamp's circle.
+ */
+function afterDark(v: View) {
+  const p = scene.play;
+  const art = scene.def.art;
+  const street = ctx();
+  const enemies = () => {
+    for (const e of p.enemies) if (e.alive && !art.enemy?.(e, v)) drawEnemy(e, p.t);
+    for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
+  };
+  if (rimCanvas.width !== view.w || rimCanvas.height !== view.h) {
+    rimCanvas.width = view.w;
+    rimCanvas.height = view.h;
+  }
+  // Their shapes, in the rim's colour, a pixel up and to each side; then they themselves over it, as tinted.
+  rimG.clearRect(0, 0, view.w, view.h);
+  target(rimG);
+  enemies();
+  rimG.globalCompositeOperation = "source-in";
+  rimG.fillStyle = RIM;
+  rimG.fillRect(0, 0, view.w, view.h);
+  rimG.globalCompositeOperation = "source-over";
+  street.globalAlpha = v.sky.phase === "night" ? 0.9 : 0.7;
+  for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) street.drawImage(rimCanvas, dx, dy);
+  street.globalAlpha = 1;
+  rimG.clearRect(0, 0, view.w, view.h);
+  enemies();
+  const tint = TINT[v.sky.phase];
+  if (tint) {
+    rimG.globalCompositeOperation = "source-atop";
+    rimG.fillStyle = tint;
+    rimG.fillRect(0, 0, view.w, view.h);
+    rimG.globalCompositeOperation = "source-over";
+  }
+  street.drawImage(rimCanvas, 0, 0);
+  target(street);
+  street.globalAlpha = 0.25;
+  enemies();
+  street.globalAlpha = 0.8;
+  p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
+  if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
+  street.globalAlpha = 0.7;
+  for (const h of p.def.hazards ?? []) R(h.x, h.y, h.w, 1, PAINT.warning);
+  street.globalAlpha = 1;
+  for (const e of p.enemies) for (const [x, y] of enemyEyes(e, p.t)) R(x, y, 1, 1, EYE_SHINE);
+  // What these drew of their own lights (a brazier's glow) has had its turn: it is not drawn twice.
+  lights.length = 0;
 }
 
 /** His headlamp: a small ring of light round him, and the beam ahead the way he looks. */
@@ -1258,21 +1366,22 @@ function render(alpha: number) {
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
   const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt };
   const haze = scene.def.haze ?? [0.35, 0.3, 0.2];
-  if (art.far) pass(kit.depth(0.12), () => art.far!(v), haze[0]);
-  if (art.mid) pass(kit.depth(0.2), () => art.mid!(v), haze[1]);
-  if (art.near) pass(kit.depth(0.4), () => art.near!(v), haze[2]);
+  if (art.far) farPass(kit.depth(0.12), () => art.far!(v), haze[0]);
+  if (art.mid) farPass(kit.depth(0.2), () => art.mid!(v), haze[1]);
+  if (art.near) farPass(kit.depth(0.4), () => art.near!(v), haze[2]);
   const street = kit.depth(1);
   pass(street, () => art.back(v));
   pass(street, () => {
     drawBoards(scene.boards);
     drawWater(p.map, p.t);
-    drawTiles(p.map, art, sky);
+    drawTiles(p.map, art, sky, scene.def.underground);
   });
   pass(street, () => {
     drawThings(v);
     art.front?.(v);
   });
   target(street);
+  if (sky.phase !== "day") afterDark(v);
   if (p.def.dark) drawNight(v);
   drawSparks(state.sparks);
   if (state.feather) {
@@ -1300,8 +1409,8 @@ function render(alpha: number) {
       bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h - 14, lines: t.moundNoFeather };
   }
   if (state.bubble) bubble = { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] };
-  // A boss's line or hint, over it, while nothing else is speaking.
-  const boss = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? bossTop(p) : null;
+  // A boss's line or hint, beside it, while nothing else is speaking.
+  const boss = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? bossBubbleAt(p, state.bossLine.lines) : null;
   if (!bubble && boss && state.bossLine) bubble = { x: boss.x, y: boss.y, lines: state.bossLine.lines };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
@@ -1317,6 +1426,7 @@ function render(alpha: number) {
   const body = p.sitting ? { ...shown, y: shown.y + 3 } : shown;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
+    banner: plated(state.banner),
     world: p.map,
     boards: scene.boards,
     player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * safe, phase: sky.phase, look: look() },
@@ -1341,6 +1451,19 @@ function render(alpha: number) {
 }
 /** What the pad's enter button stands for at a bench. */
 const benchStop = { id: "bench" };
+
+/**
+ * The place's name, on a dark plate, so it reads over any sky: there in full from the first frame,
+ * fading out after about two and a half seconds (with reduced motion it simply goes).
+ */
+function plated(b: typeof state.banner) {
+  if (!b) return null;
+  const age = state.steps - b.since;
+  const alpha = view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, (165 - age) / 30));
+  // Below the header, however many rows it has wrapped to.
+  const under = header.getBoundingClientRect().bottom - stage.getBoundingClientRect().top + fontPx() * 2.4;
+  return alpha > 0 ? { title: b.title, sub: b.sub, alpha, plate: true, top: Math.max(Math.min(110, view.cssH * 0.18), under) } : null;
+}
 
 /** The rune on its way from the level to its slot in the header, on the text canvas. */
 function drawFlight() {

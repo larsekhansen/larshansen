@@ -48,12 +48,13 @@ function round(k: number): Move[] {
 export const NORDMARKA_ROUTE: Move[] = [
   walk(tile(60)),
   leap(tile(61), 1),
-  walk(tile(71) - 2),
+  // The stones are three tiles wide: he stands back from each edge, and runs at it.
+  walk(tile(71) - 16),
   leap(tile(71), 1, { release: 26 }),
-  walk(tile(75) - 6),
-  leap(tile(75), 1, { release: 26 }),
-  walk(tile(79) - 6),
-  leap(tile(79), 1, { release: 30 }),
+  walk(tile(76) - 16),
+  leap(tile(76), 1, { release: 26 }),
+  walk(tile(81) - 16),
+  leap(tile(81), 1, { release: 30 }),
   // The moose: on its back at this end of the marsh, off at the other.
   walk(tile(87) + 4),
   wait("the moose at this end", (q) => carrier(q, MOOSE).x <= MOOSE.from.x + 2),

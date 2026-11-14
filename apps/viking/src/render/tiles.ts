@@ -24,7 +24,12 @@ const hash = (c: number, r: number, k: number) => {
   return n - Math.floor(n);
 };
 
-/** The water: a surface band with foam and drifting glints where it meets the air, deep blue below. */
+/** The water near the bottom, and the weed in it. */
+const DEEPER = mix(P.waterDeep, INK, 0.14);
+const WEED = mix(P.grassDark, P.waterDeep, 0.45);
+const WEED_LIGHT = mix(P.grass, P.waterDeep, 0.5);
+
+/** The water: a surface band with foam and drifting glints where it meets the air, deep blue below, deeper over the bed, with weed. */
 export function drawWater(map: TileMap, t: number) {
   const { c0, c1, r0, r1 } = visibleTiles(map);
   const tt = view.reduced ? 0 : t;
@@ -35,6 +40,19 @@ export function drawWater(map: TileMap, t: number) {
       const y = r * TILE;
       if (map.tileAt(c, r - 1) === "~") {
         R(x, y, TILE, TILE, P.waterDeep);
+        // Over the bed the water is deeper still, and weed grows up out of it, swaying.
+        if (map.tileAt(c, r + 1) !== "~") {
+          R(x, y + 9, TILE, 7, DEEPER);
+          for (let k = 0; k < 2; k++) {
+            if (hash(c, r, 11 + k) > 0.45) continue;
+            const wx = x + 2 + Math.floor(hash(c, r, 13 + k) * 11);
+            const h = 6 + Math.floor(hash(c, r, 17 + k) * 8);
+            for (let i = 0; i < h; i++) {
+              const sway = view.reduced ? 0 : Math.round(Math.sin(tt * 0.03 + c + k * 2 + i * 0.4) * (i / h) * 1.5);
+              R(wx + sway, y + TILE - 1 - i, 1, 1, i % 3 === 0 ? WEED_LIGHT : WEED);
+            }
+          }
+        }
         continue;
       }
       R(x, y, TILE, 8, P.water);
@@ -143,23 +161,68 @@ function line(x: number, y: number) {
   R(x, y + 10, TILE, 1, FACADE.marbleSeam);
 }
 
-export function drawTiles(map: TileMap, art: Art, sky: Sky) {
-  forVisibleTiles(map, (t, c, r, x, y) => {
-    if (t === "." || art.tile?.(t, c, r, x, y, map, sky)) return;
-    if (t === "#") {
-      // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
-      if (underWater(map, c, r)) return bed(c, r, x, y, map);
-      const s = art.ground(c);
-      groundFill(x, y, c, r, s.fill);
-      if (!map.isSolid(c, r - 1)) groundTop(x, y, c, s.top, s.dot, sky.snow);
-    } else if (t === "Q") quay(c, r, x, y, map, sky);
-    else if (t === "M") marble(c, r, x, y, map, sky);
-    else if (t === "W") fortress(c, r, x, y, map, sky);
-    else if (t === "X") brick(c, r, x, y, map, sky);
-    else if (t === "P") plank(c, r, x, y, map, sky);
-    else if (t === "K") rock(c, r, x, y, map, sky);
-    else if (t === "B") crate(x, y, edgesOf(map.tileAt, c, r), !map.isSolid(c, r - 1), sky.snow);
-    else if (t === "L") line(x, y);
-    else if (art.ledges[t]) ledge(x, y, art.ledges[t], map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
-  });
+/** One tile of the map, drawn with its top left at (x, y): the level's own look for it, or the shared one. */
+function drawTile(t: string, c: number, r: number, x: number, y: number, map: TileMap, art: Art, sky: Sky) {
+  if (t === "." || art.tile?.(t, c, r, x, y, map, sky)) return;
+  if (t === "#") {
+    // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
+    if (underWater(map, c, r)) return bed(c, r, x, y, map);
+    const s = art.ground(c);
+    groundFill(x, y, c, r, s.fill);
+    if (!map.isSolid(c, r - 1)) groundTop(x, y, c, s.top, s.dot, sky.snow);
+  } else if (t === "Q") quay(c, r, x, y, map, sky);
+  else if (t === "M") marble(c, r, x, y, map, sky);
+  else if (t === "W") fortress(c, r, x, y, map, sky);
+  else if (t === "X") brick(c, r, x, y, map, sky);
+  else if (t === "P") plank(c, r, x, y, map, sky);
+  else if (t === "K") rock(c, r, x, y, map, sky);
+  else if (t === "B") crate(x, y, edgesOf(map.tileAt, c, r), !map.isSolid(c, r - 1), sky.snow);
+  else if (t === "L") line(x, y);
+  else if (art.ledges[t]) ledge(x, y, art.ledges[t], map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
+}
+
+export function drawTiles(map: TileMap, art: Art, sky: Sky, underground = false) {
+  forVisibleTiles(map, (t, c, r, x, y) => drawTile(t, c, r, x, y, map, art, sky));
+  drawBelow(map, art, sky);
+  if (underground) drawAbove(map, art, sky);
+}
+
+/** Above the top of the map, under the ground: the top row's rock goes on up, however tall the screen. */
+function drawAbove(map: TileMap, art: Art, sky: Sky) {
+  if (view.camY >= 0) return;
+  const c0 = Math.max(0, Math.floor(view.camX / TILE));
+  const c1 = Math.min(map.cols - 1, Math.floor((view.camX + view.w) / TILE));
+  for (let c = c0; c <= c1; c++) {
+    const t = map.tileAt(c, 0);
+    if (!map.isSolid(c, 0)) continue;
+    const rr = map.tileAt(c, 1) === t ? 1 : 0;
+    for (let y = -TILE; y > view.camY - TILE; y -= TILE) drawTile(t, c, rr, c * TILE, y, map, art, sky);
+  }
+}
+
+/**
+ * Below the bottom of the map, where a tall screen looks: the bottom row goes on down, so he stands on
+ * ground (or over water) however tall the view is. Ground and water only; ledges and open air stop.
+ */
+function drawBelow(map: TileMap, art: Art, sky: Sky) {
+  const bottom = view.camY + view.h;
+  if (bottom <= map.height) return;
+  const r = map.rows - 1;
+  const c0 = Math.max(0, Math.floor(view.camX / TILE));
+  const c1 = Math.min(map.cols - 1, Math.floor((view.camX + view.w) / TILE));
+  for (let c = c0; c <= c1; c++) {
+    const t = map.tileAt(c, r);
+    if (t === "~") {
+      R(c * TILE, map.height, TILE, bottom - map.height, DEEPER);
+      continue;
+    }
+    if (!map.isSolid(c, r)) continue;
+    // Drawn as the row above it where that is the same, so no outline runs across the join; plain
+    // ground as its earth only, with no grass on top.
+    const rr = map.tileAt(c, r - 1) === t ? r - 1 : r;
+    for (let y = map.height; y < bottom; y += TILE) {
+      if (t === "#" && !underWater(map, c, r)) groundFill(c * TILE, y, c, rr, art.ground(c).fill);
+      else drawTile(t, c, rr, c * TILE, y, map, art, sky);
+    }
+  }
 }

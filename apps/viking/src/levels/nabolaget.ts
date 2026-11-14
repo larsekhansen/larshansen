@@ -106,7 +106,7 @@ b.ground(159, 206, S);
 // The last slot is two tiles: the last jump of the game is not its hardest.
 b.fill(207, 208, S, S + 1, "v");
 b.ground(207, 208, S + 2);
-b.ground(210, COLS - 1, S);
+b.ground(209, COLS - 1, S);
 // A crate up to the house's terrace, the terrace he waits on, a bank of snow by the washing line.
 b.put(167, S - 1, "W").put(174, S - 1, "W");
 b.fill(168, 173, S - 3, S - 1, "R");
@@ -818,6 +818,16 @@ function home(v: View) {
   if (d) {
     R(d.x - 2, d.bottom - d.h - 2, d.w + 4, d.h + 2, PAINT.trim);
     panelDoor(d, PAINT.homeDoor, PAINT.homeDoorPanel);
+    // The lamp over the door, always on in winter: its light on the yellow planks round the door and
+    // under the windows, so the house reads yellow at night, not brown.
+    const lx = d.x + d.w / 2;
+    const ly = d.bottom - d.h - 9;
+    R(lx - 3, ly - 1, 6, 2, METAL.lampPost);
+    R(lx - 2, ly + 1, 4, 3, LAMP);
+    light(lx - 2, ly + 1, 4, 3, "lamp");
+    light(x + 2, ly - 6, w - 4, g - ly + 6, "pool");
+    light(lx - 30, ly + 2, 60, g - ly - 2, "pool");
+    for (const [wx, wy] of [[x + 10, top + 8], [x + w - 26, top + 8], [x + 10, top + 34]] as const) light(wx - 4, wy + 15, 24, 5, "pool");
   }
   // The Pi's window: warm inside, the board on the sill, its light.
   const pw = HOME.window;
@@ -1010,14 +1020,13 @@ export const NABOLAGET: LevelDef = {
   drum: 7,
   boss: ploughBoss(PLOUGH_DEF),
   bossWords: {
-    wake: { nb: "Brøytebilen våkner. Den er det siste før du er hjemme.", en: "The snow plough wakes. It is the last thing between you and home." },
+    wake: { nb: "Brøytebilen våkner.\nDet siste mellom deg og døra hjem.", en: "The snow plough wakes.\nThe last thing between you and the door home." },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
     beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
-    // Shown over it when a round goes by with no hit (by round), and when it backs off to wait.
-    miss1: { nb: "Den står fast i brøytekanten.\nKlessnora kaster deg høyere enn et hopp.", en: "It is stuck in the bank.\nThe washing line throws you higher than a jump." },
+    // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.
+    miss1: { nb: "Den setter seg fast i brøytekanten ved klessnora.\nSnora kaster deg høyere enn et hopp.", en: "It sticks in the bank by the washing line.\nThe line throws you higher than a jump." },
     miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },
-    miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." },
-    rest: { nb: "Brøytebilen venter.\nDen kommer når den kommer.", en: "The plough waits.\nIt comes when it comes." }
+    miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." }
   },
   surfaceAt: (x, y) => {
     const h = rampHeight(ROOFS, x);
@@ -1142,8 +1151,8 @@ function tram(at: { x: number; y: number }) {
   const g = S * TILE;
   for (let dx = 0; dx < TRAM_W; dx++) {
     const wx = x + dx;
-    const c = Math.floor(wx / TILE);
-    const clip = (c >= 156 && c <= 158) || (c >= 207 && c <= 208) ? g : g + 2;
+    // Nothing of it below the street: it rises out of its slot and goes down into the other.
+    const clip = g;
     const col = (yy: number, h: number, colour: string) => {
       const top = y + yy;
       const end = Math.min(top + h, clip);
@@ -1154,7 +1163,11 @@ function tram(at: { x: number; y: number }) {
     col(2, 50, gap ? TRAM.skirt : TRAM.body);
     if (!gap && dx > 2 && dx < TRAM_W - 3) col(8, 12, dx % 8 < 6 ? LAMP : TRAM.body);
     col(46, 6, TRAM.skirt);
-    if (dx % 32 > 4 && dx % 32 < 12) col(52, 12, mix(TRAM.skirt, INK, 0.4));
+    // The bogies, and their wheels on the rail.
+    if (dx % 32 > 4 && dx % 32 < 12) {
+      col(52, 9, mix(TRAM.skirt, INK, 0.4));
+      col(61, 3, dx % 32 === 8 ? METAL.pipe : INK);
+    }
   }
   light(x + 3, y + 8, TRAM_W - 6, 12, "soft");
   R(x + 20, y - 8, 1, 8, METAL.wire);
