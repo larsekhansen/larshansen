@@ -11,6 +11,7 @@ import type { Enemy, EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { enemyEyes } from "../render/pickups";
 import { tbaneDoor } from "../render/furniture";
+import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -843,6 +844,7 @@ export const NORDMARKA: LevelDef = {
     },
     lights: (v) => lights(v),
     overDark: (v) => overDark(v),
+    night: (v, him, boards, map) => drawNight(NORDMARKA, v, him, boards, map),
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look === "bat") bat(e, v.t);

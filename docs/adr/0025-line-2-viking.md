@@ -35,8 +35,9 @@ began: a later answer may change a place or the word.
 ## Consequences
 - A returning visitor with all ten runes finds line 2 open, and arrives on the map at Bygdøy.
 - Line 2's ideas need kit pieces: the rocking deck, the sinking pad and the oar bank came with Bygdøy
-  (`deck.ts`, `sink.ts`, `oars.ts`, in Bygdøy's chunk for now; order 15's lily pads use `sink.ts` too,
-  and should move it to a chunk of its own or to the first script).
+  (`deck.ts`, `sink.ts`, `oars.ts`, in Bygdøy's chunk; since order 15 the sinking pad is a small chunk of
+  its own, as Østensjøvannet's lily pads use it too). What only one level has (the statues, the sledge,
+  the swans) comes in that level's file through its own rules (`LevelDef.rules`).
 - On an upright phone, line 1's station boards overlap one another (they did before); line 2's,
   further apart, do not.
 

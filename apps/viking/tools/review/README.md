@@ -23,10 +23,10 @@ Run everything from this folder.
 | `mazesloppy.ts`, `mazegeo.ts` | the maze with a sloppy player; stones and arrivals against snakes and sliders | `bun mazesloppy.ts ks=0,2,4 seeds=20` |
 | `urls.ts` | screenshot addresses at six standable spots per level | `bun ../../../../tools/shots.ts <dir> $(bun urls.ts 6)` with `apps/viking` built and served on 5181 |
 
-`bun sloppy.ts ks=0` must print `clear 1/1` for all ten levels: at k = 0 the harness reproduces the
+`bun sloppy.ts ks=0` must print `clear 1/1` for all fourteen levels: at k = 0 the harness reproduces the
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
-`line2/` holds Bygdøy's (order 14): the sloppy player at ±2 and ±4, every jump on its own, the standing and the waits, and a line 1 spot-check; `summary.md` there has the tables. `before/` holds the review's own numbers (the tables, the per-jump results, the dead ends, the boss
+`line2/` holds line 2's (Bygdøy, order 14; Vigelandsparken, Korketrekkeren and Østensjøvannet, order 15, with Bygdøy again): the sloppy player at ±2 and ±4, every jump and ride on its own (`obstacles.ts` also tries the sledge's stretches, the statues' steps and the lake's pad-to-pad leaps), the standing and the waits, and a line 1 spot-check; `summary.md` there has the tables. `before/` holds the review's own numbers (the tables, the per-jump results, the dead ends, the boss
 strategies and waits as measured at `b5d1a3a`); `after/` the same after order 12; `after13/` the same
 after order 13, with `standing.txt` (the routes' standing still split into fixed ground and riding). The raw `.jsonl`
 runs are not kept; `out/` is where a new run writes them and is not committed.

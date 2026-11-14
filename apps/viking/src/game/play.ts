@@ -146,7 +146,14 @@ export interface Play {
   giftAt: number | null;
   /** The level's own moving ground (decks, pads): its rules and its state. */
   grounds: { rules: Grounds; state: unknown } | null;
+  /** On a sledge he cannot stop (the level's own rules say when): a hit does not knock him off it. */
+  riding: boolean;
+  /** Ducking on the sledge: what hangs at his head's height (a branch, a barrier) passes over him. */
+  ducking: boolean;
 }
+
+/** How much lower his head is while he ducks on the sledge. */
+export const DUCK = 7;
 
 export interface Events {
   step: StepResult;
@@ -317,7 +324,9 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     shield: opts.shield ? { rules: opts.shield, has: !!opts.hasShield, raise: 0, facing: 1 } : null,
     gift: giftOf(map),
     giftAt: opts.hasShield ? -1 : null,
-    grounds: def.grounds ? { rules: def.grounds, state: def.grounds.create() } : null
+    grounds: def.grounds ? { rules: def.grounds, state: def.grounds.create() } : null,
+    riding: false,
+    ducking: false
   };
 }
 
@@ -325,7 +334,7 @@ export const overlaps = (b: Body, r: Box) => b.x < r.x + r.w && b.x + PLAYER.w >
 
 /** Moving ground this step: the carriers near him and the ledges on a beat that are there. */
 export function extraGround(p: Play, t = p.t): Carrier[] {
-  const out = [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t)];
+  const out = [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t), ...(p.def.rules?.ground?.(p) ?? [])];
   if (p.grounds) out.push(...p.grounds.rules.carriers(p.grounds.state, t, p.body));
   // The troll turned to stone is a boulder he can stand on.
   if (p.troll?.phase === "stone" && p.def.trollRules) {
@@ -389,8 +398,8 @@ function hit(p: Play, ev: Events, fromX: number) {
   p.dash = null;
   p.sitting = null;
   if (p.hearts <= 0) return loseLife(p, ev);
-  const away = p.body.x + PLAYER.w / 2 < fromX ? -1 : 1;
-  launch(p.body, away * KNOCK.vx, -KNOCK.vy);
+  // On the sledge he keeps riding, blinking.
+  if (!p.riding) launch(p.body, (p.body.x + PLAYER.w / 2 < fromX ? -1 : 1) * KNOCK.vx, -KNOCK.vy);
 }
 
 /** A skilling for the purse: every hundred is a life. `what` is the coin or the beaten enemy (see `Play.paid`): each pays once a visit. */
@@ -408,7 +417,8 @@ function addToPurse(p: Play, ev: Events, what: number) {
 /** The enemies: they move, they throw, and he either lands on them or is hurt by them. */
 function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
   const b = p.body;
-  ev.thrown = stepEnemies(p.enemies, p.shots, p.map, p.t, b);
+  const own = p.def.rules?.enemy;
+  ev.thrown = stepEnemies(p.enemies, p.shots, p.map, p.t, b, own && ((e) => own(e, p)));
   if (p.run.state === "done") return;
   for (let i = 0; i < p.enemies.length; i++) {
     const e = p.enemies[i];
@@ -602,7 +612,9 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     }
   }
 
-  // The shield: down on the ground raises it, and while it comes up and is up he stands.
+  // The level's own rules first (on the sledge down is a duck, not the shield); then the shield: down
+  // on the ground raises it, and while it comes up and is up he stands.
+  if (p.def.rules?.intent) intent = p.def.rules.intent(p, intent);
   if (p.shield && !p.sitting) intent = p.shield.rules.step(p.shield, b, intent);
 
   // The ski pole: a dash, level, the way he faces or steers, once each time he is off the ground.
@@ -668,12 +680,13 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
   if (ev.over) return ev;
   meetBoss(p, ev, intent, prevBottom);
   if (ev.over) return ev;
+  p.def.rules?.after?.(p);
   // The third rail, a spark: a heart, as an enemy's touch is. It throws him up clear of it, a tile
   // over its top, and back the way he came, so a rail at the bottom of a trench throws him out of it.
-  const zapped = hazardTouched(p.def.hazards, b, p.t);
+  const zapped = hazardTouched(p.def.hazards, p.ducking ? { x: b.x, y: b.y + DUCK } : b, p.t);
   if (zapped && p.t >= p.safeUntil && p.run.state !== "done") {
     ev.zap = true;
-    b.y = Math.min(b.y, zapped.y - TILE - PLAYER.h);
+    if (!p.riding) b.y = Math.min(b.y, zapped.y - TILE - PLAYER.h);
     hit(p, ev, b.x + PLAYER.w / 2 + b.facing);
     if (ev.over) return ev;
   }

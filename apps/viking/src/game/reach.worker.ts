@@ -10,6 +10,9 @@ import { STORTINGET } from "../levels/stortinget";
 import { EKEBERG } from "../levels/ekeberg";
 import { NABOLAGET } from "../levels/nabolaget";
 import { BYGDOY } from "../levels/bygdoy";
+import { VIGELANDSPARKEN } from "../levels/vigelandsparken";
+import { KORKETREKKEREN } from "../levels/korketrekkeren";
+import { OSTENSJOVANNET } from "../levels/ostensjovannet";
 import type { LevelDef } from "../levels/types";
 import { bracteateOf, levelMap, runeOf } from "./play";
 import { TILE } from "@larshansen/pixelkit/config";
@@ -24,7 +27,7 @@ import { deadEnds, describeSpots, search } from "./reach";
 declare const self: Worker;
 /** Holmenkollen's rune is reached down the inrun at speed, which the search does not model; the scripted player shows it from the hut at the top. */
 const HUT = { x: 207 * TILE, y: 15 * TILE, w: 6 * TILE, h: TILE };
-const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA, stortinget: STORTINGET, ekeberg: EKEBERG, nabolaget: NABOLAGET, bygdoy: BYGDOY };
+const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA, stortinget: STORTINGET, ekeberg: EKEBERG, nabolaget: NABOLAGET, bygdoy: BYGDOY, vigelandsparken: VIGELANDSPARKEN, korketrekkeren: KORKETREKKEREN, ostensjovannet: OSTENSJOVANNET };
 
 self.onmessage = (e: MessageEvent<{ id: string; pole: boolean }>) => {
   const def = LEVELS[e.data.id];

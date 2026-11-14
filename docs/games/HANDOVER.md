@@ -5,8 +5,9 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 (`packages/pixelkit`). It says what exists, how it came to be, what was decided and not decided,
 what is known to be weak, and how to work here without breaking things.
 
-Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next. Keep it
-current: when something here stops being true, change it in the same commit.
+Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
+date by order 15's implementer on 15 November. Keep it current: when something here stops being true,
+change it in the same commit.
 
 ## Where to look for what
 
@@ -40,8 +41,9 @@ page is published as a private artifact on Lars's claude.ai account.
   columns with enemies, three hearts, lives, pits, benches, skilling, secrets and a gold bracteate.
   Two bosses: the troll in Nordmarka and the snow plough in Nabolaget. Clearing Holmenkollen gives
   the ski pole (a dash). With all ten runes the helmet turns gold. Line 2 (orange, VIKING, ADR 0025)
-  leaves at Stortinget and opens when Nabolaget is cleared: Bygdøy is built (order 14) and gives
-  the shield (ADR 0024); its five other stations stand under construction.
+  leaves at Stortinget and opens when Nabolaget is cleared: Bygdøy (order 14) gives the shield (ADR
+  0024); Vigelandsparken, Korketrekkeren (the sledge he cannot stop, ADR 0026) and Østensjøvannet are
+  built (order 15); Bjørvika and Gamlebyen stand under construction.
 - **Jernhaugen** (`packages/maze`; alone at maze.larshansen.dev through `apps/iron-maze`, and
   inside the viking game at `#jernhaugen`): seven maze levels. It is a bonus stop on the line and
   is never required. Clearing its level 3 gives the raven's feather (a double jump); all seven
@@ -61,7 +63,8 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-14 | Lars gives the personal details: the school banner, home, Kruttverket. This handover and the decision records | branch `personal-touches` |
 | 2026-11-14 | An adversarial review plays every level with a sloppy scripted player (`reviews/2026-11-14-adversarial.md`); order 12 fixes what it found about rules, fairness, pacing, the joins and the engineering | `orders/12-make-it-fair.md`, branch `make-it-fair`, PR #57 |
 | 2026-11-14 | Order 13: the look (flat areas, trams, the banner, the night, upright phones, the bosses' bubbles), every line of text read again, and the last unfair places by the sloppy player's numbers | `orders/13-look-and-words.md`, branch `look-and-words`, PR #58 |
-| 2026-11-14 | Lars asks for more levels; the planner plans line 2. Order 14, its groundwork: line 2 on the map, sixteen runes, the shield, the rocking deck, the sinking pad and the oar bank, and Bygdøy | `PLAN-LINE-2.md`, `orders/14-line-2-groundwork.md`, branch `line-2-groundwork` |
+| 2026-11-14 | Lars asks for more levels; the planner plans line 2. Order 14, its groundwork: line 2 on the map, sixteen runes, the shield, the rocking deck, the sinking pad and the oar bank, and Bygdøy | `PLAN-LINE-2.md`, `orders/14-line-2-groundwork.md`, PR #59 |
+| 2026-11-14 to 15 | Order 15: Bygdøy's gull and the passage under the loft; Vigelandsparken (statues), Korketrekkeren (the sledge), Østensjøvannet (swans and lily pads); a level's own rules (`LevelDef.rules`) | `orders/15-three-stations.md`, branch `three-stations` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`
@@ -121,7 +124,7 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   each route with a person's timing laid over every key (±2, ±4, ±8 steps), every jump on its own,
   naive strategies against the bosses, the worst wait on arrival at every wait. Not part of
   `bun test`. `before/`, `after/` and `after13/` hold the numbers from the review, after order 12
-  and after order 13, and `line2/` Bygdøy's (order 14); `./runall.sh` reruns line 1's study in about
+  and after order 13, and `line2/` line 2's (orders 14 and 15); `./runall.sh` reruns line 1's study in about
   20 minutes. The sloppy player holds the shield as it holds a direction. The review itself is
   [`reviews/2026-11-14-adversarial.md`](reviews/2026-11-14-adversarial.md). Remember what the
   sloppy player is: the route's plan with a person's timing. It never finds a better line, and
@@ -146,35 +149,40 @@ What none of this can tell you: whether a jump feels fair, whether timing window
 whether sound, touch, gamepad or reduced motion work, whether the maze inside the viking page
 behaves (it loads by dynamic import after the screenshot is taken).
 
-## Line 2: what is built, what orders 15 to 17 owe
+## Line 2: what is built, what orders 16 and 17 owe
 
 - **Built (order 14)**: line 2 on the map (orange, from Stortinget, the gate until Nabolaget, the
   hoardings), the header's second group of six runes, the shield (ADR 0024) with its touch button,
   the kit's rocking deck, sinking pad and oar bank (`deck.ts`, `sink.ts`, `oars.ts`, with tests),
   a level's own moving ground (`LevelDef.grounds`), throwers that face one way and lead
   (`EnemyDef.faces`, `lead`), and Bygdøy. Numbers in `apps/viking/tools/review/line2/summary.md`.
-- **How a new line 2 level is added now**: write `levels/<id>.ts` (Bygdøy is the model) and its route
-  in `levels/routes/`; set `built: true` for it in `levels/index.ts` and add its loader there; add it
-  to the `LEVEL` pattern in `vite.config.ts` (and any swatch or kit piece only it uses to `OWN`); add it
-  to `routes.ts`, `debug.ts`'s `AUTO`, `reach.worker.ts`, `levels.test.ts` (`ROUTE`, `GOLD`, `LEVELS`,
-  `NEW`, `POLE`), `tools/facts.ts` and `tools/review/common.ts`. From level 12 on he has the shield in
-  the tests (`opts` passes `SHIELD_RULES`; give `hasShield` where a route needs it from the start).
-- **Order 15** (Vigelandsparken, Korketrekkeren, Østensjøvannet): the lily pads are `sink.ts`, which
-  now lives in Bygdøy's chunk (`OWN` in `vite.config.ts`); a second level using it should move it
-  (and `deck.ts` if used again) to a chunk of its own or to the first script. Each level needs one
-  place that wants the shield (the plan). Korketrekkeren's sledge has no kit piece yet.
+- **Built (order 15)**: Vigelandsparken (statues that move while his back is turned), Korketrekkeren
+  (the sledge, ADR 0026) and Østensjøvannet (lily pads, swans, the heron). Each level's own rules come
+  in its file through `LevelDef.rules` (its own enemies by look, ground of its own, the keys, an
+  after-step hook, the reach search's carry, the sledge camera's lead); `Play` gained `riding` and
+  `ducking`. A thrower may throw straight (`straight`, with `lead` aiming at where they meet) and see
+  further (`reach`). `sink.ts` is a chunk of its own that Bygdøy and Østensjøvannet fetch. Numbers in
+  `apps/viking/tools/review/line2/summary.md`.
+- **How a new line 2 level is added now**: write `levels/<id>.ts` (Bygdøy or Vigelandsparken is the
+  model; rules only it has go in its `rules`) and its route in `levels/routes/`; set `built: true` for it
+  in `levels/index.ts` and add its loader there; add it to the `LEVEL` pattern in `vite.config.ts` (and
+  any swatch or module only it uses to `OWN`: anything not listed lands in the first script); add it to
+  `routes.ts`, `debug.ts`'s `AUTO`, `reach.worker.ts`, `levels.test.ts` (`ROUTE`, `GOLD`, `LEVELS`, `NEW`,
+  `POLE`), `tools/facts.ts` and `tools/review/common.ts`. From level 12 on he has the shield in the tests
+  and the tools (`hasShield: def.rune > 10`). A route on lily pads must never stand on one (run onto it,
+  leap from its end): the sloppy player's corrections round a standing spot sink it.
 - **Order 16** (Bjørvika, Gamlebyen, the serpent): the serpent goes through the boss slot; its spit
   is stopped by `Boss.hurts` returning a side-on hit and `shoved`, or as a shot. The card's line for
   the last of line 2 still says the rest is under construction (`moreToBuild`): change it when all
   six are built, and decide what all sixteen runes give.
-- **Order 17** reviews line 2. Start with the gull over Bygdøy's first boathouse (most of its hearts
-  at ±4), the yard's standing still, and the share of the level spent standing (40 %).
-- **First script**: 58.96 kB gzipped of the 59.5 the order allows (60 is the budget). Moved out to
-  make room: the line map's look (`kartArt.ts`), the stations' unused place strings, `?debug&auto`'s
-  route table. Left to move: the enemy looks that two or three levels share (`render/pickups.ts`),
-  Nordmarka's night drawing in `main.ts`.
+- **Order 17** reviews line 2. Start with Østensjøvannet, which measures 1.2 hearts at ±4 against the
+  2.5 wanted: the sloppy player never lingers, so its swans never come (`line2/summary.md` says why);
+  then the sledge's feel at speed (ADR 0026 says what keeps it fair), and whether the statues' rule reads.
+- **First script**: 58.83 kB gzipped (60 is the budget). Order 15 moved Nordmarka's night drawing out of
+  `main.ts` into `render/night.ts`, which comes with Nordmarka (its pictures byte-identical before and
+  after). Left to move: the enemy looks that two or three levels share (`render/pickups.ts`).
 
-## Known weak spots, as of order 14
+## Known weak spots, as of order 15
 
 Most important first. Lars had not yet played when this was written; expect his comments to
 reorder this list.
@@ -184,7 +192,8 @@ reorder this list.
 2. **The line is a rising line, roughly.** Hearts lost per run by the sloppy player at ±4 after
    order 13 (`tools/review/after13/summary.md`): Langkaia 1.5, Akershus 1.4, Rådhuset 1.6, Slottet
    0.5 (the rest before the mountain, accepted), Holmenkollen 0.6, Akerselva 2.4, Nordmarka 2.0,
-   Stortinget 1.4 (accepted), Ekeberg 2.8, Nabolaget 1.6. Holmenkollen is easy for the sloppy
+   Stortinget 1.4 (accepted), Ekeberg 2.8, Nabolaget 1.6. Line 2 after order 15 (`line2/summary.md`):
+   Bygdøy 1.2, Vigelandsparken 2.1, Korketrekkeren 1.0, Østensjøvannet 1.2 (wanted 2.5; see there). Holmenkollen is easy for the sloppy
    player because its inrun steers itself; for a person the lip is the test. Thirty runs move by
    ±0.3; `after13/compare90.txt` has ninety-run numbers for the three that looked worse than order 12.
 3. **Rådhuset's carillon** is still where the sloppy player most often gives up (6 of 30 at ±4):
@@ -207,16 +216,19 @@ reorder this list.
 7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
-8. **Margins.** The first script is 58.96 kB gzipped of a 60 kB budget (ADR 0011 says what can
-   still move out). The viking test suite takes about 92 s of a two-and-a-half-minute budget,
-   nearly all of it the reach and dead-end searches in eleven workers on four cores.
+8. **Margins.** The first script is 58.83 kB gzipped of a 60 kB budget (ADR 0011 says what can
+   still move out). The viking test suite takes about 105 s of a three-minute budget, nearly all of
+   it the reach and dead-end searches in fourteen workers on four cores.
 9. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)); on an upright phone it wraps to three rows,
    and on a phone on its side its run group is cut at the right.
 10. **The maze's words** keep the original game's taunting voice, one exclamation mark included;
    order 13 read the viking game's lines, not the maze's.
-11. **Line 2 is unplayed too.** Bygdøy, the shield and the two-line map have been seen only in still
-   pictures and played only by scripts. The shield's touch button and the pad's smaller layout with
+11. **Line 2 is unplayed too.** Bygdøy, Vigelandsparken, Korketrekkeren, Østensjøvannet, the shield and
+   the two-line map have been seen only in still pictures and played only by scripts. Untested by a
+   person: whether a statue's creeping reads when it is at the edge of the screen; the sledge at speed,
+   the duck on a touch screen (the Shield button), the camera's lead on a real phone; whether a person
+   lingers on the lake's pads long enough for its swans to matter. The shield's touch button and the pad's smaller layout with
    five buttons were not seen on a touch screen. The rocking decks' feel (carried a pixel up or down a
    step as he walks) is untested by a person. On an upright phone (in headless Firefox at a device
    pixel ratio of 1) a level's run row is cut at the right, past the lives: it was before line 2 too.

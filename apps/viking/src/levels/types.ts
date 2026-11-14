@@ -11,8 +11,10 @@ import type { TimedLedge } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
+import type { Board } from "@larshansen/pixelkit/text";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Troll, TrollDef, TrollEvent } from "../game/troll";
+import type { Play, PlayIntent } from "../game/play";
 
 // What a level is, as data: its map and legend, the things in it, its words, and how it is drawn.
 // One runner (game/play.ts for the rules, main.ts and render/ for the page) plays any of them.
@@ -146,6 +148,8 @@ export interface Art {
   lights?(v: View): Light[];
   /** In a dark level: what is drawn over the dark, so it shines (eyes, a lamp's own flame). */
   overDark?(v: View): void;
+  /** In a dark level: the dark itself, with his headlamp (`render/night.ts`, which comes with the level). */
+  night?(v: View, him: Body, boards: readonly Board[], map: TileMap): void;
   /** Draws the troll. */
   troll?(t: Troll, v: View): void;
   /** Draws the last boss, from its state. */
@@ -215,6 +219,28 @@ export interface Grounds<S = unknown> {
   everywhere(): Carrier[];
 }
 
+/**
+ * A level's own rules, from its own file, for what only it has: statues that move while his back is
+ * turned, swans that mind their water, the sledge he cannot stop. play.ts runs them each step, as it
+ * runs the troll's, so the first script does not carry them.
+ */
+export interface LevelRules {
+  /** One step of an enemy the level has rules of its own for (by its look); true when it moved it. */
+  enemy?(e: Enemy, p: Play): boolean;
+  /** Ground of its own this step: a statue he looks at, turned to stone. */
+  ground?(p: Play): Carrier[];
+  /** Everywhere that ground can ever be in this level, as still ground: for the reach search. */
+  everywhere?(def: LevelDef): Carrier[];
+  /** After the enemies have moved: what the level's own things do to him (a statue of stone is in his way). */
+  after?(p: Play): void;
+  /** Before his body moves: the keys he is left with (on the sledge he cannot walk or stop, and down ducks). */
+  intent?(p: Play, intent: PlayIntent): PlayIntent;
+  /** How fast the ground carries him along at x, for the reach search (the sledge's speed), or 0. */
+  carry?(x: number): number;
+  /** On the sledge: how far ahead of him the camera looks, in a view `w` art pixels wide. */
+  lead?(w: number): number;
+}
+
 export interface LevelDef {
   id: string;
   /** Which of the ten runes of LARS HANSEN it ends at, 0 to 9. */
@@ -277,6 +303,8 @@ export interface LevelDef {
   underground?: boolean;
   /** Its own moving ground: rocking decks, sinking pads. */
   grounds?: Grounds<any>;
+  /** Its own rules (see `LevelRules`). */
+  rules?: LevelRules;
   art: Art;
 }
 

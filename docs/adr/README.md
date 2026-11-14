@@ -35,6 +35,7 @@ Lars before reversing one of his.
 | [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds |
 | [0024](0024-the-shield-is-a-held-stance.md) | The shield: held down on the ground it comes up in six steps and stops throws and charges from in front; a held stance, not a parry | planner (order 14) | holds |
 | [0025](0025-line-2-viking.md) | Line 2: six more levels spelling VIKING, orange, leaving at Stortinget, opened by Nabolaget; stations not built are under construction | planner (plan for line 2, shown to Lars; order 14) | holds; extends 0006 |
+| [0026](0026-the-sledge-he-cannot-stop.md) | Korketrekkeren: on the sledge he cannot stop; the speed is the level's by stretch, the run a stair of narrow ledges; jump or duck | planner (order 15) | holds |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

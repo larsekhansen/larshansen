@@ -3,8 +3,9 @@ import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { deckTops } from "@larshansen/pixelkit/deck";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { cx, jumpTo, leap, mid, stomp, tile, wait, walk, type Move } from "../../game/bot";
-import { THROW_REACH, windingUp } from "../../game/enemies";
+import { THROW_REACH, untilThrow, windingUp } from "../../game/enemies";
 import type { Play } from "../../game/play";
+import { shieldedWalk } from "./common";
 import { FERRY, FRAM_DECK, GJOA_DECK, OARS, RAFT, REED } from "../bygdoy";
 
 // Bygdøy's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
@@ -49,7 +50,9 @@ const overBundle = (edge: number, x: number): Move => ({
   }
 });
 
-const SLINGERS = [10, 11, 12];
+/** The slinger at the end of the passage under the loft, and the two on the storehouses' ridges. */
+const PASSAGE = 10;
+const SLINGERS = [11, 12];
 /** A slinger that can throw at him from where it stands: in reach, and facing him. */
 const inReach = (q: Play, k: number) => {
   const e = q.enemies[k];
@@ -58,29 +61,32 @@ const inReach = (q: Play, k: number) => {
 };
 
 /**
- * Through the yard as a person goes: walking on, and whenever a slinger in reach whirls its sling, or
- * one of their stones is in the air, stopping and raising the shield; holding it a moment after the
- * stone has been stopped, then walking on.
+ * Through the passage under the loft as a person goes: walking on, and whenever one of the slinger's
+ * stones comes down the passage at him and is close, stopping with the shield up until it has fallen.
  */
-const pastTheSlingers = (x: number): Move => ({
-  name: `through the yard to ${x}, the shield up as each sling whirls`,
-  keys(q, s) {
-    const at = SLINGERS.find((k) => (inReach(q, k) && windingUp(q.enemies[k], q.t)) || q.shots.some((sh) => sh.by === k && sh.spent === undefined));
-    if (at !== undefined) {
-      s.hold = 15;
-      s.face = Math.sign(q.enemies[at].x - cx(q)) || 1;
-    }
-    if (at !== undefined || (s.hold as number) > 0) {
-      s.hold = Math.max(0, (s.hold as number) - 1);
-      // Turned to face the one that throws, and the shield up.
-      return { ...NONE, left: s.face === -1 && q.body.facing !== -1, right: s.face === 1 && q.body.facing !== 1, shield: true };
-    }
-    const dx = x - cx(q);
-    if (Math.abs(dx) <= 2 && q.body.onGround && Math.abs(q.body.vx) < 0.05) return "done";
-    const near = Math.abs(dx) < Math.abs(q.body.vx) * 4;
-    return { ...NONE, left: !near && dx < 0, right: !near && dx > 0 };
-  }
-});
+const throughThePassage = (x: number): Move =>
+  shieldedWalk(
+    `through the passage to ${x}, the shield up as each stone comes`,
+    x,
+    (q) => (q.shots.some((sh) => sh.by === PASSAGE && sh.spent === undefined && sh.vx < 0 && sh.x > q.body.x && sh.x - (q.body.x + PLAYER.w) < 72) ? 1 : null),
+    4
+  );
+
+/**
+ * Through the yard as a person goes: walking on, and whenever a slinger in reach is about to let go,
+ * or one of their stones is in the air, stopping and raising the shield; holding it a moment after
+ * the stone has been stopped, then walking on.
+ */
+const pastTheSlingers = (x: number): Move =>
+  shieldedWalk(
+    `through the yard to ${x}, the shield up as each sling lets go`,
+    x,
+    (q) => {
+      const at = SLINGERS.find((k) => (inReach(q, k) && windingUp(q.enemies[k], q.t) && untilThrow(q.enemies[k], q.t) <= 12) || q.shots.some((sh) => sh.by === k && sh.spent === undefined));
+      return at === undefined ? null : ((Math.sign(q.enemies[at].x - cx(q)) || 1) as 1 | -1);
+    },
+    6
+  );
 const oarOut = (i: number, steps: number) => (q: Play) => timedPhase(q.t, OARS[i]) === "on" && timedPhase(q.t + steps, OARS[i]) === "on";
 
 export const BYGDOY_ROUTE: Move[] = [
@@ -145,11 +151,13 @@ export const BYGDOY_ROUTE: Move[] = [
   jumpTo(OARS[3].x + 8),
   jumpTo(mid(173)),
   walk(mid(198)),
-  // Off the prow, and out into the yard past the three slingers: walk, stop and raise the shield, walk.
+  // Off the prow, through the passage under the loft past the first slinger's stones (walk, stop and
+  // raise the shield, walk), over him, and out into the yard past the other two.
   walk(tile(201) + 4),
-  pastTheSlingers(mid(212)),
-  pastTheSlingers(mid(221)),
-  pastTheSlingers(mid(235)),
+  throughThePassage(tile(212)),
+  stomp(PASSAGE),
+  pastTheSlingers(mid(226)),
+  pastTheSlingers(mid(236)),
   // Up the museum's gable to the rune on its ridge.
   walk(tile(237) + 6),
   jumpTo(mid(239)),

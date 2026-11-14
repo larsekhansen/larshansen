@@ -24,7 +24,10 @@ enemy looks that two or three levels share. 58.96 kB after order 14 (line 2's gr
 Bygdøy), which moved the line map's look into a chunk of its own (`kartArt.ts`, fetched as the page
 starts), dropped the stations' unused place strings and moved `?debug&auto`'s table of routes into
 the debug chunk; the shield's rules (`shield.ts`) and line 2's kit pieces come lazily. The order
-allowed 59.5. Left to move: the enemy looks, and Nordmarka's night drawing in `main.ts`.
+allowed 59.5. 58.83 kB after order 15 (three more levels, each its own file, and a slot in `play.ts`
+for a level's own rules), which moved Nordmarka's night drawing out of `main.ts` into `render/night.ts`,
+fetched with Nordmarka, and made the sinking pad a small file of its own that Bygdøy and Østensjøvannet
+both fetch. Left to move: the enemy looks that two or three levels share.
 
 ## Not chosen
 - One bundle. It would be about 110 kB gzipped.

@@ -40,6 +40,10 @@ export interface EnemyDef {
   lead?: boolean;
   /** A thrower that faces one way only and throws only at him on that side, and not at him right under it (a slinger on a roof's ridge). */
   faces?: 1 | -1;
+  /** A thrower that throws hard and straight at him, with no lob (along a passage; a gull's dive). */
+  straight?: boolean;
+  /** How far a thrower sees him, in tiles, when not seven. */
+  reach?: number;
 }
 
 /** Sizes, speeds and beats by kind, when the level does not say. */
@@ -55,8 +59,8 @@ export const KIND: Record<EnemyKind, { w: number; h: number; speed: number; peri
 export const WINDUP = 60;
 /** A jumper's water ripples this long before it leaps. */
 export const RIPPLE = 60;
-/** What a thrower lobs falls this much faster each step, and leaves at this speed upwards. */
-export const SHOT = { gravity: 0.16, up: 3.2, maxAcross: 2.2, w: 5, h: 5, life: 300 };
+/** What a thrower lobs falls this much faster each step, and leaves at this speed upwards; a straight throw flies at `fast`. */
+export const SHOT = { gravity: 0.16, up: 3.2, maxAcross: 2.2, w: 5, h: 5, life: 300, fast: 2 };
 /** A thrower only throws while he is this close: well inside the screen, so he always sees who throws. */
 export const THROW_REACH = { x: 7 * TILE, y: 6 * TILE };
 
@@ -77,6 +81,10 @@ export interface Enemy {
   beatenAt: number | null;
   /** A thrower facing him, and when it last threw. */
   thrownAt: number;
+  /** Harmless and not to be touched for now (a statue he looks at, a swan at peace): a level's own rules set it. */
+  calm?: boolean;
+  /** A count a level's own rules keep for it (how long he has lingered in a swan's water). */
+  n?: number;
 }
 
 /** Something lobbed by a thrower, flying until it hits the ground. */
@@ -90,6 +98,8 @@ export interface Shot {
   by: number;
   /** The step the shield stopped it: from then on it falls, harmless. */
   spent?: number;
+  /** Thrown straight: it does not fall until it is stopped. */
+  flat?: boolean;
 }
 
 export function createEnemies(defs: readonly EnemyDef[], map: TileMap): Enemy[] {
@@ -173,18 +183,22 @@ export function leap(e: Enemy, t: number): { up: number; ripple: boolean } {
 
 /** The box it hurts or can be landed on in, or null while it cannot be touched (beaten, or a jumper under water). */
 export function enemyBox(e: Enemy, t: number): { x: number; y: number; w: number; h: number } | null {
-  if (!e.alive) return null;
+  if (!e.alive || e.calm) return null;
   if (e.def.kind === "jumper" && leap(e, t).up <= 0) return null;
   return { x: e.x - e.w / 2, y: e.y - e.h, w: e.w, h: e.h };
 }
 
-/** One step of every enemy and every shot in flight. `him` is where he is, for throwers to aim at. Returns the shots thrown this step. */
-export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: number, him: Body): number[] {
+/**
+ * One step of every enemy and every shot in flight. `him` is where he is, for throwers to aim at;
+ * `own` moves an enemy the level has rules of its own for (a statue, a swan) and says so. Returns the
+ * shots thrown this step.
+ */
+export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: number, him: Body, own?: (e: Enemy) => boolean): number[] {
   const thrown: number[] = [];
   const hx = him.x + PLAYER.w / 2;
   enemies.forEach((e, i) => {
     e.prevY = e.y;
-    if (!e.alive) return;
+    if (!e.alive || own?.(e)) return;
     switch (e.def.kind) {
       case "walker":
       case "spiky":
@@ -196,8 +210,24 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
       case "thrower": {
         e.dir = e.def.faces ?? (hx < e.x ? -1 : 1);
         // One that faces one way does not see him right under its perch either.
-        const near = Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? 1.5 * TILE : 0);
-        if (untilThrow(e, t) === 0 && near) {
+        const near = Math.abs(hx - e.x) < (e.def.reach ?? 7) * TILE && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? 1.5 * TILE : 0);
+        if (untilThrow(e, t) === 0 && near && e.def.straight) {
+          // Straight at his middle, hard, with no lob (one that leads aims where he will be when it gets there).
+          const x = e.x + e.dir * 3;
+          const y = e.y - e.h + 1;
+          const dy = him.y + PLAYER.h / 2 - y;
+          let dx = hx - x;
+          if (e.def.lead) {
+            // When it would meet him, going on as he goes: (dx + vx t)² + dy² = (fast t)².
+            const a = SHOT.fast * SHOT.fast - him.vx * him.vx;
+            const b = dx * him.vx;
+            dx += (him.vx * (b + Math.sqrt(b * b + a * (dx * dx + dy * dy)))) / a;
+          }
+          const d = Math.hypot(dx, dy) || 1;
+          shots.push({ x, y, vx: (SHOT.fast * dx) / d, vy: (SHOT.fast * dy) / d, born: t, by: i, flat: true });
+          e.thrownAt = t;
+          thrown.push(i);
+        } else if (untilThrow(e, t) === 0 && near) {
           // A lob that comes down about where he stands now, never faster across than it can be dodged.
           let air = (2 * SHOT.up) / SHOT.gravity;
           let at = hx;
@@ -224,7 +254,7 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
   // Shots fly, and stop at the first thing they hit: ground, a ledge from above, or the end of the map.
   for (let k = shots.length - 1; k >= 0; k--) {
     const s = shots[k];
-    s.vy += SHOT.gravity;
+    if (!s.flat || s.spent !== undefined) s.vy += SHOT.gravity;
     s.x += s.vx;
     s.y += s.vy;
     const c = Math.floor(s.x / TILE);

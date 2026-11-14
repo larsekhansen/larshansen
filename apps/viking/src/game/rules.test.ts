@@ -9,6 +9,9 @@ import { placeBody } from "@larshansen/pixelkit/physics";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { carefulStep } from "./careful";
 import { TROLL, TROLL_RULES, TROLL_STEPS, WAVE, trollHurts, type TrollDef } from "./troll";
+import { RULES as STATUE_RULES } from "../levels/vigelandsparken";
+import { RULES as SWAN_RULES, SWAN, telling as swanTelling } from "../levels/ostensjovannet";
+import { everywhere } from "./reach";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
 // cheese, the five kinds of enemy, the bass drum and the ski pole's dash. Each on a small made-up
@@ -1022,5 +1025,133 @@ describe("the shield (ADR 0024)", () => {
     expect(p.shield!.has).toBe(true);
     // Having it already, it is not there to take again.
     expect(newPlay(def, { shield: SHIELD_RULES, hasShield: true }).giftAt).toBe(-1);
+  });
+});
+
+describe("statues (Vigelandsparken): they move only while his back is turned", () => {
+  // A floor at row 6, a statue at column 14 that may walk six tiles either way, a wall at column 22.
+  const map = [
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "......................#.......",
+    "##############################",
+    "##############################"
+  ];
+  const def: EnemyDef = { kind: "spiky", look: "statue", c: 14, r: 5, range: 6, speed: 0.5, w: 10, h: 16 };
+  const PARK = level(map, { enemies: [def], rules: STATUE_RULES });
+  const at = (x: number) => newPlay(PARK, { start: { x, bottom: 6 * TILE } });
+  const face = (p: Play, dir: 1 | -1) => stepPlay(p, dir > 0 ? right : left);
+
+  test("facing it, it stays where it is, stone, and touching it does no harm", () => {
+    const p = at(10 * TILE);
+    face(p, 1);
+    const x = p.enemies[0].x;
+    const ev = steps(p, 200);
+    expect(p.enemies[0].x).toBe(x);
+    expect(p.enemies[0].calm).toBe(true);
+    expect(ev.some((e) => e.hurt)).toBe(false);
+  });
+
+  test("with his back to it, it walks toward him, and its touch costs a heart", () => {
+    const p = at(10 * TILE);
+    face(p, -1);
+    const x0 = p.enemies[0].x;
+    const ev = steps(p, 400);
+    expect(p.enemies[0].x).toBeLessThan(x0 - 40);
+    expect(ev.some((e) => e.hurt)).toBe(true);
+  });
+
+  test("turning to face it stops it at once: looking is his facing, nothing more", () => {
+    const p = at(6 * TILE);
+    face(p, -1);
+    steps(p, 60);
+    face(p, 1);
+    const x = p.enemies[0].x;
+    steps(p, 60);
+    expect(p.enemies[0].x).toBe(x);
+  });
+
+  test("it goes no further than its walk, and not through a wall", () => {
+    const p = at(2 * TILE);
+    face(p, -1);
+    steps(p, 600, idle);
+    expect(p.enemies[0].x).toBeGreaterThanOrEqual(14 * TILE + TILE / 2 - 6 * TILE - 1);
+    const q = at(27 * TILE);
+    face(q, 1);
+    steps(q, 600, idle);
+    expect(q.enemies[0].x + 5).toBeLessThanOrEqual(22 * TILE);
+  });
+
+  test("stone, it is in his way, and its head holds him: landing on it from above, he stands there", () => {
+    const p = at(10 * TILE);
+    steps(p, 120, right);
+    expect(cx(p) + PLAYER.w / 2).toBeLessThanOrEqual(p.enemies[0].x - 5 + 0.01);
+    const q = newPlay(PARK, { start: { x: 14 * TILE + 8, bottom: 6 * TILE - 40 } });
+    q.body.onGround = false;
+    const ev = steps(q, 60);
+    expect(feet(q)).toBe(6 * TILE - 16);
+    expect(q.body.onGround).toBe(true);
+    expect(ev.some((e) => e.hurt)).toBe(false);
+    // Standing on its head, whichever way he faces, it stays stone.
+    steps(q, 30, (i) => (i % 10 === 0 ? left : i % 10 === 5 ? right : idle));
+    expect(feet(q)).toBe(6 * TILE - 16);
+  });
+
+  test("the reach search takes a statue as a step anywhere along its walk", () => {
+    const spans = everywhere(PARK).filter((c) => c.y === 6 * TILE - 16);
+    expect(spans.length).toBe(1);
+    expect(spans[0].x).toBeLessThanOrEqual(8 * TILE + 8 - 5);
+    expect(spans[0].x + spans[0].w).toBeGreaterThanOrEqual(20 * TILE + 8 + 5);
+  });
+});
+
+describe("swans (Østensjøvannet): they mind their water", () => {
+  // A floor at row 6 at the water's height, a swan at column 15 whose stretch is six tiles either way.
+  const map = [
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "##############################",
+    "##############################"
+  ];
+  const def: EnemyDef = { kind: "spiky", look: "swan", c: 15, r: 5, range: 6, w: 16, h: 12 };
+  const LAKE = level(map, { enemies: [def], rules: SWAN_RULES });
+  const at = (x: number) => newPlay(LAKE, { start: { x, bottom: 6 * TILE } });
+
+  test("in its stretch it lets him be for three seconds, tells him for the fourth (neck down, still), and then comes; its touch hurts", () => {
+    const p = at(12 * TILE);
+    const swan = p.enemies[0];
+    let hurtAt = -1;
+    for (let i = 0; i < 600 && hurtAt < 0; i++) {
+      const ev = stepPlay(p, idle);
+      if (i < SWAN.tell - 2) expect(swan.calm && !swanTelling(swan)).toBe(true);
+      if (i >= SWAN.tell && i < SWAN.come - 2) expect(swan.calm && swanTelling(swan)).toBe(true);
+      if (ev.hurt) hurtAt = i;
+    }
+    expect(hurtAt).toBeGreaterThan(SWAN.come - 1);
+    expect(swan.calm).toBe(false);
+  });
+
+  test("leaving its stretch calms it at once, and it forgets how long he lingered", () => {
+    const p = at(12 * TILE);
+    steps(p, SWAN.come + 10);
+    expect(p.enemies[0].calm).toBe(false);
+    p.body.x = 25 * TILE;
+    steps(p, 2);
+    expect(p.enemies[0].calm).toBe(true);
+    expect(p.enemies[0].n).toBe(0);
+  });
+
+  test("calm, it cannot be touched: walking through its water does no harm", () => {
+    const p = at(8 * TILE);
+    const ev = steps(p, 100, right);
+    expect(ev.some((e) => e.hurt)).toBe(false);
+    expect(cx(p)).toBeGreaterThan(14 * TILE);
   });
 });
