@@ -1,8 +1,11 @@
-// The scripted routes through levels 4 to 10, played by the tests with the real rules and the
+// The scripted routes through all ten levels, played by the tests with the real rules and the
 // front page's single jump: each must clear its level without a fall or a heart lost, raising
 // every flag, and take at least a minute. Each lives in its own file, so the page under
 // `?debug&auto` fetches only the one it plays.
 
+export { LANGKAIA_ROUTE } from "./routes/langkaia";
+export { AKERSHUS_ROUTE } from "./routes/akershus";
+export { RADHUSET_ROUTE } from "./routes/radhuset";
 export { SLOTTET_ROUTE } from "./routes/slottet";
 export { HOLMENKOLLEN_ROUTE } from "./routes/holmenkollen";
 export { AKERSELVA_ROUTE } from "./routes/akerselva";

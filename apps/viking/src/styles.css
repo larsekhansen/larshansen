@@ -4,6 +4,15 @@ body {
   background: linear-gradient(#4f96d8, #cde8f5 70%, #3d7fae 70%, #2d6590);
 }
 
+/*
+ * The header bar is the kit's, but not see-through here: over a night sky or a level's dark (the
+ * forest in Nordmarka, the lane in Nabolaget) the front page's frosted bar shows the dark through
+ * and turns grey. In the game it is the bar's own cream in every level and every sky.
+ */
+.bar {
+  background: rgb(255, 252, 246);
+}
+
 /* The run, in the header bar: ten rune slots, the clock, and two small buttons (their base is in the kit). */
 .runes {
   display: flex;

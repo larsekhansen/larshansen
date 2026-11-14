@@ -96,6 +96,22 @@ export const leap = (edge: number | ((p: Play) => number), dir: -1 | 1, opts: { 
   }
 });
 
+/**
+ * A full jump from where he stands, steering in the air to come down at x, braking ahead of it as
+ * a person does (the air is slow to turn). For a ledge above and to one side. Done when he lands.
+ */
+export const jumpTo = (x: number, opts: { hold?: number } = {}): Move => ({
+  name: `jump to ${x}`,
+  keys(p, s) {
+    if (s.air && p.body.onGround) return "done";
+    if (!p.body.onGround) s.air = true;
+    if (s.i > 400) return "done";
+    const aim = x - p.body.vx * 7 - cx(p);
+    const dir = Math.abs(aim) > 2 ? Math.sign(aim) : 0;
+    return keys(dir, s.i < (opts.hold ?? 40), s.i === 0);
+  }
+});
+
 /** Walks into the cannon ahead and lets it fire, touching nothing until he lands. */
 export const cannonRide = (dir: -1 | 1): Move => ({
   name: "into the cannon",

@@ -200,6 +200,8 @@ export interface LevelDef {
   drum?: number;
   /** Steps the level's flourish plays after the rune is taken, before the card; the art draws it. */
   flourish?: number;
+  /** Bells (notes of the pentatonic set) that ring one after another while the flourish plays, in place of the cheer. */
+  chime?: number[];
   /** The lowest world y the view shows around world x, when that is above the bottom of the map (so a street is not all cellar). */
   floor?(x: number): number;
   /** How far the view looks up while the flourish plays, so it shows (the palace's roof, its flag). */

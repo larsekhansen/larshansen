@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
+import { PROGRESS_VERSION, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
 
 const ORDER = ["langkaia", "akershus", "radhuset", "slottet"];
 
@@ -14,19 +14,51 @@ describe("reading stored progress", () => {
   });
 
   test("wrong types inside are dropped, the rest kept", () => {
-    const p = readProgress(JSON.stringify({ cleared: ["langkaia", 3, null, "langkaia", ""], best: { langkaia: 41000, akershus: "fast", radhuset: -1, x: NaN }, bracteates: "all", skilling: { slottet: 12, x: -1, y: 2.5 }, clean: [1, "slottet"] }));
+    const p = readProgress(JSON.stringify({ v: 2, cleared: ["langkaia", 3, null, "langkaia", ""], best: { langkaia: 41000, akershus: "fast", radhuset: -1, x: NaN }, bracteates: "all", skilling: { slottet: 12, x: -1, y: 2.5 }, clean: [1, "slottet"] }));
     expect(p).toEqual({ cleared: ["langkaia"], best: { langkaia: 41000 }, bracteates: [], skilling: { slottet: 12 }, clean: ["slottet"] });
   });
 
-  test("what the first three levels saved, before skilling and hearts, still reads as it was", () => {
+  test("what the first three levels saved, before skilling and hearts, still reads: their runes and bracteates kept, their times from the short levels gone", () => {
     const old = '{"cleared":["langkaia","akershus","radhuset"],"best":{"langkaia":41300,"akershus":65000,"radhuset":88000},"bracteates":["akershus"]}';
     const p = readProgress(old);
     expect(p.cleared).toEqual(["langkaia", "akershus", "radhuset"]);
-    expect(p.best).toEqual({ langkaia: 41300, akershus: 65000, radhuset: 88000 });
+    expect(p.best).toEqual({});
     expect(p.bracteates).toEqual(["akershus"]);
     expect(p.skilling).toEqual({});
     expect(p.clean).toEqual([]);
     expect(isOpen(p, [...ORDER, "holmenkollen"], 3)).toBe(true);
+  });
+
+  test("a save from before the first three were lengthened: only their best times, skilling and clean marks go, and only once", () => {
+    const old = JSON.stringify({
+      cleared: ["langkaia", "akershus", "radhuset", "slottet", "holmenkollen"],
+      best: { langkaia: 41300, akershus: 65000, radhuset: 88000, slottet: 70100, holmenkollen: 66000 },
+      bracteates: ["langkaia", "slottet"],
+      skilling: { langkaia: 3, slottet: 40 },
+      clean: ["radhuset", "slottet"]
+    });
+    const p = readProgress(old);
+    expect(p.cleared).toEqual(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen"]);
+    expect(p.bracteates).toEqual(["langkaia", "slottet"]);
+    expect(p.best).toEqual({ slottet: 70100, holmenkollen: 66000 });
+    expect(p.skilling).toEqual({ slottet: 40 });
+    expect(p.clean).toEqual(["slottet"]);
+    // Written back, it carries the mark: a new best on the long Langkaia stays.
+    const again = clearLevel(p, "langkaia", 75000, false, { skilling: 50, clean: true });
+    expect(again.newBest).toBe(true);
+    const stored = writeProgress(again.progress);
+    expect(JSON.parse(stored).v).toBe(PROGRESS_VERSION);
+    const read = readProgress(stored);
+    expect(read.best.langkaia).toBe(75000);
+    expect(read.skilling.langkaia).toBe(50);
+    expect(read.clean).toContain("langkaia");
+    expect(readProgress(writeProgress(read))).toEqual(read);
+  });
+
+  test("a version mark that is not a number counts as an old save", () => {
+    const p = readProgress(JSON.stringify({ v: "2", cleared: ["langkaia"], best: { langkaia: 41300 } }));
+    expect(p.cleared).toEqual(["langkaia"]);
+    expect(p.best).toEqual({});
   });
 });
 
