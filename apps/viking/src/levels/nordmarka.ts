@@ -23,7 +23,7 @@ import type { LevelDef, View } from "./types";
 // comes through the trees, and a troll cannot stand light.
 // New: the dark (and the headlamp), a carrier that walks (the moose), and the troll.
 //
-//   #  the forest floor   K  rock   _  roots and branches   w  the bog
+//   #  the forest floor   K  rock   _  roots and branches   -  the hut's porch   w  the bog
 //   b  a bench   $  skilling   &  brown cheese   t  T-banen   j  Jernhaugen
 //
 // Sections: Sognsvann and into the trees (teach: the dark where nothing can go wrong, the first blue
@@ -55,6 +55,8 @@ b.fill(89, 102, G, G + 1, "w");
 b.run(110, 113, G - 3, "_");
 
 // --- Ullevålseter: the hut, its porch, the big spruce and its branches up out of the trees -----------
+// The porch, two tiles up, with a bench on it: a little off the path.
+b.run(125, 128, G - 2, "-");
 b.run(135, 136, G - 2, "_");
 b.run(137, 138, G - 4, "_");
 b.run(134, 135, G - 6, "_");
@@ -74,7 +76,7 @@ b.ground(229, COLS - 1, 6, "K");
 
 // Marks: the start, the doors, signs, flags (blue trunks), benches, the rune, the bracteate, the cheese.
 b.put(2, G - 1, "t").put(4, G - 1, "S").put(20, G - 1, "i").put(32, G - 1, "f");
-b.put(86, G - 1, "f").put(121, G - 1, "f").put(128, G - 1, "b").put(131, G - 1, "i");
+b.put(86, G - 1, "f").put(121, G - 1, "f").put(127, G - 3, "b").put(131, G - 1, "i");
 b.put(148, G - 1, "j").put(153, G - 1, "f").put(190, G - 1, "i").put(192, G - 1, "f").put(194, G - 1, "b");
 b.put(218, G - 4, "r").put(95, 11, "o").put(139, G - 9, "&");
 
@@ -192,8 +194,8 @@ function lights(v: View): Light[] {
   // The trail's other blue marks, and the water of the bogs catching what light there is.
   for (const m of MARKS_ON_TRUNKS) out.push({ x: m.x + 1, y: m.y + 2, rings: [[5, 0.5], [3, 0.1]] });
   for (const c of BOG_TOPS) out.push({ rect: { x: c * TILE, y: G * TILE - 1, w: TILE, h: 3 }, dark: 0.45 });
-  out.push({ rect: { x: HUT.x + 20, y: HUT.g - 30, w: 10, h: 9 }, dark: 0 });
-  out.push({ x: HUT.x + 25, y: HUT.g - 25, rings: [[26, 0.55], [18, 0.3]] });
+  out.push({ rect: { x: HUT.x + 50, y: HUT.g - 57, w: 10, h: 9 }, dark: 0 });
+  out.push({ x: HUT.x + 55, y: HUT.g - 52, rings: [[28, 0.55], [20, 0.3]] });
   const door = v.doors.get("maze");
   if (door) out.push({ x: door.x + door.w / 2, y: door.bottom - 10, rings: [[16, 0.5], [10, 0.2]] });
   for (const f of fireflies(v.t)) out.push({ x: f.x, y: f.y, rings: [[3, 0.3]] });
@@ -347,11 +349,11 @@ function marsh() {
   for (const [dx, y, w] of [[-8, 20, 8], [3, 30, 10], [-6, 44, 6], [3, 52, 7]] as const) R(x + dx, g - 80 + y, w, 1, mix(FOREST.trunk, STONE.base, 0.4));
 }
 
-/** Ullevålseter: a timber hut, its corners' log ends, a turf roof, a chimney, one window lit. */
+/** Ullevålseter: a two-storey timber house, its corners' log ends, a gallery along the upper floor (the map's ledge) with the bench, a turf roof, a chimney, one window lit. */
 function ullevalseter(v: View) {
   const { x, g, w } = HUT;
-  const top = g - 44;
-  R(x, top, w, 44, FOREST.hut);
+  const top = g - 64;
+  R(x, top, w, 64, FOREST.hut);
   for (let y = top + 4; y < g; y += 5) R(x, y, w, 1, FOREST.hutLine);
   for (let y = top + 1; y < g; y += 5) {
     R(x - 3, y, 4, 3, mix(FOREST.hut, WHITE, 0.25));
@@ -362,18 +364,23 @@ function ullevalseter(v: View) {
   R(x - 6, top, w + 12, 2, FOREST.hutLine);
   R(x + w - 30, top - 30, 8, 20, STONE.base);
   if (!view.reduced) smoke(x + w - 28, top - 32, v.t, STOVE_SMOKE);
-  // The window that is lit, the one that is not, the door.
-  R(x + 19, g - 31, 12, 11, PAINT.trim);
-  R(x + 20, g - 30, 10, 9, LAMP);
-  R(x + 24, g - 30, 1, 9, PAINT.trim);
-  R(x + 20, g - 26, 10, 1, PAINT.trim);
-  light(x + 20, g - 30, 4, 4);
-  light(x + 25, g - 30, 5, 4);
-  R(x + 74, g - 31, 12, 11, PAINT.trim);
-  R(x + 75, g - 30, 10, 9, GLASS.farWindow);
-  R(x + 44, g - 28, 14, 28, PAINT.homeDoor);
-  R(x + 46, g - 26, 10, 10, PAINT.homeDoorPanel);
-  R(x + 54, g - 15, 2, 2, LAMP);
+  // Upstairs: the one window that is lit, over the gallery.
+  R(x + 49, g - 58, 12, 11, PAINT.trim);
+  R(x + 50, g - 57, 10, 9, LAMP);
+  R(x + 54, g - 57, 1, 9, PAINT.trim);
+  R(x + 50, g - 53, 10, 1, PAINT.trim);
+  light(x + 50, g - 57, 4, 4);
+  light(x + 55, g - 57, 5, 4);
+  // The gallery: posts down from its planks, a rail along it.
+  for (const px of [x + 16, x + 40, x + 63]) R(px, g - 32, 2, 32, P.woodDark);
+  R(x + 16, g - 44, 49, 2, P.woodDark);
+  for (let px = x + 20; px < x + 64; px += 5) R(px, g - 43, 1, 11, P.woodDark);
+  // Downstairs: a dark window and the door.
+  R(x + 92, g - 27, 12, 11, PAINT.trim);
+  R(x + 93, g - 26, 10, 9, GLASS.farWindow);
+  R(x + 72, g - 28, 14, 28, PAINT.homeDoor);
+  R(x + 74, g - 26, 10, 10, PAINT.homeDoorPanel);
+  R(x + 82, g - 15, 2, 2, LAMP);
 }
 
 /** Jernhaugen from outside: a grassy mound with standing stones on it, and its stone door, a torch glowing inside. */
@@ -713,7 +720,7 @@ export const NORDMARKA: LevelDef = {
   place: { nb: "Skogen nord for byen", en: "The forest north of the city" },
   sky: "twilight",
   map: MAP,
-  legend: { solid: "#K", oneWay: "_", water: "w" },
+  legend: { solid: "#K", oneWay: "_-", water: "w" },
   ramps: [],
   carriers: CARRIERS,
   timed: [],
@@ -787,7 +794,8 @@ export const NORDMARKA: LevelDef = {
       return false;
     },
     ledges: {
-      _: { body: FOREST.trunk, top: FOREST.moss, edge: FOREST.trunkDark, joint: FOREST.trunkDark }
+      _: { body: FOREST.trunk, top: FOREST.moss, edge: FOREST.trunkDark, joint: FOREST.trunkDark },
+      "-": { body: P.wood, top: mix(P.wood, WHITE, 0.25), edge: P.woodDark, joint: P.woodDark }
     },
     carrier: (_i, at, v) => moose(at, v.t),
     flag(_i, f, raisedAt, v) {
