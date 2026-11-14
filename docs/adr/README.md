@@ -15,7 +15,7 @@ Lars before reversing one of his.
 | [0003](0003-fixed-body-constants.md) | Run and jump never change; the world and abilities add behaviour | planner | holds |
 | [0004](0004-levels-as-data-one-pure-runner.md) | A level is data; one pure runner plays any of them | planner | holds |
 | [0005](0005-checking-without-a-player.md) | Scripted players, a reach search, a debug harness and byte-identical screenshots stand in for playtests | planner | holds, with known limits |
-| [0006](0006-ten-levels-lars-hansen-line-map.md) | Ten levels spelling LARS HANSEN, on a T-bane line map of Oslo | Lars (ten, Oslo, him); planner (the rest) | holds |
+| [0006](0006-ten-levels-lars-hansen-line-map.md) | Ten levels spelling LARS HANSEN, on a T-bane line map of Oslo | Lars (ten, Oslo, him); planner (the rest) | holds; extended by 0025 |
 | [0007](0007-maze-as-optional-bonus.md) | The maze is a bonus stop, never required; no music; the original kept on a branch | Lars (bonus, no music, keep a copy); planner (the rest) | holds |
 | [0008](0008-hearts-lives-enemies-pits.md) | Enemies, hearts, lives and pits | Lars | holds, adjusted by 0017 and 0018; supersedes "nothing kills" |
 | [0009](0009-mario-length-levels.md) | Each level about as long and as good as a Mario level | Lars | holds (its clear-time floor adjusted by 0020); supersedes the plan's column counts |
@@ -34,6 +34,7 @@ Lars before reversing one of his.
 | [0022](0022-the-plough-hurts-only-while-it-moves.md) | The plough hurts only while it moves; standing still it is in his way; running into him shows the round's hint | planner (order 13) | holds |
 | [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds |
 | [0024](0024-the-shield-is-a-held-stance.md) | The shield: held down on the ground it comes up in six steps and stops throws and charges from in front; a held stance, not a parry | planner (order 14) | holds |
+| [0025](0025-line-2-viking.md) | Line 2: six more levels spelling VIKING, orange, leaving at Stortinget, opened by Nabolaget; stations not built are under construction | planner (plan for line 2, shown to Lars; order 14) | holds; extends 0006 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

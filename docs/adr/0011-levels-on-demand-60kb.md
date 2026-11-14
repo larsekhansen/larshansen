@@ -20,7 +20,11 @@ through the boss slot). 59.12 kB after order 13, which added the rims enemies ge
 far layers' shift and the ground below the map on upright screens, the plated banner and the
 bosses' bubbles beside them; to make room the duck, the salmon, the bat and the anthill are drawn
 by the one level that has each. Left to move out if needed: the line map's station art, and the
-enemy looks that two or three levels share.
+enemy looks that two or three levels share. 58.96 kB after order 14 (line 2's groundwork and
+Bygdøy), which moved the line map's look into a chunk of its own (`kartArt.ts`, fetched as the page
+starts), dropped the stations' unused place strings and moved `?debug&auto`'s table of routes into
+the debug chunk; the shield's rules (`shield.ts`) and line 2's kit pieces come lazily. The order
+allowed 59.5. Left to move: the enemy looks, and Nordmarka's night drawing in `main.ts`.
 
 ## Not chosen
 - One bundle. It would be about 110 kB gzipped.

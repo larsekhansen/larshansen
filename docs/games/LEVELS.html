@@ -117,6 +117,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   <ol class="spell" id="spell" aria-label="The ten levels, one per letter of LARS HANSEN"></ol>
   <p class="cap">Same person as the front page, same jump, same pixels, same Oslo sky. The front page stays the walk through Gamle Oslo; the Opera's secret door opens onto the rest of the city.</p>
   <p><span class="tag done">built</span> All ten levels, the line map, two bosses, the ending, and the maze as a bonus stop. <span class="tag todo">not yet</span> Played by a person at real speed. Everything here was checked by scripted players and still pictures.</p>
+  <p><span class="tag done">line 2</span> Since order 14 a second line leaves the map at Stortinget: six more levels spelling VIKING, opened by clearing Nabolaget. Bygdøy is built and gives the shield; the other five stations stand under construction. <a href="#line-2">Line 2</a> below.</p>
   <p class="cap">This page began on 13 November as the plan, with hand-drawn sketches of each level. The sketches are gone (they are in the file's git history); the pictures below are screenshots of the game. Where the build left the plan, the last section says how.</p>
 </header>
 
@@ -200,6 +201,15 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   <div id="levels" style="display:flex;flex-direction:column;gap:44px"></div>
 </section>
 
+<section id="line-2">
+  <h2>Line 2: VIKING</h2>
+  <div class="prose"><p>Planned on 14 November (<code>docs/games/PLAN-LINE-2.md</code>) and begun in order 14. Line 2 is orange, as Oslo's line 2 is. It leaves line 1 at Stortinget, runs under it on a low deck and comes up beside its end, where six stations stand on its own viaduct. Until Nabolaget is cleared a gate stands across it, with a sign, and all of it is drawn faint; a station not built yet stands behind a hoarding and says it is under construction. Once it is open the header shows a second group of six rune slots. Orders 15 and 16 build the rest; order 17 reviews them.</p></div>
+  <figure><img class="shot" src="shots/kart-line2.png" width="1280" height="800" loading="lazy" alt="The line map at Stortinget: line 1 red on its viaduct, line 2 orange, leaving Stortinget under line 1 and coming up beside its end onto its own viaduct, Bygdøy's station beyond"><figcaption class="cap">Line 2 leaves at Stortinget (the orange bar on its station), runs under line 1 past Ekeberg and Nabolaget, and comes up onto its own viaduct.</figcaption></figure>
+  <ol class="line" id="line2"></ol>
+  <div class="prose"><p><strong>The shield</strong> (ADR 0024), given at Bygdøy's longship and his from then on: hold down on the ground and it comes up in six steps, facing the way he faces, for as long as down is held. Up, it stops a throw coming at him from in front and holds off a charge, pushing it back a tile; he cannot walk while it is up. It does not stop falls, anything from above or below, or anything from behind. A held stance, not a parry: the sloppy player's ±4 steps fail any window of a few steps, a person on a phone too.</p></div>
+  <div id="levels2" style="display:flex;flex-direction:column;gap:44px"></div>
+</section>
+
 <section>
   <h2>What each level adds</h2>
   <div class="prose"><p>One new thing per level, taught in a safe spot first and tested after. Every level runs in four parts: teach, practise, twist, set piece.</p></div>
@@ -239,7 +249,8 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
       <tr><td class="num">10 D</td><td>Langkaia, Akershus and Rådhuset lengthened to the same measure as the rest.</td><td>PR #53</td></tr>
       <tr><td class="num">11</td><td>Høyenhall's banner, Kværnertoppen, Kruttverket; the handover and sixteen decision records.</td><td>PR #54</td></tr>
       <tr><td class="num">12</td><td>Made fair after an adversarial review with a sloppy scripted player: rules at the edges, Game over at a boss, waits cut, the joins, the engineering.</td><td>PR #57</td></tr>
-      <tr><td class="num">13</td><td>The look and the words: flat areas broken, trams on their rails, a plated banner, enemies that read at night, upright phones; every line read again; the last unfair places.</td><td>branch <code>look-and-words</code></td></tr>
+      <tr><td class="num">13</td><td>The look and the words: flat areas broken, trams on their rails, a plated banner, enemies that read at night, upright phones; every line read again; the last unfair places.</td><td>PR #58</td></tr>
+      <tr><td class="num">14</td><td>Line 2's groundwork: the second line on the map, sixteen runes, the shield, the rocking deck, the sinking pad and the oar bank in the kit, and Bygdøy.</td><td>branch <code>line-2-groundwork</code></td></tr>
     </tbody>
   </table></div>
 </section>
@@ -297,7 +308,11 @@ const STROKES = {
   S: [[[0.7, 0], [0.3, 0.34], [0.7, 0.62], [0.3, 1]]],
   H: [[[0.25, 0], [0.25, 1]], [[0.75, 0], [0.75, 1]], [[0.25, 0.36], [0.75, 0.64]]],
   N: [[[0.5, 0], [0.5, 1]], [[0.24, 0.34], [0.76, 0.66]]],
-  E: [[[0.2, 1], [0.2, 0], [0.5, 0.36], [0.8, 0], [0.8, 1]]]
+  E: [[[0.2, 1], [0.2, 0], [0.5, 0.36], [0.8, 0], [0.8, 1]]],
+  V: [[[0.26, 1], [0.26, 0], [0.74, 0.34], [0.74, 1]]],
+  I: [[[0.5, 0], [0.5, 1]]],
+  K: [[[0.72, 0.08], [0.3, 0.4], [0.72, 0.72]]],
+  G: [[[0.2, 0.06], [0.8, 0.94]], [[0.8, 0.06], [0.2, 0.94]]]
 };
 /** A rune stone, 11 x 13: the strokes from apps/viking/src/game/runes.ts on a dark slab. */
 function rune(x, y, ch) {
@@ -324,7 +339,8 @@ const FACTS = {
   "nordmarka":{"cols":236,"clear":61,"enemies":10,"coins":52,"flags":6,"benches":2},
   "stortinget":{"cols":274,"clear":63,"enemies":11,"coins":73,"flags":4,"benches":2},
   "ekeberg":{"cols":256,"clear":63,"enemies":13,"coins":60,"flags":6,"benches":2},
-  "nabolaget":{"cols":224,"clear":83,"enemies":8,"coins":66,"flags":6,"benches":2}
+  "nabolaget":{"cols":224,"clear":83,"enemies":8,"coins":66,"flags":6,"benches":2},
+  "bygdoy":{"cols":256,"clear":80,"enemies":14,"coins":67,"flags":7,"benches":1}
 };
 // ---- end of FACTS ----
 
@@ -401,6 +417,25 @@ const LEVELS = [
     oslo: "“They made gunpowder here. Now they make coffee. Fewer bangs.” The walk ends where the front page begins: through the door Hjem he is back at the first house, hat on.",
     you: "Home, and the place before it.", kit: "all of them, and the plough" }
 ];
+// Line 2: its six stations, and the levels built so far, in the same shape as line 1's.
+const LINE2 = [
+  { ch: "V", id: "bygdoy", name: "Bygdøy", built: true, idea: "decks that rock, rafts that drift, balsa that sinks, oars on a beat; the shield" },
+  { ch: "I", id: "vigelandsparken", name: "Vigelandsparken", built: false, idea: "statues that move only while his back is turned" },
+  { ch: "K", id: "korketrekkeren", name: "Korketrekkeren", built: false, idea: "the sledge run, where he cannot stop" },
+  { ch: "I", id: "ostensjovannet", name: "Østensjøvannet", built: false, idea: "lily pads that sink, swans that guard a stretch" },
+  { ch: "N", id: "bjorvika", name: "Bjørvika", built: false, idea: "crane hooks between half-built towers, and the wind" },
+  { ch: "G", id: "gamlebyen", name: "Gamlebyen", built: false, idea: "the ruins rebuilt as he passes; the sea serpent" }
+];
+const LEVELS2 = [
+  { ch: "V", id: "bygdoy", name: "Bygdøy", where: "The museums on Bygdøy", sky: "Day", foes: "crabs, gulls, a pigeon, rats, two penguins; three slingers", ride: "",
+    shot: "Fram's hall: the polar ship's deck tilted, him on its low end, the foredeck with a flag and a bench above, portholes in her black hull",
+    cap: "Fram's deck rocks; only from its far end, as it rises, does a jump reach the foredeck.",
+    add: "Ground that rocks, drifts and sinks. The polar ship's deck tilts on a beat, a row of narrow ledges that rise and fall in whole pixels; bundles of balsa hold him forty steps and go under; the longship's oars are a stair on a beat. At its prow, the shield; in the yard, slingers who lead a man who walks on.",
+    beats: ["The ferry from Rådhusbrygga lands him at the pier, skilling over its wake.", "The beach: two boathouses (up over their roofs), a slipway, crabs and gulls, the first sign.", "Fram in her hall: up to the gallery, her rocking deck, the foredeck with a flag and a bench, the crow's nest with the cheese; then Gjøa's deck rocking over the hold, and a penguin on the gallery past it.", "Outside: the balsa raft drifts out to a bundle, over another to a rock; the reed boat out to a last bundle and the shore.", "The longship's hall: up the oars as each comes out, along the deck to the prow and the shield; out into the yard past three slingers on the storehouses' ridges: walk, stop and raise it, walk.", "Up the museum's stepped gable to rune V on its ridge. The bracteate hangs over the longship's mast, the feather's only."],
+    oslo: "“Fram has been further north and further south than any other wooden ship. The deck has not forgotten.” The Oseberg ship: buried in 834, dug up in 1904, not rowed since.",
+    you: "The first rune of VIKING, and the shield.", kit: "deck.ts, sink.ts, oars.ts; game/shield.ts" }
+];
+
 const LADDER = [
   ["Moving ground", "A ledge that moves carries whoever stands on it by the same amount each step.", "carrier.ts"],
   ["Flags, cannons", "A touched flag is where he returns. A launcher sets his speed once; the keys only lean on the flight.", "checkpoint.ts, launcher.ts"],
@@ -434,6 +469,20 @@ document.getElementById("levels").innerHTML = LEVELS.map((l, i) => `
     <div><div><h4>Oslo</h4><p>${esc(l.oslo)}</p></div><div><h4>You</h4><p>${esc(l.you)}</p></div><div><h4>Built from</h4><p><code>${esc(l.kit)}</code></p></div></div>
   </div>
 </article>`).join("") + `<p class="cap">All ten: ${total} columns, against 144 in the old one-strip game. The scripted player goes straight through all ten in ${mmss(secs)}.</p>`;
+document.getElementById("line2").innerHTML = LINE2.map((l) => `<li><b>${l.ch}</b><strong>${esc(l.name)}</strong><span>${l.built ? "built: " : "under construction: "}${esc(l.idea)}</span></li>`).join("");
+document.getElementById("levels2").innerHTML = LEVELS2.map((l, i) => `
+<article class="level" id="level-${i + 11}">
+  <header>
+    <canvas width="11" height="13" data-rune="${l.ch}" aria-hidden="true"></canvas>
+    <div class="name"><p class="eyebrow">Level ${i + 11} · line 2 · rune ${l.ch} · built</p><h3>${esc(l.name)}</h3><p class="where">${esc(l.where)}</p></div>
+    <dl class="facts"><div><dt>Sky</dt><dd>${esc(l.sky)}</dd></div><div><dt>Length</dt><dd>${FACTS[l.id].cols} columns</dd></div><div><dt>Scripted clear</dt><dd>${mmss(FACTS[l.id].clear)}</dd></div><div><dt>Skilling</dt><dd>${FACTS[l.id].coins}</dd></div><div><dt>Flags, benches</dt><dd>${FACTS[l.id].flags}, ${FACTS[l.id].benches}</dd></div><div><dt>Enemies</dt><dd>${FACTS[l.id].enemies}: ${esc(l.foes)}</dd></div></dl>
+  </header>
+  <figure><img class="shot" src="shots/${i + 11}-${l.id}.png" width="1280" height="800" loading="lazy" alt="${esc(l.shot)}"><figcaption class="cap">${esc(l.cap)} <a href="https://larshansen.dev/viking/?debug&amp;level=${l.id}">Open the level</a></figcaption></figure>
+  <div class="notes">
+    <div><div><h4>New here</h4><p class="new">${esc(l.add)}</p></div><div><h4>The walk</h4><ol>${l.beats.map((b) => `<li>${esc(b)}</li>`).join("")}</ol></div></div>
+    <div><div><h4>Oslo</h4><p>${esc(l.oslo)}</p></div><div><h4>You</h4><p>${esc(l.you)}</p></div><div><h4>Built from</h4><p><code>${esc(l.kit)}</code></p></div></div>
+  </div>
+</article>`).join("");
 document.getElementById("ladder").innerHTML = LADDER.map((r, i) => `<tr><td class="num">${i + 1} ${esc(LEVELS[i].name.split(" ")[0])}</td><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><code>${esc(r[2])}</code></td></tr>`).join("");
 document.getElementById("sw").innerHTML = [P.red, P.blue, P.skin, P.ironDark, P.gold, P.lamp, P.grass, P.grassDark, P.earth, P.wood, P.woodDark, P.rock, P.water, P.waterDeep, P.foam, P.sail, P.stripe, P.snow, P.glow].map((c) => `<i style="background:${c}"></i>`).join("");
 
