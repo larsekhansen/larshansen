@@ -59,6 +59,7 @@ import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { autopilot, type Move } from "./game/bot";
 import { strings } from "./game/i18n";
 import { carefulStep } from "./game/careful";
+import { TROLL } from "./game/troll";
 import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
@@ -184,7 +185,9 @@ function extraState() {
     freeze: 0,
     nudge: { x: 0, y: 0, until: 0 },
     /** The card shown: a level cleared, or the game over. */
-    card: null as "clear" | "over" | null
+    card: null as "clear" | "over" | null,
+    /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
+    bossLine: null as { lines: string[]; until: number } | null
   };
 }
 const before = { x: 0, y: 0 };
@@ -785,6 +788,26 @@ function sparksAt(x: number, y: number, n: number, color: string, speed = 0.7) {
   }
 }
 
+/** How long a boss's line, and a hint after a round with no hit, stay over it. */
+const BOSS_LINE_STEPS = 180;
+const BOSS_HINT_STEPS = 300;
+
+/** A boss says something: over it in a bubble, and to a screen reader. */
+function bossSays(lines: string[], steps = BOSS_LINE_STEPS) {
+  state.bossLine = { lines, until: state.steps + steps };
+  say(lines.join(" "));
+}
+
+/** Where a boss's bubble points: over the troll's head, or the top of the last boss. */
+function bossTop(p: Play): { x: number; y: number } | null {
+  if (p.troll) return { x: p.troll.x, y: p.troll.def.floor - TROLL.h - 6 };
+  if (p.boss) {
+    const top = p.boss.rules.top(p.boss.state);
+    return { x: top.x, y: top.y - 6 };
+  }
+  return null;
+}
+
 /** This level's bracteate was found on an earlier visit: drawn as a pale outline, and quiet. */
 const owned = (p: Play) => progress.bracteates.includes(p.def.id);
 
@@ -829,7 +852,7 @@ function react(ev: Events) {
   if (ev.dash) sfx.play("dash");
   if (ev.troll === "wake") {
     sfx.play("gate");
-    say(t.trollWakes);
+    bossSays([t.trollWakes]);
   }
   if (ev.troll === "slam") {
     sfx.play("cannon");
@@ -838,18 +861,19 @@ function react(ev: Events) {
   if (ev.troll === "hit") {
     sfx.play("stone");
     jolt(2, 0);
-    say(t.trollHit(p.troll?.hits ?? 0));
+    bossSays([t.trollHit(p.troll?.hits ?? 0)]);
   }
+  if (ev.troll === "miss" || ev.troll === "rest") bossSays(t.trollHint, BOSS_HINT_STEPS);
   if (ev.troll === "stone") {
     sfx.play("fanfare");
-    say(t.trollStone);
+    bossSays([t.trollStone]);
   }
   if (ev.boss) {
     const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", slam: "cannon", hit: "stone", line: "stomp", beaten: "fanfare" };
     if (sound[ev.boss]) sfx.play(sound[ev.boss]);
     if (ev.boss === "hit" || ev.boss === "slam") jolt(0, 3);
     const words = p.def.bossWords?.[ev.boss];
-    if (words) say(words[lang]);
+    if (words) bossSays(words[lang].split("\n"), /^miss|^rest/.test(ev.boss) ? BOSS_HINT_STEPS : BOSS_LINE_STEPS);
   }
   if (ev.zap && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + PLAYER.h - 2, 8, PAINT.warning, 1.1);
   if (ev.over) {
@@ -1218,6 +1242,9 @@ function render(alpha: number) {
       bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h - 14, lines: t.moundNoFeather };
   }
   if (state.bubble) bubble = { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] };
+  // A boss's line or hint, over it, while nothing else is speaking.
+  const boss = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? bossTop(p) : null;
+  if (!bubble && boss && state.bossLine) bubble = { x: boss.x, y: boss.y, lines: state.bossLine.lines };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
   if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [t.featherLine] };

@@ -97,8 +97,13 @@ const GOLD: Record<string, Move[]> = {
 const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
-/** The last level is held to a longer clear: ninety seconds or more. */
-const LONGEST: Record<string, number> = { nabolaget: 90 };
+/**
+ * The scripted clear's floor: fifty seconds, the last level eighty. (It was sixty and ninety; order 12
+ * cut the long waits on rides and bosses, which took ten seconds and more off some levels without
+ * taking away anything to do. The size of a level is held by its columns, 220 to 280.)
+ */
+const SHORTEST = 50;
+const LONGEST: Record<string, number> = { nabolaget: 80 };
 
 describe("the line", () => {
   test("ten levels, one per rune of LARS HANSEN, all ten built", () => {
@@ -152,7 +157,7 @@ for (const def of LEVELS) {
       }
     });
 
-    test("a scripted player clears it with one jump, raising every flag, losing no heart, in a minute or more", () => {
+    test("a scripted player clears it with one jump, raising every flag, losing no heart, in fifty seconds or more", () => {
       const p = newPlay(def, { pole: POLE.has(def.id) });
       const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
@@ -161,7 +166,7 @@ for (const def of LEVELS) {
       expect(r.events.filter((e) => e.splash).length).toBe(0);
       expect(r.events.filter((e) => e.flag !== null).map((e) => e.flag)).toEqual(flagsOf(map).map((_, i) => i));
       expect(r.hurt).toEqual([]);
-      expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? 60);
+      expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? SHORTEST);
       expect(r.seconds).toBeLessThan(150);
       console.log(`${def.name}: scripted clear ${r.seconds.toFixed(1)} s, ${p.found} of ${p.skilling.length} skilling on the way`);
     });

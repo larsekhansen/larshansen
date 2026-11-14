@@ -54,6 +54,8 @@ const STRINGS = {
     trollWakes: "Steinen reiser seg. Det er et troll.",
     trollHit: (n: number): string => (n >= 3 ? "Trollet blir til stein." : n === 2 ? "To tredjedeler stein." : "En tredjedel av trollet er stein."),
     trollStone: "Trollet er stein. Sola er oppe.",
+    /** Over the troll after a round with no hit, or when it gives up waiting under him. */
+    trollHint: ["Den må stå i lyset når kølla setter seg fast.", "Så ser du den i øynene."],
     locked: "kommer snart",
     quintleSoon: "Quintle flytter inn når det er ute på Google Play",
     runesLeft: (n: number) => (n >= 10 ? "Ti av ti runer." : `${NB_COUNT[n] ?? n} av ti runer. Resten ligger langs linja.`),
@@ -105,6 +107,7 @@ const STRINGS = {
     trollWakes: "The boulder stands up. It is a troll.",
     trollHit: (n: number): string => (n >= 3 ? "The troll turns to stone." : n === 2 ? "Two thirds stone." : "A third of the troll is stone."),
     trollStone: "The troll is stone. The sun is up.",
+    trollHint: ["It must stand in the light when its club sticks.", "Then look it in the eye."],
     locked: "coming soon",
     quintleSoon: "Quintle moves in once it is out on Google Play",
     runesLeft: (n: number) => (n >= 10 ? "Ten of ten runes." : `${EN_COUNT[n] ?? n} of ten runes. The rest are along the line.`),

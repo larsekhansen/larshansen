@@ -177,11 +177,12 @@ const TRAM_LINE: Path = {
     { x: 207 * TILE, y: S * TILE + 50 }
   ],
   w: TRAM_W,
-  speed: 1.5,
+  speed: 2,
   wait: 0,
   stops: [{ at: 2, steps: 120 }]
 };
-TRAM_LINE.wait = 2 - (pathPeriod(TRAM_LINE) % 2) + 90;
+// Two on the line, a short turn at the depot: one is never long in coming.
+TRAM_LINE.wait = 2 - (pathPeriod(TRAM_LINE) % 2) + 30;
 export const TRAMS: Path[] = [0, 1].map((i) => ({ ...TRAM_LINE, offset: (i * pathPeriod(TRAM_LINE)) / 2 }));
 const CARRIERS: CarrierDef[] = TRAMS;
 
@@ -196,7 +197,8 @@ export const PLOUGH_DEF: PloughDef = {
     { x0: 179 * TILE + CAB, x1: 203 * TILE + CAB, sticks: true },
     { x0: 187 * TILE + CAB, x1: 203 * TILE + CAB, sticks: false }
   ],
-  line: { x0: 178 * TILE, x1: 181 * TILE, y: 15 * TILE + 4, speed: 7 }
+  line: { x0: 178 * TILE, x1: 181 * TILE, y: 15 * TILE + 4, speed: 7 },
+  backOff: 6 * TILE
 };
 /** The terrace he waits on: its edge, toward the street. */
 export const TERRACE = { right: 174 * TILE, top: (S - 3) * TILE };
@@ -913,22 +915,26 @@ function plough(p: Plough, v: View) {
     wdisc(at(wx), g - 7, 3, P.iron);
     R(at(wx) - 1 + roll, g - 13, 2, 2, P.iron);
   }
-  // The blade: yellow, black stripes, angled out in front.
+  // The blade: yellow, black stripes, angled out in front; raised off the snow while it revs, a sign
+  // that holds still (for reduced motion too).
   const bx = at(32);
+  const raised = p.phase === "windup" ? 5 : 0;
   for (let k = 0; k < 20; k++) {
-    const yy = g - 20 + k;
+    const yy = g - 20 + k - raised;
     const out = Math.round(k * 0.4) + 2;
     R(f > 0 ? bx : bx - out - 4, yy, out + 4, 1, ((k + Math.floor((bx + k) / 4)) >> 2) % 2 ? WINTER.blade : INK);
   }
-  // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when beaten.
+  // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when
+  // beaten. With reduced motion they do not flash: one is lit while it drives, both (with their glow)
+  // while it revs.
   const fast = p.phase === "windup";
   const beat = view.reduced ? 1 : Math.floor(v.t / (fast ? 4 : 12)) % 2;
   for (const [k, dx] of [[0, -28], [1, -10]] as const) {
-    const hot = !beaten && (beat + k) % 2 === 0;
+    const hot = !beaten && ((fast && view.reduced) || (beat + k) % 2 === 0);
     span(dx, dx + 6, y0 - 4, 4, hot ? WINTER.beacon : mix(WINTER.beacon, INK, 0.55));
     if (hot) {
       light(Math.min(at(dx), at(dx + 6)), y0 - 4, 6, 4, "lamp");
-      if (fast && !view.reduced) span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)");
+      if (fast) span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)");
     }
   }
   // Headlights: lit, and a pool of light on the snow ahead of the blade.
@@ -1006,7 +1012,12 @@ export const NABOLAGET: LevelDef = {
   bossWords: {
     wake: { nb: "Brøytebilen våkner. Den er det siste før du er hjemme.", en: "The snow plough wakes. It is the last thing between you and home." },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
-    beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." }
+    beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
+    // Shown over it when a round goes by with no hit (by round), and when it backs off to wait.
+    miss1: { nb: "Den står fast i brøytekanten.\nKlessnora kaster deg høyere enn et hopp.", en: "It is stuck in the bank.\nThe washing line throws you higher than a jump." },
+    miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },
+    miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." },
+    rest: { nb: "Brøytebilen venter.\nDen kommer når den kommer.", en: "The plough waits.\nIt comes when it comes." }
   },
   surfaceAt: (x, y) => {
     const h = rampHeight(ROOFS, x);

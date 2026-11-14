@@ -12,7 +12,7 @@ function run(id: string, name: string, strat: Strat, seconds = 300) {
   p.save = { ...bench };
   p.checkpoints = { reached: P.flagsOf(map).length - 1 };
   const s: any = {};
-  let hearts = 0, lives = 0, hits = 0, firstHit = -1;
+  let hearts = 0, lives = 0, hits = 0, firstHit = -1, hints = 0, firstHint = -1;
   const ev0: string[] = [];
   let n = 0;
   for (; n < seconds * 60; n++) {
@@ -20,12 +20,14 @@ function run(id: string, name: string, strat: Strat, seconds = 300) {
     if (ev.hurt) hearts++;
     if (ev.lifeLost) lives++;
     if (ev.troll === "hit" || ev.boss === "hit") { hits++; if (firstHit < 0) firstHit = n; }
+    // A hint shown over it (after a round with no hit, or when it gives up waiting).
+    if (ev.troll === "miss" || ev.troll === "rest" || /^(miss|rest)/.test(ev.boss ?? "")) { hints++; if (firstHint < 0) firstHint = n; }
     if (ev.over) { ev0.push("GAME OVER"); break; }
     if (p.run.state === "done") { ev0.push("RUNE"); break; }
-    if (p.runeAt === null && P.runeFree(p) && !ev0.includes("free")) ev0.push(`free@${(n / 60).toFixed(0)}s`);
+    if (p.runeAt === null && P.runeFree(p) && !ev0.some((e) => e.startsWith("free"))) ev0.push(`free@${(n / 60).toFixed(0)}s`);
   }
   const boss = p.troll ? `${p.troll.phase} hits ${p.troll.hits}` : `${p.boss.state.phase} hits ${p.boss.state.hits}`;
-  console.log(`${id.padEnd(9)} ${name.padEnd(38)} ${(n / 60).toFixed(0).padStart(4)} s  boss ${boss.padEnd(16)} hits ${hits} (first ${firstHit < 0 ? "-" : (firstHit / 60).toFixed(0) + "s"}), hearts lost ${hearts}, lives lost ${lives} ${ev0.join(" ")}`);
+  console.log(`${id.padEnd(9)} ${name.padEnd(38)} ${(n / 60).toFixed(0).padStart(4)} s  boss ${boss.padEnd(16)} hits ${hits} (first ${firstHit < 0 ? "-" : (firstHit / 60).toFixed(0) + "s"}), hearts lost ${hearts}, lives lost ${lives}, hints ${hints} (first ${firstHint < 0 ? "-" : (firstHint / 60).toFixed(0) + "s"}) ${ev0.join(" ")}`);
 }
 /** Toward x, hopping over whatever stops him (as a person does): a full jump after a few steps stuck. */
 let stuckFor = 0;
@@ -39,7 +41,7 @@ const toward = (p: any, x: number, extra: any = {}) => {
   return { ...NONE, left: cx(p) > x + 2, right: cx(p) < x - 2, ...extra, jumpHeld: hop || hopping || !!extra.jumpHeld, jumpPressed: hop || !!extra.jumpPressed };
 };
 const faceTo = (p: any, x: number) => ({ ...NONE, left: x < cx(p) && p.body.facing > 0, right: x > cx(p) && p.body.facing < 0 });
-for (const id of ["nordmarka", "nabolaget"]) {
+for (const id of (process.argv[2] ? [process.argv[2]] : ["nordmarka", "nabolaget"])) {
   const arena = id === "nordmarka" ? { in: 199 * 16 + 8, mid: 212 * 16, left: 200 * 16 + 6, right: 225 * 16 - 6 } : { in: 167 * 16, mid: 190 * 16, left: 175 * 16 + 8, right: 222 * 16 };
   const bossX = (p: any) => (p.troll ? p.troll.x : p.boss.state.x);
   run(id, "walk in, then stand still facing it", (p, n, s) => (!s.in && cx(p) < arena.in ? toward(p, arena.in + 4) : ((s.in = true), faceTo(p, bossX(p)))));

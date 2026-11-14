@@ -21,7 +21,8 @@ function round(k: number): Move[] {
   const stand = TROLL_DEF.dawn[k][0] - 8;
   return [
     walk(stand),
-    wait(`the troll comes, round ${k + 1}`, (q) => troll(q).phase === "windup"),
+    // (A round may already be won: looked at in the light before the route got here.)
+    wait(`the troll comes, round ${k + 1}`, (q) => troll(q).phase === "windup" || troll(q).hits > k),
     {
       name: `back from the club, jump the wave, look at it, round ${k + 1}`,
       keys(q, s) {

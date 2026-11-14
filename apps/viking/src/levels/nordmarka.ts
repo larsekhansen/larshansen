@@ -203,8 +203,8 @@ function lights(v: View): Light[] {
   if (t) {
     const d = dawnNow(t);
     if (d) {
-      out.push({ rect: { x: d[0] - 10, y: 0, w: d[1] - d[0] + 20, h: G * TILE + 4 }, dark: 0.5 });
-      out.push({ rect: { x: d[0], y: 0, w: d[1] - d[0], h: G * TILE + 4 }, dark: 0.12 });
+      out.push({ rect: { x: d[0] - 10, y: 0, w: d[1] - d[0] + 20, h: G * TILE + 4 }, dark: 0.4 });
+      out.push({ rect: { x: d[0], y: 0, w: d[1] - d[0], h: G * TILE + 4 }, dark: 0 });
     }
     // The troll's eyes are what you see of it in the dark; once stone, the rune on it shines.
     if (t.phase === "stone") out.push({ x: t.x, y: TROLL_DEF.floor - TROLL.h - 12, rings: [[16, 0.3], [10, 0]] });
@@ -433,22 +433,32 @@ function clearing(v: View) {
   for (const [c, h] of [[197, 150], [207.5, 170], [215.5, 160], [227, 180]] as const) spruce(c * TILE, G * TILE, h, Math.floor(c));
 }
 
-/** The dawn falling through the gap, drawn over the dark: a shaft of warm light added to what is there, brightest on the floor, and its motes. */
+/**
+ * The dawn falling through the gap, drawn over the dark: a shaft of warm light added to what is there,
+ * brightest on the floor where it makes a pool, and its motes. It cannot be missed: it is the way to
+ * beat the troll. While the troll's club is stuck the shaft and its pool pulse (with reduced motion
+ * they burn steadily brighter instead).
+ */
 function dawnShaft(v: View) {
   const t = v.troll;
   const d = t ? dawnNow(t) : null;
-  if (!d) return;
+  if (!d || !t) return;
   const g = ctx();
   g.globalCompositeOperation = "lighter";
   const top = view.camY;
+  const stuck = t.phase === "stuck";
+  const pulse = stuck ? (view.reduced ? 1 : 0.5 + 0.5 * Math.sin(v.t * 0.18)) : 0;
   for (let x = d[0]; x < d[1]; x++) {
     const edge = Math.min(x - d[0], d[1] - 1 - x);
-    const a = edge < 3 ? 0.04 : 0.08;
-    R(x, top, 1, G * TILE - top, `rgba(255, 190, 110, ${a})`);
+    const a = (edge < 3 ? 0.08 : 0.16) + pulse * 0.1;
+    R(x, top, 1, G * TILE - top, `rgba(255, 190, 110, ${a.toFixed(3)})`);
     // A slant of rays across it, as light through branches falls.
-    if ((x + Math.floor(v.t / 30)) % 9 < 2) R(x, top, 1, G * TILE - top, "rgba(255, 210, 150, 0.05)");
+    if ((x + Math.floor(v.t / 30)) % 9 < 2) R(x, top, 1, G * TILE - top, "rgba(255, 210, 150, 0.07)");
   }
-  R(d[0] - 6, G * TILE - 2, d[1] - d[0] + 12, 2, "rgba(255, 200, 120, 0.25)");
+  // The pool of light on the floor, and its edges, where it has to stand.
+  R(d[0] - 6, G * TILE - 3, d[1] - d[0] + 12, 3, `rgba(255, 200, 120, ${(0.35 + pulse * 0.35).toFixed(3)})`);
+  R(d[0], G * TILE - 1, d[1] - d[0], 3, `rgba(255, 225, 160, ${(0.45 + pulse * 0.4).toFixed(3)})`);
+  for (const ex of [d[0], d[1] - 1]) R(ex, G * TILE - 10, 1, 10, `rgba(255, 220, 150, ${(0.2 + pulse * 0.3).toFixed(3)})`);
   g.globalCompositeOperation = "source-over";
   if (!view.reduced)
     for (let i = 0; i < 12; i++) {

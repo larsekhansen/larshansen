@@ -114,7 +114,8 @@ export const NABOLAGET_ROUTE: Move[] = [
   jump(1, { release: 10 }),
   walk(TERRACE.right - 6),
   // Round one: it sticks in the bank by the washing line. Onto the line, and off it onto the cab.
-  wait("the plough stuck by the washing line", (q) => plough(q).phase === "stuck"),
+  // (Each round's wait lets a round already won go by, so the route can be picked up anywhere.)
+  wait("the plough stuck by the washing line", (q) => plough(q).phase === "stuck" || plough(q).hits >= 1),
   {
     name: "the bounce: off the terrace, onto the line, onto the cab",
     keys(q, s) {
@@ -128,7 +129,7 @@ export const NABOLAGET_ROUTE: Move[] = [
   },
   ...backUp(1),
   // Round two: the line is down; it sticks further along. A jump and the dash from the terrace.
-  wait("the plough stuck, nearer", (q) => plough(q).phase === "stuck" && plough(q).hits === 1),
+  wait("the plough stuck, nearer", (q) => (plough(q).phase === "stuck" && plough(q).hits === 1) || plough(q).hits >= 2),
   {
     name: "the dash: off the terrace's edge, the dash, onto the cab",
     keys(q, s) {

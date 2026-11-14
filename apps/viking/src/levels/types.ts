@@ -166,6 +166,8 @@ export interface Boss<S = unknown> {
   reset(s: S, t: number): void;
   /** In its fight: woken, and not back asleep or parked. */
   awake(s: S): boolean;
+  /** The top of it, in the middle (world x, y): where its words are shown. */
+  top(s: S): { x: number; y: number };
   /** Beaten for good: the rune shows. */
   beaten(s: S): boolean;
 }
