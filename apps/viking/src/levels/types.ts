@@ -11,6 +11,7 @@ import type { TimedLedge } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
+import type { Board } from "@larshansen/pixelkit/text";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Troll, TrollDef, TrollEvent } from "../game/troll";
 import type { Play, PlayIntent } from "../game/play";
@@ -147,6 +148,8 @@ export interface Art {
   lights?(v: View): Light[];
   /** In a dark level: what is drawn over the dark, so it shines (eyes, a lamp's own flame). */
   overDark?(v: View): void;
+  /** In a dark level: the dark itself, with his headlamp (`render/night.ts`, which comes with the level). */
+  night?(v: View, him: Body, boards: readonly Board[], map: TileMap): void;
   /** Draws the troll. */
   troll?(t: Troll, v: View): void;
   /** Draws the last boss, from its state. */

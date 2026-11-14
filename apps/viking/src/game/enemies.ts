@@ -212,11 +212,17 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
         // One that faces one way does not see him right under its perch either.
         const near = Math.abs(hx - e.x) < (e.def.reach ?? 7) * TILE && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? 1.5 * TILE : 0);
         if (untilThrow(e, t) === 0 && near && e.def.straight) {
-          // Straight at his middle, hard, with no lob.
+          // Straight at his middle, hard, with no lob (one that leads aims where he will be when it gets there).
           const x = e.x + e.dir * 3;
           const y = e.y - e.h + 1;
-          const dx = hx - x;
           const dy = him.y + PLAYER.h / 2 - y;
+          let dx = hx - x;
+          if (e.def.lead) {
+            // When it would meet him, going on as he goes: (dx + vx t)² + dy² = (fast t)².
+            const a = SHOT.fast * SHOT.fast - him.vx * him.vx;
+            const b = dx * him.vx;
+            dx += (him.vx * (b + Math.sqrt(b * b + a * (dx * dx + dy * dy)))) / a;
+          }
           const d = Math.hypot(dx, dy) || 1;
           shots.push({ x, y, vx: (SHOT.fast * dx) / d, vy: (SHOT.fast * dy) / d, born: t, by: i, flat: true });
           e.thrownAt = t;

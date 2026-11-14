@@ -10,6 +10,7 @@ import { ICE } from "@larshansen/pixelkit/surface";
 import { carefulStep } from "./careful";
 import { TROLL, TROLL_RULES, TROLL_STEPS, WAVE, trollHurts, type TrollDef } from "./troll";
 import { RULES as STATUE_RULES } from "../levels/vigelandsparken";
+import { RULES as SWAN_RULES, SWAN, telling as swanTelling } from "../levels/ostensjovannet";
 import { everywhere } from "./reach";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
@@ -1104,5 +1105,53 @@ describe("statues (Vigelandsparken): they move only while his back is turned", (
     expect(spans.length).toBe(1);
     expect(spans[0].x).toBeLessThanOrEqual(8 * TILE + 8 - 5);
     expect(spans[0].x + spans[0].w).toBeGreaterThanOrEqual(20 * TILE + 8 + 5);
+  });
+});
+
+describe("swans (Østensjøvannet): they mind their water", () => {
+  // A floor at row 6 at the water's height, a swan at column 15 whose stretch is six tiles either way.
+  const map = [
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "..............................",
+    "##############################",
+    "##############################"
+  ];
+  const def: EnemyDef = { kind: "spiky", look: "swan", c: 15, r: 5, range: 6, w: 16, h: 12 };
+  const LAKE = level(map, { enemies: [def], rules: SWAN_RULES });
+  const at = (x: number) => newPlay(LAKE, { start: { x, bottom: 6 * TILE } });
+
+  test("in its stretch it lets him be for three seconds, tells him for the fourth (neck down, still), and then comes; its touch hurts", () => {
+    const p = at(12 * TILE);
+    const swan = p.enemies[0];
+    let hurtAt = -1;
+    for (let i = 0; i < 600 && hurtAt < 0; i++) {
+      const ev = stepPlay(p, idle);
+      if (i < SWAN.tell - 2) expect(swan.calm && !swanTelling(swan)).toBe(true);
+      if (i >= SWAN.tell && i < SWAN.come - 2) expect(swan.calm && swanTelling(swan)).toBe(true);
+      if (ev.hurt) hurtAt = i;
+    }
+    expect(hurtAt).toBeGreaterThan(SWAN.come - 1);
+    expect(swan.calm).toBe(false);
+  });
+
+  test("leaving its stretch calms it at once, and it forgets how long he lingered", () => {
+    const p = at(12 * TILE);
+    steps(p, SWAN.come + 10);
+    expect(p.enemies[0].calm).toBe(false);
+    p.body.x = 25 * TILE;
+    steps(p, 2);
+    expect(p.enemies[0].calm).toBe(true);
+    expect(p.enemies[0].n).toBe(0);
+  });
+
+  test("calm, it cannot be touched: walking through its water does no harm", () => {
+    const p = at(8 * TILE);
+    const ev = steps(p, 100, right);
+    expect(ev.some((e) => e.hurt)).toBe(false);
+    expect(cx(p)).toBeGreaterThan(14 * TILE);
   });
 });

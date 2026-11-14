@@ -13,9 +13,10 @@ import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE } from "./routes";
 import { BARRIER, GAP, HAZARDS as RUN_HAZARDS, KORKETREKKEREN, RIDE, speedAt, trackY } from "./korketrekkeren";
 import { follow } from "@larshansen/pixelkit/camera";
+import { HERON, OSTENSJOVANNET, PADS as LILY_PADS, SWAN, W as LW, inStretch } from "./ostensjovannet";
 import { BOY, ENEMIES as VIGELAND_ENEMIES, JET_IN, JET_OUT, SLAB, VIGELANDSPARKEN, W as VW } from "./vigelandsparken";
 import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, LOFT, OARS, PADS, RAFT as BALSA, REED, W } from "./bygdoy";
 import { SHIELD_RULES } from "../game/shield";
@@ -61,7 +62,8 @@ const ROUTE: Record<string, Move[]> = {
   nabolaget: NABOLAGET_ROUTE,
   bygdoy: BYGDOY_ROUTE,
   vigelandsparken: VIGELANDSPARKEN_ROUTE,
-  korketrekkeren: KORKETREKKEREN_ROUTE
+  korketrekkeren: KORKETREKKEREN_ROUTE,
+  ostensjovannet: OSTENSJOVANNET_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -107,6 +109,8 @@ const GOLD: Record<string, Move[]> = {
   // On the Monolith's top figure: two jumps up over its tip.
   vigelandsparken: [...VIGELANDSPARKEN_ROUTE.slice(0, VIGELANDSPARKEN_ROUTE.findIndex((m) => m.name === `walk to ${mid(179)}`)), walk(mid(178)), jump(0, { second: 18 })],
   // On the sledge over the gap: the jump at its edge, and the second at the top of it.
+  // On the stone in the middle of the long crossing: two jumps up.
+  ostensjovannet: [...OSTENSJOVANNET_ROUTE.slice(0, OSTENSJOVANNET_ROUTE.findIndex((m) => m.name === "on the stone") + 1), walk(mid(181)), jump(0, { second: 18 })],
   korketrekkeren: [
     ...KORKETREKKEREN_ROUTE.slice(0, KORKETREKKEREN_ROUTE.findIndex((m) => m.name === "jump the gap")),
     {
@@ -124,9 +128,9 @@ const GOLD: Record<string, Move[]> = {
 };
 
 /** Every level is held to the order's measure: at least a minute for the scripted player, and the size of a level. */
-const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren"]);
+const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
-const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren"]);
+const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
 /** How each level is played in the tests: with the pole from level 6 on, and the shield's rules (Bygdøy gives the shield at its prow; in line 1 he does not have it; after Bygdøy it is his). */
 const opts = (def: LevelDef, more: { feather?: boolean } = {}) => ({ pole: POLE.has(def.id), shield: SHIELD_RULES, hasShield: def.rune > 10, ...more });
 /**
@@ -144,8 +148,14 @@ const LONGEST: Record<string, number> = { nabolaget: 80 };
  * - Nabolaget's cat at the foot of the drift, before the tram's first slot: the route stomps it first.
  *   The street there is four tiles; a cat sitting still a tile further back was hit twice as often by
  *   the sloppy player coming down the drift (order 13), so it walks where it did.
+ * - Østensjøvannet's three swans: see below.
  */
-const JUMP_EXCEPTIONS: Record<string, string[]> = { nabolaget: ["thrower:kid@52", "walker:cat@153"] };
+const JUMP_EXCEPTIONS: Record<string, string[]> = {
+  nabolaget: ["thrower:kid@52", "walker:cat@153"],
+  // Østensjøvannet's swans swim the water the pads lie on: that is the level. Each lets him be (it cannot
+  // be touched) until he has been in its stretch four seconds, and the stretches are crossed in three.
+  ostensjovannet: ["spiky:swan@71", "spiky:swan@151", "spiky:swan@169"]
+};
 
 /**
  * The route's jumps (its "jump" and "leap" moves) that go over a pit or water: where he left the ground
@@ -233,7 +243,7 @@ describe("the lines", () => {
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN, KORKETREKKEREN];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN, KORKETREKKEREN, OSTENSJOVANNET];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
@@ -1080,6 +1090,87 @@ describe("Korketrekkeren: a sledge he cannot stop", () => {
     expect(r.done).toBe(true);
     expect(riding / 60).toBeGreaterThan(38);
     expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(1);
+  });
+});
+
+describe("Østensjøvannet: pads that sink, swans that mind their water", () => {
+  const P = (start?: { x: number; bottom: number }) => newPlay(OSTENSJOVANNET, { pole: true, shield: SHIELD_RULES, hasShield: true, start });
+  const FLOOR = LW * TILE;
+
+  test("the first three pads have firm stones between them; every pad is a hop from the next", () => {
+    const map = levelMap(OSTENSJOVANNET);
+    for (const c of [42, 46, 50, 54]) expect(map.isSolid(c, LW)).toBe(true);
+    for (const p of LILY_PADS.slice(0, 3)) {
+      const c = Math.floor(p.x / TILE);
+      expect(map.isSolid(c - 1, LW) || map.isSolid(c - 2, LW)).toBe(true);
+    }
+    for (let i = 3; i < LILY_PADS.length; i++) {
+      const gap = LILY_PADS[i].x - (LILY_PADS[i - 1].x + LILY_PADS[i - 1].w);
+      if (gap < 0 || gap > 4 * TILE) continue;
+      expect(gap).toBeLessThanOrEqual(36);
+    }
+  });
+
+  test("each swan's stretch is crossed in about three seconds at a run, under the four it allows", () => {
+    for (const e of OSTENSJOVANNET.enemies!.filter((d) => d.look === "swan")) {
+      const seconds = (2 * (e.range ?? 0) * TILE) / MOVE.run / 60;
+      expect(seconds).toBeGreaterThan(2.4);
+      expect(seconds).toBeLessThan(SWAN.come / 60);
+    }
+    // And the route crosses them without one coming for him.
+    const p = P();
+    const r = playMoves(p, OSTENSJOVANNET_ROUTE, { max: 60 * 300 });
+    expect(r.done).toBe(true);
+    expect(r.hurt).toEqual([]);
+  });
+
+  test("the heron holds him a second, then flies off and drops him in the water; it is back three seconds later", () => {
+    const p = P({ x: HERON.x + HERON.w / 2, bottom: HERON.y });
+    let on = 0;
+    let splash = -1;
+    for (let i = 0; i < 200 && splash < 0; i++) {
+      if (stepPlay(p, IDLE).splash) splash = i;
+      else if (p.body.onGround) on++;
+    }
+    expect(on).toBeGreaterThanOrEqual(HERON.stay - 2);
+    expect(splash).toBeGreaterThan(HERON.stay);
+    expect(splash).toBeLessThan(HERON.stay + 40);
+    const s = p.grounds!.state as { gone: number | null };
+    expect(s.gone).not.toBeNull();
+    for (let i = 0; i < HERON.away + 2; i++) stepPlay(p, IDLE);
+    expect(s.gone).toBeNull();
+    // From the pad before it the hide's deck is out of a jump's reach; from the heron it is not.
+    const deck = (LW - 4) * TILE;
+    expect(FLOOR - deck).toBeGreaterThan(46);
+    expect(HERON.y - deck).toBeLessThan(46);
+  });
+
+  test("the gulls dive at him straight from their nests: a man who walks on along the shore is hit at most of the moments he could come", () => {
+    let hit = 0;
+    let tries = 0;
+    for (let t0 = 0; t0 < 130; t0 += 2) {
+      const p = P({ x: tile(112), bottom: FLOOR });
+      p.enemies[3].alive = false;
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 400 && p.body.x < tile(134); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      tries++;
+      if (hurt) hit++;
+    }
+    expect(hit / tries).toBeGreaterThanOrEqual(0.75);
+    const p = P();
+    const r = playMoves(p, OSTENSJOVANNET_ROUTE, { max: 60 * 300 });
+    expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("a careless man who waits on the stone at the swans' meeting is left alone; one who waits on a pad in a stretch is not", () => {
+    // On the island's edge, out of every stretch, for ten seconds: nothing comes.
+    const p = P({ x: tile(139), bottom: FLOOR });
+    let hurt = false;
+    for (let i = 0; i < 600; i++) hurt = stepPlay(p, IDLE).hurt || hurt;
+    expect(hurt).toBe(false);
+    const swan = p.enemies.find((e) => e.def.look === "swan" && e.def.c === 151)!;
+    expect(inStretch(swan, p.body)).toBe(false);
   });
 });
 
