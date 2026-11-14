@@ -1,0 +1,36 @@
+// Nordmarka at night: spruce in the dark, moss and lichen, the blue trail paint, the troll, the dawn. Part of the palette: import it from there, as FOREST.
+
+export const trunk = "#4a3a2c";
+export const trunkDark = "#33281f";
+export const needles = "#1f4a35";
+export const needlesDark = "#17382a";
+export const needlesLight = "#2c5e43";
+export const moss = "#4d7a3a";
+export const mossLight = "#6a9a4a";
+export const lichen = "#9fae8a";
+export const path = "#7a6a52"; // the trodden forest path
+export const pathDark = "#5e5040";
+export const bog = "#3f5a3a"; // the marsh: dark water under sedge
+export const bogWater = "#2f4a52";
+export const sedge = "#a0a058";
+export const cotton = "#f1efe6"; // bog cotton
+export const blaze = "#2f6fd6"; // the blue paint on the trunks that marks the trail
+export const blazeLight = "#7fb0ff";
+export const troll = "#5f7040"; // the troll's hide, mossy green-brown
+export const trollDark = "#45532e";
+export const trollLight = "#7f8f58";
+export const trollNose = "#8a6a4a";
+export const trollHair = "#3a4426";
+export const trollEye = "#ffd36b";
+export const club = "#5a4632";
+export const stone = "#9a958c"; // the troll turned to stone
+export const stoneLight = "#b3ada2";
+export const stoneDark = "#77726a";
+export const dawn = "#ffd9a0"; // the first light through the trees
+export const dawnPale = "#fff0d0";
+export const moose = "#4a3626";
+export const mooseDark = "#2f2219";
+export const mooseLight = "#6a5038";
+export const antler = "#c9b48a";
+export const hut = "#8a3a2a"; // Ullevålseter's red-brown timber
+export const hutLine = "#6e2e22";

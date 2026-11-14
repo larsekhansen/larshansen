@@ -58,7 +58,22 @@ export interface Path extends Common {
   wait: number;
 }
 
-export type CarrierDef = Bob | Travel | Lift | Path;
+/**
+ * Goes round a circle at an even speed, staying level as it goes, like a bucket on a water wheel or
+ * a seat on a big wheel: its top middle is on the circle round (cx, cy). `turn` is where on the
+ * circle it is at step 0, as a share of a turn from the top, and a positive period turns it
+ * clockwise on the screen (over the top to the right, under the bottom to the left).
+ */
+export interface Orbit extends Common {
+  kind: "orbit";
+  cx: number;
+  cy: number;
+  r: number;
+  period: number;
+  turn?: number;
+}
+
+export type CarrierDef = Bob | Travel | Lift | Path | Orbit;
 
 /** Steps in one round of a lift: up, wait, down, wait. */
 export function liftPeriod(d: Lift) {
@@ -73,7 +88,13 @@ export const pathPeriod = (d: Path) => pathSteps(d) + d.wait;
 
 /** Steps in one round of any carrier, so a search can visit every place it goes. */
 export function carrierPeriod(d: CarrierDef): number {
-  return d.kind === "lift" ? liftPeriod(d) : d.kind === "path" ? pathPeriod(d) : d.period;
+  return d.kind === "lift" ? liftPeriod(d) : d.kind === "path" ? pathPeriod(d) : Math.abs(d.period);
+}
+
+/** The angle of an orbiting carrier at a step, from the circle's right, clockwise on the screen (y down). */
+export function orbitAngle(d: Orbit, step: number): number {
+  const t = step + (d.offset ?? 0);
+  return 2 * Math.PI * ((d.turn ?? 0) + t / d.period) - Math.PI / 2;
 }
 
 /** False while a path carrier is away between rounds; every other carrier is always there. */
@@ -110,6 +131,10 @@ function pathAt(d: CarrierDef, step: number): { x: number; y: number } {
     return { ...d.points[0] };
   }
   if (d.kind === "bob") return { x: d.x, y: d.y + Math.round(d.rise * Math.sin((2 * Math.PI * t) / d.period)) };
+  if (d.kind === "orbit") {
+    const a = orbitAngle(d, step);
+    return { x: Math.round(d.cx + d.r * Math.cos(a) - d.w / 2), y: Math.round(d.cy + d.r * Math.sin(a)) };
+  }
   if (d.kind === "travel") {
     const k = (1 - Math.cos((2 * Math.PI * t) / d.period)) / 2;
     return { x: Math.round(d.from.x + (d.to.x - d.from.x) * k), y: Math.round(d.from.y + (d.to.y - d.from.y) * k) };

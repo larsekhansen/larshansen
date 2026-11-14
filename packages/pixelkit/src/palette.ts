@@ -123,3 +123,5 @@ export * as COIN from "./swatches/coin";
 export * as CREATURE from "./swatches/creature";
 export * as PARADE from "./swatches/parade";
 export * as ICY from "./swatches/ice";
+export * as RIVER from "./swatches/river";
+export * as FOREST from "./swatches/forest";

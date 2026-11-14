@@ -2,7 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { DASH, PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { LevelDef } from "../levels/types";
 import { WINDUP, leap, untilThrow, windingUp, type EnemyDef } from "./enemies";
-import { HEARTS, PURSE_LIFE, SAFE_STEPS, STOMP, newPlay, stepPlay, type Play, type PlayIntent } from "./play";
+import { HEARTS, PURSE_LIFE, SAFE_STEPS, STOMP, extraGround, newPlay, stepPlay, type Play, type PlayIntent } from "./play";
+import { TROLL, TROLL_STEPS, WAVE, type TrollDef } from "./troll";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
 // cheese, the five kinds of enemy, the bass drum and the ski pole's dash. Each on a small made-up
@@ -314,5 +315,146 @@ describe("the ski pole", () => {
     steps(p, 80);
     expect(p.body.onGround).toBe(true);
     expect(stepPlay(p, { ...idle, dash: true }).dash).toBe(true);
+  });
+});
+
+describe("zones", () => {
+  // A waterfall over the floor at columns 10 and 11, and a current along columns 20 to 27.
+  const FALLS = level(["..............................", "..............................", "..............................", "..............................", "S.............................", "##############################"], {
+    zones: [
+      { x: 10 * TILE, y: 0, w: 2 * TILE, h: 5 * TILE, push: { x: 0, y: 0.6 } },
+      { x: 20 * TILE, y: 3 * TILE, w: 8 * TILE, h: 2 * TILE, push: { x: 0.5, y: 0 } }
+    ]
+  });
+
+  test("under a waterfall his jump is pressed down; the dash goes straight through it", () => {
+    const p = newPlay(FALLS, { start: { x: 11 * TILE, bottom: 5 * TILE }, pole: true });
+    let top = Infinity;
+    for (let i = 0; i < 60; i++) {
+      stepPlay(p, { ...idle, jumpHeld: i < 40, jumpPressed: i === 0 });
+      top = Math.min(top, feet(p));
+    }
+    expect(5 * TILE - top).toBeLessThan(20);
+    // From beside it, a jump and a dash at its top cross it level.
+    const q = newPlay(FALLS, { start: { x: 8 * TILE + 8, bottom: 5 * TILE }, pole: true });
+    for (let i = 0; i < 14; i++) stepPlay(q, { ...right, jumpHeld: true, jumpPressed: i === 0 });
+    const y = q.body.y;
+    stepPlay(q, { ...right, dash: true });
+    for (let i = 0; i < 9; i++) {
+      stepPlay(q, right);
+      expect(q.body.y).toBeCloseTo(y, 5);
+    }
+    expect(q.body.x).toBeGreaterThan(12 * TILE);
+  });
+
+  test("a current carries him along while he stands in it", () => {
+    const p = newPlay(FALLS, { start: { x: 21 * TILE, bottom: 5 * TILE } });
+    steps(p, 40);
+    expect(cx(p) - 21 * TILE).toBeCloseTo(20, 0);
+  });
+});
+
+describe("the troll", () => {
+  // A clearing on a floor at row 8, from column 10 to 34; the troll sleeps at 30; the dawn falls on 18 to 22, then 22 to 26, then 26 to 30.
+  const ARENA: TrollDef = { floor: 8 * TILE, x0: 10 * TILE, x1: 34 * TILE, x: 30 * TILE, wakeAt: 14 * TILE, dawn: [[18 * TILE, 22 * TILE], [22 * TILE, 26 * TILE], [26 * TILE, 30 * TILE]] };
+  const CLEARING = level(
+    ["....................................", "....................................", "....................................", "....................................", "....................................", "....................................", "....................................", "S............................r......", "####################################"],
+    { troll: ARENA }
+  );
+  const at = (x: number) => newPlay(CLEARING, { start: { x, bottom: 8 * TILE } });
+
+  test("it sleeps until he comes into the clearing, then takes a long, loud while to wake", () => {
+    const p = at(12 * TILE);
+    expect(steps(p, 100).some((e) => e.troll)).toBe(false);
+    const q = at(15 * TILE);
+    const ev = steps(q, TROLL_STEPS.waking);
+    expect(ev.findIndex((e) => e.troll === "wake")).toBe(0);
+    expect(q.troll!.x).toBe(ARENA.x);
+    steps(q, 2);
+    expect(q.troll!.phase).toBe("walk");
+    expect(q.troll!.x).toBeLessThan(ARENA.x);
+  });
+
+  test("it raises its club for a full second before every slam", () => {
+    const p = at(16 * TILE);
+    const ev = steps(p, 1500);
+    const ups = ev.flatMap((e, i) => (e.troll === "windup" ? [i] : []));
+    const slams = ev.flatMap((e, i) => (e.troll === "slam" ? [i] : []));
+    expect(slams.length).toBeGreaterThan(0);
+    for (const s of slams) expect(s - Math.max(...ups.filter((u) => u < s))).toBeGreaterThanOrEqual(60);
+  });
+
+  test("its slam sends a wave along the ground that hurts unless he is in the air", () => {
+    const p = at(16 * TILE);
+    const ev = steps(p, 1500, () => (p.troll!.phase === "windup" ? left : idle));
+    expect(ev.some((e) => e.hurt)).toBe(true);
+    // The same, jumping as the club comes down: the wave goes under him.
+    const q = at(16 * TILE);
+    let hurt = false;
+    for (let i = 0; i < 400 && !hurt; i++) {
+      const t = q.troll!;
+      const slamming = t.phase === "windup" && q.t - t.since >= TROLL_STEPS.windup - 4;
+      hurt = stepPlay(q, t.phase === "windup" && !slamming ? left : { ...idle, jumpHeld: slamming || !q.body.onGround, jumpPressed: slamming }).hurt;
+      if (t.phase === "stuck" && q.t - t.since > WAVE.steps) break;
+    }
+    expect(hurt).toBe(false);
+  });
+
+  test("stuck in the dawn with his headlamp on it, a third of it turns to stone; looking away, or out of the dawn, nothing", () => {
+    // He stands just left of the dawn and looks right, at it: it stops in the light to slam.
+    const look = (face: PlayIntent, x: number) => {
+      const p = at(x);
+      steps(p, 1200, () => {
+        const t = p.troll!;
+        if (t.phase === "windup" && p.t - t.since < 8) return left;
+        if (t.phase === "stuck" && p.t - t.since > 2 && p.t - t.since < 6) return face;
+        return idle;
+      });
+      return p;
+    };
+    // The jumps are left out here: the wave is allowed to hurt, the hits are what is counted.
+    expect(look(right, 17 * TILE).troll!.hits).toBeGreaterThan(0);
+    expect(look(left, 17 * TILE).troll!.hits).toBe(0);
+    expect(look(right, 15 * TILE).troll!.hits).toBe(0);
+  });
+
+  test("three hits and it is stone for good: it hurts nobody, holds him up, and the rune shows on it", () => {
+    const p = at(16 * TILE);
+    const t = p.troll!;
+    t.phase = "stuck";
+    for (const x of [20, 24, 28]) {
+      t.x = x * TILE;
+      t.phase = "stuck";
+      t.since = p.t;
+      p.body.x = (x - 3) * TILE;
+      p.body.facing = 1;
+      p.safeUntil = p.t + 1000;
+      steps(p, TROLL_STEPS.hit + 2);
+    }
+    expect(t.hits).toBe(3);
+    expect(t.phase as string).toBe("stone");
+    expect(p.rune!.x + p.rune!.w / 2).toBeCloseTo(t.x, 0);
+    expect(p.rune!.y + p.rune!.h).toBeLessThanOrEqual(ARENA.floor - TROLL.h);
+    expect(extraGround(p).some((c) => c.y === ARENA.floor - TROLL.h && c.x < t.x && c.x + c.w > t.x)).toBe(true);
+  });
+
+  test("the rune cannot be taken while the troll is awake", () => {
+    const p = at(29 * TILE);
+    p.troll!.phase = "walk";
+    p.troll!.x = 20 * TILE;
+    steps(p, 30, (i) => (i < 20 ? right : idle));
+    expect(p.runeAt).toBeNull();
+  });
+
+  test("a life lost sends it back to sleep where it started, and the stone it has turned to stays", () => {
+    const p = newPlay(CLEARING, { start: { x: 16 * TILE, bottom: 8 * TILE }, lives: 2 });
+    p.troll!.hits = 1;
+    p.hearts = 1;
+    let lost = false;
+    for (let i = 0; i < 1500 && !lost; i++) lost = stepPlay(p, p.troll!.phase === "walk" ? right : idle).lifeLost;
+    expect(lost).toBe(true);
+    expect(p.troll!.phase).toBe("asleep");
+    expect(p.troll!.x).toBe(ARENA.x);
+    expect(p.troll!.hits).toBe(1);
   });
 });

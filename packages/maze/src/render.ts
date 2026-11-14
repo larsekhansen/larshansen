@@ -1,5 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, S, ctx, light, mix, stoneColumn, target, view, wdisc } from "@larshansen/pixelkit/paint";
+import { TORCH, drawDark as drawNight, type Light } from "@larshansen/pixelkit/dark";
+import { R, ctx, light, mix, stoneColumn, target, view, wdisc } from "@larshansen/pixelkit/paint";
 import { LAMP, PALETTE, STONE } from "@larshansen/pixelkit/palette";
 import { playerPixels, TOP_SIZE } from "@larshansen/pixelkit/person";
 import { snap, sx, sy, unit, textCtx } from "@larshansen/pixelkit/text";
@@ -765,44 +766,20 @@ function drawChamber(f: Frame) {
 
 /**
  * The dark levels: everything farther than 46 art pixels from him is near-black, stepping to full
- * sight through two rings (46 to 40 is 60% dark, 40 to 34 is 30% dark). Lit standing stones and the
- * finish doorway each keep a clear circle of radius 20. Rectangles per row, so it stays pixel art.
+ * sight through two rings (46 to 40 is 60% dark, 40 to 34 is 30% dark): the kit's torch. Lit
+ * standing stones and the finish doorway each keep a clear circle of radius 20. The kit draws it in
+ * rectangles per row, so it stays pixel art.
  */
-const DARK_RINGS: [number, number][] = [[46, 0.6], [40, 0.3], [34, 0]];
 const DARK_CLEAR = 20;
 export function drawDark(f: Frame) {
   const def = levelDef(f.level);
   if (!def.dark) return;
   const fin = finishOf(def.map);
   // Light sources in screen pixels: his rings, then clear circles.
-  const lights: { x: number; y: number; rings: [number, number][] }[] = [{ x: f.x - view.camX, y: f.y - view.camY, rings: DARK_RINGS }];
+  const lights: Light[] = [{ x: f.x - view.camX, y: f.y - view.camY, rings: TORCH }];
   for (const s of f.stones) if (s.lit) lights.push({ x: s.c * TILE + TILE / 2 - view.camX, y: s.r * TILE + TILE / 2 - view.camY, rings: [[DARK_CLEAR, 0]] });
   lights.push({ x: (fin.c + 1) * TILE - view.camX, y: (fin.r + 1) * TILE - view.camY, rings: [[DARK_CLEAR, 0]] });
-  const NIGHT = "5, 5, 12";
-  const level = (x: number, y: number) => {
-    let dark = 1;
-    for (const l of lights) for (const [r, d] of l.rings) if (Math.hypot(x - l.x, y - l.y) <= r) dark = Math.min(dark, d);
-    return dark;
-  };
-  for (let row = 0; row < view.h; row++) {
-    const cuts = new Set<number>([0, view.w]);
-    for (const l of lights) {
-      const dy = row + 0.5 - l.y;
-      for (const [r] of l.rings) {
-        if (Math.abs(dy) > r) continue;
-        const half = Math.sqrt(r * r - dy * dy);
-        cuts.add(Math.max(0, Math.min(view.w, Math.round(l.x - half))));
-        cuts.add(Math.max(0, Math.min(view.w, Math.round(l.x + half))));
-      }
-    }
-    const xs = [...cuts].sort((p, q) => p - q);
-    for (let i = 0; i + 1 < xs.length; i++) {
-      const w = xs[i + 1] - xs[i];
-      if (w <= 0) continue;
-      const dark = level((xs[i] + xs[i + 1]) / 2, row + 0.5);
-      if (dark > 0) S(xs[i], row, w, 1, dark >= 1 ? `rgb(${NIGHT})` : `rgba(${NIGHT}, ${dark})`);
-    }
-  }
+  drawNight(lights);
 }
 
 const STILL_BODY: Parameters<typeof playerPixels>[0] = { x: 0, y: 0, vx: 0, vy: 0, onGround: true, facing: 1, coyote: 0, buffer: 0, cutReady: false, airJumps: 0 };

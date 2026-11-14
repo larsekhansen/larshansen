@@ -6,18 +6,19 @@ A side-view game built the way the front page is built. The reasons (one cloth f
 
 | Where | What |
 |---|---|
-| `src/levels/types.ts` | What a level is, as data: id, rune, name, landmark, pinned sky, the text map and its legend, ramps, carriers, ledges on a beat, cannons, signs, doors, and its art. |
-| `src/levels/langkaia.ts`, `akershus.ts`, `radhuset.ts`, `slottet.ts`, `holmenkollen.ts` | The five built levels. Levels 4 and 5 build their maps with `build.ts` (strokes, not typed-out rows). |
+| `src/levels/types.ts` | What a level is, as data: id, rune, name, landmark, pinned sky, the text map and its legend, ramps, carriers, ledges on a beat, cannons, zones, the dark, the troll, signs, doors, and its art. |
+| `src/levels/langkaia.ts`, `akershus.ts`, `radhuset.ts`, `slottet.ts`, `holmenkollen.ts`, `akerselva.ts`, `nordmarka.ts` | The seven built levels. Levels 4 to 7 build their maps with `build.ts` (strokes, not typed-out rows). |
 | `src/levels/index.ts` | The ten in order (name, rune, place, built), and one loader per level: every level after Langkaia is fetched when first needed. |
-| `src/levels/routes/` | The scripted routes through levels 4 and 5, for the tests and for `?debug&auto`. |
+| `src/levels/routes/` | The scripted routes through levels 4 to 7, for the tests and for `?debug&auto`. |
 | `src/levels/kart.ts` | The line map, built as a level from the visitor's progress. |
 | `src/game/play.ts` | The rules of a level, pure: a step function over the body, the clock, flags, cannons, drums, sheep, hearts and lives, pits, benches, skilling and the brown cheese, the dash, enemies, the bracteate and the rune. The page and the tests run the same code. |
 | `src/game/enemies.ts` | The five kinds of enemy as small pure rules: walker, spiky, flyer, thrower, jumper. |
+| `src/game/troll.ts` | The troll of Nordmarka, the first boss, as a small pure rule: asleep, waking, walking, the club raised for a second before every slam, the wave, the dawn and the headlamp, three hits to stone. |
 | `src/game/progress.ts` | `localStorage["viking.progress"]`: levels cleared, best time per level, bracteates found, most skilling per level, levels cleared without losing a heart. Forgiving of missing, old or broken data. |
 | `src/main.ts` | The page: which scene the address shows, the header, the card, sounds and sparks, the camera, drawing, the maze. |
 | `src/render/` | Tiles and water for any level, the far layers, the longship, sheep, runes, bracteates, the T-bane entrance. |
 
-The kit (`packages/pixelkit`) holds the map reader, the physics with moving ground and surfaces (ice, an inrun), the dash, flags, cannons and drums, ledges on a beat, the camera, doors, props and the scene helpers.
+The kit (`packages/pixelkit`) holds the map reader, the physics with moving ground, surfaces (ice, an inrun) and zones that push (`zone.ts`), the dash, carriers on a path or an orbit, flags, cannons and drums, ledges on a beat, the dark with lights through it (`dark.ts`, which the maze's dark level uses too), the camera, doors, props and the scene helpers.
 
 ## The rules
 
@@ -27,14 +28,17 @@ The kit (`packages/pixelkit`) holds the map reader, the physics with moving grou
 - **Benches**: up at a bench to sit; the hearts fill and the bench is where falls bring him back.
 - **Enemies** (from Slottet on): walkers and flyers are beaten by landing on them (higher with the jump held); spiky things hurt from above too; throwers lob on a beat after a one-second wind-up; jumpers leap out of water after a ripple. A beaten enemy puffs into squares and gives a skilling.
 - **Surfaces**: ice has little grip, and the red rails stop a slide; an inrun has none at all, draws him on and lets his speed climb past a run; leaving the ground faster than a run keeps the speed in the air.
-- **The ski pole** (from clearing Holmenkollen): a dash of three tiles in ten steps, level, once each time in the air.
+- **The ski pole** (from clearing Holmenkollen): a dash of three tiles in ten steps, level, once each time in the air. From Akerselva on he always has it, and some gaps need it.
+- **Zones** (Akerselva's falls): a rectangle that pushes him while he is in it. A waterfall pushes down: under it a jump barely leaves the ground, and walking off an edge into one drops him in its pool. Jump over a fall's top, or dash through it: the dash ignores the push.
+- **The dark** (Nordmarka): under the spruces only his headlamp's circle shows, a little round him and more the way he faces; lit windows, the blue trail marks, the sign boards, the bogs' water and the dawn show through, and eyes shine in it. The marsh and the clearings are lighter.
+- **The troll** (Nordmarka's end, with a flag and a bench right before): asleep it is a boulder; it wakes when he comes in, walks at him, raises its club for a full second, slams it (a wave runs along the ground: jump it), and the club sticks. Stuck where the dawn comes through the trees with his headlamp on it, a third of it turns to stone and it backs off; three times, and it is a boulder with rune N on it. A lost life sends it back to sleep, its stone kept.
 - **Flags** (checkpoints): touched once, the front page's flag goes up the pole, and falls bring him back there. Forwards only.
-- **Moving ground** (carriers): rafts that bob, a ferry that crosses, lifts. He is carried with them, and drawn on the same whole pixels as they are.
+- **Moving ground** (carriers): rafts that bob, a ferry that crosses, lifts, banners on a path, logs that drift and come round again, buckets on a water wheel (an orbit), a moose's back. He is carried with them, and drawn on the same whole pixels as they are.
 - **Cannons**: walk in, a third of a second in the barrel (the arc is shown, dotted), then the shot. In the air the keys only lean on the flight.
 - **Ledges on a beat** (the bells): two seconds there, one second of the maze's warning shimmer, two gone. Neighbours are a step apart.
 - **The gold bracteate**: one per level, only reachable with the feather. Kept once found, counted in the header.
-- **Doors**: T-banen at each level's start goes back to the map; Hjem goes to the front page's Opera; Runesmia (`/qr/`) and Verkstedet (GitHub) are sheds on Langkaia's quay. On the map, a station opens when the level before it is cleared.
+- **Doors**: T-banen at each level's start goes back to the map; Hjem goes to the front page's Opera; Runesmia (`/qr/`) and Verkstedet (GitHub) are sheds on Langkaia's quay, and Runesmia is also the smithy by the wheel at Hjula; Jernhaugen's mound in Nordmarka leads into the maze and back out to Nordmarka. On the map, a station opens when the level before it is cleared.
 
 ## Checking
 
-`bun test` plays each level with a scripted player (`src/game/bot.ts`) using the real rules: each must be cleared with the single jump, raising every flag (levels 4 and 5: without losing a heart, and taking at least a minute); with the feather each bracteate is reached. A search with the real `stepBody` (`src/game/reach.ts`), over a world where every moving thing is everywhere at once, every ledge on a beat is always there and every enemy and sheep is a trampoline all along its patrol, with the ski pole's dash, proves each bracteate cannot be reached without the feather; the five searches run side by side in workers. `rules.test.ts` tests hearts, lives, pits, benches, skilling, the enemies, the drum and the dash on small made-up levels. Screenshots come from the harness (`?debug&steps=N&keys=...`, `?debug&auto`, `tools/shots.ts`).
+`bun test` plays each level with a scripted player (`src/game/bot.ts`) using the real rules: each must be cleared with the single jump, raising every flag (levels 4 to 7: without losing a heart, and taking at least a minute; 6 and 7 with the ski pole); with the feather each bracteate is reached. A search with the real `stepBody` (`src/game/reach.ts`), over a world where every moving thing is everywhere at once, every ledge on a beat is always there and every enemy and sheep is a trampoline all along its patrol, with the ski pole's dash, proves each bracteate cannot be reached without the feather; zones push as they do in the level; the seven searches run side by side in workers. `rules.test.ts` tests hearts, lives, pits, benches, skilling, the enemies, the drum, the dash, zones and the troll on small made-up levels. Screenshots come from the harness (`?debug&steps=N&keys=...`, `?debug&auto`, `tools/shots.ts`).

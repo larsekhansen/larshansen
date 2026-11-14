@@ -22,13 +22,14 @@ import type { LevelDef, View } from "./types";
 //   L  the line, on a viaduct   #  the floor of the dip   F  the fence   h Hjem   j Jernhaugen
 //   1 to 9, 0  the stations
 
-/** Where the stations stand along the line, and the hoarding after the last built one. */
-const STATIONS = [6, 20, 24, 29, 34, 41, 44, 47, 50, 53];
-const k = mapBuilder(57, 16);
-k.fill(38, 38, 0, 10, "F");
+/** Where the stations stand along the line, and the hoarding halfway to the first one not built. */
+const STATIONS = [6, 20, 24, 29, 34, 39, 44, 49, 52, 55];
+const BUILT_N = LINE.filter((l) => l.built).length;
+const k = mapBuilder(59, 16);
+if (BUILT_N < STATIONS.length) k.fill(Math.floor((STATIONS[BUILT_N - 1] + STATIONS[BUILT_N]) / 2), Math.floor((STATIONS[BUILT_N - 1] + STATIONS[BUILT_N]) / 2), 0, 10, "F");
 k.put(2, 10, "h").put(4, 10, "S").put(13, 13, "j");
 STATIONS.forEach((c, i) => k.put(c, 10, "1234567890"[i]));
-k.run(0, 56, 11, "L").run(9, 17, 11, ".");
+k.run(0, 58, 11, "L").run(9, 17, 11, ".");
 k.fill(9, 17, 14, 15, "#");
 export const KART_MAP = k.rows_();
 
@@ -145,8 +146,9 @@ function stationMark(i: number, open: boolean) {
   R(x - 4, LINE_Y, 8, 6, open ? WHITE : mix(WHITE, STONE.base, 0.6));
 }
 
-/** The construction fence across the line after the third station: boards, braces, a warning stripe. */
+/** The construction fence across the line after the last built station: boards, braces, a warning stripe. Gone when all ten are built. */
 function fence() {
+  if (FENCE_COL < 0) return;
   const x = FENCE_X;
   R(x - 2, 0, TILE + 4, LINE_Y, PAINT.hoarding);
   for (let y = 0; y < LINE_Y; y += 8) R(x - 2, y, TILE + 4, 1, PAINT.hoardingLine);

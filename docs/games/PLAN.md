@@ -30,7 +30,7 @@ request at the end. Nothing deploys until that is merged.
 | 7. The level kit: moving ground, flags, launchers, timed ledges | `orders/07-level-kit.md` | done: 100 kit tests, front page screenshots identical (28 of 28) |
 | 8. The line map and the first three levels: Langkaia, Akershus, Rådhuset | `orders/08-three-levels.md` | done: 32 tests, each level cleared by a scripted player with the single jump; not yet played by a person |
 | 9. Jernhaugen as the bonus stop: ghosts, marks, teleport stones, the feather | `orders/09-maze-bonus.md` | done: 211 tests, no audio files; not yet played by a person |
-| 10. Levels 4 to 10 | `orders/10-levels-4-to-10.md` | batch A built (Slottet, Holmenkollen, surfaces, hearts and lives, enemies, levels on demand); awaiting review |
+| 10. Levels 4 to 10 | `orders/10-levels-4-to-10.md` | batch A built (Slottet, Holmenkollen, surfaces, hearts and lives, enemies, levels on demand) and merged; batch B built (Akerselva, Nordmarka and its troll, zones, orbits, the dark); awaiting review |
 
 ## 1. Where things stand
 
