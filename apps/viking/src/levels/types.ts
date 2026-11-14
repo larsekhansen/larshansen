@@ -154,8 +154,12 @@ export interface Boss<S = unknown> {
   create(): S;
   /** One step of it; `him` is where he is. What it did, in its own words ("wake", "windup"...), or null. */
   step(s: S, t: number, him: Body): string | null;
-  /** He came down on it from above this step: where its top is, and whether that was a hit (or only a bounce off it). Null when he did not. */
-  stomped(s: S, t: number, him: Body, prevBottom: number): { top: number; hit: boolean } | null;
+  /**
+   * He came down on it (or on something of its own, a clothesline) from above this step: where its top
+   * is, whether that was a hit or only a bounce off it, how hard it throws him up if not as a stomp
+   * does, and what to call it. Null when he did not.
+   */
+  stomped(s: S, t: number, him: Body, prevBottom: number): { top: number; hit: boolean; speed?: number; event?: string } | null;
   /** What hurts him this step, and from where; null when nothing does. */
   hurts(s: S, t: number, him: Body): { fromX: number } | null;
   /** He lost a life: back to where it waits, keeping the hits it has taken. */

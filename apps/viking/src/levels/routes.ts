@@ -9,3 +9,4 @@ export { AKERSELVA_ROUTE } from "./routes/akerselva";
 export { NORDMARKA_ROUTE } from "./routes/nordmarka";
 export { STORTINGET_ROUTE } from "./routes/stortinget";
 export { EKEBERG_ROUTE } from "./routes/ekeberg";
+export { NABOLAGET_ROUTE } from "./routes/nabolaget";

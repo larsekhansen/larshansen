@@ -814,9 +814,9 @@ function react(ev: Events) {
     say(t.trollStone);
   }
   if (ev.boss) {
-    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", charge: "cannon", hit: "stone", flee: "gate", beaten: "fanfare" };
+    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", slam: "cannon", hit: "stone", line: "stomp", beaten: "fanfare" };
     if (sound[ev.boss]) sfx.play(sound[ev.boss]);
-    if (ev.boss === "hit" || ev.boss === "beaten") jolt(0, 3);
+    if (ev.boss === "hit" || ev.boss === "slam") jolt(0, 3);
     const words = p.def.bossWords?.[ev.boss];
     if (words) say(words[lang]);
   }
@@ -1230,7 +1230,8 @@ const AUTO: Record<string, () => Promise<Move[]>> = {
   akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE),
   nordmarka: () => import("./levels/routes/nordmarka").then((m) => m.NORDMARKA_ROUTE),
   stortinget: () => import("./levels/routes/stortinget").then((m) => m.STORTINGET_ROUTE),
-  ekeberg: () => import("./levels/routes/ekeberg").then((m) => m.EKEBERG_ROUTE)
+  ekeberg: () => import("./levels/routes/ekeberg").then((m) => m.EKEBERG_ROUTE),
+  nabolaget: () => import("./levels/routes/nabolaget").then((m) => m.NABOLAGET_ROUTE)
 };
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */

@@ -396,10 +396,11 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
   const landed = bs.rules.stomped(bs.state, p.t, b, prevBottom);
   if (landed) {
     b.y = landed.top - PLAYER.h;
-    bounce(b, intent.jumpHeld ? STOMP.held : STOMP.plain);
+    bounce(b, landed.speed ?? (intent.jumpHeld ? STOMP.held : STOMP.plain));
     p.dash = null;
     p.dashSpent = false;
-    if (landed.hit) ev.boss = bs.rules.beaten(bs.state) ? "beaten" : "hit";
+    if (landed.hit) ev.boss = "hit";
+    else if (landed.event) ev.boss = landed.event;
     return;
   }
   const hurt = bs.rules.hurts(bs.state, p.t, b);

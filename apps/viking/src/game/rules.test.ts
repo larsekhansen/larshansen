@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { DASH, PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { LevelDef } from "../levels/types";
 import { WINDUP, leap, untilThrow, windingUp, type EnemyDef } from "./enemies";
-import { HEARTS, PURSE_LIFE, SAFE_STEPS, STOMP, extraGround, newPlay, stepPlay, type Play, type PlayIntent } from "./play";
+import { HEARTS, PURSE_LIFE, SAFE_STEPS, STOMP, extraGround, newPlay, runeFree, stepPlay, type Play, type PlayIntent } from "./play";
+import { PLOUGH, PLOUGH_STEPS, lineHolds, ploughBoss, type Plough } from "./plough";
+import { placeBody } from "@larshansen/pixelkit/physics";
 import { TROLL, TROLL_STEPS, WAVE, type TrollDef } from "./troll";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
@@ -501,5 +503,78 @@ describe("hazards and gusts", () => {
     const x = p.sheep[0].x;
     steps(p, 600);
     expect(p.sheep[0].x).toBe(x);
+  });
+});
+
+describe("the last boss: the plough", () => {
+  // A street at row 10, sixty tiles long; the plough parked at its right, a line by a bank at the left.
+  const row = (ch: string) => ch.repeat(60);
+  const street = [row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), "..S" + ".".repeat(57), row("#"), row("#")];
+  const DEF = {
+    floor: 10 * TILE,
+    x: 50 * TILE,
+    wakeAt: 10 * TILE,
+    rounds: [
+      { x0: 20 * TILE, x1: 50 * TILE, sticks: true },
+      { x0: 18 * TILE, x1: 50 * TILE, sticks: true },
+      { x0: 30 * TILE, x1: 50 * TILE, sticks: false }
+    ],
+    line: { x0: 14 * TILE, x1: 17 * TILE, y: 10 * TILE - 28, speed: 7 }
+  };
+  const STREET = level(street, { boss: ploughBoss(DEF) });
+  const plough = (p: Play) => p.boss!.state as Plough;
+
+  test("parked, it does nothing and hurts nobody until he comes along; then it wakes, drives at him, and telegraphs a full second before every charge", () => {
+    const p = newPlay(STREET, { start: { x: 5 * TILE, bottom: 10 * TILE } });
+    steps(p, 100);
+    expect(plough(p).phase).toBe("parked");
+    const ev = steps(p, 1200, (i) => (i < 90 ? right : idle));
+    const names = ev.map((e) => e.boss);
+    expect(names).toContain("wake");
+    names.forEach((e, i) => {
+      if (e === "charge") expect(i - names.lastIndexOf("windup", i)).toBeGreaterThanOrEqual(PLOUGH_STEPS.windup);
+    });
+    expect(names.filter((e) => e === "charge").length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("its cab is a hit from above (the line throws him there), and a lost life sends it back parked with its hits kept; the line holds only for the first", () => {
+    const p = newPlay(STREET, { start: { x: 15 * TILE, bottom: 10 * TILE } });
+    const pl = plough(p);
+    // Put it where he can land on it, awake, and drop him onto its roof.
+    Object.assign(pl, { phase: "stuck", since: p.t, x: 20 * TILE });
+    placeBody(p.body, 20 * TILE, 10 * TILE - PLOUGH.h - 20);
+    p.body.onGround = false;
+    let hit = false;
+    for (let i = 0; i < 40 && !hit; i++) hit = stepPlay(p, idle).boss === "hit";
+    expect(hit).toBe(true);
+    expect(pl.hits).toBe(1);
+    expect(lineHolds(pl)).toBe(false);
+    // Lose a life: parked again where it started, the hit kept.
+    p.hearts = 1;
+    Object.assign(pl, { phase: "drive", since: p.t, x: cx(p) + 20 });
+    p.safeUntil = 0;
+    placeBody(p.body, cx(p), 10 * TILE);
+    let lost = false;
+    for (let i = 0; i < 60 && !lost; i++) lost = stepPlay(p, idle).lifeLost;
+    expect(lost).toBe(true);
+    expect(pl.phase).toBe("parked");
+    expect(pl.x).toBe(DEF.x);
+    expect(pl.hits).toBe(1);
+  });
+
+  test("three hits, and it parks for good; only then does the rune show", () => {
+    const p = newPlay(STREET);
+    const pl = plough(p);
+    for (let k = 0; k < 3; k++) {
+      Object.assign(pl, { phase: "stuck", since: p.t, x: 30 * TILE });
+      placeBody(p.body, 30 * TILE, 10 * TILE - PLOUGH.h - 20);
+      p.body.onGround = false;
+      p.safeUntil = p.t + 999;
+      for (let i = 0; i < 40 && pl.hits === k; i++) stepPlay(p, idle);
+      steps(p, PLOUGH_STEPS.hit + 2);
+    }
+    expect(pl.hits).toBe(3);
+    expect(pl.phase).toBe("beaten");
+    expect(runeFree(p)).toBe(true);
   });
 });

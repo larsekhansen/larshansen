@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
+import { allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
 
 const ORDER = ["langkaia", "akershus", "radhuset", "slottet"];
 
@@ -90,4 +90,16 @@ describe("the line", () => {
     expect(hasProgress(fresh())).toBe(false);
     expect(hasProgress(findBracteate(fresh(), "langkaia"))).toBe(true);
   });
+});
+
+test("all ten runes: every station on the line cleared, from a fresh start or an old save; an old save's odd entries do not count", () => {
+  const order = ["a", "b", "c"];
+  expect(allRunes(fresh(), order)).toBe(false);
+  let p = fresh();
+  for (const id of order) p = clearLevel(p, id, 1000, false).progress;
+  expect(allRunes(p, order)).toBe(true);
+  // An old save with the first two and something else in it, then the third cleared now.
+  const old = readProgress(JSON.stringify({ cleared: ["a", "b", "zz", 7], best: { a: 5 } }));
+  expect(allRunes(old, order)).toBe(false);
+  expect(allRunes(clearLevel(old, "c", 900, true).progress, order)).toBe(true);
 });

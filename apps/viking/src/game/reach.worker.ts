@@ -8,6 +8,7 @@ import { RADHUSET } from "../levels/radhuset";
 import { SLOTTET } from "../levels/slottet";
 import { STORTINGET } from "../levels/stortinget";
 import { EKEBERG } from "../levels/ekeberg";
+import { NABOLAGET } from "../levels/nabolaget";
 import type { LevelDef } from "../levels/types";
 import { bracteateOf, levelMap, runeOf } from "./play";
 import { search } from "./reach";
@@ -16,7 +17,7 @@ import { search } from "./reach";
 // Without the feather, with the ski pole: what the bracteate must be out of reach of.
 
 declare const self: Worker;
-const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA, stortinget: STORTINGET, ekeberg: EKEBERG };
+const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA, stortinget: STORTINGET, ekeberg: EKEBERG, nabolaget: NABOLAGET };
 
 self.onmessage = (e: MessageEvent<string>) => {
   const def = LEVELS[e.data];
