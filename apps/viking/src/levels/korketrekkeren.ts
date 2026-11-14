@@ -1,0 +1,546 @@
+import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
+import type { Hazard } from "@larshansen/pixelkit/hazard";
+import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { INK, LAND, METAL, PALETTE, PLANTS, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import type { Carrier } from "@larshansen/pixelkit/physics";
+import type { LedgeLook } from "@larshansen/pixelkit/props";
+import * as K from "@larshansen/pixelkit/swatches/sledge";
+import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
+import type { Enemy, EnemyDef } from "../game/enemies";
+import type { Play } from "../game/play";
+import { tbaneDoor } from "../render/furniture";
+import { mapBuilder } from "./build";
+import type { Grounds, LevelDef, LevelRules, View } from "./types";
+
+// Level 13, rune K: Korketrekkeren, the sledge run from Frognerseteren down to Midtstuen, on a winter
+// afternoon. The breather of line 2, and its one idea: a sledge he cannot stop. At the top he walks
+// (the hut, a sign, a bench, and boys throwing snowballs from the porch: the shield). Then he sits on
+// the sledge, and from there to Midtstuen it carries him to the right at the speed of each stretch of
+// the run: he can jump (the same jump) and duck (down, where the shield would be: it stays packed),
+// and nothing else. A hit costs a heart and he rides on, blinking; off the run, he is put back at the
+// last flag, on the sledge. At Midtstuen the sledge stops and he walks to the rune.
+//
+// The run is drawn steep, but the body never stands on a slope (ADR 0003, 0026): it is a stair of
+// narrow ledges four pixels wide, each a pixel or two lower than the one before, as Bygdøy's decks
+// are, and the sledge's speed is the level's, set by stretch, not gained on the way down.
+//
+//   #  snow at the top and at Midtstuen   =  the roof of the shed where the sledges are hired   t  T-banen
+//   b  bench   $  skilling   &  brown cheese
+//
+// Stretches: the first bends with snow bumps only; two sledgers, slower, to jump; low branches to duck;
+// the crossing of the line, its barriers coming down on a beat; the steep bit and the jump over the
+// gap, with a long clear landing; the trees at dusk with lanterns (branches, a last sledger); the
+// run-out to Midtstuen.
+
+const COLS = 270;
+const ROWS = 40;
+/** The ground at the top, and at Midtstuen: the tops of rows 12 and 35. */
+export const TOP_ROW = 12;
+export const END_ROW = 35;
+
+/** Where he sits on the sledge (his middle past this), and where it stops at Midtstuen. */
+export const RIDE = { from: 33 * TILE + 2, to: 250 * TILE };
+/** The gap in the run, where the old bridge over the stream is gone: he must jump it. */
+export const GAP = { from: 178 * TILE, to: 182 * TILE };
+/** How wide each of the run's ledges is. */
+export const SEG = 4;
+
+/** The run's line, through these points (column, height of its surface in pixels): steep where it is fast. */
+const POINTS: [number, number][] = [
+  [33, 192], [38, 196], [70, 228], [110, 290], [140, 334], [146, 340], [162, 340], [166, 346], [178, 426], [182, 432], [196, 446], [235, 520], [250, 560]
+];
+/** The snow bumps in the first bends: each rises six pixels over three ledges and drops away at once. */
+export const BUMPS = [44, 52, 60];
+
+function lineY(x: number): number {
+  for (let i = 1; i < POINTS.length; i++) {
+    const [c1, y1] = POINTS[i];
+    if (x <= c1 * TILE) {
+      const [c0, y0] = POINTS[i - 1];
+      return y0 + ((x - c0 * TILE) / ((c1 - c0) * TILE)) * (y1 - y0);
+    }
+  }
+  return POINTS[POINTS.length - 1][1];
+}
+const hump = (x: number) => {
+  for (const c of BUMPS) {
+    const dx = x - c * TILE;
+    if (dx >= -12 && dx < 0) return 2 * (Math.floor((dx + 12) / SEG) + 1);
+  }
+  return 0;
+};
+
+/** The top of each of the run's ledges, left to right from where the sledge starts; null over the gap. */
+export const TOPS: (number | null)[] = Array.from({ length: (RIDE.to - (RIDE.from - 2)) / SEG }, (_, i) => {
+  const x = RIDE.from - 2 + i * SEG;
+  return x >= GAP.from && x < GAP.to ? null : Math.round(lineY(x + SEG / 2) - hump(x));
+});
+const X0 = RIDE.from - 2;
+
+/** The run's surface at x, or null over the gap or off the run. */
+export function trackY(x: number): number | null {
+  const i = Math.floor((x - X0) / SEG);
+  return i < 0 || i >= TOPS.length ? null : TOPS[i];
+}
+
+/** The speed of the sledge at x, by stretch, easing from one to the next over three tiles; never over twice his run. */
+export const STRETCHES: [number, number][] = [[33, 1.2], [70, 1.5], [140, 1.4], [162, 2.2], [196, 1.4], [235, 1.4], [250, 0.8]];
+export function speedAt(x: number): number {
+  const c = x / TILE;
+  const n = STRETCHES.length;
+  const [ca, va] = STRETCHES[n - 2];
+  const [cb, vb] = STRETCHES[n - 1];
+  // The run-out slows all along it.
+  if (c >= cb) return vb;
+  if (c >= ca) return va + ((c - ca) / (cb - ca)) * (vb - va);
+  // Elsewhere the speed changes over a stretch's first three tiles.
+  let v = STRETCHES[0][1];
+  for (let i = 1; i < n - 1; i++) {
+    const [c1, v1] = STRETCHES[i];
+    if (c < c1) break;
+    const v0 = STRETCHES[i - 1][1];
+    v = c < c1 + 3 ? v0 + ((c - c1) / 3) * (v1 - v0) : v1;
+  }
+  return v;
+}
+
+const b = mapBuilder(COLS, ROWS);
+// --- Frognerseteren: the end of the line, the hut, its porch and its roof ------------------------------
+b.ground(0, 32, TOP_ROW);
+b.run(29, 31, TOP_ROW - 2, "=");
+// --- Midtstuen: the platform and the path ------------------------------------------------------------
+b.ground(250, COLS - 1, END_ROW);
+
+/** A flag on the run: on the row just above its surface there, so he is put back onto it. */
+const onRun = (c: number) => Math.floor(trackY(c * TILE + TILE / 2)! / TILE) - 1;
+b.put(2, TOP_ROW - 1, "t").put(4, TOP_ROW - 1, "S");
+b.put(5, TOP_ROW - 1, "i").put(32, TOP_ROW - 1, "i").put(255, END_ROW - 1, "i");
+b.put(7, TOP_ROW - 1, "b");
+b.put(31, TOP_ROW - 1, "f");
+for (const c of [70, 112, 146, 166, 205, 244]) b.put(c, onRun(c), "f");
+b.put(262, END_ROW - 1, "r").put(182, 20, "o").put(30, TOP_ROW - 3, "&");
+
+// Skilling: on the porch, along the run at his height (the sledge takes them), over the bumps and the
+// sledgers (a jump takes them), under the branches (ducking takes them), over the gap.
+const coinOn = (c: number, up = 0) => b.put(c, Math.floor((trackY(c * TILE + TILE / 2)! - 10) / TILE) - up, "$");
+for (const c of [12, 17, 21, 26]) b.put(c, TOP_ROW - 2, "$");
+for (const c of [36, 39, 42, 48, 50, 56, 58, 64, 66, 72, 75, 78, 103, 106, 113, 120, 128, 136, 143, 150, 156, 160, 170, 174, 186, 189, 192, 199, 202, 210, 217, 224, 230, 238, 242, 246]) coinOn(c);
+for (const c of [44, 52, 60, 88, 100, 226]) coinOn(c, 1);
+for (const c of [179, 181]) b.put(c, 24, "$");
+for (const c of [254, 257, 260]) b.put(c, END_ROW - 1, "$");
+
+export const MAP = b.rows_();
+
+// --- The run, the sledge and what is on the run ----------------------------------------------------
+
+/** What the run keeps of its own: whether he lies back on the sledge (for drawing him so). */
+interface Ride {
+  duck: boolean;
+}
+
+/** The run: the ledge under his middle, as the physics takes it, carrying him onto it as he goes down. */
+function runGround(him: { x: number; y: number; onGround: boolean }): Carrier[] {
+  const now = trackY(him.x + PLAYER.w / 2);
+  if (now === null) return [];
+  const feet = him.y + PLAYER.h;
+  const standing = him.onGround && Math.abs(feet - now) <= 4;
+  return [{ x: X0, y: now, w: RIDE.to - X0, dx: 0, dy: standing ? now - feet : 0 }];
+}
+
+export const GROUNDS: Grounds<Ride> = {
+  create: () => ({ duck: false }),
+  carriers: (_s, _t, him) => runGround(him),
+  everywhere: () => TOPS.flatMap((y, i) => (y === null ? [] : [{ x: X0 + i * SEG, y, w: SEG, dx: 0, dy: 0 }]))
+};
+
+/** A low branch over the run at column c: its needles hang to his head's height, not to a ducked one's. */
+const branch = (c: number): Hazard => {
+  const x = c * TILE;
+  const top = Math.min(...[x, x + 7, x + 13].map((xx) => trackY(xx)!));
+  return { x, y: top - 16, w: 14, h: 7 };
+};
+/** The crossing's barrier: up, it is no harm; for a second its lights blink and it comes down; down, duck. */
+export const BARRIER: Hazard = { x: 154 * TILE, y: 340 - 16, w: 2 * TILE, h: 7, beat: { rest: 150, warn: 60, live: 120 } };
+export const BRANCHES = [116, 124, 132, 206, 214].map(branch);
+export const HAZARDS: Hazard[] = [...BRANCHES.slice(0, 3), BARRIER, ...BRANCHES.slice(3)];
+
+/**
+ * A sledger: waits at the top of its stretch until he comes within ten tiles, then rides down it at its
+ * own speed, slower than his, and pulls off at the bottom. Put back behind it (a fall), it waits again.
+ */
+function sledger(e: Enemy, p: Play) {
+  const range = (e.def.range ?? 0) * TILE;
+  const start = e.home - range;
+  const hx = p.body.x + PLAYER.w / 2;
+  if (e.n !== undefined && hx < start - 12 * TILE) e.n = undefined;
+  if (e.n === undefined) {
+    e.x = start;
+    if (hx >= start - 10 * TILE) e.n = p.t;
+  } else e.x = Math.min(e.home + range, start + (p.t - e.n) * (e.def.speed ?? 0.5));
+  e.calm = e.x >= e.home + range;
+  e.y = trackY(e.x) ?? e.y;
+  e.dir = 1;
+}
+
+export const RULES: LevelRules = {
+  enemy(e, p) {
+    if (e.def.look !== "sledger") return false;
+    sledger(e, p);
+    return true;
+  },
+  /**
+   * On the run he sits on the sledge, and it carries him at the stretch's speed whatever he presses: he
+   * cannot walk, stop or dash. Down is a duck there (the shield stays packed), and ducking he cannot jump.
+   */
+  intent(p, k) {
+    const b = p.body;
+    const x = b.x + PLAYER.w / 2;
+    p.riding = x >= RIDE.from && x < RIDE.to;
+    p.ducking = p.riding && !!k.shield;
+    const s = p.grounds?.state as Ride | undefined;
+    if (s) s.duck = p.ducking;
+    if (!p.riding) return k;
+    b.vx = speedAt(x);
+    b.launched = true;
+    b.facing = 1;
+    return { left: false, right: false, jumpHeld: k.jumpHeld && !p.ducking, jumpPressed: k.jumpPressed && !p.ducking };
+  },
+  carry: (x) => (x >= RIDE.from && x < RIDE.to ? speedAt(x) : 0),
+  lead: (w) => Math.round(w * 0.28)
+};
+
+/**
+ * Boys throwing snowballs from the hut's balcony, facing the way he comes (the shield); a crow over the
+ * hut; three sledgers on the run, slower than he is; an owl in the trees at dusk; a fox at Midtstuen.
+ */
+export const ENEMIES: EnemyDef[] = [
+  { kind: "flyer", look: "crow", c: 10, r: TOP_ROW - 8, range: 3, rise: 5, period: 170 },
+  // Their beats chosen (by a search) so that a man who walks on under the balcony is nearly always hit.
+  { kind: "thrower", look: "kid", c: 15, r: TOP_ROW - 3, period: 150, lead: true, faces: -1 },
+  { kind: "thrower", look: "kid", c: 19, r: TOP_ROW - 3, period: 150, offset: 75, lead: true, faces: -1 },
+  { kind: "thrower", look: "kid", c: 23, r: TOP_ROW - 3, period: 150, offset: 125, lead: true, faces: -1 },
+  { kind: "walker", look: "sledger", c: 84, r: 15, range: 8, speed: 0.5, w: 14, h: 10 },
+  { kind: "walker", look: "sledger", c: 100, r: 17, range: 8, speed: 0.5, w: 14, h: 10 },
+  { kind: "flyer", look: "owl", c: 210, r: 21, range: 2, rise: 4, period: 200 },
+  { kind: "walker", look: "sledger", c: 225, r: 29, range: 7, speed: 0.5, w: 14, h: 10 },
+  { kind: "walker", look: "fox", c: 266, r: END_ROW - 1, range: 1 }
+];
+
+export const KORKETREKKEREN_RULES = { COLS, ROWS };
+
+// --- Art ----------------------------------------------------------------------------------------------
+const P = PALETTE;
+
+/** The view's floor follows the run down, a few rows under it. */
+const floorAt = (x: number) => Math.min(ROWS * TILE, (trackY(Math.max(X0, Math.min(RIDE.to - 1, x))) ?? (x < X0 ? TOP_ROW * TILE : END_ROW * TILE)) + 5 * TILE);
+
+/** The ground behind the run at a street x: the run's height there, or the flat at either end. */
+const behind = (sx: number) => trackY(Math.max(X0, Math.min(RIDE.to - 1, sx))) ?? (sx < X0 ? TOP_ROW * TILE : END_ROW * TILE);
+
+/** The far hills: the fjord and the town far below, white hills over them, the low sun along their tops. Kept at his height. */
+function farHills(v: View) {
+  const base = v.him.y + 20;
+  for (let x = 0; x < view.w; x++) {
+    const wx = layerWorldX(x, 0.12);
+    const h = 50 + Math.round(16 * Math.sin(wx * 0.011) + 8 * Math.sin(wx * 0.037));
+    column(x, base - h, base + 400, mix(LAND.farHills, WHITE, 0.4));
+    column(x, base - h, base - h + 2, mix(K.lantern, WHITE, 0.55));
+    // The fjord, far down under the hills.
+    column(x, base - 12, base + 400, mix(P.water, WHITE, 0.45));
+    if (Math.floor(wx) % 13 < 2) column(x, base - 12 - (Math.floor(wx) % 5), base - 12, mix(STONE.light, WHITE, 0.3));
+  }
+}
+
+/** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. */
+function spruces(factor: number, n: number, fade: number) {
+  for (let i = 0; i < n; i++) {
+    const wx = i * 31 + ((i * 17) % 13);
+    const x = layerX(wx, factor);
+    if (x < -20 || x > view.w + 20) continue;
+    const foot = behind(x + view.camX) - 14 - ((i * 7) % 18) - (factor < 0.3 ? 16 : 0);
+    const h = 30 + ((i * 11) % 16);
+    const sx = x + view.camX;
+    const dusk = sx > 196 * TILE && sx < 236 * TILE ? 0.45 : 0;
+    const green = mix(mix(PLANTS.spruce, LAND.farHills, fade), K.dusk, dusk);
+    for (let k = 0; k < h; k++) {
+      const half = Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
+      box(x - half, foot - h + k, half * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
+    }
+    box(x, foot, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+  }
+}
+
+/** Frognerseteren: the T-bane's last stop, the dark log restaurant with its carved dragon heads, the porch. */
+function frognerseteren(v: View) {
+  tbaneDoor(v.doors.get("tbane"));
+  const g = TOP_ROW * TILE;
+  const x0 = 11 * TILE;
+  const x1 = 28 * TILE;
+  // The log walls, up to the roof.
+  for (let y = g - 4 * TILE; y < g; y += 4) {
+    R(x0, y, x1 - x0, 4, (y >> 2) % 2 ? K.logs : K.logsLight);
+    R(x0, y + 3, x1 - x0, 1, mix(K.logs, INK, 0.3));
+  }
+  // Warm windows.
+  for (let x = x0 + 14; x < x1 - 14; x += 34) {
+    R(x, g - 54, 12, 12, mix(P.sail, K.lantern, 0.5));
+    R(x + 5, g - 54, 1, 12, K.logs);
+    light(x, g - 54, 12, 12);
+  }
+  // The roof: dark shingle over the top ledge, its ridge, a dragon head carved at each gable.
+  for (let k = 0; k < 18; k++) R(x0 - 8 + k * 2, g - 4 * TILE - 4 - k, x1 - x0 + 16 - k * 4, 1, k % 4 === 0 ? mix(K.shingle, WHITE, 0.6) : K.shingle);
+  for (let k = 0; k < x1 - x0 + 16; k += 3) R(x0 - 8 + k, g - 4 * TILE - 5, 2, 2, K.bank);
+  for (const [ex, d] of [[x0 - 10, -1], [x1 + 8, 1]] as const) {
+    R(ex, g - 4 * TILE - 14, 3, 12, K.carved);
+    R(ex + d * 3, g - 4 * TILE - 18, 4, 4, K.carved);
+    R(ex + d * 6, g - 4 * TILE - 16, 2, 2, K.carved);
+  }
+  // The balcony along the first floor, where the boys stand: its floor and its carved rail.
+  R(x0 + 8, g - 2 * TILE - 3, x1 - x0 - 16, 3, K.carved);
+  for (let x = x0 + 10; x < x1 - 10; x += 6) R(x, g - 2 * TILE - 12, 2, 9, mix(K.carved, INK, 0.2));
+  R(x0 + 8, g - 2 * TILE - 13, x1 - x0 - 16, 2, K.carved);
+  for (let x = x0 + 12; x < x1 - 8; x += 40) R(x, g - 2 * TILE, 3, 2 * TILE, K.carved);
+  // The shed where the sledges are hired (its roof he can stand on), sledges leaning on it.
+  R(29 * TILE, g - 2 * TILE, 3 * TILE, 2 * TILE, K.logsLight);
+  for (let y = g - 2 * TILE; y < g; y += 4) R(29 * TILE, y + 3, 3 * TILE, 1, K.logs);
+  for (let k = 0; k < 3; k++) R(29 * TILE + 4 + k * 12, g - 18, 4, 18, k % 2 ? K.sledgeRed : K.sledgeWood);
+}
+
+/** The run: packed snow along the stair of ledges, a groove from the runners, banks either side, the slope under it. */
+function theRun() {
+  TOPS.forEach((y, i) => {
+    const x = X0 + i * SEG;
+    if (y === null) return;
+    R(x, y, SEG, 3, K.run);
+    R(x, y + 3, SEG, 2, K.runGroove);
+    R(x, y + 5, SEG, 260, K.slope);
+    R(x, y + 18, SEG, 2, K.slopeShade);
+    if (i % 3 === 0) R(x, y - 2, 2, 2, K.bank);
+  });
+  // The hillside under the run: shading along it, young spruce, stones and a fence, so it is not one plain sheet.
+  for (let x = X0; x < RIDE.to; x += 2) {
+    const y = trackY(x);
+    if (y === null) continue;
+    R(x, y + 34, 2, 2, K.slopeShade);
+    R(x, y + 70, 2, 3, mix(K.slopeShade, K.slope, 0.4));
+  }
+  for (let x = X0 + 10, i = 0; x < RIDE.to; x += 37, i++) {
+    const y = trackY(x);
+    if (y === null) continue;
+    const top = y + 44 + ((i * 13) % 30);
+    const h = 10 + ((i * 5) % 8);
+    for (let k = 0; k < h; k++) R(x - Math.floor((k / h) * 4), top + k, Math.floor((k / h) * 8) + 1, 1, k % 4 === 0 ? K.bank : mix(PLANTS.spruce, K.slope, 0.25));
+    if (i % 3 === 1) R(x + 14, top + 22, 6, 3, mix(STONE.base, K.slope, 0.4));
+    if (i % 4 === 2) for (let k = 0; k < 3; k++) R(x + 20 + k * 6, top - 6, 1, 6, P.woodDark);
+  }
+}
+
+/** The gap in the run: a gully, its snowy sides going down in shade to the stream, the stumps of the old bridge. */
+function gap() {
+  const y0 = trackY(GAP.from - 2)!;
+  const w = GAP.to - GAP.from;
+  for (let k = 0; k < w; k++) {
+    const d = Math.min(k, w - 1 - k);
+    const side = Math.min(60, d * 3);
+    R(GAP.from + k, y0 + 4, 1, side, mix(K.slopeShade, K.dusk, 0.15 + (d / w) * 0.3));
+    R(GAP.from + k, y0 + 4 + side, 1, ROWS * TILE, mix(K.slopeShade, K.dusk, 0.5));
+  }
+  R(GAP.from + 12, y0 + 70, w - 24, 5, P.water);
+  R(GAP.from + 12, y0 + 70, w - 24, 1, P.foam);
+  for (let k = 0; k < 4; k++) R(GAP.from + 10 + k * 12, y0 + 64 - (k % 2) * 3, 6, 4, mix(STONE.base, K.dusk, 0.3));
+  for (const x of [GAP.from - 3, GAP.to - 2]) {
+    R(x, y0 - 2, 5, 40, P.woodDark);
+    R(x, y0 - 3, 5, 2, K.bank);
+  }
+}
+
+/** The crossing of the line: rails across the run, a post with lights each side, the barrier's arm. */
+function crossing(t: number) {
+  const y = trackY(BARRIER.x)!;
+  R(BARRIER.x - 10, y + 1, BARRIER.w + 20, 2, METAL.rail);
+  R(BARRIER.x - 10, y + 4, BARRIER.w + 20, 1, METAL.rail);
+  const phase = pulsePhase(t, BARRIER.beat!);
+  const { age, of } = pulseAge(t, BARRIER.beat!);
+  // The lights blink while it comes down and while it is down: seen from far off.
+  const lit = phase !== "rest" && (view.reduced || Math.floor(t / 15) % 2 === 0);
+  for (const px of [BARRIER.x - 8, BARRIER.x + BARRIER.w + 4]) {
+    R(px, y - 34, 3, 34, METAL.lampPost);
+    R(px - 3, y - 36, 9, 6, INK);
+    R(px - 2, y - 35, 3, 3, lit ? K.signalOn : K.signalOff);
+    R(px + 2, y - 35, 3, 3, lit && !view.reduced ? K.signalOff : lit ? K.signalOn : K.signalOff);
+    if (lit) light(px - 2, y - 35, 7, 3, "lamp");
+  }
+  // The arm: up along its post at rest, coming down over the warning, across at his head's height when down.
+  const down = phase === "live" ? 1 : phase === "warn" ? (view.reduced ? 0 : age / of) : 0;
+  const ax = BARRIER.x - 6;
+  const ay = BARRIER.y + 2;
+  const len = BARRIER.w + 8;
+  for (let k = 0; k < len; k++) {
+    const a = (1 - down) * (Math.PI / 2);
+    const xx = Math.round(ax + Math.cos(a) * k);
+    const yy = Math.round(ay - Math.sin(a) * k);
+    R(xx, yy, 2, 2, Math.floor(k / 5) % 2 ? K.barrierRed : K.barrier);
+  }
+}
+
+/** A low spruce branch over the run, its needles hanging to head height, snow on it. */
+function branchArt(h: Hazard, dusk: boolean) {
+  const green = dusk ? mix(PLANTS.spruce, K.dusk, 0.3) : PLANTS.spruce;
+  R(h.x - 30, h.y - 4, 50, 3, PLANTS.spruceTrunk);
+  for (let k = 0; k < h.w + 6; k++) R(h.x - 3 + k, h.y - 2, 1, 4 + ((k * 3) % 5), green);
+  for (let k = 0; k < h.w; k += 3) R(h.x + k, h.y - 4, 2, 1, K.bank);
+}
+
+/** The trees at dusk: lanterns on posts along the run, their light on the snow. */
+function lanterns(t: number) {
+  for (let c = 198; c < 236; c += 6) {
+    const x = c * TILE + 4;
+    const y = trackY(x)!;
+    R(x, y - 30, 2, 30, METAL.lampPost);
+    R(x - 2, y - 36, 6, 6, INK);
+    R(x - 1, y - 35, 4, 4, K.lantern);
+    light(x - 1, y - 35, 4, 4, "lamp");
+    const glow = view.reduced ? 0 : Math.round(Math.sin(t * 0.05 + c));
+    R(x - 8, y - 1, 18 + glow, 1, mix(K.lantern, K.run, 0.4));
+  }
+}
+
+/** Midtstuen: the station's platform shelter, the sign. */
+function midtstuen(v: View) {
+  const g = END_ROW * TILE;
+  const x = 256 * TILE;
+  R(x, g - 40, 6 * TILE, 4, K.shingle);
+  R(x + 4, g - 36, 3, 36, METAL.lampPost);
+  R(x + 6 * TILE - 7, g - 36, 3, 36, METAL.lampPost);
+  R(x + 10, g - 30, 6 * TILE - 20, 14, mix(P.sail, K.lantern, 0.3));
+  light(x + 10, g - 30, 6 * TILE - 20, 14, "soft");
+  void v;
+}
+
+/** The sledge: a wooden kick-sledge with dark runners curling up at the front. */
+function sledgeAt(x: number, y: number, color: string = K.sledgeWood) {
+  R(x - 7, y - 4, 14, 3, color);
+  R(x - 7, y - 4, 14, 1, mix(color, WHITE, 0.3));
+  R(x - 8, y - 1, 17, 1, K.sledgeRunner);
+  R(x + 8, y - 4, 1, 3, K.sledgeRunner);
+  R(x + 9, y - 5, 1, 2, K.sledgeRunner);
+}
+
+/** Lying back on the sledge to duck: helmet at the back, legs out along it. */
+function lyingBack(x: number, y: number) {
+  R(x - 8, y - 9, 5, 4, P.ironDark);
+  R(x - 8, y - 9, 5, 1, mix(P.ironDark, WHITE, 0.3));
+  R(x - 4, y - 8, 3, 3, mix(P.sail, P.sailStripe, 0.2));
+  R(x - 2, y - 8, 7, 4, SWEATER);
+  R(x + 4, y - 7, 6, 2, P.ironDark);
+}
+
+/** A sledger: a child in a bright jacket on a plastic sledge. Pulled off the run at the end of its stretch. */
+function sledgerArt(e: Enemy) {
+  const x = Math.round(e.x);
+  const y = Math.round(e.y);
+  if (e.calm) {
+    // Pulled off to the side, behind: smaller, paler.
+    R(x + 10, y - 6, 10, 3, mix(e.def.c % 2 ? K.sledgeRed : K.sledgeBlue, K.slope, 0.4));
+    return;
+  }
+  const jacket = e.def.c % 2 ? K.sledgeBlue : K.sledgeRed;
+  sledgeAt(x, y, e.def.c % 2 ? K.sledgeRed : K.sledgeBlue);
+  R(x - 3, y - 11, 6, 7, jacket);
+  R(x - 2, y - 14, 4, 3, mix(P.sail, P.sailStripe, 0.2));
+  R(x - 3, y - 15, 6, 2, e.def.c % 2 ? K.sledgeRed : K.sledgeBlue);
+  R(x + 1, y - 13, 1, 1, INK);
+}
+
+const PORCH: LedgeLook = { body: K.logs, top: mix(K.carved, WHITE, 0.2), edge: mix(K.logs, INK, 0.3), joint: K.logs };
+
+export const KORKETREKKEREN: LevelDef = {
+  id: "korketrekkeren",
+  rune: 12,
+  name: "Korketrekkeren",
+  landmark: { nb: "Akebakken", en: "The sledge run" },
+  place: { nb: "Frognerseteren", en: "Frognerseteren" },
+  sky: "evening",
+  map: MAP,
+  legend: { solid: "#", oneWay: "=", water: "" },
+  ramps: [],
+  carriers: [],
+  timed: [],
+  cannons: [],
+  enemies: ENEMIES,
+  hazards: HAZARDS,
+  grounds: GROUNDS,
+  rules: RULES,
+  floor: floorAt,
+  signs: [
+    {
+      label: { nb: "Korketrekkeren", en: "Korketrekkeren" },
+      lines: { nb: ["To kilometer ned til Midtstuen.", "Kjelken stopper der. Ikke før."], en: ["Two kilometres down to Midtstuen.", "The sledge stops there. Not before."] }
+    },
+    {
+      label: { nb: "Kjelken", en: "The sledge" },
+      lines: { nb: ["På kjelken er pil ned å dukke.", "Skjoldet ligger i sekken til Midtstuen."], en: ["On the sledge, down is to duck.", "The shield stays packed until Midtstuen."] },
+      touch: { nb: ["På kjelken dukker du med Skjold-knappen.", "Skjoldet ligger i sekken til Midtstuen."], en: ["On the sledge, the Shield button ducks.", "The shield stays packed until Midtstuen."] }
+    },
+    {
+      label: { nb: "Midtstuen", en: "Midtstuen" },
+      lines: { nb: ["Herfra går T-banen opp igjen.", "Kjelken må du dra selv."], en: ["The T-bane goes back up from here.", "The sledge you pull yourself."] }
+    }
+  ],
+  doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
+  art: {
+    far: (v) => farHills(v),
+    mid: () => spruces(0.2, 160, 0.4),
+    near: () => spruces(0.4, 140, 0.15),
+    back(v) {
+      frognerseteren(v);
+      theRun();
+      gap();
+      lanterns(v.t);
+      midtstuen(v);
+    },
+    front(v) {
+      // The trees at dusk: the light goes there, under the spruce, but for the lanterns.
+      for (let x = 192 * TILE; x < 240 * TILE; x += 4) {
+        const k = Math.min(1, (x - 192 * TILE) / 64, (240 * TILE - x) / 64);
+        R(x, view.camY, 4, view.h, `rgba(20, 28, 60, ${(0.32 * k).toFixed(3)})`);
+      }
+      crossing(v.t);
+      for (const h of BRANCHES) branchArt(h, h.x > 196 * TILE);
+      // The sledge: waiting at the top, under him on the run, left at Midtstuen.
+      const hx = v.him.x;
+      const s = v.grounds as Ride | null;
+      if (hx < RIDE.from) sledgeAt(RIDE.from + 8, trackY(RIDE.from + 8)!);
+      else if (hx >= RIDE.to) sledgeAt(RIDE.to - 10, END_ROW * TILE);
+      else {
+        const feet = Math.round(v.him.y + PLAYER.h / 2);
+        sledgeAt(Math.round(hx), feet + 1);
+        if (s?.duck) lyingBack(Math.round(hx), feet + 1);
+        // The speed lines behind him, off with reduced motion.
+        if (!view.reduced && speedAt(hx) >= 1.5) for (let k = 0; k < 3; k++) R(Math.round(hx) - 16 - k * 7 - ((v.t * 3) % 7), feet - 4 - k * 4, 6, 1, mix(K.bank, WHITE, 0.5));
+      }
+    },
+    ground: () => ({ top: K.bank, dot: K.runGroove, fill: K.slope }),
+    tile(t, c, r, x, y, map) {
+      if (t !== "#") return false;
+      // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.
+      const top = !map.isSolid(c, r - 1);
+      R(x, y, TILE, TILE, top ? K.slope : mix(K.slope, K.slopeShade, Math.min(0.8, (r - (c < 100 ? TOP_ROW : END_ROW)) * 0.18)));
+      if (top) {
+        R(x, y, TILE, 2, K.bank);
+        R(x + ((c * 5) % 11), y + 4, 3, 1, K.runGroove);
+        R(x + ((c * 3) % 9) + 4, y + 8, 2, 1, K.runGroove);
+        if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
+      } else if ((c * 7 + r * 3) % 6 === 0) R(x + 4, y + 6, 6, 3, mix(STONE.base, K.slope, 0.45));
+      return true;
+    },
+    ledges: { "=": PORCH },
+    enemy(e) {
+      if (e.def.look !== "sledger") return false;
+      sledgerArt(e);
+      return true;
+    }
+  }
+};
+

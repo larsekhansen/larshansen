@@ -15,3 +15,4 @@ export { EKEBERG_ROUTE } from "./routes/ekeberg";
 export { NABOLAGET_ROUTE } from "./routes/nabolaget";
 export { BYGDOY_ROUTE } from "./routes/bygdoy";
 export { VIGELANDSPARKEN_ROUTE } from "./routes/vigelandsparken";
+export { KORKETREKKEREN_ROUTE } from "./routes/korketrekkeren";

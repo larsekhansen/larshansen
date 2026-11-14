@@ -1191,7 +1191,8 @@ function camera(elapsedMs: number, snap: boolean) {
   const bar = (header.getBoundingClientRect().height * view.dpr) / view.k;
   const p = scene.play;
   const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
-  const focus = { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2, facing: p.body.facing, lookUp: look };
+  // On the sledge the camera looks well ahead, so he is drawn left of the middle and sees what comes.
+  const focus = { x: shown.x + PLAYER.w / 2 + (p.riding ? p.def.rules?.lead?.(view.w) ?? 0 : 0), y: shown.y + PLAYER.h / 2, facing: p.body.facing, lookUp: look };
   const floor = scene.def.floor?.(focus.x) ?? scene.play.map.height;
   const bottom = view.h > view.w ? Math.max(floor, Math.round(focus.y + view.h / 3)) : floor;
   const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom, top: bar }, view, elapsedMs, snap);
@@ -1281,11 +1282,11 @@ function drawThings(v: View) {
   }
   if (p.rune && runeFree(p)) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
-  if (p.pole && !p.loaded) skiPole(v);
+  if (p.pole && !p.loaded && !p.ducking) skiPole(v);
   // The shield: where the level gives it, leaning; once his, on his back, or up in front of him.
   if (shieldKit) {
     if (p.gift && p.giftAt === null) shieldKit.drawShieldFace(p.gift.x, p.gift.y + 1);
-    if (p.shield?.has && !p.loaded) shieldKit.drawShieldOn(shown, p.shield.raise > 0 ? p.shield.facing : p.body.facing, shieldKit.shieldDrawn(p.shield.raise, view.reduced), !!p.sitting);
+    if (p.shield?.has && !p.loaded && !p.ducking) shieldKit.drawShieldOn(shown, p.shield.raise > 0 ? p.shield.facing : p.body.facing, shieldKit.shieldDrawn(p.shield.raise, view.reduced), !!p.sitting || p.riding);
   }
 }
 
@@ -1453,7 +1454,7 @@ function skiPole(v: View) {
   const b = shown;
   const side = scene.play.body.facing > 0 ? -1 : 1;
   const x = Math.round(b.x + PLAYER.w / 2 + side * 5);
-  const top = Math.round(b.y + (scene.play.sitting ? 9 : 6));
+  const top = Math.round(b.y + (scene.play.sitting || scene.play.riding ? 9 : 6));
   R(x, top, 1, PLAYER.h - 4, METAL.lampPost);
   R(x - 1, top + PLAYER.h - 8, 3, 1, METAL.lampPost);
   R(x, top - 1, 1, 1, PALETTE.sailStripe);
@@ -1527,15 +1528,17 @@ function render(alpha: number) {
     if (bubble) say(bubble.lines.join(" "));
   }
 
-  // Blinking after a hit (with reduced motion, drawn at half strength the whole time instead); sitting, a little lower, on the bench.
-  const safe = blinking(p) ? (view.reduced ? 0.5 : Math.floor(p.t / 4) % 2 === 0 ? 0.25 : 1) : 1;
-  const body = p.sitting ? { ...shown, y: shown.y + 3 } : shown;
+  // Blinking after a hit (with reduced motion, drawn at half strength the whole time instead); sitting, a
+  // little lower, on the bench or the sledge; lying back on the sledge, he is the level's to draw.
+  const safe = (blinking(p) ? (view.reduced ? 0.5 : Math.floor(p.t / 4) % 2 === 0 ? 0.25 : 1) : 1) * (p.ducking ? 0 : 1);
+  const seated = p.sitting || p.riding;
+  const body = seated ? { ...shown, y: shown.y + 3 } : shown;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
     banner: plated(state.banner),
     world: p.map,
     boards: scene.boards,
-    player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * safe, phase: sky.phase, look: look() },
+    player: { body, walk: seated ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * safe, phase: sky.phase, look: look() },
     hint:
       door && !touch && !speaking && !frozen() && !state.bubble
         ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }

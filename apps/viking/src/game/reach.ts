@@ -211,7 +211,14 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
   // Zones push as they do in the level: they are always there. Gusts on a beat blow all the time,
   // or (`calm`) never: the search is run both ways.
   const zones = opts.calm ? def.zones?.filter((z) => !z.beat) : def.zones;
-  const near = (b: Body, loose = false) => ({ carriers: loose ? [] : buckets.get(Math.floor((b.x + PLAYER.w / 2) / 64)) ?? [], surfaceAt, push: zonePush(zones, b) });
+  // Ground that carries him along whatever he does (the sledge), as a push across.
+  const carry = def.rules?.carry;
+  const pushed = (b: Body) => {
+    const z = zonePush(zones, b);
+    const c = carry?.(b.x + PLAYER.w / 2) ?? 0;
+    return c ? { x: (z?.x ?? 0) + c, y: z?.y ?? 0 } : z;
+  };
+  const near = (b: Body, loose = false) => ({ carriers: loose ? [] : buckets.get(Math.floor((b.x + PLAYER.w / 2) / 64)) ?? [], surfaceAt, push: pushed(b) });
   const launchers = [...cannonsOf(def, map), ...drumsOf(def, map)];
   const trampolines = pads(def);
   const hit = boxes.map(() => false);
@@ -286,7 +293,10 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
     from = queue.pop()!;
     const s = all[from];
     const held = map.supports(createBody(s.x + PLAYER.w / 2, s.feet));
+    // Carried (on the sledge) he cannot dash: the sledge's rules take the key away.
+    const carried = !!carry?.(s.x + PLAYER.w / 2);
     for (const m of held ? list : [...list, ...DROPS]) {
+      if (carried && m.dash > 0) continue;
       bit = m.dash > 0 ? 2 : 1;
       const b = createBody(s.x + PLAYER.w / 2, s.feet);
       if (m.running) b.vx = m.dir * MOVE.run;

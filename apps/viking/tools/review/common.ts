@@ -22,6 +22,7 @@ export const LEVELS = [
   ["nabolaget", (await imp("levels/nabolaget.ts")).NABOLAGET, R.NABOLAGET_ROUTE],
   ["bygdoy", (await imp("levels/bygdoy.ts")).BYGDOY, R.BYGDOY_ROUTE],
   ["vigelandsparken", (await imp("levels/vigelandsparken.ts")).VIGELANDSPARKEN, R.VIGELANDSPARKEN_ROUTE],
+  ["korketrekkeren", (await imp("levels/korketrekkeren.ts")).KORKETREKKEREN, R.KORKETREKKEREN_ROUTE],
 ] as const;
-export const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken"]);
+export const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren"]);
 
