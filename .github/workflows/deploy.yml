@@ -24,10 +24,22 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          # The version this Pi runs; a new Bun can change the build, so it is moved on purpose.
+          bun-version: 1.4.4
 
       - name: Install dependencies
         run: bun install --frozen-lockfile
+
+      - name: Test the games
+        # The kit, the maze, the front page and Vikingfjorden (the scripted players, the reach and
+        # dead-end searches, the level measure). About 80 s on the Pi, nearly all of it the viking
+        # suite's searches; a red test stops the deploy before anything is published.
+        run: |
+          set -euo pipefail
+          for dir in packages/pixelkit packages/maze apps/landing apps/viking; do
+            echo "== $dir"
+            (cd "$dir" && bun test)
+          done
 
       - name: Build all apps
         run: bun run build
@@ -65,7 +77,17 @@ jobs:
           expect /qr/  'QR-verkstedet'
           # The game behind the Opera's secret door, and its script from /viking/assets/.
           expect /viking/ 'Vikingfjorden'
-          expect "$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')" 'Langkaia'
+          script=$(fetch /viking/ | grep -o '/viking/assets/index-[^"]*\.js')
+          expect "$script" 'Langkaia'
+          # The chunks the first script loads on demand: a level (Nordmarka) and the maze's scene.
+          # A missing or misnamed chunk would otherwise only show in a browser.
+          body=$(fetch "$script")
+          level=$(grep -o 'nordmarka-[A-Za-z0-9_-]*\.js' <<<"$body" | head -n 1)
+          maze=$(grep -o 'scene-[A-Za-z0-9_-]*\.js' <<<"$body" | head -n 1)
+          for chunk in "$level" "$maze"; do
+            if [ -z "$chunk" ]; then echo "FAIL a lazy chunk is not named in $script"; exit 1; fi
+            fetch "/viking/assets/$chunk" > /dev/null && echo "ok   /viking/assets/$chunk"
+          done
           # The QR app's script must load from /qr/assets/, not the landing page's /assets/.
           expect "$(fetch /qr/ | grep -o '/qr/assets/index-[^"]*\.js')" 'Lest av QR-leser'
 
