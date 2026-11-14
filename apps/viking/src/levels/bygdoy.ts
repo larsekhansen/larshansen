@@ -22,7 +22,7 @@ import type { Grounds, LevelDef, View } from "./types";
 // three slingers on the roofs of the old storehouses: walk, stop and raise it, walk.
 //
 //   Q  Rådhusbrygga's granite   P  the pier's planks   #  sand, the halls' floors, the yard
-//   H  the hulls (Fram's foredeck, the longship)   ^  the storehouses' ridges   =  the halls' galleries
+//   H  the hulls (Fram's foredeck, the longship)   K  a rock   ^  the storehouses' ridges   =  the halls' galleries
 //   -  the museum's stepped gable   _  roofs and the yard on the mast   B  a beached rowing boat   ~  the fjord
 //   t  T-banen   b  bench   $  skilling   &  brown cheese   y  the shield
 //
@@ -60,7 +60,9 @@ b.fill(98, 108, W, ROWS - 1, ".");
 // The gallery past Gjøa, where she lands him.
 b.run(110, 118, 10, "=");
 // --- Outside: the fjord between the halls, the balsa raft and the reed boat -------------------------
-water(122, 155);
+water(122, 151);
+// A rock between the bundles and the reed boat: somewhere firm to wait.
+b.fill(138, 139, W, ROWS - 1, "K");
 // --- The longship's hall: its hull on the cradle, the yard on its mast ------------------------------
 b.fill(172, 199, 14, W - 1, "H");
 b.run(182, 190, 10, "_");
@@ -93,9 +95,9 @@ const COINS: [number, number][] = [
   [101, 10], [104, 10], [107, 10],
   [111, 9], [112, 9], [113, 9],
   [124, 17], [126, 17], [128, 17],
-  [133, 17], [136, 17],
-  [141, 17], [143, 17], [145, 17],
-  [150, 17], [153, 17],
+  [132, 16], [133, 15], [135, 16], [136, 15], [137, 16],
+  [142, 17], [144, 17], [146, 17],
+  [149, 16], [150, 15],
   [165, 16], [167, 15], [169, 14],
   [176, 13], [178, 13], [180, 13], [190, 13], [192, 13], [194, 13],
   [205, 18], [214, 18], [223, 18],
@@ -124,8 +126,8 @@ export const FERRY: Path = {
   ]
 };
 
-/** A raft that drifts from `c0` to `c1` and back, standing a second at each end. */
-const drift = (c0: number, c1: number, offset: number): Path => ({
+/** A raft that drifts from `c0` to `c1` and back, standing a second and a half at its near end and a second at its far one. */
+const drift = (c0: number, c1: number): Path => ({
   kind: "path",
   points: [
     { x: c0 * TILE, y: FLOOR },
@@ -136,24 +138,23 @@ const drift = (c0: number, c1: number, offset: number): Path => ({
   speed: 0.8,
   wait: 0,
   stops: [
-    { at: 0, steps: 60 },
+    { at: 0, steps: 90 },
     { at: 1, steps: 60 }
-  ],
-  offset
+  ]
 });
-/** The balsa raft, and the reed boat, which comes to its near end as he could be over the bundles from the raft standing at its far one. */
-export const RAFT = drift(122, 127, 0);
-export const REED = drift(139, 144, 70);
+/** The balsa raft, from the shore out to the first bundle; the reed boat, from the rock out to the last. Each stands against them at its ends. */
+export const RAFT = drift(122, 127);
+export const REED = drift(140, 144);
 
 const CARRIERS: CarrierDef[] = [FERRY, RAFT, REED];
 
 /** Fram's main deck, and Gjøa's: each rocks between its two angles, holding each for a second and a half. */
 export const FRAM_DECK: Deck = { x: 77 * TILE, y: 228, w: 12 * TILE, seg: 4, tilt: [12, -12], hold: 100, move: 60 };
-export const GJOA_DECK: Deck = { x: 99 * TILE, y: 200, w: 10 * TILE, seg: 4, tilt: [12, -12], hold: 100, move: 60, offset: 80 };
+export const GJOA_DECK: Deck = { x: 98 * TILE, y: 200, w: 11 * TILE, seg: 4, tilt: [12, -12], hold: 100, move: 60, offset: 80 };
 const DECKS = [FRAM_DECK, GJOA_DECK];
 
 /** Bundles of balsa logs between the rafts: they hold him a moment, then go under. */
-export const PADS: SinkPad[] = [132, 135, 149, 152].map((c) => ({ x: c * TILE, y: FLOOR, w: 2 * TILE }));
+export const PADS: SinkPad[] = [131 * TILE, 134.5 * TILE, 148 * TILE].map((x) => ({ x, y: FLOOR, w: 2 * TILE }));
 
 interface Ground {
   pads: PadState[];
@@ -171,21 +172,27 @@ export const GROUNDS: Grounds<Ground> = {
 export const OARS: Oar[] = oarBank({ x: 164 * TILE, y: FLOOR - 20, n: 4, dx: 24, dy: -20, beat: { on: 120, warn: 60, off: 90 }, turn: 45, port: { x: 172 * TILE + 6, y: 15 * TILE + 2 }, portDx: 7 }).map((o) => ({ ...o, note: -1 }));
 
 /**
- * The beach's crabs and gulls, a pigeon on Rådhusbrygga, a penguin far from home on the gallery past
- * Gjøa, a gull over the roof; and in the yard, on the storehouses' roofs, three slingers who aim where
- * he is going.
+ * The beach's crabs and gulls, a pigeon on Rådhusbrygga, museum rats (under Fram's deck, by the oars,
+ * on the longship's deck), two penguins far from home past Gjøa, a gull over the roof; and in the
+ * yard, on the storehouses' ridges, three slingers who aim where he is going.
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "pigeon", c: 6, r: W - 1, range: 1 },
   { kind: "walker", look: "crab", c: 42, r: W - 1, range: 1, speed: 0.3 },
-  { kind: "flyer", look: "gull", c: 58, r: 12, range: 3, rise: 6, period: 170 },
+  { kind: "flyer", look: "gull", c: 42, r: 14, range: 2, rise: 3, period: 150 },
+  { kind: "flyer", look: "gull", c: 58, r: 13, range: 3, rise: 6, period: 170 },
   { kind: "walker", look: "crab", c: 65, r: W - 1, range: 0.5, speed: 0.3 },
+  { kind: "walker", look: "rat", c: 82, r: W - 1, range: 3 },
   { kind: "walker", look: "penguin", c: 115, r: 9, range: 1, speed: 0.3 },
-  // Nine tiles apart, each a little behind the one before: whenever a man walks on through the yard,
-  // one of them throws while he is coming at it.
+  { kind: "walker", look: "penguin", c: 114, r: W - 1, range: 1, speed: 0.3 },
+  { kind: "walker", look: "rat", c: 164, r: W - 1, range: 1 },
+  { kind: "walker", look: "rat", c: 184, r: 13, range: 3 },
+  // Nine tiles apart, the first two in step and the third a little behind: their beats chosen (by a
+  // search over every pair) so that a man who walks on through the yard meets a throw coming at him
+  // as often as can be, about every other time.
   { kind: "thrower", look: "slinger", c: 208, r: 12, period: 170, lead: true, faces: -1 },
-  { kind: "thrower", look: "slinger", c: 217, r: 12, period: 170, offset: 10, lead: true, faces: -1 },
-  { kind: "thrower", look: "slinger", c: 226, r: 12, period: 170, offset: 20, lead: true, faces: -1 },
+  { kind: "thrower", look: "slinger", c: 217, r: 12, period: 170, lead: true, faces: -1 },
+  { kind: "thrower", look: "slinger", c: 226, r: 12, period: 170, offset: 10, lead: true, faces: -1 },
   { kind: "flyer", look: "gull", c: 246, r: 4, range: 2, rise: 6, period: 150 }
 ];
 
@@ -425,6 +432,19 @@ function gjoa() {
   for (const c of [101, 106]) R(c * TILE, 258, 6, FLOOR - 258, mix(P.woodDark, M.hold, 0.3));
   R(103 * TILE, 4 * TILE, 3, 214 - 4 * TILE, P.woodDark);
   for (let i = 0; i < 30; i++) R(103 * TILE - 2 - i, 4 * TILE + 8 + i * 5, 1, 5, mix(P.woodDark, INK, 0.3));
+}
+
+/** The rock in the fjord between the bundles and the reed boat: wet grey stone, weed at the water line. */
+function rock(c: number, r: number, x: number, y: number) {
+  const base = r === W ? STONE.light : mix(STONE.base, P.waterDeep, 0.4);
+  R(x, y, TILE, TILE, base);
+  R(x + ((c * 5) % 9), y + 4 + ((r * 3) % 7), 5, 2, mix(base, WHITE, 0.2));
+  R(x + ((c * 7) % 11), y + 9, 4, 1, mix(base, INK, 0.25));
+  if (r === W) {
+    R(x, y, TILE, 2, mix(STONE.light, WHITE, 0.3));
+    R(x, y + 2, TILE, 1, STONE.moss);
+    R(c === 138 ? x : x + TILE - 1, y, 1, TILE, mix(base, INK, 0.3));
+  }
 }
 
 /** A slab of a hall's floor: polished on top, joints, a little darker below. */
@@ -733,7 +753,7 @@ export const BYGDOY: LevelDef = {
   place: { nb: "Museene på Bygdøy", en: "The museums on Bygdøy" },
   sky: "day",
   map: MAP,
-  legend: { solid: "QPH#B", oneWay: "=_-^", water: "~" },
+  legend: { solid: "QPHK#B", oneWay: "=_-^", water: "~" },
   ramps: [],
   carriers: CARRIERS,
   timed: OARS,
@@ -798,6 +818,10 @@ export const BYGDOY: LevelDef = {
         return true;
       }
       if (t === "H") return true;
+      if (t === "K") {
+        rock(c, r, x, y);
+        return true;
+      }
       // The halls' floors: polished slabs, their joints.
       if (t === "#" && ((c >= 69 && c < 122) || (c >= 157 && c < 205))) {
         hallFloor(c, r, x, y);

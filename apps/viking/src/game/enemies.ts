@@ -38,7 +38,7 @@ export interface EnemyDef {
   h?: number;
   /** A thrower that aims where he is going when he comes at it (even past itself), and allows for the drop when it stands above him. */
   lead?: boolean;
-  /** A thrower that faces one way only and throws only at him on that side (a slinger looking out over a yard). */
+  /** A thrower that faces one way only and throws only at him on that side, and not at him right under it (a slinger on a roof's ridge). */
   faces?: 1 | -1;
 }
 
@@ -195,7 +195,8 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
         break;
       case "thrower": {
         e.dir = e.def.faces ?? (hx < e.x ? -1 : 1);
-        const near = Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > 0;
+        // One that faces one way does not see him right under its perch either.
+        const near = Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? 1.5 * TILE : 0);
         if (untilThrow(e, t) === 0 && near) {
           // A lob that comes down about where he stands now, never faster across than it can be dodged.
           let air = (2 * SHOT.up) / SHOT.gravity;

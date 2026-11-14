@@ -10,7 +10,7 @@ Run everything from this folder.
 
 | Script | What it does | Run |
 |---|---|---|
-| `sloppy.ts` | the sloppy player: each level's scripted route through the real rules, every key edge off by up to ±k steps | `bun sloppy.ts levels=radhuset ks=2,4 seeds=30 out=out/x.jsonl` |
+| `sloppy.ts` | the sloppy player: each level's scripted route through the real rules, every key edge off by up to ±k steps (the shield's key too) | `bun sloppy.ts levels=radhuset ks=2,4 seeds=30 out=out/x.jsonl` |
 | `runall.sh` | the whole study: timing errors ±2/±4/±8 (`out/t-*.jsonl`), ±4 with mistakes (`out/m-*.jsonl`), every jump alone (`out/obstacles-*.json`); four processes at a time, 13 to 25 min on the Pi (more when runs go their full length) | `./runall.sh` |
 | `summary.py`, `agg.py`, `hurts.py` | the tables of the review's section A from those files | `python3 summary.py` |
 | `obstacles.ts` | every jump and ride of every route on its own, 40 tries from the perfect run's state | `bun obstacles.ts levels=langkaia ks=2,4 seeds=40` |
@@ -26,7 +26,7 @@ Run everything from this folder.
 `bun sloppy.ts ks=0` must print `clear 1/1` for all ten levels: at k = 0 the harness reproduces the
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
-`before/` holds the review's own numbers (the tables, the per-jump results, the dead ends, the boss
+`line2/` holds Bygdøy's (order 14): the sloppy player at ±2 and ±4, every jump on its own, the standing and the waits, and a line 1 spot-check; `summary.md` there has the tables. `before/` holds the review's own numbers (the tables, the per-jump results, the dead ends, the boss
 strategies and waits as measured at `b5d1a3a`); `after/` the same after order 12; `after13/` the same
 after order 13, with `standing.txt` (the routes' standing still split into fixed ground and riding). The raw `.jsonl`
 runs are not kept; `out/` is where a new run writes them and is not committed.

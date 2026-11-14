@@ -31,6 +31,22 @@ body {
   margin-left: 4px;
 }
 
+/* With line 2's group as well, sixteen slots: narrower, so the run still fits its row at any width. */
+.run.sixteen .runes {
+  gap: 1px;
+}
+
+.run.sixteen .runes li {
+  width: 14px;
+  height: 20px;
+  border-radius: 5px;
+}
+
+.run.sixteen .runes svg {
+  width: 8px;
+  height: 12px;
+}
+
 .runes li {
   display: grid;
   place-items: center;
@@ -198,6 +214,24 @@ body {
 
   .run.sixteen .runes.two {
     margin-left: 3px;
+  }
+}
+
+/* On an upright phone, sixteen slots take no more room than line 1's ten took before line 2. */
+@media (max-width: 480px) {
+  .run.sixteen .runes li {
+    width: 10px;
+    height: 18px;
+    border-radius: 3px;
+  }
+
+  .run.sixteen .runes svg {
+    width: 6px;
+    height: 11px;
+  }
+
+  .run.sixteen .clock small {
+    display: none;
   }
 }
 
