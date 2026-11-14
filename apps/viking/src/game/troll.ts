@@ -13,8 +13,9 @@ import type { Body } from "@larshansen/pixelkit/physics";
 //
 // Touching it hurts, as any enemy does. Losing a life sends it back to sleep where it started; the
 // stone it has already turned to stays. A round with no hit says so ("miss": the page shows a hint)
-// and it backs off to the far end to come again; if he waits it out up on a rock or a ledge, after
-// ten seconds it gives up waiting under him and backs off the same way ("rest").
+// and it backs off to the far end to come again; if he waits it out where it cannot reach him (a
+// rock, a ledge, the edge of the clearing), after ten seconds it gives up and backs off the same way
+// ("rest").
 
 export interface TrollDef {
   /** The floor of the clearing (world y), and the ends it walks between (world x). */
@@ -151,15 +152,17 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
         to(t, "windup", step);
         return "windup";
       }
-      // He is up out of reach: it waits under him; for ten seconds, then it gives up and backs off.
-      t.waited = onFloor ? 0 : t.waited + 1;
+      // He is out of its reach (up on a rock or a ledge, or just outside the clearing): it waits as
+      // near as it can get; for ten seconds, then it gives up and backs off.
+      const was = t.x;
+      if (Math.abs(dx) > 4) t.x = clamp(t.x + t.dir * TROLL_SPEED.walk[Math.min(t.hits, TROLL_SPEED.walk.length - 1)]);
+      t.waited = t.x !== was ? 0 : t.waited + 1;
       if (t.waited >= TROLL_STEPS.stalemate) {
         t.waited = 0;
         t.dir = hx < (d.x0 + d.x1) / 2 ? 1 : -1;
         to(t, "retreat", step);
         return "rest";
       }
-      if (Math.abs(dx) > 4) t.x = clamp(t.x + t.dir * TROLL_SPEED.walk[Math.min(t.hits, TROLL_SPEED.walk.length - 1)]);
       return null;
     }
     case "windup":

@@ -175,11 +175,12 @@ export function surfaceAt(x: number, y: number): Surface | null {
 }
 
 // --- Things that move -------------------------------------------------------------------------------------
-/** The chairlift over the second gully: one chair on its cable, back and forth, slow at each end. */
+/** The chairlift over the second gully: two chairs on its cable, back and forth, slow at each end, half a round apart: one is never far off. */
 const CHAIR_Y = 15 * TILE - 6;
-export const CHAIRS: Travel[] = [{ kind: "travel", from: { x: 139 * TILE, y: CHAIR_Y }, to: { x: 149 * TILE, y: CHAIR_Y }, w: 2 * TILE, period: 1000 }];
+const CHAIR_ROUND = 480;
+export const CHAIRS: Travel[] = [0, 1].map((k) => ({ kind: "travel", from: { x: 139 * TILE, y: CHAIR_Y }, to: { x: 149 * TILE, y: CHAIR_Y }, w: 2 * TILE, period: CHAIR_ROUND, offset: (k * CHAIR_ROUND) / 2 }));
 /** The lift up the tower: from the hollow under the jump to the hut's floor. */
-export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 0.6, wait: 150 };
+export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 1.5, wait: 60 };
 const CARRIERS: CarrierDef[] = [...CHAIRS, LIFT];
 /**
  * Slabs of ice over the third gully, three tiles each with a tile of water between: there three

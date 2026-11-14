@@ -153,7 +153,7 @@ const drift = (from: number, to: number, offset: number): CarrierDef[] =>
  * The two rafts that drift towards each other: each waits at its own end, comes over at a steady
  * pace, and the two stand side by side in the middle for a second and a half before they part.
  */
-export const TOGETHER = { speed: 0.4, atEnd: 60, together: 90 };
+export const TOGETHER = { speed: 0.6, atEnd: 60, together: 90 };
 const meeting = (from: number, to: number): CarrierDef[] =>
   [0, 1].map((k) => ({
     kind: "path",

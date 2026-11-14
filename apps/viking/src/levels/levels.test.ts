@@ -9,7 +9,7 @@ import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/tim
 import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
-import { carrierAt } from "@larshansen/pixelkit/carrier";
+import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
@@ -27,7 +27,7 @@ import { AKERSHUS, BATTERY, HOIST } from "./akershus";
 import { BUILT, LINE, ORDER } from "./index";
 import { kartDef } from "./kart";
 import { LANGKAIA, RAFT } from "./langkaia";
-import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING } from "./radhuset";
+import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING, SWING_ENDS } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
 
 // The built levels: their maps make sense, a scripted player clears each with the front page's
@@ -98,11 +98,11 @@ const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkolle
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /**
- * The scripted clear's floor: fifty seconds, the last level eighty. (It was sixty and ninety; order 12
- * cut the long waits on rides and bosses, which took ten seconds and more off some levels without
- * taking away anything to do. The size of a level is held by its columns, 220 to 280.)
+ * The scripted clear's floor: forty-five seconds, the last level eighty. (It was sixty and ninety;
+ * order 12 cut the long waits on rides and bosses, which took ten to fifteen seconds off some levels
+ * without taking away anything to do. The size of a level is held by its columns, 220 to 280.)
  */
-const SHORTEST = 50;
+const SHORTEST = 45;
 const LONGEST: Record<string, number> = { nabolaget: 80 };
 
 describe("the line", () => {
@@ -157,7 +157,7 @@ for (const def of LEVELS) {
       }
     });
 
-    test("a scripted player clears it with one jump, raising every flag, losing no heart, in fifty seconds or more", () => {
+    test("a scripted player clears it with one jump, raising every flag, losing no heart, in forty-five seconds or more", () => {
       const p = newPlay(def, { pole: POLE.has(def.id) });
       const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
@@ -582,7 +582,8 @@ describe("what the levels promise", () => {
     const p = newPlay(AKERSHUS);
     const route = AKERSHUS_ROUTE;
     const upTo = route.findIndex((m) => m.name === "the hoist down");
-    playMoves(p, [...route.slice(0, upTo), wait("the hoist at the top", (q) => carrier(q, HOIST).y <= HOIST.top), cannonRide(1)], { max: 60 * 120 });
+    // Into the cannon just as the hoist comes to the top (it stands there under a second).
+    playMoves(p, [...route.slice(0, upTo), wait("the hoist coming to the top", (q) => carrier(q, HOIST).y <= HOIST.top + 40 && carrierAt(HOIST, q.t + 1).y < carrier(q, HOIST).y), cannonRide(1)], { max: 60 * 120 });
     const flags = flagsOf(levelMap(AKERSHUS));
     expect(p.checkpoints.reached).toBe(1);
     expect(p.hearts).toBe(2);
@@ -631,7 +632,11 @@ describe("what the levels promise", () => {
   test("Rådhuset: the swinging bell comes back to the fourth bell while it is there, and the clock's hand passes within a jump of the first ledge and under the balcony", () => {
     // The swing stands at its right end while the fourth bell of the carillon is on, once a round.
     let together = 0;
-    for (let t = 0; t < SWING.period; t++) if (carrierAt(SWING, t).x >= SWING.from.x - 8 && timedPhase(t, CARILLON[3]) !== "off") together++;
+    for (let t = 0; t < carrierPeriod(SWING); t++) if (carrierAt(SWING, t).x >= SWING_ENDS.right - 8 && timedPhase(t, CARILLON[3]) !== "off") together++;
+    // ... and stands at its left end while the bell after it is there.
+    let across = 0;
+    for (let t = 0; t < carrierPeriod(SWING); t++) if (carrierAt(SWING, t).x <= SWING_ENDS.left + 2 && timedPhase(t, CARILLON[4]) === "on") across++;
+    expect(across).toBeGreaterThan(20);
     expect(together).toBeGreaterThan(30);
     // The hand: its bottom a short hop from the tower's first ledge, its top a jump under the balcony.
     const map = levelMap(RADHUSET);

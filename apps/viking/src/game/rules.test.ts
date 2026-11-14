@@ -611,9 +611,13 @@ describe("the troll", () => {
       { troll: ARENA }
     );
     const p = newPlay(ROCK, { start: { x: 16 * TILE + 8, bottom: 5 * TILE } });
-    const ev = steps(p, TROLL_STEPS.stalemate + TROLL_STEPS.waking + 200);
+    let far = 0;
+    const ev = steps(p, TROLL_STEPS.stalemate + TROLL_STEPS.waking + 900, () => {
+      far = Math.max(far, p.troll!.phase === "retreat" ? p.troll!.x : 0);
+      return idle;
+    });
     expect(ev.some((e) => e.troll === "rest")).toBe(true);
-    expect(p.troll!.x).toBeGreaterThan(30 * TILE);
+    expect(far).toBeGreaterThan(30 * TILE);
   });
 
   test("a life lost sends it back to sleep where it started, and the stone it has turned to stays", () => {

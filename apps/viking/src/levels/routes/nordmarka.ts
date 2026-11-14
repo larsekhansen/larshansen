@@ -1,6 +1,7 @@
 import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { carrier, cx, jump, leap, tile, wait, walk, type Move } from "../../game/bot";
 import type { Play } from "../../game/play";
+import { untilThrow } from "../../game/enemies";
 import { TROLL_STEPS, type Troll } from "../../game/troll";
 import { MOOSE, TROLL_DEF } from "../nordmarka";
 import { riding } from "./common";
@@ -59,7 +60,9 @@ export const NORDMARKA_ROUTE: Move[] = [
   jump(1, { release: 10 }),
   wait("across on the moose", (q) => riding(q) && carrierAt(MOOSE, q.t).x >= MOOSE.to.x - 2),
   jump(1, { release: 30 }),
-  // Past Ullevålseter and Jernhaugen; the gorge, with the dash.
+  // Past Ullevålseter (under the squirrel just after it has thrown) and Jernhaugen; the gorge, with the dash.
+  walk(tile(103)),
+  wait("the squirrel by the hut has thrown", (q) => untilThrow(q.enemies.find((e) => e.def.c === 111)!, q.t) > 110 && q.shots.length === 0),
   walk(tile(157) + 4),
   leap(tile(158), 1, { dash: 12 }),
   walk(tile(195) + 8),

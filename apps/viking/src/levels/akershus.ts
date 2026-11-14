@@ -154,7 +154,7 @@ const SLATE: LedgeLook = { body: ROOF.slate, top: mix(ROOF.slate, WHITE, 0.2), e
 const COPPER: LedgeLook = { body: METAL.copper, top: METAL.copperLight, edge: METAL.copperDark, joint: METAL.copperDark };
 
 /** The hoist over the moat: up into the fourth cannon's line of fire and down into the water, solid underneath. */
-export const HOIST = { kind: "lift" as const, x: 148 * TILE, top: 64, bottom: WATER + 10, w: 3 * TILE, speed: 2, wait: 60, under: 6 };
+export const HOIST = { kind: "lift" as const, x: 148 * TILE, top: 64, bottom: WATER + 10, w: 3 * TILE, speed: 3, wait: 45, under: 6 };
 
 /**
  * The cannons, left to right: onto the gate tower; over the ward to the higher wall; over the ditch;

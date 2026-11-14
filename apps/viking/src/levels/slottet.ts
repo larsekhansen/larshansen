@@ -167,7 +167,7 @@ export const BALLOONS: TimedLedge[] = [
 /** The big banners, on tall poles, over the second dig: only the drum reaches them. The first is Høyenhall skole's. */
 const BANNERS_D = bannerRow(106, 123, 23, 86, 2, 30, 0.8);
 /** The King's Guard: three in step, back and forth across the square; their hats are the ledge. */
-export const GUARD: Travel = { kind: "travel", from: { x: 199 * TILE, y: 19 * TILE - 22 }, to: { x: 209 * TILE, y: 19 * TILE - 22 }, w: 3 * TILE, period: 480 };
+export const GUARD: Travel = { kind: "travel", from: { x: 199 * TILE, y: 19 * TILE - 22 }, to: { x: 209 * TILE, y: 19 * TILE - 22 }, w: 3 * TILE, period: 300 };
 export const BANNERS = { A: BANNERS_A, B: BANNERS_B, D: BANNERS_D };
 const CARRIERS: CarrierDef[] = [...BANNERS_A, ...BANNERS_B, ...BANNERS_D, GUARD];
 const GUARD_INDEX = CARRIERS.length - 1;
