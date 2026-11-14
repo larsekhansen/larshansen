@@ -113,7 +113,9 @@ b.fill(177, 178, S - 1, S - 1, "B");
 
 // Marks: the start, the doors, signs, flags, benches, the rune, the bracteate, the cheese.
 b.put(2, S - 1, "t").put(4, S - 1, "S").put(7, S - 1, "i");
-b.put(10, S - 3, "f").put(83, S - 3, "b").put(100, S - 1, "f").put(108, S - 1, "i");
+b.put(10, S - 3, "f").put(44, 7, "f").put(83, S - 3, "b").put(98, S - 1, "f").put(108, S - 1, "i");
+// A flag on the church tower's top, and one past the tram's slot by the yellow house.
+b.put(128, 1, "f").put(211, S - 1, "f");
 // A stone plinth by the lane's wall, a bench on it: a little off the path.
 b.run(82, 84, S - 2, "=");
 // Kruttverket's sign at the foot of the snow; then the flag, the bench and the plough's sign.
@@ -201,18 +203,17 @@ export const TERRACE = { right: 174 * TILE, top: (S - 3) * TILE };
 
 /**
  * Cats on the roofs, the first alone on its ridge; crows over the yards; a snowball kid on the block's
- * roof; a fox, an owl and another kid in the lane behind the church.
+ * roof; a fox and an owl in the lane behind the church.
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "cat", c: 30, r: 10, range: 1, w: 12 },
   { kind: "flyer", look: "crow", c: 35, r: 7, range: 2, rise: 8, period: 160 },
-  { kind: "thrower", look: "kid", c: 50, r: 7, period: 210 },
+  { kind: "thrower", look: "kid", c: 52, r: 7, period: 210 },
   { kind: "walker", look: "cat", c: 58, r: 9, range: 1, w: 12 },
   { kind: "flyer", look: "crow", c: 72, r: 6, range: 3, rise: 6, period: 170, offset: 60 },
   { kind: "walker", look: "cat", c: 153, r: S - 1, range: 1, w: 12 },
   { kind: "walker", look: "fox", c: 90, r: S - 1, range: 2, w: 12 },
   { kind: "flyer", look: "owl", c: 96, r: 13, range: 2, rise: 6, period: 170 },
-  { kind: "thrower", look: "kid", c: 106, r: S - 1, period: 220, offset: 90 },
   { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 }
 ];
 

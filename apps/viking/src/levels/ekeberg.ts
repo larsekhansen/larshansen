@@ -86,7 +86,7 @@ b.fill(251, 251, T - 2, T - 1, "K");
 
 // Marks: the start, the doors, signs, flags, benches, sheep, the rune, the bracteate, the cheese.
 b.put(2, G0 - 1, "t").put(4, G0 - 1, "S").put(7, G0 - 1, "i");
-b.put(57, G1 - 1, "i").put(71, G1 - 1, "f").put(84, G1 - 1, "i").put(127, G1 - 1, "b").put(133, G1 - 1, "f");
+b.put(54, G1 - 1, "f").put(57, G1 - 1, "i").put(71, G1 - 1, "f").put(84, G1 - 1, "i").put(127, G1 - 1, "b").put(133, G1 - 1, "f");
 for (const c of KNOLLS) b.put(c, 17, "e");
 b.put(161, QR - 1, "f").put(202, T - 1, "f").put(220, T - 3, "b").put(212, T - 1, "i");
 b.put(251, T - 3, "r").put(86, 3, "o").put(112, 5, "&");

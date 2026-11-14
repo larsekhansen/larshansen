@@ -189,6 +189,7 @@ export function ploughBoss(def: PloughDef): Boss<Plough> {
     stomped: ploughStomped,
     hurts: (p, _t, him) => ploughHurts(p, him),
     reset: resetPlough,
+    awake,
     beaten: (p) => p.phase === "beaten"
   };
 }

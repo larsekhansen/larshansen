@@ -76,7 +76,7 @@ b.ground(229, COLS - 1, 6, "K");
 
 // Marks: the start, the doors, signs, flags (blue trunks), benches, the rune, the bracteate, the cheese.
 b.put(2, G - 1, "t").put(4, G - 1, "S").put(20, G - 1, "i").put(32, G - 1, "f");
-b.put(86, G - 1, "f").put(121, G - 1, "f").put(127, G - 3, "b").put(131, G - 1, "i");
+b.put(58, G - 1, "f").put(86, G - 1, "f").put(121, G - 1, "f").put(127, G - 3, "b").put(131, G - 1, "i");
 b.put(148, G - 1, "j").put(153, G - 1, "f").put(190, G - 1, "i").put(192, G - 1, "f").put(194, G - 1, "b");
 b.put(218, G - 4, "r").put(95, 11, "o").put(139, G - 9, "&");
 
@@ -140,7 +140,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "fox", c: 172, r: G - 1, range: 2, w: 12 },
   { kind: "flyer", look: "bat", c: 178, r: 14, range: 3, rise: 10, period: 120 },
   { kind: "spiky", look: "anthill", c: 183, r: G - 1, speed: 0, w: 14, h: 8 },
-  { kind: "thrower", look: "squirrel", c: 186, r: G - 1, period: 210, offset: 70 }
+  { kind: "thrower", look: "squirrel", c: 176, r: G - 1, period: 210, offset: 70 }
 ];
 
 

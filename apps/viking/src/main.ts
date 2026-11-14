@@ -59,7 +59,7 @@ import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { autopilot, type Move } from "./game/bot";
 import { strings } from "./game/i18n";
 import { carefulStep } from "./game/careful";
-import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
+import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
@@ -613,10 +613,26 @@ restartButton.title = `${t.restart} (R)`;
 $<HTMLElement>("finish-on").textContent = t.finishOn;
 $<HTMLElement>("finish-again").textContent = t.finishAgain;
 
-/** The level again from its start, the clock at zero. Lives stay as they are. */
+/** The level again from its start, the clock at zero. Lives stay as they are. On the card after a Game over in a boss's fight: on again from the bench before it. */
 function restartLevel() {
   if (scene.map) return;
+  if (state.card === "over" && scene.play.overAtBoss) return tryAgainAtBoss();
   openScene(scene.def.id);
+}
+
+/** After a Game over in a boss's fight: from the bench before it, three lives, the boss asleep and whole again (ADR 0017). */
+function tryAgainAtBoss() {
+  const p = scene.play;
+  againAtBoss(p);
+  session.lives = p.lives;
+  state.finished = false;
+  state.card = null;
+  finishEl.hidden = true;
+  Object.assign(shown, p.body);
+  before.x = p.body.x;
+  before.y = p.body.y;
+  layout();
+  hud();
 }
 
 const finishOn = $<HTMLButtonElement>("finish-on");
@@ -659,8 +675,9 @@ function showCard(r: CardResult) {
 function showOver() {
   state.finished = true;
   state.card = "over";
+  const line = scene.play.overAtBoss ? t.overLineBoss : t.overLine;
   $<HTMLElement>("finish-title").textContent = t.overTitle;
-  $<HTMLElement>("finish-line").textContent = t.overLine;
+  $<HTMLElement>("finish-line").textContent = line;
   $<HTMLElement>("finish-gold").hidden = true;
   finishCoins.hidden = true;
   finishClean.hidden = true;
@@ -668,7 +685,7 @@ function showOver() {
   finishOn.textContent = t.overAgain;
   finishAgain.textContent = t.overMap;
   finishEl.hidden = false;
-  say(`${t.overTitle}. ${t.overLine}`);
+  say(`${t.overTitle}. ${line}`);
   sfx.play("over");
   finishOn.focus({ preventScroll: true });
 }

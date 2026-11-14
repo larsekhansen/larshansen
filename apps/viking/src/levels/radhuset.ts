@@ -68,7 +68,7 @@ b.fill(206, 208, 3, 5, "N");
 // Marks.
 b.put(2, G - 1, "t").put(4, G - 1, "S");
 b.put(60, G - 2, "b").put(70, G - 1, "i").put(73, G - 1, "f");
-b.put(114, G - 1, "i").put(116, G - 1, "f").put(155, G - 1, "i");
+b.put(114, G - 1, "i").put(116, G - 1, "f").put(133, G - 1, "f").put(155, G - 1, "i");
 b.put(175, ROOF_ROW - 1, "f").put(177, ROOF_ROW - 1, "i").put(180, ROOF_ROW - 1, "b");
 b.put(195, BLOCK - 2, "f");
 b.put(203, 4, "r").put(207, 1, "o").put(31, G - 8, "&");
@@ -149,8 +149,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "gull", c: 85, r: G - 5, range: 3, rise: 6, period: 170 },
   { kind: "walker", look: "scooter", c: 102, r: G - 1, range: 3, speed: 1, w: 14, h: 12 },
   { kind: "walker", look: "pigeon", c: 110, r: G - 1, range: 1 },
-  { kind: "walker", look: "pigeon", c: 136, r: G - 1, range: 2 },
-  { kind: "thrower", look: "gull", c: 150, r: G - 1, period: 200, offset: 60 },
+  { kind: "walker", look: "pigeon", c: 140, r: G - 1, range: 1 },
+  { kind: "thrower", look: "gull", c: 146, r: G - 1, period: 200, offset: 60 },
   { kind: "flyer", look: "gull", c: 180, r: 27, range: 1, rise: 6, period: 160 }
 ];
 

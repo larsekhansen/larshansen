@@ -3,7 +3,8 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
-import { KIND, leap as leapOf } from "../game/enemies";
+import { KIND, THROW_REACH, leap as leapOf } from "../game/enemies";
+import { footOf } from "@larshansen/pixelkit/tilemap";
 import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
 import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
 import { fresh } from "../game/progress";
@@ -204,12 +205,19 @@ for (const def of LEVELS) {
         expect(enemies.length).toBeGreaterThanOrEqual(8);
         expect(enemies.length).toBeLessThanOrEqual(20);
         expect(flagsOf(map).length).toBeGreaterThanOrEqual(2);
-        // No enemy's patrol comes within three tiles of a flag or a bench.
+        // No enemy's patrol comes within three tiles of a flag or a bench, and no thrower can reach
+        // him standing at one, or at a sign while he reads it.
         const spots = [...flagsOf(map), ...benches];
+        const signs = map.find(MARKS.sign).map(footOf);
         for (const e of enemies) {
           const x = e.c * TILE + TILE / 2;
           const reachX = ((e.range ?? 0) + 3) * TILE;
           for (const f of spots) if (Math.abs(f.bottom - (e.r + 1) * TILE) < 3 * TILE) expect({ enemy: e.c, near: Math.abs(f.x - x) > reachX }).toEqual({ enemy: e.c, near: true });
+          if (e.kind === "thrower")
+            for (const f of [...spots, ...signs]) {
+              const inReach = Math.abs(f.x - x) < THROW_REACH.x + TILE / 2 && Math.abs(f.bottom - PLAYER.h - (e.r + 1) * TILE) < THROW_REACH.y;
+              expect({ thrower: e.c, at: Math.floor(f.x / TILE), inReach }).toEqual({ thrower: e.c, at: Math.floor(f.x / TILE), inReach: false });
+            }
         }
         // Every kind in it has a drawing of its own size.
         for (const e of enemies) expect(KIND[e.kind]).toBeDefined();
@@ -509,7 +517,8 @@ describe("what the levels promise", () => {
     expect(ev.lastIndexOf("line", hits[0])).toBeGreaterThan(hits[0] - 120);
     expect(r.events.slice(hits[1] - 60, hits[1]).some((e) => e.dash)).toBe(true);
     const map = levelMap(NABOLAGET);
-    for (const s of [flagsOf(map).at(-1)!, benchesOf(map).at(-1)!]) {
+    // The last flag before the plough's street (another stands past the tram's slot), and the last bench.
+    for (const s of [flagsOf(map).filter((f) => f.x < TERRACE.right).at(-1)!, benchesOf(map).at(-1)!]) {
       expect(s.x).toBeLessThan(TERRACE.right);
       expect(PLOUGH_DEF.rounds[0].x0 - s.x).toBeLessThan(24 * TILE);
     }

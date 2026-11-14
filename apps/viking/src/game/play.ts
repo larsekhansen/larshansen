@@ -114,6 +114,8 @@ export interface Play {
   troll: Troll | null;
   /** The last boss, in the level that has one: its rules (from the level's own module) and its state. */
   boss: { rules: Boss; state: unknown } | null;
+  /** The level is over in a boss's fight (the boss was awake when the last life went): he may go on from the bench before it. */
+  overAtBoss: boolean;
 }
 
 export interface Events {
@@ -267,7 +269,8 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     dashSpent: false,
     dashEnded: -999,
     troll: def.troll ? createTroll(def.troll) : null,
-    boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null
+    boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null,
+    overAtBoss: false
   };
 }
 
@@ -317,6 +320,7 @@ function loseLife(p: Play, ev: Events) {
   if (p.lives <= 0) {
     p.lives = 0;
     p.run.state = "over";
+    p.overAtBoss = bossAwake(p);
     ev.over = true;
     return;
   }
@@ -418,6 +422,33 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
   }
   const hurt = bs.rules.hurts(bs.state, p.t, b);
   if (hurt) hit(p, ev, hurt.fromX);
+}
+
+/** True while a boss is in its fight: awake, and not yet stone or beaten. */
+export const bossAwake = (p: Play) => (!!p.troll && p.troll.phase !== "asleep" && p.troll.phase !== "stone") || (!!p.boss && !p.boss.rules.beaten(p.boss.state) && p.boss.rules.awake(p.boss.state));
+
+/** The bench right before the boss, where a Game over in its fight lets him go on from: the last bench in the level. */
+export const bossBench = (p: Play) => p.benches.at(-1) ?? null;
+
+/**
+ * After a Game over in a boss's fight: on again from the bench before it, with three lives and full
+ * hearts, and the boss asleep again with none of its hits, as if he had just come. The clock, the
+ * flags, the skilling and what else he has found stay as they were.
+ */
+export function againAtBoss(p: Play) {
+  const bench = bossBench(p);
+  if (!p.overAtBoss || !bench) return;
+  p.lives = LIVES;
+  p.hearts = HEARTS;
+  p.run.state = "running";
+  p.overAtBoss = false;
+  p.save = { ...bench };
+  putBack(p, bench);
+  p.lastGround = { ...bench };
+  p.shots = [];
+  p.safeUntil = p.t + SAFE_STEPS;
+  if (p.def.troll) p.troll = createTroll(p.def.troll);
+  if (p.boss) p.boss.state = p.boss.rules.create();
 }
 
 /** True when nothing stands between him and the rune any more: no troll, or it is stone; no boss, or it is beaten. */
@@ -599,13 +630,18 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
       putBack(p, p.lastGround);
       return ev;
     }
-    p.hearts--;
-    p.hurt = true;
-    ev.hurt = true;
-    if (p.hearts <= 0) loseLife(p, ev);
+    const back = p.save ?? (p.checkpoints.reached === null ? p.lastGround : respawnAt(p.checkpoints, p.flags, p.start));
+    // Knocked in while he still blinks from a hit: the hit was the heart; the fall only puts him back.
+    if (p.t < p.safeUntil) putBack(p, back);
     else {
-      putBack(p, p.save ?? (p.checkpoints.reached === null ? p.lastGround : respawnAt(p.checkpoints, p.flags, p.start)));
-      p.safeUntil = p.t + SAFE_STEPS;
+      p.hearts--;
+      p.hurt = true;
+      ev.hurt = true;
+      if (p.hearts <= 0) loseLife(p, ev);
+      else {
+        putBack(p, back);
+        p.safeUntil = p.t + SAFE_STEPS;
+      }
     }
   } else if (b.onGround && firmUnder(p.map, b)) p.lastGround = { x: b.x + PLAYER.w / 2, bottom: b.y + PLAYER.h };
   return ev;

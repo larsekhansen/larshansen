@@ -104,6 +104,8 @@ b.put(88, G - 1, "b").put(75, G - 1, "e").put(91, G - 1, "c");
 b.put(122, WALL - 1, "c").put(136, WALL - 1, "f").put(141, TURRET - 1, "i").put(143, TURRET - 1, "c");
 b.put(159, WALL - 1, "f").put(161, WALL - 1, "i").put(163, WALL - 1, "c").put(172, WALL - 1, "c").put(181, WALL - 1, "c");
 b.put(194, WALL - 1, "f").put(209, WALL - 2, "b").put(211, WALL - 1, "i");
+// A flag in the first gap of the battlements, so a slip up here costs a short walk, not the keep again.
+b.put(235, TOP + 1, "f");
 b.run(208, 210, WALL - 1, "_");
 b.put(SPIRE + 3, TOP - 2, "r").put(SPIRE - 1, 1, "o").put(63, G + 2, "&");
 
@@ -185,7 +187,6 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 223, r: KEEP_FLOOR - 1, range: 2, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 229, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
-  { kind: "walker", look: "guard", c: 244, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "flyer", look: "crow", c: 233, r: TOP - 2, range: 1, rise: 5, period: 140 },
   { kind: "spiky", look: "brazier", c: 259, r: TOP - 1, speed: 0, w: 10, h: 12 }
 ];

@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { DASH, PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { LevelDef } from "../levels/types";
 import { WINDUP, leap, untilThrow, windingUp, type EnemyDef } from "./enemies";
-import { HEARTS, PURSE_LIFE, SAFE_STEPS, STOMP, extraGround, newPlay, runeFree, stepPlay, type Play, type PlayIntent } from "./play";
+import { HEARTS, LIVES, PURSE_LIFE, SAFE_STEPS, STOMP, againAtBoss, extraGround, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./play";
 import { PLOUGH, PLOUGH_STEPS, lineHolds, ploughBoss, type Plough } from "./plough";
 import { placeBody } from "@larshansen/pixelkit/physics";
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -63,11 +63,13 @@ const PIT = level([
 describe("hearts, pits and lives", () => {
   test("a fall into a pit takes a heart and puts him back at the last flag", () => {
     const p = newPlay(PIT);
-    const ev = steps(p, 300, right);
+    const ev: Events[] = [];
+    for (let i = 0; i < 300 && !ev.some((e) => e.splash); i++) ev.push(stepPlay(p, right));
     expect(ev.some((e) => e.flag === 0)).toBe(true);
     expect(ev.some((e) => e.splash)).toBe(true);
     expect(p.hearts).toBe(HEARTS - 1);
     expect(p.hurt).toBe(true);
+    expect(Math.abs(cx(p) - (10 * TILE + 8))).toBeLessThan(2);
   });
 
   test("water is the same as a pit, and he comes back on firm ground, not hanging over the edge", () => {
@@ -118,6 +120,22 @@ describe("hearts, pits and lives", () => {
     for (let i = 0; i < 120 && !splash; i++) splash = stepPlay(p, right).splash;
     expect(p.hearts).toBe(HEARTS - 1);
     expect(Math.abs(cx(p) - (20 * TILE + 8))).toBeLessThan(2);
+  });
+
+  test("a fall while he still blinks from a hit puts him back, but takes no second heart", () => {
+    const p = newPlay(PIT);
+    p.hearts = 2;
+    let splash = false;
+    for (let i = 0; i < 400 && !splash; i++) {
+      // Hit just now, as if knocked off the edge by something.
+      if (cx(p) > 13 * TILE && p.safeUntil === 0) p.safeUntil = p.t + SAFE_STEPS;
+      const ev = stepPlay(p, right);
+      splash = ev.splash;
+      if (splash) expect(ev.hurt).toBe(false);
+    }
+    expect(splash).toBe(true);
+    expect(p.hearts).toBe(2);
+    expect(Math.abs(cx(p) - (10 * TILE + 8))).toBeLessThan(2);
   });
 
   test("after a fall he blinks for a second and a half and cannot be hurt", () => {
@@ -525,6 +543,32 @@ describe("the troll", () => {
     expect(p.runeAt).toBeNull();
   });
 
+  test("Game over in its fight: he goes on from the bench before it, with three lives and full hearts, the troll asleep and whole again", () => {
+    const BENCHED = level(["....................................", "....................................", "....................................", "....................................", "....................................", "....................................", "....................................", "S.....b......................r......", "####################################"], { troll: ARENA });
+    const p = newPlay(BENCHED, { start: { x: 16 * TILE, bottom: 8 * TILE }, lives: 1 });
+    p.troll!.hits = 2;
+    p.hearts = 1;
+    let over = false;
+    for (let i = 0; i < 1500 && !over; i++) over = stepPlay(p, p.troll!.phase === "walk" ? right : idle).over;
+    expect(over).toBe(true);
+    expect(p.overAtBoss).toBe(true);
+    againAtBoss(p);
+    expect(p.run.state).toBe("running");
+    expect([p.lives, p.hearts]).toEqual([LIVES, HEARTS]);
+    expect(Math.abs(cx(p) - (6 * TILE + 8))).toBeLessThan(2);
+    expect([p.troll!.phase, p.troll!.hits, p.troll!.x]).toEqual(["asleep", 0, ARENA.x]);
+    // Away from a fight, Game over is the whole level again.
+    const lost = (() => {
+      const r = newPlay(PIT, { lives: 1 });
+      r.hearts = 1;
+      let o = false;
+      for (let i = 0; i < 600 && !o; i++) o = stepPlay(r, right).over;
+      return r;
+    })();
+    expect(lost.run.state).toBe("over");
+    expect(lost.overAtBoss).toBe(false);
+  });
+
   test("a life lost sends it back to sleep where it started, and the stone it has turned to stays", () => {
     const p = newPlay(CLEARING, { start: { x: 16 * TILE, bottom: 8 * TILE }, lives: 2 });
     p.troll!.hits = 1;
@@ -637,6 +681,23 @@ describe("the last boss: the plough", () => {
     expect(pl.phase).toBe("parked");
     expect(pl.x).toBe(DEF.x);
     expect(pl.hits).toBe(1);
+  });
+
+  test("Game over in its fight: on again from the bench before it, the plough parked with no hits", () => {
+    const BENCHED = level([...street.slice(0, 9), "..S.b" + ".".repeat(55), row("#"), row("#")], { boss: ploughBoss(DEF) });
+    const p = newPlay(BENCHED, { start: { x: 34 * TILE, bottom: 10 * TILE }, lives: 1 });
+    const pl = plough(p);
+    Object.assign(pl, { phase: "drive", since: p.t, x: cx(p) + 40, hits: 2 });
+    p.hearts = 1;
+    let over = false;
+    for (let i = 0; i < 600 && !over; i++) over = stepPlay(p, idle).over;
+    expect(over).toBe(true);
+    expect(p.overAtBoss).toBe(true);
+    againAtBoss(p);
+    const again = plough(p);
+    expect([again.phase, again.hits, again.x]).toEqual(["parked", 0, DEF.x]);
+    expect([p.lives, p.hearts]).toEqual([LIVES, HEARTS]);
+    expect(Math.abs(cx(p) - (4 * TILE + 8))).toBeLessThan(2);
   });
 
   test("three hits, and it parks for good; only then does the rune show", () => {

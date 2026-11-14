@@ -65,7 +65,8 @@ export const RADHUSET_ROUTE: Move[] = [
   jumpTo(mid(132)),
   walk(tile(133)),
   stomp(6),
-  walk(tile(142)),
+  // Out of the second gull's reach while it throws, then onto it.
+  walk(tile(138)),
   ...stompThrower(7),
   walk(LIFT.x - 10),
   wait("the lift at the bottom", (q) => carrier(q, LIFT).y >= LIFT.bottom),

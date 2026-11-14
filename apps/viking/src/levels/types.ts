@@ -164,6 +164,8 @@ export interface Boss<S = unknown> {
   hurts(s: S, t: number, him: Body): { fromX: number } | null;
   /** He lost a life: back to where it waits, keeping the hits it has taken. */
   reset(s: S, t: number): void;
+  /** In its fight: woken, and not back asleep or parked. */
+  awake(s: S): boolean;
   /** Beaten for good: the rune shows. */
   beaten(s: S): boolean;
 }

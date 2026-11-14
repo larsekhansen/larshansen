@@ -88,7 +88,6 @@ export const NABOLAGET_ROUTE: Move[] = [
   walk(tile(92) + 4),
   jump(1, { release: 16 }),
   walk(tile(104)),
-  stomp(8),
   // Up the church's west end, its roof, the tower's ledges, the tower.
   walk(tile(108) + 8),
   jump(1, { release: 12 }),
@@ -104,7 +103,7 @@ export const NABOLAGET_ROUTE: Move[] = [
   jump(1, { release: 12 }),
   walk(tile(131) + 12),
   // Down the snow on the far side, the crow over it, the tram's slot.
-  stomp(9),
+  stomp(8),
   stomp(5),
   walk(tile(155) + 4),
   leap(tile(156), 1),

@@ -124,7 +124,7 @@ const INRUN: Ramp = {
 // Marks: the start, the door, signs, flags, benches, the cannon, the rune, the bracteate, the cheese.
 b.put(3, 8, "t").put(5, 8, "S").put(9, 8, "i").put(21, 6, "b");
 b.put(55, 9, "i").put(57, 9, "f").put(112, 13, "f").put(114, 13, "i").put(117, 13, "c");
-b.put(136, 14, "f").put(152, 15, "f").put(171, 15, "i").put(J + 16, 15, "f").put(J + 19, 15, "b");
+b.put(136, 14, "f").put(152, 15, "f").put(171, 15, "i").put(173, 15, "f").put(J + 16, 15, "f").put(J + 19, 15, "b");
 b.put(J + 51, 19, "r").put(J + 18, 8, "o").put(34, 12, "&");
 
 const COINS: [number, number][] = [
