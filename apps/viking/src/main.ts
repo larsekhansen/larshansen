@@ -655,7 +655,7 @@ function showCard(r: CardResult) {
   finishCoins.hidden = r.total === 0;
   finishCoins.textContent = t.finishSkilling(r.found, r.total);
   finishClean.hidden = !r.clean && !r.pole;
-  finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? t.finishPole : ""].filter(Boolean).join(" ");
+  finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? (touch ? t.finishPoleTouch : t.finishPole) : ""].filter(Boolean).join(" ");
   // The last line counts honestly: the runes he has, on the last level built; and with the tenth, the name, plainly, in both languages.
   const more = $<HTMLElement>("finish-more");
   const runes = LINE.filter((l) => progress.cleared.includes(l.id)).length;
@@ -1236,7 +1236,10 @@ function render(alpha: number) {
   let bubble: { x: number; y: number; lines: string[]; align?: "left" } | null = null;
   if (state.mode === "play" && !door) {
     const sign = scene.signs.find((s) => Math.abs(cx - s.x) < 28 && Math.abs(shown.y + PLAYER.h - s.bottom) < 8);
-    if (sign) bubble = { x: sign.x, y: sign.bottom - 30, lines: scene.def.signs[sign.i]?.lines[lang] ?? [] };
+    if (sign) {
+      const def = scene.def.signs[sign.i];
+      bubble = { x: sign.x, y: sign.bottom - 30, lines: (touch && def?.touch ? def.touch[lang] : def?.lines[lang]) ?? [] };
+    }
     const mound = scene.map ? doorsById.get("maze") : undefined;
     if (!bubble && mound && !abilities.doubleJump && Math.abs(cx - (mound.x + mound.w / 2)) < 3 * TILE && p.body.onGround && Math.abs(shown.y + PLAYER.h - mound.bottom) < 8)
       bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h - 14, lines: t.moundNoFeather };
@@ -1254,14 +1257,14 @@ function render(alpha: number) {
     if (bubble) say(bubble.lines.join(" "));
   }
 
-  // Blinking after a hit; sitting, a little lower, on the bench.
-  const blink = blinking(p) && !view.reduced && Math.floor(p.t / 4) % 2 === 0;
+  // Blinking after a hit (with reduced motion, drawn at half strength the whole time instead); sitting, a little lower, on the bench.
+  const safe = blinking(p) ? (view.reduced ? 0.5 : Math.floor(p.t / 4) % 2 === 0 ? 0.25 : 1) : 1;
   const body = p.sitting ? { ...shown, y: shown.y + 3 } : shown;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
     world: p.map,
     boards: scene.boards,
-    player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * (blink ? 0.25 : 1), phase: sky.phase, look: look() },
+    player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * safe, phase: sky.phase, look: look() },
     hint:
       door && !touch && !speaking && !frozen() && !state.bubble
         ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
@@ -1273,6 +1276,12 @@ function render(alpha: number) {
   });
   drawFlight();
   follows(door ?? (bench !== null ? benchStop : null), state.moved);
+  // The touch pad's button says what up does here: go in at a door, sit at a bench.
+  const label = !door && bench !== null ? t.sitButton : t.enter;
+  if (enterButton.textContent !== label) {
+    enterButton.textContent = label;
+    enterButton.setAttribute("aria-label", label);
+  }
   hud();
 }
 /** What the pad's enter button stands for at a bench. */

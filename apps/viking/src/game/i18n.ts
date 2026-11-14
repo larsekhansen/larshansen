@@ -40,6 +40,9 @@ const STRINGS = {
     finishSkilling: (n: number, of: number) => `Skilling: ${n} av ${of}.`,
     finishClean: "Uten å miste et hjerte.",
     finishPole: "Du har fått skistaven: Shift eller X for et kort rykk, også i lufta.",
+    finishPoleTouch: "Du har fått skistaven: Rykk-knappen gir et kort rykk, også i lufta.",
+    /** The touch pad's button at a bench. */
+    sitButton: "Sett deg",
     hurt: (n: number) => (n === 1 ? "Au. Ett hjerte igjen." : `Au. ${n} hjerter igjen.`),
     lifeLost: (n: number) => (n === 1 ? "Et liv mindre. Ett igjen." : `Et liv mindre. ${n} igjen.`),
     lifeWon: "Et liv til.",
@@ -93,6 +96,8 @@ const STRINGS = {
     finishSkilling: (n: number, of: number) => `Skilling: ${n} of ${of}.`,
     finishClean: "Without losing a heart.",
     finishPole: "You have the ski pole: Shift or X for a short dash, in the air too.",
+    finishPoleTouch: "You have the ski pole: the Dash button for a short dash, in the air too.",
+    sitButton: "Sit",
     hurt: (n: number) => (n === 1 ? "Ouch. One heart left." : `Ouch. ${n} hearts left.`),
     lifeLost: (n: number) => (n === 1 ? "A life lost. One left." : `A life lost. ${n} left.`),
     lifeWon: "One more life.",

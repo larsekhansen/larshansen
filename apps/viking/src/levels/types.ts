@@ -47,6 +47,8 @@ export interface SignDef {
   label: Words;
   /** What the sign says in a bubble when he stands by it, first line on top. */
   lines: { nb: string[]; en: string[] };
+  /** The same for a touch screen with no keyboard, where the lines name keys. */
+  touch?: { nb: string[]; en: string[] };
 }
 
 export interface DoorDef {

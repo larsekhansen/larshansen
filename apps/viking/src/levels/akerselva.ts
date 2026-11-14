@@ -204,9 +204,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "spiky", look: "grill", c: 52, r: T1 - 1, speed: 0, w: 12, h: 12 },
   { kind: "jumper", look: "salmon", c: 70, r: T1 + 2, rise: 56, period: LOG_PERIOD.bjolsen[1], offset: 60 },
   { kind: "walker", look: "rat", c: 98, r: T2 - 1, range: 2 },
-  { kind: "flyer", look: "wasp", c: 119, r: 10, range: 2, rise: 8, period: 140 },
+  { kind: "flyer", look: "wasp", c: 104, r: 14, range: 2, rise: 8, period: 140 },
   { kind: "spiky", look: "hedgehog", c: 151, r: T2 - 1, range: 1 },
-  { kind: "thrower", look: "gull", c: 178, r: T3 - 1, period: 190 },
   { kind: "walker", look: "rat", c: 183, r: T3 - 1, range: 2 },
   { kind: "jumper", look: "salmon", c: 209, r: POOL + 1, rise: 50, period: LOG_PERIOD.pool[1], offset: 40 },
   { kind: "flyer", look: "gull", c: 222, r: 25, range: 3, rise: 8, period: 160 },
@@ -901,7 +900,8 @@ export const AKERSELVA: LevelDef = {
     },
     {
       label: { nb: "Skistaven", en: "The ski pole" },
-      lines: { nb: ["Hopp, og trykk Shift eller X: et rykk rett fram.", "Det går gjennom en foss også."], en: ["Jump, then Shift or X: a dash straight on.", "It goes through a waterfall, too."] }
+      lines: { nb: ["Hopp, og trykk Shift eller X: et rykk rett fram.", "Det går gjennom en foss også."], en: ["Jump, then Shift or X: a dash straight on.", "It goes through a waterfall, too."] },
+      touch: { nb: ["Hopp, og trykk Rykk: et rykk rett fram.", "Det går gjennom en foss også."], en: ["Jump, then press Dash: a dash straight on.", "It goes through a waterfall, too."] }
     },
     {
       label: { nb: "Hjula", en: "Hjula" },
