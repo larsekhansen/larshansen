@@ -28,7 +28,7 @@ export const LINE: Station[] = [
   { id: "nordmarka", rune: 6, name: "Nordmarka", place: { nb: "Skogen nord for byen", en: "The forest north of the city" }, built: true },
   { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: true },
   { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: true },
-  { id: "nabolaget", rune: 9, name: "Nabolaget", place: { nb: "Takene på Vålerenga og Kampen", en: "The roofs of Vålerenga and Kampen" }, built: true }
+  { id: "nabolaget", rune: 9, name: "Nabolaget", place: { nb: "Fra Vålerenga hjem til Kværnertoppen", en: "From Vålerenga home to Kværnertoppen" }, built: true }
 ];
 
 export const ORDER = LINE.map((l) => l.id);

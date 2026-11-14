@@ -3,7 +3,7 @@ import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshanse
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
-import { R, gable, layerX, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
+import { R, gable, layerX, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -22,11 +22,12 @@ import type { LevelDef, View } from "./types";
 // the front page's wooden houses, icy, from above the eaves; roof to roof over the back yards on
 // washing lines that throw him (launchers) and the warm air over a chimney that lifts him (a zone);
 // down into the lane behind Vålerenga kirke, dark but for the church's windows and his headlamp; up
-// the tower by its ledges, the spire the last climb; down the snow on its far side into the street.
-// There, past a flag and a bench, the snow plough: the last thing between him and home. A bounce on
-// the washing line, a jump and the dash from a roof, and a ride on the tram's roof: three times on its
-// cab, and it parks for good. Then the yellow house, with a Raspberry Pi in the window serving the
-// game; its light turns green when the rune is taken. The door Hjem leads to the front page.
+// the tower by its ledges, the spire the last climb; down the snow on its far side into Kværnerdalen,
+// past Kruttverket, the old gunpowder works, into the street. There, past a flag and a bench, the snow
+// plough: the last thing between him and home. A bounce on the washing line, a jump and the dash from
+// a roof, and a ride on the tram's roof: three times on its cab, and it parks for good. Then the
+// yellow house on Kværnertoppen, with a Raspberry Pi in the window serving the game; its light turns
+// green when the rune is taken. The door Hjem leads to the front page.
 //
 //   #  the street   R  a house (drawn behind)   H  a chimney   B  a snow bank   W  a woodshed
 //   T  the church tower   K  a gravestone   =  a stone ledge   d  a washing line   v  the tram's slot
@@ -34,7 +35,8 @@ import type { LevelDef, View } from "./types";
 //
 // Sections: the street and the first roofs (teach, nothing to fall into yet); roof to roof over the
 // yards (practise: the lines, the chimney's warm air, ice); behind the church and up the spire (twist:
-// the dark, and the climb); the street to the yellow house (set piece: the plough, the rune).
+// the dark, and the climb); past Kruttverket, the street to the yellow house (set piece: the plough,
+// the rune).
 
 const COLS = 224;
 const STONE_JOINT = MASONRY.gatePostLine;
@@ -114,14 +116,16 @@ b.put(2, S - 1, "t").put(4, S - 1, "S").put(7, S - 1, "i");
 b.put(10, S - 3, "f").put(83, S - 3, "b").put(100, S - 1, "f").put(108, S - 1, "i");
 // A stone plinth by the lane's wall, a bench on it: a little off the path.
 b.run(82, 84, S - 2, "=");
+// Kruttverket's sign at the foot of the snow; then the flag, the bench and the plough's sign.
+b.put(154, S - 1, "i");
 b.put(161, S - 1, "f").put(163, S - 1, "b").put(165, S - 1, "i");
 b.put(214, S - 1, "h").put(218, S - 2, "r").put(42, 0, "o").put(130, 0, "&");
 
 /** Skilling a little over a roof: the tile row just above its ramp at column c. */
 const over = (c: number) => Math.floor(((rampHeight(ROOFS, c * TILE + 8) ?? S * TILE) - 10) / TILE);
 // Skilling: up the shed, over the roofs and their gaps, up the washing lines, in the chimney's air,
-// along the block's roof, over the lane's stones, up the tower, down the snow, through the plough's
-// street, and round the yellow house.
+// along the block's roof, over the lane's stones, up the tower, down the snow (one by Kruttverket's
+// first window upstairs, a hop off the slope), through the plough's street, and round the yellow house.
 const COINS: [number, number][] = [
   [8, 16], [9, 16],
   ...[13, 15, 16].map((c): [number, number] => [c, over(c)]),
@@ -141,7 +145,7 @@ const COINS: [number, number][] = [
   ...[74, 76, 78].map((c): [number, number] => [c, over(c)]),
   [87, 14], [93, 14], [97, 16], [104, 16],
   [110, 12], [116, 9], [123, 5], [126, 3], [129, 1], [131, 1],
-  [136, 6], [140, 9], [144, 12], [148, 14],
+  [136, 6], [140, 9], [144, 12], [148, 14], [150, 13],
   [157, 14], [158, 14],
   [170, 12], [172, 12],
   [190, 15], [196, 15], [202, 15],
@@ -426,6 +430,292 @@ function drift() {
   }
 }
 
+// --- Kruttverket ---------------------------------------------------------------------------------------------
+/**
+ * Kruttverket, the old gunpowder works in Kværnerdalen, at the foot of the snow: two floors of brick
+ * under a roof of snow, its left end behind the drift, its right by the house with the terrace.
+ * Only art: nothing of it is in the map. Its walls, the band between its floors, and its six bays.
+ */
+const KRUTT = { x0: 147 * TILE + 8, x1: 167 * TILE, eave: S * TILE - 98, belt: S * TILE - 48, plinth: S * TILE - 6, bay: 52 };
+/** The hall upstairs: a tall arched window in each bay. The first, over the drift, has the paper cranes on threads. */
+const HALL = { y: S * TILE - 88, w: 25, h: 36 };
+const hallX = (i: number) => KRUTT.x0 + 14 + i * KRUTT.bay;
+/** The café's windows on the ground floor, wide and low; the door is in the third bay. */
+const CAFE = { y: S * TILE - 37, w: 32, h: 27, door: KRUTT.x0 + 2 * KRUTT.bay + 26 };
+const BRICK_JOINT = mix(BRICK.kruttverket, INK, 0.22);
+const BRICK_PALE = mix(BRICK.kruttverket, WHITE, 0.1);
+const BRICK_DEEP = mix(BRICK.kruttverket, INK, 0.12);
+const ARCH_BRICK = BRICK.kruttverketChimney;
+const IRON = METAL.castIron;
+const FIGURE = mix(INK, BRICK.kruttverketWindow, 0.4);
+
+/** Brick in courses three pixels high, the joints offset course by course, a brick here and there a shade off. */
+function brick(x: number, y: number, w: number, h: number) {
+  R(x, y, w, h, BRICK.kruttverket);
+  for (let yy = y, k = 0; yy < y + h; yy += 3, k++) {
+    R(x, yy + 2, w, 1, BRICK_JOINT);
+    for (let xx = x + (k % 2) * 4; xx < x + w; xx += 8) {
+      R(xx, yy, 1, 2, BRICK_JOINT);
+      const n = (xx * 7 + yy * 13) % 11;
+      if (n === 0 || n === 6) R(xx + 1, yy, Math.min(7, x + w - xx - 1), 2, n === 0 ? BRICK_PALE : BRICK_DEEP);
+    }
+  }
+}
+
+/** How far row dy of a segmental arch `a` rows high is drawn in from each side of a window w wide. */
+const archIn = (w: number, a: number, dy: number) => (dy >= a ? 0 : Math.round(w / 2 - (w / 2) * Math.sqrt(1 - ((a - dy) / (a + 1)) ** 2)));
+/** An arched shape, filled. */
+function arched(x: number, y: number, w: number, h: number, a: number, color: string) {
+  for (let dy = 0; dy < Math.min(a, h); dy++) {
+    const i = archIn(w, a, dy);
+    R(x + i, y + dy, w - 2 * i, 1, color);
+  }
+  if (h > a) R(x, y + a, w, h - a, color);
+}
+
+/** True where the drift's snow lies in front of world (x, y): a window's light must not shine through it. */
+function underDrift(x: number, y: number) {
+  const [, [x0, y0], [x1, y1]] = DRIFT.points;
+  return x >= x0 && x < x1 && y >= y0 + ((x - x0) / (x1 - x0)) * (y1 - y0) - 1;
+}
+
+/**
+ * An arched iron window in the brick: a band of bricks on end over it, the frame and its bars in
+ * iron, a stone sill with snow lying on it. After dark its panes light up (as `kind`, `glow` times
+ * over) around the bars and around whatever stands in the room (`inside`, rectangles drawn dark
+ * against the light), and not where the drift is in front of them.
+ */
+function archWindow(x: number, y: number, w: number, h: number, a: number, bar: (dx: number, dy: number) => boolean, kind: LightKind, glow: number, inside: [number, number, number, number][] = []) {
+  arched(x - 2, y - 3, w + 4, a + 5, a + 1, ARCH_BRICK);
+  for (let dx = 1; dx < w + 3; dx += 3) {
+    let r = 0;
+    while (r < a + 1 && (dx < archIn(w + 4, a + 1, r) || dx >= w + 4 - archIn(w + 4, a + 1, r))) r++;
+    R(x - 2 + dx, y - 3 + r, 1, 2, BRICK_JOINT);
+  }
+  arched(x, y, w, h, a, IRON);
+  arched(x + 1, y + 1, w - 2, h - 2, a, GLASS.farWindow);
+  const solid = (dx: number, dy: number) => bar(dx, dy) || underDrift(x + dx, y + dy) || inside.some(([fx, fy, fw, fh]) => dx >= fx && dx < fx + fw && dy >= fy && dy < fy + fh);
+  for (let dy = 1; dy < h - 1; dy++) {
+    const i = Math.max(1, archIn(w - 2, a, dy - 1) + 1);
+    let from = -1;
+    for (let dx = i; dx <= w - i; dx++) {
+      const open = dx < w - i && !solid(dx, dy);
+      if (dx < w - i && bar(dx, dy)) R(x + dx, y + dy, 1, 1, IRON);
+      if (open && from < 0) from = dx;
+      else if (!open && from >= 0) {
+        for (let k = 0; k < glow; k++) light(x + from, y + dy, dx - from, 1, kind);
+        from = -1;
+      }
+    }
+  }
+  for (const [fx, fy, fw, fh] of inside) R(x + fx, y + fy, fw, fh, FIGURE);
+  // The sill, and the snow lying on it, banked a little at the frame's ends.
+  R(x - 2, y + h, w + 4, 2, MASONRY.lintel);
+  R(x - 2, y + h + 1, w + 4, 1, mix(MASONRY.lintel, INK, 0.3));
+  R(x - 2, y + h - 1, w + 4, 1, SNOW.lying);
+  R(x - 2, y + h - 2, 2, 1, SNOW.lying);
+  R(x + w, y + h - 2, 2, 1, SNOW.lying);
+}
+
+/** The hall's windows: a fanlight in the arch, a transom, a mullion down the middle, a bar low down. */
+const hallBar = (dx: number, dy: number) => dy === 7 || dy === 29 || dx === 12 || (dy < 7 && (dx === 6 || dx === 18));
+/** The café's: a transom, two mullions. */
+const cafeBar = (dx: number, dy: number) => dy === 8 || dx === 10 || dx === 21;
+/** What stands in the hall's windows against its light: a lamp hanging, a curtain, someone looking out. The first window's are the paper cranes, drawn over the night (see `cranes`). */
+const HALL_INSIDE: [number, number, number, number][][] = [
+  [],
+  [[6, 8, 1, 5], [4, 13, 5, 2], [5, 15, 3, 1]],
+  [[1, 8, 3, 21], [1, 30, 2, 5]],
+  [],
+  [[16, 20, 3, 3], [15, 23, 5, 6], [14, 30, 7, 5]],
+  [[21, 8, 3, 21], [22, 30, 2, 5], [5, 8, 1, 4], [3, 12, 5, 2]]
+];
+/** People at the café's tables, and a plant, as they stand against the light in each window. */
+const CAFE_INSIDE: [number, number, number, number][][] = [
+  [[3, 15, 3, 3], [2, 18, 5, 7], [9, 20, 8, 1], [12, 21, 1, 4], [14, 18, 2, 2]],
+  [[4, 14, 3, 3], [3, 17, 5, 8], [10, 21, 9, 1], [14, 22, 1, 3], [20, 15, 3, 3], [19, 18, 5, 7]],
+  [[24, 19, 4, 6], [23, 15, 2, 4], [26, 14, 2, 5], [25, 17, 1, 2], [5, 16, 3, 3], [4, 19, 5, 6]],
+  [[12, 15, 3, 3], [11, 18, 5, 7], [17, 20, 8, 1], [21, 21, 1, 4]],
+  [[3, 15, 3, 3], [2, 18, 5, 7], [26, 16, 3, 3], [25, 19, 5, 6], [9, 21, 14, 1]]
+];
+
+function kruttverket(t: number) {
+  const { x0, x1, eave, belt, plinth, bay } = KRUTT;
+  if (x1 + 8 < view.camX || x0 - 8 > view.camX + view.w) return;
+  const g = S * TILE;
+  // The roof, hipped, under snow; bare around the chimney's foot, where its warmth has taken the snow.
+  for (let i = 0; i < 18; i++) R(x0 - 4 + i, eave - 1 - i, x1 - x0 + 8 - 2 * i, 1, i < 2 ? ROOF.factory : i % 6 === 4 ? SNOW.shade : SNOW.lying);
+  const cx = x1 - 70;
+  R(cx - 2, eave - 10, 16, 2, ROOF.factory);
+  R(cx - 4, eave - 8, 20, 3, ROOF.factory);
+  R(cx - 6, eave - 5, 24, 2, mix(ROOF.factory, SNOW.lying, 0.4));
+  // The chimney, standing up out of the roof: brick, a corbelled cap with snow on it, smoke.
+  brick(cx, eave - 36, 12, 30);
+  R(cx - 2, eave - 40, 16, 4, ARCH_BRICK);
+  R(cx - 1, eave - 36, 14, 1, BRICK_JOINT);
+  R(cx - 2, eave - 42, 16, 2, SNOW.lying);
+  R(cx + 11, eave - 36, 1, 30, BRICK_DEEP);
+  const tt = view.reduced ? 0 : t;
+  for (let i = 0; i < 5; i++) {
+    const k = ((tt * 0.5 + i * 19) % 60) / 60;
+    R(cx + 3 + Math.round(Math.sin(tt * 0.03 + i * 1.3) * 3 + k * 8), eave - 45 - k * 36, 4 + Math.round(k * 3), 3, `rgba(220, 224, 232, ${(0.4 * (1 - k)).toFixed(2)})`);
+  }
+  // The walls: brick in courses; a stone plinth; the cornice under the eaves on a row of corbels.
+  brick(x0, eave, x1 - x0, plinth - eave);
+  R(x0 - 2, eave, x1 - x0 + 4, 2, ARCH_BRICK);
+  for (let x = x0 + 2; x < x1 - 4; x += 6) R(x, eave + 2, 4, 2, BRICK_DEEP);
+  R(x0, plinth, x1 - x0, g - plinth, MASONRY.lintel);
+  for (let x = x0 + 5; x < x1; x += 11) R(x, plinth + 1, 1, g - plinth - 1, MASONRY.gatePostLine);
+  R(x0, plinth, x1 - x0, 1, MASONRY.worn);
+  // The band between the floors, snow along its top.
+  R(x0 - 1, belt, x1 - x0 + 2, 3, MASONRY.lintel);
+  R(x0 - 1, belt + 2, x1 - x0 + 2, 1, mix(MASONRY.lintel, INK, 0.3));
+  R(x0 - 1, belt - 1, x1 - x0 + 2, 1, SNOW.lying);
+  // Pilasters between the bays: a strip of the brick standing forward, its shadow on the right.
+  for (let i = 0; i <= 6; i++) {
+    const px = Math.min(x1 - 4, x0 + i * bay);
+    R(px, eave + 4, 4, plinth - eave - 4, mix(BRICK.kruttverket, WHITE, 0.06));
+    for (let y = eave + 6; y < plinth; y += 3) R(px, y, 4, 1, BRICK_JOINT);
+    R(px + 4, eave + 4, 1, plinth - eave - 4, BRICK_DEEP);
+  }
+  // The hall upstairs: a window in each bay, lit warm and low.
+  for (let i = 0; i < 6; i++) archWindow(hallX(i), HALL.y, HALL.w, HALL.h, 4, hallBar, "soft", 2, HALL_INSIDE[i]);
+  // The café: lit, people at the tables; the door, its lamp, and the cup hung out over the street.
+  for (let i = 0; i < 6; i++) {
+    if (i === 2) continue;
+    archWindow(x0 + i * bay + 12, CAFE.y, CAFE.w, CAFE.h, 3, cafeBar, "window", 1, CAFE_INSIDE[i < 2 ? i : i - 1]);
+  }
+  const d = CAFE.door;
+  arched(d - 3, g - 33, 20, 33, 3, ARCH_BRICK);
+  arched(d - 1, g - 31, 16, 31, 3, IRON);
+  arched(d, g - 30, 14, 5, 3, GLASS.farWindow);
+  for (let dy = 0; dy < 5; dy++) light(d + archIn(14, 3, dy), g - 30 + dy, 14 - 2 * archIn(14, 3, dy), 1);
+  R(d, g - 25, 14, 25, P.woodDark);
+  R(d + 1, g - 24, 5, 22, mix(P.woodDark, P.wood, 0.5));
+  R(d + 8, g - 24, 5, 22, mix(P.woodDark, P.wood, 0.5));
+  R(d + 1, g - 14, 5, 1, P.woodDark);
+  R(d + 8, g - 14, 5, 1, P.woodDark);
+  R(d + 6, g - 16, 1, 2, METAL.brass);
+  R(d + 7, g - 16, 1, 2, METAL.brass);
+  R(d - 3, g - 2, 20, 2, MASONRY.worn);
+  R(d + 5, g - 40, 4, 2, METAL.lampPost);
+  R(d + 4, g - 38, 6, 2, METAL.lampHat);
+  R(d + 5, g - 36, 4, 2, LAMP);
+  light(d + 5, g - 36, 4, 2, "lamp");
+  // The cup: a little board on an iron arm, a white cup steaming on it.
+  const bx = d + 21;
+  R(d + 17, g - 42, 13, 1, IRON);
+  R(bx, g - 41, 1, 2, IRON);
+  R(bx + 6, g - 41, 1, 2, IRON);
+  R(bx - 1, g - 39, 9, 9, P.boardEdge);
+  R(bx, g - 38, 7, 7, P.board);
+  R(bx + 1, g - 35, 4, 3, PAINT.trim);
+  R(bx + 5, g - 34, 1, 1, PAINT.trim);
+  R(bx + 1, g - 32, 5, 1, PAINT.trim);
+  R(bx + 2, g - 37, 1, 1, mix(PAINT.trim, P.board, 0.4));
+  R(bx + 3, g - 38, 1, 1, mix(PAINT.trim, P.board, 0.4));
+  light(bx, g - 38, 7, 7, "soft");
+  // The corners.
+  R(x0, eave + 2, 1, plinth - eave - 2, BRICK_DEEP);
+  R(x1 - 1, eave + 2, 1, plinth - eave - 2, BRICK_DEEP);
+}
+
+/** The paper cranes on threads in the upstairs window: four threads, seven cranes, in three pale colours. Each thread is where it hangs (across the window), whether its cranes face left, and how far down each one hangs. */
+const CRANE_THREADS: { dx: number; flip: boolean; at: number[] }[] = [
+  { dx: 5, flip: false, at: [9, 19] },
+  { dx: 7, flip: true, at: [14, 24] },
+  { dx: 17, flip: false, at: [10, 21] },
+  { dx: 19, flip: true, at: [15] }
+];
+/** A paper crane, as it hangs: the neck and its bent head, the wing up (its far side in shade), the tail. W wing, F the wing's far side, B the body. */
+const CRANE = ["....W...", "BB..WF..", ".B.WWF.B", "..BWWFB.", "...BBB.."];
+const CRANE_PAPER = [mix(WINTER.sheet, LAMP, 0.25), mix(WINTER.sheet, WINTER.stained, 0.22), mix(WINTER.sheet, WINTER.sock, 0.26)];
+const CRANE_THREAD = mix(LAMP, INK, 0.36);
+
+/** The paper cranes on threads in the upstairs window, drawn over the night as the Pi is, so they keep their paper's colours in the lit window; each thread sways a pixel on the level's clock. */
+function cranes(t: number) {
+  const x = hallX(0);
+  const y = HALL.y;
+  const inGlass = (dx: number, dy: number) => dx > 0 && dx < HALL.w - 1 && dy > 7 && dy < 29 && !hallBar(dx, dy);
+  let n = 0;
+  CRANE_THREADS.forEach((th, k) => {
+    const s = view.reduced ? 0 : Math.round(Math.sin(t * 0.045 + k * 2.3));
+    const last = th.at[th.at.length - 1];
+    for (let dy = 8; dy < last; dy++) {
+      const dx = th.dx + (dy < 10 ? 0 : s);
+      if (inGlass(dx, dy)) R(x + dx, y + dy, 1, 1, CRANE_THREAD);
+    }
+    for (const top of th.at) {
+      const paper = CRANE_PAPER[n++ % CRANE_PAPER.length];
+      const colors: Record<string, string> = { W: paper, F: mix(paper, INK, 0.2), B: mix(paper, INK, 0.07) };
+      const left = th.dx + s - (th.flip ? 3 : 4);
+      CRANE.forEach((row, ry) => {
+        for (let rx = 0; rx < row.length; rx++) {
+          const ch = row[th.flip ? row.length - 1 - rx : rx];
+          if (ch === ".") continue;
+          if (inGlass(left + rx, top + ry)) R(x + left + rx, y + top + ry, 1, 1, colors[ch]);
+        }
+      });
+    }
+  });
+}
+
+// --- Kværnertoppen: the place's name, on a blue plate on two posts past the yellow house ---------------------
+/** Capitals three pixels wide (Æ five, N four), five high: only the ones the plate needs. */
+const GLYPHS: Record<string, string[]> = {
+  K: ["101", "101", "110", "101", "101"],
+  V: ["101", "101", "101", "101", "010"],
+  Æ: ["01111", "10100", "11110", "10100", "10111"],
+  R: ["110", "101", "110", "101", "101"],
+  N: ["1001", "1101", "1011", "1001", "1001"],
+  E: ["111", "100", "110", "100", "111"],
+  T: ["111", "010", "010", "010", "010"],
+  O: ["010", "101", "101", "101", "010"],
+  P: ["110", "101", "110", "100", "100"]
+};
+const PLATE_TEXT = "KVÆRNERTOPPEN";
+const textWidth = (s: string) => [...s].reduce((w, ch) => w + GLYPHS[ch][0].length + 1, -1);
+
+/** Letters from GLYPHS, their top left at (x, y); after dark they shine back the street's light, as a sign's white paint does. */
+function letters(s: string, x: number, y: number, color: string) {
+  for (const ch of s) {
+    const g = GLYPHS[ch];
+    g.forEach((row, ry) => {
+      for (let rx = 0; rx < row.length; rx++) {
+        if (row[rx] !== "1") continue;
+        let len = 1;
+        while (row[rx + len] === "1") len++;
+        R(x + rx, y + ry, len, 1, color);
+        light(x + rx, y + ry, len, 1, "soft");
+        rx += len - 1;
+      }
+    });
+    x += g[0].length + 1;
+  }
+}
+
+/** The plate: Oslo's blue, a white rule round it, the name in white, snow on its top; on two posts, between the yellow house and the end of the street. */
+function streetSign() {
+  const g = S * TILE;
+  const w = textWidth(PLATE_TEXT) + 10;
+  const px = HOME.x + HOME.w + 8;
+  const py = g - 34;
+  for (const x of [px + 6, px + w - 8]) {
+    R(x, py + 13, 2, g - py - 13, METAL.lampPost);
+    R(x - 1, g - 2, 4, 2, METAL.lampPost);
+  }
+  R(px, py, w, 13, TRAM.skirt);
+  R(px + 1, py + 1, w - 2, 11, TRAM.body);
+  R(px + 2, py + 2, w - 4, 9, PAINT.trim);
+  R(px + 3, py + 3, w - 6, 7, TRAM.body);
+  light(px + 2, py + 2, w - 4, 1, "soft");
+  light(px + 2, py + 10, w - 4, 1, "soft");
+  light(px + 2, py + 3, 1, 7, "soft");
+  light(px + w - 3, py + 3, 1, 7, "soft");
+  letters(PLATE_TEXT, px + 5, py + 4, PAINT.trim);
+  R(px, py - 1, w, 1, SNOW.lying);
+}
+
 /** The lane behind the church: a stone wall along it, two lamps, the gravestones' snow. */
 function lane() {
   const g = S * TILE;
@@ -699,8 +989,8 @@ export const NABOLAGET: LevelDef = {
   id: "nabolaget",
   rune: 9,
   name: "Nabolaget",
-  landmark: { nb: "Vålerenga og Kampen", en: "Vålerenga and Kampen" },
-  place: { nb: "Takene på Vålerenga og Kampen", en: "The roofs of Vålerenga and Kampen" },
+  landmark: { nb: "Over takene hjem til Kværnertoppen", en: "Over the roofs, home to Kværnertoppen" },
+  place: { nb: "Fra Vålerenga hjem til Kværnertoppen", en: "From Vålerenga home to Kværnertoppen" },
   sky: "winter",
   map: MAP,
   legend: { solid: "#RHBWTK", oneWay: "=", water: "v" },
@@ -736,7 +1026,11 @@ export const NABOLAGET: LevelDef = {
     },
     {
       label: { nb: "Vålerenga kirke", en: "Vålerenga kirke" },
-      lines: { nb: ["Tårnet er det siste du klatrer i kveld.", "Ovenfra ser du det gule huset."], en: ["The tower is the last thing you climb tonight.", "From the top you can see the yellow house."] }
+      lines: { nb: ["Tårnet er det siste du klatrer i kveld.", "Ovenfra ser du det gule huset på Kværnertoppen."], en: ["The tower is the last thing you climb tonight.", "From the top you can see the yellow house on Kværnertoppen."] }
+    },
+    {
+      label: { nb: "Kruttverket", en: "Kruttverket" },
+      lines: { nb: ["Her laget de krutt.", "Nå lager de kaffe. Det smeller sjeldnere."], en: ["They made gunpowder here.", "Now they make coffee. Fewer bangs."] }
     },
     {
       label: { nb: "Brøyting", en: "Snow clearing" },
@@ -754,7 +1048,8 @@ export const NABOLAGET: LevelDef = {
     back(v) {
       VIEW_T.t = v.t;
       tbaneDoor(v.doors.get("tbane"));
-      // The woodshed at the start, the houses, the chimneys, the church, the lane, the drift, the street.
+      // The woodshed at the start, the houses, the chimneys, the church, the lane, Kruttverket behind
+      // the drift, the drift, the street, and the street's name at the yellow house's corner.
       R(10 * TILE, (S - 2) * TILE, 2 * TILE, 2 * TILE, P.wood);
       for (let k = 10 * TILE + 3; k < 12 * TILE; k += 5) R(k, (S - 2) * TILE, 1, 2 * TILE, P.woodDark);
       R(10 * TILE - 2, (S - 2) * TILE - 3, 2 * TILE + 4, 3, SNOW.lying);
@@ -762,8 +1057,10 @@ export const NABOLAGET: LevelDef = {
       chimneys(v.t);
       lane();
       church();
+      kruttverket(v.t);
       drift();
       street(v, v.boss as Plough | null);
+      streetSign();
     },
     front() {},
     ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: GROUND.cobbleFill }),
@@ -818,6 +1115,7 @@ export const NABOLAGET: LevelDef = {
     lights: (v) => lights(v),
     overDark: (v) => {
       for (const e of v.enemies) for (const [x, y] of enemyEyes(e, v.t)) R(x, y, 1, 1, WINTER.catEye);
+      cranes(v.t);
       pi(v);
     },
     boss: (s, v) => plough(s as Plough, v),
