@@ -1,6 +1,6 @@
 import { LEVELS, play as P } from "./common.ts";
 const N = { left: false, right: false, jumpHeld: false, jumpPressed: false };
-for (const [id, col] of [["akerselva", 160], ["nordmarka", 192], ["nabolaget", 100]] as const) {
+for (const [id, col] of [["akerselva", 160], ["nordmarka", 192], ["nabolaget", 98]] as const) {
   const def = LEVELS.find((l) => l[0] === id)![1];
   const map = P.levelMap(def);
   const f = P.flagsOf(map).find((f: any) => Math.floor(f.x / 16) === col);

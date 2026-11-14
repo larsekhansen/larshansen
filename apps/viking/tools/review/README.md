@@ -11,11 +11,11 @@ Run everything from this folder.
 | Script | What it does | Run |
 |---|---|---|
 | `sloppy.ts` | the sloppy player: each level's scripted route through the real rules, every key edge off by up to ±k steps | `bun sloppy.ts levels=radhuset ks=2,4 seeds=30 out=out/x.jsonl` |
-| `runall.sh` | the whole study: timing errors ±2/±4/±8 (`out/t-*.jsonl`), ±4 with mistakes (`out/m-*.jsonl`), every jump alone (`out/obstacles-*.json`); four processes at a time, about 50 min on the Pi | `./runall.sh` |
+| `runall.sh` | the whole study: timing errors ±2/±4/±8 (`out/t-*.jsonl`), ±4 with mistakes (`out/m-*.jsonl`), every jump alone (`out/obstacles-*.json`); four processes at a time, 13 to 25 min on the Pi (more when runs go their full length) | `./runall.sh` |
 | `summary.py`, `agg.py`, `hurts.py` | the tables of the review's section A from those files | `python3 summary.py` |
 | `obstacles.ts` | every jump and ride of every route on its own, 40 tries from the perfect run's state | `bun obstacles.ts levels=langkaia ks=2,4 seeds=40` |
 | `resume.ts` | the perfect route picked up from every flag and bench at six clocks | `bun resume.ts` |
-| `deadends.ts` | the dead-end graph search (the test suite runs the same search, `src/game/deadends.ts`) | `bun deadends.ts radhuset` |
+| `deadends.ts` | the dead-end graph search, as the review ran it (the test suite now finds dead ends in the reach search's own graph: `deadEnds` in `src/game/reach.ts`, run in `reach.worker.ts`) | `bun deadends.ts radhuset` |
 | `standflag.ts`, `savepoints.ts`, `throwers.ts` | throwers against flags, benches and the route's waits | `bun standflag.ts` |
 | `bosses.ts`, `bossref.ts` | naive strategies against the troll and the plough; the perfect fights' timing | `bun bosses.ts` |
 | `waits.ts`, `worstwait.ts`, `quiet.ts` | the perfect route's standing still; the worst wait on arrival at each wait; quiet stretches | `bun waits.ts` |
