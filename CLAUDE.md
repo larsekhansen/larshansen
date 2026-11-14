@@ -18,3 +18,4 @@ If that last command prints anything, the checkout is stale: update it and read 
 - **Bun only.** No npm, npx, pnpm or yarn. `bun install`, `bun run dev:<app>`, `bun test` inside an app.
 - **Headless browsers on this Pi are limited.** Chromium cannot render headless here (the 16k-page kernel), and headless Firefox has no WebGL and fires no animation frames. Canvas 2D pages can be checked by stepping the game by hand (`apps/landing` exposes `window.__game` with `?debug`); anything WebGL needs a person with a normal browser.
 - **The front page's secret.** The door at the top of the Opera in `apps/landing` leads to `apps/viking` and is deliberately not listed in the header.
+- **The games have a handover.** Before working on `apps/landing`, `apps/viking`, `packages/maze` or `packages/pixelkit`, read `docs/games/HANDOVER.md` and the decision records in `docs/adr/`. When a decision is made or reversed, add a record and update the handover in the same change.

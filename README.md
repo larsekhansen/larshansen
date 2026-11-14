@@ -12,11 +12,14 @@ apps/
 ├── portfolio/    # CV / about site (React 18 + Vite + styled-components + zustand)
 ├── iron-maze/    # Jernhaugen at maze.larshansen.dev: a thin page around the maze scene (plain TypeScript, Canvas 2D)
 ├── qr/           # QR code generator at larshansen.dev/qr (React 19 + qr-code-styling + jsQR)
-└── viking/       # Viking platform game at larshansen.dev/viking, behind the landing page's secret door (plain TypeScript + Canvas 2D, on the shared pixel kit)
+└── viking/       # Vikingfjorden at larshansen.dev/viking, behind the landing page's secret door: ten Oslo levels on a T-bane line map (plain TypeScript + Canvas 2D, on the shared pixel kit)
 packages/
 ├── pixelkit/     # the shared kit: stage, loop, input, physics, Oslo sky, the person, sound (TypeScript source, no build step)
 └── maze/         # Jernhaugen, the maze scene: levels, rules (tested), drawing, steering. Used by apps/viking (loaded on demand) and apps/iron-maze
 ```
+
+The three games (front page, viking, maze) share one look and one kit. Their state, history and
+decisions are in [`docs/games/HANDOVER.md`](docs/games/HANDOVER.md) and [`docs/adr/`](docs/adr/README.md).
 
 ## Getting started
 

@@ -7,6 +7,11 @@ mini game.
 Written 2026-11-10. Work happens on the branch `games-same-cloth`, one commit per phase, one pull
 request at the end. Nothing deploys until that is merged.
 
+> For the state of things today, what was decided and why, and how to work here, start with
+> [`HANDOVER.md`](HANDOVER.md) and the decision records in [`../adr/`](../adr/README.md). This file
+> is the original plan and its status table; sections 5 and 6 describe the game before levels,
+> enemies and lives were added.
+
 ## How the work is run
 
 1. **Plan** (Claude Fable, as game designer and lead developer): this file, plus one self-contained
@@ -30,7 +35,8 @@ request at the end. Nothing deploys until that is merged.
 | 7. The level kit: moving ground, flags, launchers, timed ledges | `orders/07-level-kit.md` | done: 100 kit tests, front page screenshots identical (28 of 28) |
 | 8. The line map and the first three levels: Langkaia, Akershus, Rådhuset | `orders/08-three-levels.md` | done: 32 tests, each level cleared by a scripted player with the single jump; not yet played by a person |
 | 9. Jernhaugen as the bonus stop: ghosts, marks, teleport stones, the feather | `orders/09-maze-bonus.md` | done: 211 tests, no audio files; not yet played by a person |
-| 10. Levels 4 to 10 | `orders/10-levels-4-to-10.md` | batch A built (Slottet, Holmenkollen, surfaces, hearts and lives, enemies, levels on demand) and merged; batch B built (Akerselva, Nordmarka and its troll, zones, orbits, the dark) and merged; batch C built (Stortinget, Ekeberg, Nabolaget and the snow plough, hazards, gusts, trains that stop, the ending) and merged; batch D built (Langkaia, Akershus and Rådhuset lengthened to the same measure, a version mark in the save); awaiting review |
+| 10. Levels 4 to 10 | `orders/10-levels-4-to-10.md` | batch A built (Slottet, Holmenkollen, surfaces, hearts and lives, enemies, levels on demand) and merged; batch B built (Akerselva, Nordmarka and its troll, zones, orbits, the dark) and merged; batch C built (Stortinget, Ekeberg, Nabolaget and the snow plough, hazards, gusts, trains that stop, the ending) and merged; batch D built (Langkaia, Akershus and Rådhuset lengthened to the same measure, a version mark in the save) and merged. All ten levels are live; none has been played by a person at real speed |
+| 11. The personal details: Høyenhall's banner, Kværnertoppen, Kruttverket | no order; see `../adr/0014-personal-details-discreetly.md` | done: the banner at Slottet, the Kværnertoppen plate and Kruttverket in Nabolaget |
 
 ## 1. Where things stand
 
