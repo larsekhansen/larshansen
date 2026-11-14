@@ -12,7 +12,7 @@ import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
 import { NABOLAGET, PLOUGH_DEF, SMOKE, TERRACE } from "./nabolaget";
 import type { Plough } from "../game/plough";
 import { EKEBERG, GUSTS, KNOLLS, TRAMS } from "./ekeberg";
@@ -22,7 +22,7 @@ import { riding } from "./routes/common";
 import { rides } from "./routes/common";
 import { AKERSELVA, BUCKETS, CURTAIN, FALL1, WHEEL } from "./akerselva";
 import { SLOTTET } from "./slottet";
-import { AKERSHUS, HOIST } from "./akershus";
+import { AKERSHUS, BATTERY, HOIST } from "./akershus";
 import { BUILT, LINE, ORDER } from "./index";
 import { kartDef } from "./kart";
 import { LANGKAIA, RAFT } from "./langkaia";
@@ -41,32 +41,7 @@ const IDLE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 /** The route through each level, as a scripted player plays it. */
 const ROUTE: Record<string, Move[]> = {
   langkaia: LANGKAIA_ROUTE,
-  akershus: [
-    walk(mid(16) + 4),
-    jump(0),
-    jump(0),
-    jump(0),
-    jump(1, { hold: 20 }),
-    walk(mid(28)),
-    cannonRide(1),
-    walk(tile(49) - 20),
-    leap(tile(50), 1),
-    walk(tile(56) - 30),
-    leap(tile(57), 1),
-    walk(mid(65)),
-    wait("the hoist down", (q) => carrier(q, HOIST).y >= HOIST.bottom - 2),
-    cannonRide(1),
-    walk(mid(88)),
-    jump(0),
-    walk(tile(89) - 8),
-    leap(tile(90), 1),
-    walk(tile(93)),
-    leap(tile(92), -1),
-    walk(tile(88)),
-    leap(tile(90), 1),
-    walk(mid(96)),
-    jump(0)
-  ],
+  akershus: AKERSHUS_ROUTE,
   radhuset: [
     walk(tile(11) - 6),
     wait("the ferry at the quay", (q) => carrier(q, FERRY).x <= 180),
@@ -101,7 +76,8 @@ const ROUTE: Record<string, Move[]> = {
 /** The way to each level's bracteate with the feather, from the start. */
 const GOLD: Record<string, Move[]> = {
   langkaia: [walk(mid(2)), jump(0, { second: 18 })],
-  akershus: [...ROUTE.akershus.slice(0, -2), walk(mid(94) + 4), jump(0, { second: 18 })],
+  // From the last stretch of the battlements, beside the brazier, two jumps up the spire to its tip.
+  akershus: [...AKERSHUS_ROUTE.slice(0, -2), walk(mid(261) + 6, { careless: true }), jump(0, { second: 18 })],
   radhuset: [...ROUTE.radhuset.slice(0, 9), jump(1, { second: 14 }), walk(mid(60))],
   // From the balcony's left end, two jumps up past the rune to the eaves; along to the flagpole and up.
   slottet: [...SLOTTET_ROUTE.slice(0, -2), walk(tile(227) + 6), jump(0, { second: 18 }), walk(mid(229)), jump(0)],
@@ -137,8 +113,8 @@ const GOLD: Record<string, Move[]> = {
 };
 
 /** The first three levels: the scripted player has half the order's target. From level 4 on: at least a minute. */
-const TARGET: Record<string, number> = { akershus: 90, radhuset: 120 };
-const NEW = new Set(["langkaia", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
+const TARGET: Record<string, number> = { radhuset: 120 };
+const NEW = new Set(["langkaia", "akershus", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** The last level is held to a longer clear: ninety seconds or more. */
@@ -598,17 +574,40 @@ describe("what the levels promise", () => {
     const b = createBody(0, 0);
     fire(l, b);
     for (let i = 0; i < 200 && !(b.onGround && i > 2); i++) stepBody(b, IDLE, levelMap(AKERSHUS));
-    expect(b.y + PLAYER.h).toBe(tile(14));
-    expect(b.x + PLAYER.w / 2).toBeGreaterThan(tile(40));
+    // Onto the gate tower, where the first flag is.
+    const flag = flagsOf(levelMap(AKERSHUS))[0];
+    expect(b.y + PLAYER.h).toBe(flag.bottom);
+    expect(Math.abs(b.x + PLAYER.w / 2 - flag.x)).toBeLessThan(2 * TILE);
   });
 
-  test("Akershus: fired while the hoist is up, he hits it and the moat puts him back at the flag", () => {
+  test("Akershus: fired while the hoist is up, he hits it and the moat puts him back at the flag before it", () => {
     const p = newPlay(AKERSHUS);
-    const route = ROUTE.akershus;
+    const route = AKERSHUS_ROUTE;
     const upTo = route.findIndex((m) => m.name === "the hoist down");
     playMoves(p, [...route.slice(0, upTo), wait("the hoist at the top", (q) => carrier(q, HOIST).y <= HOIST.top), cannonRide(1)], { max: 60 * 120 });
-    expect(p.checkpoints.reached).toBe(0);
-    expect(Math.abs(cx(p) - flagsOf(levelMap(AKERSHUS))[0].x)).toBeLessThan(2);
+    const flags = flagsOf(levelMap(AKERSHUS));
+    expect(p.checkpoints.reached).toBe(1);
+    expect(p.hearts).toBe(2);
+    expect(Math.abs(cx(p) - flags[1].x)).toBeLessThan(2);
+  });
+
+  test("Akershus: the saluting battery fires him from cannon to cannon onto the last wall; leaning back on the way drops him in the harbour", () => {
+    const at = AKERSHUS_ROUTE.findIndex((m) => m.name === "the hoist down");
+    const p = newPlay(AKERSHUS);
+    const r = playMoves(p, AKERSHUS_ROUTE.slice(0, at + 3), { max: 60 * 120, until: (z) => z.body.onGround && cx(z) > tile(190) });
+    expect(r.stuck).toBeNull();
+    const fired = r.events.flatMap((e) => (e.fired !== null ? [e.fired] : []));
+    expect(fired.slice(-3)).toEqual(BATTERY);
+    expect(r.events.some((e) => e.splash)).toBe(false);
+    expect(cx(p)).toBeGreaterThan(tile(190));
+    // Holding back while the first of them throws him: short of the next, into the water.
+    const q = newPlay(AKERSHUS);
+    playMoves(q, AKERSHUS_ROUTE.slice(0, at + 2), { max: 60 * 120 });
+    const leaning = (z: Play) => z.firedAt[BATTERY[0]] > 0;
+    playMoves(q, [cannonRide(1)], { max: 60 * 20, until: leaning });
+    let splash = false;
+    for (let i = 0; i < 200 && !splash; i++) splash = stepPlay(q, { ...IDLE, left: true }).splash;
+    expect(splash).toBe(true);
   });
 
   test("Rådhuset: a bell rings when he lands on it, and gone it drops him on the roof below, not in the water", () => {
