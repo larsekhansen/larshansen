@@ -2,7 +2,8 @@
 // levels cleared, the best time per level, the levels whose gold bracteate he found, the most
 // skilling found in each, and the levels cleared without losing a heart. Pure functions, and
 // forgiving: missing, old or broken data reads as a fresh start, never as an error, and what the
-// first three levels saved before skilling and hearts existed still reads as it was.
+// first three levels saved before skilling and hearts existed still reads as it was. Line 2's
+// levels are stored the same way, by id, beside line 1's: nothing of line 1's changes (ADR 0025).
 //
 // A save carries a version mark, `v`. Levels 1 to 3 were rebuilt at version 2, four times as long:
 // a save from before that keeps their runes and bracteates, but their best times (and best skilling
@@ -92,6 +93,9 @@ export function clearLevel(p: Progress, id: string, ms: number, bracteate: boole
 
 /** The ski pole is the prize for clearing Holmenkollen. */
 export const hasPole = (p: Progress) => p.cleared.includes("holmenkollen");
+
+/** The shield is given at Bygdøy's longship; once Bygdøy is cleared he has it everywhere (ADR 0024). */
+export const hasShield = (p: Progress) => p.cleared.includes("bygdoy");
 
 /** A bracteate found, kept even before the level is cleared. */
 export function findBracteate(p: Progress, id: string): Progress {

@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { DASH, PLAYER, TILE } from "@larshansen/pixelkit/config";
-import type { LevelDef } from "../levels/types";
+import type { Boss, LevelDef } from "../levels/types";
+import { RAISE, SHIELD_RULES, shieldDrawn, shieldUp } from "./shield";
 import { WINDUP, leap, untilThrow, windingUp, type EnemyDef } from "./enemies";
 import { HEARTS, LIVES, PURSE_LIFE, SAFE_STEPS, STOMP, againAtBoss, extraGround, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./play";
 import { PLOUGH, PLOUGH_STEPS, lineHolds, ploughBoss, type Plough } from "./plough";
@@ -833,5 +834,193 @@ describe("the last boss: the plough", () => {
     expect(pl.hits).toBe(3);
     expect(pl.phase).toBe("beaten");
     expect(runeFree(p)).toBe(true);
+  });
+});
+
+describe("the shield (ADR 0024)", () => {
+  // A long floor at row 6 (feet at 96), nothing in the way; enemies as each test puts them.
+  const FLOOR = (enemies: EnemyDef[] = [], extra: Partial<LevelDef> = {}) =>
+    level([".".repeat(40), ".".repeat(40), ".".repeat(40), ".".repeat(40), ".".repeat(40), "S" + ".".repeat(39), "#".repeat(40), "#".repeat(40)], { enemies, ...extra });
+  const shielded = (def: LevelDef, at: number, facing: 1 | -1 = 1) => {
+    const p = newPlay(def, { start: { x: at, bottom: 6 * TILE }, shield: SHIELD_RULES, hasShield: true });
+    p.body.facing = facing;
+    return p;
+  };
+  const down: PlayIntent = { ...idle, shield: true };
+
+  test("it takes six steps to come up, and can be held for as long as down is held", () => {
+    const p = shielded(FLOOR(), 10 * TILE);
+    for (let i = 1; i <= RAISE; i++) {
+      stepPlay(p, down);
+      expect(shieldUp(p.shield!)).toBe(i >= RAISE);
+    }
+    expect(RAISE).toBe(6);
+    steps(p, 3000, down);
+    expect(shieldUp(p.shield!)).toBe(true);
+    stepPlay(p, idle);
+    expect(shieldUp(p.shield!)).toBe(false);
+  });
+
+  test("while it comes up and while it is up he can neither walk nor jump; let go, and he can", () => {
+    const p = shielded(FLOOR(), 10 * TILE);
+    const x = cx(p);
+    steps(p, 60, (i) => ({ ...down, right: true, jumpHeld: true, jumpPressed: i % 10 === 0 }));
+    expect(cx(p)).toBe(x);
+    expect(feet(p)).toBe(6 * TILE);
+    steps(p, 30, right);
+    expect(cx(p)).toBeGreaterThan(x + 20);
+  });
+
+  test("a turn brings it round: it comes up again the other way, and he still does not walk", () => {
+    const p = shielded(FLOOR(), 10 * TILE);
+    const x = cx(p);
+    steps(p, 10, down);
+    expect(p.shield!.facing).toBe(1);
+    stepPlay(p, { ...down, left: true });
+    expect(p.shield!.facing).toBe(-1);
+    expect(shieldUp(p.shield!)).toBe(false);
+    steps(p, RAISE, { ...down, left: true });
+    expect(shieldUp(p.shield!)).toBe(true);
+    expect(cx(p)).toBe(x);
+  });
+
+  test("in the air it does not come up; without the shield, down does nothing", () => {
+    const p = shielded(FLOOR(), 10 * TILE);
+    p.body.onGround = false;
+    p.body.y -= 30;
+    stepPlay(p, down);
+    expect(p.shield!.raise).toBe(0);
+    const q = newPlay(FLOOR(), { start: { x: 10 * TILE, bottom: 6 * TILE }, shield: SHIELD_RULES, hasShield: false });
+    steps(q, 30, { ...down, right: true });
+    expect(cx(q)).toBeGreaterThan(10 * TILE + 20);
+  });
+
+  /** A thrower `dx` tiles from him; he stands with the shield up facing `facing`. Hearts left, and how many throws it stopped. */
+  const volley = (dx: number, facing: 1 | -1, hold = true, row = 5) => {
+    const def = FLOOR([{ kind: "thrower", look: "kid", c: 20 + dx, r: row, period: 170 }]);
+    const p = shielded(def, 20 * TILE + 8, facing);
+    let blocked = 0;
+    let thrown = 0;
+    for (let i = 0; i < 700; i++) {
+      const ev = stepPlay(p, hold ? down : idle);
+      if (ev.blocked) blocked++;
+      thrown += ev.thrown.length;
+    }
+    return { hearts: p.hearts, blocked, thrown, spent: p.shots.length };
+  };
+
+  test("a thrown stone from the front is stopped at its face and falls, harmless, from near and far", () => {
+    for (const dx of [2, 3, 4, 5, 6]) {
+      for (const side of [1, -1] as const) {
+        const r = volley(dx * side, side);
+        // Every throw that has come down by the end was stopped (the last may still be in the air).
+        expect({ dx: dx * side, hearts: r.hearts, blocked: r.blocked >= r.thrown - 1 && r.blocked >= 3 }).toEqual({ dx: dx * side, hearts: HEARTS, blocked: true });
+      }
+    }
+    // Without it, the same throws hurt.
+    expect(volley(4, 1, false).hearts).toBeLessThan(HEARTS);
+  });
+
+  test("a thrown stone from behind is not stopped", () => {
+    expect(volley(4, -1).hearts).toBeLessThan(HEARTS);
+    expect(volley(-4, 1).hearts).toBeLessThan(HEARTS);
+  });
+
+  test("a stone dropping on him from above is not stopped", () => {
+    const p = shielded(FLOOR(), 20 * TILE + 8);
+    steps(p, 10, down);
+    p.shots.push({ x: cx(p) + 1, y: p.body.y - 30, vx: 0, vy: 1, born: p.t, by: 0 });
+    p.enemies = [];
+    const ev = steps(p, 40, down);
+    expect(ev.some((e) => e.hurt)).toBe(true);
+    expect(ev.some((e) => e.blocked)).toBe(false);
+  });
+
+  test("a charge: a walker that runs into it is stopped and pushed back a tile, and does him no harm", () => {
+    const def = FLOOR([{ kind: "walker", look: "pigeon", c: 26, r: 5, range: 6, speed: 0.6, dir: -1 }]);
+    const p = shielded(def, 20 * TILE + 8);
+    steps(p, 10, down);
+    let at = -1;
+    let x0 = 0;
+    for (let i = 0; i < 200 && at < 0; i++) {
+      const before = p.enemies[0].x;
+      if (stepPlay(p, down).blocked) {
+        at = i;
+        x0 = before;
+      }
+    }
+    expect(at).toBeGreaterThanOrEqual(0);
+    expect(p.hearts).toBe(HEARTS);
+    expect(p.enemies[0].x - x0).toBeGreaterThanOrEqual(TILE - 1);
+    expect(p.enemies[0].dir).toBe(1);
+    // It comes again and again, and each time it is held off.
+    steps(p, 600, down);
+    expect(p.hearts).toBe(HEARTS);
+    // Lowered, the next one hurts.
+    const ev = steps(p, 600, idle);
+    expect(ev.some((e) => e.hurt)).toBe(true);
+  });
+
+  test("a boss's charge is held off too, the boss pushed back a tile; from behind it is not", () => {
+    // A made-up boss: a block that drives at him and hurts on touch, as the plough does.
+    type Ram = { x: number };
+    const ram: Boss<Ram> = {
+      create: () => ({ x: 30 * TILE }),
+      step: (s, _t, him) => {
+        s.x += Math.sign(him.x + PLAYER.w / 2 - s.x) * 1.5;
+        return null;
+      },
+      stomped: () => null,
+      hurts: (s, _t, him) => (Math.abs(him.x + PLAYER.w / 2 - s.x) < 14 ? { fromX: s.x } : null),
+      shoved: (s, _t, dir) => void (s.x += dir * TILE),
+      reset: () => undefined,
+      awake: () => true,
+      top: (s) => ({ x: s.x, y: 5 * TILE }),
+      beaten: () => false
+    };
+    const def = FLOOR([], { boss: ram });
+    const p = shielded(def, 20 * TILE + 8);
+    let held = 0;
+    for (let i = 0; i < 400; i++) if (stepPlay(p, down).blocked) held++;
+    expect(held).toBeGreaterThan(1);
+    expect(p.hearts).toBe(HEARTS);
+    expect((p.boss!.state as Ram).x).toBeGreaterThan(20 * TILE + 8 + 14);
+    const q = shielded(def, 20 * TILE + 8, -1);
+    expect(steps(q, 400, down).some((e) => e.hurt)).toBe(true);
+  });
+
+  test("the plough charging into it backs off to rest, and says the round's hint, as when it runs into him", () => {
+    const row = (ch: string) => ch.repeat(60);
+    const street = [row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), "..S" + ".".repeat(57), row("#"), row("#")];
+    const DEF = { floor: 10 * TILE, x: 50 * TILE, wakeAt: 10 * TILE, rounds: [{ x0: 20 * TILE, x1: 50 * TILE, sticks: true }], line: { x0: 14 * TILE, x1: 17 * TILE, y: 10 * TILE - 28, speed: 7 }, backOff: 6 * TILE };
+    const p = newPlay(level(street, { boss: ploughBoss(DEF) }), { start: { x: 30 * TILE, bottom: 10 * TILE }, shield: SHIELD_RULES, hasShield: true });
+    const evs = steps(p, 900, down);
+    expect(evs.some((e) => e.blocked)).toBe(true);
+    expect(evs.some((e) => e.boss === "miss1")).toBe(true);
+    expect(p.hearts).toBe(HEARTS);
+  });
+
+  test("a jumper leaping up beside him is not held: it comes from below", () => {
+    const def = level([".".repeat(30), ".".repeat(30), ".".repeat(30), ".".repeat(30), "S" + ".".repeat(29), "###########~~###############", "###########~~###############"], { enemies: [{ kind: "jumper", look: "salmon", c: 11, r: 6, rise: 40, period: 200 }] });
+    const p = newPlay(def, { start: { x: 11 * TILE, bottom: 5 * TILE }, shield: SHIELD_RULES, hasShield: true });
+    expect(steps(p, 400, down).some((e) => e.hurt)).toBe(true);
+  });
+
+  test("the reduced-motion drawing: it is drawn up exactly when it protects, with no steps between; otherwise it rises over the six", () => {
+    for (let r = 0; r <= RAISE; r++) {
+      expect(shieldDrawn(r, true)).toBe(r >= RAISE ? 1 : 0);
+      expect(shieldDrawn(r, false)).toBeCloseTo(r / RAISE);
+    }
+  });
+
+  test("given where the level puts it: touched, he has it from then on", () => {
+    const def = level([".".repeat(20), ".".repeat(20), ".".repeat(20), "S.....y" + ".".repeat(13), "#".repeat(20)]);
+    const p = newPlay(def, { shield: SHIELD_RULES });
+    expect(p.shield!.has).toBe(false);
+    const ev = steps(p, 120, right);
+    expect(ev.filter((e) => e.gift).length).toBe(1);
+    expect(p.shield!.has).toBe(true);
+    // Having it already, it is not there to take again.
+    expect(newPlay(def, { shield: SHIELD_RULES, hasShield: true }).giftAt).toBe(-1);
   });
 });

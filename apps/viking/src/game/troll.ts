@@ -222,16 +222,22 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
  * Stone hurts nobody; nor does its body while its club is stuck or it flinches in the light (it has
  * its hands full), so he can stand right up to it to look at it, nor while it backs off.
  */
-export function trollHurts(t: Troll, step: number, him: Body): { fromX: number } | null {
+export function trollHurts(t: Troll, step: number, him: Body): { fromX: number; from?: "above" | "below" } | null {
   if (t.phase === "stone") return null;
   const over = (r: { x: number; y: number; w: number; h: number }) => him.x < r.x + r.w && him.x + PLAYER.w > r.x && him.y < r.y + r.h && him.y + PLAYER.h > r.y;
   const busy = t.phase === "asleep" || t.phase === "stuck" || t.phase === "hit" || t.phase === "retreat";
   if (!busy && over(trollBox(t))) return { fromX: t.x };
+  // The club comes down from above, the wave along the ground: a shield held up in front stops neither.
   const club = clubBox(t, step);
-  if (club && over(club)) return { fromX: t.x };
-  for (const f of waveFronts(t, step)) if (over(f)) return { fromX: f.x + f.w / 2 };
+  if (club && over(club)) return { fromX: t.x, from: "above" };
+  for (const f of waveFronts(t, step)) if (over(f)) return { fromX: f.x + f.w / 2, from: "below" };
   return null;
 }
 
+/** It walked into his raised shield: back a tile, within its clearing. */
+function shoveTroll(t: Troll, _step: number, dir: 1 | -1) {
+  t.x = Math.max(t.def.x0 + TROLL.w / 2, Math.min(t.def.x1 - TROLL.w / 2, t.x + dir * TILE));
+}
+
 /** The troll's rules for its level's slot (`LevelDef.trollRules`): play.ts runs them through the level. */
-export const TROLL_RULES: TrollRules = { create: createTroll, reset: resetTroll, step: stepTroll, box: trollBox, hurts: trollHurts };
+export const TROLL_RULES: TrollRules = { create: createTroll, reset: resetTroll, step: stepTroll, box: trollBox, hurts: trollHurts, shoved: shoveTroll };

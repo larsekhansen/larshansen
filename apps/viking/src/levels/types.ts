@@ -39,7 +39,9 @@ export const MARKS = {
   /** A park bench: sit on it (up) to fill the hearts and keep the spot. */
   bench: "b",
   /** A bass drum: steps on it and it throws him straight up. */
-  drum: "d"
+  drum: "d",
+  /** Where the shield is given (Bygdøy's prow): he takes it by touching it. */
+  shield: "y"
 } as const;
 
 export interface SignDef {
@@ -159,7 +161,9 @@ export interface TrollRules {
   step(t: Troll, step: number, him: Body): TrollEvent;
   /** Its body (and, stone, what he stands on). */
   box(t: Troll): { x: number; y: number; w: number; h: number };
-  hurts(t: Troll, step: number, him: Body): { fromX: number } | null;
+  hurts(t: Troll, step: number, him: Body): { fromX: number; from?: "above" | "below" } | null;
+  /** It ran into his raised shield: pushed back the way `dir` points. */
+  shoved?(t: Troll, step: number, dir: 1 | -1): void;
 }
 
 /**
@@ -176,8 +180,10 @@ export interface Boss<S = unknown> {
    * does, and what to call it. Null when he did not.
    */
   stomped(s: S, t: number, him: Body, prevBottom: number): { top: number; hit: boolean; speed?: number; event?: string } | null;
-  /** What hurts him this step, and from where; null when nothing does. */
-  hurts(s: S, t: number, him: Body): { fromX: number } | null;
+  /** What hurts him this step, and from where (and whether from above or below); null when nothing does. */
+  hurts(s: S, t: number, him: Body): { fromX: number; from?: "above" | "below" } | null;
+  /** It ran into his raised shield: pushed back a tile the way `dir` points (ADR 0024). */
+  shoved?(s: S, t: number, dir: 1 | -1): void;
   /** Its body as a wall he cannot walk through this step (a machine standing still), or null. */
   blocks?(s: S): { x: number; y: number; w: number; h: number } | null;
   /** He lost a life: back to where it waits, keeping the hits it has taken. */

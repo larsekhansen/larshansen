@@ -25,6 +25,8 @@ export default defineConfig({
           if (/\/src\/debug\.ts$/.test(id)) return "debug";
           // How the line map looks: fetched on its own as the page starts.
           if (/\/src\/levels\/kartArt\.ts$/.test(id)) return "kart";
+          // The shield's rules and drawing: fetched when he has it, or goes where it is given.
+          if (/\/src\/game\/shield\.ts$/.test(id)) return "shield";
           const level = LEVEL.exec(id);
           const owned = OWNED.exec(id);
           return level ? level[1] : owned ? OWN[owned[1]] : "index";

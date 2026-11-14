@@ -36,6 +36,8 @@ export interface EnemyDef {
   /** Its size, when not the kind's own. */
   w?: number;
   h?: number;
+  /** A thrower that aims where he is going, not where he stands: walking on under it is what it punishes. */
+  lead?: boolean;
 }
 
 /** Sizes, speeds and beats by kind, when the level does not say. */
@@ -84,6 +86,8 @@ export interface Shot {
   born: number;
   /** Which thrower, for the drawing. */
   by: number;
+  /** The step the shield stopped it: from then on it falls, harmless. */
+  spent?: number;
 }
 
 export function createEnemies(defs: readonly EnemyDef[], map: TileMap): Enemy[] {
@@ -193,7 +197,7 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
         if (untilThrow(e, t) === 0 && near) {
           // A lob that comes down about where he stands now, never faster across than it can be dodged.
           const air = (2 * SHOT.up) / SHOT.gravity;
-          const vx = Math.max(-SHOT.maxAcross, Math.min(SHOT.maxAcross, (hx - e.x) / air));
+          const vx = Math.max(-SHOT.maxAcross, Math.min(SHOT.maxAcross, (hx + (e.def.lead ? him.vx * air : 0) - e.x) / air));
           shots.push({ x: e.x + e.dir * 3, y: e.y - e.h + 1, vx, vy: -SHOT.up, born: t, by: i });
           e.thrownAt = t;
           thrown.push(i);

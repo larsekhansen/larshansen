@@ -33,6 +33,7 @@ Lars before reversing one of his.
 | [0021](0021-the-upright-view-stands-him-two-thirds-down.md) | On an upright screen he stands two thirds down; the ground goes on under him, the far layers sit behind the street | planner (order 13) | holds; adjusts 0019 |
 | [0022](0022-the-plough-hurts-only-while-it-moves.md) | The plough hurts only while it moves; standing still it is in his way; running into him shows the round's hint | planner (order 13) | holds |
 | [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds |
+| [0024](0024-the-shield-is-a-held-stance.md) | The shield: held down on the ground it comes up in six steps and stops throws and charges from in front; a held stance, not a parry | planner (order 14) | holds |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

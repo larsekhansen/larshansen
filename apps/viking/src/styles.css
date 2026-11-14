@@ -384,3 +384,17 @@ body {
   text-align: center;
   box-sizing: border-box;
 }
+
+/* With the shield's button as well as the dash, the touch pad has five buttons on its right: smaller, so
+   all of them fit an upright phone. */
+@media (max-width: 480px) {
+  .pad.armed div {
+    gap: 6px;
+  }
+
+  .pad.armed button {
+    min-width: 50px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
+}

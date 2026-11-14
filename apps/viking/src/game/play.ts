@@ -43,10 +43,33 @@ export interface Box {
   h: number;
 }
 
-/** What the player asks for this step: the keys, plus sitting down (up at a bench) and the dash. */
+/** What the player asks for this step: the keys, plus sitting down (up at a bench), the dash, and the shield (down, held). */
 export interface PlayIntent extends Intent {
   sit?: boolean;
   dash?: boolean;
+  shield?: boolean;
+}
+
+/** The shield he holds (ADR 0024): whether he has it, how many steps it has been coming up, and the way it faces. */
+export interface ShieldState {
+  has: boolean;
+  raise: number;
+  facing: 1 | -1;
+}
+
+/**
+ * The shield's rules, from their own file (`game/shield.ts`), which the page fetches when he has the
+ * shield or goes where it is given: play.ts runs them through `Play.shield`.
+ */
+export interface ShieldRules {
+  /** Before his body moves: down on the ground raises it. The keys he is left with (no walking or jumping while it comes up or is up). */
+  step(s: ShieldState, b: Body, intent: PlayIntent): PlayIntent;
+  /** A thrown thing that reaches its face from in front: stopped. */
+  stops(s: ShieldState, b: Body, shot: Shot, box: Box): boolean;
+  /** Something that runs into him from `fromX` (its box, when it has one; `from`, when it comes from above or below): held off. */
+  holds(s: ShieldState, b: Body, fromX: number, box: { y: number; h: number } | null, from?: "above" | "below"): boolean;
+  /** An enemy that ran into it: pushed back a tile, the way `dir` points, and turned away. */
+  shove(e: Enemy, map: TileMap, dir: 1 | -1): void;
 }
 
 export interface Play {
@@ -116,6 +139,11 @@ export interface Play {
   boss: { rules: Boss; state: unknown } | null;
   /** The level is over in a boss's fight (the boss was awake when the last life went): he may go on from the bench before it. */
   overAtBoss: boolean;
+  /** The shield, when its rules are here (he has it, or this level gives it). */
+  shield: (ShieldState & { rules: ShieldRules }) | null;
+  /** Where the level gives the shield (Bygdøy's prow), and when he took it (-1: he had it already). */
+  gift: Box | null;
+  giftAt: number | null;
 }
 
 export interface Events {
@@ -151,6 +179,10 @@ export interface Events {
   boss: string | null;
   /** He touched a hazard (the third rail): it sparks. */
   zap: boolean;
+  /** The shield stopped something this step: a throw, an enemy, a boss. */
+  blocked: boolean;
+  /** He took the shield where the level gives it. */
+  gift: boolean;
 }
 
 /** The tiles marked with a letter, as boxes or feet. */
@@ -202,6 +234,12 @@ export function skillingOf(map: TileMap): Box[] {
   return marks(map, MARKS.skilling).map((t) => ({ x: t.c * TILE + 4, y: t.r * TILE + 4, w: 8, h: 8 }));
 }
 
+/** Where the level gives the shield: a disc the size of a tile, leaning where the map says. */
+export function giftOf(map: TileMap): Box | null {
+  const t = marks(map, MARKS.shield)[0];
+  return t ? { x: t.c * TILE + 2, y: t.r * TILE + 2, w: 12, h: 14 } : null;
+}
+
 export function cheeseOf(map: TileMap): Box | null {
   const t = marks(map, MARKS.cheese)[0];
   return t ? { x: t.c * TILE + 2, y: t.r * TILE + 4, w: 12, h: 10 } : null;
@@ -218,6 +256,9 @@ export interface PlayOptions {
   cheeseTaken?: boolean;
   /** What this level has paid into the purse earlier in this visit (see `Play.paid`). */
   paid?: readonly number[];
+  /** The shield's rules, when they are here, and whether he has it already. */
+  shield?: ShieldRules;
+  hasShield?: boolean;
 }
 
 export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
@@ -270,7 +311,10 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     dashEnded: -999,
     troll: def.troll && def.trollRules ? def.trollRules.create(def.troll) : null,
     boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null,
-    overAtBoss: false
+    overAtBoss: false,
+    shield: opts.shield ? { rules: opts.shield, has: !!opts.hasShield, raise: 0, facing: 1 } : null,
+    gift: giftOf(map),
+    giftAt: opts.hasShield ? -1 : null
   };
 }
 
@@ -382,16 +426,44 @@ function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number
       addToPurse(p, ev, -1 - i);
       break;
     }
+    // Run into the shield from in front: pushed back a tile, and no harm done (a jumper comes from below).
+    const sh = p.shield;
+    if (!fromAbove && sh && e.def.kind !== "jumper" && sh.rules.holds(sh, b, e.x, box)) {
+      sh.rules.shove(e, p.map, sh.facing);
+      ev.blocked = true;
+      continue;
+    }
     // Landing on a spiky thing hurts, and throws him up off it so he is not left standing on it.
     hit(p, ev, e.x);
     if (fromAbove && !ev.lifeLost) launch(b, (b.x + PLAYER.w / 2 < e.x ? -1 : 1) * KNOCK.vx, -KNOCK.vy - 1);
     break;
   }
-  for (let k = p.shots.length - 1; k >= 0; k--)
-    if (overlaps(b, shotBox(p.shots[k]))) {
-      const s = p.shots.splice(k, 1)[0];
+  for (let k = p.shots.length - 1; k >= 0; k--) {
+    const s = p.shots[k];
+    if (s.spent !== undefined) continue;
+    const box = shotBox(s);
+    // Stopped by the shield's face: it falls, harmless.
+    if (p.shield?.rules.stops(p.shield, b, s, box)) {
+      s.spent = p.t;
+      s.vx = -s.vx * 0.25;
+      s.vy = Math.min(s.vy, 0);
+      ev.blocked = true;
+      continue;
+    }
+    if (overlaps(b, box)) {
+      p.shots.splice(k, 1);
       hit(p, ev, s.x - s.vx * 4);
     }
+  }
+}
+
+/** Something that hurts him from `fromX`, unless the shield holds it off (then `shoved` pushes it back). */
+function hurtUnlessHeld(p: Play, ev: Events, hurt: { fromX: number; from?: "above" | "below" }, box: { y: number; h: number } | null, shoved?: (dir: 1 | -1) => void) {
+  const sh = p.shield;
+  if (sh && sh.rules.holds(sh, p.body, hurt.fromX, box, hurt.from)) {
+    shoved?.(sh.facing);
+    ev.blocked = true;
+  } else hit(p, ev, hurt.fromX);
 }
 
 /** The troll: it moves, it hurts, and the dawn hits it. Once it is stone the rune shows on top of it. */
@@ -402,7 +474,7 @@ function meetTroll(p: Play, ev: Events) {
   ev.troll = rules.step(t, p.t, p.body);
   if (ev.troll === "stone" && p.rune) p.rune = { ...p.rune, x: t.x - p.rune.w / 2, y: rules.box(t).y - p.rune.h - 4 };
   const hurt = rules.hurts(t, p.t, p.body);
-  if (hurt) hit(p, ev, hurt.fromX);
+  if (hurt) hurtUnlessHeld(p, ev, hurt, rules.box(t), (dir) => rules.shoved?.(t, p.t, dir));
 }
 
 /** The last boss: it moves, it hurts, and coming down on it from above is a hit (or, while it is reeling, a bounce off it). */
@@ -422,7 +494,7 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
     return;
   }
   const hurt = bs.rules.hurts(bs.state, p.t, b);
-  if (hurt) hit(p, ev, hurt.fromX);
+  if (hurt) hurtUnlessHeld(p, ev, hurt, null, (dir) => bs.rules.shoved?.(bs.state, p.t, dir));
   // Standing still, it is a wall: he cannot walk through it to what lies behind.
   const wall = bs.rules.blocks?.(bs.state);
   if (wall && b.x + PLAYER.w > wall.x && b.x < wall.x + wall.w && b.y + PLAYER.h > wall.y + 2 && b.y < wall.y + wall.h) {
@@ -486,7 +558,9 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     thrown: [],
     troll: null,
     boss: null,
-    zap: false
+    zap: false,
+    blocked: false,
+    gift: false
   };
   if (p.run.state === "over") return ev;
   p.t++;
@@ -523,6 +597,9 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
       intent = { left: false, right: false, jumpHeld: false, jumpPressed: false };
     }
   }
+
+  // The shield: down on the ground raises it, and while it comes up and is up he stands.
+  if (p.shield && !p.sitting) intent = p.shield.rules.step(p.shield, b, intent);
 
   // The ski pole: a dash, level, the way he faces or steers, once each time he is off the ground.
   if (p.pole && intent.dash && !p.dash && !p.dashSpent && !p.sitting && p.t - p.dashEnded >= DASH_REST) {
@@ -619,6 +696,12 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     p.cheese.at = p.t;
     p.lives++;
     ev.life = true;
+  }
+  // The shield, where the level gives it: from now on he has it.
+  if (p.gift && p.giftAt === null && overlaps(b, p.gift)) {
+    p.giftAt = p.t;
+    if (p.shield) p.shield.has = true;
+    ev.gift = true;
   }
   if (p.bracteate && p.bracteateAt === null && overlaps(b, p.bracteate)) {
     p.bracteateAt = p.t;
