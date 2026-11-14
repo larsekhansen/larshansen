@@ -140,7 +140,7 @@ export const GROUNDS: Grounds<Lake> = {
 };
 
 /** The swans' clock: four seconds in a swan's stretch and it comes; for the last second it tells him so. */
-export const SWAN = { tell: 180, come: 240, glide: 0.3, near: 0.5, speed: 1.3 };
+export const SWAN = { tell: 180, come: 240, glide: 0.3, near: 1, speed: 1.3 };
 
 /** The water line a swan swims on: the floor of its tile. */
 const waterOf = (e: Enemy) => (e.def.r + 1) * TILE;

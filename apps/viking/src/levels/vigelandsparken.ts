@@ -52,7 +52,7 @@ b.ground(104, 249, W);
 b.fill(134, 137, W - 3, W - 1, "G");
 b.fill(154, 158, W - 3, W - 1, "G");
 // --- The Monolith: a stair of figures up its side, onto the plateau ------------------------------------
-b.run(172, 174, W - 2, "=").run(176, 178, W - 4, "=").run(172, 174, W - 6, "=").run(176, 179, W - 8, "=");
+b.run(171, 174, W - 2, "=").run(176, 179, W - 4, "=").run(171, 174, W - 6, "=").run(176, 180, W - 8, "=");
 b.fill(182, 212, W - 8, W - 1, "G");
 // --- The plateau's steps down to the Wheel of Life, and its plinth -----------------------------------
 b.fill(213, 215, W - 6, W - 1, "G").fill(216, 218, W - 4, W - 1, "G").fill(219, 221, W - 2, W - 1, "G");
@@ -153,14 +153,14 @@ const statueSpans = (defs: readonly EnemyDef[]): Carrier[] =>
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 16, r: W - 8, range: 3, rise: 5, period: 180 },
-  { kind: "spiky", look: "statue", c: 23, r: W - 1, range: 6, speed: 0.5, w: 10, h: 16 },
-  { kind: "spiky", look: "bronze", c: 44, r: W - 1, range: 4, speed: 0.5, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 23, r: W - 1, range: 6, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "bronze", c: 44, r: W - 1, range: 4, speed: 0.8, w: 10, h: 16 },
   // The Angry Boy, high on his post at the far side of the broken span: he stamps, jumps and lands.
   { kind: "jumper", look: "boy", c: BOY.c, r: W - 4, rise: 18, period: BOY.period, w: 8, h: 12 },
-  { kind: "spiky", look: "bronze", c: 71, r: W - 1, range: 4, speed: 0.5, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 124, r: W - 1, range: 3, speed: 0.5, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 133, r: W - 1, range: 1, speed: 0.5, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 146, r: W - 1, range: 7, speed: 0.6, w: 10, h: 16 },
+  { kind: "spiky", look: "bronze", c: 71, r: W - 1, range: 4, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 124, r: W - 1, range: 3, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 133, r: W - 1, range: 1, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 146, r: W - 1, range: 7, speed: 0.8, w: 10, h: 16 },
   { kind: "walker", look: "pigeon", c: 161, r: W - 1, range: 2 },
   { kind: "flyer", look: "crow", c: 165, r: W - 6, range: 2, rise: 6, period: 170 },
   { kind: "flyer", look: "crow", c: 187, r: W - 13, range: 3, rise: 5, period: 190 },
@@ -515,7 +515,7 @@ function monolith() {
   }
   for (let k = 0; k < 6; k++) R(cx - 8 + k, top - 6 + Math.abs(k - 3), 16 - k * 2, 1, V.graniteLight);
   // Under each of the figures he climbs, the body it belongs to: lying out from the column, head out.
-  for (const [c0, c1, r] of [[172, 174, W - 2], [176, 178, W - 4], [172, 174, W - 6], [176, 179, W - 8]] as const) {
+  for (const [c0, c1, r] of [[171, 174, W - 2], [176, 179, W - 4], [171, 174, W - 6], [176, 180, W - 8]] as const) {
     const y = r * TILE + 4;
     const left = c0 < 175;
     const x0 = c0 * TILE;
