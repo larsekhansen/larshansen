@@ -11,7 +11,7 @@ const args = Object.fromEntries(process.argv.slice(2).map((a) => a.split("=") as
 const ids = args.levels && args.levels !== "all" ? args.levels.split(",") : LEVELS.map((l) => l[0]);
 const ks = (args.ks ?? "2,4").split(",").map(Number);
 const seeds = Number(args.seeds ?? 40);
-const timed = (name: string) => /^(jump |jump to|leap at|into the cannon|hop|over the bundle)/.test(name) || /lip|dash|bounce|off the|up off|on the tram|across on the sheep|onto the stone/.test(name);
+const timed = (name: string) => /^(jump |jump to|leap at|into the cannon|hop|over the bundle|onto statue|ride |over the sledgers|duck |down the steep|the run-out)/.test(name) || /lip|dash|bounce|off the|up off|on the tram|across on the sheep|onto the stone/.test(name);
 const all: any[] = [];
 for (const [id, def, moves] of LEVELS) {
   if (!ids.includes(id)) continue;

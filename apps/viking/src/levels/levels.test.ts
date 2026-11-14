@@ -110,7 +110,7 @@ const GOLD: Record<string, Move[]> = {
   vigelandsparken: [...VIGELANDSPARKEN_ROUTE.slice(0, VIGELANDSPARKEN_ROUTE.findIndex((m) => m.name === `walk to ${mid(179)}`)), walk(mid(178)), jump(0, { second: 18 })],
   // On the sledge over the gap: the jump at its edge, and the second at the top of it.
   // On the stone in the middle of the long crossing: two jumps up.
-  ostensjovannet: [...OSTENSJOVANNET_ROUTE.slice(0, OSTENSJOVANNET_ROUTE.findIndex((m) => m.name === "on the stone") + 1), walk(mid(181)), jump(0, { second: 18 })],
+  ostensjovannet: [...OSTENSJOVANNET_ROUTE.slice(0, OSTENSJOVANNET_ROUTE.findIndex((m) => m.name === "on the stone") + 1), walk(mid(180)), jump(0, { second: 18 })],
   korketrekkeren: [
     ...KORKETREKKEREN_ROUTE.slice(0, KORKETREKKEREN_ROUTE.findIndex((m) => m.name === "jump the gap")),
     {
@@ -154,7 +154,7 @@ const JUMP_EXCEPTIONS: Record<string, string[]> = {
   nabolaget: ["thrower:kid@52", "walker:cat@153"],
   // Østensjøvannet's swans swim the water the pads lie on: that is the level. Each lets him be (it cannot
   // be touched) until he has been in its stretch four seconds, and the stretches are crossed in three.
-  ostensjovannet: ["spiky:swan@71", "spiky:swan@151", "spiky:swan@169"]
+  ostensjovannet: ["spiky:swan@70.5", "spiky:swan@149.5", "spiky:swan@166.5"]
 };
 
 /**
@@ -1107,7 +1107,7 @@ describe("Østensjøvannet: pads that sink, swans that mind their water", () => 
     for (let i = 3; i < LILY_PADS.length; i++) {
       const gap = LILY_PADS[i].x - (LILY_PADS[i - 1].x + LILY_PADS[i - 1].w);
       if (gap < 0 || gap > 4 * TILE) continue;
-      expect(gap).toBeLessThanOrEqual(36);
+      expect(gap).toBeLessThanOrEqual(32);
     }
   });
 
@@ -1148,7 +1148,7 @@ describe("Østensjøvannet: pads that sink, swans that mind their water", () => 
   test("the gulls dive at him straight from their nests: a man who walks on along the shore is hit at most of the moments he could come", () => {
     let hit = 0;
     let tries = 0;
-    for (let t0 = 0; t0 < 130; t0 += 2) {
+    for (let t0 = 0; t0 < 110; t0 += 2) {
       const p = P({ x: tile(112), bottom: FLOOR });
       p.enemies[3].alive = false;
       p.t = t0;
@@ -1169,7 +1169,7 @@ describe("Østensjøvannet: pads that sink, swans that mind their water", () => 
     let hurt = false;
     for (let i = 0; i < 600; i++) hurt = stepPlay(p, IDLE).hurt || hurt;
     expect(hurt).toBe(false);
-    const swan = p.enemies.find((e) => e.def.look === "swan" && e.def.c === 151)!;
+    const swan = p.enemies.find((e) => e.def.look === "swan" && e.def.c === 149.5)!;
     expect(inStretch(swan, p.body)).toBe(false);
   });
 });

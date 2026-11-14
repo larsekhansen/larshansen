@@ -40,47 +40,47 @@ const water = (c0: number, c1: number) => b.fill(c0, c1, W, W + 1, "~").ground(c
 b.ground(0, 17, W);
 b.run(10, 13, W - 2, "=").run(9, 14, W - 4, "=");
 // --- The boardwalk over the shallows ---------------------------------------------------------------------
-water(18, 40);
-b.run(18, 40, W, "P");
+water(18, 41);
+b.run(18, 41, W, "P");
 // --- The first pads, stones between them --------------------------------------------------------------
-water(41, 55);
+water(42, 55);
 for (const c of [42, 46, 50, 54]) b.fill(c, c, W, W + 1, "K");
 b.ground(56, 62, W);
 // --- The first swan's stretch ----------------------------------------------------------------------------
 water(63, 80);
 b.ground(81, 85, W);
 // --- The mist, the heron, the second hide's deck ------------------------------------------------------
-water(86, 101);
-b.run(92, 101, W - 4, "=");
+water(86, 100);
+b.run(91, 101, W - 4, "=");
 // --- The island -------------------------------------------------------------------------------------------
-b.ground(102, 140, W);
+b.ground(101, 140, W);
 // --- The long crossing: two swans, a stone in the middle ----------------------------------------------
-water(141, 190);
-b.fill(181, 182, W, W + 1, "K");
+water(141, 189);
+b.fill(179, 181, W, W + 1, "K");
 // --- The far shore and the far hide ------------------------------------------------------------------
-b.ground(191, COLS - 1, W);
+b.ground(190, COLS - 1, W);
 b.run(234, 236, W - 2, "=").run(238, 247, W - 4, "=");
 
 // Marks: the start, the door, signs, flags, the bench, the rune, the bracteate, the cheese.
 b.put(2, W - 1, "t").put(4, W - 1, "S");
 b.put(7, W - 1, "i").put(60, W - 1, "i").put(84, W - 1, "i");
 for (const c of [29, 57, 83, 103, 138, 198, 228]) b.put(c, W - 1, "f");
-b.put(182, W - 1, "f");
+b.put(181, W - 1, "f");
 b.put(137, W - 1, "b");
-b.put(244, W - 5, "r").put(181, W - 6, "o").put(11, W - 5, "&");
+b.put(244, W - 5, "r").put(180, W - 6, "o").put(11, W - 5, "&");
 
 // Skilling: over the path and the hide, along the boardwalk, over the pads and stones, up to the deck,
 // round the island, across the long crossing, along the far shore and up the far hide.
 const COINS: [number, number][] = [
   [6, 18], [11, 16], [12, 16], [13, 16],
-  [20, 18], [23, 18], [26, 18], [32, 18], [36, 18], [39, 17],
+  [20, 18], [23, 18], [26, 18], [32, 18], [36, 18], [40, 17],
   [44, 17], [48, 17], [52, 17],
   [65, 17], [68, 16], [72, 17], [75, 16], [79, 17],
-  [88, 17], [91, 15], [94, 14], [97, 14], [100, 14],
+  [87, 17], [90, 15], [94, 14], [97, 14], [100, 14],
   [106, 18], [114, 18], [120, 18], [126, 18], [132, 18],
-  [144, 17], [148, 16], [151, 17], [158, 16], [162, 17], [165, 16], [172, 17], [176, 16], [179, 17],
-  [186, 17], [189, 16],
-  [195, 18], [201, 18], [209, 18], [220, 18], [226, 18],
+  [144, 17], [148, 16], [151, 17], [158, 16], [162, 17], [165, 16], [172, 17], [176, 16], [180, 17],
+  [184, 17], [187, 16],
+  [196, 18], [201, 18], [209, 18], [217, 18], [226, 18],
   [235, 16], [240, 14], [242, 14], [246, 14]
 ];
 for (const [c, r] of COINS) b.put(c, r, "$");
@@ -89,21 +89,28 @@ export const MAP = b.rows_();
 
 // --- The pads, the heron, the swans -------------------------------------------------------------------
 
-/** A lily pad, a tile and a half across, its top on the water. */
-const pad = (c: number): SinkPad => ({ x: Math.round(c * TILE) - 4, y: FLOOR, w: 24 });
-/** The first three pads, between the stones; the first swan's; the one before the heron; the long crossing's. */
+/** A lily pad: its left end and its width (two tiles, or two and a half on a swan's water), its top on the water. */
+const pad = (x: number, w = 40): SinkPad => ({ x, y: FLOOR, w });
+/** Pads in a row from x, each `w` wide, every `step` pixels. */
+const row = (x: number, n: number, w = 40, step = 60) => Array.from({ length: n }, (_, i) => pad(x + i * step, w));
+/**
+ * The first three pads, between the stones; the first swan's, from the shore's edge; the one in the mist
+ * at the shore's edge, before the heron; the long crossing's, smaller, from the island's edge to the
+ * stone, and on to the far shore.
+ */
 export const PADS: SinkPad[] = [
-  ...[44, 48, 52].map((c) => ({ x: c * TILE - 2, y: FLOOR, w: 20 })),
-  ...[64, 67.5, 71, 74.5, 78].map(pad),
-  pad(87.5),
-  ...[142.5, 146, 149.5, 153, 156.5, 160, 163.5, 167, 170.5, 174, 177.5, 184.5, 188].map(pad)
+  ...[44, 48, 52].map((c) => pad(c * TILE - 8, 32)),
+  ...row(63 * TILE, 5, 32, 56),
+  pad(86 * TILE),
+  ...row(141 * TILE, 12, 24, 52),
+  ...row(183 * TILE, 2, 24, 56)
 ];
 
 /**
  * The heron: it stands in the shallows, a tall step from the pad before it up to the second hide's deck,
  * and flies off a second after he lands on it; it is back three seconds later.
  */
-export const HERON = { x: 90 * TILE + 2, y: FLOOR - 28, w: 12, stay: 60, away: 180 };
+export const HERON = { x: 89 * TILE + 8, y: FLOOR - 28, w: 12, stay: 60, away: 180 };
 
 interface Lake {
   pads: PadState[];
@@ -133,22 +140,23 @@ export const GROUNDS: Grounds<Lake> = {
 };
 
 /** The swans' clock: four seconds in a swan's stretch and it comes; for the last second it tells him so. */
-export const SWAN = { tell: 180, come: 240, glide: 0.3, speed: 1.1 };
+export const SWAN = { tell: 180, come: 240, glide: 0.3, near: 0.5, speed: 1.3 };
 
 /** The water line a swan swims on: the floor of its tile. */
 const waterOf = (e: Enemy) => (e.def.r + 1) * TILE;
 
-/** He is in this swan's stretch of water: over it, and down near the water, not up on a hide. */
+/** He is in this swan's stretch of water: over it, on it or jumping over it (not up on a hide). */
 export const inStretch = (e: Enemy, him: Body) => {
   const x = him.x + PLAYER.w / 2;
   const range = (e.def.range ?? 0) * TILE;
-  return x > e.home - range && x < e.home + range && him.y + PLAYER.h > waterOf(e) - 2 * TILE;
+  return x > e.home - range && x < e.home + range && him.y + PLAYER.h > waterOf(e) - 4 * TILE;
 };
 
 /**
- * One step of a swan. Calm, it glides along its stretch, harmless; once he has lingered there four
- * seconds it comes at him along the water (its touch hurts, and it cannot be landed on), as far as its
- * stretch goes; out of its stretch, he is forgotten and it calms.
+ * One step of a swan. Calm, it glides along its stretch, harmless; after three seconds of him there it
+ * turns to him, lowers its neck and hisses, drawing nearer; after four it comes at him along the water
+ * (its touch hurts, and it cannot be landed on), as far as its stretch goes. Out of its stretch, he is
+ * forgotten and it calms.
  */
 function swan(e: Enemy, p: Play) {
   const range = (e.def.range ?? 0) * TILE;
@@ -164,9 +172,11 @@ function swan(e: Enemy, p: Play) {
     return;
   }
   e.calm = true;
-  // Telling him: still, its neck down, facing him.
+  // Telling him: its neck down, facing him, drawing nearer.
   if (e.n >= SWAN.tell) {
-    e.dir = p.body.x + PLAYER.w / 2 < e.x ? -1 : 1;
+    const hx = p.body.x + PLAYER.w / 2;
+    e.dir = hx < e.x ? -1 : 1;
+    if (Math.abs(hx - e.x) > SWAN.near) e.x = Math.max(lo, Math.min(hi, e.x + e.dir * SWAN.near));
     return;
   }
   e.x += e.dir * SWAN.glide;
@@ -193,16 +203,16 @@ export const RULES: LevelRules = {
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "duck", c: 22, r: W - 1, range: 2, speed: 0.3 },
-  { kind: "walker", look: "duck", c: 34, r: W - 1, range: 1, speed: 0.3 },
-  { kind: "spiky", look: "swan", c: 71, r: W - 1, range: 8, w: 16, h: 12 },
+  { kind: "walker", look: "duck", c: 222, r: W - 1, range: 2, speed: 0.3 },
+  { kind: "spiky", look: "swan", c: 70.5, r: W - 1, range: 8, w: 16, h: 12 },
   { kind: "walker", look: "coot", c: 110, r: W - 1, range: 2, speed: 0.4 },
   // The gulls' beats chosen (by a search) so that a man who walks on along the shore is dived at nearly every time.
-  { kind: "thrower", look: "nester", c: 117, r: W - 3, period: 130, straight: true, lead: true, faces: -1 },
-  { kind: "thrower", look: "nester", c: 123, r: W - 3, period: 130, offset: 40, straight: true, lead: true, faces: -1 },
-  { kind: "thrower", look: "nester", c: 129, r: W - 3, period: 130, offset: 80, straight: true, lead: true, faces: -1 },
-  { kind: "spiky", look: "swan", c: 151, r: W - 1, range: 9, w: 16, h: 12 },
-  { kind: "spiky", look: "swan", c: 169, r: W - 1, range: 9, w: 16, h: 12, dir: -1 },
-  { kind: "walker", look: "coot", c: 205, r: W - 1, range: 2, speed: 0.4 },
+  { kind: "thrower", look: "nester", c: 117, r: W - 3, period: 110, straight: true, lead: true, faces: -1 },
+  { kind: "thrower", look: "nester", c: 123, r: W - 3, period: 110, offset: 10, straight: true, lead: true, faces: -1 },
+  { kind: "thrower", look: "nester", c: 129, r: W - 3, period: 110, offset: 40, straight: true, lead: true, faces: -1 },
+  { kind: "spiky", look: "swan", c: 149.5, r: W - 1, range: 8.25, w: 16, h: 12 },
+  { kind: "spiky", look: "swan", c: 166.5, r: W - 1, range: 8.25, w: 16, h: 12, dir: -1 },
+  { kind: "walker", look: "coot", c: 206, r: W - 1, range: 2, speed: 0.4 },
   { kind: "walker", look: "duck", c: 215, r: W - 1, range: 2, speed: 0.3 }
 ];
 
@@ -567,7 +577,7 @@ export const OSTENSJOVANNET: LevelDef = {
       reeds(15, 18, v.t);
       reeds(56, 62, v.t);
       reeds(81, 85, v.t);
-      reeds(191, 232, v.t);
+      reeds(190, 232, v.t);
       nestRocks();
     },
     front(v) {

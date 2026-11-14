@@ -1,5 +1,5 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { cx, jumpTo, leap, mid, tile, wait, walk, type Move } from "../../game/bot";
+import { cx, jumpTo, mid, tile, wait, walk, type Move } from "../../game/bot";
 import { THROW_REACH, untilThrow } from "../../game/enemies";
 import type { Play } from "../../game/play";
 import { shieldedWalk } from "./common";
@@ -24,10 +24,35 @@ const inReach = (q: Play, k: number) => {
   return e.alive && Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(q.body.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > 1.5 * TILE;
 };
 
-/** Over a run of pads without stopping: from the end of each, a running leap onto the next. */
+/** Onto a pad and on to about x on it, without stopping to stand there: a pad will not wait. */
+const onto = (x: number): Move => ({
+  name: `onto the pad at ${x}`,
+  keys: (q) => (Math.abs(x - cx(q)) <= 6 && q.body.onGround ? "done" : { left: x < cx(q), right: x > cx(q), jumpHeld: false, jumpPressed: false })
+});
+
+/**
+ * From pad i onto the next as a person goes: running to its end and jumping there, steering in the air
+ * to come down on the middle of the next (braking ahead of it, since the air is slow to turn).
+ */
+const padToPad = (i: number, to = middle(i + 1), name = `leap from pad ${i} to the next`): Move => ({
+  name,
+  keys(q, s) {
+    if (s.air && q.body.onGround) return "done";
+    if (!q.body.onGround) s.air = true;
+    if (s.took === undefined) {
+      if (q.body.x + PLAYER.w < right(i) - 2 && q.body.onGround) return { left: false, right: true, jumpHeld: false, jumpPressed: false };
+      s.took = s.i;
+    }
+    const k = s.i - (s.took as number);
+    const aim = to - q.body.vx * 7 - cx(q);
+    return { left: aim < -2, right: aim > 2, jumpHeld: k < 40, jumpPressed: k === 0 };
+  }
+});
+
+/** Over a run of pads without stopping on any: pad to pad. */
 const acrossPads = (from: number, to: number): Move[] => {
   const out: Move[] = [];
-  for (let i = from; i < to; i++) out.push(leap(right(i) - 2, 1));
+  for (let i = from; i < to; i++) out.push(padToPad(i));
   return out;
 };
 
@@ -35,7 +60,7 @@ export const OSTENSJOVANNET_ROUTE: Move[] = [
   // The path from the metro, under the first hide, the boardwalk and its ducks.
   walk(mid(8)),
   walk(mid(29)),
-  walk(tile(41) - 6),
+  walk(tile(42) - 6),
   // The first pads, firm stones between them.
   jumpTo(mid(42)),
   jumpTo(middle(0)),
@@ -46,16 +71,14 @@ export const OSTENSJOVANNET_ROUTE: Move[] = [
   jumpTo(mid(54)),
   jumpTo(mid(57)),
   walk(mid(62)),
-  // The first swan's stretch: pad to pad, never stopping, and off it before it minds him.
-  jumpTo(middle(3)),
+  // The first swan's stretch: from the shore across the first pad and on, pad to pad, never stopping.
   ...acrossPads(3, 7),
-  leap(right(7) - 2, 1),
+  padToPad(7, mid(82), "leap from the last pad to the shore"),
   walk(mid(83)),
-  walk(tile(86) - 4),
-  // The mist: onto the pad, up the heron before it flies, onto the hide's deck, along it and down onto the island.
-  jumpTo(middle(8)),
+  // The mist: onto the pad at the shore's edge, up the heron before it flies, onto the hide's deck, along it and down onto the island.
+  onto(right(8) - 10),
   jumpTo(HERON.x + HERON.w / 2),
-  jumpTo(mid(93)),
+  jumpTo(mid(92)),
   walk(mid(101)),
   walk(mid(104)),
   // The island: past the coot; the gulls dive from their nests, so walk, stop and raise the shield, walk.
@@ -72,16 +95,16 @@ export const OSTENSJOVANNET_ROUTE: Move[] = [
     4
   ),
   walk(mid(138)),
-  // The long crossing: two swans' stretches, one after the other; the stone in the middle; on to the far shore.
-  walk(tile(141) - 6),
-  jumpTo(middle(9)),
-  ...acrossPads(9, 19),
-  leap(right(19) - 2, 1),
+  // The long crossing: from the island onto the first pad, pad to pad through two swans' stretches, onto
+  // the stone in the middle; on over two more pads to the far shore.
+  ...acrossPads(9, 20),
+  padToPad(20, mid(180), "leap from the last pad to the stone"),
   wait("on the stone", (q) => q.body.onGround),
-  walk(tile(183) - 6),
-  jumpTo(middle(20)),
-  ...acrossPads(20, 21),
-  leap(right(21) - 2, 1),
+  walk(mid(181)),
+  walk(tile(182) - 6),
+  jumpTo(middle(21)),
+  ...acrossPads(21, 22),
+  padToPad(22, mid(192), "leap from the last pad to the far shore"),
   // The far shore, and up the far hide to the rune.
   walk(mid(198)),
   walk(mid(228)),
