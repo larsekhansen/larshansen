@@ -94,6 +94,8 @@ export interface Extra {
   carriers?: readonly Carrier[];
   /** The ground under his feet (centre x, feet y) when it is not plain ground: ice, an inrun, a belt. Null for plain ground. */
   surfaceAt?(x: number, y: number): Surface | null;
+  /** A zone's push this step (see zone.ts): across, it moves him as moving ground does; down (+) or up, it adds to his falling speed. */
+  push?: { x: number; y: number } | null;
 }
 
 /**
@@ -160,8 +162,11 @@ export function stepBody(b: Body, intent: Intent, world: World, abilities?: Abil
     b.vx = b.vx < target ? Math.min(target, b.vx + accel) : Math.max(target, b.vx - accel);
   }
   b.vy = Math.min(JUMP.maxFall, b.vy + (b.vy < 0 ? JUMP.gravityUp : JUMP.gravityDown));
+  const push = extra?.push;
+  if (push && push.y) b.vy = Math.max(-JUMP.speed, Math.min(JUMP.maxFall, b.vy + push.y));
 
   moveX(b, b.vx, world);
+  if (push && push.x) moveX(b, push.x, world, true);
   result.landed = moveY(b, b.vy, world, carriers);
   // Off the ground faster than he can run (the lip of an inrun): the speed is kept in the air, as after a throw.
   if (wasOnGround && !b.onGround && keepsSpeed(b.vx)) b.launched = true;

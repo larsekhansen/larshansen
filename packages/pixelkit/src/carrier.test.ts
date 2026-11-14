@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "./config";
-import { carrierAt, carrierDrawn, carrierShown, carrierState, carriersNear, liftPeriod, pathPeriod, pathSteps, rideShown, type CarrierDef, type Lift, type Path } from "./carrier";
+import { carrierAt, carrierDrawn, carrierPeriod, carrierShown, carrierState, carriersNear, liftPeriod, pathPeriod, pathSteps, rideShown, type CarrierDef, type Lift, type Orbit, type Path } from "./carrier";
 import { createBody, stepBody, type Body, type Intent, type World } from "./physics";
 
 // Open air over a floor far below (row 30), so only the carrier holds him up.
@@ -229,5 +229,38 @@ describe("a path, one way and round again", () => {
     expect(b.x + PLAYER.w / 2).toBeGreaterThan(150);
     expect(b.y + PLAYER.h).toBe(13 * TILE);
     expect(b.onGround).toBe(true);
+  });
+});
+
+describe("an orbit, a bucket on a water wheel", () => {
+  const bucket: Orbit = { kind: "orbit", cx: 20 * TILE, cy: 15 * TILE, r: 4 * TILE, w: 2 * TILE, period: 400 };
+  const top = (d: CarrierDef, t: number) => carrierAt(d, t);
+
+  test("it starts at the top, goes round clockwise at an even pace, and stays level", () => {
+    expect(top(bucket, 0)).toEqual({ x: 20 * TILE - TILE, y: 11 * TILE });
+    expect(top(bucket, 100)).toEqual({ x: 24 * TILE - TILE, y: 15 * TILE });
+    expect(top(bucket, 200)).toEqual({ x: 20 * TILE - TILE, y: 19 * TILE });
+    expect(top(bucket, 300)).toEqual({ x: 16 * TILE - TILE, y: 15 * TILE });
+    expect(top(bucket, 400)).toEqual(top(bucket, 0));
+    expect(carrierPeriod(bucket)).toBe(400);
+    // A share of a turn moves it round, and a negative period turns it the other way.
+    expect(top({ ...bucket, turn: 0.25 }, 0)).toEqual(top(bucket, 100));
+    expect(top({ ...bucket, period: -400 }, 100)).toEqual(top(bucket, 300));
+    for (let t = 1; t < 400; t++) {
+      const s = carrierState(bucket, t);
+      expect(Math.abs(s.dx) + Math.abs(s.dy)).toBeLessThanOrEqual(2);
+    }
+  });
+
+  test("on at the bottom, he is carried up the side and over the top", () => {
+    const b = standOn(bucket, 200, 16);
+    let highest = feet(b);
+    for (let t = 200; t < 400; t++) {
+      stepBody(b, idle, world, undefined, { carriers: carriersNear([bucket], t, b) });
+      highest = Math.min(highest, feet(b));
+      expect(b.onGround).toBe(true);
+    }
+    expect(highest).toBe(11 * TILE);
+    expect(feet(b)).toBe(top(bucket, 399).y);
   });
 });
