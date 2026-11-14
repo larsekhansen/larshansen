@@ -1,6 +1,6 @@
 # Vikingfjorden: how it is built
 
-A side-view game built the way the front page is built. The reasons (one cloth for all three games, the style bible) are in [`docs/games/PLAN.md`](../../../docs/games/PLAN.md), the levels' plan in [`docs/games/LEVELS.html`](../../../docs/games/LEVELS.html); this file says what is here.
+A side-view game built the way the front page is built. The reasons (one cloth for all three games, the style bible) are in [`docs/games/PLAN.md`](../../../docs/games/PLAN.md), the ten levels with a picture of each in [`docs/games/LEVELS.html`](../../../docs/games/LEVELS.html); this file says what is here.
 
 ## The parts
 
