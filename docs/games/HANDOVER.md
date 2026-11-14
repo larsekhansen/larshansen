@@ -163,8 +163,9 @@ reorder this list.
 - **Parallel implementers in worktrees.** Used once (the maze, order 9). Levels were built one
   batch at a time in one checkout, because every batch touched `play.ts`, `types.ts` and the kit.
 - **A person's playtest before deploy.** Not possible in the process Lars chose; he is the playtest.
-- **The 3D printer in Verkstedet, sign lines of his own, the fate of the old longhouse, sheep and
-  stave tower.** Asked on the plan page, not yet answered. The sheep and longship were reused.
+- **Sign lines of his own, the fate of the old longhouse and stave tower.** Asked on the plan
+  page, not yet answered. The sheep and longship were reused. The 3D printer he did ask for: it is
+  in Verkstedet's window on Langkaia (`printer()` in `levels/langkaia.ts`).
 - **His childhood street.** Known to the planner, deliberately not put in the public repository
   or the game ([ADR 0014](../adr/0014-personal-details-discreetly.md)).
 
