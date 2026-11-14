@@ -2,7 +2,7 @@
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;700&display=swap">
 <style>
-/* Layout: one 960px column (three screen pixels per art pixel), each level a full-width scene with its notes beneath. */
+/* Layout: one 960px column, each level a full-width screenshot with its notes beneath. */
 :root {
   --bg: #e8f2f8; --surface: #ffffff; --ink: #1f1a17; --muted: #4c5a69; --line: #c3d5e2;
   --accent: #2b4c8c; --hot: #b3261f; --chip: #d8e8f2; --ok: #2f6b3a; --ask: #8a5a00;
@@ -100,35 +100,42 @@ td:first-child, th:first-child { white-space: nowrap; }
 .decide > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .decide strong { font-size: 1rem; }
 @media (max-width: 720px) { .decide { grid-template-columns: minmax(0, 1fr); } }
+.shot { width: 100%; height: auto; display: block; image-rendering: pixelated; image-rendering: crisp-edges; border: 1px solid var(--line); background: #4f96d8; }
+figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.rulegrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 32px; }
+.rulegrid > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.rulegrid strong { font-size: 1rem; }
+@media (max-width: 720px) { .rulegrid { grid-template-columns: minmax(0, 1fr); } }
 </style>
 
 <div class="wrap">
 
 <header style="display:flex;flex-direction:column;gap:18px">
-  <p class="eyebrow">Vikingfjorden · plan, 13 November 2026</p>
+  <p class="eyebrow">Vikingfjorden · as built, 14 November 2026</p>
   <h1>Ten runes across Oslo</h1>
-  <p class="lede">The viking game grows from one strip of fjord into ten levels. Each level is a place in Oslo, each ends at one rune, and the ten places start with the ten letters of your name.</p>
+  <p class="lede">The viking game is ten levels. Each is a place in Oslo, each ends at one rune, and the ten places start with the ten letters of your name. This page describes the game as it is live at <a href="https://larshansen.dev/viking/">larshansen.dev/viking</a>.</p>
   <ol class="spell" id="spell" aria-label="The ten levels, one per letter of LARS HANSEN"></ol>
-  <p class="cap">Same person as the front page, same jump, same pixels, same Oslo sky. The front page stays the walk through Gamle Oslo; the Opera's secret door now opens onto the rest of the city.</p>
-  <p><span class="tag done">built now</span> Levels 1 to 3, the shared kit they stand on, the line map, and the maze as a bonus level. <span class="tag">planned</span> Levels 4 to 10, drawn and specified below so they can be built in the same way later.</p>
+  <p class="cap">Same person as the front page, same jump, same pixels, same Oslo sky. The front page stays the walk through Gamle Oslo; the Opera's secret door opens onto the rest of the city.</p>
+  <p><span class="tag done">built</span> All ten levels, the line map, two bosses, the ending, and the maze as a bonus stop. <span class="tag todo">not yet</span> Played by a person at real speed. Everything here was checked by scripted players and still pictures.</p>
+  <p class="cap">This page began on 13 November as the plan, with hand-drawn sketches of each level. The sketches are gone (they are in the file's git history); the pictures below are screenshots of the game. Where the build left the plan, the last section says how.</p>
 </header>
 
 <section>
-  <h2>One cloth: where the two games stand</h2>
+  <h2>One cloth: what the games share</h2>
   <div class="prose">
-    <p>The front page and the viking game already run on <code>packages/pixelkit</code>. What they share today is the engine. What they still keep twice is everything a level is made of, and that is exactly what ten levels need.</p>
+    <p>The front page, the viking game and the maze all run on <code>packages/pixelkit</code>. When this was a plan they shared only the engine and kept everything a level is made of twice. That is now one copy.</p>
   </div>
   <div class="scroll"><table>
-    <thead><tr><th>Part</th><th>Today</th><th>For ten levels</th></tr></thead>
+    <thead><tr><th>Part</th><th>Where it lives now</th><th>Note</th></tr></thead>
     <tbody>
-      <tr><td>Physics</td><td><span class="tag done">shared</span> one <code>stepBody</code>, run 1.6, jump 5, 60 steps a second</td><td>Constants stay untouched. Moving ground, ice and belts are added as things the world reports, never by retuning.</td></tr>
-      <tr><td>Person</td><td><span class="tag done">shared</span> 10 × 14, red hat, helmet over it in the viking world</td><td>No change. Skis and a headlamp are two extra pixel rows.</td></tr>
-      <tr><td>Sky, clock, sound, input, header bar</td><td><span class="tag done">shared</span></td><td>Levels may pin a sky (17 May, winter night). Level 1 keeps the real Oslo hour.</td></tr>
-      <tr><td>Map reading</td><td><span class="tag todo">twice</span> <code>level.ts</code> in both apps: the same <code>tileAt</code>, <code>rampAt</code>, <code>findSpawn</code>, <code>districtAt</code></td><td>One <code>pixelkit/tilemap.ts</code> with a legend per level.</td></tr>
-      <tr><td>The scene loop</td><td><span class="tag todo">twice</span> camera, click-to-walk, doors, banners: 499 lines in landing's <code>main.ts</code>, 977 in viking's</td><td>One <code>pixelkit/scene.ts</code>. The front page is a scene with one level; the viking game is the same runner with ten.</td></tr>
-      <tr><td>Art</td><td><span class="tag todo">twice</span> crates, sign boards, doors, lamps, trees, flags drawn in each app; about sixty colours written inline in landing's <code>buildings.ts</code></td><td>One <code>pixelkit/props.ts</code>, every colour in <code>palette.ts</code>. A birch in Nordmarka is the birch in Kampen.</td></tr>
-      <tr><td>Backdrop helpers</td><td><span class="tag todo">twice</span> <code>layerWorldX</code>, <code>column</code>, <code>box</code>, <code>lit</code> copied</td><td>Into the kit, with the far city as one reusable layer.</td></tr>
-      <tr><td>The joins (order 5)</td><td><span class="tag ask">in the tree</span> 22 changed files, not committed</td><td>Finish, review and commit before any of this starts.</td></tr>
+      <tr><td>Physics</td><td><span class="tag done">shared</span> one <code>stepBody</code>: run 1.6, jump 5, 60 steps a second</td><td>The constants were never retuned. Ice, belts, wind and moving ground are things the world reports to the body.</td></tr>
+      <tr><td>Person</td><td><span class="tag done">shared</span> 10 × 14, red hat, helmet over it in the viking world</td><td>The ski pole and the headlamp are a few extra pixels on the same sprite.</td></tr>
+      <tr><td>Sky, clock, sound, input, header bar</td><td><span class="tag done">shared</span></td><td>Levels may pin a sky. Langkaia keeps the real Oslo hour. In the viking game the header is solid cream so it reads over dark levels.</td></tr>
+      <tr><td>Map reading</td><td><span class="tag done">shared</span> <code>tilemap.ts</code>, a legend per level</td><td>Levels are data, written with strokes in <code>levels/build.ts</code>, not typed-out rows.</td></tr>
+      <tr><td>The scene loop</td><td><span class="tag done">shared</span> <code>scene.ts</code>, <code>camera.ts</code>, <code>doors.ts</code>, <code>walkto.ts</code></td><td>The front page is a scene with one level; the viking game is one runner (<code>game/play.ts</code>) with ten.</td></tr>
+      <tr><td>Art</td><td><span class="tag done">shared</span> <code>props.ts</code>, every colour in <code>palette.ts</code></td><td>Colours only one level uses sit in <code>swatches/</code> and come with that level's file.</td></tr>
+      <tr><td>Level rules</td><td><span class="tag done">shared</span> <code>carrier</code>, <code>checkpoint</code>, <code>launcher</code>, <code>timed</code>, <code>surface</code>, <code>zone</code>, <code>hazard</code>, <code>dark</code></td><td>Each is a small pure rule with its own test. The maze's dark level uses the same <code>dark.ts</code>.</td></tr>
+      <tr><td>The front page itself</td><td><span class="tag done">unchanged</span></td><td>28 reference screenshots were compared byte for byte after every change to the kit.</td></tr>
     </tbody>
   </table></div>
   <div class="rules">
@@ -149,16 +156,30 @@ td:first-child, th:first-child { white-space: nowrap; }
 </section>
 
 <section>
+  <h2>What can happen to him</h2>
+  <div class="prose"><p>The plan said nothing could hurt and there were no lives. You asked for enemies, lives, pits and platforming, at the length of a Mario level, with a splash of Hollow Knight. These are the rules as built.</p></div>
+  <div class="rulegrid">
+    <div><strong>Three waffle hearts, three lives</strong><p>An enemy's touch, something thrown, or a fall into water or a pit costs a heart and leaves him blinking and safe for a second and a half. No hearts: a life goes and he restarts at the last flag or bench. No lives: Game over restarts only that level. Nothing cleared or found is ever lost.</p></div>
+    <div><strong>Benches and flags</strong><p>A flag is where falls bring him back. A bench does that too and fills the hearts when he sits (up). Every level has one or two benches; each boss has a flag and a bench right before it.</p></div>
+    <div><strong>Five kinds of enemy</strong><p>Walkers and flyers are beaten by landing on them. Spiky things hurt from above too. Throwers lob on a beat after a one-second wind-up. Jumpers leap out of water after a ripple. A beaten enemy gives a skilling. Each kind first appears alone.</p></div>
+    <div><strong>Skilling, cheese, bracteates</strong><p>52 to 79 copper skilling per level; a hundred is a life. One slice of brown cheese per level, in a secret, is a life. One gold bracteate per level can only be reached with the raven's feather from the maze.</p></div>
+    <div><strong>The ski pole</strong><p>Clearing Holmenkollen gives a dash: three tiles in ten steps, level, once each time he is in the air (Shift or X). From Akerselva on some gaps need it.</p></div>
+    <div><strong>Two bosses</strong><p>The troll in Nordmarka and the snow plough in Nabolaget. Three hits each. Both show what they are about to do for a full second first.</p></div>
+  </div>
+</section>
+
+<section>
   <h2>The level select is a line map</h2>
-  <div class="prose"><p>Between levels he rides. The map is one T-bane line with ten stations, drawn in pixels, with the rune lit over every station he has finished. A finished station can be replayed for a better time.</p></div>
+  <div class="prose"><p>Between levels he rides. The map is one T-bane line with ten stations, drawn in pixels, with a rune lit in the header for every station he has finished and his best time on the station's board. A station opens when the one before it is cleared. A finished station can be replayed for a better time.</p></div>
+  <figure><img class="shot" src="shots/kart.png" width="1280" height="800" loading="lazy" alt="The line map with all ten runes gold in the header: the door Hjem, the first station Langkaia with a best time, and Jernhaugen's mound under the line"><figcaption class="cap">The start of the line with all ten cleared: the door home, Langkaia with its best time, and Jernhaugen's mound under the track.</figcaption></figure>
   <ol class="line" id="line"></ol>
 </section>
 
 <section>
   <h2>The maze is the bonus level</h2>
   <div class="prose">
-    <p>Jernhaugen is a side stop on the line map, open from the start and never required. Its prize is the raven's feather, the second jump. No rune needs it. What it opens is one hidden gold bracteate in every level, placed two jumps up.</p>
-    <p>The original 2019 maze is kept as it was, MC Hammer and all, on the branch <code>iron-maze-original</code> and in the archived <code>iron-maze</code> repository. The new one has no music and no audio files: only the kit's short synthesised blips, behind the shared mute.</p>
+    <p>Jernhaugen is a side stop on the line map, open from the start and never required. Its prize is the raven's feather, the second jump. No rune needs it. What it opens is the gold bracteate in every level. The mound also stands in Nordmarka, with a door into the maze and back out to the forest.</p>
+    <p>The original 2019 maze is kept as it was, music and all, on the branch <code>iron-maze-original</code> and in the archived <code>iron-maze</code> repository. The new one has no music and no audio files: only the kit's short synthesised blips, behind the shared mute.</p>
   </div>
   <div class="scroll"><table>
     <thead><tr><th>Made better</th><th>How</th></tr></thead>
@@ -168,20 +189,20 @@ td:first-child, th:first-child { white-space: nowrap; }
       <tr><td>Teleport stones</td><td>The old game had a teleport sound and nothing that used it. Paired rune stones now move him across the map.</td></tr>
       <tr><td>Feel</td><td>A short freeze and rust-red burst on a curse, dust at his feet, the torch flickering, the raven turning its head to watch.</td></tr>
       <tr><td>Fairness</td><td>Every corridor at least one tile wide, every level cleared by a scripted player at key speed and at pointer speed.</td></tr>
-      <tr><td>A way in and out</td><td>From the line map, with the same outfit moment as the other doors. Clearing level 3 gives the feather; all seven turn it gold.</td></tr>
+      <tr><td>A way in and out</td><td>From the line map and from Nordmarka. Clearing maze level 3 gives the feather; all seven turn it gold.</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section>
   <h2>The ten levels</h2>
-  <div class="prose"><p>Each drawing is the idea of the level at the game's own resolution, 320 art pixels wide. Lengths are in 16-pixel columns; today's whole game is 144.</p></div>
+  <div class="prose"><p>Each picture is a screenshot of the level, taken on the Pi by stepping the game to that moment. Lengths are in 16-pixel columns; a screen is 20 wide. "Scripted clear" is how long the test's scripted player takes going straight through, without waiting on purpose and without the secrets; a first visit by a person will be several times that.</p></div>
   <div id="levels" style="display:flex;flex-direction:column;gap:44px"></div>
 </section>
 
 <section>
   <h2>What each level adds</h2>
-  <div class="prose"><p>One new thing per level, taught in a safe spot first and tested after. There are no lives. Anything that stops him puts him back at the last flag, the same rule as the curse in the maze.</p></div>
+  <div class="prose"><p>One new thing per level, taught in a safe spot first and tested after. Every level runs in four parts: teach, practise, twist, set piece.</p></div>
   <div class="scroll"><table>
     <thead><tr><th>Level</th><th>New thing</th><th>Rule</th><th>Lives in the kit as</th></tr></thead>
     <tbody id="ladder"></tbody>
@@ -191,42 +212,47 @@ td:first-child, th:first-child { white-space: nowrap; }
 <section>
   <h2>You, in the game</h2>
   <div class="prose">
-    <p>What the plan already takes from you: the name as ten runes, the red hat, the Raspberry Pi that serves the site, your apps as doors (Runesmia is the QR maker, Jernhaugen the maze, Verkstedet your GitHub, the kiosk is Quintle), and the front page's choice of Vålerenga and Kampen as the place with the door marked home.</p>
-    <p>The repository says little else about you, so these are the things only you can fill in:</p>
+    <p>What the game takes from you: the name as ten runes, the red hat, the Raspberry Pi that serves the site, and your apps as doors (Runesmia is the QR maker, Jernhaugen the maze, Verkstedet your GitHub, the kiosk under Stortinget is Quintle).</p>
+    <p>What you added on 14 November, and where it went:</p>
   </div>
   <ol class="asks">
-    <li><span class="tag ask">confirm</span> Level 10 assumes home is in Vålerenga or Kampen, in the yellow house the front page draws. Right district? Right colour?</li>
-    <li><span class="tag ask">confirm</span> The window in level 10 shows the Pi. Verkstedet next door could show the 3D printer with a small longship on the bed. Keep it?</li>
-    <li><span class="tag ask">add</span> One place in Oslo that is yours and missing here: a café, a pitch, a climbing wall, a bench. It becomes the secret room of the nearest level.</li>
-    <li><span class="tag ask">add</span> The banner in level 4's parade. Which school did you walk behind on 17 May?</li>
-    <li><span class="tag ask">add</span> Ten sign lines in your own voice, one per level. I have drafted them dry and short; you should overwrite them.</li>
+    <li><span class="tag done">in</span> The school banner in Slottet's parade is Høyenhall skole's: navy, gold fringe, an open book. It is the high banner he rides over the second roadworks dig.</li>
+    <li><span class="tag done">in</span> Home is Kværnertoppen. Nabolaget's subtitle, the church sign and a plate past the yellow house say so.</li>
+    <li><span class="tag done">in</span> The place that is yours is Kruttverket, a screen wide in Nabolaget, just before the plough. Look at its windows.</li>
+    <li><span class="tag ask">open</span> Verkstedet could show the 3D printer with a small longship on the bed. Not built; say if you want it.</li>
+    <li><span class="tag ask">open</span> The sign lines are still my drafts, dry and short, in Norwegian and English. Overwrite any of them.</li>
+    <li><span class="tag ask">open</span> The old fjord's longhouse and stave tower have no home. The longship went to Langkaia and the sheep to Akershus and Ekeberg.</li>
   </ol>
 </section>
 
 <section>
-  <h2>Build order</h2>
-  <div class="prose"><p>Continues the numbering in <code>docs/games/PLAN.md</code>. One work order per phase, one commit per phase, all on a branch. Nothing reaches the live site until the pull request is merged to <code>main</code>.</p></div>
+  <h2>How it was built</h2>
+  <div class="prose"><p>One work order per phase in <code>docs/games/orders/</code>, each built on a branch by an implementer, reviewed, and merged to <code>main</code>, which deploys. The full story is in <code>docs/games/HANDOVER.md</code>, the reasons in <code>docs/adr/</code>.</p></div>
   <div class="scroll"><table>
-    <thead><tr><th>Phase</th><th>Work</th><th>Done when</th></tr></thead>
+    <thead><tr><th>Order</th><th>Work</th><th>Merged as</th></tr></thead>
     <tbody>
-      <tr><td class="num">5 – 6</td><td><span class="tag done">now</span> The joins and the cleanup already planned. Commit what is in the tree.</td><td>Orders 5 and 6 pass their own lists.</td></tr>
-      <tr><td class="num">7</td><td><span class="tag done">now</span> <code>tilemap.ts</code>, <code>scene.ts</code>, <code>props.ts</code> in the kit. Both games moved onto them.</td><td>Front page screenshots identical in four skies; all tests green.</td></tr>
-      <tr><td class="num">8</td><td><span class="tag done">now</span> The things the first three levels need: flags, moving ground, launchers, ledges on a beat. Pure rules with tests. Then the level framework: the level list, the line map, saved progress, one rune per level.</td><td>Each rule has a unit test; the map can be stepped headless on the Pi.</td></tr>
-      <tr><td class="num">9</td><td><span class="tag done">now</span> Levels 1 to 3: Langkaia, Akershus, Rådhuset.</td><td>Per level: a scripted player clears it, no gap beyond the measured jump, the bracteate out of reach without the feather and in reach with it.</td></tr>
-      <tr><td class="num">10</td><td><span class="tag done">now</span> The maze made better and joined on as the bonus stop.</td><td>Seven levels cleared by script; ghost, marks and teleports tested; no audio files in the build.</td></tr>
-      <tr><td class="num">11</td><td><span class="tag done">now</span> READMEs, deploy smoke tests, a read against the style bible, merge.</td><td>The live site answers with the new strings.</td></tr>
-      <tr><td class="num">12 – 14</td><td><span class="tag">later</span> Levels 4 to 10 in three batches, with ice, belts, current, wind and dark added to the kit as each needs them.</td><td>The same list as phase 9, per level.</td></tr>
+      <tr><td class="num">1 – 6</td><td>The kit extracted; the viking game and the maze rebuilt in the front page's style; the joins between the three.</td><td>before this plan</td></tr>
+      <tr><td class="num">7 – 9</td><td>The level kit, the line map, saved progress, three short levels, the maze made better and joined on as the bonus stop.</td><td>PR #49</td></tr>
+      <tr><td class="num">10 A</td><td>Slottet and Holmenkollen. Hearts, lives, enemies, pits, benches, skilling. Levels fetched on demand.</td><td>PR #50</td></tr>
+      <tr><td class="num">10 B</td><td>Akerselva and Nordmarka. The dash, zones, the dark, the troll.</td><td>PR #51</td></tr>
+      <tr><td class="num">10 C</td><td>Stortinget, Ekeberg and Nabolaget. Belts, trains, the third rail, gusts, the plough, the ending.</td><td>PR #52</td></tr>
+      <tr><td class="num">10 D</td><td>Langkaia, Akershus and Rådhuset lengthened to the same measure as the rest.</td><td>PR #53</td></tr>
+      <tr><td class="num">11</td><td>Høyenhall's banner, Kværnertoppen, Kruttverket; the handover and sixteen decision records.</td><td>PR #54</td></tr>
     </tbody>
   </table></div>
 </section>
 
 <section>
-  <h2>Decisions that are yours</h2>
+  <h2>Where the build left the plan</h2>
   <div class="decide">
-    <div><strong>The maze is a bonus <span class="tag done">settled</span></strong><p>Your call. No rune needs the feather. It is given after maze level 3 and turns gold after all seven.</p></div>
-    <div><strong>What happens to today's fjord?</strong><p>I am splitting it. The longship moves to level 1, the door Hjem with it, the smithy waits for level 6, the beacon becomes the Pi's light in level 10. The longhouse, the sheep and the stave tower have no home yet; say if you miss them.</p></div>
-    <div><strong>One clock or ten?</strong><p>I recommend a best time per level, and a total that only counts when all ten are run in one sitting. The gold helmet stays the prize for a full run.</p></div>
-    <div><strong>How much can hurt?</strong><p>I recommend very little: water, the third rail, the waterfalls and long falls. Guards, moose, sheep and trams never hurt. They move you.</p></div>
+    <div><strong>How much can hurt <span class="tag done">your call</span></strong><p>The plan recommended very little, and no lives. You asked for enemies, lives and pits, so every level has 9 to 16 enemies, three hearts and real falls. The King's Guard, the moose and the sheep still only move him.</p></div>
+    <div><strong>Length <span class="tag done">your call</span></strong><p>The plan had 110 to 190 columns per level. You asked for Mario length: every level is 224 to 280 columns, about 2,500 in all.</p></div>
+    <div><strong>The maze is a bonus <span class="tag done">settled</span></strong><p>As planned. No rune needs the feather.</p></div>
+    <div><strong>The old fjord <span class="tag done">split</span></strong><p>As planned: the longship to Langkaia, the smithy to Akerselva, the beacon became the Pi's light in the yellow house, red until the last rune is taken and green after.</p></div>
+    <div><strong>One clock or ten <span class="tag">partly</span></strong><p>There is a best time per level. The total for all ten in one sitting was not built. The gold helmet is for having all ten runes, not for a single run.</p></div>
+    <div><strong>Added along the way</strong><p>The ski pole's dash, benches, two bosses, skilling and brown cheese, a Game over card, and levels that load one at a time so the first page stays under 60 kB.</p></div>
+    <div><strong>Known weak spots</strong><p>Nobody has played it. Rådhuset is hard for a third level. The bosses lean on one sign to explain themselves and have waits. Throwers aim at where he stands. The full list is in the handover.</p></div>
+    <div><strong>Left out on purpose</strong><p>Your childhood street, and any explanation of the personal details, are not in the game or the public repository.</p></div>
   </div>
 </section>
 
@@ -243,26 +269,8 @@ const rnd = (seed) => () => { seed = (seed * 1664525 + 1013904223) >>> 0; return
 const W = 320, H = 128;
 const P = { wood: "#9a6a3a", woodDark: "#5a3d24", grass: "#5aa04a", grassDark: "#3f7d35", earth: "#6b4a2f", rock: "#7d776e", rockLight: "#8c857a", rockDark: "#6c665e", mortar: "#4b4741", water: "#3d7fae", waterDeep: "#2d6590", foam: "#d6eef9", iron: "#6b7480", ironDark: "#5d646e", sail: "#e8e2d4", stripe: "#b04a35", wool: "#ece8df", glow: "#9fe3ff", snow: "#f2f5fa", lamp: "#ffd36b", gold: "#e8b923", red: "#c8302b", blue: "#2b4c8c", skin: "#f1c27d", ink: "#1f1a17", top: "#d9a466", brick: "#9b4a3a", brickLine: "#86402f", glass: "#a9d2e6", trim: "#f4efe4", slate: "#3e3a3a", steel: "#2f3438" };
 
-// ---- small parts, all filled rectangles, as the style bible asks ----
 function sky(top, bot) { for (let i = 0; i < 16; i++) R(0, i * 8, W, 8, mixc(top, bot, i / 15)); }
-function hills(base, amp, col, f, ph) { for (let x = 0; x < W; x++) { const h = amp * (0.62 + 0.3 * Math.sin(x * f + ph) + 0.12 * Math.sin(x * f * 2.7 + ph * 2)); R(x, base - h, 1, h, col); } }
-function clouds(list) { for (const [x, y, w] of list) { R(x, y, w, 3, "#ffffff"); R(x + 3, y - 2, w - 8, 2, "#ffffff"); } }
-function water(x, y, w, h, seed = 7) { R(x, y, w, h, P.water); R(x, y + 6, w, h - 6, P.waterDeep); const r = rnd(seed); for (let i = 0; i < w / 9; i++) R(x + r() * (w - 4), y + 1 + r() * (h - 2), 3, 1, P.foam); }
-function stone(x, y, w, h) { R(x, y, w, h, P.rock); for (let yy = y + 4; yy < y + h; yy += 5) { R(x, yy, w, 1, P.rockDark); for (let xx = x + ((yy / 5) % 2 ? 3 : 7); xx < x + w - 1; xx += 9) R(xx, yy - 4, 1, 4, P.rockDark); } R(x, y, w, 1, P.rockLight); }
-function brick(x, y, w, h, base = P.brick, line = P.brickLine) { R(x, y, w, h, base); for (let yy = y + 3; yy < y + h; yy += 4) R(x, yy, w, 1, line); }
 function ground(x, y, w, h, top = P.grass, dark = P.grassDark, earth = P.earth) { R(x, y, w, h, earth); R(x, y, w, 3, top); R(x, y + 3, w, 1, dark); }
-function gable(x, baseY, w, h, col) { for (let i = 0; i < h; i++) { const ww = w * (1 - i / h); R(x + (w - ww) / 2, baseY - i - 1, Math.max(1, ww), 1, col); } }
-function flag(x, top, base) { R(x, top, 1, base - top, "#e9e9e9"); R(x + 1, top, 13, 9, "#ba0c2f"); R(x + 4, top, 3, 9, "#ffffff"); R(x + 1, top + 3, 13, 3, "#ffffff"); R(x + 5, top, 1, 9, "#00205b"); R(x + 1, top + 4, 13, 1, "#00205b"); }
-function spruce(x, base, h, col, snowy) { R(x - 1, base - 4, 2, 4, "#4a3324"); for (let i = 0; i < h - 4; i++) { const w = 2 + Math.floor((i % 6) * 1.1 + i * 0.28); R(x - w / 2, base - h + i, w, 1, col); if (snowy && i % 6 === 0) R(x - w / 2, base - h + i, w, 1, P.snow); } }
-function birch(x, base) { R(x, base - 20, 2, 20, P.wool); R(x, base - 15, 1, 1, P.ink); R(x + 1, base - 8, 1, 1, P.ink); R(x - 5, base - 30, 12, 9, "#8fbf5a"); R(x - 3, base - 33, 8, 3, "#a8d06e"); R(x - 6, base - 26, 3, 4, "#8fbf5a"); }
-function leafTree(x, base) { R(x, base - 12, 2, 12, "#5b4030"); R(x - 6, base - 24, 14, 12, "#4f8a46"); R(x - 4, base - 28, 10, 4, "#64a157"); }
-function sheep(x, bottom) { R(x, bottom - 7, 10, 5, P.wool); R(x + 9, bottom - 8, 3, 4, P.ink); R(x + 1, bottom - 2, 1, 2, P.ink); R(x + 7, bottom - 2, 1, 2, P.ink); }
-function smoke(x, y, n = 3) { A(0.7, () => { for (let i = 0; i < n; i++) R(x + (i % 2 ? 2 : -1), y - i * 5, 3 + (i % 2), 3, "#e9eefb"); }); }
-function arc(x0, y0, x1, y1, peak, col = "#ffffff") { for (let i = 0; i <= 14; i++) { const t = i / 14; const y = (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * (2 * peak - (y0 + y1) / 2) + t * t * y1; R(x0 + (x1 - x0) * t, y, 1, 1, col); } }
-function kid(x, bottom, shirt) { R(x, bottom - 7, 2, 2, P.skin); R(x, bottom - 5, 2, 3, shirt); R(x, bottom - 2, 2, 2, "#2a2a35"); R(x + 2, bottom - 9, 1, 5, "#e9e9e9"); R(x + 3, bottom - 9, 3, 2, "#ba0c2f"); }
-function stars(n, seed, maxY) { const r = rnd(seed); for (let i = 0; i < n; i++) R(r() * W, r() * maxY, 1, 1, "#ffffff"); }
-function snowfall(n, seed) { const r = rnd(seed); A(0.9, () => { for (let i = 0; i < n; i++) R(r() * W, r() * H, 1, 1, "#ffffff"); }); }
-function house(x, wallTop, w, wall, line, roofH, snowy) { R(x, wallTop, w, H - wallTop, wall); for (let yy = wallTop + 4; yy < H; yy += 5) R(x, yy, w, 1, line); gable(x - 3, wallTop, w + 6, roofH, P.slate); if (snowy) { gable(x - 3, wallTop, w + 6, roofH, "#dfe7f2"); gable(x - 1, wallTop, w + 2, roofH - 2, P.slate); R(x - 3, wallTop - 1, w + 6, 1, "#dfe7f2"); } }
 
 const SPR = ["....ww....", "...rrrr...", "..rrrrrr..", "..ssssss..", "..sssese..", "..ssssss..", "..bbbbbb..", ".bbwbbwbb.", ".bbbbbbbb.", "..bbbbbb..", "..dddddd.."];
 const LEGS = { stand: ["..dd..dd..", "..dd..dd..", "..kk..kk.."], air: [".dd....dd.", "dd......dd", "kk......kk"] };
@@ -303,258 +311,117 @@ function rune(x, y, ch) {
   }
 }
 
-// ---- the ten scenes ----
-const SCENES = [
-  function langkaia() {
-    sky("#4f96d8", "#cde8f5"); clouds([[40, 16, 26], [210, 24, 30]]);
-    hills(82, 16, "#a3b9cd", 0.03, 1);
-    [[150, 30, "#8a97a8"], [163, 42, "#b7c2cf"], [174, 26, "#6f7c8f"], [188, 38, "#9aa7b6"], [201, 30, "#7d8a9c"], [213, 44, "#b7c2cf"]].forEach(([x, h, c]) => { R(x, 82 - h, 10, h, c); for (let y = 84 - h; y < 80; y += 4) R(x + 2, y, 6, 1, mixc(c, "#ffffff", 0.35)); });
-    R(118, 46, 14, 36, "#8f98a3"); R(120, 38, 14, 8, "#8f98a3"); R(123, 32, 13, 6, "#a3acb6");
-    water(0, 100, W, 28, 3);
-    R(8, 38, 28, 24, "#e3e8ec"); R(18, 46, 7, 12, "#3b2a20");
-    for (let x = 0; x < 92; x++) { const t = 96 - (92 - x) * 0.42; R(x, t, 1, 96 - t, "#f1f4f6"); R(x, t, 1, 1, "#ffffff"); }
-    for (let x = 4; x < 60; x += 9) R(x, 84, 6, 12, P.glass);
-    stone(0, 96, 96, 32);
-    R(96, 96, 30, 3, P.wood); R(100, 99, 2, 12, P.woodDark); R(120, 99, 2, 12, P.woodDark);
-    [[138, 99], [178, 97], [216, 99]].forEach(([x, d], i) => { R(x, d, 28, 3, P.woodDark); R(x + 4, d - 14, 17, 14, P.wood); R(x + 3, d - 16, 19, 2, P.slate); R(x + 8, d - 10, 5, 5, P.lamp); R(x + 17, d - 21, 2, 5, P.steel); smoke(x + 17, d - 26, 2 + (i % 2)); });
-    R(252, 98, 58, 5, P.woodDark); R(250, 92, 3, 8, P.woodDark); R(248, 87, 3, 6, P.woodDark); R(309, 92, 3, 8, P.woodDark); R(311, 87, 3, 6, P.woodDark);
-    R(280, 58, 2, 40, P.wood); R(264, 62, 34, 2, P.woodDark); R(266, 64, 30, 22, P.sail); for (let x = 270; x < 294; x += 9) R(x, 64, 4, 22, P.stripe);
-    for (let i = 0; i < 6; i++) R(257 + i * 9, 96, 5, 5, [P.red, P.gold, P.blue][i % 3]);
-    rune(275, 44, "L"); person(70, 96);
-    R(160, 60, 2, 1, "#ffffff"); R(162, 59, 2, 1, "#ffffff"); R(164, 60, 2, 1, "#ffffff");
-  },
-  function akershus() {
-    sky("#4f96d8", "#cde8f5"); clouds([[20, 20, 30], [150, 12, 22]]); hills(100, 18, "#a3b9cd", 0.025, 2);
-    water(0, 112, W, 16, 5); stone(0, 104, 70, 24);
-    const wall = (x, y, w) => { stone(x, y, w, H - y); for (let xx = x; xx < x + w - 3; xx += 8) R(xx, y - 3, 4, 3, P.rock); };
-    wall(70, 84, 60); wall(130, 64, 70); wall(200, 48, 120);
-    stone(250, 22, 34, 26); R(258, 30, 2, 7, P.mortar); R(274, 30, 2, 7, P.mortar);
-    gable(246, 22, 42, 12, "#4f8f7a"); R(266, 0, 2, 11, "#4f8f7a");
-    [[76, 96], [136, 78], [206, 60]].forEach(([x, y]) => R(x, y, 12, 2, P.top));
-    R(84, 86, 5, 14, "#5d7a45"); R(140, 70, 4, 20, "#5d7a45"); R(232, 52, 6, 16, "#5d7a45");
-    const cannon = (x, y) => { R(x, y - 5, 11, 4, P.steel); R(x + 9, y - 7, 5, 3, P.steel); R(x + 2, y - 2, 6, 2, P.woodDark); };
-    cannon(98, 84); arc(112, 76, 150, 62, 34); cannon(168, 64); arc(182, 56, 218, 46, 20);
-    flag(152, 38, 64);
-    rune(296, 8, "A"); person(126, 48, { air: true }); person(30, 104);
-  },
-  function radhuset() {
-    sky("#4f96d8", "#cde8f5"); clouds([[30, 30, 28], [96, 14, 20]]); hills(104, 14, "#a3b9cd", 0.03, 4);
-    water(0, 108, 92, 20, 9);
-    R(16, 101, 44, 8, "#f1f4f6"); R(24, 94, 26, 7, "#e3e8ec"); for (let x = 27; x < 48; x += 6) R(x, 96, 4, 3, P.glass); R(16, 105, 44, 2, P.red); R(36, 88, 1, 6, P.steel);
-    R(90, 108, 230, 20, "#b9b2a6"); for (let x = 96; x < W; x += 16) R(x, 108, 1, 20, "#9c958a"); R(90, 108, 230, 1, "#cfc8bc");
-    brick(126, 74, 164, 34); for (let x = 132; x < 286; x += 10) { R(x, 80, 4, 7, P.glass); R(x, 94, 4, 7, P.glass); }
-    brick(140, 24, 42, 84); R(138, 22, 46, 3, P.brickLine); brick(230, 20, 42, 88); R(228, 18, 46, 3, P.brickLine);
-    for (let y = 34; y < 70; y += 12) { R(150, y, 4, 7, P.glass); R(168, y, 4, 7, P.glass); }
-    R(243, 30, 16, 16, P.trim); R(250, 32, 1, 7, P.ink); R(250, 38, 5, 1, P.ink);
-    for (let y = 54; y < 70; y += 12) { R(240, y, 4, 7, P.glass); R(258, y, 4, 7, P.glass); }
-    const bell = (x, y, a) => A(a, () => { R(x, y, 9, 5, P.gold); R(x + 1, y - 2, 7, 2, P.gold); R(x + 4, y + 5, 1, 2, "#5a4a2a"); R(x, y, 9, 1, "#f6dc7a"); });
-    bell(186, 62, 1); bell(198, 50, 1); bell(209, 38, 0.35); bell(219, 28, 1);
-    R(128, 58, 11, 3, P.top); for (let y = 64; y < 106; y += 5) R(133, y, 1, 2, "#ffffff");
-    rune(246, 3, "R"); person(198, 48); R(100, 96, 2, 12, P.steel); R(97, 94, 8, 2, P.lamp);
-  },
-  function slottet() {
-    sky("#4f96d8", "#cde8f5"); clouds([[60, 14, 30], [150, 26, 24]]);
-    for (let x = 10; x < 210; x += 34) leafTree(x, 108 - x * 0.12);
-    const slope = (x) => (x < 200 ? 112 - (28 * x) / 200 : 84);
-    R(214, 48, 104, 36, "#e8d48a"); R(212, 46, 108, 3, "#b9a36d"); for (let x = 220; x < 314; x += 9) { R(x, 54, 4, 7, P.glass); R(x, 68, 4, 7, P.glass); }
-    R(250, 40, 30, 44, "#efe0a0"); gable(248, 40, 34, 8, "#e8d48a"); for (let i = 0; i < 5; i++) R(253 + i * 6, 52, 2, 32, P.trim); R(249, 62, 32, 2, P.trim); R(249, 60, 1, 2, P.trim); R(280, 60, 1, 2, P.trim);
-    flag(226, 22, 46);
-    for (let x = 0; x < W; x++) { const t = slope(x); R(x, t, 1, H - t, "#b9b2a6"); R(x, t, 1, 1, "#cfc8bc"); }
-    const shirts = [P.red, P.blue, "#f4efe4", "#2f6b3a", P.gold];
-    for (let x = 12, i = 0; x < 190; x += 13, i++) kid(x, slope(x), shirts[i % 5]);
-    const banner = (x, c) => { const b = slope(x); R(x, b - 30, 1, 30, P.woodDark); R(x - 6, b - 30, 13, 10, c); R(x - 6, b - 21, 13, 1, P.gold); R(x - 7, b - 31, 15, 2, P.top); R(x - 2, b - 27, 5, 4, P.gold); };
-    banner(58, P.blue); banner(128, "#8a2a1e");
-    const b = slope(96); R(92, b - 12, 9, 9, P.trim); R(92, b - 12, 9, 1, P.red); R(92, b - 4, 9, 1, P.red); R(95, b - 9, 3, 3, P.red);
-    const guard = (x) => { R(x, 70, 3, 3, P.ink); R(x + 2, 67, 1, 4, P.ink); R(x, 73, 3, 2, P.skin); R(x, 75, 3, 5, "#1b2547"); R(x, 80, 3, 4, P.ink); R(x + 3, 72, 1, 9, P.steel); };
-    guard(222); guard(232); guard(294);
-    rune(259, 20, "S"); person(123, slope(128) - 31);
-  },
-  function holmenkollen() {
-    sky("#7fa8cf", "#e3eef6"); hills(92, 30, "#c7d6e4", 0.02, 1); hills(100, 20, "#dfe9f2", 0.035, 3);
-    const inrun = (x) => 14 + ((x - 20) * 56) / 130 - (x > 136 ? (x - 136) * 0.35 : 0);
-    for (let x = 30; x < 150; x += 26) R(x, inrun(x) + 4, 2, 112 - inrun(x), "#8f98a3");
-    for (let x = 40; x < 150; x += 26) for (let y = inrun(x) + 10; y < 108; y += 10) R(x - 10, y, 26, 1, "#a3acb6");
-    for (let x = 20; x <= 150; x++) { R(x, inrun(x), 1, 3, "#ffffff"); R(x, inrun(x) + 3, 1, 2, "#8f98a3"); }
-    R(8, 2, 16, 12, "#a8432f"); R(6, 0, 20, 3, P.slate); R(12, 6, 4, 4, P.lamp);
-    for (let x = 0; x < W; x++) { const t = x < 150 ? 112 : 92 + (x - 150) * 0.2; R(x, t, 1, H - t, P.snow); R(x, t, 1, 1, "#ffffff"); if (x > 150 && x % 3 === 0) R(x, t + 6, 1, 1, "#c9d6e4"); }
-    [[8, 112, 26], [170, 96, 18], [300, 122, 30], [284, 119, 22]].forEach(([x, b, h]) => spruce(x, b, h, "#2f5d3a", true));
-    arc(150, 66, 268, 114, 44); rune(226, 54, "H");
-    person(184, 58, { air: true }); R(180, 58, 18, 1, P.red);
-    person(60, inrun(64), {}); R(56, inrun(64), 18, 1, P.red);
-    flag(250, 86, 112); snowfall(70, 21);
-  },
-  function akerselva() {
-    sky("#4f96d8", "#cde8f5"); clouds([[200, 14, 30], [260, 30, 22]]); hills(60, 16, "#a3b9cd", 0.03, 2);
-    brick(112, 34, 52, 34); for (let i = 0; i < 4; i++) gable(112 + i * 13, 34, 13, 6, P.brickLine); for (let x = 117; x < 160; x += 11) { R(x, 44, 5, 10, P.lamp); R(x + 1, 43, 3, 1, P.lamp); }
-    R(150, 4, 7, 26, P.brickLine); smoke(152, 0, 2);
-    ground(0, 44, 92, 84); ground(92, 72, 100, 56); water(192, 100, 128, 28, 11); ground(300, 92, 20, 36);
-    R(28, 40, 64, 4, P.water); R(96, 68, 96, 4, P.water);
-    const fall = (x, y0, y1) => { for (let y = y0; y < y1; y++) { R(x, y, 8, 1, y % 3 ? P.foam : "#ffffff"); R(x + 2 + (y % 2), y, 2, 1, P.water); } R(x - 3, y1 - 2, 14, 3, "#ffffff"); };
-    fall(88, 40, 72); fall(188, 68, 101);
-    const cx = 108, cy = 56; for (let a = 0; a < 40; a++) { const t = (a / 40) * Math.PI * 2; R(cx + Math.cos(t) * 11, cy + Math.sin(t) * 11, 1, 1, P.woodDark); } R(cx, cy - 11, 1, 22, P.woodDark); R(cx - 11, cy, 22, 1, P.woodDark);
-    [[0, -11], [11, 0], [0, 11], [-11, 0]].forEach(([dx, dy]) => R(cx + dx - 3, cy + dy - 1, 6, 3, P.top));
-    birch(18, 44); birch(60, 44); R(34, 30, 16, 14, "#a8432f"); gable(32, 30, 20, 6, P.slate); R(40, 36, 4, 4, P.lamp);
-    const log = (x) => { R(x, 98, 24, 4, P.wood); R(x, 98, 24, 1, P.top); R(x, 99, 2, 2, P.top); R(x + 22, 99, 2, 2, P.woodDark); };
-    log(206); log(246);
-    R(240, 84, 62, 2, P.steel); R(240, 66, 2, 20, "#b9b2a6"); R(298, 66, 2, 26, "#b9b2a6"); for (let i = 0; i <= 28; i++) { const t = i / 28; R(242 + t * 56, 68 + Math.sin(t * Math.PI) * 14, 1, 1, P.steel); if (i % 4 === 0) R(242 + t * 56, 68 + Math.sin(t * Math.PI) * 14, 1, 16 - Math.sin(t * Math.PI) * 14, P.steel); }
-    rune(304, 74, "A"); person(212, 98);
-  },
-  function nordmarka() {
-    sky("#1d2a5e", "#7083c2"); stars(18, 5, 40); hills(92, 30, "#2a3a70", 0.02, 0.5); hills(100, 22, "#1c2a55", 0.04, 2);
-    const r = rnd(12); for (let i = 0; i < 16; i++) spruce(r() * W, 104, 26 + r() * 30, i % 2 ? "#17382a" : "#1f4a35");
-    ground(0, 104, W, 24, "#3f7d35", "#2f5d3a", "#4a3a28");
-    R(34, 88, 30, 16, "#a8432f"); gable(31, 88, 36, 9, P.slate); R(56, 74, 3, 8, P.steel); smoke(56, 70, 2); R(50, 94, 6, 10, "#3b2a20");
-    R(90, 78, 3, 26, "#4a3324"); R(90, 88, 3, 5, P.water);
-    R(118, 84, 28, 10, "#4a3324"); [119, 124, 138, 143].forEach((x) => R(x, 94, 2, 10, "#3b2a20")); R(143, 78, 6, 9, "#4a3324"); R(147, 80, 8, 5, "#4a3324"); R(141, 75, 11, 2, "#8c7a5a"); R(140, 72, 2, 4, "#8c7a5a"); R(150, 72, 2, 4, "#8c7a5a");
-    for (let x = 232; x < 312; x++) { const h = 30 * Math.sin((Math.PI * (x - 232)) / 80); R(x, 104 - h, 1, h, "#4f8a46"); R(x, 104 - h, 1, 2, "#64a157"); }
-    stone(262, 84, 18, 20); R(265, 88, 12, 16, "#15131b"); R(264, 87, 14, 1, "#c8402b");
-    R(196, 92, 18, 12, P.rock); R(198, 90, 14, 2, P.rockLight);
-    R(284, 71, 5, 4, "#17141a"); R(288, 72, 2, 1, "#8f897d");
-    person(126, 84);
-    const px = 131, py = 77; for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) { const d = Math.hypot(x - px, y - py); if (d > 44 || (d > 37 && (x / 2 + y / 2) % 2)) A(0.66, () => R(x, y, 2, 2, "#050a1d")); }
-    R(40, 93, 5, 5, P.lamp); A(0.25, () => R(38, 91, 9, 9, P.lamp)); A(0.5, () => R(264, 87, 14, 1, "#ff7a55"));
-    rune(200, 40, "N");
-  },
-  function stortinget() {
-    R(0, 0, W, H, "#15131b"); R(0, 0, W, 10, "#2a2a35");
-    R(0, 10, 204, 82, "#d9d4c8"); for (let x = 0; x < 204; x += 8) R(x, 10, 1, 82, "#c2bcae"); for (let y = 18; y < 92; y += 8) R(0, y, 204, 1, "#c2bcae");
-    for (let y = 16; y < 104; y += 9) R(206, y, 114, 1, "#232030");
-    [36, 104, 172].forEach((x) => { R(x, 10, 18, 2, P.lamp); A(0.18, () => R(x - 4, 12, 26, 10, P.lamp)); });
-    R(62, 22, 60, 14, P.ink); for (let i = 0; i < 3; i++) for (let x = 66; x < 118; x += 3) if ((x * (i + 3)) % 7 < 4) R(x, 25 + i * 4, 2, 1, "#ffb347");
-    R(22, 20, 14, 14, "#ffffff"); R(24, 22, 10, 10, P.blue); R(26, 24, 6, 2, "#ffffff"); R(28, 24, 2, 7, "#ffffff");
-    R(0, 92, 112, 36, P.rockLight); R(0, 92, 112, 1, "#a8a195"); R(100, 92, 12, 2, P.gold);
-    R(284, 92, 36, 36, P.rockLight); R(284, 92, 12, 2, P.gold);
-    R(112, 118, 172, 10, "#2a2a35"); R(112, 116, 172, 1, "#8f98a3"); R(112, 111, 172, 2, P.gold); for (let x = 116; x < 284; x += 20) R(x, 113, 2, 3, P.steel);
-    R(152, 110, 1, 1, "#ffffff"); R(153, 109, 1, 1, P.lamp);
-    for (let i = 0; i < 11; i++) { R(i * 4, 58 + i * 3, 5, 2, P.iron); R(i * 4, 60 + i * 3, 1, 3, P.ironDark); } for (let i = 0; i < 44; i++) R(i, 48 + i * 0.75, 1, 2, P.steel);
-    R(124, 70, 150, 40, "#f1f4f6"); R(126, 68, 146, 2, "#b7c2cf"); R(128, 78, 142, 13, "#1f2a44"); for (let x = 132; x < 264; x += 17) R(x, 80, 12, 9, P.lamp);
-    [162, 230].forEach((x) => { R(x, 76, 12, 30, "#dfe4ea"); R(x + 6, 76, 1, 30, "#9aa7b6"); R(x + 2, 80, 3, 9, P.lamp); R(x + 8, 80, 3, 9, P.lamp); });
-    R(124, 104, 150, 2, P.red); R(270, 96, 4, 4, P.lamp); [136, 196, 256].forEach((x) => R(x, 108, 10, 5, P.steel));
-    rune(297, 72, "S"); person(194, 68); person(40, 92, { face: 1 });
-  },
-  function ekeberg() {
-    sky("#2b3466", "#f2a46a");
-    const band = ["#c8402b", "#e2553a", "#f2a46a", "#ffd36b", "#e2553a"];
-    for (let b = 0; b < 5; b++) for (let x = 0; x < W; x++) R(x, 10 + b * 10 + Math.sin(x * 0.045 + b * 1.3) * 5, 1, 3, band[b]);
-    R(0, 70, W, 24, "#2d4a80"); R(120, 72, 60, 3, "#1c2a55"); R(210, 76, 40, 2, "#1c2a55"); for (let x = 6; x < W; x += 23) R(x, 80 + (x % 7), 5, 1, "#f2a46a");
-    const r = rnd(4); for (let x = 0; x < 150; x += 9) { const h = 6 + r() * 16; R(x, 96 - h, 8, h + 30, "#1c2547"); if (r() > 0.3) R(x + 2, 98 - h, 1, 1, P.lamp); if (r() > 0.5) R(x + 5, 102 - h, 1, 1, P.lamp); }
-    const hill = (x) => 119 - x * 0.105;
-    for (let x = 0; x < W; x++) { const t = hill(x); R(x, t, 1, H - t, "#4a3a28"); R(x, t, 1, 3, "#3f6a3c"); }
-    R(0, 82, 104, 1, P.steel);
-    const tb = hill(60); R(30, tb - 17, 60, 14, "#6fb3d9"); R(30, tb - 19, 60, 2, "#f1f4f6"); for (let x = 34; x < 86; x += 9) R(x, tb - 14, 6, 6, P.lamp); R(30, tb - 6, 60, 1, "#f1f4f6"); R(38, tb - 3, 6, 3, P.steel); R(74, tb - 3, 6, 3, P.steel); R(58, tb - 37 + 5, 1, 14, P.steel);
-    const s1 = hill(134); R(132, s1 - 34, 4, 34, P.steel); R(131, s1 - 40, 6, 6, P.steel); R(126, s1 - 30, 16, 2, P.steel); R(128, s1 - 42, 12, 2, P.top);
-    const s2 = hill(172); R(162, s2 - 26, 3, 26, "#8f98a3"); R(182, s2 - 26, 3, 27, "#8f98a3"); R(162, s2 - 28, 23, 3, "#8f98a3"); R(162, s2 - 29, 23, 1, P.top);
-    sheep(214, hill(220)); sheep(250, hill(256)); arc(190, s2 - 30, 220, hill(220) - 8, s2 - 44); arc(222, hill(220) - 8, 256, hill(256) - 8, 44);
-    for (let x = 270; x < W; x += 12) R(x, hill(x) - 14, 2, 14, P.woodDark); for (let x = 270; x < W; x++) { R(x, hill(x) - 14, 1, 1, P.woodDark); R(x, hill(x) - 8, 1, 1, P.woodDark); }
-    A(0.7, () => { [[100, 40], [150, 56], [200, 34], [240, 60], [110, 66]].forEach(([x, y]) => { R(x, y, 9, 1, P.trim); R(x + 12, y + 1, 3, 1, P.trim); }); }); [[118, 52], [176, 46], [228, 50]].forEach(([x, y]) => R(x, y, 2, 2, "#de8a3f"));
-    rune(298, 52, "E"); person(232, 62, { air: true }); person(100, hill(104) - 19 + 0, {});
-  },
-  function nabolaget() {
-    sky("#050a1d", "#1b2b58"); stars(40, 9, 60);
-    A(0.45, () => { for (let b = 0; b < 3; b++) for (let x = 0; x < W; x++) R(x, 14 + b * 9 + Math.sin(x * 0.03 + b * 2) * 6, 1, 4 - b, b ? "#8be3c0" : "#5ad6a0"); });
-    R(22, 44, 20, 84, "#1c2547"); gable(20, 44, 24, 22, "#1c2547"); R(31, 14, 1, 9, "#1c2547"); R(28, 52, 8, 8, P.lamp); R(31, 54, 1, 3, P.ink);
-    house(-6, 96, 66, "#8fb8a0", "#7ea692", 18, true); house(70, 88, 70, "#a8432f", "#93392a", 20, true); house(152, 94, 68, "#7d8a9c", "#6f7c8f", 16, true); house(232, 84, 92, "#d6a347", "#c18f38", 22, true);
-    [[14, 104], [36, 104], [84, 98], [112, 98], [166, 104], [196, 104]].forEach(([x, y]) => { R(x, y, 8, 10, P.lamp); R(x + 4, y, 1, 10, P.woodDark); });
-    [[40, 78], [118, 68], [196, 80]].forEach(([x, y], i) => { R(x, y, 6, 10, P.brickLine); R(x - 1, y, 8, 2, "#dfe7f2"); smoke(x + 1, y - 6, 3 + (i % 2)); });
-    for (let x = 140; x < 152; x++) R(x, 92 + Math.sin(((x - 140) / 12) * Math.PI) * 2, 1, 1, "#e9e9e9"); R(143, 94, 3, 5, P.red); R(147, 95, 3, 4, "#f4efe4");
-    R(256, 92, 48, 26, P.trim); R(258, 94, 44, 22, "#3b2f24"); R(258, 110, 44, 6, "#5a3d24"); R(258, 109, 44, 1, P.top);
-    R(264, 104, 10, 5, "#2f6b3a"); R(265, 105, 3, 2, P.steel); R(270, 105, 3, 3, "#b7c2cf"); R(272, 107, 1, 1, "#7dff8a"); A(0.35, () => R(270, 105, 5, 5, "#7dff8a"));
-    R(238, 106, 10, 22, "#3f6b4f"); R(245, 116, 2, 2, P.gold);
-    rune(286, 95, "N"); person(172, 79, { air: true });
-    snowfall(80, 31);
-  }
-];
-
-// ---- the plan as data ----
+// ---- the game as data: counts and times are read from the built levels and their tests ----
 const LEVELS = [
-  { ch: "L", name: "Langkaia", where: "Bjørvika, on the water side of the Opera", sky: "Oslo right now", cols: 120, time: "1 min", ride: "on foot along the harbour promenade",
-    add: "Walking, the jump, ledges you jump up through, and water that puts you back on the last ground. Then the first ground that moves: sauna rafts that bob three pixels.",
-    beats: ["Out of the Opera's back door onto the quay. The helmet drops onto the hat (built in order 5).", "Along the jetty, raft to raft. The gaps are two and three tiles; one jump covers three.", "The moored longship: deck, mast, yard. Today's ship, moved here.", "Rune L hangs over the yard."],
+  { ch: "L", id: "langkaia", name: "Langkaia", where: "Bjørvika, on the water side of the Opera", sky: "Oslo right now", cols: 250, clear: 65, foes: "9: pigeons, gulls, a rat", coins: 79, ride: "on foot along the harbour promenade",
+    shot: "Two sauna rafts drifting side by side in the harbour, him on the first, skilling over the cabin roofs and a gull between them",
+    cap: "The two rafts that drift together: moving ground onto moving ground.",
+    add: "Everything from nothing: walking, the jump, ledges you jump up through, the first skilling, one pigeon on its own, the first bench and flag. Then the first water, two tiles wide, and the first ground that moves: sauna rafts.",
+    beats: ["Out of the stage tower's door, down the Opera's marble roof to the quay and its two sheds, Runesmia and Verkstedet. Nothing can be lost here.", "The sauna rafts, over water on moving ground, to the sauna club's pier and the middle flag.", "Two rafts that drift towards each other, a high road over the cabin roofs, gulls, and Sørenga's diving tower with the brown cheese on top.", "The moored longship: aboard, up the mast, along the yard to rune L."],
     oslo: "Langkaia is the quay beside the Opera where the floating saunas are tied up. MUNCH and the Barcode stand behind, as on the front page.",
-    you: "The level starts where the front page ends: the same Opera, seen from the other side.", kit: "carrier (bob)" },
-  { ch: "A", name: "Akershus festning", where: "The fortress above the harbour", sky: "Day", cols: 130, time: "1½ min", ride: "three hundred metres along the quay",
-    add: "The flag. Touch a flagpole and the flag goes up; every fall from here on returns him to it. And cannons: step in, get fired, using the sheep's bounce with a direction.",
-    beats: ["Up the outer wall on ledges.", "First cannon: a short shot onto the next wall, impossible to miss.", "First flag.", "Second cannon: you choose when to step in, and a guard walks the landing spot.", "Rune A beside the copper spire."],
+    you: "It starts where the front page ends: the same Opera, seen from the other side. The longship is the one from the old game.", kit: "carrier (bob, drift)" },
+  { ch: "A", id: "akershus", name: "Akershus festning", where: "The fortress above the harbour", sky: "Day", cols: 280, clear: 62, foes: "16: guards, braziers, crows, rats", coins: 79, ride: "three hundred metres along the quay",
+    shot: "He flies through the air between three cannons standing on stone piers in the harbour",
+    cap: "The saluting battery: each cannon fires him into the next.",
+    add: "The cannon. Walk in, a third of a second in the barrel with the arc shown dotted, then the shot; in the air the keys only lean on the flight. And the brazier, the first thing that hurts to land on.",
+    beats: ["Up the outer wall on stone ledges and ivy, past a brazier on its own, into a cannon that cannot miss, onto the gate tower and the first flag.", "The wall-walk with guards on it, a cannon over the ward and one over the dry ditch. A fall only lands him below, with ledges back up and a bench by the well. The well goes down to a cellar with the cheese.", "The moat, where a hoist goes up and down through the cannon's line of fire, and the saluting battery: three cannons on piers, each firing him into the next.", "The keep: a climb inside past its guard, out beside the copper spire, rune A."],
     oslo: "Begun in 1299. The sign reads: “Never taken by siege. You are welcome to try.”",
     you: "The first A of your name.", kit: "checkpoint, launcher" },
-  { ch: "R", name: "Rådhuset", where: "The two brick towers on Rådhusplassen", sky: "Day", cols: 110, time: "2 min", ride: "up Karl Johans gate",
-    add: "Ledges on a beat. The carillon's bells show for two seconds, shimmer for one, and are gone for two, with the same warning shimmer as the maze's sliding walls.",
-    beats: ["From Rådhusbrygga, across the roof of an island ferry.", "A lift up the west tower: moving ground that goes straight up.", "The bells between the towers, four in a rising row.", "Rune R on top of the east tower, above the clock."],
-    oslo: "The east tower holds 49 bells that play on the hour. The level is the tallest so far: it scrolls up, not sideways.",
-    you: "A second line on the sign is yours to write.", kit: "timed, carrier (lift)" },
-  { ch: "S", name: "Slottet", where: "Karl Johan, uphill to the palace", sky: "Always 17 May", cols: 170, time: "2 min", ride: "T-bane line 1 from Nationaltheatret",
-    add: "Ground that travels sideways. The parade's banners are ledges carried along the street; stand on one and you go with it. Nothing here can hurt: it is the breather after the towers.",
-    beats: ["Karl Johan is one long ramp, like the Opera roof.", "The children's parade walks the same way you do. Ride a banner over the crowd.", "The band's bass drum is a trampoline.", "The Guard march in step across the square and carry you back with them.", "Rune S over the balcony."],
+  { ch: "R", id: "radhuset", name: "Rådhuset", where: "The two brick towers on Rådhusplassen", sky: "Day", cols: 228, clear: 93, foes: "9: pigeons, gulls that throw chips, an e-scooter", coins: 65, ride: "up Karl Johans gate",
+    shot: "He stands on the tip of the gilded hand of the clock on the brick tower, a flag and a swinging bell to the left",
+    cap: "Up the clock tower on the tip of the clock's own hand.",
+    add: "Ledges on a beat. The carillon's bells are there for two seconds, shimmer for one, and are gone for two. And the first thrower: a gull with chips. The level climbs; it is 52 rows tall.",
+    beats: ["Along Rådhusbrygga: three low bells over the promenade, where a fall costs nothing, and a chip-throwing gull on its own.", "Across the water on the island ferry's roof, over the square past an e-scooter, three bells over the fountain.", "The window cleaners' lift up the west tower while a second gull throws, then the carillon: bells rising between the towers, one that swings on its rod.", "The clock tower, ridden up on the tip of the clock's gilded hand, to the parapet and rune R."],
+    oslo: "The east tower holds 49 bells that play on the hour. Here they also ring when he lands on them.",
+    you: "Known to be hard for a third level: a fall from the upper bells is a long climb back.", kit: "timed, carrier (lift, swing, orbit)" },
+  { ch: "S", id: "slottet", name: "Slottet", where: "Karl Johan, uphill to the palace", sky: "Always 17 May", cols: 252, clear: 65, foes: "14: pigeons, gulls, one e-scooter", coins: 61, ride: "T-bane line 1 from Nationaltheatret",
+    shot: "Karl Johan on 17 May: a crowd with flags, a roadworks pit, and a navy school banner reading Høyenhall skole carried above the street",
+    cap: "The second roadworks dig. Høyenhall skole's banner is the way over.",
+    add: "Ground that travels. The parade's banners are ledges carried up the street; stand on a crossbar and it takes him over the crowd. The band's bass drum throws him straight up. The breather after the towers.",
+    beats: ["Egertorget: the first banners, over plain street.", "Spikersuppa: a banner over the pond.", "Past Nationaltheatret and the University: the drum up to the high banner over the roadworks (“Digging in progress. Since 2019.”).", "Slottsparken and the palace: the King's Guard march in step and their hats lift him to the terrace; up the front to the balcony and rune S. The royals wave."],
     oslo: "Flags on every pole, whatever the real date: the kit's 17 May sky, pinned.",
-    you: "One banner in the parade should be your school's.", kit: "carrier (travel), launcher" },
-  { ch: "H", name: "Holmenkollen", where: "The ski jump", sky: "Always winter, snowing", cols: 160, time: "1½ min", ride: "on skis through the forest to the river",
-    add: "Ice and skis. On ice he keeps sliding after you let go. On the inrun the skis go on, steering goes off and the speed climbs past the usual 1.6 until the lip.",
-    beats: ["Off the train at the top. Icy steps down to the start hut, with rails to stop a slide.", "The inrun. One button matters: jump at the lip.", "Twelve tiles of air. Rune H hangs in the flight path, so a late jump misses it.", "The landing slope. Miss it and you are back at the hut."],
-    oslo: "Line 1 climbs past the jump on its way to Frognerseteren. The far city lies below in the backdrop, the reverse of the front page's view.",
-    you: "The H of Hansen.", kit: "surface (ice, ski)" },
-  { ch: "A", name: "Akerselva", where: "Down the river from Nydalen to Vaterland", sky: "Day, summer", cols: 180, time: "2½ min", ride: "T-bane line 5 to Sognsvann",
-    add: "Current. Logs drift downstream and take him along; the waterfalls push down and wash him back to the flag. The only level that goes downhill all the way.",
-    beats: ["Three terraces, each a stretch of river with a fall at the end.", "The water wheel at Hjula: buckets go round, step on at the bottom, off at the top.", "Runesmia, the smithy by the falls, is the door to the QR maker.", "Aamodt bru, then the last pool on logs.", "Rune A on the far bank."],
-    oslo: "The sign on Aamodt bru is real: a hundred men it can carry, but it fails under marching in step.",
-    you: "The second A, and your QR maker gets a proper workshop.", kit: "carrier (drift, orbit), zone (push)" },
-  { ch: "N", name: "Nordmarka", where: "The forest north of the city", sky: "Always a summer night", cols: 170, time: "3 min + the mound", ride: "line 5 back down to the centre",
-    add: "Dark. Under the spruces you see what the headlamp lights, as in the maze's sixth level. Lit windows, painted trunks and the rune still show through it.",
-    beats: ["Blue paint on the trunks marks the trail. A painted trunk is this level's flag.", "A moose crosses the marsh. Its back is a ledge; it does not care about you.", "Ullevålseter: one lit window, a sign about waffles.", "Jernhaugen, the burial mound, seen from outside. Its door is a second way into the bonus maze.", "Rune N on a boulder in the darkest part."],
-    oslo: "The level starts at the end of the line, where the city stops and the forest begins.",
-    you: "Your 2019 maze gets a place on the ground, not only on the map.", kit: "dark, carrier (walk)" },
-  { ch: "S", name: "Stortinget", where: "The T-bane station under the centre", sky: "None: underground", cols: 150, time: "2½ min", ride: "the tram up Ekebergbakken",
-    add: "Belts and a timetable. Escalators add to his speed or take from it. Trains pass on a schedule shown on the board, and their roofs are the only way across. The third rail is the curse.",
-    beats: ["Down the escalators, against one of them.", "Wait for the board, step onto a train roof, ride it through the tunnel.", "Two trains passing: change roofs in the tunnel.", "The kiosk on the platform is the door to Quintle.", "Rune S at the far end, past where passengers may go."],
-    oslo: "Every line in the city passes through this station. “Dørene lukkes” is the sign.",
-    you: "Quintle gets its door here, locked with the front page's padlock until it is on Google Play.", kit: "surface (belt), carrier (schedule), hazard" },
-  { ch: "E", name: "Ekeberg", where: "The hillside above Gamle Oslo", sky: "Always evening", cols: 170, time: "3 min", ride: "on foot down through Gamlebyen",
-    add: "Wind. Gusts push him sideways in the air, shown by leaves and announced a second ahead. Sheep chains: bounce to bounce, steering through the gust.",
-    beats: ["Ride the tram's roof up the hill.", "Sculptures are the ledges. Gusts come between them.", "The farm's sheep: three bounces across a gap too wide for anything else.", "The viewpoint. Every level you have finished is lit in the city below.", "Rune E at the end of the railing."],
-    oslo: "Munch set The Scream on this hillside. The kit's evening sky is already those colours; here it also gets the bands.",
-    you: "From here he can see home.", kit: "zone (wind), launcher" },
-  { ch: "N", name: "Nabolaget", where: "The roofs of Vålerenga and Kampen", sky: "Always a winter night, northern lights", cols: 190, time: "4 min", ride: "the door Hjem, to the front page's first house",
-    add: "Nothing new. Everything from the nine levels before, once each: icy roofs, chimney smoke that lifts, clotheslines that bounce, a tram to ride, a dark stretch behind the church.",
-    beats: ["Up onto the first roof. The front page's wooden houses, now from above the eaves.", "Roof to roof on smoke and washing lines.", "Vålerenga kirke's spire is the last climb.", "The yellow house. In the window, a Raspberry Pi with a green light. It is serving the game you are playing.", "Rune N beside it. The helmet turns gold."],
-    oslo: "The walk ends where the front page begins. Through the door Hjem he is back at the first house, hat on.",
-    you: "The beacon of today's game becomes the Pi's light: lit when someone finally makes it home.", kit: "all of them" }
+    you: "The high banner is Høyenhall skole's.", kit: "carrier (path), launcher (drum)" },
+  { ch: "H", id: "holmenkollen", name: "Holmenkollen", where: "The ski jump", sky: "Always winter, snowing", cols: 280, clear: 62, foes: "10: snowball kids, hedgehogs, fire baskets, crows", coins: 62, ride: "on skis through the forest to the river",
+    shot: "He is in the air off the ski jump, rune H ahead of him and the city far below",
+    cap: "Off the lip. Rune H hangs in the flight path.",
+    add: "Ice and the inrun. On ice he keeps sliding after you let go; red rails stop a slide. On an inrun there is no steering, the speed climbs past a run, and one button matters: the jump at the lip.",
+    beats: ["Off the train at the top, along a path where the snow has turned to ice and nothing can go wrong.", "The icy steps, over small drops and gaps. Nobody has gritted. Nobody will.", "Two gullies: one crossed by the snow cannon, one by the chairlift. A children's hill to practise the lip.", "The start hut, the inrun, the flight. Miss the rune and the landing hill lets him down; the steps under the inrun take him back up."],
+    oslo: "Line 1 climbs past the jump on its way to Frognerseteren. The city lies below in the backdrop, the reverse of the front page's view.",
+    you: "The H of Hansen. Clearing it gives the ski pole.", kit: "surface (ice, inrun), launcher" },
+  { ch: "A", id: "akerselva", name: "Akerselva", where: "Down the river from Nydalen to Vaterland", sky: "Day, summer", cols: 250, clear: 66, foes: "14: salmon, rats, wasps, gulls, a duck", coins: 57, ride: "T-bane line 5 to Sognsvann",
+    shot: "The water wheel at Hjula with him standing in one of its buckets, the brick mill behind",
+    cap: "The wheel at Hjula: on at the bottom, off at the top.",
+    add: "Current, and the dash. Logs drift downstream and come round again; a waterfall pushes down so hard a jump barely leaves the ground. The ski pole's dash goes straight through one. The salmon is the first jumper.",
+    beats: ["Nydalen: a salmon on its own, a fall over dry ground, the dash over a dry mill race, the first logs.", "Bjølsen: logs between rocks, the first fall over its pool.", "Hjula: the water wheel, Runesmia by the falls (the door to the QR maker), the middle flag. Then a curtain of falling water to dash through, with a cave behind it.", "Vaterland: Aamodt bru, off the last fall onto the logs, the last pool, rune A on the far bank."],
+    oslo: "The sign on Aamodt bru is real: a hundred men it can carry, but not marching in step. The only level that goes downhill all the way.",
+    you: "The second A, and your QR maker gets a proper workshop.", kit: "zone (push), carrier (drift, orbit), dash" },
+  { ch: "N", id: "nordmarka", name: "Nordmarka", where: "The forest north of the city", sky: "Always a summer night", cols: 236, clear: 69, foes: "11: foxes, owls, hedgehogs, squirrels, a bat; and the troll", coins: 52, ride: "line 5 back down to the centre",
+    shot: "A dark spruce forest lit only by his headlamp; a green troll raises its club in a shaft of dawn light",
+    cap: "The clearing. The troll's club is up, and the dawn is coming through the trees.",
+    add: "The dark. Under the spruces only the headlamp's circle shows, more the way he faces; lit windows, the blue trail marks, signs and eyes show through. Then the first boss.",
+    beats: ["From Sognsvann into the trees: the dark where nothing can go wrong, the first blue-painted trunk (this level's flag), a fox's eyes.", "Bog pits in the dark, stones over a bog, and a moose that crosses the marsh and does not care that he rides its back.", "Ullevålseter with one lit window, Jernhaugen's mound with its door into the maze, and a gorge in the darkest part, crossed with the dash.", "The clearing. A boulder that is a troll: it raises its club for a second, slams, and the club sticks. Caught in the dawn with the headlamp on it, a third of it turns to stone. Three times, and rune N is on the boulder."],
+    oslo: "The level starts at the end of the line, where the city stops and the forest begins. “Waffles for everyone, every day. Not now. It is night.”",
+    you: "Your 2019 maze gets a place on the ground, not only on the map.", kit: "dark, carrier (walk), troll" },
+  { ch: "S", id: "stortinget", name: "Stortinget", where: "The T-bane station under the centre", sky: "None: underground", cols: 274, clear: 64, foes: "12: rats, pigeons, umbrellas, a trolley, an e-scooter", coins: 73, ride: "the tram up Ekebergbakken",
+    shot: "A tiled station platform with a white T-bane train standing at it and him stepping onto its roof",
+    cap: "The train stands. Its roof is the only way through the tunnel.",
+    add: "Belts and a timetable. Escalators and a walkway add to his speed or take from it. Trains stand at the platforms on a schedule the board counts down to. The third rail is the first hazard: a heart, and it throws him clear.",
+    beats: ["The ticket hall and the escalators: one with him, one against, where nothing can go wrong.", "Platform 1: the board, the first crossing of the open track, the first train roof through a tunnel. A low beam sweeps a rider off at the next platform.", "Platform 2: the kiosk that is Quintle's door, the middle flag, a walkway against him with umbrellas on it, and a track too wide for a jump.", "The cavern where the lines cross: two trains pass, and the lower one goes to the depot, so he changes roofs on the way. Rune S past the gate."],
+    oslo: "Every line in the city passes through this station. “The doors are closing. They always say that.”",
+    you: "Quintle's kiosk is padlocked with the front page's words until it is out.", kit: "surface (belt), carrier (stops), hazard" },
+  { ch: "E", id: "ekeberg", name: "Ekeberg", where: "The hillside above Gamle Oslo", sky: "Always evening", cols: 256, clear: 69, foes: "14: magpies, crows, hedgehogs, squirrels, wasps", coins: 60, ride: "on foot down through Gamlebyen",
+    shot: "Under a banded orange evening sky he bounces across a quarry on the backs of sheep",
+    cap: "The quarry: three sheep are the only way over.",
+    add: "Wind. Leaves stream through for a second as a warning, then for a second and a half the gust pushes him sideways. And sheep chains: bounce to bounce, steering through the gust.",
+    beats: ["Up from Gamlebyen on the tram's roof as it climbs its trestle, and one gust over flat ground.", "The sculpture park: the sculptures are the ledges (“Do not climb on the art. It says nothing about jumping.”), with gusts over small drops and a pond.", "The old quarry, on the backs of three sheep.", "Up the bank to the viewpoint. Every place he has cleared shows a light in the city below. Rune E at the end of the railing."],
+    oslo: "Munch set The Scream on this hillside. The evening sky here gets the bands.",
+    you: "From here he can see home.", kit: "zone (gust on a beat), launcher (sheep)" },
+  { ch: "N", id: "nabolaget", name: "Nabolaget", where: "From Vålerenga home to Kværnertoppen", sky: "Always a winter night, northern lights", cols: 224, clear: 94, foes: "10: cats, crows, snowball kids, a fox, an owl; and the snow plough", coins: 66, ride: "the door Hjem, to the front page's first house",
+    shot: "A winter night: he comes down a snowdrift beside Kruttverket, a long brick building with arched lit windows and people at café tables",
+    cap: "Down the snow from the church, past Kruttverket.",
+    add: "Nothing new. Everything from the nine levels before, once each: icy roofs, washing lines that throw him, warm chimney air that lifts, a dark lane, a tram roof. Then the last boss.",
+    beats: ["Up onto the roofs of the front page's wooden houses, icy, seen from above the eaves.", "Roof to roof over the back yards on washing lines and chimney air.", "Down into the lane behind Vålerenga kirke, dark but for the church windows and his headlamp, and up the tower: the spire is the last climb.", "Down the snow into Kværnerdalen, past Kruttverket, to a flag and a bench. Then the snow plough: a bounce off the washing line, the dash from a roof, a ride on the tram. Three times on its cab and it parks for good.", "The yellow house on Kværnertoppen. In the window, a Raspberry Pi serving the game you are playing; its light turns green when rune N is taken. The helmet turns gold."],
+    oslo: "“They made gunpowder here. Now they make coffee. Fewer bangs.” The walk ends where the front page begins: through the door Hjem he is back at the first house, hat on.",
+    you: "Home, and the place before it.", kit: "all of them, and the plough" }
 ];
 const LADDER = [
-  ["Moving ground", "A ledge that moves carries whoever stands on it by the same amount each step.", "things/carrier.ts"],
-  ["Flags, launchers", "A touched flag is where he returns. A launcher sets his speed once; steering stays his.", "things/checkpoint.ts, launcher.ts"],
-  ["Ledges on a beat", "On, shimmer, off, by the level's step count, so it is the same on every visit.", "things/timed.ts"],
-  ["Ground that travels", "The same carrier, on a path with a schedule.", "things/carrier.ts"],
-  ["Ice and skis", "A surface has a grip and a speed cap. The body's own constants do not change.", "physics.ts: World.surfaceAt"],
-  ["Current", "A zone adds a push each step while he is in it.", "things/zone.ts"],
-  ["Dark", "The maze's torch overlay, moved to the kit. Lights show through it.", "dark.ts"],
-  ["Belts, a timetable, the rail", "A belt is a surface with a speed. The rail is the maze's curse rule.", "World.surfaceAt, checkpoint.ts"],
-  ["Wind", "The same zone, switched on and off on a beat, with a warning.", "things/zone.ts"],
-  ["Everything", "No new code. If the level needs any, an earlier one was built wrong.", ""]
+  ["Moving ground", "A ledge that moves carries whoever stands on it by the same amount each step.", "carrier.ts"],
+  ["Flags, cannons", "A touched flag is where he returns. A launcher sets his speed once; the keys only lean on the flight.", "checkpoint.ts, launcher.ts"],
+  ["Ledges on a beat", "On, shimmer, off, by the level's step count, so it is the same on every visit.", "timed.ts"],
+  ["Ground that travels", "The same carrier, on a path. The drum is a launcher that points up.", "carrier.ts, launcher.ts"],
+  ["Ice and the inrun", "A surface has a grip and a speed cap. The body's own constants do not change.", "surface.ts"],
+  ["Current, and the dash", "A zone adds a push each step while he is in it. The dash ignores it.", "zone.ts, physics.ts (dashStep)"],
+  ["Dark, and a boss", "The maze's torch overlay, moved to the kit. Lights show through it.", "dark.ts; game/troll.ts"],
+  ["Belts, a timetable, the rail", "A belt is a surface with a speed. Trains are carriers that stop. The rail is a hazard.", "surface.ts, carrier.ts, hazard.ts"],
+  ["Wind", "The same zone, switched on and off on a beat, with a warning.", "zone.ts, timed.ts"],
+  ["Everything, and the last boss", "No new kit code. The plough comes with its level through the level's boss slot.", "game/plough.ts"]
 ];
 
 // ---- put it on the page ----
-const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+const esc = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/"/g, "&quot;");
 const total = LEVELS.reduce((n, l) => n + l.cols, 0);
+const secs = LEVELS.reduce((n, l) => n + l.clear, 0);
+const mmss = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 document.getElementById("spell").innerHTML = LEVELS.map((l, i) => `<li><a href="#level-${i + 1}"><canvas width="11" height="13" data-rune="${l.ch}" aria-hidden="true"></canvas><b>${l.ch}</b><span>${esc(l.name.split(" ")[0])}</span></a></li>`).join("");
 document.getElementById("line").innerHTML = LEVELS.map((l, i) => `<li><b>${l.ch}</b><strong>${esc(l.name)}</strong><span>${i < 9 ? "then " + esc(l.ride) : esc(l.ride)}</span></li>`).join("") + `<li class="bonus"><b>+</b><strong>Jernhaugen</strong><span>the bonus stop: the maze, open from the start</span></li>`;
 document.getElementById("levels").innerHTML = LEVELS.map((l, i) => `
 <article class="level" id="level-${i + 1}">
   <header>
     <canvas width="11" height="13" data-rune="${l.ch}" aria-hidden="true"></canvas>
-    <div class="name"><p class="eyebrow">Level ${i + 1} · rune ${l.ch} · ${i < 3 ? "built now" : "planned"}</p><h3>${esc(l.name)}</h3><p class="where">${esc(l.where)}</p></div>
-    <dl class="facts"><div><dt>Sky</dt><dd>${esc(l.sky)}</dd></div><div><dt>Length</dt><dd>${l.cols} columns</dd></div><div><dt>First clear</dt><dd>${esc(l.time)}</dd></div></dl>
+    <div class="name"><p class="eyebrow">Level ${i + 1} · rune ${l.ch} · built</p><h3>${esc(l.name)}</h3><p class="where">${esc(l.where)}</p></div>
+    <dl class="facts"><div><dt>Sky</dt><dd>${esc(l.sky)}</dd></div><div><dt>Length</dt><dd>${l.cols} columns</dd></div><div><dt>Scripted clear</dt><dd>${mmss(l.clear)}</dd></div><div><dt>Skilling</dt><dd>${l.coins}</dd></div><div><dt>Enemies</dt><dd>${esc(l.foes)}</dd></div></dl>
   </header>
-  <canvas class="scene" width="${W}" height="${H}" data-scene="${i}" role="img" aria-label="Pixel drawing of level ${i + 1}, ${esc(l.name)}"></canvas>
+  <figure><img class="shot" src="shots/${String(i + 1).padStart(2, "0")}-${l.id}.png" width="1280" height="800" loading="lazy" alt="${esc(l.shot)}"><figcaption class="cap">${esc(l.cap)} <a href="https://larshansen.dev/viking/?debug&amp;level=${l.id}">Open the level</a></figcaption></figure>
   <div class="notes">
     <div><div><h4>New here</h4><p class="new">${esc(l.add)}</p></div><div><h4>The walk</h4><ol>${l.beats.map((b) => `<li>${esc(b)}</li>`).join("")}</ol></div></div>
     <div><div><h4>Oslo</h4><p>${esc(l.oslo)}</p></div><div><h4>You</h4><p>${esc(l.you)}</p></div><div><h4>Built from</h4><p><code>${esc(l.kit)}</code></p></div></div>
   </div>
-</article>`).join("") + `<p class="cap">All ten: ${total} columns, against 144 today. A first run through should take about 25 minutes plus the maze; a practised one under ten.</p>`;
-document.getElementById("ladder").innerHTML = LADDER.map((r, i) => `<tr><td class="num">${i + 1} ${esc(LEVELS[i].name.split(" ")[0])}</td><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td>${r[2] ? `<code>${esc(r[2])}</code>` : "–"}</td></tr>`).join("");
+</article>`).join("") + `<p class="cap">All ten: ${total} columns, against 144 in the old one-strip game. The scripted player goes straight through all ten in ${mmss(secs)}.</p>`;
+document.getElementById("ladder").innerHTML = LADDER.map((r, i) => `<tr><td class="num">${i + 1} ${esc(LEVELS[i].name.split(" ")[0])}</td><td>${esc(r[0])}</td><td>${esc(r[1])}</td><td><code>${esc(r[2])}</code></td></tr>`).join("");
 document.getElementById("sw").innerHTML = [P.red, P.blue, P.skin, P.ironDark, P.gold, P.lamp, P.grass, P.grassDark, P.earth, P.wood, P.woodDark, P.rock, P.water, P.waterDeep, P.foam, P.sail, P.stripe, P.snow, P.glow].map((c) => `<i style="background:${c}"></i>`).join("");
 
 const draw = (cv, fn) => { try { g = cv.getContext("2d"); g.imageSmoothingEnabled = false; fn(); } catch (e) { console.error(e); } };
 document.querySelectorAll("canvas[data-rune]").forEach((cv) => draw(cv, () => { R(0, 0, 11, 13, "#232c4f"); rune(0, 0, cv.dataset.rune); }));
-document.querySelectorAll("canvas[data-scene]").forEach((cv) => draw(cv, SCENES[+cv.dataset.scene]));
 
 // The three states of the person.
 draw(document.getElementById("who"), () => { sky("#4f96d8", "#cde8f5"); ground(0, 22, 80, 6); person(10, 22, { viking: false }); person(35, 22); person(60, 22, { gold: true }); });
@@ -580,6 +447,6 @@ draw(document.getElementById("arc"), () => {
   person(x0 - 5, gy);
 });
 const tiles = (px) => (px / 16).toFixed(1);
-document.getElementById("arcCap").textContent = `Grid is one tile, 16 px. Short hop ${J.hop.high} px high. Full jump ${J.full.high} px high and ${J.full.far} px far (${tiles(J.full.far)} tiles). With the raven's feather: ${J.double.high} px high, ${J.double.far} px far (${tiles(J.double.far)} tiles). Every gap in the ten levels is measured against these.`;
+document.getElementById("arcCap").textContent = `Grid is one tile, 16 px. Short hop ${J.hop.high} px high. Full jump ${J.full.high} px high and ${J.full.far} px far (${tiles(J.full.far)} tiles). With the raven's feather: ${J.double.high} px high, ${J.double.far} px far (${tiles(J.double.far)} tiles). The ski pole adds a level dash of three tiles. Every gap in the ten levels is measured against these.`;
 })();
 </script>

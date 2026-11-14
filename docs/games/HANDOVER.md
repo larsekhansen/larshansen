@@ -17,15 +17,15 @@ current: when something here stops being true, change it in the same commit.
 | The look: tiles, person, palette, voice | [`PLAN.md`](PLAN.md) §3 (style bible) and §4 (one person) |
 | How to check anything on this Pi | [`PLAN.md`](PLAN.md) §9, and "Checking" below |
 | What each implementer was told to build | [`orders/`](orders/), one file per order |
-| The first plan for the ten levels, with drawings | [`LEVELS.html`](LEVELS.html) (see the warning below) |
+| The ten levels as built, with a screenshot of each | [`LEVELS.html`](LEVELS.html) (see the note below) |
 | Hosting and deploy | [`../../infra/README.md`](../../infra/README.md), [`../../CLAUDE.md`](../../CLAUDE.md) |
 
-**Warning about `LEVELS.html`.** It is the plan from before Lars asked for enemies, lives and
-Mario-length levels. Its drawings, level order, places, mechanic ladder and Oslo notes still hold.
-Its column counts, its "nothing here can hurt" tone and its "no lives" decision do not: order 10
-(`orders/10-levels-4-to-10.md`, rules 4 and 6 and the "Feel" section) replaced them. Where the two
-disagree, order 10 and the code win. A copy of the page is also published as a private artifact
-on Lars's claude.ai account; it has not been updated either.
+**About `LEVELS.html`.** It began as the plan (13 November) and was rewritten on 14 November to
+describe the game as built: real screenshots (`shots/`), column counts, clear times, enemies and
+rules read from the levels and their tests, and a last section on where the build left the plan.
+The plan's hand-drawn sketches are in the file's git history. Its numbers are written into the
+page by hand, so update them when a level changes. The same page is published as a private
+artifact on Lars's claude.ai account.
 
 ## What exists
 
@@ -157,7 +157,6 @@ reorder this list.
 - **Wall jump or wall cling.** Not added; the body has run, jump, optional double jump, dash.
 - **More than two bosses.** Kept to levels 7 and 10.
 - **Enemies in the maze, or hearts there.** The maze keeps its own rules.
-- **Updating `LEVELS.html` and the published plan page** to the built game. Not done.
 - **Cheaper implementers.** Lars suggested lower-tier subagents for grunt work if it saved
   tokens. Every implementer was Opus, because every order was design-heavy; small edits were done
   by the planner inline. Sonnet for whole batches was offered to Lars as a saving and not taken up.
