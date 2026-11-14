@@ -1,0 +1,2 @@
+nordmarka: 1069 spots, 4 s; dead ends (no rune, no fall): 0
+   no way to the rune except by dying: 0
