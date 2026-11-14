@@ -679,6 +679,8 @@ function farKerbs() {
     // The hole: its back wall of earth in bands, black under the far edge, darker the deeper it goes.
     R(x, y - 2, w, 6, mix(P.earth, INK, 0.8));
     for (let k = 0; k < 9; k++) R(x, y + 4 + k * 8, w, 8, mix(P.earth, INK, 0.45 + k * 0.06));
+    // It has no bottom: black on down, however tall the screen.
+    R(x, y + 76, w, 1200, mix(P.earth, INK, 0.97));
     for (let k = 0; k < w; k += 5) R(x + k, y + 8 + ((k * 7) % 11), 2, 1, mix(P.earth, INK, 0.3));
     // The water main it was dug for, and the props holding the far side up.
     R(x, y + 26, w, 4, mix(P.ironDark, INK, 0.3));

@@ -186,8 +186,8 @@ const LOCAL_LINE: Path = {
     { at: 2, steps: STAND }
   ]
 };
-/** Five locals on the line, evenly spaced: never much more than five seconds to wait, even for one he can still get onto. */
-export const LOCALS: Path[] = [0, 1, 2, 3, 4].map((i) => ({ ...LOCAL_LINE, offset: Math.round((i * pathPeriod(LOCAL_LINE)) / 5) }));
+/** Five locals on the line, evenly spaced (and set three seconds into their round): never much more than five seconds to wait, even for one he can still get onto. */
+export const LOCALS: Path[] = [0, 1, 2, 3, 4].map((i) => ({ ...LOCAL_LINE, offset: Math.round((i * pathPeriod(LOCAL_LINE)) / 5) + 180 }));
 /** The express: down out of its own tunnel high in the cavern's wall, past the local, standing at platform 3, and on past the end. */
 const EXPRESS_LINE: Path = {
   kind: "path",
@@ -236,7 +236,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "jumper", look: "trackrat", c: 80, r: P, rise: 30, period: 200 },
   { kind: "walker", look: "rat", c: 92, r: P - 1, range: 2 },
   { kind: "walker", look: "scooter", c: 139, r: P - 1, range: 2, w: 14, h: 12 },
-  { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9 },
+  { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9, speed: 0.25 },
   { kind: "jumper", look: "trackrat", c: 155, r: P, rise: 36, period: 180, offset: 90 },
   { kind: "walker", look: "rat", c: 244, r: U - 1, range: 1 },
   { kind: "jumper", look: "trackrat", c: 259, r: P, rise: 28, period: 190, offset: 40 }
@@ -907,8 +907,8 @@ export const STORTINGET: LevelDef = {
       lines: { nb: ["Ikke gå i sporet. Den gule skinna er strømførende.", "Tavla sier når neste tog står her."], en: ["Keep out of the track. The yellow rail is live.", "The board says when the next train stands here."] }
     },
     {
-      label: { nb: "Dørene lukkes", en: "Dørene lukkes" },
-      lines: { nb: ["Dørene lukkes. Det sier de alltid.", "Toget i nedre spor går i depot. Bytt tak underveis."], en: ["The doors are closing. They always say so.", "The lower train goes to the depot. Change roofs on the way."] }
+      label: { nb: "Dørene lukkes", en: "Doors closing" },
+      lines: { nb: ["Dørene lukkes. Det sier de alltid.", "Toget i nedre spor går i depot. Bytt tak underveis."], en: ["Doors closing. They always say so.", "The lower train goes to the depot. Change roofs on the way."] }
     }
   ],
   doors: [

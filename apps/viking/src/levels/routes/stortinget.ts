@@ -57,9 +57,6 @@ export const STORTINGET_ROUTE: Move[] = [
   jump(0, { hold: 30 }),
   wait("through the tunnel, until the beam sweeps him off", (q) => q.body.onGround && !onLocal(q) && cx(q) < tile(131)),
   stomp(6),
-  // Over the umbrella as it tumbles towards him, so it passes under him: from the foot of the walkway.
-  walk(tile(141) - 6),
-  wait("the umbrella tumbling this way", (q) => q.enemies[7].dir < 0 && q.enemies[7].x > tile(145) + 14),
   walk(tile(152) - 4),
   wait("the rat in the wide track is down", ratDown(8)),
   leap(tile(153) - 2, 1, { dash: 12 }),

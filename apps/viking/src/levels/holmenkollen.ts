@@ -568,11 +568,11 @@ export const HOLMENKOLLEN: LevelDef = {
     },
     {
       label: { nb: "Snøkanon", en: "Snow cannon" },
-      lines: { nb: ["Snøkanonen lager snø.", "Og flyr deg over juvet."], en: ["The snow cannon makes snow.", "And flies you over the gully."] }
+      lines: { nb: ["Snøkanonen lager snø.", "Og sender deg over juvet."], en: ["The snow cannon makes snow.", "And sends you over the gully."] }
     },
     {
       label: { nb: "Starten", en: "The start" },
-      lines: { nb: ["Ned unnarennet styrer du ikke. Hopp på kanten.", "Prøv i barnebakken først. Bommer du, tar heisen deg opp."], en: ["Down an inrun you do not steer. Jump at the lip.", "Try the kids' jump first. Miss, and the lift takes you up."] }
+      lines: { nb: ["Ned unnarennet styrer du ikke. Hopp fra kanten.", "Prøv i barnebakken først. Bommer du, tar heisen deg opp."], en: ["Down an inrun you do not steer. Jump at the lip.", "Try the kids' jump first. Miss, and the lift takes you up."] }
     }
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],

@@ -1021,11 +1021,11 @@ export const NABOLAGET: LevelDef = {
   drum: 7,
   boss: ploughBoss(PLOUGH_DEF),
   bossWords: {
-    wake: { nb: "Brøytebilen våkner. Den er det siste før du er hjemme.", en: "The snow plough wakes. It is the last thing between you and home." },
+    wake: { nb: "Brøytebilen våkner.\nDet siste mellom deg og døra hjem.", en: "The snow plough wakes.\nThe last thing between you and the door home." },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
     beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
     // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.
-    miss1: { nb: "Den står fast i brøytekanten.\nKlessnora kaster deg høyere enn et hopp.", en: "It is stuck in the bank.\nThe washing line throws you higher than a jump." },
+    miss1: { nb: "Den setter seg fast i brøytekanten ved klessnora.\nSnora kaster deg høyere enn et hopp.", en: "It sticks in the bank by the washing line.\nThe line throws you higher than a jump." },
     miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },
     miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." }
   },

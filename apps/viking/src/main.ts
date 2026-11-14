@@ -51,7 +51,7 @@ import {
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
 import { drawTimed } from "@larshansen/pixelkit/timed";
-import { boardWidth, doorBoard, drawOverlay, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
+import { boardWidth, doorBoard, drawOverlay, fontPx, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
@@ -1460,7 +1460,9 @@ function plated(b: typeof state.banner) {
   if (!b) return null;
   const age = state.steps - b.since;
   const alpha = view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, (165 - age) / 30));
-  return alpha > 0 ? { title: b.title, sub: b.sub, alpha, plate: true } : null;
+  // Below the header, however many rows it has wrapped to.
+  const under = header.getBoundingClientRect().bottom - stage.getBoundingClientRect().top + fontPx() * 2.4;
+  return alpha > 0 ? { title: b.title, sub: b.sub, alpha, plate: true, top: Math.max(Math.min(110, view.cssH * 0.18), under) } : null;
 }
 
 /** The rune on its way from the level to its slot in the header, on the text canvas. */

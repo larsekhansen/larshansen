@@ -21,7 +21,7 @@ import type { Boss } from "../levels/types";
 // to where it was parked, the hits it has taken kept. A round that ends with no hit says so ("miss1",
 // "miss2", "miss3" by round: the page shows that round's hint): stuck or turned with no hit, run into
 // him, or ten seconds of nothing. After running into him or the ten seconds, it backs off to the far
-// end of its stretch, rests five seconds, and comes again from there; not while he leans on it.
+// end of its stretch, rests five seconds, and comes again from there, but not while he leans on it.
 
 export interface PloughDef {
   /** The street (world y), and where it waits parked (its centre x). */
@@ -200,14 +200,16 @@ function stepPloughPhase(p: Plough, step: number, him: Body): string | null {
       return null;
     }
     case "rest": {
-      // It does not set off with him leaning on it: it waits until he steps clear, and says how to beat it now and then.
+      // It does not set off with him leaning on it: it waits until he steps clear, and every ten
+      // seconds says again how to beat it.
+      if (age < PLOUGH_STEPS.rest) return null;
       const b = ploughBox(p);
       const against = him.x + PLAYER.w > b.x - 2 && him.x < b.x + b.w + 2 && him.y + PLAYER.h > b.y + 2;
-      if (age >= PLOUGH_STEPS.rest && !against) {
+      if (!against) {
         to(p, "drive", step);
         return null;
       }
-      if (against && ++p.stale >= PLOUGH_STEPS.stalemate) {
+      if (++p.stale >= PLOUGH_STEPS.stalemate) {
         p.stale = 0;
         return `miss${p.hits + 1}`;
       }

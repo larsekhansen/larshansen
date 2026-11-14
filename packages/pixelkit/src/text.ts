@@ -100,8 +100,8 @@ export function bubble(x: number, y: number, text: string, align: "center" | "le
  * The place name banner near the top of the screen. With `plate` it stands on a dark rounded plate, so
  * it reads over any sky, bright snow or banded sunset alike (the viking game's banner).
  */
-export function drawBanner(b: { title: string; sub: string; alpha: number; plate?: boolean }) {
-  const top = Math.min(110, view.cssH * 0.18);
+export function drawBanner(b: { title: string; sub: string; alpha: number; plate?: boolean; top?: number }) {
+  const top = b.top ?? Math.min(110, view.cssH * 0.18);
   if (b.plate) return drawPlatedBanner(b, top);
   u.globalAlpha = b.alpha;
   u.fillStyle = "rgba(10, 14, 30, 0.45)";
@@ -233,7 +233,7 @@ export interface Overlay {
   hint: { x: number; y: number; text: string } | null;
   /** Lines in speech bubbles stacked upwards, the first line on top. Shown instead of the hint. */
   bubble: { x: number; y: number; lines: string[]; align?: "left" } | null;
-  banner: { title: string; sub: string; alpha: number; plate?: boolean } | null;
+  banner: { title: string; sub: string; alpha: number; plate?: boolean; top?: number } | null;
   highlight: { x: number; bottom: number; w: number; h: number; sign: string } | null;
   /** Where the player is walking to after a click on the ground. */
   marker: { x: number; y: number } | null;

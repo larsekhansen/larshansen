@@ -528,7 +528,7 @@ export const AKERSHUS: LevelDef = {
     },
     {
       label: { nb: "Saluttbatteriet", en: "The saluting battery" },
-      lines: { nb: ["Tre kanoner på rad, og den ene skyter deg i den neste.", "Ikke len deg bakover."], en: ["Three cannons in a row, each firing you into the next.", "Do not lean back."] }
+      lines: { nb: ["Tre kanoner på rad, hver skyter deg inn i den neste.", "Ikke len deg bakover."], en: ["Three cannons in a row, each firing you into the next.", "Do not lean back."] }
     },
     {
       label: { nb: "Tårnet", en: "The keep" },
