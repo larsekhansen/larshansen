@@ -1,6 +1,7 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
-import { R, mix } from "@larshansen/pixelkit/paint";
+import { column } from "@larshansen/pixelkit/backdrop";
+import { R, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, DOORWAY, FACADE, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, FOOD, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
@@ -159,11 +160,13 @@ function fence() {
 
 /** The viaduct under the line: concrete piers every three tiles, the far city seen between them. */
 function viaduct() {
+  // Its piers go down into the water out of sight, however tall the screen.
+  const h = 16 * TILE - LINE_Y - 11 + 1200;
   for (let x = 2 * TILE; x < KART_MAP[0].length * TILE; x += 3 * TILE) {
     if (x > 8 * TILE && x < 18 * TILE) continue;
-    R(x, LINE_Y + 11, 8, 16 * TILE - LINE_Y - 11, FACADE.marbleWall);
-    R(x, LINE_Y + 11, 2, 16 * TILE - LINE_Y - 11, WHITE);
-    R(x + 6, LINE_Y + 11, 2, 16 * TILE - LINE_Y - 11, FACADE.marbleSeam);
+    R(x, LINE_Y + 11, 8, h, FACADE.marbleWall);
+    R(x, LINE_Y + 11, 2, h, WHITE);
+    R(x + 6, LINE_Y + 11, 2, h, FACADE.marbleSeam);
   }
 }
 
@@ -204,7 +207,11 @@ export function kartDef(progress: Progress): LevelDef {
     ],
     art: {
       far: (v) => drawOsloHills(v.sky, LINE_Y + 2 * TILE),
-      mid: (v) => drawFjord(v.t, LINE_Y + 2 * TILE),
+      mid(v) {
+        drawFjord(v.t, LINE_Y + 2 * TILE);
+        // The fjord goes on down under the viaduct, however tall the screen.
+        for (let x = 0; x < view.w; x++) column(x, LINE_Y + 2 * TILE + 8, LINE_Y + 2 * TILE + 1200, PALETTE.water);
+      },
       back(v) {
         const home = v.doors.get("home");
         if (home) {

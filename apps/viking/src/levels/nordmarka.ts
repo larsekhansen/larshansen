@@ -7,7 +7,7 @@ import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import type { EnemyDef } from "../game/enemies";
+import type { Enemy, EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { enemyEyes } from "../render/pickups";
 import { tbaneDoor } from "../render/furniture";
@@ -144,6 +144,33 @@ export const ENEMIES: EnemyDef[] = [
 ];
 
 
+
+// --- The forest's own creatures: the bat and the anthill (drawn here, as no other level has them) -----------
+
+function bat(e: Enemy, t: number) {
+  const x = Math.round(e.x);
+  const y = Math.round(e.y) - 3;
+  const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
+  R(x - 1, y - 2, 3, 4, CREATURE.bat);
+  R(x - 1, y - 3, 1, 1, CREATURE.bat);
+  R(x + 1, y - 3, 1, 1, CREATURE.bat);
+  R(x - 6, y - 1 - flap * 2, 5, 2, CREATURE.bat);
+  R(x + 2, y - 1 - flap * 2, 5, 2, CREATURE.bat);
+  R(x - 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
+  R(x + 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
+}
+
+function anthill(e: Enemy, t: number) {
+  const x = Math.round(e.x - 7);
+  const y = Math.round(e.y);
+  // A heap of needles, alive: ants running over it.
+  for (let k = 0; k < 8; k++) R(x + 7 - k, y - 8 + k, 1 + k * 2, 1, k % 2 ? CREATURE.hedgehog : mix(CREATURE.hedgehog, INK, 0.2));
+  if (view.reduced) return;
+  for (let i = 0; i < 4; i++) {
+    const k = ((t * 0.3 + i * 7) % 16) / 16;
+    R(x + 2 + Math.round(k * 10), y - 2 - Math.round(Math.sin(k * Math.PI) * 6), 1, 1, INK);
+  }
+}
 
 // --- The dark ----------------------------------------------------------------------------------------------------
 /** How dark it is along the level before any light: open by the lake, the marsh and at Ullevålseter, darkest before the clearing. */
@@ -445,7 +472,8 @@ function dawnShaft(v: View) {
   if (!d || !t) return;
   const g = ctx();
   g.globalCompositeOperation = "lighter";
-  const top = view.camY;
+  // It comes down through the canopy, not out of the top of the screen, however tall the screen is.
+  const top = Math.max(view.camY, 0);
   const stuck = t.phase === "stuck";
   const pulse = stuck ? (view.reduced ? 1 : 0.5 + 0.5 * Math.sin(v.t * 0.18)) : 0;
   for (let x = d[0]; x < d[1]; x++) {
@@ -475,7 +503,7 @@ function sunrise(v: View) {
   if (k <= 0) return;
   const g = ctx();
   g.globalCompositeOperation = "lighter";
-  const top = view.camY;
+  const top = Math.max(view.camY, 0);
   for (let s = 0; s < 5; s++) {
     const x0 = (198 + s * 6.5) * TILE;
     for (let y = top; y < G * TILE; y += 2) {
@@ -815,6 +843,13 @@ export const NORDMARKA: LevelDef = {
     },
     lights: (v) => lights(v),
     overDark: (v) => overDark(v),
+    enemy(e, v) {
+      if (!e.alive) return false;
+      if (e.def.look === "bat") bat(e, v.t);
+      else if (e.def.look === "anthill") anthill(e, v.t);
+      else return false;
+      return true;
+    },
     troll: (t, v) => troll(t, v),
     flourish: (age) => flourish(age)
   }

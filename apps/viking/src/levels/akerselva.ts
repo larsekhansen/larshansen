@@ -2,13 +2,12 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { CREATURE, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import type { EnemyDef } from "../game/enemies";
+import { leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { drawSalmon } from "../render/pickups";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -217,6 +216,57 @@ export const ENEMIES: EnemyDef[] = [
 ];
 
 export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
+
+// --- The river's own creatures: the salmon and the duck (drawn here, as no other level has them) -------------
+
+/** Two frames of walking, by its place. */
+const stride = (e: Enemy) => (view.reduced ? 0 : Math.floor(e.x / 3) % 2);
+
+function duck(e: Enemy) {
+  const x = Math.round(e.x - 5);
+  const y = Math.round(e.y);
+  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 10 - dx);
+  // A mallard waddling: brown body, a green head bobbing, a yellow bill, orange feet.
+  R(x + 1, y - 5, 8, 4, CREATURE.duck);
+  R(at(0), y - 4, 2, 2, mix(CREATURE.duck, INK, 0.3));
+  R(x + 2, y - 4, 4, 1, mix(CREATURE.duck, WHITE, 0.25));
+  const bob = stride(e);
+  R(at(7), y - 8 + bob, 3, 3, CREATURE.duckHead);
+  R(at(9) + (e.dir > 0 ? 1 : -1), y - 7 + bob, 2, 1, CREATURE.duckBill);
+  R(at(8), y - 7 + bob, 1, 1, INK);
+  R(at(3) + bob, y - 1, 2, 1, CREATURE.beak);
+  R(at(6) - bob, y - 1, 2, 1, CREATURE.beak);
+}
+
+const SALMON = ["..bb..", ".bbbb.", ".bebs.", "bbbbss", "bbbsss", "bbssss", ".bbss.", ".bbss.", "..bs..", "..bb..", ".b..b.", "bb..bb"];
+
+/**
+ * A salmon leaping: nose up on the way out of the water, nose down on the way back, a dark back, a
+ * pale side, the tail fin spread. `water`: the y of the surface, below which nothing of it shows.
+ */
+function drawSalmon(e: Enemy, t: number, water = Infinity) {
+  const l = leap(e, t);
+  const x = Math.round(e.x - 3);
+  const y = Math.round(e.y) - 12;
+  if (l.ripple && !view.reduced && Math.floor(t / 6) % 2) {
+    R(Math.round(e.x - 5), Math.min(water, Math.round(e.y)) - 1, 10, 1, P.foam);
+    R(Math.round(e.x - 3), Math.min(water, Math.round(e.y)) - 2, 6, 1, mix(P.foam, P.water, 0.4));
+  }
+  if (l.up <= 0) return;
+  // Past the top of its leap it turns over.
+  const falling = leap(e, t + 1).up < l.up;
+  const colors: Record<string, string> = { b: mix(CREATURE.salmon, INK, 0.12), s: mix(CREATURE.salmon, WHITE, 0.45), e: INK };
+  SALMON.forEach((row, r) =>
+    [...row].forEach((ch, c) => {
+      if (ch === ".") return;
+      const yy = y + (falling ? 11 - r : r);
+      if (yy >= water) return;
+      R(x + (e.dir > 0 ? c : 5 - c), yy, 1, 1, ch === "b" && (r < 2 || c === 0) ? mix(CREATURE.salmon, INK, 0.35) : colors[ch]);
+    })
+  );
+  // The splash it leaves where it broke the surface.
+  if (water < Infinity && l.up < 14 && !view.reduced) for (const dx of [-5, 5]) R(Math.round(e.x) + dx, water - 2 - (l.up % 3), 2, 2, P.foam);
+}
 
 // --- Art ------------------------------------------------------------------------------------------------
 const P = PALETTE;
@@ -978,8 +1028,10 @@ export const AKERSELVA: LevelDef = {
       else if (carrierShown(d, v.t)) drawLog(at, (i < FIRST_BUCKET ? T1 : POOL) * TILE);
     },
     enemy(e, v) {
-      if (e.def.look !== "salmon" || !e.alive) return false;
-      drawSalmon(e, v.t, waterTop(e.x));
+      if (!e.alive) return false;
+      if (e.def.look === "salmon") drawSalmon(e, v.t, waterTop(e.x));
+      else if (e.def.look === "duck") duck(e);
+      else return false;
       return true;
     },
     flourish: (age) => flourish(age)

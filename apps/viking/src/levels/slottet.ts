@@ -660,24 +660,38 @@ function barriers(c0: number, c1: number) {
   }
 }
 
-/** Behind the pond and the digs the street goes on: a strip of its far side, where the parade walks; the digs are dark holes in front of it. */
+/**
+ * Behind the pond and the digs the street goes on: a strip of its far side, where the parade walks.
+ * Behind a dig only a thin far edge of it shows, dim, with the hole's shadow under it: the dig is a
+ * dark hole with broken edges, not a slab to step on.
+ */
 function farKerbs() {
   for (const [c0, c1] of [[52, 58], DIG1, DIG2] as const) {
     const x = c0 * TILE;
     const w = (c1 - c0 + 1) * TILE;
     const y = streetY(x);
-    if (c0 !== 52) {
-      // The hole: earth in bands, a pipe across, darker the deeper it goes.
-      for (let k = 0; k < 9; k++) R(x, y + 4 + k * 8, w, 8, mix(P.earth, INK, 0.25 + k * 0.08));
-      for (let k = 0; k < w; k += 5) R(x + k, y + 6 + ((k * 7) % 11), 2, 1, mix(P.earth, WHITE, 0.15));
-      R(x, y + 26, w, 4, P.ironDark);
-      R(x, y + 26, w, 1, P.iron);
-      R(x + 3, y + 4, 2, 8, METAL.lampPost);
-      R(x + w - 5, y + 4, 2, 8, METAL.lampPost);
+    if (c0 === 52) {
+      R(x, y - 3, w, 3, GROUND.paving);
+      R(x, y - 3, w, 1, mix(GROUND.paving, WHITE, 0.4));
+      R(x, y, w, 4, GROUND.pavingDot);
+      continue;
     }
-    R(x, y - 3, w, 3, GROUND.paving);
-    R(x, y - 3, w, 1, mix(GROUND.paving, WHITE, 0.4));
-    R(x, y, w, 4, GROUND.pavingDot);
+    // The hole: its back wall of earth in bands, black under the far edge, darker the deeper it goes.
+    R(x, y - 2, w, 6, mix(P.earth, INK, 0.8));
+    for (let k = 0; k < 9; k++) R(x, y + 4 + k * 8, w, 8, mix(P.earth, INK, 0.45 + k * 0.06));
+    for (let k = 0; k < w; k += 5) R(x + k, y + 8 + ((k * 7) % 11), 2, 1, mix(P.earth, INK, 0.3));
+    // The water main it was dug for, and the props holding the far side up.
+    R(x, y + 26, w, 4, mix(P.ironDark, INK, 0.3));
+    R(x, y + 26, w, 1, P.ironDark);
+    for (let px = x + 10; px < x + w - 6; px += 30) R(px, y + 2, 2, 24, mix(P.woodDark, INK, 0.35));
+    // The far edge of the street, beyond the hole: thin, dim, broken where the digger took bites from it.
+    for (let k = 0; k < w; k++) {
+      const bite = (k * 7) % 23 < 3;
+      R(x + k, y - 4 + (bite ? 1 : 0), 1, bite ? 1 : 2, mix(GROUND.paving, INK, 0.38));
+    }
+    // Broken asphalt where the street stops, at either side, cut ragged.
+    for (const [ex, dir] of [[x, 1], [x + w - 1, -1]] as const)
+      for (let k = 0; k < 6; k++) R(ex + dir * k, y + Math.floor(k * 1.5), 1, Math.max(1, 5 - k), mix(GROUND.pavingDot, INK, 0.3));
   }
 }
 

@@ -273,7 +273,7 @@ export function ploughBoss(def: PloughDef): Boss<Plough> {
     blocks: (p) => (awake(p) && !p.moved ? ploughBox(p) : null),
     reset: resetPlough,
     awake,
-    top: (p) => ({ x: p.x, y: p.def.floor - PLOUGH.h }),
+    top: (p) => ({ x: p.x, y: p.def.floor - PLOUGH.h, w: PLOUGH.w }),
     beaten: (p) => p.phase === "beaten"
   };
 }

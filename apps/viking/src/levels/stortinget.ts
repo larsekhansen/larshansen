@@ -442,8 +442,8 @@ function platformWall(c0: number, c1: number, floor: number, seed: number) {
   const x1 = (c1 + 1) * TILE;
   const top = floor - 84;
   tiles(x0, x1, top, floor - 6, floor - 52);
-  // The name in the band, every so often: white blocks, as a word seen from too close.
-  for (let x = x0 + 40; x + 60 < x1; x += 180) for (let k = 0; k < 10; k++) R(x + k * 6, floor - 51, 4, 4, WHITE);
+  // The station's name in the band, every so often, in white.
+  for (let x = x0 + 40; x + 60 < x1; x += 180) stationName(x, floor - 51);
   // Posters in steel frames.
   for (let x = x0 + 110; x + 30 < x1; x += 160) {
     const k = (Math.floor(x / 160) + seed) % 3;
@@ -457,9 +457,36 @@ function platformWall(c0: number, c1: number, floor: number, seed: number) {
   // The track, seen past the platform's edge: a dark gap with a rail in it.
   R(x0, floor - 6, x1 - x0, 6, METRO.bed);
   R(x0, floor - 3, x1 - x0, 1, METRO.rail);
-  // The ceiling slab's lamps, where it has one.
+  // The ceiling slab's lamps, where it has one, and the cable tray along under it on its brackets.
   const ceiling = ceilingAt(c0);
-  if (ceiling > 0) for (let x = x0 + 8; x < x1 - 14; x += 48) tube(x, ceiling + 2, 14);
+  if (ceiling > 0) {
+    for (let x = x0 + 8; x < x1 - 14; x += 48) tube(x, ceiling + 2, 14);
+    R(x0, ceiling + 9, x1 - x0, 2, METRO.steelDark);
+    R(x0, ceiling + 8, x1 - x0, 1, METRO.trainStripe);
+    R(x0, ceiling + 7, x1 - x0, 1, mix(METRO.steelDark, INK, 0.3));
+    for (let x = x0 + 4; x < x1; x += 32) R(x, ceiling, 1, 11, METRO.steelDark);
+  }
+}
+
+/** The letters of the station's name, three or four pixels wide and five high. */
+const GLYPHS: Record<string, string[]> = {
+  S: ["###", "#..", "###", "..#", "###"],
+  T: ["###", ".#.", ".#.", ".#.", ".#."],
+  O: ["###", "#.#", "#.#", "#.#", "###"],
+  R: ["##.", "#.#", "##.", "#.#", "#.#"],
+  I: ["#", "#", "#", "#", "#"],
+  N: ["#..#", "##.#", "#.##", "#..#", "#..#"],
+  G: ["###", "#..", "#.#", "#.#", "###"],
+  E: ["###", "#..", "##.", "#..", "###"]
+};
+/** STORTINGET, in white on the blue band, as on every platform's wall. */
+function stationName(x: number, y: number) {
+  let at = x;
+  for (const ch of "STORTINGET") {
+    const g = GLYPHS[ch];
+    g.forEach((row, ry) => [...row].forEach((on, rx) => on === "#" && R(at + rx, y + ry, 1, 1, WHITE)));
+    at += g[0].length + 1;
+  }
 }
 const PLANT_GREEN = PALETTE.grassDark;
 
@@ -647,7 +674,35 @@ function trenchFloor(c: number, x: number, y: number, t: number) {
 }
 
 /** Concrete: walls, ceilings, the mass under the escalators; a lamp line along a ceiling's underside. */
+/** The bedrock over the halls: Oslo's shale in slanting layers of uneven thickness, offset where a fault runs through it. */
+const SHALE = [mix(METRO.concrete, METRO.rock, 0.5), mix(METRO.concrete, METRO.rock, 0.42), mix(METRO.concrete, METRO.rock, 0.6), mix(METRO.concrete, METRO.rock, 0.47)];
+const SHALE_LINE = mix(METRO.concreteDark, METRO.rock, 0.5);
+/** Where a drill hole from the blasting is left in the rock, as a groove: one now and then, by column. */
+const drilled = (c: number) => (c * 7) % 23 === 3;
+
+/** A tile of rock: the layers slant across it, a world-wide pattern, never the same tile twice. */
+function shaleTile(c: number, x: number, y: number) {
+  for (let yy = 0; yy < TILE; yy++)
+    for (let xx = 0; xx < TILE; xx += 4) {
+      const wx = x + xx;
+      const fault = Math.floor(wx / 176);
+      const u = y + yy + wx * 0.22 + hash(fault, 3) * 9 + 400;
+      const layer = Math.floor(u / 9);
+      // Some layers are split by a dark parting, most run into the next.
+      const edge = u % 9 < 1 && hash(layer, 5) < 0.45;
+      R(wx, y + yy, 4, 1, edge ? SHALE_LINE : SHALE[Math.floor(hash(layer, fault + 1) * SHALE.length)]);
+    }
+  if (drilled(c)) {
+    // The half of a blast hole, a groove down the face.
+    R(x + 6, y, 1, TILE, mix(SHALE[2], METRO.vault, 0.3));
+    R(x + 7, y, 1, TILE, mix(SHALE[1], WHITE, 0.08));
+  }
+}
+
 function concreteTile(c: number, r: number, x: number, y: number, m: TileMap) {
+  // Over the halls and the tunnels, away from their faces, it is the rock itself.
+  const face = !m.isSolid(c, r + 1) || !m.isSolid(c - 1, r) || !m.isSolid(c + 1, r) || !m.isSolid(c, r + 2);
+  if (!face && r < P) return shaleTile(c, x, y);
   R(x, y, TILE, TILE, METRO.concrete);
   // Formwork: the boards' lines, and a tie hole now and then.
   R(x, y + 7, TILE, 1, METRO.concreteDark);
@@ -836,6 +891,7 @@ export const STORTINGET: LevelDef = {
   hazards: HAZARDS,
   surfaceAt,
   haze: [0, 0, 0],
+  underground: true,
   flourish: 120,
   floor: (x) => {
     const c = Math.max(0, Math.min(COLS - 1, Math.floor(x / TILE)));

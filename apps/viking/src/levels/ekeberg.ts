@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { GLASS, INK, LAMP, METAL, PAINT, PALETTE, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
+import { GLASS, INK, LAMP, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
@@ -258,10 +258,22 @@ function city(v: View) {
       x += w + 1;
     }
   }
-  // The fjord down to the bottom, its glints, and Hovedøya.
+  // The fjord down to the bottom, deeper blue further out, its glints, and Hovedøya.
   box(0, fy(156), view.w, view.h + 200, HILL.fjord);
+  const deep = mix(HILL.fjord, INK, 0.2);
+  for (let x = 0; x < view.w; x++) box(x, fy(178) + Math.round(2 * Math.sin(layerWorldX(x, f) * 0.05)), 1, view.h + 200, deep);
   for (let i = 0; i < 28; i++) box(((i * 53 + Math.floor(v.t / 30)) % (view.w + 20)) - 10, fy(160 + (i % 7) * 5), 4 + (i % 3), 1, HILL.fjordLight);
   for (let k = -16; k <= 16; k++) box(L(150) + k, fy(170) - Math.round(4 * (1 - (k / 16) ** 2)), 1, 5, mix(HILL.oak, HILL.fjord, 0.4));
+  // The boat out to Nesodden with its wake, a sailing boat, and the red buoy off the quay.
+  const ferry = L(-70) + (view.reduced ? 0 : Math.floor(v.t / 40) % 60);
+  box(ferry, fy(184) - 3, 9, 3, WHITE);
+  box(ferry + 2, fy(184) - 5, 4, 2, mix(WHITE, HILL.city, 0.3));
+  lit(ferry + 3, fy(184) - 2, 4, 1);
+  for (let k = 1; k < 10; k++) box(ferry - k * 2, fy(184) - 1 + (k % 2), 2, 1, mix(HILL.fjordLight, HILL.fjord, k / 10));
+  box(L(96), fy(192) - 1, 6, 2, mix(WHITE, HILL.fjord, 0.2));
+  for (let k = 0; k < 6; k++) box(L(98), fy(192) - 2 - k, Math.max(1, 3 - Math.floor(k / 2)), 1, mix(WHITE, HILL.fjord, 0.1));
+  box(L(46), fy(166) - 2, 2, 2, PALETTE.sail);
+  box(L(46), fy(166) - 3, 2, 1, mix(PALETTE.sail, WHITE, 0.4));
   // The places: the palace on its rise, Rådhuset's two towers, the fortress on the water, Stortinget, the Opera's white wedge, the river's valley, Vålerenga's church.
   box(L(-84), fy(112), 13, 6, mix(PALETTE.sand, HILL.city, 0.55));
   box(L(-53), fy(100), 4, 18, mix(PALETTE.sailStripe, HILL.city, 0.55));
@@ -472,12 +484,47 @@ function quarry() {
     { y: G1 * TILE + 22, h: 26, inset: 10 },
     { y: G1 * TILE + 48, h: 48, inset: 22 }
   ];
-  for (const bn of benches) {
+  // A small number from a place, so the face is cut the same way on every visit.
+  const n = (a: number, b: number) => {
+    const v = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+    return v - Math.floor(v);
+  };
+  benches.forEach((bn, b) => {
     R(x0, bn.y, x1 - x0, bn.h, HILL.quarry);
+    // Where a slab came away, the face is fresher, and paler.
+    for (const [dx, w] of [[30 + b * 47, 34], [150 - b * 23, 22]] as const) R(x0 + dx, bn.y + 3, w, bn.h - 6, mix(HILL.quarry, HILL.quarryLight, 0.45));
     R(x0 + bn.inset, bn.y, x1 - x0 - bn.inset * 2, 2, HILL.quarryLight);
-    for (let x = x0 + 5 + bn.inset; x < x1 - bn.inset; x += 19) R(x, bn.y + 3, 1, bn.h - 5, HILL.quarryDark);
-    for (let x = x0 + 13; x < x1; x += 31) R(x, bn.y + Math.floor(bn.h / 2), 7, 1, HILL.quarryDark);
+    // The drill holes the blasters left: in twos and threes, not evenly, some only half down.
+    for (let x = x0 + 4 + bn.inset, k = 0; x < x1 - bn.inset - 2; k++) {
+      const len = n(b, k) < 0.3 ? Math.floor((bn.h - 5) / 2) : bn.h - 5;
+      R(x, bn.y + 3, 1, len, HILL.quarryDark);
+      R(x + 1, bn.y + 3, 1, len, mix(HILL.quarry, HILL.quarryLight, 0.6));
+      x += n(k, b) < 0.5 ? 5 : 13 + Math.floor(n(b + 3, k) * 18);
+    }
+    // A crack running down across it, and the rust stain from water that comes down it.
+    let cx = x0 + 60 + b * 70;
+    for (let y = bn.y + 2; y < bn.y + bn.h - 1; y++) {
+      cx += n(y, b) < 0.5 ? 1 : 0;
+      R(cx, y, 1, 1, mix(HILL.quarryDark, INK, 0.2));
+      if (y > bn.y + 4) R(cx + 1, y, 2, 1, mix(HILL.quarry, HILL.bronze, 0.35));
+    }
     R(x0, bn.y + bn.h - 1, x1 - x0, 1, HILL.quarryDark);
+  });
+  // A birch that has taken root on the second bench, and grass along the benches' tops.
+  const bx = x0 + 196;
+  const by = benches[1].y;
+  R(bx, by - 26, 2, 26, PLANTS.birchBark);
+  for (let y = by - 24; y < by; y += 5) R(bx, y, 1, 1, PLANTS.birchMark);
+  for (let yy = -7; yy <= 7; yy++) {
+    const half = Math.floor(7 * Math.sqrt(1 - (yy * yy) / 49));
+    R(bx + 1 - half, by - 30 + yy, half * 2, 1, yy < -2 ? PLANTS.birchShine : PLANTS.birchLeaves);
+  }
+  for (const bn of benches.slice(1)) for (let x = x0 + bn.inset; x < x1 - bn.inset; x += 3) if (n(x, bn.y) < 0.35) R(x, bn.y - 1, 1, 2, HILL.grass);
+  // Blocks that fell, at the foot of the lowest face.
+  for (const [dx, w, h] of [[18, 9, 6], [27, 6, 4], [212, 11, 7], [224, 5, 3]] as const) {
+    const fy = benches[2].y + benches[2].h;
+    R(x0 + dx, fy - h, w, h, HILL.graniteDark);
+    R(x0 + dx, fy - h, w, 1, HILL.granite);
   }
 }
 
@@ -724,11 +771,12 @@ const VIEW_T = { t: 0 };
  */
 function tram(at: { x: number; y: number }, t: number) {
   const { x, y } = at;
+  // The top of the rail under a column of it: the street, the trestle's slope, the stop at the top.
   const ground = (wx: number) => {
     const c = Math.floor(wx / TILE);
-    if (c >= 45 && c <= 48) return G1 * TILE + 2;
-    if (c >= 18 && c < 45) return Math.round(G0 * TILE + 2 + ((wx - (18 * TILE + TRAM_W / 2)) / (26 * TILE)) * (G1 - G0) * TILE);
-    return surfaceRow(Math.max(0, c)) * TILE + 2;
+    if (c >= 45 && c <= 48) return G1 * TILE;
+    if (c >= 18 && c < 45) return Math.max(G1 * TILE, Math.min(G0 * TILE, Math.round(G0 * TILE + ((wx - (18 * TILE + TRAM_W / 2)) / (26 * TILE)) * (G1 - G0) * TILE)));
+    return surfaceRow(Math.max(0, c)) * TILE;
   };
   for (let dx = 0; dx < TRAM_W; dx++) {
     const wx = x + dx;
@@ -743,10 +791,11 @@ function tram(at: { x: number; y: number }, t: number) {
     col(2, 22, gap ? TRAM.skirt : TRAM.body);
     if (!gap && dx > 2 && dx < TRAM_W - 3) col(6, 8, dx % 8 < 6 ? LAMP : TRAM.body);
     col(20, 4, TRAM.skirt);
-    // The bogies, reaching down to the track wherever it is under them.
+    // The bogies, reaching down to the rail wherever it is under them, and their wheels on it.
     if (dx % 32 > 4 && dx % 32 < 12) {
-      const g = ground(wx);
+      const g = Math.min(ground(wx), clip);
       if (g > y + 24) col(24, g - y - 24, mix(TRAM.skirt, INK, 0.4));
+      if (g >= y + 27) col(g - y - 3, 3, dx % 32 === 8 ? METAL.pipe : INK);
     }
   }
   light(x + 3, y + 6, TRAM_W - 6, 8, "soft");

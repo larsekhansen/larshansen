@@ -319,6 +319,52 @@ function windows(c0: number, c1: number, r0: number, r1: number, every = 2) {
     }
 }
 
+/**
+ * A relief in pale granite set into the brick, as the town hall has on its walls: a row of figures at
+ * work, cut shallow, their lit edges on the left.
+ */
+function relief(x: number, y: number, w: number, h: number) {
+  const stone = MASONRY.worn;
+  const cut = mix(stone, INK, 0.22);
+  R(x - 2, y - 2, w + 4, h + 4, mix(BRICK.red, INK, 0.35));
+  R(x - 1, y - 1, w + 2, h + 2, MASONRY.lintel);
+  R(x, y, w, h, stone);
+  for (let fx = x + 3, k = 0; fx + 9 < x + w; fx += 13, k++) {
+    // Each figure: a head, a body, arms raised or down by turn, something held.
+    R(fx + 3, y + 2, 3, 3, cut);
+    R(fx + 2, y + 5, 5, h - 7, cut);
+    R(fx + 2, y + 5, 1, h - 7, mix(stone, WHITE, 0.35));
+    const up = k % 3 === 1;
+    R(fx, up ? y + 2 : y + 6, 2, 4, cut);
+    R(fx + 7, up ? y + 2 : y + 6, 2, 4, cut);
+    if (k % 2 === 0) R(fx + 9, y + 4, 2, h - 6, cut);
+  }
+  R(x, y + h - 2, w, 2, mix(stone, INK, 0.12));
+}
+
+/** The towers' faces between the windows: lighter brick down their corners, and the reliefs over the passage and the middle building. */
+function townHallFaces() {
+  for (const [x, w, c] of [
+    [161 * TILE, 3, mix(BRICK.red, WHITE, 0.18)],
+    [173 * TILE - 3, 3, mix(BRICK.red, INK, 0.25)],
+    [167 * TILE - 2, 4, mix(BRICK.red, INK, 0.12)]
+  ] as const) {
+    R(x, 14 * TILE + 2, w, (ROOF_ROW - 2) * TILE - 14 * TILE - 2, c);
+    R(x, ROOF_ROW * TILE, w, G * TILE - ROOF_ROW * TILE, c);
+  }
+  relief(162 * TILE + 4, 28 * TILE - 6, 10 * TILE - 8, 22);
+  relief(175 * TILE + 6, 33 * TILE + 4, 19 * TILE - 12, 22);
+  // Under the west tower's roof: a cornice of pale stone, and a row of small square windows, lit at night.
+  const top = 14 * TILE;
+  R(161 * TILE, top + 2, 12 * TILE, 3, MASONRY.worn);
+  R(161 * TILE, top + 5, 12 * TILE, 1, mix(BRICK.red, INK, 0.4));
+  for (let x = 162 * TILE + 6; x < 172 * TILE; x += 12) {
+    R(x - 1, top + 8, 7, 7, MASONRY.worn);
+    R(x, top + 9, 5, 5, GLASS.farWindow);
+    light(x, top + 9, 5, 5);
+  }
+}
+
 /** The clock tower over its block: brick drawn behind him, in courses, up to the parapet. */
 function upperTower() {
   const x0 = 197 * TILE;
@@ -524,6 +570,7 @@ export const RADHUSET: LevelDef = {
       tbaneDoor(v.doors.get("tbane"));
     },
     front(v: View) {
+      townHallFaces();
       windows(162, 171, 16, 27, 3);
       windows(162, 171, 34, 45, 3);
       windows(174, 195, 35, 45, 3);

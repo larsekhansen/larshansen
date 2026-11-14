@@ -184,8 +184,8 @@ export interface Boss<S = unknown> {
   reset(s: S, t: number): void;
   /** In its fight: woken, and not back asleep or parked. */
   awake(s: S): boolean;
-  /** The top of it, in the middle (world x, y): where its words are shown. */
-  top(s: S): { x: number; y: number };
+  /** The top of it, in the middle (world x, y), and how wide it is: its words are shown beside it. */
+  top(s: S): { x: number; y: number; w?: number };
   /** Beaten for good: the rune shows. */
   beaten(s: S): boolean;
 }
@@ -248,6 +248,8 @@ export interface LevelDef {
   sheepRange?: number;
   /** How much the far, mid and near layers fade towards the horizon (0.35, 0.3, 0.2 when not said): under the ground, nothing does. */
   haze?: [number, number, number];
+  /** Under the ground, with no sky: its far layers fill the whole view, however tall, and are not moved down on an upright screen. */
+  underground?: boolean;
   art: Art;
 }
 
