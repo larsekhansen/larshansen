@@ -10,8 +10,8 @@ import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
-import { R, target, view } from "@larshansen/pixelkit/paint";
-import { COIN, DUST, FEATHER, FOOD, INK, METAL, PALETTE, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
+import { R, mix, target, view } from "@larshansen/pixelkit/paint";
+import { COIN, DUST, FEATHER, FOOD, INK, METAL, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -55,12 +55,13 @@ import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
+import { autopilot, type Move } from "./game/bot";
 import { strings } from "./game/i18n";
 import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
-import { kartDef } from "./levels/kart";
+import { FENCE_COL, kartDef } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawRune, drawSheep } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
@@ -100,6 +101,14 @@ const store = {
 
 const params = new URLSearchParams(location.search);
 const debug = params.has("debug");
+// Under ?debug an error shows on the help line, so a headless screenshot says what went wrong.
+if (debug)
+  for (const ev of ["error", "unhandledrejection"] as const)
+    window.addEventListener(ev, (e) => {
+      const reason = e instanceof ErrorEvent ? e.message : String((e as PromiseRejectionEvent).reason);
+      help.textContent = `Error: ${reason}`;
+      help.hidden = false;
+    });
 /** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
 const harness = readHarness(params);
 const now = () => harness?.now ?? new Date();
@@ -134,7 +143,7 @@ readFeather();
 /** The gold helmet from the old game's full run of ten runes is kept by those who earned it. */
 const crowned = store.get("viking.crowned") === "1";
 /** Lives and the purse of skilling go with him from level to level for this visit; a new visit starts with three lives. */
-const session = { lives: LIVES, purse: 0 };
+const session = { lives: debug && params.has("lives") ? Math.max(1, Number(params.get("lives")) || LIVES) : LIVES, purse: 0 };
 
 // ---------------------------------------------------------------------------------------------
 // The scene: the line map or a level, its rules, doors and boards.
@@ -206,7 +215,7 @@ function layoutBoards(s: Scene): Board[] {
   });
   if (s.map) {
     const text = t.building;
-    boards.push({ text, cx: 27 * TILE + 8, y: 6 * TILE, w: boardWidth(text) });
+    boards.push({ text, cx: FENCE_COL * TILE + 8, y: 6 * TILE, w: boardWidth(text) });
   }
   return boards;
 }
@@ -226,6 +235,8 @@ function openScene(id: string, at?: string) {
   const def = id === "kart" ? kartDef(progress) : loadedLevel(id) ?? kartDef(progress);
   readFeather();
   const play = newPlay(def, { feather: abilities.doubleJump, pole: abilities.pole, lives: session.lives, purse: session.purse });
+  // `?debug&hearts=1&lives=1`: start a level with fewer, to look at a hit, a lost life or the game over.
+  if (debug && params.has("hearts")) play.hearts = Math.max(1, Math.min(HEARTS, Number(params.get("hearts")) || HEARTS));
   const doors = buildDoors(doorSpots(def, play), links);
   const signs = leftToRight(play.map.find(MARKS.sign)).map((tile, i) => ({ ...footOf(tile), i }));
   const skies = skyControl(params.get("sky") ?? def.sky, now);
@@ -769,7 +780,9 @@ function play() {
   if (state.goal && held) state.goal = null;
   const { intent: keys, enter } = followGoal(state, b, held ? STILL : intentFrom(input, !!door || bench !== null), door);
   if (enter) return tryEnter(enter);
-  const intent: PlayIntent = { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash") };
+  // The scripted route (under ?debug&auto) is asked every step, held or not, as the tests ask it.
+  const scripted = auto?.(p) ?? null;
+  const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash") };
   const airJumps = b.airJumps;
   const vx = b.vx;
   const ev = stepPlay(p, intent);
@@ -777,7 +790,8 @@ function play() {
   session.purse = p.purse;
   // Dust when he turns at speed, and a streak behind a dash.
   if (b.onGround && Math.abs(vx) > 1.2 && Math.sign(b.vx) !== Math.sign(vx) && !view.reduced) state.sparks.push({ x: b.x + PLAYER.w / 2, y: b.y + PLAYER.h - 1, vx: -vx * 0.2, vy: -0.3, life: 14, color: DUST });
-  if (p.dash && !view.reduced) for (let k = 0; k < 2; k++) state.sparks.push({ x: b.x + PLAYER.w / 2 - p.dash.dir * (4 + k * 3), y: b.y + 4 + k * 5, vx: -p.dash.dir * 0.3, vy: 0, life: 10, color: WHITE });
+  if (p.dash && !view.reduced)
+    for (let k = 0; k < 3; k++) state.sparks.push({ x: b.x + PLAYER.w / 2 - p.dash.dir * (6 + k * 2), y: b.y + 3 + k * 4, vx: -p.dash.dir * 0.4, vy: 0, life: 12, color: k === 1 ? SWEATER : mix(SWEATER, WHITE, 0.45) });
   state.lastEvents = ev;
   if (ev.step.jumped && b.airJumps < airJumps && !view.reduced)
     for (let i = 0; i < 3; i++) state.sparks.push({ x: b.x + PLAYER.w / 2 + (i - 1) * 3, y: b.y + PLAYER.h - 2 + i, vx: (i - 1) * 0.12, vy: 0.02, life: 70 + i * 12, color: abilities.gold ? METAL.gold : FEATHER.vane });
@@ -846,7 +860,9 @@ const look = (): Look => {
 /** The camera follows him, at the same pace on every screen, up and down as well; the header bar covers the top, and only sky is up there. */
 function camera(elapsedMs: number, snap: boolean) {
   const bar = (header.getBoundingClientRect().height * view.dpr) / view.k;
-  const focus = { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2, facing: scene.play.body.facing };
+  const p = scene.play;
+  const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
+  const focus = { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2, facing: p.body.facing, lookUp: look };
   const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom: scene.def.floor?.(focus.x) ?? scene.play.map.height, top: bar }, view, elapsedMs, snap);
   shake.x = state.steps < state.nudge.until ? state.nudge.x : 0;
   shake.y = state.steps < state.nudge.until ? state.nudge.y : 0;
@@ -1065,6 +1081,13 @@ const levelParam = params.get("level");
 const debugLevel = debug && levelParam && BUILT.some((l) => l.id === levelParam) ? levelParam : null;
 if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + MAZE_HASH); // ?level=<n>: the maze at that level
 
+/** `?debug&auto`: the page plays the level's scripted route from the tests, for looking at. */
+let auto: ((p: Play) => PlayIntent | null) | null = null;
+const AUTO: Record<string, () => Promise<Move[]>> = {
+  slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
+  holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE)
+};
+
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
 function still() {
   if (mode !== "scene" || !scene) return;
@@ -1099,6 +1122,9 @@ async function start() {
     first = "kart";
     firstAt = furthest;
   }
+  // The scripted routes for `?debug&auto` are fetched alongside the level, not after it, so a
+  // stepped page has both before it steps.
+  const route = debug && params.has("auto") ? AUTO[first]?.().catch(() => null) ?? null : null;
   if (first !== "kart")
     try {
       await loadLevel(first);
@@ -1106,8 +1132,10 @@ async function start() {
       first = "kart";
       firstAt = furthest;
     }
+  const moves = await route;
   openScene(first, firstAt);
   if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
+  if (moves && !scene.map) auto = autopilot(moves);
 
   // The helmet moment: out of the Opera's door in level 1, or at a station on the map.
   if (from === "oslo" && !view.reduced) {

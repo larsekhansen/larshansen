@@ -98,13 +98,15 @@ const DOWN = b.slope(192, 21, 197, 25, "V");
 /** The jump's first column: the set piece is laid out from here. */
 const J = 192;
 // The hollow under the jump runs at the knoll's height; the landing hill goes down from there.
-b.ground(J + 5, J + 46, 25);
+b.ground(J + 5, J + 48, 25);
 // The hut: its floor, its roof, beside the tower's lift.
 b.fill(J + 15, J + 20, 16, 16, "#");
 b.run(J + 15, J + 21, 14, "-");
-b.ground(J + 67, J + 79, 35);
+b.ground(J + 69, J + 79, 35);
 b.ground(J + 84, COLS - 1, 33);
-const HILL = b.slope(J + 47, 25, J + 67, 35, "V");
+// The landing hill starts two tiles past the lip, with a tile of plain ground between: two slopes
+// meeting at different heights would lift him from the knoll onto the inrun as he walked back up.
+const HILL = b.slope(J + 49, 25, J + 69, 35, "V");
 const RISE = b.slope(J + 79, 35, J + 84, 33, "V");
 b.fill(COLS - 2, COLS - 1, 0, 32, "K");
 
@@ -173,11 +175,11 @@ export function surfaceAt(x: number, y: number): Surface | null {
 }
 
 // --- Things that move -------------------------------------------------------------------------------------
-/** The chairlift over the second gully: two chairs, back and forth, slow at each end. */
+/** The chairlift over the second gully: one chair on its cable, back and forth, slow at each end. */
 const CHAIR_Y = 15 * TILE - 6;
-export const CHAIRS: Travel[] = [0, 520].map((offset) => ({ kind: "travel", from: { x: 139 * TILE, y: CHAIR_Y }, to: { x: 149 * TILE, y: CHAIR_Y }, w: 2 * TILE, period: 1040, offset }));
+export const CHAIRS: Travel[] = [{ kind: "travel", from: { x: 139 * TILE, y: CHAIR_Y }, to: { x: 149 * TILE, y: CHAIR_Y }, w: 2 * TILE, period: 1000 }];
 /** The lift up the tower: from the hollow under the jump to the hut's floor. */
-export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 0.75, wait: 150 };
+export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 0.6, wait: 150 };
 const CARRIERS: CarrierDef[] = [...CHAIRS, LIFT];
 /** Slabs of ice over the third gully: there two and a half seconds, cracking for one, sunk for two and a half; each a little after the one before. */
 export const SLABS: TimedLedge[] = [158, 161, 164, 167].map((c, k) => ({ x: c * TILE, y: 16 * TILE, w: 2 * TILE, on: 150, warn: 60, off: 150, offset: -70 * k }));
@@ -343,7 +345,7 @@ function jump(v: View) {
     }
   }
   // Blue marks on the landing hill, every few metres.
-  for (let c = J + 49; c < J + 67; c += 3) {
+  for (let c = J + 50; c < J + 69; c += 3) {
     const x = c * TILE;
     const y = Math.round(rampHeight([HILL], x) ?? 0);
     R(x, y + 2, 6, 1, ICY.mark);
@@ -457,7 +459,8 @@ function farCity() {
       if (inBlock === 0) continue;
       const h = 3 + ((block * 13 + row) % 6);
       const foot = horizon + 6 + row;
-      const color = mix(FACADE.blocks[(block * 3 + row) % FACADE.blocks.length], LAND.farHills, 0.15);
+      const n = FACADE.blocks.length;
+      const color = mix(FACADE.blocks[(((block * 3 + row) % n) + n) % n], LAND.farHills, 0.15);
       column(x, foot - h, foot, inBlock === w - 1 ? mix(color, INK, 0.15) : color);
       if (inBlock === 2 && (block + row) % 3 === 0) lit(x, foot - h + 2, 1, 1);
     }

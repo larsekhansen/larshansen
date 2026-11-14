@@ -186,3 +186,21 @@ export function playMoves(p: Play, moves: Move[], opts: { max?: number; until?: 
 export const tile = (c: number) => c * TILE;
 export const mid = (c: number) => c * TILE + TILE / 2;
 export { feet, cx };
+
+/** Plays a route a step at a time: the keys for this step, or null once it has run out (for `?debug&auto`). */
+export function autopilot(moves: Move[]) {
+  let m = 0;
+  let mem: Mem = { i: 0, air: false };
+  return (p: Play) => {
+    while (m < moves.length) {
+      const k = moves[m].keys(p, mem);
+      if (k !== "done") {
+        mem.i++;
+        return k;
+      }
+      m++;
+      mem = { i: 0, air: false };
+    }
+    return null;
+  };
+}

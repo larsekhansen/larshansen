@@ -149,6 +149,8 @@ export interface LevelDef {
   flourish?: number;
   /** The lowest world y the view shows around world x, when that is above the bottom of the map (so a street is not all cellar). */
   floor?(x: number): number;
+  /** How far the view looks up while the flourish plays, so it shows (the palace's roof, its flag). */
+  flourishLook?: number;
   /** Where fireworks burst when the rune is taken, if anywhere: world x and y. */
   fireworks?: [number, number][];
   art: Art;

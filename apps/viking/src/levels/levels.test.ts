@@ -6,7 +6,11 @@ import { cannonRide, carrier, cx, feet, jump, leap, mid, on, playMoves, tile, wa
 import { KIND } from "../game/enemies";
 import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay } from "../game/play";
 import { fresh } from "../game/progress";
-import { HOLMENKOLLEN } from "./holmenkollen";
+import { MOVE } from "@larshansen/pixelkit/config";
+import { carrierAt } from "@larshansen/pixelkit/carrier";
+import { ICE } from "@larshansen/pixelkit/surface";
+import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
+import { BANNERS } from "./slottet";
 import { HOLMENKOLLEN_ROUTE, SLOTTET_ROUTE } from "./routes";
 import { SLOTTET } from "./slottet";
 import { AKERSHUS, HOIST } from "./akershus";
@@ -246,6 +250,63 @@ beforeAll(async () => {
 }, 240000);
 
 describe("what the levels promise", () => {
+  test("Slottet: a banner carries him over Spikersuppa, and the bass drum throws him higher than any jump", () => {
+    const p = newPlay(SLOTTET);
+    const route = SLOTTET_ROUTE;
+    const at = route.findIndex((m) => m.name === "across the pond");
+    playMoves(p, route.slice(0, at + 1), { max: 60 * 120 });
+    expect(cx(p)).toBeGreaterThan(tile(59));
+    expect(p.body.onGround).toBe(true);
+    // The drum at the Grand: from the street to the balcony, 80 px up.
+    const q = newPlay(SLOTTET, { start: { x: tile(42) + 8, bottom: tile(25) } });
+    let top = Infinity;
+    for (let i = 0; i < 120; i++) {
+      stepPlay(q, { ...IDLE, right: i < 10 });
+      top = Math.min(top, feet(q));
+    }
+    expect(tile(25) - top).toBeGreaterThan(80);
+    expect(BANNERS.D.length).toBeGreaterThan(0);
+  });
+
+  test("Holmenkollen: on ice he slides on when he lets go, and the red rail stops him", () => {
+    const p = newPlay(HOLMENKOLLEN, { start: { x: tile(16), bottom: tile(9) } });
+    expect(HOLMENKOLLEN.surfaceAt!(tile(16), tile(9), 0)).toBe(ICE);
+    for (let i = 0; i < 90; i++) stepPlay(p, { ...IDLE, right: true });
+    const x = cx(p);
+    for (let i = 0; i < 20; i++) stepPlay(p, IDLE);
+    expect(cx(p) - x).toBeGreaterThan(8);
+    for (let i = 0; i < 200; i++) stepPlay(p, IDLE);
+    expect(p.body.x + PLAYER.w).toBeLessThanOrEqual(tile(27));
+  });
+
+  test("Holmenkollen: on the inrun his keys do nothing and his speed climbs well past a run", () => {
+    const p = newPlay(HOLMENKOLLEN, { start: { x: tile(213) + 6, bottom: tile(16) } });
+    let top = 0;
+    for (let i = 0; i < 400 && cx(p) < LIP.x - 8; i++) {
+      stepPlay(p, { ...IDLE, left: i > 10 });
+      top = Math.max(top, p.body.vx);
+    }
+    expect(top).toBeGreaterThan(MOVE.run * 2);
+  });
+
+  test("Holmenkollen: without a jump at the lip he lands on the hill, no rune; the hollow and the lift take him back up to try again", () => {
+    const p = newPlay(HOLMENKOLLEN);
+    const route = HOLMENKOLLEN_ROUTE;
+    playMoves(p, route.slice(0, -1), { max: 60 * 200 });
+    expect(p.hearts).toBe(3);
+    // Down the inrun with no jump.
+    for (let i = 0; i < 600 && !(p.body.onGround && cx(p) > LIP.x); i++) stepPlay(p, { ...IDLE, right: true });
+    expect(p.runeAt).toBeNull();
+    expect(feet(p)).toBeGreaterThan(LIP.y);
+    const missed = p.t;
+    // Back: up the hill, under the inrun to the lift, up in it, into the hut.
+    const back = playMoves(p, [walk(TOWER_LIFT.x - 8), wait("the lift at the bottom", (q) => carrier(q, TOWER_LIFT).y >= TOWER_LIFT.bottom), walk(TOWER_LIFT.x + 16), wait("the lift at the top", (q) => carrierAt(TOWER_LIFT, q.t).y <= TOWER_LIFT.top), walk(tile(210))], { max: 60 * 60, until: (q) => q.body.onGround && feet(q) === tile(16) && cx(q) > tile(208) });
+    expect(back.stuck).toBeNull();
+    expect(feet(p)).toBe(tile(16));
+    expect((p.t - missed) / 60).toBeLessThan(25);
+    expect(back.events.some((e) => e.splash)).toBe(false);
+  });
+
   test("Langkaia: the water puts him back on the last ground he stood on, as the old fjord did", () => {
     const p = newPlay(LANGKAIA);
     playMoves(p, [walk(tile(47) + 6)]);

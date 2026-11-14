@@ -687,6 +687,7 @@ export const SLOTTET: LevelDef = {
   enemies: ENEMIES,
   drum: 7,
   flourish: 150,
+  flourishLook: 80,
   floor: (x) => Math.min(ROWS * TILE, streetY(x) + 2 * TILE + 8),
   fireworks: [
     [221 * TILE, 4 * TILE],
