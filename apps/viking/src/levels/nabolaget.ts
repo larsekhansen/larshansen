@@ -506,8 +506,9 @@ function home(v: View) {
   for (let k = x + 3; k < x + w - 2; k += 4) R(k, top, 1, g - top, PAINT.ochreLine);
   R(x, top, 2, g - top, PAINT.trim);
   R(x + w - 2, top, 2, g - top, PAINT.trim);
-  gable(x - 6, top, w + 12, 30, ROOF.slate);
-  gable(x - 6, top - 26, w + 12, 4, SNOW.lying);
+  // Its roof under snow, as the front page draws it in winter, the slate showing at the eaves.
+  gable(x - 6, top, w + 12, 30, SNOW.lying);
+  R(x - 6, top - 2, w + 12, 2, ROOF.slate);
   R(x + w - 30, top - 34, 8, 16, MASONRY.chimney);
   R(x + w - 31, top - 35, 10, 2, SNOW.lying);
   for (const [wx, wy] of [[x + 10, top + 8], [x + w - 26, top + 8], [x + 10, top + 34]] as const) {
