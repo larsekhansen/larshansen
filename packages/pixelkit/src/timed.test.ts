@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "./config";
 import { createBody, stepBody, type Intent, type World } from "./physics";
-import { timedCarriers, timedPhase, type TimedLedge } from "./timed";
+import { pulseAge, pulsePhase, timedCarriers, timedPhase, type TimedLedge } from "./timed";
 
 const beat = { on: 120, warn: 60, off: 90 };
 
@@ -50,5 +50,26 @@ describe("standing on it", () => {
     const b = createBody(11 * TILE, 10 * TILE);
     for (let i = 0; i < 70; i++) stepBody(b, { ...idle, jumpHeld: true, jumpPressed: i === 0 }, low, undefined, { carriers: timedCarriers([ledge], i) });
     expect(b.y + PLAYER.h).toBe(8 * TILE);
+  });
+});
+
+describe("a pulse: at rest, a warning, then live", () => {
+  const gust = { rest: 120, warn: 60, live: 90 };
+
+  test("it rests, warns for a second, is live, and rests again", () => {
+    expect(pulsePhase(0, gust)).toBe("rest");
+    expect(pulsePhase(119, gust)).toBe("rest");
+    expect(pulsePhase(120, gust)).toBe("warn");
+    expect(pulsePhase(179, gust)).toBe("warn");
+    expect(pulsePhase(180, gust)).toBe("live");
+    expect(pulsePhase(269, gust)).toBe("live");
+    expect(pulsePhase(270, gust)).toBe("rest");
+    expect(pulsePhase(0, { ...gust, offset: 150 })).toBe("warn");
+  });
+
+  test("the age in its phase, for a warning drawn growing", () => {
+    expect(pulseAge(130, gust)).toEqual({ age: 10, of: 60 });
+    expect(pulseAge(200, gust)).toEqual({ age: 20, of: 90 });
+    expect(pulseAge(5, gust)).toEqual({ age: 5, of: 120 });
   });
 });

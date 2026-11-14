@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { JUMP, MOVE, PLAYER, TILE } from "./config";
 import { createBody, stepBody, type Body, type Intent, type World } from "./physics";
-import { inZone, zonePush, type Zone } from "./zone";
+import { inZone, zoneLive, zonePush, type Zone } from "./zone";
 
 // A flat floor at row 10, and zones where each test puts them.
 const FLOOR = 10 * TILE;
@@ -98,5 +98,35 @@ describe("zones", () => {
     for (let i = 0; i < 200; i++) stepBody(b, idle, walled, undefined, { push: zonePush([CURRENT], b) });
     expect(b.x + PLAYER.w).toBeLessThanOrEqual(25 * TILE);
     expect(b.x + PLAYER.w).toBeGreaterThan(25 * TILE - 1);
+  });
+});
+
+describe("zones on a beat: a gust of wind", () => {
+  /** Wind over columns 30 to 39, pushing right, live for a second and a half after a one-second warning. */
+  const GUST: Zone = { x: 30 * TILE, y: 0, w: 10 * TILE, h: FLOOR, push: { x: 0.5, y: 0 }, beat: { rest: 120, warn: 60, live: 90 } };
+
+  test("it only pushes while live; at rest and while it warns it does nothing", () => {
+    const b = { x: 32 * TILE, y: FLOOR - PLAYER.h };
+    expect(zonePush([GUST], b, 10)).toBeNull();
+    expect(zonePush([GUST], b, 150)).toBeNull();
+    expect(zonePush([GUST], b, 200)).toEqual({ x: 0.5, y: 0 });
+    expect(zoneLive(GUST, 269)).toBe(true);
+    expect(zoneLive(GUST, 270)).toBe(false);
+    // Without a step (a search over every moment at once) it counts as live; a zone with no beat always is.
+    expect(zoneLive(GUST)).toBe(true);
+    expect(zoneLive(CURRENT, 5)).toBe(true);
+  });
+
+  test("a jump through it at rest goes as far as anywhere; live, the gust carries him on", () => {
+    const jumpAt = (from: number) => {
+      const b = createBody(31 * TILE, FLOOR);
+      for (let i = 0; i < 60; i++) stepBody(b, { ...right, jumpPressed: i === 0, jumpHeld: i < 40 }, world, undefined, { push: zonePush([GUST], b, from + i) });
+      return b.x;
+    };
+    const calm = jumpAt(0);
+    const plain = createBody(31 * TILE, FLOOR);
+    for (let i = 0; i < 60; i++) stepBody(plain, { ...right, jumpPressed: i === 0, jumpHeld: i < 40 }, world);
+    expect(calm).toBe(plain.x);
+    expect(jumpAt(180) - calm).toBeGreaterThan(20);
   });
 });
