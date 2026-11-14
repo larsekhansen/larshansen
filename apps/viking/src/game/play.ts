@@ -7,7 +7,7 @@ import { bounce, createBody, dashStep, launch, placeBody, stepBody, type Body, t
 import { timedCarriers, timedPhase } from "@larshansen/pixelkit/timed";
 import { footOf, tileMap, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { zonePush } from "@larshansen/pixelkit/zone";
-import { MARKS, type Boss, type LevelDef } from "../levels/types";
+import { MARKS, type Boss, type Grounds, type LevelDef } from "../levels/types";
 import { KIND, createEnemies, enemyBox, shotBox, stepEnemies, type Enemy, type Shot } from "./enemies";
 import { SHEEP, createSheep, stepSheep, stomped, type Sheep } from "./sheep";
 import type { Troll, TrollEvent } from "./troll";
@@ -144,6 +144,8 @@ export interface Play {
   /** Where the level gives the shield (Bygdøy's prow), and when he took it (-1: he had it already). */
   gift: Box | null;
   giftAt: number | null;
+  /** The level's own moving ground (decks, pads): its rules and its state. */
+  grounds: { rules: Grounds; state: unknown } | null;
 }
 
 export interface Events {
@@ -314,7 +316,8 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     overAtBoss: false,
     shield: opts.shield ? { rules: opts.shield, has: !!opts.hasShield, raise: 0, facing: 1 } : null,
     gift: giftOf(map),
-    giftAt: opts.hasShield ? -1 : null
+    giftAt: opts.hasShield ? -1 : null,
+    grounds: def.grounds ? { rules: def.grounds, state: def.grounds.create() } : null
   };
 }
 
@@ -323,6 +326,7 @@ export const overlaps = (b: Body, r: Box) => b.x < r.x + r.w && b.x + PLAYER.w >
 /** Moving ground this step: the carriers near him and the ledges on a beat that are there. */
 export function extraGround(p: Play, t = p.t): Carrier[] {
   const out = [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t)];
+  if (p.grounds) out.push(...p.grounds.rules.carriers(p.grounds.state, t, p.body));
   // The troll turned to stone is a boulder he can stand on.
   if (p.troll?.phase === "stone" && p.def.trollRules) {
     const box = p.def.trollRules.box(p.troll);
@@ -622,6 +626,7 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     ev.step = stepBody(b, intent, p.map, { doubleJump: p.feather }, { carriers: extraGround(p), surfaceAt: p.def.surfaceAt ? (x, y) => p.def.surfaceAt!(x, y, p.t) : undefined, push: zonePush(p.def.zones, b, p.t) });
     if (b.onGround) p.dashSpent = false;
   }
+  if (p.grounds) p.grounds.rules.after?.(p.grounds.state, p.t, b);
   ev.moved = ev.moved || intent.left || intent.right || ev.step.jumped;
   if (ev.moved && p.run.state === "idle") p.run.state = "running";
 

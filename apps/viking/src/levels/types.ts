@@ -9,7 +9,7 @@ import type { Sky, SkyName } from "@larshansen/pixelkit/oslo";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import type { TimedLedge } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
-import type { Body } from "@larshansen/pixelkit/physics";
+import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Troll, TrollDef, TrollEvent } from "../game/troll";
@@ -109,6 +109,8 @@ export interface View {
   cleared: readonly string[];
   /** When the rune was taken (a step), or null: the Pi's light turns green. */
   runeAt: number | null;
+  /** The state of the level's own moving ground (`LevelDef.grounds`), for drawing it. */
+  grounds: unknown;
 }
 
 export interface Art {
@@ -196,6 +198,21 @@ export interface Boss<S = unknown> {
   beaten(s: S): boolean;
 }
 
+/**
+ * Moving ground a level brings with it that is not a carrier on the clock: rocking decks and sinking
+ * pads (`deck.ts` and `sink.ts` in the kit). It comes with its level's file, so the first script does
+ * not carry it; play.ts runs it each step. Its state is plain data.
+ */
+export interface Grounds<S = unknown> {
+  create(): S;
+  /** The ground it gives him this step, as the physics takes it. */
+  carriers(s: S, t: number, him: Body): Carrier[];
+  /** After his step: what it notices of him (the pad he stands on). */
+  after?(s: S, t: number, him: Body): void;
+  /** Everywhere it ever is, as still ground: for the reach search. */
+  everywhere(): Carrier[];
+}
+
 export interface LevelDef {
   id: string;
   /** Which of the ten runes of LARS HANSEN it ends at, 0 to 9. */
@@ -256,6 +273,8 @@ export interface LevelDef {
   haze?: [number, number, number];
   /** Under the ground, with no sky: its far layers fill the whole view, however tall, and are not moved down on an upright screen. */
   underground?: boolean;
+  /** Its own moving ground: rocking decks, sinking pads. */
+  grounds?: Grounds<any>;
   art: Art;
 }
 

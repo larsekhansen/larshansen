@@ -46,6 +46,8 @@ export function everywhere(def: LevelDef): Carrier[] {
     }
   }
   for (const l of def.timed) add(l.x, l.y, l.w);
+  // The level's own moving ground (rocking decks, sinking pads), every height it takes, as the logs are.
+  for (const c of def.grounds?.everywhere() ?? []) add(c.x, c.y, c.w);
   // Ledges at the same height that touch or overlap are one longer ledge: the same ground to stand
   // on, and far fewer things for each step to look at (a banner's path is hundreds of places).
   const byY = new Map<number, Carrier[]>();

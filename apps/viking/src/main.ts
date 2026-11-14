@@ -1459,7 +1459,7 @@ function render(alpha: number) {
   const horizon = p.map.height - 4 * TILE - 34;
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
-  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt };
+  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
   const haze = scene.def.haze ?? [0.35, 0.3, 0.2];
   if (art.far) farPass(kit.depth(0.12), () => art.far!(v), haze[0]);
   if (art.mid) farPass(kit.depth(0.2), () => art.mid!(v), haze[1]);
