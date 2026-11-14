@@ -251,15 +251,19 @@ function cave() {
   for (let x = 31 * TILE; x < 32 * TILE; x++) R(x, 9 * TILE, 1, TILE, mix(ICY.groove, ICY.steelDark, 0.3));
 }
 
-/** The old spruce whose snowy branches are the way up to the nook over the steps. */
+/** The old spruce whose snowy branches (the map's ledges) are the way up to the nook over the steps: a tall trunk, its tiers of needles behind. */
 function bigSpruce() {
   const x = 82 * TILE + 8;
-  R(x - 2, 6 * TILE, 5, 7 * TILE, PLANTS.spruceTrunk);
-  R(x - 2, 6 * TILE, 1, 7 * TILE, mix(PLANTS.spruceTrunk, WHITE, 0.15));
-  for (let y = 4 * TILE; y < 6 * TILE; y++) {
-    const half = Math.floor((y - 4 * TILE) / 3);
-    R(x - half, y, half * 2 + 1, 1, (y - 4 * TILE) % 7 === 0 ? SNOW.lying : PLANTS.spruce);
+  const top = 3 * TILE;
+  const foot = 13 * TILE;
+  for (let y = top; y < foot - 8; y++) {
+    const k = y - top;
+    const half = Math.min(26, Math.floor(2 + (k % 22) * 0.9 + k * 0.08));
+    const color = k % 22 === 0 ? SNOW.lying : k % 22 === 1 ? SNOW.shade : mix(PLANTS.spruce, ICY.steelDark, 0.15);
+    R(x - half, y, half * 2 + 1, 1, color);
   }
+  R(x - 2, top + 8, 5, foot - top - 8, PLANTS.spruceTrunk);
+  R(x - 2, top + 8, 1, foot - top - 8, mix(PLANTS.spruceTrunk, WHITE, 0.15));
 }
 
 /** A spruce weighed down with snow, from its foot. */
@@ -565,7 +569,7 @@ export const HOLMENKOLLEN: LevelDef = {
     },
     {
       label: { nb: "Starten", en: "The start" },
-      lines: { nb: ["Ned unnarennet styrer du ikke. Hopp på kanten.", "Bare der. Bommer du, går trappene opp igjen."], en: ["Down the inrun you do not steer. Jump at the lip.", "Only there. Miss, and the steps lead back up."] }
+      lines: { nb: ["Ned unnarennet styrer du ikke. Hopp på kanten.", "Prøv i barnebakken først. Bommer du, tar heisen deg opp."], en: ["Down an inrun you do not steer. Jump at the lip.", "Try the kids' jump first. Miss, and the lift takes you up."] }
     }
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],

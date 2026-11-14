@@ -705,7 +705,7 @@ export const SLOTTET: LevelDef = {
     },
     {
       label: { nb: "Graving pågår", en: "Roadworks" },
-      lines: { nb: ["Graving pågår.", "Siden 2019."], en: ["Digging in progress.", "Since 2019."] }
+      lines: { nb: ["Graving pågår. Siden 2019.", "Skolens fane går over. Stortromma hjelper."], en: ["Digging in progress. Since 2019.", "The school's banner goes over. The bass drum helps."] }
     },
     {
       label: { nb: "Slottet", en: "The palace" },

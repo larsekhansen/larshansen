@@ -914,6 +914,19 @@ function drawThings(v: View) {
   if (p.bracteate && p.bracteateAt === null) drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
   if (p.rune) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
+  if (abilities.pole && !p.loaded) skiPole(v);
+}
+
+/** Once he has it, the ski pole goes with him everywhere: held at his side, its basket near the ground. */
+function skiPole(v: View) {
+  const b = shown;
+  const side = scene.play.body.facing > 0 ? -1 : 1;
+  const x = Math.round(b.x + PLAYER.w / 2 + side * 5);
+  const top = Math.round(b.y + (scene.play.sitting ? 9 : 6));
+  R(x, top, 1, PLAYER.h - 4, METAL.lampPost);
+  R(x - 1, top + PLAYER.h - 8, 3, 1, METAL.lampPost);
+  R(x, top - 1, 1, 1, PALETTE.sailStripe);
+  void v;
 }
 
 function render(alpha: number) {
