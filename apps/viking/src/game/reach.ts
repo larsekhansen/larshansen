@@ -15,7 +15,10 @@ import { SHEEP } from "./sheep";
 // put everywhere it ever goes at once, ledges on a beat are always there, and every enemy he can
 // land on, and every sheep, is a trampoline all along its patrol and at all its heights at once, at
 // the highest bounce: a world with more to stand on and bounce off than the real one. Zones push as
-// they do in the level (they never move). So what this
+// they do in the level (gusts on a beat are searched blowing all the time and again not at all).
+// Standing on moving ground where the map holds nothing, he may also drop through it, as he does
+// when the real thing moves away from under him (a train's roof, put everywhere at once, would
+// otherwise be a ceiling over every platform he could never get down from). So what this
 // search cannot reach, he cannot reach either. (What it can reach is shown by the scripted players,
 // which play the real level.)
 
@@ -108,7 +111,8 @@ export function pads(def: LevelDef): Pad[] {
   for (const t of map.find(MARKS.sheep)) {
     const x = t.c * TILE + TILE / 2;
     const top = (t.r + 1) * TILE - SHEEP.h;
-    out.push({ x0: x - SHEEP.range - SHEEP.w / 2, x1: x + SHEEP.range + SHEEP.w / 2, y0: top, y1: top + 1, speed: 7 });
+    const range = def.sheepRange === undefined ? SHEEP.range : def.sheepRange * TILE;
+    out.push({ x0: x - range - SHEEP.w / 2, x1: x + range + SHEEP.w / 2, y0: top, y1: top + 1, speed: 7 });
   }
   return out;
 }
@@ -151,6 +155,8 @@ interface Move {
   second: number;
   /** Steps into the air at which he dashes, with the pole (0: never). */
   dash: number;
+  /** Steps at the start in which moving ground does not hold him: he drops off it as it goes. */
+  drop?: number;
 }
 
 function moves(feather: boolean, pole: boolean): Move[] {
@@ -166,11 +172,14 @@ function moves(feather: boolean, pole: boolean): Move[] {
   return out;
 }
 
+/** Dropping off moving ground: straight down, or walking either way. */
+const DROPS: Move[] = ([-1, 0, 1] as const).map((dir) => ({ dir, hold: 0, running: false, release: 999, turn: false, second: 0, dash: 0, drop: 12 }));
+
 /**
  * Where he can stand, from `start`, and every box his body passed through on the way. `boxes` are
  * checked while searching (the bracteate, the rune), so a touch in mid-air counts.
  */
-export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[], opts: { pole?: boolean } = {}): { spots: Spot[]; hit: boolean[] } {
+export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[], opts: { pole?: boolean; calm?: boolean } = {}): { spots: Spot[]; hit: boolean[] } {
   const world = fastWorld(def);
   const map = levelMap(def);
   // The moving ground, everywhere at once, in buckets of 64 px so each step only sees what is near.
@@ -181,8 +190,10 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
       buckets.get(k)!.push(c);
     }
   const surfaceAt = def.surfaceAt ? (x: number, y: number) => def.surfaceAt!(x, y, 0) : undefined;
-  // Zones push as they do in the level: they are always there.
-  const near = (b: Body) => ({ carriers: buckets.get(Math.floor((b.x + PLAYER.w / 2) / 64)) ?? [], surfaceAt, push: zonePush(def.zones, b) });
+  // Zones push as they do in the level: they are always there. Gusts on a beat blow all the time,
+  // or (`calm`) never: the search is run both ways.
+  const zones = opts.calm ? def.zones?.filter((z) => !z.beat) : def.zones;
+  const near = (b: Body, loose = false) => ({ carriers: loose ? [] : buckets.get(Math.floor((b.x + PLAYER.w / 2) / 64)) ?? [], surfaceAt, push: zonePush(zones, b) });
   const launchers = [...cannonsOf(def, map), ...drumsOf(def, map)];
   const trampolines = pads(def);
   const hit = boxes.map(() => false);
@@ -237,7 +248,8 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
   };
   while (queue.length) {
     const s = queue.pop()!;
-    for (const m of list) {
+    const held = map.supports(createBody(s.x + PLAYER.w / 2, s.feet));
+    for (const m of held ? list : [...list, ...DROPS]) {
       const b = createBody(s.x + PLAYER.w / 2, s.feet);
       if (m.running) b.vx = m.dir * MOVE.run;
       let air = 0;
@@ -252,7 +264,11 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
           dashStep(b, way, DASH.speed, world);
           if (--dashing === 0) b.vx = way * MOVE.run;
           air++;
-        } else stepBody(b, { left: dir < 0, right: dir > 0, jumpHeld: (m.hold > 0 && i < m.hold) || second, jumpPressed: (m.hold > 0 && i === 0) || second }, world, { doubleJump: feather }, near(b));
+        } else {
+          const loose = m.drop !== undefined && i < m.drop;
+          if (loose) b.onGround = false;
+          stepBody(b, { left: dir < 0, right: dir > 0, jumpHeld: (m.hold > 0 && i < m.hold) || second, jumpPressed: (m.hold > 0 && i === 0) || second }, world, { doubleJump: feather }, near(b, loose));
+        }
         touch(b);
         if (fellOut(b, world)) break;
         const shot = launchers.find((l) => launcherHit(l, b));

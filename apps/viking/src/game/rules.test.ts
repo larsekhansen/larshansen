@@ -458,3 +458,48 @@ describe("the troll", () => {
     expect(p.troll!.hits).toBe(1);
   });
 });
+
+describe("hazards and gusts", () => {
+  // A floor at row 6 with a one-tile trench (cols 10 and 11) whose bottom is live, as the third rail is.
+  const RAIL = level(
+    ["....................", "....................", "....................", "....................", "....................", "..S.................", "##########..########", "####################"],
+    { hazards: [{ x: 10 * TILE, y: 7 * TILE - 4, w: 2 * TILE, h: 4 }] }
+  );
+
+  test("walking into the live trench costs a heart, throws him clear and back, and he blinks; he is not hurt again", () => {
+    const p = newPlay(RAIL);
+    const ev = steps(p, 240, (i) => (i < 100 ? right : idle));
+    expect(ev.filter((e) => e.zap).length).toBe(1);
+    expect(p.hearts).toBe(HEARTS - 1);
+    expect(p.body.onGround).toBe(true);
+    expect(feet(p)).toBe(6 * TILE);
+    expect(cx(p)).toBeLessThan(10 * TILE);
+  });
+
+  test("a hazard on a beat hurts only while live, and warns for a second first", () => {
+    const beat = { rest: 100, warn: 60, live: 40 };
+    const SPARK = level(["....", "..S.", "####"], { hazards: [{ x: 0, y: 0, w: 4 * TILE, h: 2 * TILE, beat }] });
+    const p = newPlay(SPARK);
+    const ev = steps(p, 199);
+    expect(ev.findIndex((e) => e.zap)).toBe(160 - 1);
+    expect(ev.filter((e) => e.zap).length).toBe(1);
+  });
+
+  test("a gust only pushes him while it is live", () => {
+    const FLAT = level([".....................................", "..S..................................", "#####################################"], { zones: [{ x: 0, y: 0, w: 37 * TILE, h: 3 * TILE, push: { x: 0.5, y: 0 }, beat: { rest: 60, warn: 60, live: 60 } }] });
+    const p = newPlay(FLAT);
+    const x0 = cx(p);
+    steps(p, 119);
+    expect(cx(p)).toBe(x0);
+    steps(p, 60);
+    expect(cx(p) - x0).toBeCloseTo(30, 0);
+  });
+
+  test("sheep on a knoll stand where they are put when the level says so", () => {
+    const KNOLL = level(["..........", "..S..e....", "##########"], { sheepRange: 0 });
+    const p = newPlay(KNOLL);
+    const x = p.sheep[0].x;
+    steps(p, 600);
+    expect(p.sheep[0].x).toBe(x);
+  });
+});

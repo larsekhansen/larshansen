@@ -311,3 +311,22 @@ body {
     display: none;
   }
 }
+
+/* All ten runes: the name is spelled in gold. */
+.runes.all li.lit {
+  background: #ffd36b;
+  border-color: #a8801a;
+}
+
+/* The tenth rune: the card says so, plainly, in both languages, the visitor's own first. */
+#finish-more.home:not([hidden]) {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-weight: 600;
+}
+
+#finish-more.home span + span {
+  font-weight: 400;
+  color: var(--muted);
+}

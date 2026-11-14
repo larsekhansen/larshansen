@@ -27,8 +27,8 @@ export const LINE: Station[] = [
   { id: "holmenkollen", rune: 4, name: "Holmenkollen", place: { nb: "Hoppbakken", en: "The ski jump" }, built: true },
   { id: "akerselva", rune: 5, name: "Akerselva", place: { nb: "Nedover elva fra Nydalen til Vaterland", en: "Down the river from Nydalen to Vaterland" }, built: true },
   { id: "nordmarka", rune: 6, name: "Nordmarka", place: { nb: "Skogen nord for byen", en: "The forest north of the city" }, built: true },
-  { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: false },
-  { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: false },
+  { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: true },
+  { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: true },
   { id: "nabolaget", rune: 9, name: "Nabolaget", place: { nb: "Takene på Vålerenga og Kampen", en: "The roofs of Vålerenga and Kampen" }, built: false }
 ];
 
@@ -44,7 +44,9 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   slottet: () => import("./slottet").then((m) => m.SLOTTET),
   holmenkollen: () => import("./holmenkollen").then((m) => m.HOLMENKOLLEN),
   akerselva: () => import("./akerselva").then((m) => m.AKERSELVA),
-  nordmarka: () => import("./nordmarka").then((m) => m.NORDMARKA)
+  nordmarka: () => import("./nordmarka").then((m) => m.NORDMARKA),
+  stortinget: () => import("./stortinget").then((m) => m.STORTINGET),
+  ekeberg: () => import("./ekeberg").then((m) => m.EKEBERG)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);

@@ -8,6 +8,8 @@ import type { Door } from "@larshansen/pixelkit/doors";
 import type { Sky, SkyName } from "@larshansen/pixelkit/oslo";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import type { TimedLedge } from "@larshansen/pixelkit/timed";
+import type { Hazard } from "@larshansen/pixelkit/hazard";
+import type { Body } from "@larshansen/pixelkit/physics";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Troll, TrollDef } from "../game/troll";
@@ -97,6 +99,12 @@ export interface View {
   /** The flags and when each went up, and the enemies, for a level that lights them in the dark. */
   flags: readonly { x: number; bottom: number; raisedAt: number | null }[];
   enemies: readonly Enemy[];
+  /** The last boss's state, in the level that has one. */
+  boss: unknown;
+  /** The levels he has cleared, by id: Ekeberg lights them in the city below. */
+  cleared: readonly string[];
+  /** When the rune was taken (a step), or null: the Pi's light turns green. */
+  runeAt: number | null;
 }
 
 export interface Art {
@@ -132,6 +140,28 @@ export interface Art {
   overDark?(v: View): void;
   /** Draws the troll. */
   troll?(t: Troll, v: View): void;
+  /** Draws the last boss, from its state. */
+  boss?(state: unknown, v: View): void;
+  /** Draws bass drum `i` its own way (a clothesline); without it the kit's drum is drawn. */
+  drum?(i: number, l: Launcher, firedAt: number, v: View): void;
+}
+
+/**
+ * The last boss's rules, from its own module, which comes with its level: play.ts runs them each
+ * step as it runs the troll's. The state is the module's own.
+ */
+export interface Boss<S = unknown> {
+  create(): S;
+  /** One step of it; `him` is where he is. What it did, in its own words ("wake", "windup"...), or null. */
+  step(s: S, t: number, him: Body): string | null;
+  /** He came down on it from above this step: where its top is, and whether that was a hit (or only a bounce off it). Null when he did not. */
+  stomped(s: S, t: number, him: Body, prevBottom: number): { top: number; hit: boolean } | null;
+  /** What hurts him this step, and from where; null when nothing does. */
+  hurts(s: S, t: number, him: Body): { fromX: number } | null;
+  /** He lost a life: back to where it waits, keeping the hits it has taken. */
+  reset(s: S, t: number): void;
+  /** Beaten for good: the rune shows. */
+  beaten(s: S): boolean;
 }
 
 export interface LevelDef {
@@ -178,6 +208,16 @@ export interface LevelDef {
   dark?(x: number, v: View): number;
   /** The boss at the end, in the level that has one: the troll of Nordmarka. The rune shows when it has turned to stone. */
   troll?: TrollDef;
+  /** The last boss, in Nabolaget: its rules come with the level. The rune shows when it is beaten. */
+  boss?: Boss<any>;
+  /** What the page says when the boss does something, by its event's name. */
+  bossWords?: Record<string, Words>;
+  /** Things that hurt to touch: the third rail. */
+  hazards?: Hazard[];
+  /** How far either side of home the sheep graze, in tiles, when not four: on a knoll, they stand. */
+  sheepRange?: number;
+  /** How much the far, mid and near layers fade towards the horizon (0.35, 0.3, 0.2 when not said): under the ground, nothing does. */
+  haze?: [number, number, number];
   art: Art;
 }
 

@@ -1,12 +1,13 @@
 import { carriersNear, type CarrierDef } from "@larshansen/pixelkit/carrier";
 import { fellOut, respawnAt, touchFlags, type Checkpoints, type Flag } from "@larshansen/pixelkit/checkpoint";
 import { DASH, MOVE, PLAYER, STEP_MS, TILE } from "@larshansen/pixelkit/config";
+import { hazardTouched } from "@larshansen/pixelkit/hazard";
 import { LOAD_STEPS, cannon, drum, fire, launcherHit, type Launcher } from "@larshansen/pixelkit/launcher";
 import { bounce, createBody, dashStep, launch, placeBody, stepBody, type Body, type Carrier, type Intent, type StepResult } from "@larshansen/pixelkit/physics";
 import { timedCarriers, timedPhase } from "@larshansen/pixelkit/timed";
 import { footOf, tileMap, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { zonePush } from "@larshansen/pixelkit/zone";
-import { MARKS, type LevelDef } from "../levels/types";
+import { MARKS, type Boss, type LevelDef } from "../levels/types";
 import { KIND, createEnemies, enemyBox, shotBox, stepEnemies, type Enemy, type Shot } from "./enemies";
 import { SHEEP, createSheep, stepSheep, stomped, type Sheep } from "./sheep";
 import { TROLL, createTroll, resetTroll, stepTroll, trollBox, trollHurts, type Troll, type TrollEvent } from "./troll";
@@ -105,6 +106,8 @@ export interface Play {
   dashEnded: number;
   /** The troll, in the level that has one. */
   troll: Troll | null;
+  /** The last boss, in the level that has one: its rules (from the level's own module) and its state. */
+  boss: { rules: Boss; state: unknown } | null;
 }
 
 export interface Events {
@@ -136,6 +139,10 @@ export interface Events {
   thrown: number[];
   /** What the troll did this step: woke, raised its club, slammed it down, was hit by the dawn, turned to stone. */
   troll: TrollEvent;
+  /** What the last boss did this step, in its own words ("wake", "windup", "hit", "beaten"...), or null. */
+  boss: string | null;
+  /** He touched a hazard (the third rail): it sparks. */
+  zap: boolean;
 }
 
 /** The tiles marked with a letter, as boxes or feet. */
@@ -230,7 +237,7 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     runeAt: null,
     bracteate: bracteateOf(map),
     bracteateAt: null,
-    sheep: createSheep(marks(map, MARKS.sheep).map(footOf)),
+    sheep: createSheep(marks(map, MARKS.sheep).map(footOf), def.sheepRange),
     lastGround: { ...start },
     hearts: HEARTS,
     lives: Math.max(1, opts.lives ?? LIVES),
@@ -248,7 +255,8 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     dash: null,
     dashSpent: false,
     dashEnded: -999,
-    troll: def.troll ? createTroll(def.troll) : null
+    troll: def.troll ? createTroll(def.troll) : null,
+    boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null
   };
 }
 
@@ -305,6 +313,7 @@ function loseLife(p: Play, ev: Events) {
   putBack(p, p.save ?? p.start);
   p.safeUntil = p.t + SAFE_STEPS;
   if (p.troll) resetTroll(p.troll, p.t);
+  if (p.boss) p.boss.rules.reset(p.boss.state, p.t);
 }
 
 /** A touch from something that hurts, from `fromX`: a heart, a knock away from it, and a moment of safety. */
@@ -378,6 +387,28 @@ function meetTroll(p: Play, ev: Events) {
   if (hurt) hit(p, ev, hurt.fromX);
 }
 
+/** The last boss: it moves, it hurts, and coming down on it from above is a hit (or, while it is reeling, a bounce off it). */
+function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
+  const bs = p.boss;
+  if (!bs || p.run.state === "done") return;
+  const b = p.body;
+  ev.boss = bs.rules.step(bs.state, p.t, b);
+  const landed = bs.rules.stomped(bs.state, p.t, b, prevBottom);
+  if (landed) {
+    b.y = landed.top - PLAYER.h;
+    bounce(b, intent.jumpHeld ? STOMP.held : STOMP.plain);
+    p.dash = null;
+    p.dashSpent = false;
+    if (landed.hit) ev.boss = bs.rules.beaten(bs.state) ? "beaten" : "hit";
+    return;
+  }
+  const hurt = bs.rules.hurts(bs.state, p.t, b);
+  if (hurt) hit(p, ev, hurt.fromX);
+}
+
+/** True when nothing stands between him and the rune any more: no troll, or it is stone; no boss, or it is beaten. */
+export const runeFree = (p: Play) => (!p.troll || p.troll.phase === "stone") && (!p.boss || p.boss.rules.beaten(p.boss.state));
+
 /** One step of the level. Pure apart from `p`, which it moves on. */
 export function stepPlay(p: Play, intent: PlayIntent): Events {
   const ev: Events = {
@@ -401,7 +432,9 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     bench: null,
     dash: false,
     thrown: [],
-    troll: null
+    troll: null,
+    boss: null,
+    zap: false
   };
   if (p.run.state === "over") return ev;
   p.t++;
@@ -457,7 +490,7 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
       p.dashEnded = p.t;
     }
   } else {
-    ev.step = stepBody(b, intent, p.map, { doubleJump: p.feather }, { carriers: extraGround(p), surfaceAt: p.def.surfaceAt ? (x, y) => p.def.surfaceAt!(x, y, p.t) : undefined, push: zonePush(p.def.zones, b) });
+    ev.step = stepBody(b, intent, p.map, { doubleJump: p.feather }, { carriers: extraGround(p), surfaceAt: p.def.surfaceAt ? (x, y) => p.def.surfaceAt!(x, y, p.t) : undefined, push: zonePush(p.def.zones, b, p.t) });
     if (b.onGround) p.dashSpent = false;
   }
   ev.moved = ev.moved || intent.left || intent.right || ev.step.jumped;
@@ -499,6 +532,17 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
   if (ev.over) return ev;
   meetTroll(p, ev);
   if (ev.over) return ev;
+  meetBoss(p, ev, intent, prevBottom);
+  if (ev.over) return ev;
+  // The third rail, a spark: a heart, as an enemy's touch is. It throws him up clear of it, a tile
+  // over its top, and back the way he came, so a rail at the bottom of a trench throws him out of it.
+  const zapped = hazardTouched(p.def.hazards, b, p.t);
+  if (zapped && p.t >= p.safeUntil && p.run.state !== "done") {
+    ev.zap = true;
+    b.y = Math.min(b.y, zapped.y - TILE - PLAYER.h);
+    hit(p, ev, b.x + PLAYER.w / 2 + b.facing);
+    if (ev.over) return ev;
+  }
 
   const before = p.checkpoints.reached;
   p.checkpoints = touchFlags(p.checkpoints, p.flags, b);
@@ -528,7 +572,7 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     p.bracteateAt = p.t;
     ev.bracteate = true;
   }
-  if (p.rune && p.runeAt === null && (!p.troll || p.troll.phase === "stone") && overlaps(b, p.rune)) {
+  if (p.rune && p.runeAt === null && runeFree(p) && overlaps(b, p.rune)) {
     p.runeAt = p.t;
     p.run.state = "done";
     ev.rune = true;
