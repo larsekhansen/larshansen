@@ -24,8 +24,9 @@ import { rides } from "./routes/common";
 import { AKERSELVA, BUCKETS, CURTAIN, FALL1, WHEEL } from "./akerselva";
 import { SLOTTET } from "./slottet";
 import { AKERSHUS, BATTERY, HOIST } from "./akershus";
-import { BUILT, LINE, ORDER } from "./index";
-import { kartDef } from "./kart";
+import { BUILT, LINE, LINE_1, LINE_2, ORDER } from "./index";
+import { GATE_COL, LINE_1_END, STATIONS, kartDef, lineTwoOpen } from "./kart";
+import { kartArt } from "./kartArt";
 import { LANGKAIA, RAFT } from "./langkaia";
 import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING, SWING_ENDS } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
@@ -153,18 +154,50 @@ function jumpsOverGaps(def: LevelDef, moves: Move[]) {
   });
 }
 
-describe("the line", () => {
-  test("ten levels, one per rune of LARS HANSEN, all ten built", () => {
-    expect(LINE.map((l) => "LARSHANSEN"[l.rune]).join("")).toBe("LARSHANSEN");
-    expect(BUILT.map((l) => l.id)).toEqual(ORDER);
-    expect(new Set(ORDER).size).toBe(10);
+describe("the lines", () => {
+  test("line 1: ten levels, one per rune of LARS HANSEN, all built; line 2: six, one per rune of VIKING", () => {
+    const word = (ids: string[]) => ids.map((id) => "LARSHANSENVIKING"[LINE[ORDER.indexOf(id)].rune]).join("");
+    expect(word(LINE_1)).toBe("LARSHANSEN");
+    expect(word(LINE_2)).toBe("VIKING");
+    expect(LINE.map((l) => l.line).join("")).toBe("1111111111222222");
+    expect(LINE.filter((l) => l.line === 1).every((l) => l.built)).toBe(true);
+    expect(new Set(ORDER).size).toBe(16);
+    // The built stations are the first of the order: a station opens when the one before it is cleared.
+    expect(BUILT.map((l) => l.id)).toEqual(ORDER.slice(0, BUILT.length));
   });
 
-  test("the line map has a station for each, the mound, and Hjem", () => {
-    const def = kartDef(fresh());
+  test("the line map has a station for each of the sixteen, the mound, and Hjem; line 1 has not moved", () => {
+    const def = kartDef(fresh(), kartArt);
     const map = levelMap(def);
     for (const d of def.doors) expect(map.find(d.tile).length).toBe(1);
     expect(def.doors.map((d) => d.id)).toEqual(["home", "maze", ...ORDER]);
+    // Line 1's ten stations stand where they stood before line 2 came.
+    expect(STATIONS.slice(0, 10)).toEqual([6, 20, 24, 29, 34, 39, 44, 49, 52, 55]);
+    expect(LINE_1.map((id) => map.find(def.doors.find((d) => d.id === id)!.tile)[0].c)).toEqual([6, 20, 24, 29, 34, 39, 44, 49, 52, 55]);
+    // Line 2's six are past line 1's end, on its own deck.
+    for (const c of STATIONS.slice(10)) expect(c).toBeGreaterThan(LINE_1_END);
+  });
+
+  test("line 2 opens when Nabolaget is cleared: until then a gate stands across it, with a sign", () => {
+    const closed = kartDef(fresh(), kartArt);
+    expect(lineTwoOpen(fresh())).toBe(false);
+    const gate = levelMap(closed);
+    expect(gate.isSolid(GATE_COL, 10)).toBe(true);
+    expect(gate.isSolid(GATE_COL, 0)).toBe(true);
+    expect(closed.signs[0].lines.en).toEqual(["Opens once Nabolaget is cleared."]);
+    const nine = { ...fresh(), cleared: LINE_1.slice(0, 9) };
+    expect(lineTwoOpen(nine)).toBe(false);
+    const all = { ...fresh(), cleared: [...LINE_1] };
+    expect(lineTwoOpen(all)).toBe(true);
+    const open = levelMap(kartDef(all, kartArt));
+    expect(open.isSolid(GATE_COL, 10)).toBe(false);
+    // He can walk from Hjem's end of line 1 to the far end of line 2.
+    const p = newPlay(kartDef(all, kartArt), { start: { x: tile(50), bottom: tile(11) } });
+    for (let i = 0; i < 60 * 30 && cx(p) < tile(98); i++) stepPlay(p, { ...IDLE, right: true });
+    expect(cx(p)).toBeGreaterThan(tile(98));
+    const q = newPlay(closed, { start: { x: tile(50), bottom: tile(11) } });
+    for (let i = 0; i < 60 * 10; i++) stepPlay(q, { ...IDLE, right: true, jumpHeld: true, jumpPressed: i % 40 === 0 });
+    expect(cx(q)).toBeLessThan(tile(GATE_COL));
   });
 });
 
@@ -175,7 +208,7 @@ test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
     const st = LINE.find((l) => l.id === def.id)!;
     expect(st.built).toBe(true);
-    expect([st.rune, st.name, st.place]).toEqual([def.rune, def.name, def.place]);
+    expect([st.rune, st.name]).toEqual([def.rune, def.name]);
   }
 });
 
@@ -744,9 +777,9 @@ describe("no way out but the restart button, fixed", () => {
   });
 });
 
-// All ten are on the line and built, and the line map has no hoarding left.
-test("all ten levels are built, and the line map has no hoarding", () => {
-  expect(LINE.length).toBe(10);
-  expect(LINE.filter((l) => l.built).length).toBe(10);
-  expect(kartDef(fresh()).map.join("")).not.toContain("F");
+// Line 1's ten are built; line 2's stations not built yet are under construction and cannot be entered.
+test("line 1 is all built; line 2's stations not built have no address to go to", () => {
+  expect(LINE.filter((l) => l.line === 1 && l.built).length).toBe(10);
+  const def = kartDef({ ...fresh(), cleared: [...LINE_1] }, kartArt);
+  for (const l of LINE) expect(def.doors.find((d) => d.id === l.id)!.href).toBe(l.built ? `#${l.id}` : "");
 });

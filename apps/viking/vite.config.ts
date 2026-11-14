@@ -23,6 +23,8 @@ export default defineConfig({
           if (route) return route[1] === "common" ? "routes" : `${route[1]}-route`;
           if (/\/src\/game\/bot\.ts$/.test(id)) return "routes";
           if (/\/src\/debug\.ts$/.test(id)) return "debug";
+          // How the line map looks: fetched on its own as the page starts.
+          if (/\/src\/levels\/kartArt\.ts$/.test(id)) return "kart";
           const level = LEVEL.exec(id);
           const owned = OWNED.exec(id);
           return level ? level[1] : owned ? OWN[owned[1]] : "index";

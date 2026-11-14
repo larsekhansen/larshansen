@@ -29,3 +29,5 @@ export const tar = "#3a2a20";
 export const hoarding = "#c9a46a";
 export const hoardingLine = "#a8844f";
 export const warning = "#f2c200";
+// Line 2 on the viking game's line map: orange, as Oslo's line 2 is.
+export const tbane2 = "#e5832e";

@@ -22,6 +22,15 @@ body {
   list-style: none;
 }
 
+.runes[hidden] {
+  display: none;
+}
+
+/* Line 2's group stands a little apart from line 1's. */
+.runes.two {
+  margin-left: 4px;
+}
+
 .runes li {
   display: grid;
   place-items: center;
@@ -169,6 +178,26 @@ body {
   .runes svg {
     width: 8px;
     height: 12px;
+  }
+
+  /* With line 2's group as well, sixteen slots: narrower, so the run still fits the row it had. */
+  .run.sixteen .runes {
+    gap: 1px;
+  }
+
+  .run.sixteen .runes li {
+    width: 12px;
+    height: 18px;
+    border-radius: 4px;
+  }
+
+  .run.sixteen .runes svg {
+    width: 7px;
+    height: 11px;
+  }
+
+  .run.sixteen .runes.two {
+    margin-left: 3px;
   }
 }
 

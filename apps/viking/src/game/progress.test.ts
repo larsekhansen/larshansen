@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { PROGRESS_VERSION, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress } from "./progress";
+import { LINE_1, LINE_2, LINE_2_AT, ORDER as ORDER16 } from "../levels/index";
 
 const ORDER = ["langkaia", "akershus", "radhuset", "slottet"];
 
@@ -134,4 +135,48 @@ test("all ten runes: every station on the line cleared, from a fresh start or an
   const old = readProgress(JSON.stringify({ cleared: ["a", "b", "zz", 7], best: { a: 5 } }));
   expect(allRunes(old, order)).toBe(false);
   expect(allRunes(clearLevel(old, "c", 900, true).progress, order)).toBe(true);
+});
+
+describe("line 2 beside a save from line 1", () => {
+  // A save as the game writes it today (14 November 2026), from a visitor who has all ten runes of
+  // line 1, some bracteates, best times, skilling and clean marks.
+  const today = JSON.stringify({
+    v: 2,
+    cleared: ["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"],
+    best: { langkaia: 61600, akershus: 57400, radhuset: 77100, slottet: 61300, holmenkollen: 44100, akerselva: 65500, nordmarka: 60600, stortinget: 63000, ekeberg: 63000, nabolaget: 83200 },
+    bracteates: ["langkaia", "radhuset", "nordmarka"],
+    skilling: { langkaia: 60, nabolaget: 71 },
+    clean: ["slottet", "holmenkollen"]
+  });
+
+  test("a visitor with ten runes keeps everything, and line 2 is open for him at Bygdøy", () => {
+    const p = readProgress(today);
+    expect(writeProgress(p)).toBe(today);
+    expect(allRunes(p, LINE_1)).toBe(true);
+    expect(hasPole(p)).toBe(true);
+    expect(isOpen(p, ORDER16, LINE_2_AT)).toBe(true);
+    expect(isOpen(p, ORDER16, LINE_2_AT + 1)).toBe(false);
+    // On the map he arrives at Bygdøy, the furthest open station among the built ones.
+    expect(ORDER16[furthestOpen(p, ORDER16, 11)]).toBe("bygdoy");
+    expect(ORDER16[furthestOpen(p, ORDER16, 10)]).toBe("nabolaget");
+  });
+
+  test("line 2's runes are kept beside line 1's, and do not count towards the ten", () => {
+    let p = readProgress(today);
+    p = clearLevel(p, "bygdoy", 58000, true, { skilling: 50, clean: true }).progress;
+    const again = readProgress(writeProgress(p));
+    expect(again.cleared.slice(0, 10)).toEqual(LINE_1);
+    expect(again.cleared).toContain("bygdoy");
+    expect(again.best.nabolaget).toBe(83200);
+    expect(again.best.bygdoy).toBe(58000);
+    expect(again.bracteates).toEqual(["langkaia", "radhuset", "nordmarka", "bygdoy"]);
+    expect(allRunes(again, LINE_1)).toBe(true);
+    expect(allRunes(again, LINE_2)).toBe(false);
+    expect(isOpen(again, ORDER16, LINE_2_AT + 1)).toBe(true);
+  });
+
+  test("with nine runes of line 1, line 2 stays closed", () => {
+    const nine = readProgress(JSON.stringify({ ...JSON.parse(today), cleared: LINE_1.slice(0, 9) }));
+    expect(isOpen(nine, ORDER16, LINE_2_AT)).toBe(false);
+  });
 });
