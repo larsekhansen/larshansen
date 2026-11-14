@@ -23,9 +23,10 @@ current: when something here stops being true, change it in the same commit.
 **About `LEVELS.html`.** It began as the plan (13 November) and was rewritten on 14 November to
 describe the game as built: real screenshots (`shots/`), column counts, clear times, enemies and
 rules read from the levels and their tests, and a last section on where the build left the plan.
-The plan's hand-drawn sketches are in the file's git history. Its numbers are written into the
-page by hand, so update them when a level changes. The same page is published as a private
-artifact on Lars's claude.ai account.
+The plan's hand-drawn sketches are in the file's git history. Its numbers (columns, scripted clear,
+enemies, skilling, flags, benches) are written into the page's FACTS block by
+`bun tools/facts.ts` in `apps/viking`: run it when a level changes. The words are by hand. The same
+page is published as a private artifact on Lars's claude.ai account.
 
 ## What exists
 
@@ -55,7 +56,8 @@ artifact on Lars's claude.ai account.
 | 2026-11-13 | Lars: make the games share style, art and physics; make the viking game ten levels on the theme "Oslo, and me"; make the maze much better and a bonus level without its music; keep the original. Plan page, orders 7 to 9, the level kit, the line map, three short levels, the maze bonus | `LEVELS.html`, `orders/07` to `09`, PR #49 |
 | 2026-11-13 to 14 | Lars: build levels 4 to 10; each as good and long as a Mario level; enemies, lives, pits; a splash of Hollow Knight; "be a game designer, plan out something amazing; remember the pixel style from the front page". Order 10 in four batches | `orders/10`, PRs #50 (A: levels 4, 5), #51 (B: 6, 7), #52 (C: 8, 9, 10, ending), #53 (D: 1 to 3 lengthened) |
 | 2026-11-14 | Lars gives the personal details: the school banner, home, Kruttverket. This handover and the decision records | branch `personal-touches` |
-| 2026-11-14 | An adversarial review plays every level with a sloppy scripted player (`reviews/2026-11-14-adversarial.md`); order 12 fixes what it found about rules, fairness, pacing, the joins and the engineering | `orders/12-make-it-fair.md`, branch `make-it-fair` |
+| 2026-11-14 | An adversarial review plays every level with a sloppy scripted player (`reviews/2026-11-14-adversarial.md`); order 12 fixes what it found about rules, fairness, pacing, the joins and the engineering | `orders/12-make-it-fair.md`, branch `make-it-fair`, PR #57 |
+| 2026-11-14 | Order 13, the last planned: the look (flat areas, trams, the banner, the night, upright phones, the bosses' bubbles), every line of text read again, and the last unfair places by the sloppy player's numbers | `orders/13-look-and-words.md`, branch `look-and-words` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`
@@ -114,14 +116,15 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
 - **The sloppy player and the review's other tools** (`apps/viking/tools/review/`, with a README):
   each route with a person's timing laid over every key (±2, ±4, ±8 steps), every jump on its own,
   naive strategies against the bosses, the worst wait on arrival at every wait. Not part of
-  `bun test`. `before/` and `after/` hold the numbers from the review and after order 12;
-  `./runall.sh` reruns the study in about 13 minutes. The review itself is
+  `bun test`. `before/`, `after/` and `after13/` hold the numbers from the review, after order 12
+  and after order 13; `./runall.sh` reruns the study in about 20 minutes. The review itself is
   [`reviews/2026-11-14-adversarial.md`](reviews/2026-11-14-adversarial.md). Remember what the
   sloppy player is: the route's plan with a person's timing. It never finds a better line, and
   "off route" and "gave up" mostly mean it fell somewhere the route never goes.
 - **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame;
   `?debug&auto&steps=N` plays the scripted route in the page; `bun tools/shots.ts <dir> <url>…`
-  takes the pictures with headless Firefox.
+  takes the pictures with headless Firefox (`--size=390x844` for an upright phone; `--wait=5000`
+  for a built page under `?debug&auto`, which fetches after the load event the picture is taken at).
 - **The front page gate**: 28 reference screenshots of the front page, taken before any of this
   work. After every kit change they must be byte-identical (`cmp`). The references live in
   `/tmp/shots-before` with addresses in `/tmp/shots-urls.txt` (the `:5180` lines); `/tmp` does

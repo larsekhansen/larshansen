@@ -1,7 +1,8 @@
 # 0019. On an upright phone the viking view stays 240 art pixels wide
 
 Decided 2026-11-14 by the order 12 implementer, on the planner's order (order 12, item 21), after
-the adversarial review (D2).
+the adversarial review (D2). Adjusted by [0021](0021-the-upright-view-stands-him-two-thirds-down.md):
+where he stands in that tall view, and what goes on round him.
 
 ## Context
 The kit zooms in on tall screens so the front page's street fills an upright phone. In the viking

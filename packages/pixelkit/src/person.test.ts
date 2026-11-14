@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { createBody } from "./physics";
 import { helmetPixels, playerPixels, type Look } from "./person";
 
-function draw(look?: Look, walk = 0, facing = 1) {
+function draw(look?: Look, walk = 0, facing: 1 | -1 = 1) {
   const b = createBody(0, 20);
   b.facing = facing;
   b.onGround = true;
@@ -13,7 +13,7 @@ function draw(look?: Look, walk = 0, facing = 1) {
 const same = (a: Map<string, string>, b: Map<string, string>) => expect([...a].sort()).toEqual([...b].sort());
 
 describe("the outfit moment", () => {
-  for (const facing of [1, -1])
+  for (const facing of [1, -1] as const)
     test(`the helmet at offset 0 and all four cape rows is the viking outfit (facing ${facing})`, () => {
       same(draw({ outfit: "viking", helmetOffset: 0, capeRows: 4 }, 0, facing), draw({ outfit: "viking" }, 0, facing));
     });

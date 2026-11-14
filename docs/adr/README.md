@@ -28,8 +28,11 @@ Lars before reversing one of his.
 | [0016](0016-two-languages-dry-voice.md) | Norwegian and English, in a dry voice | earlier work, kept | holds |
 | [0017](0017-game-over-at-a-boss.md) | Game over at a boss goes on from its bench, three lives, the boss whole again | planner (order 12) | holds; adjusts 0008 |
 | [0018](0018-the-blinking-fall-and-the-visit.md) | A fall while blinking is free; a visit remembers the cheese and paid skilling | planner (order 12) | holds; adjusts 0008 |
-| [0019](0019-the-view-on-an-upright-phone.md) | On an upright phone the viking view stays 240 art px wide | planner (order 12) | holds |
+| [0019](0019-the-view-on-an-upright-phone.md) | On an upright phone the viking view stays 240 art px wide | planner (order 12) | holds; adjusted by 0021 |
 | [0020](0020-waiting-is-not-length.md) | The scripted clear's floor is 40 s (80 s), now that waits are cut | planner (order 12) | holds; adjusts 0009's measure |
+| [0021](0021-the-upright-view-stands-him-two-thirds-down.md) | On an upright screen he stands two thirds down; the ground goes on under him, the far layers sit behind the street | planner (order 13) | holds; adjusts 0019 |
+| [0022](0022-the-plough-hurts-only-while-it-moves.md) | The plough hurts only while it moves; standing still it is in his way; running into him shows the round's hint | planner (order 13) | holds |
+| [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".
