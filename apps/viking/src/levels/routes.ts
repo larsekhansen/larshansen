@@ -13,3 +13,4 @@ export { NORDMARKA_ROUTE } from "./routes/nordmarka";
 export { STORTINGET_ROUTE } from "./routes/stortinget";
 export { EKEBERG_ROUTE } from "./routes/ekeberg";
 export { NABOLAGET_ROUTE } from "./routes/nabolaget";
+export { BYGDOY_ROUTE } from "./routes/bygdoy";

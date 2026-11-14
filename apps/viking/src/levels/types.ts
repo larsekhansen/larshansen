@@ -3,7 +3,7 @@ import type { Flag } from "@larshansen/pixelkit/checkpoint";
 import type { Light } from "@larshansen/pixelkit/dark";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import type { Surface as Footing } from "@larshansen/pixelkit/surface";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import type { Enemy, EnemyDef, Shot } from "../game/enemies";
 import type { Door } from "@larshansen/pixelkit/doors";
 import type { Sky, SkyName } from "@larshansen/pixelkit/oslo";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
@@ -136,6 +136,8 @@ export interface Art {
   cannon?(i: number, l: Launcher, loadedAt: number, firedAt: number, v: View): void;
   /** Draws enemy `i` (its look), when the level has its own drawing for it. */
   enemy?(e: Enemy, v: View): boolean;
+  /** Draws something thrown, when the level has its own drawing for it (a slinger's stone). */
+  shot?(s: Shot, v: View): boolean;
   /** The flourish after the rune, `age` steps in: lights coming on, a flag going up. */
   flourish?(age: number, v: View): void;
   /** Draws flag `i` its own way (a blue-painted trunk) and says so; false leaves it to the kit's flagpole. */

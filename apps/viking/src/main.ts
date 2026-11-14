@@ -165,6 +165,8 @@ const loadShield = () =>
 /** The levels from Bygdøy on, where the shield is given (Bygdøy) or always his (after it). */
 const shieldFrom = () => ORDER.indexOf("bygdoy");
 const wantsShield = (id: string) => abilities.shield || (id !== "kart" && ORDER.indexOf(id) >= shieldFrom());
+// A stepped page is photographed once its files are in: the shield's comes alongside the level's.
+if (debug && wantsShield(params.get("level") ?? location.hash.slice(1))) void loadShield().catch(() => undefined);
 readFeather();
 /** The gold helmet: all ten runes, now or in the old game (`viking.crowned`, kept by those who earned it). */
 const CROWNED = "viking.crowned";
@@ -312,7 +314,12 @@ function openScene(id: string, at?: string) {
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
-  if (scene.map) for (const [i, l] of LINE.entries()) if (l.built && isOpen(progress, ORDER, i)) void loadLevel(l.id).catch(() => undefined);
+  if (scene.map)
+    for (const [i, l] of LINE.entries())
+      if (l.built && isOpen(progress, ORDER, i)) {
+        void loadLevel(l.id).catch(() => undefined);
+        if (wantsShield(l.id)) void loadShield().catch(() => undefined);
+      }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -962,7 +969,8 @@ function react(ev: Events) {
     sfx.play("flag");
     say(t.flagAnnounce);
   }
-  if (ev.bell !== null) sfx.play("bell", p.def.timed[ev.bell].note ?? ev.bell);
+  // A ledge on a beat rings its bell when he lands on it; one with no note (an oar) does not.
+  if (ev.bell !== null && (p.def.timed[ev.bell].note ?? 0) >= 0) sfx.play("bell", p.def.timed[ev.bell].note ?? ev.bell);
   if (ev.bleat) sfx.play("bleat");
   if (ev.drum !== null) sfx.play("stomp");
   if (ev.coin !== null) {
@@ -1264,7 +1272,7 @@ function drawThings(v: View) {
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
   for (const e of p.enemies) if (!art.enemy?.(e, v)) drawEnemy(e, p.t);
-  for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
+  for (const s of p.shots) art.shot?.(s, v) || drawShot(s, p.enemies[s.by]?.def.look);
   if (p.troll) art.troll?.(p.troll, v);
   if (p.boss) art.boss?.(p.boss.state, v);
   if (p.bracteate && p.bracteateAt === null) {
@@ -1301,7 +1309,7 @@ function afterDark(v: View) {
   const street = ctx();
   const enemies = () => {
     for (const e of p.enemies) if (e.alive && !art.enemy?.(e, v)) drawEnemy(e, p.t);
-    for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
+    for (const s of p.shots) art.shot?.(s, v) || drawShot(s, p.enemies[s.by]?.def.look);
   };
   if (rimCanvas.width !== view.w || rimCanvas.height !== view.h) {
     rimCanvas.width = view.w;

@@ -6,11 +6,12 @@ import { defineConfig } from "vite";
 // fetch. The last three levels' own swatches, and the bosses' rules, go with their level. The
 // scripted routes (for `?debug&auto`) and the scripted player are files of their own, fetched
 // only under `?debug&auto`; what only `?debug` needs is one more. The maze splits as it likes.
-const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget)\.ts$/;
+const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget|bygdoy)\.ts$/;
 const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 // A level's own swatches and its boss come with it: they are imported by that level alone.
-const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "game/plough": "nabolaget", "game/troll": "nordmarka" };
-const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|game\/plough|game\/troll)\.ts$/;
+// Line 2's kit pieces (the rocking deck, the sinking pad, the oars) come with Bygdøy, the first to use them.
+const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "game/plough": "nabolaget", "game/troll": "nordmarka", deck: "bygdoy", sink: "bygdoy", oars: "bygdoy" };
+const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|game\/plough|game\/troll|deck|sink|oars)\.ts$/;
 
 export default defineConfig({
   base: "/viking/",
