@@ -6,7 +6,8 @@ import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, P
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
-import type { EnemyDef } from "../game/enemies";
+import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
+import type { Enemy, EnemyDef } from "../game/enemies";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
@@ -42,7 +43,7 @@ const SLOPES = [b.slope(33, 26, 41, 25, "U"), b.slope(75, 25, 87, 23, "U"), b.sl
 // Spikersuppa, two tiles deep.
 b.fill(52, 58, 25, 26, "~");
 // The roadworks: two digs with no bottom.
-const DIG1 = [96, 100] as const;
+const DIG1 = [95, 101] as const;
 const DIG2 = [116, 121] as const;
 b.fill(DIG1[0], DIG1[1], 23, ROWS - 1, ".");
 b.fill(DIG2[0], DIG2[1], 23, ROWS - 1, ".");
@@ -153,16 +154,24 @@ function bannerRow(c0: number, c1: number, row: number, ride: number, n: number,
 const BANNERS_A = bannerRow(17, 31, 26, RIDE, 2, 60);
 /** Over Spikersuppa. */
 const BANNERS_B = bannerRow(46, 61, 25, RIDE, 3, 40);
-/** Over the first dig. */
-const BANNERS_C = bannerRow(90, 103, 23, RIDE, 2, 40);
+/**
+ * Over the first dig, the balloon sellers: two bunches, a crate under each, let up into the sky and
+ * hauled down again, out of step. Ledges on a beat: there two seconds and a bit, a second of tugging
+ * at their strings, gone almost two.
+ */
+export const BALLOONS: TimedLedge[] = [
+  { x: 96 * TILE + 2, y: 23 * TILE - 16, w: 22, on: 120, warn: 50, off: 120, offset: 0 },
+  { x: 98 * TILE + 8, y: 23 * TILE - 28, w: 22, on: 120, warn: 50, off: 120, offset: -50 },
+  { x: 100 * TILE + 14, y: 23 * TILE - 16, w: 22, on: 120, warn: 50, off: 120, offset: -100 }
+];
 /** The big banners, on tall poles, over the second dig: only the drum reaches them. The first is Høyenhall skole's. */
 const BANNERS_D = bannerRow(106, 123, 23, 86, 2, 30, 0.8);
 /** The King's Guard: three in step, back and forth across the square; their hats are the ledge. */
 export const GUARD: Travel = { kind: "travel", from: { x: 199 * TILE, y: 19 * TILE - 22 }, to: { x: 209 * TILE, y: 19 * TILE - 22 }, w: 3 * TILE, period: 480 };
-export const BANNERS = { A: BANNERS_A, B: BANNERS_B, C: BANNERS_C, D: BANNERS_D };
-const CARRIERS: CarrierDef[] = [...BANNERS_A, ...BANNERS_B, ...BANNERS_C, ...BANNERS_D, GUARD];
+export const BANNERS = { A: BANNERS_A, B: BANNERS_B, D: BANNERS_D };
+const CARRIERS: CarrierDef[] = [...BANNERS_A, ...BANNERS_B, ...BANNERS_D, GUARD];
 const GUARD_INDEX = CARRIERS.length - 1;
-const SCHOOL = BANNERS_A.length + BANNERS_B.length + BANNERS_C.length;
+const SCHOOL = BANNERS_A.length + BANNERS_B.length;
 
 // ---------------------------------------------------------------------------------------------
 // Pigeons on the ground, gulls in the air, and one e-scooter that rides itself.
@@ -172,11 +181,10 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "pigeon", c: 27, r: 25, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 64, r: 22, range: 2, rise: 8, period: 150 },
   { kind: "walker", look: "pigeon", c: 80, r: 23, range: 2 },
-  { kind: "walker", look: "pigeon", c: 94, r: 22, range: 1, dir: -1 },
-  { kind: "flyer", look: "gull", c: 98, r: 18, range: 2, rise: 6, period: 170, offset: 40 },
+  { kind: "flyer", look: "gull", c: 98, r: 15, range: 2, rise: 6, period: 170, offset: 40 },
   { kind: "walker", look: "pigeon", c: 112, r: 22, range: 2 },
   { kind: "flyer", look: "gull", c: 119, r: 14, range: 3, rise: 8, period: 160 },
-  { kind: "walker", look: "scooter", c: 129, r: 22, range: 2, speed: 1, w: 14, h: 12 },
+  { kind: "walker", look: "hotdog", c: 128, r: 22, range: 2, speed: 0.4, w: 18, h: 14 },
   { kind: "walker", look: "pigeon", c: 160, r: 21, range: 2 },
   { kind: "walker", look: "pigeon", c: 172, r: 21, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 175, r: 18, range: 3, rise: 8, period: 150, offset: 70 },
@@ -195,6 +203,58 @@ function wallFlag(x: number, y: number, t: number) {
   R(x - 3, y, 4, 1, METAL.flagpole);
   flagCloth(x, y + 1);
   if (!view.reduced && Math.floor(t / 14 + x) % 2) R(x + 12, y + 2, 1, 7, FLAG.red);
+}
+
+/** A bunch of balloons over a crate (the ledge): tugging at their strings as they are about to go, then up and away out of sight; let down again. */
+function balloons(i: number, t: number) {
+  const l = BALLOONS[i];
+  const phase = timedPhase(t, l);
+  // Where its rope is made fast, so the eye knows where it comes back.
+  R(l.x + l.w / 2, 23 * TILE - 2, 1, 2, PARADE.pole);
+  if (phase === "off") return;
+  const tug = phase === "warn" && !view.reduced ? (Math.floor(t / 5) % 2 ? -1 : 0) : 0;
+  const y = l.y + tug;
+  // The crate he stands on.
+  R(l.x, y, l.w, 6, P.wood);
+  R(l.x, y, l.w, 1, mix(P.wood, WHITE, 0.3));
+  R(l.x, y + 5, l.w, 1, P.woodDark);
+  for (let x = l.x + 6; x < l.x + l.w - 2; x += 7) R(x, y + 1, 1, 4, P.woodDark);
+  // The strings, and the balloons in the flag's colours.
+  const colors = [PARADE.balloonRed, PARADE.balloonWhite, PARADE.balloonBlue];
+  colors.forEach((c, k) => {
+    const bx = l.x + 3 + k * 7;
+    const top = y - 30 + (k % 2) * 5;
+    R(bx + 2, top + 7, 1, y - top - 7, mix(WHITE, INK, 0.3));
+    R(bx, top + 1, 6, 5, c);
+    R(bx + 1, top, 4, 7, c);
+    R(bx + 1, top + 1, 1, 2, WHITE);
+  });
+  // About to go: the warning blink every ledge on a beat has.
+  if (phase === "warn" && Math.floor(t / 8) % 2 === 0) {
+    R(l.x - 2, y - 2, l.w + 4, 1, WHITE);
+    R(l.x - 2, y + 7, l.w + 4, 1, WHITE);
+  }
+}
+
+/** The hot-dog cart, pushed along the street on 17 May: a striped awning, the steamer, two wheels. */
+function hotdogCart(e: Enemy, t: number) {
+  if (!e.alive) return;
+  const x = Math.round(e.x - e.w / 2);
+  const y = Math.round(e.y);
+  R(x, y - 10, e.w, 7, PARADE.blouse);
+  R(x, y - 10, e.w, 1, mix(PARADE.blouse, INK, 0.2));
+  R(x + 2, y - 8, 7, 3, METAL.pipe);
+  R(x + 11, y - 8, 5, 2, PARADE.drumShell);
+  for (let k = 0; k < e.w; k += 4) R(x + k, y - 14, 2, 3, PARADE.balloonRed);
+  for (let k = 2; k < e.w; k += 4) R(x + k, y - 14, 2, 3, WHITE);
+  R(x + 1, y - 11, 1, 1, P.woodDark);
+  R(x + e.w - 2, y - 11, 1, 1, P.woodDark);
+  const roll = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
+  for (const wx of [x + 3, x + e.w - 6]) {
+    R(wx, y - 3, 4, 3, INK);
+    R(wx + 1 + roll, y - 2, 1, 1, METAL.pipe);
+  }
+  void t;
 }
 
 /** A row of windows in a facade, lit after dark, with a sill under each. */
@@ -748,7 +808,7 @@ export const SLOTTET: LevelDef = {
   legend: { solid: "#UP", oneWay: "=_:-", water: "~" },
   ramps: SLOPES,
   carriers: CARRIERS,
-  timed: [],
+  timed: BALLOONS,
   cannons: [],
   enemies: ENEMIES,
   drum: 7,
@@ -837,6 +897,12 @@ export const SLOTTET: LevelDef = {
     carrier(i, at, v) {
       if (i === GUARD_INDEX) guards(at, v.t);
       else drawBanner(i, at, v.t);
+    },
+    timed: (i, v) => balloons(i, v.t),
+    enemy(e, v) {
+      if (e.def.look !== "hotdog") return false;
+      hotdogCart(e, v.t);
+      return true;
     },
     flourish: (age) => flourish(age)
   }

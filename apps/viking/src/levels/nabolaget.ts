@@ -103,8 +103,9 @@ b.ground(152, 155, S);
 b.fill(156, 158, S, S + 1, "v");
 b.ground(156, 158, S + 2);
 b.ground(159, 206, S);
-b.fill(207, 209, S, S + 1, "v");
-b.ground(207, 209, S + 2);
+// The last slot is two tiles: the last jump of the game is not its hardest.
+b.fill(207, 208, S, S + 1, "v");
+b.ground(207, 208, S + 2);
 b.ground(210, COLS - 1, S);
 // A crate up to the house's terrace, the terrace he waits on, a bank of snow by the washing line.
 b.put(167, S - 1, "W").put(174, S - 1, "W");
@@ -208,15 +209,14 @@ export const TERRACE = { right: 174 * TILE, top: (S - 3) * TILE };
  * roof; a fox and an owl in the lane behind the church.
  */
 export const ENEMIES: EnemyDef[] = [
-  { kind: "walker", look: "cat", c: 30, r: 10, range: 1, w: 12 },
-  { kind: "flyer", look: "crow", c: 35, r: 7, range: 2, rise: 8, period: 160 },
+  { kind: "flyer", look: "crow", c: 35, r: 5, range: 2, rise: 8, period: 160 },
   { kind: "thrower", look: "kid", c: 52, r: 7, period: 210 },
-  { kind: "walker", look: "cat", c: 58, r: 9, range: 1, w: 12 },
   { kind: "flyer", look: "crow", c: 72, r: 6, range: 3, rise: 6, period: 170, offset: 60 },
   { kind: "walker", look: "cat", c: 153, r: S - 1, range: 1, w: 12 },
   { kind: "walker", look: "fox", c: 90, r: S - 1, range: 2, w: 12 },
   { kind: "flyer", look: "owl", c: 96, r: 13, range: 2, rise: 6, period: 170 },
-  { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 }
+  { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 },
+  { kind: "walker", look: "cat", c: 104, r: S - 1, range: 1, w: 12 }
 ];
 
 export const NABOLAGET_RULES = { COLS, ROWS, CARRIERS };
@@ -766,11 +766,11 @@ function street(v: View, p: Plough | null) {
     R(l.x0 + 20, g - 3, 8, 3, WINTER.sheet);
   }
   // The tram's slots in the street: dark, with rails going down.
-  for (const c of [156, 207]) {
-    R(c * TILE, g, 3 * TILE, 2 * TILE, mix(INK, GROUND.cobbleFill, 0.3));
-    for (let k = 0; k < 3 * TILE; k += 5) R(c * TILE + k, g + 6 + (k % 3), 3, 1, METAL.rail);
+  for (const [c, n] of [[156, 3], [207, 2]]) {
+    R(c * TILE, g, n * TILE, 2 * TILE, mix(INK, GROUND.cobbleFill, 0.3));
+    for (let k = 0; k < n * TILE; k += 5) R(c * TILE + k, g + 6 + (k % 3), 3, 1, METAL.rail);
     R(c * TILE - 2, g, 2, 2 * TILE, GROUND.cobbleDot);
-    R((c + 3) * TILE, g, 2, 2 * TILE, GROUND.cobbleDot);
+    R((c + n) * TILE, g, 2, 2 * TILE, GROUND.cobbleDot);
   }
   home(v);
 }
@@ -1143,7 +1143,7 @@ function tram(at: { x: number; y: number }) {
   for (let dx = 0; dx < TRAM_W; dx++) {
     const wx = x + dx;
     const c = Math.floor(wx / TILE);
-    const clip = (c >= 156 && c <= 158) || (c >= 207 && c <= 209) ? g : g + 2;
+    const clip = (c >= 156 && c <= 158) || (c >= 207 && c <= 208) ? g : g + 2;
     const col = (yy: number, h: number, colour: string) => {
       const top = y + yy;
       const end = Math.min(top + h, clip);

@@ -236,8 +236,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "jumper", look: "trackrat", c: 80, r: P, rise: 30, period: 200 },
   { kind: "walker", look: "rat", c: 92, r: P - 1, range: 2 },
   { kind: "walker", look: "scooter", c: 139, r: P - 1, range: 2, w: 14, h: 12 },
-  { kind: "spiky", look: "umbrella", c: 144, r: P - 1, range: 1, w: 12, h: 9 },
-  { kind: "spiky", look: "umbrella", c: 148, r: P - 1, range: 1, w: 12, h: 9, dir: -1 },
+  { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9 },
   { kind: "jumper", look: "trackrat", c: 155, r: P, rise: 36, period: 180, offset: 90 },
   { kind: "walker", look: "rat", c: 244, r: U - 1, range: 1 },
   { kind: "jumper", look: "trackrat", c: 259, r: P, rise: 28, period: 190, offset: 40 }

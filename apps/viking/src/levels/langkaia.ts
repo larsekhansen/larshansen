@@ -76,7 +76,7 @@ b.run(212, 214, 5, "_");
 b.put(1, 8, "t").put(4, 8, "h").put(5, 8, "S").put(2, 4, "o");
 b.put(21, 15, "i").put(26, 15, "q").put(35, 15, "v").put(41, 15, "i");
 b.put(55, 14, "b").put(59, 15, "i").put(61, 15, "f");
-b.put(119, 15, "f").put(144, 15, "f").put(157, 7, "&");
+b.put(86, 15, "f").put(119, 15, "f").put(144, 15, "f").put(157, 7, "&");
 b.put(172, 15, "b").put(175, 15, "i").put(178, 15, "f");
 b.put(213, 2, "r");
 
@@ -124,14 +124,31 @@ const RAMP = { points: [[7 * TILE, 9 * TILE], [21 * TILE, WATER]] as [number, nu
 const DECK = WATER - 4;
 const ROOF = DECK - 20;
 const BOB = { rise: 3, period: 200 };
+/** A raft's deck: five tiles, so no gap from one to the next is more than two (it is level 1). */
+const RAFT_W = 5 * TILE;
 const raft = (x: number, offset: number): CarrierDef[] => [
-  { kind: "bob", x, y: DECK, w: 4 * TILE, rise: BOB.rise, period: BOB.period, offset },
+  { kind: "bob", x, y: DECK, w: RAFT_W, rise: BOB.rise, period: BOB.period, offset },
   { kind: "bob", x: x + TILE, y: ROOF, w: 2 * TILE, rise: BOB.rise, period: BOB.period, offset }
 ];
-const drift = (from: number, to: number, offset: number, period: number): CarrierDef[] => [
-  { kind: "travel", from: { x: from, y: DECK }, to: { x: to, y: DECK }, w: 4 * TILE, period, offset, bob: BOB },
-  { kind: "travel", from: { x: from + TILE, y: ROOF }, to: { x: to + TILE, y: ROOF }, w: 2 * TILE, period, offset, bob: BOB }
-];
+/** A raft that drifts across a gap and back at a walk, and waits a second and a half at each end. */
+const drift = (from: number, to: number, offset: number): CarrierDef[] =>
+  [0, 1].map((k) => ({
+    kind: "path",
+    points: [
+      { x: from + k * TILE, y: k ? ROOF : DECK },
+      { x: to + k * TILE, y: k ? ROOF : DECK },
+      { x: from + k * TILE, y: k ? ROOF : DECK }
+    ],
+    w: k ? 2 * TILE : RAFT_W,
+    speed: 0.4,
+    wait: 0,
+    offset,
+    stops: [
+      { at: 0, steps: 90 },
+      { at: 1, steps: 90 }
+    ],
+    bob: BOB
+  }));
 /**
  * The two rafts that drift towards each other: each waits at its own end, comes over at a steady
  * pace, and the two stand side by side in the middle for a second and a half before they part.
@@ -145,7 +162,7 @@ const meeting = (from: number, to: number): CarrierDef[] =>
       { x: to + k * TILE, y: k ? ROOF : DECK },
       { x: from + k * TILE, y: k ? ROOF : DECK }
     ],
-    w: (4 - 2 * k) * TILE,
+    w: k ? 2 * TILE : RAFT_W,
     speed: TOGETHER.speed,
     wait: 0,
     stops: [
@@ -157,12 +174,12 @@ const meeting = (from: number, to: number): CarrierDef[] =>
 export const RAFTS: CarrierDef[] = [
   ...raft(69 * TILE, 0),
   ...raft(75 * TILE, 70),
-  ...drift(91 * TILE, 95 * TILE, 140, 420),
-  ...meeting(124 * TILE, 128 * TILE),
+  ...drift(91 * TILE, 94 * TILE, 140),
+  ...meeting(123 * TILE, 127 * TILE),
   ...meeting(136 * TILE, 132 * TILE)
 ];
 /** The rowing boat between the quay and the longship: a small raft with no cabin. */
-export const BOAT: CarrierDef = { kind: "bob", x: 190 * TILE, y: DECK, w: 2 * TILE, rise: 2, period: 160, offset: 30 };
+export const BOAT: CarrierDef = { kind: "bob", x: 189 * TILE, y: DECK, w: 3 * TILE, rise: 2, period: 160, offset: 30 };
 const CARRIERS: CarrierDef[] = [...RAFTS, BOAT];
 const BOAT_INDEX = CARRIERS.length - 1;
 /** The rafts by name, as the scripted player looks for them: their decks. */
@@ -171,14 +188,13 @@ export const RAFT = { first: RAFTS[0], second: RAFTS[2], drift: RAFTS[4], meetA:
 // --- Enemies: a pigeon on its own on the quay, then gulls over the water, pigeons and a rat --------------
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "pigeon", c: 48, r: 15, range: 2 },
-  { kind: "flyer", look: "gull", c: 85, r: 13, range: 2, rise: 8, period: 160 },
   { kind: "walker", look: "pigeon", c: 107, r: 15, range: 2 },
-  { kind: "flyer", look: "gull", c: 131, r: 13, range: 2, rise: 6, period: 150 },
+  { kind: "flyer", look: "gull", c: 131, r: 12, range: 2, rise: 6, period: 150 },
   { kind: "walker", look: "rat", c: 150, r: 15, range: 2 },
   { kind: "flyer", look: "gull", c: 153, r: 11, range: 1, rise: 8, period: 170, offset: 40 },
-  { kind: "walker", look: "pigeon", c: 184, r: 15, range: 2 },
+  { kind: "walker", look: "pigeon", c: 224, r: 14, range: 2 },
   { kind: "walker", look: "pigeon", c: 205, r: 14, range: 2 },
-  { kind: "flyer", look: "gull", c: 219, r: 6, range: 1, rise: 4, period: 140 }
+  { kind: "flyer", look: "gull", c: 182, r: 12, range: 1, rise: 4, period: 140 }
 ];
 
 // --- Art ------------------------------------------------------------------------------------------------
@@ -190,9 +206,10 @@ const CONCRETE: LedgeLook = { body: FACADE.marbleWall, top: WHITE, edge: FACADE.
 
 /** A sauna raft: pontoons, a plank deck, and a tarred cabin with a warm window and a smoking stove pipe. */
 function saunaRaft(x: number, y: number, t: number) {
-  R(x + 3, y + 4, 4 * TILE - 6, 1, PAINT.tar);
-  R(x + 2, y + 5, 4 * TILE - 4, 2, mix(PAINT.tar, P.water, 0.5));
-  for (let i = 0; i < 4; i++) ledge(x + i * TILE, y, WOOD_LEDGE, i === 0, i === 3, false);
+  const n = RAFT_W / TILE;
+  R(x + 3, y + 4, RAFT_W - 6, 1, PAINT.tar);
+  R(x + 2, y + 5, RAFT_W - 4, 2, mix(PAINT.tar, P.water, 0.5));
+  for (let i = 0; i < n; i++) ledge(x + i * TILE, y, WOOD_LEDGE, i === 0, i === n - 1, false);
   // The cabin, between the deck and its roof.
   const cx = x + TILE;
   R(cx, y - 18, 2 * TILE, 18, PAINT.tar);
@@ -382,11 +399,12 @@ const SHIP = { x0: 192 * TILE + 8, x1: 229 * TILE + 8, deck: 15 * TILE, mast: MA
 /** The rowing boat: a varnished hull, its oars shipped. Its thwart is what he stands on. */
 function rowingBoat(at: { x: number; y: number }) {
   const { x, y } = at;
-  for (let i = 0; i < 6; i++) R(x - 2 + i, y + i, 2 * TILE + 4 - i * 2, 1, i < 1 ? mix(P.wood, WHITE, 0.3) : i % 2 ? P.woodDark : P.wood);
-  R(x + 2, y, 2 * TILE - 4, 2, P.wood);
+  const w = BOAT.w;
+  for (let i = 0; i < 6; i++) R(x - 2 + i, y + i, w + 4 - i * 2, 1, i < 1 ? mix(P.wood, WHITE, 0.3) : i % 2 ? P.woodDark : P.wood);
+  R(x + 2, y, w - 4, 2, P.wood);
   R(x + 4, y - 2, 1, 2, P.woodDark);
-  R(x + 2 * TILE - 5, y - 2, 1, 2, P.woodDark);
-  R(x + 3, y - 3, 2 * TILE - 6, 1, P.woodDark);
+  R(x + w - 5, y - 2, 1, 2, P.woodDark);
+  R(x + 3, y - 3, w - 6, 1, P.woodDark);
 }
 
 /** The lookout round the masthead: a ring of planks on brackets, its rail. The floor is the map's ledge. */

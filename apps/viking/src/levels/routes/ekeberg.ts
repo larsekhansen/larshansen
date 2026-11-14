@@ -71,6 +71,11 @@ export const EKEBERG_ROUTE: Move[] = [
       if (q.body.onGround && cx(q) < tile(142)) return { left: false, right: true, jumpHeld: s.i > 0, jumpPressed: q.body.x + PLAYER.w >= tile(142) - 2 };
       const next = q.sheep.find((sh) => sh.x > cx(q) + 2);
       const target = next ? next.x : tile(160);
+      // Down on a knoll's rock beside a sheep (a bounce that missed): up onto the next sheep again.
+      if (q.body.onGround) {
+        const aim = target - cx(q);
+        return { left: aim < -2, right: aim > 2, jumpHeld: true, jumpPressed: true };
+      }
       const aim = target - q.body.vx * 7 - cx(q);
       const dir = q.body.vy < 0 && next ? 1 : Math.abs(aim) > 2 ? Math.sign(aim) : 0;
       return { left: dir < 0, right: dir > 0, jumpHeld: true, jumpPressed: false };

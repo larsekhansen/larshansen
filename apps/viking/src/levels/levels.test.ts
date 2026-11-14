@@ -560,7 +560,7 @@ describe("what the levels promise", () => {
     let together = 0;
     let longest = 0;
     for (let t = 0; t < 2000; t++) {
-      const gap = carrierAt(RAFT.meetB, t).x - (carrierAt(RAFT.meetA, t).x + 4 * TILE);
+      const gap = carrierAt(RAFT.meetB, t).x - (carrierAt(RAFT.meetA, t).x + 5 * TILE);
       together = gap <= 1 ? together + 1 : 0;
       longest = Math.max(longest, together);
     }

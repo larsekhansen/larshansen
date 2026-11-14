@@ -11,7 +11,7 @@ import { HOIST } from "../akershus";
 
 export const AKERSHUS_ROUTE: Move[] = [
   walk(tile(19) + 6),
-  stomp(0),
+  stomp(1),
   walk(mid(28) + 4),
   jump(0),
   jump(0),

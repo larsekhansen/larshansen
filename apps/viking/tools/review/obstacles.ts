@@ -53,6 +53,7 @@ for (const [id, def, moves] of LEVELS) {
       }
       row[`k${k}`] = ok / seeds;
       row[`fall${k}`] = falls / seeds;
+      row[`hearts${k}`] = hearts / seeds;
     }
     all.push(row);
   }
@@ -60,6 +61,6 @@ for (const [id, def, moves] of LEVELS) {
   const prod = (k: number) => rows.reduce((a, r) => a * r[`k${k}`], 1);
   console.log(`${id}: ${rows.length} jumps and rides; all made without a heart lost: ${ks.map((k) => `k=${k} ${(100 * prod(k)).toFixed(1)}%`).join(", ")}; expected hearts lost on the jumps: ${ks.map((k) => `k=${k} ${rows.reduce((a, r) => a + 1 - r[`k${k}`], 0).toFixed(1)}`).join(", ")}`);
   for (const r of [...rows].sort((a, b) => a[`k${ks[ks.length - 1]}`] - b[`k${ks[ks.length - 1]}`]).slice(0, 6))
-    console.log(`   col ${r.col}->${r.endCol} ${r.name.slice(0, 50).padEnd(50)} ${ks.map((k) => `k${k}: ${(100 * (1 - r[`k${k}`])).toFixed(0)}% cost a heart (${(100 * r[`fall${k}`]).toFixed(0)}% a fall)`).join("; ")}`);
+    console.log(`   col ${r.col}->${r.endCol} ${r.name.slice(0, 50).padEnd(50)} ${ks.map((k) => `k${k}: ${(100 * (1 - r[`k${k}`])).toFixed(0)}% not made cleanly (${(100 * r[`fall${k}`]).toFixed(0)}% a fall, ${r[`hearts${k}`].toFixed(2)} hearts a try)`).join("; ")}`);
 }
 await Bun.write(`out/obstacles-${ids.length === 1 ? ids[0] : "all"}.json`, JSON.stringify(all));

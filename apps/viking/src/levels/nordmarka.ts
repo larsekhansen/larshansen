@@ -133,7 +133,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "spiky", look: "hedgehog", c: 25, r: G - 1, range: 2 },
   { kind: "walker", look: "fox", c: 42, r: G - 1, range: 3, w: 12 },
   { kind: "flyer", look: "owl", c: 56, r: 13, range: 2, rise: 6, period: 170 },
-  { kind: "spiky", look: "hedgehog", c: 68, r: G - 1, range: 1 },
+  { kind: "spiky", look: "hedgehog", c: 133, r: G - 1, range: 1 },
   { kind: "walker", look: "fox", c: 107, r: G - 1, range: 2, w: 12 },
   { kind: "thrower", look: "squirrel", c: 111, r: G - 4, period: 200 },
   { kind: "flyer", look: "owl", c: 141, r: 13, range: 3, rise: 6, period: 180, offset: 50 },

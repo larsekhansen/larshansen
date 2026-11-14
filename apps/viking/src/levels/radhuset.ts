@@ -147,7 +147,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "thrower", look: "gull", c: 40, r: G - 1, period: 180 },
   { kind: "walker", look: "pigeon", c: 52, r: G - 1, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 85, r: G - 5, range: 3, rise: 6, period: 170 },
-  { kind: "walker", look: "scooter", c: 102, r: G - 1, range: 3, speed: 1, w: 14, h: 12 },
+  { kind: "walker", look: "scooter", c: 105, r: G - 1, range: 2, speed: 0.7, w: 14, h: 12 },
   { kind: "walker", look: "pigeon", c: 110, r: G - 1, range: 1 },
   { kind: "walker", look: "pigeon", c: 140, r: G - 1, range: 1 },
   { kind: "thrower", look: "gull", c: 146, r: G - 1, period: 200, offset: 60 },

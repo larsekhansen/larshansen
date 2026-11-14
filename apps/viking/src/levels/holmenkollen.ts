@@ -123,7 +123,7 @@ const INRUN: Ramp = {
 
 // Marks: the start, the door, signs, flags, benches, the cannon, the rune, the bracteate, the cheese.
 b.put(3, 8, "t").put(5, 8, "S").put(9, 8, "i").put(21, 6, "b");
-b.put(55, 9, "i").put(57, 9, "f").put(112, 13, "f").put(114, 13, "i").put(117, 13, "c");
+b.put(55, 9, "i").put(57, 9, "f").put(95, 13, "f").put(112, 13, "f").put(114, 13, "i").put(117, 13, "c");
 b.put(136, 14, "f").put(152, 15, "f").put(171, 15, "i").put(173, 15, "f").put(J + 16, 15, "f").put(J + 19, 15, "b");
 b.put(J + 51, 19, "r").put(J + 18, 8, "o").put(34, 12, "&");
 
@@ -181,16 +181,18 @@ export const CHAIRS: Travel[] = [{ kind: "travel", from: { x: 139 * TILE, y: CHA
 /** The lift up the tower: from the hollow under the jump to the hut's floor. */
 export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 0.6, wait: 150 };
 const CARRIERS: CarrierDef[] = [...CHAIRS, LIFT];
-/** Slabs of ice over the third gully: there two and a half seconds, cracking for one, sunk for two and a half; each a little after the one before. */
-export const SLABS: TimedLedge[] = [158, 161, 164, 167].map((c, k) => ({ x: c * TILE, y: 16 * TILE, w: 2 * TILE, on: 150, warn: 60, off: 150, offset: -70 * k }));
+/**
+ * Slabs of ice over the third gully, three tiles each with a tile of water between: there three
+ * seconds, cracking for one, sunk for two; each half a second after the one before, so a wave of
+ * them stands to be walked across, and one going under can be seen coming.
+ */
+export const SLABS: TimedLedge[] = [158, 162, 166].map((c, k) => ({ x: c * TILE, y: 16 * TILE, w: 3 * TILE, on: 180, warn: 60, off: 120, offset: -30 * k }));
 
 export const ENEMIES: EnemyDef[] = [
   { kind: "thrower", look: "kid", c: 33, r: 8, period: 180 },
   { kind: "flyer", look: "crow", c: 47, r: 6, range: 3, rise: 6, period: 170 },
-  { kind: "spiky", look: "hedgehog", c: 62, r: 9, range: 1 },
-  { kind: "spiky", look: "hedgehog", c: 87, r: 12, range: 2, dir: -1 },
-  { kind: "spiky", look: "grill", c: 94, r: 13, speed: 0, w: 12, h: 12 },
-  { kind: "thrower", look: "kid", c: 98, r: 13, period: 180, offset: 50 },
+  { kind: "walker", look: "fox", c: 62, r: 9, range: 1, w: 12 },
+  { kind: "walker", look: "fox", c: 87, r: 12, range: 2, dir: -1, w: 12 },
   { kind: "flyer", look: "crow", c: 145, r: 10, range: 3, rise: 6, period: 180 },
   { kind: "thrower", look: "kid", c: J + 22, r: 24, period: 190, offset: 120 },
   { kind: "spiky", look: "grill", c: J + 8, r: 24, speed: 0, w: 12, h: 12 },

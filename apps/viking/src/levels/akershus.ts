@@ -174,14 +174,14 @@ export const BATTERY = [4, 5, 6];
 
 // --- Enemies: a brazier on its own, guards on the walls, crows over the gaps, rats in the ward ------------
 export const ENEMIES: EnemyDef[] = [
+  { kind: "spiky", look: "brazier", c: 14, r: G - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 23, r: G - 1, range: 2, speed: 0.3, w: 10, h: 14 },
-  { kind: "spiky", look: "brazier", c: 35, r: RAMP - 1, speed: 0, w: 10, h: 12 },
   { kind: "flyer", look: "crow", c: 66, r: GATE - 3, range: 1, rise: 6, period: 150 },
   { kind: "walker", look: "guard", c: 77, r: GATE - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 82, r: GATE - 1, range: 1, speed: 0.3, w: 10, h: 14, dir: -1 },
   { kind: "walker", look: "rat", c: 103, r: G - 1, range: 3 },
   { kind: "walker", look: "guard", c: 110, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
-  { kind: "spiky", look: "brazier", c: 119, r: WALL - 1, speed: 0, w: 10, h: 12 },
+  { kind: "spiky", look: "brazier", c: 58, r: GATE - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "rat", c: 128, r: G - 1, range: 2 },
   { kind: "walker", look: "guard", c: 200, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
