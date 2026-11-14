@@ -82,7 +82,7 @@ export const RADHUSET_ROUTE: Move[] = [
   ...toBell(7, tile(184) - 6),
   ...toBell(8, tile(187) - 6),
   // The ninth bell and the swinging bell come together: onto the bell as the swing comes back this way.
-  wait("bell 9 there, the swinging bell coming back", (q) => steady(q, 9) && carrier(q, SWING).x >= 192 * TILE && carrier(q, SWING).x > carrierAt(SWING, q.t - 1).x),
+  wait("bell 9 there, the swinging bell coming back", (q) => steady(q, 9) && carrierAt(SWING, q.t + 40).x >= SWING_ENDS.right - 1),
   jumpTo(BELLS[9].x + TILE),
   walk(tile(193) - 6),
   wait("the swinging bell at this end", (q) => carrier(q, SWING).x >= SWING_ENDS.right - 1 && carrierAt(SWING, q.t + 20).x >= SWING_ENDS.right - 1),

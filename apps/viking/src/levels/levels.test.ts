@@ -98,11 +98,11 @@ const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkolle
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /**
- * The scripted clear's floor: forty-five seconds, the last level eighty. (It was sixty and ninety;
- * order 12 cut the long waits on rides and bosses, which took ten to fifteen seconds off some levels
- * without taking away anything to do. The size of a level is held by its columns, 220 to 280.)
+ * The scripted clear's floor: forty seconds, the last level eighty. (It was sixty and ninety; order 12
+ * cut the long waits on rides and bosses, which took ten to eighteen seconds off some levels without
+ * taking away anything to do. The size of a level is held by its columns, 220 to 280.)
  */
-const SHORTEST = 45;
+const SHORTEST = 40;
 const LONGEST: Record<string, number> = { nabolaget: 80 };
 
 describe("the line", () => {
@@ -157,7 +157,7 @@ for (const def of LEVELS) {
       }
     });
 
-    test("a scripted player clears it with one jump, raising every flag, losing no heart, in forty-five seconds or more", () => {
+    test("a scripted player clears it with one jump, raising every flag, losing no heart, in forty seconds or more", () => {
       const p = newPlay(def, { pole: POLE.has(def.id) });
       const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
@@ -301,7 +301,7 @@ describe("what the levels promise", () => {
     expect(feet(p)).toBeGreaterThan(LIP.y);
     const missed = p.t;
     // Back: up the hill, under the inrun to the lift, up in it, into the hut.
-    const back = playMoves(p, [walk(TOWER_LIFT.x - 8), wait("the lift at the bottom", (q) => carrier(q, TOWER_LIFT).y >= TOWER_LIFT.bottom), walk(TOWER_LIFT.x + 16), wait("the lift at the top", (q) => carrierAt(TOWER_LIFT, q.t).y <= TOWER_LIFT.top), walk(tile(210))], { max: 60 * 60, until: (q) => q.body.onGround && feet(q) === tile(16) && cx(q) > tile(208) });
+    const back = playMoves(p, [walk(TOWER_LIFT.x - 8), wait("the lift at the bottom", (q) => carrier(q, TOWER_LIFT).y >= TOWER_LIFT.bottom && carrierAt(TOWER_LIFT, q.t + 45).y >= TOWER_LIFT.bottom), walk(TOWER_LIFT.x + 16), wait("the lift at the top", (q) => carrierAt(TOWER_LIFT, q.t).y <= TOWER_LIFT.top), walk(tile(210))], { max: 60 * 60, until: (q) => q.body.onGround && feet(q) === tile(16) && cx(q) > tile(208) });
     expect(back.stuck).toBeNull();
     expect(feet(p)).toBe(tile(16));
     expect((p.t - missed) / 60).toBeLessThan(25);

@@ -3,7 +3,6 @@ import { stepBody, type Intent } from "@larshansen/pixelkit/physics";
 import { zonePush } from "@larshansen/pixelkit/zone";
 import { enemyBox } from "./enemies";
 import { extraGround, type Play } from "./play";
-import { trollHurts } from "./troll";
 
 // Walking to a clicked or tapped spot in a level, carefully: a click is a way to stroll, not to
 // play, so it never jumps, it stops at an edge rather than walk him off it into water or a pit (or
@@ -39,5 +38,5 @@ export function hurtsAhead(p: Play, dir: 1 | -1): boolean {
   const meets = (r: { x: number; y: number; w: number; h: number } | null) => !!r && r.x < reach.x + reach.w && r.x + r.w > reach.x && r.y < reach.y + reach.h && r.y + r.h > reach.y;
   if (p.enemies.some((e) => meets(enemyBox(e, p.t)))) return true;
   const ahead = { ...b, x: b.x + dir * 2 * TILE };
-  return !!(p.troll && trollHurts(p.troll, p.t, ahead)) || !!(p.boss && p.boss.rules.hurts(p.boss.state, p.t, ahead));
+  return !!(p.troll && p.def.trollRules?.hurts(p.troll, p.t, ahead)) || !!(p.boss && p.boss.rules.hurts(p.boss.state, p.t, ahead));
 }

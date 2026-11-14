@@ -7,7 +7,7 @@ Supersedes the column counts in `LEVELS.html` (110 to 190) and the three short l
 The measure every level is held to by `levels.test.ts` (order 10 rule 6):
 - 220 to 280 columns. (World 1-1 is about 210 tiles; this screen shows about 20.)
 - A scripted clear of at least 60 s (level 10: 90 s), reached by distance, not waits. (Since
-  order 12, 45 s and 80 s: the waits were cut; see [0020](0020-waiting-is-not-length.md).)
+  order 12, 40 s and 80 s: the waits were cut; see [0020](0020-waiting-is-not-length.md).)
 - Four sections: teach the new thing where it cannot fail, practise it over a small drop, twist
   it with something from an earlier level, end on a set piece with the rune.
 - Something to do on every screen.

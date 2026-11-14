@@ -1,5 +1,6 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Body } from "@larshansen/pixelkit/physics";
+import type { TrollRules } from "../levels/types";
 
 // The troll of Nordmarka: the boss at the end of level 7, as a small pure rule over the step count.
 //
@@ -224,3 +225,6 @@ export function trollHurts(t: Troll, step: number, him: Body): { fromX: number }
   for (const f of waveFronts(t, step)) if (over(f)) return { fromX: f.x + f.w / 2 };
   return null;
 }
+
+/** The troll's rules for its level's slot (`LevelDef.trollRules`): play.ts runs them through the level. */
+export const TROLL_RULES: TrollRules = { create: createTroll, reset: resetTroll, step: stepTroll, box: trollBox, hurts: trollHurts };

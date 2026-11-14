@@ -180,7 +180,7 @@ const CHAIR_Y = 15 * TILE - 6;
 const CHAIR_ROUND = 480;
 export const CHAIRS: Travel[] = [0, 1].map((k) => ({ kind: "travel", from: { x: 139 * TILE, y: CHAIR_Y }, to: { x: 149 * TILE, y: CHAIR_Y }, w: 2 * TILE, period: CHAIR_ROUND, offset: (k * CHAIR_ROUND) / 2 }));
 /** The lift up the tower: from the hollow under the jump to the hut's floor. */
-export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 1.5, wait: 60 };
+export const LIFT: Lift = { kind: "lift", x: (J + 13) * TILE, top: 16 * TILE, bottom: 25 * TILE, w: 2 * TILE, speed: 1.5, wait: 90 };
 const CARRIERS: CarrierDef[] = [...CHAIRS, LIFT];
 /**
  * Slabs of ice over the third gully, three tiles each with a tile of water between: there three

@@ -56,10 +56,9 @@ import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
-import { autopilot, type Move } from "./game/bot";
+import type { Move } from "./game/bot";
 import { strings } from "./game/i18n";
 import { carefulStep } from "./game/careful";
-import { TROLL } from "./game/troll";
 import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
@@ -106,26 +105,22 @@ const store = {
 
 const params = new URLSearchParams(location.search);
 const debug = params.has("debug");
-// Under ?debug an error shows on the help line, so a headless screenshot says what went wrong.
-if (debug)
-  for (const ev of ["error", "unhandledrejection"] as const)
-    window.addEventListener(ev, (e) => {
-      const reason = e instanceof ErrorEvent ? e.message : String((e as PromiseRejectionEvent).reason);
-      help.textContent = `Error: ${reason}`;
-      help.hidden = false;
-    });
+/** `?debug`'s own code (errors on the help line, pretended progress, `window.__game`), fetched only under `?debug`. */
+const debugging = debug ? import("./debug") : null;
+void debugging?.then((d) => d.showErrors(help));
+// A stepped page is photographed once its files are in; the level it names is fetched alongside the
+// debug code, not after it, so both are here in one round.
+if (debug) {
+  const named = params.get("level") ?? location.hash.slice(1);
+  if (named) void loadLevel(named).catch(() => undefined);
+}
 /** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
 const harness = readHarness(params);
 const now = () => harness?.now ?? new Date();
 
-/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it. */
-function debugProgress(): Progress | null {
-  if (!debug || (!params.has("cleared") && !params.has("gold") && !params.has("clean"))) return null;
-  const list = (k: string) => (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id));
-  return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
-}
-const pretend = debugProgress();
-let progress: Progress = pretend ?? readProgress(store.get(PROGRESS_KEY));
+/** Progress pretended under `?debug&cleared=...` (set at start, once the debug code is here): never stored. */
+let pretend: Progress | null = null;
+let progress: Progress = readProgress(store.get(PROGRESS_KEY));
 function saveProgress(p: Progress) {
   progress = p;
   if (!pretend) store.set(PROGRESS_KEY, writeProgress(p));
@@ -136,6 +131,15 @@ const input = createInput();
 const sfx = createSfx();
 wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 followReducedMotion();
+// `?debug&reduced`: reduced motion, for looking at it in a browser that cannot be asked for it.
+if (debug && params.has("reduced")) view.reduced = true;
+/** A level's file, fetched; `?debug&fetch=hang` (or `fail`) holds it back for ever (or fails it), to look at the board and the card. */
+const fetchLevel = (id: string) => {
+  const mode = debug ? params.get("fetch") : null;
+  if (mode === "hang") return new Promise<never>(() => undefined);
+  if (mode === "fail") return Promise.reject(new Error("held back by ?debug&fetch=fail"));
+  return loadLevel(id);
+};
 const touch = isTouch();
 /** The double jump is the raven's feather, from the maze; `?feather` gives it for checking. Read again on coming out of the mound. */
 const abilities = { doubleJump: false, gold: false, pole: false };
@@ -327,7 +331,7 @@ function sync() {
       state.fade = 1;
     }
     showFetching(want);
-    loadLevel(want).then(
+    fetchLevel(want).then(
       () => {
         if (fetching !== want) return;
         showFetching(null);
@@ -851,7 +855,7 @@ function bossSays(lines: string[], steps = BOSS_LINE_STEPS) {
 
 /** Where a boss's bubble points: over the troll's head, or the top of the last boss. */
 function bossTop(p: Play): { x: number; y: number } | null {
-  if (p.troll) return { x: p.troll.x, y: p.troll.def.floor - TROLL.h - 6 };
+  if (p.troll && p.def.trollRules) return { x: p.troll.x, y: p.def.trollRules.box(p.troll).y - 6 };
   if (p.boss) {
     const top = p.boss.rules.top(p.boss.state);
     return { x: top.x, y: top.y - 6 };
@@ -1450,6 +1454,11 @@ function still() {
 
 /** Where he arrives, the level's code if it is not here yet, and then the game runs. */
 async function start() {
+  if (debugging) {
+    pretend = (await debugging).debugProgress(params);
+    if (pretend) progress = pretend;
+    readFeather();
+  }
   const started = hasProgress(progress);
   const furthest = ORDER[furthestOpen(progress, ORDER, BUILT.length)];
   let first: string;
@@ -1475,12 +1484,13 @@ async function start() {
   }
   // The scripted routes for `?debug&auto` are fetched alongside the level, not after it, so a
   // stepped page has both before it steps.
-  const route = debug && params.has("auto") ? AUTO[first]?.().catch(() => null) ?? null : null;
+  // The scripted player itself comes with them, on demand: no visitor's first script carries it.
+  const route = debug && params.has("auto") ? Promise.all([AUTO[first]?.(), import("./game/bot")]).catch(() => null) : null;
   let failedAtStart: string | null = null;
   if (first !== "kart") {
     showFetching(first);
     try {
-      await loadLevel(first);
+      await fetchLevel(first);
     } catch {
       failedAtStart = first;
       first = "kart";
@@ -1488,11 +1498,11 @@ async function start() {
     }
     showFetching(null);
   }
-  const moves = await route;
+  const scripted = await route;
   openScene(first, firstAt);
   if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
   if (failedAtStart) showLoadFailed(failedAtStart);
-  if (moves && !scene.map) auto = autopilot(moves);
+  if (scripted?.[0] && !scene.map) auto = scripted[1].autopilot(scripted[0]);
 
   // The helmet moment: out of the Opera's door in level 1, or at a station on the map. In level 1 he
   // stands at the start, a step clear of the door he came out of, which closes behind him: so his
@@ -1528,9 +1538,9 @@ async function start() {
 }
 void start();
 
-if (debug)
-  Object.assign(window, {
-    __game: {
+if (debugging)
+  void debugging.then((d) =>
+    d.expose({
       get body() {
         return scene.play.body;
       },
@@ -1557,5 +1567,5 @@ if (debug)
       },
       progress: () => progress,
       fresh
-    }
-  });
+    })
+  );

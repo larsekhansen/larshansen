@@ -10,7 +10,7 @@ import { zonePush } from "@larshansen/pixelkit/zone";
 import { MARKS, type Boss, type LevelDef } from "../levels/types";
 import { KIND, createEnemies, enemyBox, shotBox, stepEnemies, type Enemy, type Shot } from "./enemies";
 import { SHEEP, createSheep, stepSheep, stomped, type Sheep } from "./sheep";
-import { TROLL, createTroll, resetTroll, stepTroll, trollBox, trollHurts, type Troll, type TrollEvent } from "./troll";
+import type { Troll, TrollEvent } from "./troll";
 
 // The rules of a level, as pure state and one step function: no page, no sound, no drawing. The
 // page plays it, and the tests play it with a scripted player, so both run exactly the same rules.
@@ -268,7 +268,7 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     dash: null,
     dashSpent: false,
     dashEnded: -999,
-    troll: def.troll ? createTroll(def.troll) : null,
+    troll: def.troll && def.trollRules ? def.trollRules.create(def.troll) : null,
     boss: def.boss ? { rules: def.boss, state: def.boss.create() } : null,
     overAtBoss: false
   };
@@ -280,8 +280,8 @@ export const overlaps = (b: Body, r: Box) => b.x < r.x + r.w && b.x + PLAYER.w >
 export function extraGround(p: Play, t = p.t): Carrier[] {
   const out = [...carriersNear(p.def.carriers, t, p.body), ...timedCarriers(p.def.timed, t)];
   // The troll turned to stone is a boulder he can stand on.
-  if (p.troll?.phase === "stone") {
-    const box = trollBox(p.troll);
+  if (p.troll?.phase === "stone" && p.def.trollRules) {
+    const box = p.def.trollRules.box(p.troll);
     out.push({ x: box.x, y: box.y, w: box.w, dx: 0, dy: 0 });
   }
   return out;
@@ -327,7 +327,7 @@ function loseLife(p: Play, ev: Events) {
   p.hearts = HEARTS;
   putBack(p, p.save ?? p.start);
   p.safeUntil = p.t + SAFE_STEPS;
-  if (p.troll) resetTroll(p.troll, p.t);
+  if (p.troll) p.def.trollRules?.reset(p.troll, p.t);
   if (p.boss) p.boss.rules.reset(p.boss.state, p.t);
 }
 
@@ -397,10 +397,11 @@ function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number
 /** The troll: it moves, it hurts, and the dawn hits it. Once it is stone the rune shows on top of it. */
 function meetTroll(p: Play, ev: Events) {
   const t = p.troll;
-  if (!t || p.run.state === "done") return;
-  ev.troll = stepTroll(t, p.t, p.body);
-  if (ev.troll === "stone" && p.rune) p.rune = { ...p.rune, x: t.x - p.rune.w / 2, y: t.def.floor - TROLL.h - p.rune.h - 4 };
-  const hurt = trollHurts(t, p.t, p.body);
+  const rules = p.def.trollRules;
+  if (!t || !rules || p.run.state === "done") return;
+  ev.troll = rules.step(t, p.t, p.body);
+  if (ev.troll === "stone" && p.rune) p.rune = { ...p.rune, x: t.x - p.rune.w / 2, y: rules.box(t).y - p.rune.h - 4 };
+  const hurt = rules.hurts(t, p.t, p.body);
   if (hurt) hit(p, ev, hurt.fromX);
 }
 
@@ -447,7 +448,7 @@ export function againAtBoss(p: Play) {
   p.lastGround = { ...bench };
   p.shots = [];
   p.safeUntil = p.t + SAFE_STEPS;
-  if (p.def.troll) p.troll = createTroll(p.def.troll);
+  if (p.def.troll && p.def.trollRules) p.troll = p.def.trollRules.create(p.def.troll);
   if (p.boss) p.boss.state = p.boss.rules.create();
 }
 

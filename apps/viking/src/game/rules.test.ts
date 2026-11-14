@@ -7,7 +7,7 @@ import { PLOUGH, PLOUGH_STEPS, lineHolds, ploughBoss, type Plough } from "./plou
 import { placeBody } from "@larshansen/pixelkit/physics";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { carefulStep } from "./careful";
-import { TROLL, TROLL_STEPS, WAVE, trollHurts, type TrollDef } from "./troll";
+import { TROLL, TROLL_RULES, TROLL_STEPS, WAVE, trollHurts, type TrollDef } from "./troll";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
 // cheese, the five kinds of enemy, the bass drum and the ski pole's dash. Each on a small made-up
@@ -35,6 +35,7 @@ function level(map: string[], extra: Partial<LevelDef> = {}): LevelDef {
     signs: [],
     doors: [],
     art: { back() {}, ground: () => ({ top: "", dot: "", fill: "" }), ledges: {} },
+    ...(extra.troll ? { trollRules: TROLL_RULES } : {}),
     ...extra
   };
 }

@@ -29,7 +29,7 @@ Lars before reversing one of his.
 | [0017](0017-game-over-at-a-boss.md) | Game over at a boss goes on from its bench, three lives, the boss whole again | planner (order 12) | holds; adjusts 0008 |
 | [0018](0018-the-blinking-fall-and-the-visit.md) | A fall while blinking is free; a visit remembers the cheese and paid skilling | planner (order 12) | holds; adjusts 0008 |
 | [0019](0019-the-view-on-an-upright-phone.md) | On an upright phone the viking view stays 240 art px wide | planner (order 12) | holds |
-| [0020](0020-waiting-is-not-length.md) | The scripted clear's floor is 45 s (80 s), now that waits are cut | planner (order 12) | holds; adjusts 0009's measure |
+| [0020](0020-waiting-is-not-length.md) | The scripted clear's floor is 40 s (80 s), now that waits are cut | planner (order 12) | holds; adjusts 0009's measure |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".
