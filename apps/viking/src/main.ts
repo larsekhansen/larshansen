@@ -3,7 +3,7 @@ import "./styles.css";
 import { aim, follow } from "@larshansen/pixelkit/camera";
 import { carrierDrawn, drawCarrier, rideShown } from "@larshansen/pixelkit/carrier";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
-import { drawDark, type Light, type Ring } from "@larshansen/pixelkit/dark";
+import { darkRow, darknessAt, drawDark, nightCutsOf, type Light, type Ring } from "@larshansen/pixelkit/dark";
 import { wireMute } from "@larshansen/pixelkit/chrome";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door, type DoorSpot } from "@larshansen/pixelkit/doors";
@@ -11,7 +11,7 @@ import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
-import { R, mix, target, view } from "@larshansen/pixelkit/paint";
+import { R, S, ctx, mix, target, view } from "@larshansen/pixelkit/paint";
 import { COIN, DUST, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body } from "@larshansen/pixelkit/physics";
@@ -1039,8 +1039,71 @@ function drawNight(v: View) {
   for (const bd of scene.boards) lights.push({ rect: { x: Math.round(bd.cx - bd.w / 2 - 1) - view.camX, y: bd.y - 1 - view.camY, w: bd.w + 2, h: 13 }, dark: 0.25 });
   for (const l of art.lights?.(v) ?? [])
     lights.push("rect" in l ? { rect: { ...l.rect, x: l.rect.x - view.camX, y: l.rect.y - view.camY }, dark: l.dark } : { x: l.x - view.camX, y: l.y - view.camY, rings: l.rings });
-  drawDark(lights, night, "4, 6, 18");
+  drawDark(lights, night, NIGHT);
+  lampOnlyLightsTheStreet(lights.slice(0, 2), lights.slice(2), night);
   art.overDark?.(v);
+}
+
+const NIGHT = "4, 6, 18";
+/** How deep into the soil under his feet the headlamp reaches: the ground's top edge, not a disc of earth. */
+const LAMP_SOIL = 6;
+
+/**
+ * The headlamp lights what stands in front of the backdrop: the street layer's things, the walls
+ * and the top edge of the ground. Where its disc falls on the sky or the far layers, or deeper than
+ * a few pixels into the soil below his feet, the night goes back to what it would be without the
+ * lamp. The street canvas is see-through where the backdrop shows, so the night is put back there
+ * underneath what is drawn (destination-over), and over the soil as usual.
+ */
+function lampOnlyLightsTheStreet(lamp: Light[], others: Light[], night: number[]) {
+  const map = scene.play.map;
+  const g = ctx();
+  const feet = shown.y + PLAYER.h;
+  const r0 = Math.floor(feet / TILE);
+  // The top of the soil in each column the lamp reaches: the first solid tile at or below his feet.
+  const soil = new Map<number, number>();
+  const soilTop = (x: number) => {
+    let top = soil.get(x);
+    if (top !== undefined) return top;
+    const wx = x + view.camX;
+    const c = Math.floor(wx / TILE);
+    top = Infinity;
+    for (let r = r0; r < map.rows; r++)
+      if (map.isSolid(c, r)) {
+        top = r * TILE;
+        break;
+      }
+    const ramp = map.rampAt(wx);
+    if (ramp !== null && ramp >= feet - TILE) top = Math.min(top, ramp);
+    top = top - view.camY + LAMP_SOIL;
+    soil.set(x, top);
+    return top;
+  };
+  const reach = Math.max(...lamp.map((l) => ("rings" in l ? Math.max(...l.rings.map((r) => r[0])) : 0)));
+  const ys = lamp.flatMap((l) => ("rings" in l ? [l.y] : []));
+  const cuts = nightCutsOf(night);
+  const all = [...lamp, ...others];
+  const fill = (x: number, y: number, w: number, a: number) => S(x, y, w, 1, `rgba(${NIGHT}, ${a})`);
+  for (let y = Math.max(0, Math.floor(Math.min(...ys) - reach)); y < Math.min(view.h, Math.ceil(Math.max(...ys) + reach)); y++)
+    for (const run of darkRow(y, view.w, all, night, cuts)) {
+      const without = darknessAt(run.x + run.w / 2, y + 0.5, night[Math.min(night.length - 1, run.x)] ?? 0, others);
+      if (without <= run.dark || run.dark >= 1) continue;
+      const a = (without - run.dark) / (1 - run.dark);
+      // The backdrop behind the street: only where nothing of the street is drawn.
+      g.globalCompositeOperation = "destination-over";
+      fill(run.x, y, run.w, a);
+      g.globalCompositeOperation = "source-over";
+      // The soil: from a few pixels under the ground's top down, column by column.
+      let from = -1;
+      for (let x = run.x; x <= run.x + run.w; x++) {
+        const deep = x < run.x + run.w && y >= soilTop(x);
+        if (deep && from < 0) from = x;
+        else if (!deep && from >= 0) {
+          fill(from, y, x - from, a);
+          from = -1;
+        }
+      }
+    }
 }
 
 /** Once he has it, the ski pole goes with him everywhere: held at his side, its basket near the ground. */
