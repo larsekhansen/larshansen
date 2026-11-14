@@ -75,8 +75,10 @@ import { drawTiles, drawWater } from "./render/tiles";
 // (#jernhaugen) as before. The rules of a level are in game/play.ts, the levels in levels/.
 
 const $ = byId;
-// Four depths: hills, the far water, a near layer, and the ground he walks on.
-const { stage, pad, help, announce, enterButton, kit } = openPage([0.12, 0.2, 0.4, 1]);
+// Four depths: hills, the far water, a near layer, and the ground he walks on. On an upright phone
+// the view stays at least 240 art pixels wide, wider than a thrower's reach either side of him, so
+// what comes at him is seen in time (ADR 0019); there is more sky over it.
+const { stage, pad, help, announce, enterButton, kit } = openPage([0.12, 0.2, 0.4, 1], { minWidth: 240 });
 const header = document.querySelector<HTMLElement>(".bar")!;
 
 // Language: Norwegian for Norwegian browsers, English for everyone else.
@@ -184,8 +186,8 @@ function extraState() {
     /** Steps the world holds still after a stomp or a hit, and the little shake of the view. */
     freeze: 0,
     nudge: { x: 0, y: 0, until: 0 },
-    /** The card shown: a level cleared, or the game over. */
-    card: null as "clear" | "over" | null,
+    /** The card shown: a level cleared, the game over, or a level's file that would not come. */
+    card: null as "clear" | "over" | "failed" | null,
     /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
     bossLine: null as { lines: string[]; until: number } | null
   };
@@ -283,6 +285,19 @@ let arriveAt: string | null = null;
 let mode: "scene" | "maze" = "scene";
 let maze: Maze | null = null;
 let loading = false;
+/** A level whose file is being fetched: the scene holds dark under a board until it is here. */
+let fetching: string | null = null;
+const loadingEl = $<HTMLElement>("loading");
+/** While a level's file is on its way: a board with its name; null takes it down. */
+function showFetching(id: string | null) {
+  fetching = id;
+  const name = id ? LINE.find((l) => l.id === id)?.name ?? id : "";
+  loadingEl.hidden = !id;
+  if (id) {
+    loadingEl.textContent = t.loading(name);
+    say(t.loading(name));
+  }
+}
 /** True when going back in history leaves the mound: false when the page was opened inside it. */
 let canGoBack = false;
 
@@ -301,19 +316,27 @@ function sync() {
     else loading = false;
   }
   const want = ROUTES.includes(id) && (id === "kart" || levelOpen(id)) ? id : "kart";
+  if (fetching && fetching !== want) showFetching(null);
   if (scene && scene.def.id === want && !arriveAt) return;
   if (want !== "kart" && !loadedLevel(want)) {
-    // The level's code comes first: the scene goes dark while it does, and opens when it is here.
+    // The level's code comes first: the scene goes dark under a board while it does, and opens when
+    // it is here, unless he has gone somewhere else meanwhile. Failing, a card says so, with a retry.
     if (scene) {
       state.mode = "away";
       state.modeSteps = 0;
       state.fade = 1;
     }
+    showFetching(want);
     loadLevel(want).then(
-      () => location.hash === `#${want}` && sync(),
       () => {
-        history.replaceState(null, "", location.pathname + location.search + "#kart");
-        sync();
+        if (fetching !== want) return;
+        showFetching(null);
+        if (location.hash === `#${want}`) sync();
+      },
+      () => {
+        if (fetching !== want) return;
+        showFetching(null);
+        showLoadFailed(want);
       }
     );
     return;
@@ -693,6 +716,23 @@ function showOver() {
   finishOn.focus({ preventScroll: true });
 }
 
+/** A level's file did not come: a plain card, "Try again" (the page again, at that level) and "To the map". */
+let failedLevel: string | null = null;
+function showLoadFailed(id: string) {
+  failedLevel = id;
+  const name = LINE.find((l) => l.id === id)?.name ?? id;
+  state.finished = true;
+  state.card = "failed";
+  $<HTMLElement>("finish-title").textContent = t.loadFailedTitle;
+  $<HTMLElement>("finish-line").textContent = t.loadFailedLine(name);
+  for (const el of ["finish-gold", "finish-coins", "finish-clean", "finish-more"]) $<HTMLElement>(el).hidden = true;
+  finishOn.textContent = t.overAgain;
+  finishAgain.textContent = t.overMap;
+  finishEl.hidden = false;
+  say(`${t.loadFailedTitle}. ${t.loadFailedLine(name)}`);
+  finishOn.focus({ preventScroll: true });
+}
+
 interface CardResult {
   ms: number;
   newBest: boolean;
@@ -707,6 +747,11 @@ interface CardResult {
 let cardResult: CardResult | null = null;
 
 finishOn.addEventListener("click", () => {
+  // A level's file that would not come: the whole page again, at that level (a failed import is not retried in place).
+  if (state.card === "failed") {
+    history.replaceState(null, "", location.pathname + location.search + `#${failedLevel ?? "kart"}`);
+    return location.reload();
+  }
   if (state.card === "over") {
     session.lives = LIVES;
     return restartLevel();
@@ -715,6 +760,12 @@ finishOn.addEventListener("click", () => {
   go("kart", next && isBuilt(LINE[ORDER.indexOf(next)]) ? next : scene.def.id);
 });
 finishAgain.addEventListener("click", () => {
+  if (state.card === "failed") {
+    finishEl.hidden = true;
+    state.finished = false;
+    state.card = null;
+    return go("kart", failedLevel ?? undefined);
+  }
   if (state.card === "over") {
     session.lives = LIVES;
     return go("kart", scene.def.id);
@@ -976,7 +1027,7 @@ function stepOnce() {
   if (state.freeze > 0) state.freeze--;
   else if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
-  else if (!loading && ++state.modeSteps > 300) reopen(state, scene.doors, input); // the place never opened
+  else if (!loading && !fetching && ++state.modeSteps > 300) reopen(state, scene.doors, input); // the place never opened
   if (state.bubble && state.steps > state.bubble.until) state.bubble = null;
   if (state.feather && state.steps - state.feather.since > FEATHER_SHOWN) state.feather = null;
   if (state.mode === "play" && state.fade > 0) state.fade = Math.max(0, state.fade - 1 / 16); // coming back from the mound
@@ -1425,16 +1476,22 @@ async function start() {
   // The scripted routes for `?debug&auto` are fetched alongside the level, not after it, so a
   // stepped page has both before it steps.
   const route = debug && params.has("auto") ? AUTO[first]?.().catch(() => null) ?? null : null;
-  if (first !== "kart")
+  let failedAtStart: string | null = null;
+  if (first !== "kart") {
+    showFetching(first);
     try {
       await loadLevel(first);
     } catch {
+      failedAtStart = first;
       first = "kart";
       firstAt = furthest;
     }
+    showFetching(null);
+  }
   const moves = await route;
   openScene(first, firstAt);
   if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
+  if (failedAtStart) showLoadFailed(failedAtStart);
   if (moves && !scene.map) auto = autopilot(moves);
 
   // The helmet moment: out of the Opera's door in level 1, or at a station on the map. In level 1 he

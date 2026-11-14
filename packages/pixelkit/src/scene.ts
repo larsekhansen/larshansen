@@ -38,7 +38,7 @@ export interface Page {
 }
 
 /** The parts every scene's page has, by their ids, and the stage built in it. */
-export function openPage(factors: number[]): Page {
+export function openPage(factors: number[], opts: { minWidth?: number } = {}): Page {
   const stage = byId<HTMLElement>("stage");
   const px = byId<HTMLCanvasElement>("px");
   const ui = byId<HTMLCanvasElement>("ui");
@@ -46,7 +46,7 @@ export function openPage(factors: number[]): Page {
   const help = byId<HTMLElement>("help");
   const announce = byId<HTMLElement>("announce");
   const enterButton = pad.querySelector<HTMLButtonElement>('[data-action="enter"]')!;
-  const kit = createStage({ stage, px, ui, factors });
+  const kit = createStage({ stage, px, ui, factors, minWidth: opts.minWidth });
   textTarget(ui.getContext("2d")!);
   return { stage, px, ui, pad, help, announce, enterButton, kit };
 }

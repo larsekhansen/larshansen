@@ -1,4 +1,4 @@
-# Jernhaugen (Iron Maze)
+# Jernhaugen
 
 At [maze.larshansen.dev](https://maze.larshansen.dev). This began as "Mouse Maze", built in a few days at Ironhack as the first project of the coding bootcamp: move the mouse pointer through a maze without touching the cursed walls, with a few snakes and some taunts, in React and jQuery, and MC Hammer playing.
 

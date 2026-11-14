@@ -15,7 +15,12 @@ export interface Stage {
   nudge(canvas: HTMLCanvasElement, fracX: number): void;
 }
 
-export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; ui: HTMLCanvasElement; factors: number[] }): Stage {
+/**
+ * `minWidth`: the fewest art pixels the view may be wide, however tall and narrow the screen; a page
+ * that needs to see far ahead (the viking game, on an upright phone) passes it. Without it a tall
+ * phone zooms in until the street fills it (the front page).
+ */
+export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; ui: HTMLCanvasElement; factors: number[]; minWidth?: number }): Stage {
   const { stage, px, ui } = opts;
   const g = px.getContext("2d")!;
   const scratch = document.createElement("canvas");
@@ -44,6 +49,7 @@ export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; u
     // A tall phone zooms in further, so the street is not a strip under an empty sky.
     let k = Math.max(1, Math.floor(Math.min(devH / 192, devW / 180)));
     if (devH > devW * 1.2) k = Math.max(k, Math.min(Math.ceil(devH / 280), Math.floor(devW / 120)));
+    if (opts.minWidth) k = Math.max(1, Math.min(k, Math.floor(devW / opts.minWidth)));
     // One art pixel more than the screen in each direction, so nudging a layer never shows an edge.
     Object.assign(view, { k, dpr, w: Math.ceil(devW / k) + 1, h: Math.ceil(devH / k) + 1 });
     view.cssW = (view.w * k) / dpr;
