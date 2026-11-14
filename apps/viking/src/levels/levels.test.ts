@@ -13,7 +13,8 @@ import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE } from "./routes";
+import { BOY, ENEMIES as VIGELAND_ENEMIES, JET_IN, JET_OUT, SLAB, VIGELANDSPARKEN, W as VW } from "./vigelandsparken";
 import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, LOFT, OARS, PADS, RAFT as BALSA, REED, W } from "./bygdoy";
 import { SHIELD_RULES } from "../game/shield";
 import { deckTops } from "@larshansen/pixelkit/deck";
@@ -56,7 +57,8 @@ const ROUTE: Record<string, Move[]> = {
   stortinget: STORTINGET_ROUTE,
   ekeberg: EKEBERG_ROUTE,
   nabolaget: NABOLAGET_ROUTE,
-  bygdoy: BYGDOY_ROUTE
+  bygdoy: BYGDOY_ROUTE,
+  vigelandsparken: VIGELANDSPARKEN_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -98,15 +100,17 @@ const GOLD: Record<string, Move[]> = {
     }
   ],
   // On the longship's deck under its mast: two jumps up onto the yard, and two more up off it.
-  bygdoy: [...BYGDOY_ROUTE.slice(0, BYGDOY_ROUTE.findIndex((m) => m.name === `walk to ${mid(198)}`)), walk(mid(184)), jump(0, { second: 18 }), walk(mid(186)), jump(0, { second: 18 })]
+  bygdoy: [...BYGDOY_ROUTE.slice(0, BYGDOY_ROUTE.findIndex((m) => m.name === `walk to ${mid(198)}`)), walk(mid(184)), jump(0, { second: 18 }), walk(mid(186)), jump(0, { second: 18 })],
+  // On the Monolith's top figure: two jumps up over its tip.
+  vigelandsparken: [...VIGELANDSPARKEN_ROUTE.slice(0, VIGELANDSPARKEN_ROUTE.findIndex((m) => m.name === `walk to ${mid(179)}`)), walk(mid(178)), jump(0, { second: 18 })]
 };
 
 /** Every level is held to the order's measure: at least a minute for the scripted player, and the size of a level. */
-const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy"]);
+const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
-const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy"]);
-/** How each level is played in the tests: with the pole from level 6 on, and the shield's rules (Bygdøy gives the shield at its prow; in line 1 he does not have it). */
-const opts = (def: LevelDef, more: { feather?: boolean } = {}) => ({ pole: POLE.has(def.id), shield: SHIELD_RULES, ...more });
+const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken"]);
+/** How each level is played in the tests: with the pole from level 6 on, and the shield's rules (Bygdøy gives the shield at its prow; in line 1 he does not have it; after Bygdøy it is his). */
+const opts = (def: LevelDef, more: { feather?: boolean } = {}) => ({ pole: POLE.has(def.id), shield: SHIELD_RULES, hasShield: def.rune > 10, ...more });
 /**
  * The scripted clear's floor: forty seconds, the last level eighty. (It was sixty and ninety; order 12
  * cut the long waits on rides and bosses, which took ten to eighteen seconds off some levels without
@@ -211,7 +215,7 @@ describe("the lines", () => {
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
@@ -823,7 +827,8 @@ describe("Bygdøy, the first of line 2", () => {
   test("past the other two slingers, a man who walks on without raising the shield is hit at many of the moments he could come", () => {
     let hit = 0;
     let tries = 0;
-    for (let t0 = 0; t0 < 170; t0 += 5) {
+    // Over one round of their beat.
+    for (let t0 = 0; t0 < 110; t0 += 2) {
       const p = P({ x: tile(216), bottom: tile(19) });
       p.t = t0;
       let hurt = false;
@@ -845,6 +850,86 @@ describe("Bygdøy, the first of line 2", () => {
       expect(longest / 60).toBeLessThan(5.5);
     }
     expect(GJOA_DECK.hold + 2 * GJOA_DECK.move).toBeLessThan(5 * 60);
+  });
+});
+
+describe("Vigelandsparken: the statues move while his back is turned", () => {
+  const P = (start?: { x: number; bottom: number }) => newPlay(VIGELANDSPARKEN, { pole: true, shield: SHIELD_RULES, hasShield: true, start });
+  const FLOOR = VW * TILE;
+
+  test("the walls the statues are for are out of a jump's reach from the ground, and in reach from a statue's head", () => {
+    const map = levelMap(VIGELANDSPARKEN);
+    // The pergola and the courtyard's far wall: three rows high.
+    for (const c of [134, 154]) {
+      expect(map.isSolid(c, VW - 3)).toBe(true);
+      expect(map.isSolid(c, VW - 4)).toBe(false);
+    }
+    // From the ground at the pergola's foot, a jump falls short; from the statue's head, it lands on top.
+    const tryFrom = (bottom: number) => {
+      const p = P({ x: tile(134) - 8, bottom });
+      p.enemies.forEach((e) => (e.alive = false));
+      playMoves(p, [jumpTo(mid(135))], { max: 200 });
+      return feet(p);
+    };
+    expect(tryFrom(FLOOR)).toBe(FLOOR);
+    const statue = VIGELAND_ENEMIES.find((e) => e.c === 133)!;
+    const p = P({ x: tile(131) + 4, bottom: FLOOR });
+    const r = playMoves(p, [jumpTo(statue.c * TILE + TILE / 2), jumpTo(mid(135))], { max: 400 });
+    expect(r.hurt).toEqual([]);
+    expect(feet(p)).toBe(FLOOR - 3 * TILE);
+  });
+
+  test("the courtyard's statue follows him to the wall while his back is turned, and the route climbs it there", () => {
+    const p = P();
+    const route = VIGELANDSPARKEN_ROUTE;
+    const r = playMoves(p, route.slice(0, route.findIndex((m) => m.name === "face statue 7") + 1), { max: 60 * 120 });
+    expect(r.hurt).toEqual([]);
+    const e = p.enemies[7];
+    expect(e.x).toBeGreaterThan(tile(152));
+    expect(e.calm).toBe(true);
+  });
+
+  test("the loose slab is there while the Angry Boy stamps, shakes while he is in the air, and drops when he lands", () => {
+    const boy = newPlay(VIGELANDSPARKEN).enemies[3];
+    for (let t = 0; t < BOY.period * 2; t++) {
+      const { up, ripple } = leapOf(boy, t);
+      if (ripple) expect(timedPhase(t, SLAB)).toBe("on");
+      if (up > 0) expect(timedPhase(t, SLAB)).toBe("warn");
+    }
+    // Off for under a second, on for over a second: the wait for it is never long.
+    expect(SLAB.off).toBeLessThan(60);
+    expect(SLAB.on).toBeGreaterThan(60);
+  });
+
+  test("the fountain's jets never keep him waiting much more than five seconds", () => {
+    for (const d of [JET_IN, JET_OUT]) {
+      let longest = 0;
+      let since = 0;
+      for (let t = 0; t < 2000; t++) {
+        since = carrierAt(d, t).y >= FLOOR ? 0 : since + 1;
+        longest = Math.max(longest, since);
+      }
+      expect(longest / 60).toBeLessThan(5.5);
+    }
+  });
+
+  test("on the plateau, a man who walks on without the shield is hit at most of the moments he could come; the route stops the rings with it", () => {
+    let hit = 0;
+    let tries = 0;
+    for (let t0 = 0; t0 < 130; t0 += 2) {
+      const p = P({ x: tile(189), bottom: FLOOR - 8 * TILE });
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 400 && p.body.x < tile(211); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      tries++;
+      if (hurt) hit++;
+    }
+    expect(hit / tries).toBeGreaterThanOrEqual(0.75);
+    const p = P();
+    const r = playMoves(p, VIGELANDSPARKEN_ROUTE, { max: 60 * 300 });
+    expect(r.done).toBe(true);
+    expect(r.hurt).toEqual([]);
+    expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(1);
   });
 });
 

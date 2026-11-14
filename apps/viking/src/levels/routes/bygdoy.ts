@@ -5,6 +5,7 @@ import { timedPhase } from "@larshansen/pixelkit/timed";
 import { cx, jumpTo, leap, mid, stomp, tile, wait, walk, type Move } from "../../game/bot";
 import { THROW_REACH, untilThrow, windingUp } from "../../game/enemies";
 import type { Play } from "../../game/play";
+import { shieldedWalk } from "./common";
 import { FERRY, FRAM_DECK, GJOA_DECK, OARS, RAFT, REED } from "../bygdoy";
 
 // Bygdøy's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
@@ -58,27 +59,6 @@ const inReach = (q: Play, k: number) => {
   const hx = cx(q);
   return e.alive && Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(q.body.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > 1.5 * TILE;
 };
-
-/** Walks on to x, or stands with the shield up facing `face` while `danger` says so (and a few steps after). */
-const shieldedWalk = (name: string, x: number, danger: (q: Play) => 1 | -1 | null, hold: number): Move => ({
-  name,
-  keys(q, s) {
-    const face = danger(q);
-    if (face !== null) {
-      s.hold = hold;
-      s.face = face;
-    }
-    if (face !== null || (s.hold as number) > 0) {
-      s.hold = Math.max(0, (s.hold as number) - 1);
-      // Turned to face the one that throws, and the shield up.
-      return { ...NONE, left: s.face === -1 && q.body.facing !== -1, right: s.face === 1 && q.body.facing !== 1, shield: true };
-    }
-    const dx = x - cx(q);
-    if (Math.abs(dx) <= 2 && q.body.onGround && Math.abs(q.body.vx) < 0.05) return "done";
-    const near = Math.abs(dx) < Math.abs(q.body.vx) * 4;
-    return { ...NONE, left: !near && dx < 0, right: !near && dx > 0 };
-  }
-});
 
 /**
  * Through the passage under the loft as a person goes: walking on, and whenever one of the slinger's

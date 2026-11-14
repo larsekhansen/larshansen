@@ -39,7 +39,8 @@ const AUTO: Record<string, () => Promise<Move[]>> = {
   stortinget: () => import("./levels/routes/stortinget").then((m) => m.STORTINGET_ROUTE),
   ekeberg: () => import("./levels/routes/ekeberg").then((m) => m.EKEBERG_ROUTE),
   nabolaget: () => import("./levels/routes/nabolaget").then((m) => m.NABOLAGET_ROUTE),
-  bygdoy: () => import("./levels/routes/bygdoy").then((m) => m.BYGDOY_ROUTE)
+  bygdoy: () => import("./levels/routes/bygdoy").then((m) => m.BYGDOY_ROUTE),
+  vigelandsparken: () => import("./levels/routes/vigelandsparken").then((m) => m.VIGELANDSPARKEN_ROUTE)
 };
 
 /** `?debug&auto`: the level's scripted route as a step-by-step autopilot, or null for a level with none. */

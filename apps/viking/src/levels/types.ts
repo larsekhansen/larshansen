@@ -226,8 +226,10 @@ export interface LevelRules {
   enemy?(e: Enemy, p: Play): boolean;
   /** Ground of its own this step: a statue he looks at, turned to stone. */
   ground?(p: Play): Carrier[];
-  /** Everywhere that ground can ever be, as still ground: for the reach search. */
-  everywhere?(): Carrier[];
+  /** Everywhere that ground can ever be in this level, as still ground: for the reach search. */
+  everywhere?(def: LevelDef): Carrier[];
+  /** After the enemies have moved: what the level's own things do to him (a statue of stone is in his way). */
+  after?(p: Play): void;
   /** Before his body moves: the keys he is left with (on the sledge he cannot walk or stop, and down ducks). */
   intent?(p: Play, intent: PlayIntent): PlayIntent;
   /** How fast the ground carries him along at x, for the reach search (the sledge's speed), or 0. */

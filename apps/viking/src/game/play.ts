@@ -680,6 +680,7 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
   if (ev.over) return ev;
   meetBoss(p, ev, intent, prevBottom);
   if (ev.over) return ev;
+  p.def.rules?.after?.(p);
   // The third rail, a spark: a heart, as an enemy's touch is. It throws him up clear of it, a tile
   // over its top, and back the way he came, so a rail at the bottom of a trench throws him out of it.
   const zapped = hazardTouched(p.def.hazards, p.ducking ? { x: b.x, y: b.y + DUCK } : b, p.t);

@@ -200,7 +200,7 @@ export const ENEMIES: EnemyDef[] = [
   // beats chosen (by a search over every pair) so that a man who walks on through the yard meets a
   // throw coming at him as often as can be, a little under every other time.
   { kind: "thrower", look: "slinger", c: 222, r: 12, period: 110, lead: true, faces: -1 },
-  { kind: "thrower", look: "slinger", c: 231, r: 12, period: 110, offset: 40, lead: true, faces: -1 },
+  { kind: "thrower", look: "slinger", c: 231, r: 12, period: 110, offset: 45, lead: true, faces: -1 },
   { kind: "flyer", look: "gull", c: 246, r: 4, range: 2, rise: 6, period: 150 }
 ];
 
