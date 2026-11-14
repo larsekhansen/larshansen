@@ -154,7 +154,7 @@ const BANNERS_A = bannerRow(17, 31, 26, RIDE, 2, 60);
 const BANNERS_B = bannerRow(46, 61, 25, RIDE, 3, 40);
 /** Over the first dig. */
 const BANNERS_C = bannerRow(90, 103, 23, RIDE, 2, 40);
-/** The school's big banner, on tall poles, over the second dig: only the drum reaches it. */
+/** The big banners, on tall poles, over the second dig: only the drum reaches them. The first is Høyenhall skole's. */
 const BANNERS_D = bannerRow(106, 123, 23, 86, 2, 30, 0.8);
 /** The King's Guard: three in step, back and forth across the square; their hats are the ledge. */
 export const GUARD: Travel = { kind: "travel", from: { x: 199 * TILE, y: 19 * TILE - 22 }, to: { x: 209 * TILE, y: 19 * TILE - 22 }, w: 3 * TILE, period: 480 };
@@ -449,8 +449,7 @@ function drawBanner(i: number, at: { x: number; y: number }, t: number) {
     [PARADE.silkGreen, PARADE.fringe],
     [PARADE.silkCream, PARADE.silkRed]
   ];
-  // Lars: your school's banner goes here. It is drawn plain, cream with no emblem, until we know which school.
-  const [cloth, trim] = school ? [PARADE.silkCream, PARADE.silkCream] : colors[i % colors.length];
+  const [cloth, trim] = colors[i % colors.length];
   const { x, y } = at;
   const street = streetY(x + TILE);
   // Rising out of the crowd or sinking into it: only what is above the street shows.
@@ -465,10 +464,11 @@ function drawBanner(i: number, at: { x: number; y: number }, t: number) {
   // The cloth under it, swinging a pixel with the march.
   const sway = view.reduced ? 0 : Math.floor((t + i * 13) / 18) % 2;
   const h = Math.min(school ? 26 : 22, street - 8 - y);
-  R(x + 3 + sway, y + 5, 2 * TILE - 6, h, cloth);
-  R(x + 3 + sway, y + 5, 2 * TILE - 6, 1, mix(cloth, WHITE, 0.25));
-  for (let k = 0; k < 2 * TILE - 6; k += 2) R(x + 3 + sway + k, y + 5 + h, 1, 2, trim);
-  if (!school) {
+  if (school) schoolBanner(x, y, h, sway);
+  else {
+    R(x + 3 + sway, y + 5, 2 * TILE - 6, h, cloth);
+    R(x + 3 + sway, y + 5, 2 * TILE - 6, 1, mix(cloth, WHITE, 0.25));
+    for (let k = 0; k < 2 * TILE - 6; k += 2) R(x + 3 + sway + k, y + 5 + h, 1, 2, trim);
     // An emblem: a ring and a star.
     R(x + 12 + sway, y + 11, 8, 8, trim);
     R(x + 14 + sway, y + 13, 4, 4, cloth);
@@ -478,6 +478,71 @@ function drawBanner(i: number, at: { x: number; y: number }, t: number) {
   paradeKid(x - 1, street - 1, i, t);
   paradeKid(x + 2 * TILE - 4, street - 1, i + 1, t);
 }
+
+/** Capitals three pixels wide (Ø and N four, L two), five high: only the ones the school's banner needs. */
+const GLYPHS: Record<string, string[]> = {
+  H: ["101", "101", "111", "101", "101"],
+  Ø: ["0111", "1001", "1011", "1101", "1110"],
+  Y: ["101", "101", "010", "010", "010"],
+  E: ["111", "100", "110", "100", "111"],
+  N: ["1001", "1101", "1011", "1001", "1001"],
+  A: ["010", "101", "111", "101", "101"],
+  L: ["10", "10", "10", "10", "11"],
+  S: ["111", "100", "111", "001", "111"],
+  K: ["101", "101", "110", "101", "101"],
+  O: ["010", "101", "101", "101", "010"]
+};
+const lettersWide = (s: string) => [...s].reduce((w, ch) => w + GLYPHS[ch][0].length + 1, -1);
+/** Letters from GLYPHS, centred on x, their top at y; nothing below `bottom` (the cloth while it rises out of the crowd). */
+function letters(s: string, x: number, y: number, bottom: number, color: string) {
+  let lx = x - Math.floor(lettersWide(s) / 2);
+  for (const ch of s) {
+    const g = GLYPHS[ch];
+    g.forEach((row, ry) => {
+      if (y + ry >= bottom) return;
+      for (let rx = 0; rx < row.length; rx++) if (row[rx] === "1") R(lx + rx, y + ry, 1, 1, color);
+    });
+    lx += g[0].length + 1;
+  }
+}
+/** An open book: the pages, a line or two of writing on each, the spine and the cover's edge in gold. */
+const BOOK = [".PPPP.PPPP.", "PPllPGPllPP", "PPPPPGPPPPP", "PllPPGPPllP", "GGGGGGGGGGG"];
+
+/**
+ * Høyenhall skole's banner, the school's big one on tall poles: navy silk, wider than the others and
+ * hung the whole length of the crossbar, gold knobs on the crossbar's ends, a gold band along the
+ * top, HØYENHALL over an open book and SKOLE under it, all in gold, and gold fringe.
+ */
+function schoolBanner(x: number, y: number, h: number, sway: number) {
+  const left = x - 4 + sway;
+  const w = 2 * TILE + 8;
+  const top = y + 5;
+  const bottom = top + h;
+  const mid = left + w / 2;
+  R(left, top, w, h, SCHOOL_SILK);
+  R(left, top, w, 1, mix(SCHOOL_SILK, WHITE, 0.25));
+  if (h > 2) R(left + 1, top + 1, w - 2, 1, PARADE.fringe);
+  R(left, top + 2, 1, Math.max(0, h - 2), mix(SCHOOL_SILK, INK, 0.25));
+  R(left + w - 1, top + 2, 1, Math.max(0, h - 2), mix(SCHOOL_SILK, INK, 0.25));
+  letters("HØYENHALL", mid, top + 3, bottom, PARADE.fringe);
+  BOOK.forEach((row, ry) => {
+    if (top + 10 + ry >= bottom) return;
+    for (let rx = 0; rx < row.length; rx++) {
+      const ch = row[rx];
+      if (ch !== ".") R(mid - 5 + rx, top + 10 + ry, 1, 1, ch === "P" ? PARADE.silkCream : ch === "l" ? mix(PARADE.silkCream, SCHOOL_SILK, 0.45) : PARADE.fringe);
+    }
+  });
+  letters("SKOLE", mid, top + 17, bottom, PARADE.fringe);
+  for (let k = 1; k < w - 1; k += 2) R(left + k, bottom, 1, 2 + (k % 4 === 1 ? 1 : 0), PARADE.fringe);
+  // Round gold knobs on the crossbar's ends.
+  for (const kx of [x - 4, x + 2 * TILE]) {
+    R(kx + 1, y, 2, 1, mix(PARADE.fringe, WHITE, 0.45));
+    R(kx, y + 1, 4, 2, PARADE.fringe);
+    R(kx, y + 1, 1, 1, mix(PARADE.fringe, WHITE, 0.45));
+    R(kx + 1, y + 3, 2, 1, mix(PARADE.fringe, INK, 0.3));
+  }
+}
+const SCHOOL_SILK = mix(PARADE.silkBlue, INK, 0.25);
 const BANNER_BAR: LedgeLook = { body: PARADE.pole, top: mix(PARADE.pole, WHITE, 0.3), edge: P.woodDark, joint: P.woodDark };
 
 /** The King's Guard: three in step under their hats, rifles on the shoulder. */
