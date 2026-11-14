@@ -5,6 +5,8 @@ import { WINDUP, leap, untilThrow, windingUp, type EnemyDef } from "./enemies";
 import { HEARTS, PURSE_LIFE, SAFE_STEPS, STOMP, extraGround, newPlay, runeFree, stepPlay, type Play, type PlayIntent } from "./play";
 import { PLOUGH, PLOUGH_STEPS, lineHolds, ploughBoss, type Plough } from "./plough";
 import { placeBody } from "@larshansen/pixelkit/physics";
+import { ICE } from "@larshansen/pixelkit/surface";
+import { carefulStep } from "./careful";
 import { TROLL, TROLL_STEPS, WAVE, type TrollDef } from "./troll";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
@@ -149,6 +151,81 @@ describe("skilling and the brown cheese", () => {
     steps(p, 120, right);
     expect(p.cheese?.at).not.toBeNull();
     expect(p.lives).toBe(4);
+  });
+});
+
+describe("a visit remembers what a level has given", () => {
+  const COINS = level([".........", "S.$$$..&.", "#########"]);
+
+  test("the brown cheese taken earlier in this visit is not there again", () => {
+    const p = newPlay(COINS, { cheeseTaken: true });
+    const ev = steps(p, 120, right);
+    expect(ev.some((e) => e.life)).toBe(false);
+    expect(p.lives).toBe(3);
+  });
+
+  test("skilling taken again after a restart count on the card, but pay nothing towards a life twice", () => {
+    const first = newPlay(COINS);
+    steps(first, 120, right);
+    expect(first.purse).toBe(3);
+    const again = newPlay(COINS, { purse: first.purse, paid: [...first.paid] });
+    const ev = steps(again, 120, right);
+    expect(again.found).toBe(3);
+    expect(ev.filter((e) => e.coin !== null).length).toBe(3);
+    expect(again.purse).toBe(3);
+  });
+
+  test("an enemy beaten again after a restart pays nothing twice", () => {
+    const def = level(["......", "......", "......", "......", "..S...", "######"], { enemies: [{ kind: "walker", look: "pigeon", c: 2, r: 4, range: 0, speed: 0 }] });
+    const drop = (paid?: readonly number[]) => {
+      const p = newPlay(def, { start: { x: 2 * TILE + 8, bottom: 2 * TILE }, paid });
+      p.body.onGround = false;
+      expect(steps(p, 40).some((e) => e.stomp === 0)).toBe(true);
+      return p;
+    };
+    const first = drop();
+    expect(first.purse).toBe(1);
+    expect(drop([...first.paid]).purse).toBe(0);
+  });
+});
+
+describe("walking to a click in a level", () => {
+  /** Walks the way `intent` points as a click would, until the careful walk stops him; then lets him come to rest. */
+  const stroll = (p: Play, intent: PlayIntent, n = 400) => {
+    const ev = [];
+    let stopped = false;
+    for (let i = 0; i < n; i++) {
+      const k = stopped ? null : carefulStep(p, intent);
+      if (!k) stopped = true;
+      ev.push(stepPlay(p, k ?? idle));
+    }
+    return { ev, stopped };
+  };
+
+  test("it stops at the edge of the water instead of walking in, and never jumps", () => {
+    const p = newPlay(PIT, { start: { x: 21 * TILE, bottom: 6 * TILE } });
+    const { ev, stopped } = stroll(p, { ...right, jumpHeld: true, jumpPressed: true });
+    expect(stopped).toBe(true);
+    expect(ev.some((e) => e.splash || e.step.jumped)).toBe(false);
+    expect(p.body.onGround).toBe(true);
+    expect(cx(p)).toBeGreaterThan(22 * TILE);
+    expect(p.body.x).toBeLessThan(24 * TILE);
+  });
+
+  test("on ice it stops early enough not to slide off", () => {
+    const ICY = level(["..............", "S.............", "##########...."], { surfaceAt: () => ICE });
+    const p = newPlay(ICY);
+    const { ev, stopped } = stroll(p, right, 600);
+    expect(stopped).toBe(true);
+    expect(ev.some((e) => e.splash)).toBe(false);
+    expect(p.body.onGround).toBe(true);
+  });
+
+  test("it stops before an enemy instead of walking into it", () => {
+    const p = newPlay(FIELD([{ kind: "walker", look: "pigeon", c: 12, r: 5, range: 0, speed: 0 }]));
+    const { ev, stopped } = stroll(p, right);
+    expect(stopped).toBe(true);
+    expect(ev.some((e) => e.hurt)).toBe(false);
   });
 });
 

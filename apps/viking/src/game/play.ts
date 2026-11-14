@@ -97,6 +97,12 @@ export interface Play {
   found: number;
   /** All skilling taken, carried from level to level until a hundred make a life. */
   purse: number;
+  /**
+   * What has gone into the purse from this level in this visit: skilling by their index on the map,
+   * beaten enemies as -1 - their index. Taken again after a restart they still count on the card,
+   * but they pay nothing towards a life twice.
+   */
+  paid: Set<number>;
   /** For the chime that climbs: how many were taken close together, and when the last was. */
   chain: { n: number; at: number };
   cheese: { box: Box; at: number | null } | null;
@@ -206,6 +212,10 @@ export interface PlayOptions {
   /** Lives and skilling carried from the level before. */
   lives?: number;
   purse?: number;
+  /** The brown cheese was taken earlier in this visit: it is not there again. */
+  cheeseTaken?: boolean;
+  /** What this level has paid into the purse earlier in this visit (see `Play.paid`). */
+  paid?: readonly number[];
 }
 
 export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
@@ -250,8 +260,9 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     skilling: skillingOf(map).map((box) => ({ box, at: null })),
     found: 0,
     purse: Math.max(0, opts.purse ?? 0),
+    paid: new Set(opts.paid ?? []),
     chain: { n: 0, at: -999 },
-    cheese: cheese ? { box: cheese, at: null } : null,
+    cheese: cheese ? { box: cheese, at: opts.cheeseTaken ? -1 : null } : null,
     dash: null,
     dashSpent: false,
     dashEnded: -999,
@@ -330,8 +341,10 @@ function hit(p: Play, ev: Events, fromX: number) {
   launch(p.body, away * KNOCK.vx, -KNOCK.vy);
 }
 
-/** A skilling for the purse: every hundred is a life. */
-function addToPurse(p: Play, ev: Events) {
+/** A skilling for the purse: every hundred is a life. `what` is the coin or the beaten enemy (see `Play.paid`): each pays once a visit. */
+function addToPurse(p: Play, ev: Events, what: number) {
+  if (p.paid.has(what)) return;
+  p.paid.add(what);
   p.purse++;
   if (p.purse >= PURSE_LIFE) {
     p.purse -= PURSE_LIFE;
@@ -362,7 +375,7 @@ function meetEnemies(p: Play, ev: Events, intent: PlayIntent, prevBottom: number
       bounce(b, intent.jumpHeld ? STOMP.held : STOMP.plain);
       b.y = box.y - PLAYER.h;
       p.dashSpent = false;
-      addToPurse(p, ev);
+      addToPurse(p, ev, -1 - i);
       break;
     }
     // Landing on a spiky thing hurts, and throws him up off it so he is not left standing on it.
@@ -556,14 +569,14 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
   if (ev.step.landed > 0) ev.bell = bellUnder(p);
 
   // Skilling, the brown cheese, the bracteate and the rune.
-  for (const s of p.skilling)
-    if (s.at === null && overlaps(b, s.box)) {
-      s.at = p.t;
-      p.found++;
-      p.chain = { n: p.t - p.chain.at < 40 ? p.chain.n + 1 : 0, at: p.t };
-      ev.coin = p.chain.n;
-      addToPurse(p, ev);
-    }
+  p.skilling.forEach((s, i) => {
+    if (s.at !== null || !overlaps(b, s.box)) return;
+    s.at = p.t;
+    p.found++;
+    p.chain = { n: p.t - p.chain.at < 40 ? p.chain.n + 1 : 0, at: p.t };
+    ev.coin = p.chain.n;
+    addToPurse(p, ev, i);
+  });
   if (p.cheese && p.cheese.at === null && overlaps(b, p.cheese.box)) {
     p.cheese.at = p.t;
     p.lives++;

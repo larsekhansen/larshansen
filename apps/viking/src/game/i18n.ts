@@ -10,6 +10,8 @@ const STRINGS = {
   nb: {
     ...SCENE_WORDS.nb,
     help: "Piltastene for å gå, mellomrom for å hoppe, pil opp for å gå inn en dør. Eller klikk dit du vil.",
+    /** The help line in a level: no clicking there (a click never walks him off an edge, but it is not how to play). */
+    helpLevel: (pole: boolean) => `Piltastene for å gå, mellomrom eller pil opp for å hoppe, pil opp ved en dør for å gå inn.${pole ? " Shift eller X for et rykk." : ""} R starter banen på nytt.`,
     blurb: "Du fant den hemmelige døra. Ta T-banen gjennom Oslo og finn de ti runene i navnet.",
     lineSub: "Linje 1, ti stopp",
     building: "Under bygging",
@@ -59,6 +61,7 @@ const STRINGS = {
   en: {
     ...SCENE_WORDS.en,
     help: "Arrow keys to walk, Space to jump, up arrow to go through a door. Or click where you want to go.",
+    helpLevel: (pole: boolean) => `Arrow keys to walk, Space or up to jump, up at a door to go in.${pole ? " Shift or X to dash." : ""} R starts the level again.`,
     blurb: "You found the secret door. Take the T-bane through Oslo and find the ten runes of the name.",
     lineSub: "Line 1, ten stops",
     building: "Being built",

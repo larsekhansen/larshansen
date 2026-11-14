@@ -14,7 +14,7 @@ import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, S, ctx, mix, target, view } from "@larshansen/pixelkit/paint";
 import { COIN, DUST, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
-import { placeBody, type Body } from "@larshansen/pixelkit/physics";
+import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
 import {
   afterStep,
@@ -58,13 +58,14 @@ import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { autopilot, type Move } from "./game/bot";
 import { strings } from "./game/i18n";
+import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
 import { FENCE_COL, kartDef } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
-import { drawBracteate, drawRune, drawSheep } from "./render/actors";
+import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { drawTiles, drawWater } from "./render/tiles";
 
@@ -144,8 +145,12 @@ readFeather();
 /** The gold helmet: all ten runes, now or in the old game (`viking.crowned`, kept by those who earned it). */
 const CROWNED = "viking.crowned";
 const crowned = () => store.get(CROWNED) === "1" || allRunes(progress, ORDER);
-/** Lives and the purse of skilling go with him from level to level for this visit; a new visit starts with three lives. */
-const session = { lives: debug && params.has("lives") ? Math.max(1, Number(params.get("lives")) || LIVES) : LIVES, purse: 0 };
+/**
+ * Lives and the purse of skilling go with him from level to level for this visit; a new visit starts
+ * with three lives. What a level has given already in this visit is remembered, so restarting it is
+ * no way to farm lives: its brown cheese once, each of its skilling (and each enemy beaten) once.
+ */
+const session = { lives: debug && params.has("lives") ? Math.max(1, Number(params.get("lives")) || LIVES) : LIVES, purse: 0, cheese: new Set<string>(), paid: new Map<string, number[]>() };
 
 // ---------------------------------------------------------------------------------------------
 // The scene: the line map or a level, its rules, doors and boards.
@@ -238,7 +243,10 @@ function openScene(id: string, at?: string) {
   readFeather();
   // Past Holmenkollen he has the ski pole whatever the progress says: the levels there are only open to those who cleared it.
   const pole = abilities.pole || ORDER.indexOf(def.id) > ORDER.indexOf("holmenkollen");
-  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse });
+  // After a Game over (lives at nought) any way back into a level starts with three lives: the card's
+  // buttons, R, the header's restart, Back, a header link.
+  if (session.lives <= 0) session.lives = LIVES;
+  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse, cheeseTaken: session.cheese.has(def.id), paid: session.paid.get(def.id) });
   // `?debug&hearts=1&lives=1`: start a level with fewer, to look at a hit, a lost life or the game over.
   if (debug && params.has("hearts")) play.hearts = Math.max(1, Math.min(HEARTS, Number(params.get("hearts")) || HEARTS));
   const doors = buildDoors(doorSpots(def, play), links);
@@ -255,6 +263,7 @@ function openScene(id: string, at?: string) {
   document.body.classList.toggle("on-map", scene.map);
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
+  help.textContent = scene.map ? t.help : t.helpLevel(pole);
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
@@ -384,7 +393,8 @@ async function enterMaze() {
         el: stage,
         say,
         topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
-        onLeave: (r) => leaveMaze(r.feather ?? (r.cleared ? "plain" : null))
+        // Only a feather newly won (or newly gold) gets the moment; a level cleared again does not.
+        onLeave: (r) => leaveMaze(r.feather ?? null)
       },
       { level: Number.isFinite(level) && level > 0 ? level : undefined }
     );
@@ -437,6 +447,7 @@ function resumeScene(s: Scene) {
   document.body.classList.remove("on-map");
   finishEl.hidden = true;
   dashButton.hidden = !s.play.pole;
+  help.textContent = t.helpLevel(s.play.pole);
   layout();
   hud();
 }
@@ -757,6 +768,9 @@ function sparksAt(x: number, y: number, n: number, color: string, speed = 0.7) {
   }
 }
 
+/** This level's bracteate was found on an earlier visit: drawn as a pale outline, and quiet. */
+const owned = (p: Play) => progress.bracteates.includes(p.def.id);
+
 /** What the level's rules did this step, made audible and visible. */
 function react(ev: Events) {
   const p = scene.play;
@@ -830,7 +844,7 @@ function react(ev: Events) {
     if (!view.reduced)
       for (let i = 0; i < 8; i++) state.sparks.push({ x: b.x + PLAYER.w / 2 + (i - 4) * 1.5, y: b.y + PLAYER.h - 1, vx: (i - 3.5) * 0.18, vy: -0.8 - Math.random() * 0.6, life: 22, color: PALETTE.foam });
   }
-  if (ev.bracteate && p.bracteate) {
+  if (ev.bracteate && p.bracteate && !owned(p)) {
     sfx.play("gold");
     say(t.goldAnnounce);
     saveProgress(findBracteate(progress, p.def.id));
@@ -867,8 +881,10 @@ function play() {
   const bench = !held && !scene.map && !p.sitting ? benchAt(p) : null;
   // Walking to a clicked spot or door. Any input of the visitor's own takes over again.
   if (state.goal && held) state.goal = null;
-  const { intent: keys, enter } = followGoal(state, b, held ? STILL : intentFrom(input, !!door || bench !== null), door);
-  if (enter) return tryEnter(enter);
+  const walked = followGoal(state, b, held ? STILL : intentFrom(input, !!door || bench !== null), door);
+  if (walked.enter) return tryEnter(walked.enter);
+  // In a level, walking to a click never jumps, and stops at an edge or before an enemy.
+  const keys = state.goal && !scene.map ? carefully(p, walked.intent) : walked.intent;
   // The scripted route (under ?debug&auto) is asked every step, held or not, as the tests ask it.
   const scripted = auto?.(p) ?? null;
   const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash") };
@@ -877,6 +893,8 @@ function play() {
   const ev = stepPlay(p, intent);
   session.lives = p.lives;
   session.purse = p.purse;
+  if (ev.life && p.cheese?.at === p.t) session.cheese.add(p.def.id);
+  if (ev.coin !== null || ev.stomp !== null) session.paid.set(p.def.id, [...p.paid]);
   // Dust when he turns at speed, and a streak behind a dash.
   if (b.onGround && Math.abs(vx) > 1.2 && Math.sign(b.vx) !== Math.sign(vx) && !view.reduced) state.sparks.push({ x: b.x + PLAYER.w / 2, y: b.y + PLAYER.h - 1, vx: -vx * 0.2, vy: -0.3, life: 14, color: DUST });
   if (p.dash && !view.reduced)
@@ -893,6 +911,14 @@ function play() {
     const age = p.t - p.runeAt;
     if (age > 0 && age % 14 === 0 && age / 14 <= chime.length) sfx.play("bell", chime[age / 14 - 1]);
   }
+}
+
+/** Walking to a clicked spot in a level: the walk's keys without its hops; at an edge or before an enemy, no keys, and the walk ends. */
+function carefully(p: Play, k: Intent): Intent {
+  const walk = carefulStep(p, k);
+  if (walk) return walk;
+  state.goal = null;
+  return STILL;
 }
 
 /** A stomp or a hit: the world holds still for two steps and the view gives a little. */
@@ -1008,7 +1034,10 @@ function drawThings(v: View) {
   for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
   if (p.troll) art.troll?.(p.troll, v);
   if (p.boss) art.boss?.(p.boss.state, v);
-  if (p.bracteate && p.bracteateAt === null) drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
+  if (p.bracteate && p.bracteateAt === null) {
+    if (owned(p)) drawBracteateOutline(p.bracteate.x, p.bracteate.y);
+    else drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
+  }
   if (p.rune && runeFree(p)) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
   if (p.pole && !p.loaded) skiPole(v);
@@ -1355,10 +1384,11 @@ async function start() {
   if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
   if (moves && !scene.map) auto = autopilot(moves);
 
-  // The helmet moment: out of the Opera's door in level 1, or at a station on the map.
+  // The helmet moment: out of the Opera's door in level 1, or at a station on the map. In level 1 he
+  // stands at the start, a step clear of the door he came out of, which closes behind him: so his
+  // first press of up is a jump, not the way home.
   if (from === "oslo" && !view.reduced) {
     const home = !scene.map ? scene.doors.find((d) => d.id === "home") ?? null : null;
-    if (home) standAt(home);
     state.arrive = { t: 0, off: null, door: home };
     state.alpha = 0;
     if (home) home.open = true;

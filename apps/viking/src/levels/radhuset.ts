@@ -36,6 +36,8 @@ const G = 48;
 const ROOF_ROW = 32;
 /** The east tower's solid lower block ends here; above it the tower is drawn behind him. */
 const BLOCK = 16;
+/** Where the harbour comes in again, east of the clock tower's block. */
+const EAST_BASIN = 209;
 const b = mapBuilder(COLS, ROWS);
 
 // --- The harbour front, the ferry's water, the square with its fountain --------------------------------
@@ -43,6 +45,9 @@ b.ground(0, 75, G, "Q");
 b.fill(76, 95, G, G + 1, "~").ground(76, 95, G + 2);
 b.ground(96, COLS - 1, G);
 b.fill(121, 130, G, G + 1, "~").ground(121, 130, G + 2);
+// East of the clock tower the square ends at the harbour: a fall from the tower is not free, it is a
+// splash, a heart, and back at the flag by the clock.
+b.fill(EAST_BASIN, COLS - 1, G, G + 1, "~").ground(EAST_BASIN, COLS - 1, G + 2);
 // The ferry terminal's roof, up the three low bells; a deck with a bench a step up.
 b.run(28, 34, G - 7, "_");
 b.run(59, 61, G - 1, "_");
@@ -88,6 +93,8 @@ const COINS: [number, number][] = [
   [184, 23], [186, 23], [188, 23],
   [176, 21], [179, 20], [182, 19], [185, 17], [188, 16], [191, 14],
   [200, 9], [203, 7], [206, 9],
+  // Over the bottom of the hand's round, a hop above the tower roof: the way back up after a miss.
+  [202, 14], [203, 14],
   [199, 5], [201, 5], [205, 5],
   [206, 2]
 ];

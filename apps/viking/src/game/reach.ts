@@ -176,10 +176,24 @@ function moves(feather: boolean, pole: boolean): Move[] {
 const DROPS: Move[] = ([-1, 0, 1] as const).map((dir) => ({ dir, hold: 0, running: false, release: 999, turn: false, second: 0, dash: 0, drop: 12 }));
 
 /**
- * Where he can stand, from `start`, and every box his body passed through on the way. `boxes` are
- * checked while searching (the bracteate, the rune), so a touch in mid-air counts.
+ * The search as a graph, for finding dead ends: for each spot, where its moves land, and whether a
+ * move from it fell out (into water, a pit, off the map) or touched one of the boxes. Each is kept
+ * twice over, as bits: 1 when a move without the dash did it, 2 when only a move with the dash did.
  */
-export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[], opts: { pole?: boolean; calm?: boolean } = {}): { spots: Spot[]; hit: boolean[] } {
+export interface Graph {
+  /** Where each spot's moves land: the spot's index times two, plus one when the move used the dash. */
+  out: number[][];
+  falls: Uint8Array;
+  /** For each box, per spot. */
+  touches: Uint8Array[];
+}
+
+/**
+ * Where he can stand, from `start`, and every box his body passed through on the way. `boxes` are
+ * checked while searching (the bracteate, the rune), so a touch in mid-air counts. With `graph`,
+ * also the graph of which spot leads to which (see `Graph`); `spots[0]` is the start.
+ */
+export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[], opts: { pole?: boolean; calm?: boolean; graph?: boolean } = {}): { spots: Spot[]; hit: boolean[]; graph?: Graph } {
   const world = fastWorld(def);
   const map = levelMap(def);
   // The moving ground, everywhere at once, in buckets of 64 px so each step only sees what is near.
@@ -197,22 +211,37 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
   const launchers = [...cannonsOf(def, map), ...drumsOf(def, map)];
   const trampolines = pads(def);
   const hit = boxes.map(() => false);
-  const seen = new Set<string>([key(start)]);
-  const queue: Spot[] = [start];
+  const index = new Map<string, number>([[key(start), 0]]);
+  const queue: number[] = [0];
   const all: Spot[] = [start];
   const list = moves(feather, !!opts.pole);
+  const out: number[][] = [];
+  const falls: number[] = [];
+  const touches: number[][] = boxes.map(() => []);
+  // The spot being searched from, and whether this move uses the dash: what the graph records.
+  let from = 0;
+  let bit = 1;
   const touch = (b: Body) =>
     boxes.forEach((r, i) => {
-      if (!hit[i] && b.x < r.x + r.w && b.x + PLAYER.w > r.x && b.y < r.y + r.h && b.y + PLAYER.h > r.y) hit[i] = true;
+      if (b.x < r.x + r.w && b.x + PLAYER.w > r.x && b.y < r.y + r.h && b.y + PLAYER.h > r.y) {
+        hit[i] = true;
+        touches[i][from] |= bit;
+      }
     });
+  const fell = () => {
+    falls[from] |= bit;
+  };
   const land = (b: Body) => {
     const s = { x: b.x, feet: b.y + PLAYER.h };
     const k = key(s);
-    if (!seen.has(k)) {
-      seen.add(k);
-      queue.push(s);
+    let i = index.get(k);
+    if (i === undefined) {
+      i = all.length;
+      index.set(k, i);
+      queue.push(i);
       all.push(s);
     }
+    if (opts.graph) (out[from] ??= []).push(i * 2 + (bit === 2 ? 1 : 0));
   };
   /** Coming down onto a pad this step: thrown up again from the pad's height. */
   const bounced = (b: Body, prevFeet: number) => {
@@ -234,7 +263,10 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
         const prev = b.y + PLAYER.h;
         stepBody(b, { left: lean < 0, right: lean > 0, jumpHeld: true, jumpPressed: false }, world, { doubleJump: feather }, near(b));
         touch(b);
-        if (fellOut(b, world)) break;
+        if (fellOut(b, world)) {
+          fell();
+          break;
+        }
         if (depth < 1 && bounced(b, prev)) {
           flyFrom(b, depth + 1);
           break;
@@ -247,9 +279,11 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
     }
   };
   while (queue.length) {
-    const s = queue.pop()!;
+    from = queue.pop()!;
+    const s = all[from];
     const held = map.supports(createBody(s.x + PLAYER.w / 2, s.feet));
     for (const m of held ? list : [...list, ...DROPS]) {
+      bit = m.dash > 0 ? 2 : 1;
       const b = createBody(s.x + PLAYER.w / 2, s.feet);
       if (m.running) b.vx = m.dir * MOVE.run;
       let air = 0;
@@ -270,7 +304,10 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
           stepBody(b, { left: dir < 0, right: dir > 0, jumpHeld: (m.hold > 0 && i < m.hold) || second, jumpPressed: (m.hold > 0 && i === 0) || second }, world, { doubleJump: feather }, near(b, loose));
         }
         touch(b);
-        if (fellOut(b, world)) break;
+        if (fellOut(b, world)) {
+          fell();
+          break;
+        }
         const shot = launchers.find((l) => launcherHit(l, b));
         if (shot) {
           fire(shot, b);
@@ -290,5 +327,57 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
       }
     }
   }
-  return { spots: all, hit };
+  if (!opts.graph) return { spots: all, hit };
+  const n = all.length;
+  const bits = (xs: number[]) => Uint8Array.from({ length: n }, (_, i) => xs[i] ?? 0);
+  return { spots: all, hit, graph: { out: Array.from({ length: n }, (_, i) => out[i] ?? []), falls: bits(falls), touches: touches.map(bits) } };
+}
+
+/**
+ * Dead ends in a searched level: spots he can get to from the start from which he can reach neither
+ * a goal (the rune) nor a fall that puts him back (water, a pit). With `pole` false, moves that need
+ * the dash count for nothing. Also the spots from which no goal can be reached without such a fall.
+ */
+export function deadEnds(g: Graph, pole: boolean, goals: number[]): { reached: number; dead: number[]; onlyByFalling: number[] } {
+  const n = g.out.length;
+  const counts = (bits: number) => (pole ? bits !== 0 : (bits & 1) !== 0);
+  const reached = new Uint8Array(n);
+  const back: number[][] = Array.from({ length: n }, () => []);
+  const stack = [0];
+  reached[0] = 1;
+  while (stack.length) {
+    const i = stack.pop()!;
+    for (const e of g.out[i]) {
+      if (!pole && e & 1) continue;
+      const j = e >> 1;
+      back[j].push(i);
+      if (!reached[j]) {
+        reached[j] = 1;
+        stack.push(j);
+      }
+    }
+  }
+  const backFrom = (seed: (i: number) => boolean) => {
+    const ok = new Uint8Array(n);
+    const q: number[] = [];
+    for (let i = 0; i < n; i++)
+      if (reached[i] && seed(i)) {
+        ok[i] = 1;
+        q.push(i);
+      }
+    while (q.length) for (const j of back[q.pop()!]) if (!ok[j]) (ok[j] = 1), q.push(j);
+    return ok;
+  };
+  const toGoal = (i: number) => goals.some((k) => counts(g.touches[k][i]));
+  const out = backFrom((i) => toGoal(i) || counts(g.falls[i]));
+  const won = backFrom(toGoal);
+  const list = (ok: Uint8Array) => [...reached.keys()].filter((i) => reached[i] && !ok[i]);
+  return { reached: reached.reduce((a, b) => a + b, 0), dead: list(out), onlyByFalling: list(won) };
+}
+
+/** Spots as "row r cols a-b (n)" by the floor they stand on, for a message. */
+export function describeSpots(spots: Spot[]): string[] {
+  const byFeet = new Map<number, number[]>();
+  for (const s of spots) byFeet.set(Math.round(s.feet), [...(byFeet.get(Math.round(s.feet)) ?? []), Math.floor((s.x + PLAYER.w / 2) / TILE)]);
+  return [...byFeet.entries()].sort((a, b) => a[1][0] - b[1][0]).map(([f, cs]) => `row ${(f / TILE).toFixed(1)} cols ${Math.min(...cs)}-${Math.max(...cs)} (${cs.length})`);
 }

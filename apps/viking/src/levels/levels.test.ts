@@ -180,6 +180,13 @@ for (const def of LEVELS) {
       if (def.id !== "holmenkollen") expect(r.rune).toBe(true);
     });
 
+    test("no dead ends: from everywhere he can get to with what he is sure to have, the rune can be reached without a fall, and a fall at least puts him back", () => {
+      const r = reach.get(def.id)!;
+      expect(r.reached).toBeGreaterThan(100);
+      expect(r.dead).toEqual([]);
+      expect(r.onlyByFalling).toEqual([]);
+    });
+
     if (NEW.has(def.id))
       test("it is a level the size the order asks: columns, skilling, enemies, cheese, benches, signs, flags", () => {
         expect(map.cols).toBeGreaterThanOrEqual(220);
@@ -211,19 +218,19 @@ for (const def of LEVELS) {
 }
 
 /** The reach searches, one worker per level, side by side: the slowest is what the suite waits for. */
-const reach = new Map<string, { rune: boolean; bracteate: boolean; spots: number; ms: number }>();
+const reach = new Map<string, { rune: boolean; bracteate: boolean; spots: number; reached: number; dead: string[]; onlyByFalling: string[]; ms: number }>();
 beforeAll(async () => {
   const results = await Promise.all(
     LEVELS.map(
       (def) =>
-        new Promise<{ id: string; rune: boolean; bracteate: boolean; spots: number; ms: number }>((resolve, reject) => {
+        new Promise<{ id: string; rune: boolean; bracteate: boolean; spots: number; reached: number; dead: string[]; onlyByFalling: string[]; ms: number }>((resolve, reject) => {
           const w = new Worker(new URL("../game/reach.worker.ts", import.meta.url).href);
           w.onmessage = (e) => {
             resolve(e.data);
             w.terminate();
           };
           w.onerror = (e) => reject(e);
-          w.postMessage(def.id);
+          w.postMessage({ id: def.id, pole: POLE.has(def.id) });
         })
     )
   );
@@ -619,6 +626,41 @@ describe("what the levels promise", () => {
     expect(CLOCK.cy - CLOCK.r - 8 * TILE).toBeGreaterThan(0);
     expect(CLOCK.cy - CLOCK.r - 8 * TILE).toBeLessThan(40);
     expect(HANDS.length).toBe(2);
+  });
+});
+
+describe("no way out but the restart button, fixed", () => {
+  test("Rådhuset: east of the clock tower is the harbour, so a fall off the tower costs a heart and puts him back at the flag by the clock", () => {
+    const map = levelMap(RADHUSET);
+    for (let c = 209; c < map.cols; c++) expect(map.isWater(c, 48)).toBe(true);
+    const flag = flagsOf(map).at(-1)!;
+    const p = newPlay(RADHUSET, { start: { x: tile(204), bottom: tile(16) } });
+    p.save = { ...flag };
+    let splash = false;
+    for (let i = 0; i < 600 && !splash; i++) splash = stepPlay(p, { ...IDLE, right: true }).splash;
+    expect(splash).toBe(true);
+    expect(p.hearts).toBe(2);
+    expect(Math.abs(cx(p) - flag.x)).toBeLessThan(2);
+  });
+
+  test("Rådhuset: a missed clock hand drops him on the tower roof, where a hop catches a tip as it comes round the bottom", () => {
+    const p = newPlay(RADHUSET, { start: { x: tile(202), bottom: tile(16) } });
+    const low = (q: Play) => HANDS.some((d) => carrierAt(d, q.t).y >= CLOCK.cy + CLOCK.r - 6);
+    let rode = -1;
+    for (let i = 0; i < 60 * 10 && rode < 0; i++) {
+      stepPlay(p, { ...IDLE, jumpHeld: true, jumpPressed: p.body.onGround && low(p) });
+      if (p.body.onGround && !p.map.supports(p.body)) rode = i;
+    }
+    expect(rode).toBeGreaterThanOrEqual(0);
+    expect(rode / 60).toBeLessThan(8);
+    // And it carries him up the side of the clock.
+    for (let i = 0; i < 90; i++) stepPlay(p, IDLE);
+    expect(feet(p)).toBeLessThan(tile(14));
+  });
+
+  test("Slottet: the palace's terrace goes on to the edge of the map, so there is no slot beside it to fall into", () => {
+    const map = levelMap(SLOTTET);
+    for (let c = 212; c < map.cols; c++) for (const r of [16, 17, 18]) expect(map.isSolid(c, r)).toBe(true);
   });
 });
 

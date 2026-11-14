@@ -65,6 +65,18 @@ export function drawRune(x: number, y: number, char: string, state: "lit" | "dar
 // hung on a loop. It turns slowly (narrower, then full), and a glint runs over it.
 const BRACTEATE = ["....rrrr....", "..rrggggrr..", ".rgghgghggr.", ".rggssssggr.", "rgggsddsgggr", "rghgsdsdghgr", "rgggsdddgggr", "rghgssssghgr", ".rggggggggr.", ".rgghgghggr.", "..rrggggrr..", "....rrrr...."];
 
+/** A bracteate found on an earlier visit: its ring as a pale outline, still, where it hangs. */
+export function drawBracteateOutline(x: number, y: number) {
+  const ring = mix(METAL.goldLight, WHITE, 0.55);
+  R(x + 5, y - 2, 2, 2, ring);
+  for (let r = 0; r < 12; r++)
+    for (let c = 0; c < 12; c++) {
+      if (BRACTEATE[r][c] === ".") continue;
+      const edge = [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dc, dr]) => (BRACTEATE[r + dr]?.[c + dc] ?? ".") === ".");
+      if (edge) R(x + c, y + r, 1, 1, ring);
+    }
+}
+
 export function drawBracteate(x: number, y: number, steps: number) {
   const turn = view.reduced ? 1 : Math.abs(Math.cos(steps * 0.03));
   const w = Math.max(2, Math.round(12 * (0.35 + 0.65 * turn)));

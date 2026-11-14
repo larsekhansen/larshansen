@@ -58,8 +58,9 @@ b.run(42, 44, 16, "=");
 b.run(34, 47, 14, "-");
 // A lawn a little above the path in Slottsparken, with a bench on it.
 b.run(164, 168, 20, ":");
-// The palace: its terrace, two cornices, the balcony, the eaves.
-b.fill(212, 246, 16, 18, "P");
+// The palace: its terrace (carried on to the edge of the map, so the street beside it is no slot to
+// fall into), two cornices, the balcony, the eaves.
+b.fill(212, COLS - 1, 16, 18, "P");
 b.run(222, 225, 14, "=");
 b.run(234, 237, 14, "=");
 b.run(227, 232, 12, "=");
