@@ -838,7 +838,7 @@ function react(ev: Events) {
   }
   if (ev.rune && p.rune) {
     sfx.play("pickup", p.def.rune);
-    if (p.def.flourish) sfx.play("hurra");
+    if (p.def.flourish && !p.def.chime) sfx.play("hurra");
     say(t.runeFound(RUNE_CHARS[p.def.rune], p.def.name));
     const ms = elapsedMs(p);
     const hadPole = hasPole(progress);
@@ -887,6 +887,12 @@ function play() {
   afterStep(state, b, intent, ev.step, sfx);
   if (!ev.bleat) hardLanding(state, b, ev.step, sfx);
   react(ev);
+  // A level whose flourish is a peal of bells rings them one after another.
+  const chime = p.def.chime;
+  if (chime && p.runeAt !== null) {
+    const age = p.t - p.runeAt;
+    if (age > 0 && age % 14 === 0 && age / 14 <= chime.length) sfx.play("bell", chime[age / 14 - 1]);
+  }
 }
 
 /** A stomp or a hit: the world holds still for two steps and the view gives a little. */
@@ -1290,6 +1296,7 @@ let auto: ((p: Play) => PlayIntent | null) | null = null;
 const AUTO: Record<string, () => Promise<Move[]>> = {
   langkaia: () => import("./levels/routes/langkaia").then((m) => m.LANGKAIA_ROUTE),
   akershus: () => import("./levels/routes/akershus").then((m) => m.AKERSHUS_ROUTE),
+  radhuset: () => import("./levels/routes/radhuset").then((m) => m.RADHUSET_ROUTE),
   slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
   holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE),
   akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE),

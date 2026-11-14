@@ -5,6 +5,7 @@
 
 export { LANGKAIA_ROUTE } from "./routes/langkaia";
 export { AKERSHUS_ROUTE } from "./routes/akershus";
+export { RADHUSET_ROUTE } from "./routes/radhuset";
 export { SLOTTET_ROUTE } from "./routes/slottet";
 export { HOLMENKOLLEN_ROUTE } from "./routes/holmenkollen";
 export { AKERSELVA_ROUTE } from "./routes/akerselva";

@@ -2,9 +2,9 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
-import { cannonRide, carrier, cx, feet, jump, leap, mid, on, playMoves, tile, wait, walk, type Move } from "../game/bot";
+import { cannonRide, carrier, cx, feet, jump, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
 import { KIND, leap as leapOf } from "../game/enemies";
-import { pulsePhase as pulsePhaseOf } from "@larshansen/pixelkit/timed";
+import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
 import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
@@ -12,7 +12,7 @@ import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
 import { NABOLAGET, PLOUGH_DEF, SMOKE, TERRACE } from "./nabolaget";
 import type { Plough } from "../game/plough";
 import { EKEBERG, GUSTS, KNOLLS, TRAMS } from "./ekeberg";
@@ -26,7 +26,7 @@ import { AKERSHUS, BATTERY, HOIST } from "./akershus";
 import { BUILT, LINE, ORDER } from "./index";
 import { kartDef } from "./kart";
 import { LANGKAIA, RAFT } from "./langkaia";
-import { BELLS, FERRY, LIFT, RADHUSET } from "./radhuset";
+import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
 
 // The built levels: their maps make sense, a scripted player clears each with the front page's
@@ -42,28 +42,7 @@ const IDLE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const ROUTE: Record<string, Move[]> = {
   langkaia: LANGKAIA_ROUTE,
   akershus: AKERSHUS_ROUTE,
-  radhuset: [
-    walk(tile(11) - 6),
-    wait("the ferry at the quay", (q) => carrier(q, FERRY).x <= 180),
-    jump(1, { release: 8 }),
-    wait("the ferry across", (q) => carrier(q, FERRY).x >= 396),
-    walk(mid(31)),
-    walk(mid(48)),
-    wait("the lift down", (q) => carrier(q, LIFT).y >= LIFT.bottom),
-    walk(mid(51)),
-    wait("the lift up", (q) => carrier(q, LIFT).y <= LIFT.top),
-    walk(mid(60)),
-    walk(BELLS[0].x + 16),
-    wait("bell 0", (q) => on(q, 0)),
-    jump(0),
-    ...[1, 2, 3, 4].flatMap((i) => [walk(BELLS[i - 1].x + BELLS[i - 1].w - 6), wait(`bell ${i}`, (q) => on(q, i)), jump(1, { release: 16 })]),
-    walk(BELLS[4].x + 28),
-    jump(1, { release: 8 }),
-    jump(0),
-    jump(1, { release: 12 }),
-    walk(mid(91)),
-    jump(0)
-  ],
+  radhuset: RADHUSET_ROUTE,
   slottet: SLOTTET_ROUTE,
   holmenkollen: HOLMENKOLLEN_ROUTE,
   akerselva: AKERSELVA_ROUTE,
@@ -78,7 +57,8 @@ const GOLD: Record<string, Move[]> = {
   langkaia: [walk(mid(2)), jump(0, { second: 18 })],
   // From the last stretch of the battlements, beside the brazier, two jumps up the spire to its tip.
   akershus: [...AKERSHUS_ROUTE.slice(0, -2), walk(mid(261) + 6, { careless: true }), jump(0, { second: 18 })],
-  radhuset: [...ROUTE.radhuset.slice(0, 9), jump(1, { second: 14 }), walk(mid(60))],
+  // From the parapet, under the lantern, two jumps up past its roof.
+  radhuset: [...RADHUSET_ROUTE.slice(0, -2), walk(mid(206)), jump(0, { second: 18 })],
   // From the balcony's left end, two jumps up past the rune to the eaves; along to the flagpole and up.
   slottet: [...SLOTTET_ROUTE.slice(0, -2), walk(tile(227) + 6), jump(0, { second: 18 }), walk(mid(229)), jump(0)],
   // In the hut, up through its roof, then two jumps up the tower.
@@ -112,9 +92,8 @@ const GOLD: Record<string, Move[]> = {
   ]
 };
 
-/** The first three levels: the scripted player has half the order's target. From level 4 on: at least a minute. */
-const TARGET: Record<string, number> = { radhuset: 120 };
-const NEW = new Set(["langkaia", "akershus", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
+/** Every level is held to the order's measure: at least a minute for the scripted player, and the size of a level. */
+const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** The last level is held to a longer clear: ninety seconds or more. */
@@ -172,7 +151,7 @@ for (const def of LEVELS) {
       }
     });
 
-    test(NEW.has(def.id) ? "a scripted player clears it with one jump, raising every flag, losing no heart, in a minute or more" : `a scripted player clears it with one jump, raising every flag, inside ${TARGET[def.id]} seconds`, () => {
+    test("a scripted player clears it with one jump, raising every flag, losing no heart, in a minute or more", () => {
       const p = newPlay(def, { pole: POLE.has(def.id) });
       const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
@@ -180,12 +159,10 @@ for (const def of LEVELS) {
       expect(p.runeAt).not.toBeNull();
       expect(r.events.filter((e) => e.splash).length).toBe(0);
       expect(r.events.filter((e) => e.flag !== null).map((e) => e.flag)).toEqual(flagsOf(map).map((_, i) => i));
-      if (NEW.has(def.id)) {
-        expect(r.hurt).toEqual([]);
-        expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? 60);
-        expect(r.seconds).toBeLessThan(150);
-        console.log(`${def.name}: scripted clear ${r.seconds.toFixed(1)} s, ${p.found} of ${p.skilling.length} skilling on the way`);
-      } else expect(r.seconds).toBeLessThan(TARGET[def.id] / 2);
+      expect(r.hurt).toEqual([]);
+      expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? 60);
+      expect(r.seconds).toBeLessThan(150);
+      console.log(`${def.name}: scripted clear ${r.seconds.toFixed(1)} s, ${p.found} of ${p.skilling.length} skilling on the way`);
     });
 
     test("with the feather the bracteate can be reached", () => {
@@ -610,27 +587,38 @@ describe("what the levels promise", () => {
     expect(splash).toBe(true);
   });
 
-  test("Rådhuset: a bell rings when he lands on it, and gone it drops him on the roof below, not in the water", () => {
+  test("Rådhuset: a bell of the carillon rings when he lands on it, and gone it drops him on the middle roof, not in the water", () => {
     const p = newPlay(RADHUSET);
-    const route = ROUTE.radhuset;
-    const at = route.findIndex((m) => m.name === "bell 0");
-    const r = playMoves(p, route.slice(0, at + 2), { max: 60 * 120 });
-    expect(r.events.some((e) => e.bell === 0)).toBe(true);
+    const at = RADHUSET_ROUTE.findIndex((m) => m.name.startsWith("the first bell of the carillon"));
+    const r = playMoves(p, RADHUSET_ROUTE.slice(0, at + 2), { max: 60 * 150, until: (q) => q.body.onGround && feet(q) === CARILLON[0].y });
+    expect(r.events.some((e) => e.bell === BELLS.indexOf(CARILLON[0]))).toBe(true);
     let splash = false;
     for (let i = 0; i < 400; i++) splash = stepPlay(p, IDLE).splash || splash;
     expect(splash).toBe(false);
-    expect(feet(p)).toBe(tile(18));
+    expect(feet(p)).toBe(tile(32));
   });
 
   test("Rådhuset: neighbouring bells are both there for over a second, so a patient player can always go on", () => {
-    for (let i = 1; i < BELLS.length; i++) {
+    const pairs = [...[1, 2].map((i) => [LOW_BELLS[i - 1], LOW_BELLS[i]]), ...[1, 2].map((i) => [POOL_BELLS[i - 1], POOL_BELLS[i]]), ...[1, 2, 3, 5, 6, 7, 8, 9].map((i) => [CARILLON[i - 1], CARILLON[i]])];
+    for (const [a, b] of pairs) {
       let bothThere = 0;
-      for (let t = 0; t < 300; t++) {
-        const there = (k: number) => (t + (BELLS[k].offset ?? 0) + 3000) % 300 < 180;
-        if (there(i - 1) && there(i)) bothThere++;
-      }
+      for (let t = 0; t < 300; t++) if (timedPhase(t, a) !== "off" && timedPhase(t, b) !== "off") bothThere++;
       expect(bothThere).toBeGreaterThanOrEqual(60);
     }
+  });
+
+  test("Rådhuset: the swinging bell comes back to the fourth bell while it is there, and the clock's hand passes within a jump of the first ledge and under the balcony", () => {
+    // The swing stands at its right end while the fourth bell of the carillon is on, once a round.
+    let together = 0;
+    for (let t = 0; t < SWING.period; t++) if (carrierAt(SWING, t).x >= SWING.from.x - 8 && timedPhase(t, CARILLON[3]) !== "off") together++;
+    expect(together).toBeGreaterThan(30);
+    // The hand: its bottom a short hop from the tower's first ledge, its top a jump under the balcony.
+    const map = levelMap(RADHUSET);
+    expect(map.isOneWay(196, 15)).toBe(true);
+    expect(CLOCK.cy + CLOCK.r - 15 * TILE).toBeLessThan(16);
+    expect(CLOCK.cy - CLOCK.r - 8 * TILE).toBeGreaterThan(0);
+    expect(CLOCK.cy - CLOCK.r - 8 * TILE).toBeLessThan(40);
+    expect(HANDS.length).toBe(2);
   });
 });
 
