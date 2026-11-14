@@ -48,8 +48,9 @@ b.put(49, G - 2, "K").put(53, G - 2, "K");
 
 // --- The bogs, and the marsh --------------------------------------------------------------------------------
 b.fill(61, 63, G, G + 1, "w");
-b.fill(71, 80, G, G + 1, "w");
-for (const c of [73, 74, 77, 78]) b.put(c, G, "K").put(c, G + 1, "K");
+// Three pits two tiles wide, with a stone three tiles wide between each: room to land, and to stop.
+b.fill(71, 82, G, G + 1, "w");
+for (const c of [73, 74, 75, 78, 79, 80]) b.put(c, G, "K").put(c, G + 1, "K");
 b.fill(89, 102, G, G + 1, "w");
 // A branch for the squirrel, in the trees past the marsh.
 b.run(110, 113, G - 3, "_");
@@ -88,7 +89,7 @@ const COINS: [number, number][] = [
   [37, 15], [38, 15], [39, 15], [40, 15],
   [50, 15], [52, 15], [54, 15],
   [61, 16], [62, 15], [63, 16],
-  [72, 16], [75, 16], [76, 16], [79, 16],
+  [72, 16], [76, 16], [77, 16], [81, 16],
   [91, 16], [94, 16], [97, 16], [100, 16],
   [105, 17], [106, 17],
   [122, 17], [123, 17],
@@ -133,7 +134,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "spiky", look: "hedgehog", c: 25, r: G - 1, range: 2 },
   { kind: "walker", look: "fox", c: 42, r: G - 1, range: 3, w: 12 },
   { kind: "flyer", look: "owl", c: 56, r: 13, range: 2, rise: 6, period: 170 },
-  { kind: "walker", look: "fox", c: 107, r: G - 1, range: 2, w: 12 },
+  { kind: "walker", look: "fox", c: 108, r: G - 1, range: 1, w: 12 },
   { kind: "thrower", look: "squirrel", c: 111, r: G - 4, period: 200 },
   { kind: "flyer", look: "owl", c: 141, r: 13, range: 3, rise: 6, period: 180, offset: 50 },
   { kind: "walker", look: "fox", c: 172, r: G - 1, range: 2, w: 12 },

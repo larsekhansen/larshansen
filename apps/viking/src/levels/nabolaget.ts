@@ -212,7 +212,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 35, r: 5, range: 2, rise: 8, period: 160 },
   { kind: "thrower", look: "kid", c: 52, r: 7, period: 210 },
   { kind: "flyer", look: "crow", c: 72, r: 6, range: 3, rise: 6, period: 170, offset: 60 },
-  { kind: "walker", look: "cat", c: 153, r: S - 1, range: 1, w: 12 },
+  // A cat sitting at the foot of the drift, clear of the slot's edge.
+  { kind: "walker", look: "cat", c: 152, r: S - 1, range: 0, speed: 0, w: 12 },
   { kind: "walker", look: "fox", c: 90, r: S - 1, range: 2, w: 12 },
   { kind: "flyer", look: "owl", c: 96, r: 13, range: 2, rise: 6, period: 170 },
   { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 },
@@ -1013,11 +1014,10 @@ export const NABOLAGET: LevelDef = {
     wake: { nb: "Brøytebilen våkner. Den er det siste før du er hjemme.", en: "The snow plough wakes. It is the last thing between you and home." },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
     beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
-    // Shown over it when a round goes by with no hit (by round), and when it backs off to wait.
+    // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.
     miss1: { nb: "Den står fast i brøytekanten.\nKlessnora kaster deg høyere enn et hopp.", en: "It is stuck in the bank.\nThe washing line throws you higher than a jump." },
     miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },
-    miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." },
-    rest: { nb: "Brøytebilen venter.\nDen kommer når den kommer.", en: "The plough waits.\nIt comes when it comes." }
+    miss3: { nb: "Nå holder den seg midt i gata.\nTrikken går over den.", en: "It keeps to the middle now.\nThe tram goes over it." }
   },
   surfaceAt: (x, y) => {
     const h = rampHeight(ROOFS, x);

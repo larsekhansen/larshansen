@@ -44,7 +44,9 @@ const b = mapBuilder(COLS, ROWS);
 b.ground(0, 75, G, "Q");
 b.fill(76, 95, G, G + 1, "~").ground(76, 95, G + 2);
 b.ground(96, COLS - 1, G);
-b.fill(121, 130, G, G + 1, "~").ground(121, 130, G + 2);
+// The fountain's pool begins under its first bell and ends under its last: he waits for the bells on the
+// square, not at the water's edge, and a step off the last bell lands on the square, not in the water.
+b.fill(122, 128, G, G + 1, "~").ground(122, 128, G + 2);
 // East of the clock tower the square ends at the harbour: a fall from the tower is not free, it is a
 // splash, a heart, and back at the flag by the clock.
 b.fill(EAST_BASIN, COLS - 1, G, G + 1, "~").ground(EAST_BASIN, COLS - 1, G + 2);
@@ -161,7 +163,7 @@ const SWING_INDEX = 2;
 const bellAt = (c: number, row: number, k: number, note: number, shift = 0): BellLedge => ({ x: c * TILE, y: Math.round(row * TILE), w: 2 * TILE, on: 120, warn: 60, off: 120, offset: -100 * k + shift, note: note % 5 });
 /** Three low bells over the promenade, up to the terminal's roof: nothing lost by a fall. */
 export const LOW_BELLS = [bellAt(16, G - 2, 0, 0), bellAt(20, G - 3.5, 1, 1), bellAt(24, G - 5, 2, 2)];
-/** Three over the fountain's pool. */
+/** Three over the fountain's pool, the first over its near edge and the last over its far edge. */
 export const POOL_BELLS = [bellAt(121, G - 2, 0, 1), bellAt(124, G - 2.5, 1, 2), bellAt(127, G - 2, 2, 3)];
 /** The carillon between the towers: four up from the middle roof, the swinging bell, five more up to the clock tower. */
 export const CARILLON = [
@@ -419,8 +421,8 @@ function terminal() {
 
 /** The fountain in the square's pool: a stone basin edge and a figure in green bronze on a plinth in the middle. */
 function fountain(t: number) {
-  const x0 = 121 * TILE;
-  const x1 = 131 * TILE;
+  const x0 = 122 * TILE;
+  const x1 = 129 * TILE;
   R(x0 - 4, WATER - 4, 4, 4, MASONRY.lintel);
   R(x1, WATER - 4, 4, 4, MASONRY.lintel);
   const cx = 126 * TILE;

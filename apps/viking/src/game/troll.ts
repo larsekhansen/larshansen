@@ -46,6 +46,8 @@ export interface Troll {
   wave: { x: number; at: number } | null;
   /** Steps it has waited under him while he stays up out of its reach. */
   waited: number;
+  /** Backing off from the light after a hit (quicker than backing off after a miss). */
+  fleeing: boolean;
 }
 
 /** Its size: two tiles wide, two and a half tall, three times his height. */
@@ -56,8 +58,8 @@ export const TROLL = { w: 30, h: 40 };
  * while he stays up out of reach before it backs off.
  */
 export const TROLL_STEPS = { waking: 90, windup: 60, stuck: 180, hit: 80, stalemate: 600 };
-/** How fast it walks, faster each time it is hit; how fast it backs off from the light. */
-export const TROLL_SPEED = { walk: [0.8, 0.95, 1.1], retreat: 1.5 };
+/** How fast it walks, faster each time it is hit; how fast it backs off after a miss, and from the light after a hit. */
+export const TROLL_SPEED = { walk: [0.8, 0.95, 1.1], retreat: 1.5, flee: 2.4 };
 /** It raises the club when he is this close (centre to centre) and on the floor. */
 export const TROLL_REACH = TROLL.w / 2 + 22;
 /** The club, in front of it when it comes down, and how long the blow hurts. */
@@ -68,13 +70,13 @@ export const WAVE = { speed: 1.4, steps: 70, h: 6, w: 6, delay: 0 };
 export const LAMP_REACH = 7 * TILE;
 
 export function createTroll(def: TrollDef): Troll {
-  return { def, x: def.x, dir: -1, phase: "asleep", since: 0, hits: 0, wave: null, waited: 0 };
+  return { def, x: def.x, dir: -1, phase: "asleep", since: 0, hits: 0, wave: null, waited: 0, fleeing: false };
 }
 
 /** Back to sleep where it started (he lost a life), keeping the stone it has turned to. */
 export function resetTroll(t: Troll, step: number) {
   if (t.phase === "stone") return;
-  Object.assign(t, { x: t.def.x, dir: -1, phase: "asleep", since: step, wave: null, waited: 0 });
+  Object.assign(t, { x: t.def.x, dir: -1, phase: "asleep", since: step, wave: null, waited: 0, fleeing: false });
 }
 
 const to = (t: Troll, phase: TrollPhase, step: number) => {
@@ -198,13 +200,18 @@ export function stepTroll(t: Troll, step: number, him: Body): TrollEvent {
         }
         // Away from the light, to whichever end of the clearing is further from him.
         t.dir = hx < (d.x0 + d.x1) / 2 ? 1 : -1;
+        t.fleeing = true;
         to(t, "retreat", step);
       }
       return null;
     case "retreat": {
       const end = t.dir > 0 ? d.x1 - TROLL.w / 2 : d.x0 + TROLL.w / 2;
-      t.x = t.dir > 0 ? Math.min(end, t.x + TROLL_SPEED.retreat) : Math.max(end, t.x - TROLL_SPEED.retreat);
-      if (t.x === end) to(t, "walk", step);
+      const v = t.fleeing ? TROLL_SPEED.flee : TROLL_SPEED.retreat;
+      t.x = t.dir > 0 ? Math.min(end, t.x + v) : Math.max(end, t.x - v);
+      if (t.x === end) {
+        t.fleeing = false;
+        to(t, "walk", step);
+      }
       return null;
     }
   }

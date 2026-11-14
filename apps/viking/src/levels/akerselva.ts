@@ -142,9 +142,12 @@ export const MAP = b.rows_();
 const FLOAT = 3;
 const LOG_W = 2 * TILE;
 const LOG_SPEED = 0.45;
+/** Steps a log lies against the rock at the end of its stretch before it goes under: room for a late jump. */
+const LOG_HOLD = 60;
 /**
  * Logs on a stretch of river from column c0 to c1 (the log's left end, first to last), on water whose
- * top is at row `r`: each comes up out of the water, drifts downstream, sinks, and comes round again.
+ * top is at row `r`: each comes up out of the water, drifts downstream, lies a moment against the rock
+ * at the end, sinks, and comes round again.
  */
 function logs(c0: number, c1: number, r: number, n: number, wait: number, phase = 0): Path[] {
   const y = r * TILE - FLOAT;
@@ -158,14 +161,15 @@ function logs(c0: number, c1: number, r: number, n: number, wait: number, phase 
     ],
     w: LOG_W,
     speed: LOG_SPEED,
-    wait
+    wait,
+    stops: [{ at: 2, steps: LOG_HOLD }]
   };
   const period = logPeriod(c0, c1, wait);
   return Array.from({ length: n }, (_, i) => ({ ...one, offset: Math.round(((i + phase) * period) / n) }));
 }
 
 /** Steps in one round of a stretch's logs, for the salmon that leap on the same beat. */
-const logPeriod = (c0: number, c1: number, wait: number) => Math.ceil((8 + (c1 - c0) * TILE + 10) / LOG_SPEED) + wait;
+const logPeriod = (c0: number, c1: number, wait: number) => Math.ceil((8 + (c1 - c0) * TILE + 10) / LOG_SPEED) + LOG_HOLD + wait;
 export const LOG_PERIOD = { bjolsen: [logPeriod(61, 64, 40), logPeriod(68, 72, 40), logPeriod(75, 78, 40)], pool: [logPeriod(196, 202, 30), logPeriod(205, 212, 30), logPeriod(216, 220, 30), logPeriod(227, 230, 30), logPeriod(233, 237, 30)] };
 
 /** The three stretches at Bjølsen. */

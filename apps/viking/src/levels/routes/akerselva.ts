@@ -29,7 +29,9 @@ const ontoLog = (name: string, list: CarrierDef[], y: number, x0: number, x1: nu
     keys(q, s) {
       if (s.air && q.body.onGround) return "done";
       if (!q.body.onGround) s.air = true;
-      const d = list.filter((l) => carrierShown(l, q.t)).sort((a, b2) => Math.abs(carrierAt(a, q.t).x - cx(q)) - Math.abs(carrierAt(b2, q.t).x - cx(q)))[0];
+      // The log that came up in the window, not the one still lying against the rock at the far end.
+      if (s.i === 0) s.log = list.findIndex((l) => carrierShown(l, q.t) && carrierAt(l, q.t).x >= x0 && carrierAt(l, q.t).x <= x1);
+      const d = list[s.log as number] ?? list.filter((l) => carrierShown(l, q.t)).sort((a, b2) => Math.abs(carrierAt(a, q.t).x - cx(q)) - Math.abs(carrierAt(b2, q.t).x - cx(q)))[0];
       const aim = d ? carrierAt(d, q.t).x + d.w / 2 + 6 - (cx(q) + q.body.vx * 6) : 0;
       const dir = Math.abs(aim) > 2 ? Math.sign(aim) : 0;
       return { left: dir < 0, right: dir > 0, jumpHeld: s.i < 30, jumpPressed: s.i === 0 };

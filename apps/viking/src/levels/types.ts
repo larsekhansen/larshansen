@@ -178,6 +178,8 @@ export interface Boss<S = unknown> {
   stomped(s: S, t: number, him: Body, prevBottom: number): { top: number; hit: boolean; speed?: number; event?: string } | null;
   /** What hurts him this step, and from where; null when nothing does. */
   hurts(s: S, t: number, him: Body): { fromX: number } | null;
+  /** Its body as a wall he cannot walk through this step (a machine standing still), or null. */
+  blocks?(s: S): { x: number; y: number; w: number; h: number } | null;
   /** He lost a life: back to where it waits, keeping the hits it has taken. */
   reset(s: S, t: number): void;
   /** In its fight: woken, and not back asleep or parked. */

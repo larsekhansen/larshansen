@@ -186,8 +186,8 @@ const LOCAL_LINE: Path = {
     { at: 2, steps: STAND }
   ]
 };
-/** Four locals on the line, evenly spaced: never more than about five seconds to wait. */
-export const LOCALS: Path[] = [0, 1, 2, 3].map((i) => ({ ...LOCAL_LINE, offset: Math.round((i * pathPeriod(LOCAL_LINE)) / 4) }));
+/** Five locals on the line, evenly spaced: never much more than five seconds to wait, even for one he can still get onto. */
+export const LOCALS: Path[] = [0, 1, 2, 3, 4].map((i) => ({ ...LOCAL_LINE, offset: Math.round((i * pathPeriod(LOCAL_LINE)) / 5) }));
 /** The express: down out of its own tunnel high in the cavern's wall, past the local, standing at platform 3, and on past the end. */
 const EXPRESS_LINE: Path = {
   kind: "path",

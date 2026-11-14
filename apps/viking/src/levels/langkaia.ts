@@ -67,6 +67,9 @@ b.run(158, 159, 14, "=").run(155, 156, 12, "=").run(158, 159, 10, "=").run(155, 
 // mast, the yard, the lookout at the masthead ----------------------------------------------------------
 b.ground(168, 187, W, "Q");
 b.run(193, 229, 15, "_");
+// The longship's stern: solid, so the rowing boat lies right against it and a step too far bumps into
+// the hull instead of going into the harbour.
+b.put(193, 15, "H");
 b.put(197, 14, "B").put(201, 14, "B").put(201, 13, "B");
 b.run(211, 212, 13, "_").run(214, 215, 11, "_").run(211, 212, 9, "_");
 b.run(207, 219, 7, "_");
@@ -178,8 +181,8 @@ export const RAFTS: CarrierDef[] = [
   ...meeting(123 * TILE, 127 * TILE),
   ...meeting(136 * TILE, 132 * TILE)
 ];
-/** The rowing boat between the quay and the longship: a small raft with no cabin. */
-export const BOAT: CarrierDef = { kind: "bob", x: 189 * TILE, y: DECK, w: 3 * TILE, rise: 2, period: 160, offset: 30 };
+/** The rowing boat between the quay and the longship, moored against its stern: a small raft with no cabin. */
+export const BOAT: CarrierDef = { kind: "bob", x: 189 * TILE, y: DECK, w: 4 * TILE, rise: 2, period: 160, offset: 30 };
 const CARRIERS: CarrierDef[] = [...RAFTS, BOAT];
 const BOAT_INDEX = CARRIERS.length - 1;
 /** The rafts by name, as the scripted player looks for them: their decks. */
@@ -488,7 +491,7 @@ export const LANGKAIA: LevelDef = {
   place: { nb: "Bjørvika, på vannsida av Operaen", en: "Bjørvika, on the water side of the Opera" },
   sky: null,
   map: MAP,
-  legend: { solid: "MQPB#", oneWay: "_-=", water: "~" },
+  legend: { solid: "MQPBH#", oneWay: "_-=", water: "~" },
   ramps: [RAMP],
   carriers: CARRIERS,
   timed: [],
@@ -549,6 +552,12 @@ export const LANGKAIA: LevelDef = {
       perchedGull(v, Math.abs(v.him.x - PERCH.x) < 56 && Math.abs(v.him.y - PERCH.y) < 40);
     },
     ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth }),
+    // The stern, solid under its deck: drawn as the deck, the hull behind it.
+    tile(t, _c, _r, x, y, _map, sky) {
+      if (t !== "H") return false;
+      ledge(x, y, WOOD_LEDGE, false, false, sky.snow);
+      return true;
+    },
     ledges: { _: WOOD_LEDGE, "-": MARBLE_LEDGE, "=": CONCRETE },
     carrier(i, at, v) {
       if (i === BOAT_INDEX) rowingBoat(at);

@@ -183,7 +183,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "guard", c: 110, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "spiky", look: "brazier", c: 58, r: GATE - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "rat", c: 128, r: G - 1, range: 2 },
-  { kind: "walker", look: "guard", c: 200, r: WALL - 1, range: 1, speed: 0.3, w: 10, h: 14 },
+  // He stands his post between the flag and the end of the wall, clear of both: the leap over the water is its own problem.
+  { kind: "walker", look: "guard", c: 198, r: WALL - 1, range: 0, speed: 0, w: 10, h: 14 },
   { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 223, r: KEEP_FLOOR - 1, range: 2, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 229, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },

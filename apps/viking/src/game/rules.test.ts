@@ -728,8 +728,9 @@ describe("the last boss: the plough", () => {
     Object.assign(pl, { phase: "drive", since: p.t, x: cx(p) + 20 });
     p.safeUntil = 0;
     placeBody(p.body, cx(p), 10 * TILE);
+    // (Right on him, it revs for its full second first, and then charges.)
     let lost = false;
-    for (let i = 0; i < 60 && !lost; i++) lost = stepPlay(p, idle).lifeLost;
+    for (let i = 0; i < PLOUGH_STEPS.windup + 60 && !lost; i++) lost = stepPlay(p, idle).lifeLost;
     expect(lost).toBe(true);
     expect(pl.phase).toBe("parked");
     expect(pl.x).toBe(DEF.x);
@@ -753,15 +754,19 @@ describe("the last boss: the plough", () => {
     expect(Math.abs(cx(p) - (4 * TILE + 8))).toBeLessThan(2);
   });
 
-  test("a stuck with no hit says so, by round; after a hit it backs off only a little way; ten seconds of nothing and it backs off to the far end", () => {
+  test("a stuck with no hit says so, by round; after a hit it backs off only a little way; ten seconds of nothing and it says so again and backs off to the far end", () => {
     // He waits beyond the bank, out of its reach: it charges, sticks, and pulls free.
     const p = newPlay(STREET, { start: { x: 12 * TILE, bottom: 10 * TILE } });
     const pl = plough(p);
     Object.assign(pl, { phase: "drive", since: p.t, x: 30 * TILE });
-    const ev = steps(p, PLOUGH_STEPS.stalemate + 600);
-    const names = ev.map((e) => e.boss);
-    expect(names).toContain("miss1");
-    expect(names).toContain("rest");
+    const names: (string | null)[] = [];
+    let rested = false;
+    for (let i = 0; i < PLOUGH_STEPS.stalemate + 600; i++) {
+      names.push(stepPlay(p, idle).boss);
+      rested ||= pl.phase === "rest" && pl.x === DEF.rounds[0].x1;
+    }
+    expect(names.filter((e) => e === "miss1").length).toBeGreaterThanOrEqual(2);
+    expect(rested).toBe(true);
     // Hit: it backs off a short way, not to the end of its stretch.
     const q = newPlay(STREET);
     const ql = plough(q);
@@ -776,6 +781,42 @@ describe("the last boss: the plough", () => {
       far = Math.max(far, ql.x);
     }
     expect(far).toBeLessThanOrEqual(25 * TILE + DEF.backOff + 1);
+  });
+
+  test("it hurts only while it moves at him: revving on top of him it does not, the charge does; then it shows the round's hint, rests at the far end, waits while he leans on it, and stands in his way", () => {
+    const p = newPlay(STREET, { start: { x: 30 * TILE, bottom: 10 * TILE } });
+    const pl = plough(p);
+    Object.assign(pl, { phase: "drive", since: p.t, x: cx(p) + 20 });
+    const names: (string | null)[] = [];
+    let hurtAt = -1;
+    for (let i = 0; i < PLOUGH_STEPS.windup + 40 && hurtAt < 0; i++) {
+      const ev = stepPlay(p, idle);
+      names.push(ev.boss);
+      if (ev.hurt) hurtAt = i;
+    }
+    expect(names).toContain("windup");
+    expect(hurtAt).toBeGreaterThanOrEqual(PLOUGH_STEPS.windup);
+    names.push(stepPlay(p, idle).boss);
+    expect(pl.phase).toBe("retreat");
+    // It showed the round's hint as it backed off; at the far end it rests.
+    let rested = false;
+    for (let i = 0; i < 400 && !rested; i++) {
+      names.push(stepPlay(p, idle).boss);
+      rested = pl.phase === "rest";
+    }
+    expect(names).toContain("miss1");
+    expect(rested).toBe(true);
+    // He walks up to it: it stands in his way, and while he leans on it, it does not set off.
+    p.safeUntil = 0;
+    placeBody(p.body, pl.x - 100, 10 * TILE);
+    for (let i = 0; i < PLOUGH_STEPS.rest + 120; i++) stepPlay(p, { ...idle, right: true });
+    expect(pl.phase).toBe("rest");
+    expect(p.body.x + PLAYER.w).toBeLessThanOrEqual(pl.x - PLOUGH.w / 2 + 0.01);
+    expect(p.hurt).toBe(true);
+    // He steps back, and it comes again.
+    for (let i = 0; i < 60; i++) stepPlay(p, { ...idle, left: true });
+    for (let i = 0; i < 10; i++) stepPlay(p, idle);
+    expect(["drive", "windup", "charge"]).toContain(pl.phase);
   });
 
   test("three hits, and it parks for good; only then does the rune show", () => {

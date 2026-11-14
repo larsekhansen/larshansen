@@ -56,13 +56,12 @@ export const RADHUSET_ROUTE: Move[] = [
   stomp(4),
   walk(tile(107)),
   stomp(5),
-  walk(tile(120) + 8),
+  walk(tile(121) - 2),
   wait("pool bell 0", (q) => steady(q, 3)),
-  jump(1, { release: 8 }),
+  jump(1, { release: 6 }),
   ...toBell(4, tile(123) - 6),
   ...toBell(5, tile(126) - 6),
-  walk(tile(129) - 6),
-  jumpTo(mid(132)),
+  // Off the last bell onto the square: the pool ends under it.
   walk(tile(133)),
   stomp(6),
   // Out of the second gull's reach while it throws, then onto it.

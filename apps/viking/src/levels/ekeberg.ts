@@ -161,14 +161,14 @@ export const GUSTS: Zone[] = [
 ];
 
 /**
- * A magpie alone in the street first; wasps under the trestle; hedgehogs in the hollows, squirrels on
- * the sculptures throwing cones, crows over the pond and the deck, magpies on the bank and the deck.
+ * A magpie alone in the street first; wasps under the trestle; nothing in the first gust, where the
+ * wind is the lesson; squirrels on the sculptures throwing cones, crows over the pond and the deck, a
+ * magpie in the last hollow, hedgehogs before the quarry and on the bank, magpies on the bank and the deck.
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "magpie", c: 10, r: G0 - 1, range: 2 },
   { kind: "flyer", look: "wasp", c: 28, r: G0 - 3, range: 3, rise: 6, period: 150 },
   { kind: "flyer", look: "wasp", c: 38, r: G0 - 4, range: 2, rise: 8, period: 140, offset: 40 },
-  { kind: "spiky", look: "hedgehog", c: 64, r: G1 - 1, range: 2 },
   { kind: "spiky", look: "hedgehog", c: 137, r: G1 - 1, range: 0, speed: 0 },
   { kind: "thrower", look: "squirrel", c: 97, r: G1 - 1, period: 200 },
   { kind: "flyer", look: "crow", c: 100, r: 9, range: 3, rise: 8, period: 170 },
