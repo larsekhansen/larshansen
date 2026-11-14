@@ -3,13 +3,13 @@ import type { Flag } from "@larshansen/pixelkit/checkpoint";
 import type { Light } from "@larshansen/pixelkit/dark";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import type { Surface as Footing } from "@larshansen/pixelkit/surface";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import type { Enemy, EnemyDef, Shot } from "../game/enemies";
 import type { Door } from "@larshansen/pixelkit/doors";
 import type { Sky, SkyName } from "@larshansen/pixelkit/oslo";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import type { TimedLedge } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
-import type { Body } from "@larshansen/pixelkit/physics";
+import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { Ramp, TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Troll, TrollDef, TrollEvent } from "../game/troll";
@@ -39,7 +39,9 @@ export const MARKS = {
   /** A park bench: sit on it (up) to fill the hearts and keep the spot. */
   bench: "b",
   /** A bass drum: steps on it and it throws him straight up. */
-  drum: "d"
+  drum: "d",
+  /** Where the shield is given (Bygdøy's prow): he takes it by touching it. */
+  shield: "y"
 } as const;
 
 export interface SignDef {
@@ -107,6 +109,8 @@ export interface View {
   cleared: readonly string[];
   /** When the rune was taken (a step), or null: the Pi's light turns green. */
   runeAt: number | null;
+  /** The state of the level's own moving ground (`LevelDef.grounds`), for drawing it. */
+  grounds: unknown;
 }
 
 export interface Art {
@@ -132,6 +136,8 @@ export interface Art {
   cannon?(i: number, l: Launcher, loadedAt: number, firedAt: number, v: View): void;
   /** Draws enemy `i` (its look), when the level has its own drawing for it. */
   enemy?(e: Enemy, v: View): boolean;
+  /** Draws something thrown, when the level has its own drawing for it (a slinger's stone). */
+  shot?(s: Shot, v: View): boolean;
   /** The flourish after the rune, `age` steps in: lights coming on, a flag going up. */
   flourish?(age: number, v: View): void;
   /** Draws flag `i` its own way (a blue-painted trunk) and says so; false leaves it to the kit's flagpole. */
@@ -159,7 +165,9 @@ export interface TrollRules {
   step(t: Troll, step: number, him: Body): TrollEvent;
   /** Its body (and, stone, what he stands on). */
   box(t: Troll): { x: number; y: number; w: number; h: number };
-  hurts(t: Troll, step: number, him: Body): { fromX: number } | null;
+  hurts(t: Troll, step: number, him: Body): { fromX: number; from?: "above" | "below" } | null;
+  /** It ran into his raised shield: pushed back the way `dir` points. */
+  shoved?(t: Troll, step: number, dir: 1 | -1): void;
 }
 
 /**
@@ -176,8 +184,10 @@ export interface Boss<S = unknown> {
    * does, and what to call it. Null when he did not.
    */
   stomped(s: S, t: number, him: Body, prevBottom: number): { top: number; hit: boolean; speed?: number; event?: string } | null;
-  /** What hurts him this step, and from where; null when nothing does. */
-  hurts(s: S, t: number, him: Body): { fromX: number } | null;
+  /** What hurts him this step, and from where (and whether from above or below); null when nothing does. */
+  hurts(s: S, t: number, him: Body): { fromX: number; from?: "above" | "below" } | null;
+  /** It ran into his raised shield: pushed back a tile the way `dir` points (ADR 0024). */
+  shoved?(s: S, t: number, dir: 1 | -1): void;
   /** Its body as a wall he cannot walk through this step (a machine standing still), or null. */
   blocks?(s: S): { x: number; y: number; w: number; h: number } | null;
   /** He lost a life: back to where it waits, keeping the hits it has taken. */
@@ -188,6 +198,21 @@ export interface Boss<S = unknown> {
   top(s: S): { x: number; y: number; w?: number };
   /** Beaten for good: the rune shows. */
   beaten(s: S): boolean;
+}
+
+/**
+ * Moving ground a level brings with it that is not a carrier on the clock: rocking decks and sinking
+ * pads (`deck.ts` and `sink.ts` in the kit). It comes with its level's file, so the first script does
+ * not carry it; play.ts runs it each step. Its state is plain data.
+ */
+export interface Grounds<S = unknown> {
+  create(): S;
+  /** The ground it gives him this step, as the physics takes it. */
+  carriers(s: S, t: number, him: Body): Carrier[];
+  /** After his step: what it notices of him (the pad he stands on). */
+  after?(s: S, t: number, him: Body): void;
+  /** Everywhere it ever is, as still ground: for the reach search. */
+  everywhere(): Carrier[];
 }
 
 export interface LevelDef {
@@ -250,6 +275,8 @@ export interface LevelDef {
   haze?: [number, number, number];
   /** Under the ground, with no sky: its far layers fill the whole view, however tall, and are not moved down on an upright screen. */
   underground?: boolean;
+  /** Its own moving ground: rocking decks, sinking pads. */
+  grounds?: Grounds<any>;
   art: Art;
 }
 

@@ -24,7 +24,7 @@ const { newPlay, stepPlay } = P;
 const { enemyBox, shotBox } = await import("../../src/game/enemies.ts");
 const { trollHurts } = await import("../../src/game/troll.ts");
 
-type Intent = { left: boolean; right: boolean; jumpHeld: boolean; jumpPressed: boolean; sit?: boolean; dash?: boolean };
+type Intent = { left: boolean; right: boolean; jumpHeld: boolean; jumpPressed: boolean; sit?: boolean; dash?: boolean; shield?: boolean };
 const NONE: Intent = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const PW = 10;
 const PH = 14;
@@ -76,7 +76,9 @@ export function clonePlay(p: any): any {
     cheese: p.cheese && { ...p.cheese },
     dash: p.dash && { ...p.dash },
     troll: p.troll && { ...p.troll, wave: p.troll.wave && { ...p.troll.wave } },
-    boss: p.boss && { rules: p.boss.rules, state: { ...p.boss.state } }
+    boss: p.boss && { rules: p.boss.rules, state: { ...p.boss.state } },
+    shield: p.shield && { ...p.shield },
+    grounds: p.grounds && { rules: p.grounds.rules, state: structuredClone(p.grounds.state) }
   };
 }
 
@@ -300,6 +302,8 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
   const dirCh: { out: number; last: number; delta: number; extra: number; off?: number } = { out: 0, last: -1, delta: draw(), extra: extra() };
   const jumpCh = { out: false, last: -1, delta: draw(), drop: cfg.drop > 0 && r() < cfg.drop };
   const dashCh = { last: -1, delta: draw() };
+  /** The shield (down, held): its key going down and coming up each reach the game off by up to k steps, as the direction's do. */
+  const shieldCh = { out: false, last: -1, delta: draw() };
   let prevJumpOut = false;
   const res: RunResult = { level: id, k: K, drop: cfg.drop, overhold: cfg.overhold, seed: cfg.seed, outcome: "timeout", seconds: 0, steps: 0, hurts: [], respawns: [], resyncs: [], livesLost: 0, lastX: 0, lastMove: "", idle: 0 };
   const max = cfg.max ?? ref.steps * 4 + 60 * 60;
@@ -459,13 +463,32 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
       dashCh.delta = draw();
       break;
     }
+    // Shield: a held key, its edges shifted as the direction's are.
+    const sh = (t: number) => !!src(t).shield;
+    for (let T = Math.max(shieldCh.last + 1, lo + 1); T <= hi; T++) {
+      if (sh(T) === sh(T - 1)) continue;
+      if (n < T + shieldCh.delta) break;
+      shieldCh.last = Math.min(T, n);
+      shieldCh.delta = draw();
+      shieldCh.out = sh(T);
+    }
+    // An edge that slid out of the window unseen: the key follows the route again.
+    if (shieldCh.out !== sh(n)) {
+      let pending = false;
+      for (let T = shieldCh.last + 1; T <= hi; T++) if (sh(T) !== sh(T - 1)) pending = true;
+      if (!pending) {
+        shieldCh.out = sh(n);
+        shieldCh.last = n;
+      }
+    }
     const out: Intent = {
       left: dirCh.out < 0,
       right: dirCh.out > 0,
       jumpHeld: jumpCh.out,
       jumpPressed: jumpCh.out && (!prevJumpOut || repress),
       sit: H[n].sit,
-      dash: dashNow
+      dash: dashNow,
+      shield: shieldCh.out
     };
     prevJumpOut = jumpCh.out;
     if (!out.left && !out.right && !out.jumpHeld && p.body.onGround && Math.abs(p.body.vx) < 0.05) res.idle++;

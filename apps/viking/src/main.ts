@@ -56,14 +56,13 @@ import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
-import type { Move } from "./game/bot";
 import { strings } from "./game/i18n";
 import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
-import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
+import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
-import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
-import { FENCE_COL, kartDef } from "./levels/kart";
+import { BUILT, LINE, LINE_1, LINE_2, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
+import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling, enemyEyes } from "./render/pickups";
@@ -142,16 +141,36 @@ const fetchLevel = (id: string) => {
 };
 const touch = isTouch();
 /** The double jump is the raven's feather, from the maze; `?feather` gives it for checking. Read again on coming out of the mound. */
-const abilities = { doubleJump: false, gold: false, pole: false };
+const abilities = { doubleJump: false, gold: false, pole: false, shield: false };
 function readFeather() {
   abilities.doubleJump = store.get("viking.feather") === "1" || params.has("feather") || abilities.doubleJump;
   abilities.gold = store.get("viking.featherGold") === "1" || abilities.gold;
   abilities.pole = hasPole(progress) || params.has("pole");
+  abilities.shield = hasShield(progress) || params.has("shield");
 }
+/**
+ * The shield's rules and drawing (`game/shield.ts`), fetched on their own when he has the shield or
+ * goes to Bygdøy or beyond, where it is given and then always his (ADR 0024).
+ */
+let shieldKit: typeof import("./game/shield") | null = null;
+let shieldLoading: Promise<void> | null = null;
+const loadShield = () =>
+  (shieldLoading ??= import("./game/shield").then(
+    (m) => void (shieldKit = m),
+    (e) => {
+      shieldLoading = null;
+      throw e;
+    }
+  ));
+/** The levels from Bygdøy on, where the shield is given (Bygdøy) or always his (after it). */
+const shieldFrom = () => ORDER.indexOf("bygdoy");
+const wantsShield = (id: string) => abilities.shield || (id !== "kart" && ORDER.indexOf(id) >= shieldFrom());
+// A stepped page is photographed once its files are in: the shield's comes alongside the level's.
+if (debug && wantsShield(params.get("level") ?? location.hash.slice(1))) void loadShield().catch(() => undefined);
 readFeather();
 /** The gold helmet: all ten runes, now or in the old game (`viking.crowned`, kept by those who earned it). */
 const CROWNED = "viking.crowned";
-const crowned = () => store.get(CROWNED) === "1" || allRunes(progress, ORDER);
+const crowned = () => store.get(CROWNED) === "1" || allRunes(progress, LINE_1);
 /**
  * Lives and the purse of skilling go with him from level to level for this visit; a new visit starts
  * with three lives. What a level has given already in this visit is remembered, so restarting it is
@@ -193,7 +212,9 @@ function extraState() {
     /** The card shown: a level cleared, the game over, or a level's file that would not come. */
     card: null as "clear" | "over" | "failed" | null,
     /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
-    bossLine: null as { lines: string[]; until: number } | null
+    bossLine: null as { lines: string[]; until: number } | null,
+    /** The moment he is given the shield: his own words over him for a while. */
+    gift: null as { since: number } | null
   };
 }
 const before = { x: 0, y: 0 };
@@ -229,10 +250,6 @@ function layoutBoards(s: Scene): Board[] {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
   });
-  if (s.map && FENCE_COL >= 0) {
-    const text = t.building;
-    boards.push({ text, cx: FENCE_COL * TILE + 8, y: 6 * TILE, w: boardWidth(text) });
-  }
   return boards;
 }
 
@@ -246,16 +263,36 @@ function place(x: number, bottom: number, announceIt = true) {
 
 const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
 
+/**
+ * How the line map looks (`levels/kartArt.ts`), fetched on its own: every visitor comes to the map
+ * soon, so it is asked for as the page starts. Until it is here (or if it never comes) the map is bare.
+ */
+let kartArt: KartArt | null = null;
+let kartLoading: Promise<void> | null = null;
+const loadKart = () =>
+  (kartLoading ??= import("./levels/kartArt").then(
+    (m) => void (kartArt = m.kartArt),
+    (e) => {
+      kartLoading = null;
+      throw e;
+    }
+  ));
+void loadKart().catch(() => undefined);
+const BARE: KartArt = () => ({ back() {}, ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }), ledges: {} });
+const theMap = () => kartDef(progress, kartArt ?? BARE);
+
 /** Opens the line map or a level. `at`: a door to stand at on arrival (on the map, a station or the mound). */
 function openScene(id: string, at?: string) {
-  const def = id === "kart" ? kartDef(progress) : loadedLevel(id) ?? kartDef(progress);
+  const def = id === "kart" ? theMap() : loadedLevel(id) ?? theMap();
   readFeather();
   // Past Holmenkollen he has the ski pole whatever the progress says: the levels there are only open to those who cleared it.
   const pole = abilities.pole || ORDER.indexOf(def.id) > ORDER.indexOf("holmenkollen");
   // After a Game over (lives at nought) any way back into a level starts with three lives: the card's
   // buttons, R, the header's restart, Back, a header link.
   if (session.lives <= 0) session.lives = LIVES;
-  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse, cheeseTaken: session.cheese.has(def.id), paid: session.paid.get(def.id) });
+  // From the level after Bygdøy on he always has the shield, as the pole from Akerselva on.
+  const shield = abilities.shield || ORDER.indexOf(def.id) > shieldFrom();
+  const play = newPlay(def, { feather: abilities.doubleJump, pole, lives: session.lives, purse: session.purse, cheeseTaken: session.cheese.has(def.id), paid: session.paid.get(def.id), shield: shieldKit?.SHIELD_RULES, hasShield: shield });
   // `?debug&hearts=1&lives=1`: start a level with fewer, to look at a hit, a lost life or the game over.
   if (debug && params.has("hearts")) play.hearts = Math.max(1, Math.min(HEARTS, Number(params.get("hearts")) || HEARTS));
   const doors = buildDoors(doorSpots(def, play), links);
@@ -263,7 +300,7 @@ function openScene(id: string, at?: string) {
   const skies = skyControl(params.get("sky") ?? def.sky, now);
   scene = { def, play, doors, boards: [], signs, map: def.id === "kart", skies };
   Object.assign(state, sceneState<Door>({ name: def.name, landmark: def.landmark, from: 0 }, lang), extraState());
-  if (scene.map) state.banner = { title: def.name, sub: t.lineSub, since: 0 };
+  if (scene.map) state.banner = { title: def.name, sub: lineTwoOpen(progress) ? t.lineSubBoth : t.lineSub, since: 0 };
   shown = { ...play.body };
   before.x = play.body.x;
   before.y = play.body.y;
@@ -272,11 +309,17 @@ function openScene(id: string, at?: string) {
   document.body.classList.toggle("on-map", scene.map);
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
-  help.textContent = scene.map ? t.help : t.helpLevel(pole);
+  showShieldButton(!!play.shield?.has && !scene.map);
+  help.textContent = scene.map ? t.help : t.helpLevel(pole, !!play.shield?.has);
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
-  if (scene.map) for (const [i, l] of LINE.entries()) if (l.built && isOpen(progress, ORDER, i)) void loadLevel(l.id).catch(() => undefined);
+  if (scene.map)
+    for (const [i, l] of LINE.entries())
+      if (l.built && isOpen(progress, ORDER, i)) {
+        void loadLevel(l.id).catch(() => undefined);
+        if (wantsShield(l.id)) void loadShield().catch(() => undefined);
+      }
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -295,12 +338,28 @@ const loadingEl = $<HTMLElement>("loading");
 /** While a level's file is on its way: a board with its name; null takes it down. */
 function showFetching(id: string | null) {
   fetching = id;
-  const name = id ? LINE.find((l) => l.id === id)?.name ?? id : "";
+  const name = id ? nameOf(id) : "";
   loadingEl.hidden = !id;
   if (id) {
     loadingEl.textContent = t.loading(name);
     say(t.loading(name));
   }
+}
+/** A station's name, or the map's. */
+const nameOf = (id: string) => (id === "kart" ? "T-banen" : LINE.find((l) => l.id === id)?.name ?? id);
+/**
+ * What a scene needs fetched before it can open, or null when all of it is here: the map's look; a
+ * level's file.
+ */
+function needed(id: string): Promise<unknown> | null {
+  const waits: Promise<unknown>[] = [];
+  if (id === "kart") {
+    if (!kartArt) waits.push(loadKart());
+  } else {
+    if (!loadedLevel(id)) waits.push(fetchLevel(id));
+    if (wantsShield(id) && !shieldKit) waits.push(loadShield());
+  }
+  return waits.length ? Promise.all(waits) : null;
 }
 /** True when going back in history leaves the mound: false when the page was opened inside it. */
 let canGoBack = false;
@@ -322,7 +381,8 @@ function sync() {
   const want = ROUTES.includes(id) && (id === "kart" || levelOpen(id)) ? id : "kart";
   if (fetching && fetching !== want) showFetching(null);
   if (scene && scene.def.id === want && !arriveAt) return;
-  if (want !== "kart" && !loadedLevel(want)) {
+  const need = needed(want);
+  if (need) {
     // The level's code comes first: the scene goes dark under a board while it does, and opens when
     // it is here, unless he has gone somewhere else meanwhile. Failing, a card says so, with a retry.
     if (scene) {
@@ -331,7 +391,7 @@ function sync() {
       state.fade = 1;
     }
     showFetching(want);
-    fetchLevel(want).then(
+    need.then(
       () => {
         if (fetching !== want) return;
         showFetching(null);
@@ -477,7 +537,8 @@ function resumeScene(s: Scene) {
   document.body.classList.remove("on-map");
   finishEl.hidden = true;
   dashButton.hidden = !s.play.pole;
-  help.textContent = t.helpLevel(s.play.pole);
+  showShieldButton(!!s.play.shield?.has);
+  help.textContent = t.helpLevel(s.play.pole, !!s.play.shield?.has);
   layout();
   hud();
 }
@@ -535,8 +596,10 @@ mazeUi.back.addEventListener("click", () => {
 // ---------------------------------------------------------------------------------------------
 // The header: ten rune slots, the clock, the gold, restart and mute; and the card at a level's end.
 
-const runeSlots = [...document.querySelectorAll<HTMLElement>("#runes li")];
+const runeSlots = [...document.querySelectorAll<HTMLElement>(".runes li")];
 const runesEl = $<HTMLElement>("runes");
+/** Line 2's six, VIKING: shown once line 2 is open. */
+const runesTwoEl = $<HTMLElement>("runes2");
 const clockEl = $<HTMLElement>("clock");
 const bestEl = $<HTMLElement>("best");
 const goldEl = $<HTMLElement>("goldcount");
@@ -548,6 +611,15 @@ const coinN = $<HTMLElement>("coinn");
 const dashButton = pad.querySelector<HTMLButtonElement>('[data-action="dash"]')!;
 dashButton.textContent = t.dash;
 dashButton.setAttribute("aria-label", t.dash);
+/** The shield's button on the touch pad (down, held), beside the dash: shown once he has the shield. */
+const shieldButton = pad.querySelector<HTMLButtonElement>('[data-action="down"]')!;
+shieldButton.textContent = t.shield;
+shieldButton.setAttribute("aria-label", t.shield);
+/** Shows the shield's button or not; with it the pad's buttons are made smaller, so they all fit. */
+function showShieldButton(on: boolean) {
+  shieldButton.hidden = !on;
+  pad.classList.toggle("armed", on);
+}
 const restartButton = $<HTMLButtonElement>("restart");
 const finishEl = $<HTMLElement>("finish");
 
@@ -592,15 +664,20 @@ livesEl.appendChild(pixelSvg(["...w...", "..iii..", ".iiiii.", "iiiiiii", "rrrrr
 const livesN = livesEl.appendChild(document.createElement("span"));
 
 const shownHud = { clock: "", lit: "", gold: -1, best: "", hearts: -1, lives: -1, coins: "" };
-/** The rune slots light for the levels cleared; the one a rune is flying to waits. */
+/** The rune slots light for the levels cleared; the one a rune is flying to waits. Line 2's group shows once line 2 is open. */
 function hud() {
-  const lit = LINE.map((l) => (progress.cleared.includes(l.id) && !(state.flight && scene.def.id === l.id) ? "1" : "0")).join("");
+  const lit = LINE.map((l) => (progress.cleared.includes(l.id) && !(state.flight && scene.def.id === l.id) ? "1" : "0")).join("") + (lineTwoOpen(progress) ? "+" : "");
   if (lit !== shownHud.lit) {
     shownHud.lit = lit;
     LINE.forEach((l, i) => runeSlots[l.rune]?.classList.toggle("lit", lit[i] === "1"));
-    const n = [...lit].filter((c) => c === "1").length;
+    const n = [...lit.slice(0, 10)].filter((c) => c === "1").length;
+    const n2 = [...lit.slice(10, 16)].filter((c) => c === "1").length;
     runesEl.setAttribute("aria-label", n === 10 ? t.runesAll : t.runes(n));
     runesEl.classList.toggle("all", n === 10);
+    runesTwoEl.hidden = !lit.endsWith("+");
+    runesEl.parentElement!.classList.toggle("sixteen", !runesTwoEl.hidden);
+    runesTwoEl.setAttribute("aria-label", t.runesTwo(n2));
+    runesTwoEl.classList.toggle("all", n2 === 6);
   }
   if (!scene.map) {
     const clock = formatTime(elapsedMs(scene.play));
@@ -683,16 +760,19 @@ function showCard(r: CardResult) {
   finishCoins.textContent = t.finishSkilling(r.found, r.total);
   finishClean.hidden = !r.clean && !r.pole;
   finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? (touch ? t.finishPoleTouch : t.finishPole) : ""].filter(Boolean).join(" ");
-  // The last line counts honestly: the runes he has, on the last level built; and with the tenth, the name, plainly, in both languages.
+  // The last line counts honestly: the runes he has, on the last level built of each line; with the
+  // tenth, the name, plainly, in both languages; and when Nabolaget opens line 2, that it has.
   const more = $<HTMLElement>("finish-more");
-  const runes = LINE.filter((l) => progress.cleared.includes(l.id)).length;
-  more.hidden = !r.home && scene.def.id !== BUILT[BUILT.length - 1].id;
+  const of = (ids: string[]) => ids.filter((id) => progress.cleared.includes(id)).length;
+  const lastOfTwo = BUILT.filter((l) => l.line === 2).at(-1)?.id;
+  more.hidden = !r.home && !r.opened && scene.def.id !== "nabolaget" && scene.def.id !== lastOfTwo;
   more.classList.toggle("home", r.home);
   more.textContent = "";
   if (r.home) {
     const other = strings(lang === "nb" ? "en" : "nb");
-    for (const line of [t.homeLine, other.homeLine]) more.appendChild(document.createElement("span")).textContent = line;
-  } else more.textContent = BUILT.length < LINE.length ? t.moreToBuild(runes) : t.runesLeft(runes);
+    for (const line of [t.homeLine, other.homeLine, ...(r.opened ? [t.lineTwoOpened] : [])]) more.appendChild(document.createElement("span")).textContent = line;
+  } else if (r.opened) more.textContent = t.lineTwoOpened;
+  else more.textContent = scene.def.id === "nabolaget" ? t.runesLeft(of(LINE_1)) : t.moreToBuild(of(LINE_2));
   finishOn.textContent = t.finishOn;
   finishAgain.textContent = t.finishAgain;
   finishEl.hidden = false;
@@ -724,7 +804,7 @@ function showOver() {
 let failedLevel: string | null = null;
 function showLoadFailed(id: string) {
   failedLevel = id;
-  const name = LINE.find((l) => l.id === id)?.name ?? id;
+  const name = nameOf(id);
   state.finished = true;
   state.card = "failed";
   $<HTMLElement>("finish-title").textContent = t.loadFailedTitle;
@@ -747,6 +827,8 @@ interface CardResult {
   pole: boolean;
   /** This rune was the tenth: the card says so, once. */
   home: boolean;
+  /** Line 2 opened with this clear (Nabolaget's first): the card says so. */
+  opened: boolean;
 }
 let cardResult: CardResult | null = null;
 
@@ -887,7 +969,8 @@ function react(ev: Events) {
     sfx.play("flag");
     say(t.flagAnnounce);
   }
-  if (ev.bell !== null) sfx.play("bell", p.def.timed[ev.bell].note ?? ev.bell);
+  // A ledge on a beat rings its bell when he lands on it; one with no note (an oar) does not.
+  if (ev.bell !== null && (p.def.timed[ev.bell].note ?? 0) >= 0) sfx.play("bell", p.def.timed[ev.bell].note ?? ev.bell);
   if (ev.bleat) sfx.play("bleat");
   if (ev.drum !== null) sfx.play("stomp");
   if (ev.coin !== null) {
@@ -915,6 +998,20 @@ function react(ev: Events) {
     say(t.benchSat);
   }
   if (ev.dash) sfx.play("dash");
+  // The shield: a thud as it stops something, and the moment it is given (ADR 0024).
+  if (ev.blocked) {
+    sfx.play("stomp");
+    const sh = p.shield;
+    if (sh) sparksAt(b.x + PLAYER.w / 2 + sh.facing * 9, b.y + 3, 4, PALETTE.iron, 0.5);
+  }
+  if (ev.gift) {
+    sfx.play("fanfare");
+    state.gift = { since: state.steps };
+    say((touch ? t.shieldGivenTouch : t.shieldGiven).join(" "));
+    sparksAt(b.x + PLAYER.w / 2, b.y + 4, 10, METAL.goldLight, 0.8);
+    showShieldButton(true);
+    help.textContent = t.helpLevel(p.pole, true);
+  }
   if (ev.troll === "wake") {
     sfx.play("gate");
     bossSays([t.trollWakes]);
@@ -962,14 +1059,15 @@ function react(ev: Events) {
     say(t.runeFound(RUNE_CHARS[p.def.rune], p.def.name));
     const ms = elapsedMs(p);
     const hadPole = hasPole(progress);
-    const had = allRunes(progress, ORDER);
+    const had = allRunes(progress, LINE_1);
+    const wasOpen = lineTwoOpen(progress);
     const r = clearLevel(progress, p.def.id, ms, p.bracteateAt !== null, { skilling: p.found, clean: !p.hurt });
     saveProgress(r.progress);
     // The tenth rune: the helmet turns gold, and stays gold.
-    const home = !had && allRunes(progress, ORDER);
+    const home = !had && allRunes(progress, LINE_1);
     if (home && !pretend) store.set(CROWNED, "1");
     if (home && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + 1, 12, METAL.goldLight, 0.8);
-    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole: !hadPole && hasPole(progress), home };
+    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole: !hadPole && hasPole(progress), home, opened: !wasOpen && lineTwoOpen(progress) };
     state.flight = { from: { x: p.rune.x + 8, y: p.rune.y + 8 }, since: state.steps };
     sparksAt(p.rune.x + 8, p.rune.y + 8, 8, PALETTE.runeGlow);
     const bursts = p.def.fireworks;
@@ -993,7 +1091,7 @@ function play() {
   const keys = state.goal && !scene.map ? carefully(p, walked.intent) : walked.intent;
   // The scripted route (under ?debug&auto) is asked every step, held or not, as the tests ask it.
   const scripted = auto?.(p) ?? null;
-  const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash") };
+  const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash"), shield: !held && input.held.down };
   const airJumps = b.airJumps;
   const vx = b.vx;
   const ev = stepPlay(p, intent);
@@ -1174,7 +1272,7 @@ function drawThings(v: View) {
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
   for (const e of p.enemies) if (!art.enemy?.(e, v)) drawEnemy(e, p.t);
-  for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
+  for (const s of p.shots) art.shot?.(s, v) || drawShot(s, p.enemies[s.by]?.def.look);
   if (p.troll) art.troll?.(p.troll, v);
   if (p.boss) art.boss?.(p.boss.state, v);
   if (p.bracteate && p.bracteateAt === null) {
@@ -1184,6 +1282,11 @@ function drawThings(v: View) {
   if (p.rune && runeFree(p)) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
   if (p.pole && !p.loaded) skiPole(v);
+  // The shield: where the level gives it, leaning; once his, on his back, or up in front of him.
+  if (shieldKit) {
+    if (p.gift && p.giftAt === null) shieldKit.drawShieldFace(p.gift.x, p.gift.y + 1);
+    if (p.shield?.has && !p.loaded) shieldKit.drawShieldOn(shown, p.shield.raise > 0 ? p.shield.facing : p.body.facing, shieldKit.shieldDrawn(p.shield.raise, view.reduced), !!p.sitting);
+  }
 }
 
 /** Eye-shine: the one bright pixel that answers a light in the dark; and the moonlit rim round what can hurt him. */
@@ -1206,7 +1309,7 @@ function afterDark(v: View) {
   const street = ctx();
   const enemies = () => {
     for (const e of p.enemies) if (e.alive && !art.enemy?.(e, v)) drawEnemy(e, p.t);
-    for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
+    for (const s of p.shots) art.shot?.(s, v) || drawShot(s, p.enemies[s.by]?.def.look);
   };
   if (rimCanvas.width !== view.w || rimCanvas.height !== view.h) {
     rimCanvas.width = view.w;
@@ -1364,7 +1467,7 @@ function render(alpha: number) {
   const horizon = p.map.height - 4 * TILE - 34;
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
-  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt };
+  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
   const haze = scene.def.haze ?? [0.35, 0.3, 0.2];
   if (art.far) farPass(kit.depth(0.12), () => art.far!(v), haze[0]);
   if (art.mid) farPass(kit.depth(0.2), () => art.mid!(v), haze[1]);
@@ -1415,6 +1518,9 @@ function render(alpha: number) {
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
   if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [t.featherLine] };
+  // The shield given: his own bubble for five seconds.
+  if (state.gift && state.steps - state.gift.since > 300) state.gift = null;
+  if (state.gift && state.mode === "play") bubble = { x: cx, y: shown.y - 4, lines: touch ? t.shieldGivenTouch : t.shieldGiven };
   const nearKey = bubble ? bubble.lines[0] : null;
   if (nearKey !== state.nearSign) {
     state.nearSign = nearKey;
@@ -1551,20 +1657,8 @@ const levelParam = params.get("level");
 const debugLevel = debug && levelParam && BUILT.some((l) => l.id === levelParam) ? levelParam : null;
 if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + MAZE_HASH); // ?level=<n>: the maze at that level
 
-/** `?debug&auto`: the page plays the level's scripted route from the tests, for looking at. */
+/** `?debug&auto`: the page plays the level's scripted route from the tests, for looking at (the routes are `?debug`'s to fetch). */
 let auto: ((p: Play) => PlayIntent | null) | null = null;
-const AUTO: Record<string, () => Promise<Move[]>> = {
-  langkaia: () => import("./levels/routes/langkaia").then((m) => m.LANGKAIA_ROUTE),
-  akershus: () => import("./levels/routes/akershus").then((m) => m.AKERSHUS_ROUTE),
-  radhuset: () => import("./levels/routes/radhuset").then((m) => m.RADHUSET_ROUTE),
-  slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
-  holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE),
-  akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE),
-  nordmarka: () => import("./levels/routes/nordmarka").then((m) => m.NORDMARKA_ROUTE),
-  stortinget: () => import("./levels/routes/stortinget").then((m) => m.STORTINGET_ROUTE),
-  ekeberg: () => import("./levels/routes/ekeberg").then((m) => m.EKEBERG_ROUTE),
-  nabolaget: () => import("./levels/routes/nabolaget").then((m) => m.NABOLAGET_ROUTE)
-};
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
 function still() {
@@ -1608,24 +1702,29 @@ async function start() {
   // The scripted routes for `?debug&auto` are fetched alongside the level, not after it, so a
   // stepped page has both before it steps.
   // The scripted player itself comes with them, on demand: no visitor's first script carries it.
-  const route = debug && params.has("auto") ? Promise.all([AUTO[first]?.(), import("./game/bot")]).catch(() => null) : null;
+  const route = debugging && params.has("auto") ? debugging.then((d) => d.autoRoute(first)).catch(() => null) : null;
   let failedAtStart: string | null = null;
-  if (first !== "kart") {
-    showFetching(first);
+  const need = needed(first);
+  if (need) {
+    if (first !== "kart") showFetching(first);
     try {
-      await fetchLevel(first);
+      await need;
     } catch {
-      failedAtStart = first;
-      first = "kart";
-      firstAt = furthest;
+      if (first !== "kart") {
+        failedAtStart = first;
+        first = "kart";
+        firstAt = furthest;
+      }
     }
     showFetching(null);
   }
+  // The map's look, when he starts on the map after all (it is bare if it does not come).
+  if (first === "kart") await needed("kart")?.catch(() => undefined);
   const scripted = await route;
   openScene(first, firstAt);
   if (location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + `#${first}`);
   if (failedAtStart) showLoadFailed(failedAtStart);
-  if (scripted?.[0] && !scene.map) auto = scripted[1].autopilot(scripted[0]);
+  if (scripted && !scene.map) auto = scripted;
 
   // The helmet moment: out of the Opera's door in level 1, or at a station on the map. In level 1 he
   // stands at the start, a step clear of the door he came out of, which closes behind him: so his

@@ -14,9 +14,11 @@ import { EKEBERG } from "../src/levels/ekeberg";
 import { HOLMENKOLLEN } from "../src/levels/holmenkollen";
 import { LANGKAIA } from "../src/levels/langkaia";
 import { NABOLAGET } from "../src/levels/nabolaget";
+import { BYGDOY } from "../src/levels/bygdoy";
+import { SHIELD_RULES } from "../src/game/shield";
 import { NORDMARKA } from "../src/levels/nordmarka";
 import { RADHUSET } from "../src/levels/radhuset";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "../src/levels/routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "../src/levels/routes";
 import { SLOTTET } from "../src/levels/slottet";
 import { STORTINGET } from "../src/levels/stortinget";
 import { MARKS } from "../src/levels/types";
@@ -31,13 +33,14 @@ const LEVELS = [
   [NORDMARKA, NORDMARKA_ROUTE, true],
   [STORTINGET, STORTINGET_ROUTE, true],
   [EKEBERG, EKEBERG_ROUTE, true],
-  [NABOLAGET, NABOLAGET_ROUTE, true]
+  [NABOLAGET, NABOLAGET_ROUTE, true],
+  [BYGDOY, BYGDOY_ROUTE, true]
 ] as const;
 
 const facts: Record<string, { cols: number; clear: number; enemies: number; coins: number; flags: number; benches: number }> = {};
 for (const [def, route, pole] of LEVELS) {
   const map = levelMap(def);
-  const r = playMoves(newPlay(def, { pole }), [...route], { max: 60 * 300 });
+  const r = playMoves(newPlay(def, { pole, shield: SHIELD_RULES }), [...route], { max: 60 * 300 });
   if (!r.done) throw new Error(`${def.id}: the scripted route does not clear (${r.stuck})`);
   facts[def.id] = { cols: map.cols, clear: Math.round(r.seconds), enemies: (def.enemies ?? []).length, coins: map.find(MARKS.skilling).length, flags: flagsOf(map).length, benches: benchesOf(map).length };
 }

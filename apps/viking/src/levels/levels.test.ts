@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
-import { cannonRide, carrier, cx, feet, jump, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
+import { cannonRide, carrier, cx, feet, jump, jumpTo, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
 import { KIND, THROW_REACH, leap as leapOf } from "../game/enemies";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
@@ -13,7 +13,11 @@ import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, OARS, PADS, RAFT as BALSA, REED } from "./bygdoy";
+import { SHIELD_RULES } from "../game/shield";
+import { deckTops } from "@larshansen/pixelkit/deck";
+import { SINK } from "@larshansen/pixelkit/sink";
 import { NABOLAGET, PLOUGH_DEF, SMOKE, TERRACE } from "./nabolaget";
 import type { Plough } from "../game/plough";
 import { EKEBERG, GUSTS, KNOLLS, TRAMS } from "./ekeberg";
@@ -24,8 +28,9 @@ import { rides } from "./routes/common";
 import { AKERSELVA, BUCKETS, CURTAIN, FALL1, WHEEL } from "./akerselva";
 import { SLOTTET } from "./slottet";
 import { AKERSHUS, BATTERY, HOIST } from "./akershus";
-import { BUILT, LINE, ORDER } from "./index";
-import { kartDef } from "./kart";
+import { BUILT, LINE, LINE_1, LINE_2, ORDER } from "./index";
+import { GATE_COL, LINE_1_END, STATIONS, kartDef, lineTwoOpen } from "./kart";
+import { kartArt } from "./kartArt";
 import { LANGKAIA, RAFT } from "./langkaia";
 import { BELLS, CARILLON, CLOCK, HANDS, LOW_BELLS, POOL_BELLS, RADHUSET, SWING, SWING_ENDS } from "./radhuset";
 import { MARKS, type LevelDef } from "./types";
@@ -50,7 +55,8 @@ const ROUTE: Record<string, Move[]> = {
   nordmarka: NORDMARKA_ROUTE,
   stortinget: STORTINGET_ROUTE,
   ekeberg: EKEBERG_ROUTE,
-  nabolaget: NABOLAGET_ROUTE
+  nabolaget: NABOLAGET_ROUTE,
+  bygdoy: BYGDOY_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -90,13 +96,17 @@ const GOLD: Record<string, Move[]> = {
         return { left: aim < -2, right: aim > 2, jumpHeld: true, jumpPressed: s.i === 0 || second };
       }
     }
-  ]
+  ],
+  // On the longship's deck under its mast: two jumps up onto the yard, and two more up off it.
+  bygdoy: [...BYGDOY_ROUTE.slice(0, BYGDOY_ROUTE.findIndex((m) => m.name === `walk to ${mid(198)}`)), walk(mid(184)), jump(0, { second: 18 }), walk(mid(186)), jump(0, { second: 18 })]
 };
 
 /** Every level is held to the order's measure: at least a minute for the scripted player, and the size of a level. */
-const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
+const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
-const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
+const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy"]);
+/** How each level is played in the tests: with the pole from level 6 on, and the shield's rules (Bygdøy gives the shield at its prow; in line 1 he does not have it). */
+const opts = (def: LevelDef, more: { feather?: boolean } = {}) => ({ pole: POLE.has(def.id), shield: SHIELD_RULES, ...more });
 /**
  * The scripted clear's floor: forty seconds, the last level eighty. (It was sixty and ninety; order 12
  * cut the long waits on rides and bosses, which took ten to eighteen seconds off some levels without
@@ -138,7 +148,7 @@ function jumpsOverGaps(def: LevelDef, moves: Move[]) {
         }
       : m
   );
-  playMoves(newPlay(def, { pole: POLE.has(def.id) }), watched, { max: 60 * 300 });
+  playMoves(newPlay(def, opts(def)), watched, { max: 60 * 300 });
   const gapAt = (c: number, top: number) => {
     for (let r = top; r < map.rows; r++) {
       if (def.legend.water.includes(map.tileAt(c, r))) return true;
@@ -153,29 +163,61 @@ function jumpsOverGaps(def: LevelDef, moves: Move[]) {
   });
 }
 
-describe("the line", () => {
-  test("ten levels, one per rune of LARS HANSEN, all ten built", () => {
-    expect(LINE.map((l) => "LARSHANSEN"[l.rune]).join("")).toBe("LARSHANSEN");
-    expect(BUILT.map((l) => l.id)).toEqual(ORDER);
-    expect(new Set(ORDER).size).toBe(10);
+describe("the lines", () => {
+  test("line 1: ten levels, one per rune of LARS HANSEN, all built; line 2: six, one per rune of VIKING", () => {
+    const word = (ids: string[]) => ids.map((id) => "LARSHANSENVIKING"[LINE[ORDER.indexOf(id)].rune]).join("");
+    expect(word(LINE_1)).toBe("LARSHANSEN");
+    expect(word(LINE_2)).toBe("VIKING");
+    expect(LINE.map((l) => l.line).join("")).toBe("1111111111222222");
+    expect(LINE.filter((l) => l.line === 1).every((l) => l.built)).toBe(true);
+    expect(new Set(ORDER).size).toBe(16);
+    // The built stations are the first of the order: a station opens when the one before it is cleared.
+    expect(BUILT.map((l) => l.id)).toEqual(ORDER.slice(0, BUILT.length));
   });
 
-  test("the line map has a station for each, the mound, and Hjem", () => {
-    const def = kartDef(fresh());
+  test("the line map has a station for each of the sixteen, the mound, and Hjem; line 1 has not moved", () => {
+    const def = kartDef(fresh(), kartArt);
     const map = levelMap(def);
     for (const d of def.doors) expect(map.find(d.tile).length).toBe(1);
     expect(def.doors.map((d) => d.id)).toEqual(["home", "maze", ...ORDER]);
+    // Line 1's ten stations stand where they stood before line 2 came.
+    expect(STATIONS.slice(0, 10)).toEqual([6, 20, 24, 29, 34, 39, 44, 49, 52, 55]);
+    expect(LINE_1.map((id) => map.find(def.doors.find((d) => d.id === id)!.tile)[0].c)).toEqual([6, 20, 24, 29, 34, 39, 44, 49, 52, 55]);
+    // Line 2's six are past line 1's end, on its own deck.
+    for (const c of STATIONS.slice(10)) expect(c).toBeGreaterThan(LINE_1_END);
+  });
+
+  test("line 2 opens when Nabolaget is cleared: until then a gate stands across it, with a sign", () => {
+    const closed = kartDef(fresh(), kartArt);
+    expect(lineTwoOpen(fresh())).toBe(false);
+    const gate = levelMap(closed);
+    expect(gate.isSolid(GATE_COL, 10)).toBe(true);
+    expect(gate.isSolid(GATE_COL, 0)).toBe(true);
+    expect(closed.signs[0].lines.en).toEqual(["Opens once Nabolaget is cleared."]);
+    const nine = { ...fresh(), cleared: LINE_1.slice(0, 9) };
+    expect(lineTwoOpen(nine)).toBe(false);
+    const all = { ...fresh(), cleared: [...LINE_1] };
+    expect(lineTwoOpen(all)).toBe(true);
+    const open = levelMap(kartDef(all, kartArt));
+    expect(open.isSolid(GATE_COL, 10)).toBe(false);
+    // He can walk from Hjem's end of line 1 to the far end of line 2.
+    const p = newPlay(kartDef(all, kartArt), { start: { x: tile(50), bottom: tile(11) } });
+    for (let i = 0; i < 60 * 30 && cx(p) < tile(98); i++) stepPlay(p, { ...IDLE, right: true });
+    expect(cx(p)).toBeGreaterThan(tile(98));
+    const q = newPlay(closed, { start: { x: tile(50), bottom: tile(11) } });
+    for (let i = 0; i < 60 * 10; i++) stepPlay(q, { ...IDLE, right: true, jumpHeld: true, jumpPressed: i % 40 === 0 });
+    expect(cx(q)).toBeLessThan(tile(GATE_COL));
   });
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
     const st = LINE.find((l) => l.id === def.id)!;
     expect(st.built).toBe(true);
-    expect([st.rune, st.name, st.place]).toEqual([def.rune, def.name, def.place]);
+    expect([st.rune, st.name]).toEqual([def.rune, def.name]);
   }
 });
 
@@ -206,7 +248,7 @@ for (const def of LEVELS) {
     });
 
     test("a scripted player clears it with one jump, raising every flag, losing no heart, in forty seconds or more", () => {
-      const p = newPlay(def, { pole: POLE.has(def.id) });
+      const p = newPlay(def, opts(def));
       const r = playMoves(p, ROUTE[def.id], { max: 60 * 300 });
       expect(r.stuck).toBeNull();
       expect(r.done).toBe(true);
@@ -220,7 +262,7 @@ for (const def of LEVELS) {
     });
 
     test("with the feather the bracteate can be reached", () => {
-      const p = newPlay(def, { feather: true, pole: POLE.has(def.id) });
+      const p = newPlay(def, opts(def, { feather: true }));
       const r = playMoves(p, GOLD[def.id], { until: (q) => q.bracteateAt !== null });
       expect(r.stuck).toBeNull();
       expect(p.bracteateAt).not.toBeNull();
@@ -709,6 +751,75 @@ describe("what the levels promise", () => {
   });
 });
 
+describe("Bygdøy, the first of line 2", () => {
+  const P = (start?: { x: number; bottom: number }) => newPlay(BYGDOY, { pole: true, shield: SHIELD_RULES, start });
+
+  test("Fram's deck rocks him up and down; only from its far end, as it rises, does a jump reach the foredeck", () => {
+    const tryFrom = (high: boolean) => {
+      let t0 = 0;
+      while ((deckTops(FRAM_DECK, t0).at(-1)! <= 217) !== high || deckTops(FRAM_DECK, t0 + 40).at(-1)! !== deckTops(FRAM_DECK, t0).at(-1)) t0++;
+      const p = P({ x: tile(89) - 8, bottom: deckTops(FRAM_DECK, t0).at(-1)! });
+      p.t = t0;
+      playMoves(p, [jumpTo(mid(90))], { max: 200 });
+      return feet(p);
+    };
+    expect(tryFrom(true)).toBe(tile(11));
+    expect(tryFrom(false)).toBeGreaterThan(tile(11));
+  });
+
+  test("a bundle of balsa holds him forty steps, then goes under, and him with it", () => {
+    const p = P({ x: PADS[0].x + 16, bottom: PADS[0].y });
+    let splashAt = -1;
+    for (let i = 0; i < 200 && splashAt < 0; i++) if (stepPlay(p, IDLE).splash) splashAt = i;
+    expect(splashAt).toBeGreaterThan(SINK.firm);
+    expect(splashAt).toBeLessThan(SINK.firm + SINK.sink + 10);
+  });
+
+  test("the oars are a stair up the hull: each comes out a stroke after the one below, and the two are out together for over a second", () => {
+    for (let k = 1; k < OARS.length; k++) {
+      expect(OARS[k].y).toBeLessThan(OARS[k - 1].y);
+      let both = 0;
+      for (let t = 0; t < 270; t++) if (timedPhase(t, OARS[k]) === "on" && timedPhase(t, OARS[k - 1]) !== "off") both++;
+      expect(both).toBeGreaterThanOrEqual(60);
+    }
+  });
+
+  test("the shield is given at the longship's prow, and the route stops the slingers' stones with it", () => {
+    const p = P();
+    const r = playMoves(p, BYGDOY_ROUTE, { max: 60 * 300 });
+    expect(r.events.filter((e) => e.gift).length).toBe(1);
+    expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(2);
+    expect(r.hurt).toEqual([]);
+  });
+
+  test("past the slingers, a man who walks on without raising the shield is hit at many of the moments he could come", () => {
+    let hit = 0;
+    let tries = 0;
+    for (let t0 = 0; t0 < 170; t0 += 5) {
+      const p = P({ x: tile(201), bottom: tile(19) });
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 400 && p.body.x < tile(234); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      tries++;
+      if (hurt) hit++;
+    }
+    expect(hit / tries).toBeGreaterThanOrEqual(0.4);
+  });
+
+  test("the ferry and the raft never keep him waiting much more than five seconds", () => {
+    for (const [d, x] of [[FERRY, tile(12)], [BALSA, tile(122)], [REED, tile(140)]] as const) {
+      let longest = 0;
+      let since = 0;
+      for (let t = 0; t < 4000; t++) {
+        since = carrierAt(d, t).x === x ? 0 : since + 1;
+        longest = Math.max(longest, since);
+      }
+      expect(longest / 60).toBeLessThan(5.5);
+    }
+    expect(GJOA_DECK.hold + 2 * GJOA_DECK.move).toBeLessThan(5 * 60);
+  });
+});
+
 describe("no way out but the restart button, fixed", () => {
   test("Rådhuset: east of the clock tower is the harbour, so a fall off the tower costs a heart and puts him back at the flag by the clock", () => {
     const map = levelMap(RADHUSET);
@@ -744,9 +855,9 @@ describe("no way out but the restart button, fixed", () => {
   });
 });
 
-// All ten are on the line and built, and the line map has no hoarding left.
-test("all ten levels are built, and the line map has no hoarding", () => {
-  expect(LINE.length).toBe(10);
-  expect(LINE.filter((l) => l.built).length).toBe(10);
-  expect(kartDef(fresh()).map.join("")).not.toContain("F");
+// Line 1's ten are built; line 2's stations not built yet are under construction and cannot be entered.
+test("line 1 is all built; line 2's stations not built have no address to go to", () => {
+  expect(LINE.filter((l) => l.line === 1 && l.built).length).toBe(10);
+  const def = kartDef({ ...fresh(), cleared: [...LINE_1] }, kartArt);
+  for (const l of LINE) expect(def.doors.find((d) => d.id === l.id)!.href).toBe(l.built ? `#${l.id}` : "");
 });

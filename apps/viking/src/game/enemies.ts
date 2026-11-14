@@ -36,6 +36,10 @@ export interface EnemyDef {
   /** Its size, when not the kind's own. */
   w?: number;
   h?: number;
+  /** A thrower that aims where he is going when he comes at it (even past itself), and allows for the drop when it stands above him. */
+  lead?: boolean;
+  /** A thrower that faces one way only and throws only at him on that side, and not at him right under it (a slinger on a roof's ridge). */
+  faces?: 1 | -1;
 }
 
 /** Sizes, speeds and beats by kind, when the level does not say. */
@@ -84,6 +88,8 @@ export interface Shot {
   born: number;
   /** Which thrower, for the drawing. */
   by: number;
+  /** The step the shield stopped it: from then on it falls, harmless. */
+  spent?: number;
 }
 
 export function createEnemies(defs: readonly EnemyDef[], map: TileMap): Enemy[] {
@@ -188,12 +194,20 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
         fly(e, t);
         break;
       case "thrower": {
-        e.dir = hx < e.x ? -1 : 1;
-        const near = Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(him.y - e.y) < THROW_REACH.y;
+        e.dir = e.def.faces ?? (hx < e.x ? -1 : 1);
+        // One that faces one way does not see him right under its perch either.
+        const near = Math.abs(hx - e.x) < THROW_REACH.x && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? 1.5 * TILE : 0);
         if (untilThrow(e, t) === 0 && near) {
           // A lob that comes down about where he stands now, never faster across than it can be dodged.
-          const air = (2 * SHOT.up) / SHOT.gravity;
-          const vx = Math.max(-SHOT.maxAcross, Math.min(SHOT.maxAcross, (hx - e.x) / air));
+          let air = (2 * SHOT.up) / SHOT.gravity;
+          let at = hx;
+          if (e.def.lead) {
+            // Thrown from above him, it is longer in the air; and if he is coming at it, it is aimed where he will be.
+            const dy = him.y + PLAYER.h / 2 - (e.y - e.h + 1);
+            if (dy > 0) air = (SHOT.up + Math.sqrt(SHOT.up * SHOT.up + 2 * SHOT.gravity * dy)) / SHOT.gravity;
+            if ((hx - e.x) * him.vx < 0) at += him.vx * air;
+          }
+          const vx = Math.max(-SHOT.maxAcross, Math.min(SHOT.maxAcross, (at - e.x) / air));
           shots.push({ x: e.x + e.dir * 3, y: e.y - e.h + 1, vx, vy: -SHOT.up, born: t, by: i });
           e.thrownAt = t;
           thrown.push(i);

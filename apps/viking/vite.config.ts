@@ -6,11 +6,12 @@ import { defineConfig } from "vite";
 // fetch. The last three levels' own swatches, and the bosses' rules, go with their level. The
 // scripted routes (for `?debug&auto`) and the scripted player are files of their own, fetched
 // only under `?debug&auto`; what only `?debug` needs is one more. The maze splits as it likes.
-const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget)\.ts$/;
+const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget|bygdoy)\.ts$/;
 const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 // A level's own swatches and its boss come with it: they are imported by that level alone.
-const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "game/plough": "nabolaget", "game/troll": "nordmarka" };
-const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|game\/plough|game\/troll)\.ts$/;
+// Line 2's kit pieces (the rocking deck, the sinking pad, the oars) come with Bygdøy, the first to use them.
+const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "game/plough": "nabolaget", "game/troll": "nordmarka", deck: "bygdoy", sink: "bygdoy", oars: "bygdoy" };
+const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|game\/plough|game\/troll|deck|sink|oars)\.ts$/;
 
 export default defineConfig({
   base: "/viking/",
@@ -23,6 +24,10 @@ export default defineConfig({
           if (route) return route[1] === "common" ? "routes" : `${route[1]}-route`;
           if (/\/src\/game\/bot\.ts$/.test(id)) return "routes";
           if (/\/src\/debug\.ts$/.test(id)) return "debug";
+          // How the line map looks: fetched on its own as the page starts.
+          if (/\/src\/levels\/kartArt\.ts$/.test(id)) return "kart";
+          // The shield's rules and drawing: fetched when he has it, or goes where it is given.
+          if (/\/src\/game\/shield\.ts$/.test(id)) return "shield";
           const level = LEVEL.exec(id);
           const owned = OWNED.exec(id);
           return level ? level[1] : owned ? OWN[owned[1]] : "index";

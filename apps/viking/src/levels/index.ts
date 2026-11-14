@@ -1,37 +1,56 @@
 import { LANGKAIA } from "./langkaia";
-import type { LevelDef, Words } from "./types";
+import type { LevelDef } from "./types";
 
-// The ten levels, one per rune of LARS HANSEN, in the order the line runs, all ten built.
+// The line map's stations, in the order the lines run. Line 1 has ten, one per rune of LARS HANSEN,
+// all built. Line 2 leaves the map at Stortinget and has six, one per rune of VIKING; it opens when
+// Nabolaget is cleared, and a station whose level is not built yet is under construction.
 //
-// What the line map needs of a level (its name, rune and place) is here, so the map can be drawn
+// What the line map needs of a level (its name, rune and line) is here, so the map can be drawn
 // without the levels themselves. Each built level's code comes in its own small file when it is
 // first needed; Langkaia, where a fresh visitor starts, comes with the page.
 
 export interface Station {
   id: string;
-  /** Which of the ten runes of LARS HANSEN it ends at, 0 to 9. */
+  /** Which of the sixteen runes it ends at: 0 to 9 spell LARS HANSEN, 10 to 15 VIKING. */
   rune: number;
   name: string;
   /** A shorter name for its board on the line map, when the full one is long. */
   short?: string;
-  place: Words;
   built: boolean;
+  /** Line 1 or line 2. */
+  line: 1 | 2;
 }
 
+const one = (id: string, rune: number, name: string, short?: string): Station => ({ id, rune, name, short, built: true, line: 1 });
+const two = (id: string, rune: number, name: string, built: boolean, short?: string): Station => ({ id, rune, name, short, built, line: 2 });
+
 export const LINE: Station[] = [
-  { id: "langkaia", rune: 0, name: "Langkaia", place: { nb: "Bjørvika, på vannsida av Operaen", en: "Bjørvika, on the water side of the Opera" }, built: true },
-  { id: "akershus", rune: 1, name: "Akershus festning", short: "Akershus", place: { nb: "Festningen over havna", en: "The fortress above the harbour" }, built: true },
-  { id: "radhuset", rune: 2, name: "Rådhuset", place: { nb: "De to tårnene på Rådhusplassen", en: "The two towers on Rådhusplassen" }, built: true },
-  { id: "slottet", rune: 3, name: "Slottet", place: { nb: "Karl Johan, opp til Slottet", en: "Karl Johan, uphill to the palace" }, built: true },
-  { id: "holmenkollen", rune: 4, name: "Holmenkollen", place: { nb: "Hoppbakken", en: "The ski jump" }, built: true },
-  { id: "akerselva", rune: 5, name: "Akerselva", place: { nb: "Nedover elva fra Nydalen til Vaterland", en: "Down the river from Nydalen to Vaterland" }, built: true },
-  { id: "nordmarka", rune: 6, name: "Nordmarka", place: { nb: "Skogen nord for byen", en: "The forest north of the city" }, built: true },
-  { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: true },
-  { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: true },
-  { id: "nabolaget", rune: 9, name: "Nabolaget", place: { nb: "Fra Vålerenga hjem til Kværnertoppen", en: "From Vålerenga home to Kværnertoppen" }, built: true }
+  one("langkaia", 0, "Langkaia"),
+  one("akershus", 1, "Akershus festning", "Akershus"),
+  one("radhuset", 2, "Rådhuset"),
+  one("slottet", 3, "Slottet"),
+  one("holmenkollen", 4, "Holmenkollen"),
+  one("akerselva", 5, "Akerselva"),
+  one("nordmarka", 6, "Nordmarka"),
+  one("stortinget", 7, "Stortinget"),
+  one("ekeberg", 8, "Ekeberg"),
+  one("nabolaget", 9, "Nabolaget"),
+  two("bygdoy", 10, "Bygdøy", true),
+  two("vigelandsparken", 11, "Vigelandsparken", false, "Vigeland"),
+  two("korketrekkeren", 12, "Korketrekkeren", false),
+  two("ostensjovannet", 13, "Østensjøvannet", false),
+  two("bjorvika", 14, "Bjørvika", false),
+  two("gamlebyen", 15, "Gamlebyen", false)
 ];
 
+/** Every station's id, line 1 then line 2: a station opens when the one before it is cleared, so line 2 opens with Nabolaget. */
 export const ORDER = LINE.map((l) => l.id);
+/** The ten of line 1, LARS HANSEN: all ten make the gold helmet. */
+export const LINE_1 = ORDER.slice(0, 10);
+/** The six of line 2, VIKING. */
+export const LINE_2 = ORDER.slice(10);
+/** Where line 2 begins in ORDER. */
+export const LINE_2_AT = 10;
 /** The built stations, in order. */
 export const BUILT = LINE.filter((l) => l.built);
 export const isBuilt = (l: Station) => l.built;
@@ -46,7 +65,8 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   nordmarka: () => import("./nordmarka").then((m) => m.NORDMARKA),
   stortinget: () => import("./stortinget").then((m) => m.STORTINGET),
   ekeberg: () => import("./ekeberg").then((m) => m.EKEBERG),
-  nabolaget: () => import("./nabolaget").then((m) => m.NABOLAGET)
+  nabolaget: () => import("./nabolaget").then((m) => m.NABOLAGET),
+  bygdoy: () => import("./bygdoy").then((m) => m.BYGDOY)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);

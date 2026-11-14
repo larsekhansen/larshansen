@@ -33,6 +33,10 @@
         <ol class="runes" id="runes" role="img">
           <li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li><li></li>
         </ol>
+        <!-- Line 2's six, VIKING: shown once line 2 is open. -->
+        <ol class="runes two" id="runes2" role="img" hidden>
+          <li></li><li></li><li></li><li></li><li></li><li></li>
+        </ol>
         <p class="clock"><span id="clock">0:00.0</span><small id="best"></small></p>
         <p class="life" id="life"><span class="hearts" id="hearts" role="img"></span><span class="lives" id="lives" role="img"></span></p>
         <p class="coins" id="coins" hidden><i aria-hidden="true"></i><span id="coinn">0</span></p>
@@ -94,6 +98,7 @@
       <div>
         <button type="button" data-action="enter" class="enter">Go in</button>
         <button type="button" data-action="dash" class="dash" hidden>Dash</button>
+        <button type="button" data-action="down" class="shield" hidden>Shield</button>
         <button type="button" data-action="jump">Jump</button>
       </div>
     </div>

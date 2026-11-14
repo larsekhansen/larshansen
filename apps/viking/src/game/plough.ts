@@ -1,4 +1,4 @@
-import { PLAYER } from "@larshansen/pixelkit/config";
+import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Boss } from "../levels/types";
 
@@ -271,6 +271,14 @@ export function ploughBoss(def: PloughDef): Boss<Plough> {
     step: stepPlough,
     stomped: ploughStomped,
     hurts: (p, _t, him) => ploughHurts(p, him),
+    // Run into his raised shield: back a tile, and (as it does after running into him) it brakes,
+    // backs off to the far end and rests, and the round's hint shows (ADR 0024).
+    shoved(p, _t, dir) {
+      const r = round(p);
+      p.x = Math.max(r.x0, Math.min(r.x1, p.x + dir * TILE));
+      p.moved = false;
+      p.struck = true;
+    },
     // Awake and standing still (revving, stuck, resting at the end of its stretch), it is in the way.
     blocks: (p) => (awake(p) && !p.moved ? ploughBox(p) : null),
     reset: resetPlough,

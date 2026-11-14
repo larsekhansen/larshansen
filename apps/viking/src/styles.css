@@ -22,6 +22,31 @@ body {
   list-style: none;
 }
 
+.runes[hidden] {
+  display: none;
+}
+
+/* Line 2's group stands a little apart from line 1's. */
+.runes.two {
+  margin-left: 4px;
+}
+
+/* With line 2's group as well, sixteen slots: narrower, so the run still fits its row at any width. */
+.run.sixteen .runes {
+  gap: 1px;
+}
+
+.run.sixteen .runes li {
+  width: 14px;
+  height: 20px;
+  border-radius: 5px;
+}
+
+.run.sixteen .runes svg {
+  width: 8px;
+  height: 12px;
+}
+
 .runes li {
   display: grid;
   place-items: center;
@@ -169,6 +194,44 @@ body {
   .runes svg {
     width: 8px;
     height: 12px;
+  }
+
+  /* With line 2's group as well, sixteen slots: narrower, so the run still fits the row it had. */
+  .run.sixteen .runes {
+    gap: 1px;
+  }
+
+  .run.sixteen .runes li {
+    width: 12px;
+    height: 18px;
+    border-radius: 4px;
+  }
+
+  .run.sixteen .runes svg {
+    width: 7px;
+    height: 11px;
+  }
+
+  .run.sixteen .runes.two {
+    margin-left: 3px;
+  }
+}
+
+/* On an upright phone, sixteen slots take no more room than line 1's ten took before line 2. */
+@media (max-width: 480px) {
+  .run.sixteen .runes li {
+    width: 10px;
+    height: 18px;
+    border-radius: 3px;
+  }
+
+  .run.sixteen .runes svg {
+    width: 6px;
+    height: 11px;
+  }
+
+  .run.sixteen .clock small {
+    display: none;
   }
 }
 
@@ -354,4 +417,18 @@ body {
   white-space: normal;
   text-align: center;
   box-sizing: border-box;
+}
+
+/* With the shield's button as well as the dash, the touch pad has five buttons on its right: smaller, so
+   all of them fit an upright phone. */
+@media (max-width: 480px) {
+  .pad.armed div {
+    gap: 6px;
+  }
+
+  .pad.armed button {
+    min-width: 50px;
+    padding: 0 8px;
+    font-size: 14px;
+  }
 }
