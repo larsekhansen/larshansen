@@ -248,6 +248,35 @@ function shed(x0: number, color: string, line: string, door: Door | undefined) {
   if (door) plankDoor(door, PAINT.trim);
 }
 
+/** Verkstedet's window: the 3D printer at work on a small longship, a spool of the same orange on the shelf. */
+function printer(x: number, y: number, t: number) {
+  const orange = mix(PAINT.red, LAMP, 0.5);
+  R(x - 1, y - 1, 26, 17, PAINT.trim);
+  R(x, y, 24, 15, mix(P.woodDark, INK, 0.5));
+  // The printer: a dark box, its glass front, the bed.
+  R(x + 2, y + 1, 14, 13, METAL.pipe);
+  R(x + 3, y + 3, 12, 9, mix(GLASS.pane, INK, 0.6));
+  R(x + 3, y + 10, 12, 1, METAL.pipeCap);
+  // The longship on the bed: hull, the two stems, the mast.
+  R(x + 6, y + 9, 6, 1, orange);
+  R(x + 5, y + 8, 1, 1, orange);
+  R(x + 12, y + 8, 1, 1, orange);
+  R(x + 9, y + 7, 1, 2, orange);
+  // The head goes back and forth on its rail.
+  const head = view.reduced ? 5 : Math.abs((Math.floor(t / 5) % 18) - 9);
+  R(x + 3, y + 4, 12, 1, METAL.pipeCap);
+  R(x + 4 + head, y + 4, 2, 2, INK);
+  R(x + 4 + head, y + 6, 1, 1, LAMP);
+  // The spool on its shelf.
+  R(x + 18, y + 4, 4, 4, orange);
+  R(x + 19, y + 5, 2, 2, INK);
+  R(x + 17, y + 8, 6, 1, P.wood);
+  // At night only its own lamp strip and the hot end glow, so the print still shows.
+  R(x + 3, y + 2, 12, 1, LAMP);
+  light(x + 3, y + 2, 12, 1);
+  light(x + 4 + head, y + 6, 1, 1);
+}
+
 /** Posts under a wooden ledge down to the ground or the water, so a deck or a roof stands on something. */
 function posts(c0: number, c1: number, r: number, ground: number) {
   const y = r * TILE + 5;
@@ -491,6 +520,7 @@ export const LANGKAIA: LevelDef = {
       tbaneDoor(v.doors.get("tbane"));
       shed(24 * TILE, PAINT.red, PAINT.redLine, v.doors.get("qr"));
       shed(33 * TILE, PAINT.ochre, PAINT.ochreLine, v.doors.get("github"));
+      printer(33 * TILE + 58, 14 * TILE + 10, v.t);
       deckLegs();
       clubHut(v.t);
       sailboat();
