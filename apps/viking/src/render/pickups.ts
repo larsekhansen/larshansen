@@ -244,6 +244,107 @@ function gullStanding(e: Enemy, t: number) {
   R(x + 6, y - 4, 1, 4, CREATURE.beak);
 }
 
+function fox(e: Enemy) {
+  const x = Math.round(e.x - 6);
+  const y = Math.round(e.y);
+  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 12 - dx);
+  // A red fox at a trot: a long body, a white-tipped brush, pointed ears, a pale chin.
+  R(x + 2, y - 7, 8, 4, CREATURE.fox);
+  R(at(9), y - 9, 3, 4, CREATURE.fox);
+  R(at(11), y - 7, 2, 2, CREATURE.fox);
+  R(at(12), y - 7, 1, 1, INK);
+  R(at(9), y - 11, 1, 2, CREATURE.fox);
+  R(at(11), y - 11, 1, 2, CREATURE.fox);
+  R(at(10), y - 6, 2, 1, CREATURE.foxLight);
+  R(at(-2), y - 8, 4, 2, CREATURE.fox);
+  R(at(-3), y - 8, 1, 2, CREATURE.foxLight);
+  R(at(3) + stride(e), y - 3, 1, 3, INK);
+  R(at(8) - stride(e), y - 3, 1, 3, INK);
+}
+
+function owl(e: Enemy, t: number) {
+  const x = Math.round(e.x);
+  const y = Math.round(e.y) - 4;
+  const wing = view.reduced ? 0 : Math.floor(t / 9) % 2;
+  // A tawny owl gliding: round head, a pale face, wide soft wings.
+  R(x - 3, y - 3, 6, 5, CREATURE.owl);
+  R(x - 2, y - 2, 4, 2, CREATURE.owlLight);
+  R(x - 1, y - 6, 2, 1, CREATURE.owl);
+  R(x - 2, y - 5, 4, 2, CREATURE.owl);
+  if (wing) {
+    R(x - 8, y - 3, 5, 2, CREATURE.owl);
+    R(x + 3, y - 3, 5, 2, CREATURE.owl);
+  } else {
+    R(x - 8, y, 5, 2, CREATURE.owl);
+    R(x + 3, y, 5, 2, CREATURE.owl);
+  }
+}
+
+function bat(e: Enemy, t: number) {
+  const x = Math.round(e.x);
+  const y = Math.round(e.y) - 3;
+  const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
+  R(x - 1, y - 2, 3, 4, CREATURE.bat);
+  R(x - 1, y - 3, 1, 1, CREATURE.bat);
+  R(x + 1, y - 3, 1, 1, CREATURE.bat);
+  R(x - 6, y - 1 - flap * 2, 5, 2, CREATURE.bat);
+  R(x + 2, y - 1 - flap * 2, 5, 2, CREATURE.bat);
+  R(x - 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
+  R(x + 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
+}
+
+function squirrel(e: Enemy, t: number) {
+  const x = Math.round(e.x - 4);
+  const y = Math.round(e.y);
+  const up = windingUp(e, t);
+  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 8 - dx);
+  // A red squirrel sitting up, its tail a curl behind, a cone held up to throw.
+  R(x + 2, y - 8, 4, 6, CREATURE.squirrel);
+  R(at(4), y - 11, 3, 3, CREATURE.squirrel);
+  R(at(5), y - 12, 1, 1, CREATURE.squirrel);
+  R(at(6), y - 10, 1, 1, INK);
+  R(at(-1), y - 12, 3, 9, CREATURE.squirrel);
+  R(at(-2), y - 13, 3, 3, mix(CREATURE.squirrel, WHITE, 0.15));
+  R(x + 2, y - 2, 2, 2, mix(CREATURE.squirrel, INK, 0.3));
+  R(x + 5, y - 2, 2, 2, mix(CREATURE.squirrel, INK, 0.3));
+  if (up) R(at(6), y - 14, 3, 3, CREATURE.cone);
+  else R(at(6), y - 7, 2, 2, CREATURE.cone);
+}
+
+function anthill(e: Enemy, t: number) {
+  const x = Math.round(e.x - 7);
+  const y = Math.round(e.y);
+  // A heap of needles, alive: ants running over it.
+  for (let k = 0; k < 8; k++) R(x + 7 - k, y - 8 + k, 1 + k * 2, 1, k % 2 ? CREATURE.hedgehog : mix(CREATURE.hedgehog, INK, 0.2));
+  if (view.reduced) return;
+  for (let i = 0; i < 4; i++) {
+    const k = ((t * 0.3 + i * 7) % 16) / 16;
+    R(x + 2 + Math.round(k * 10), y - 2 - Math.round(Math.sin(k * Math.PI) * 6), 1, 1, INK);
+  }
+}
+
+/** Where an enemy's eyes are (world pixels), for the ones that shine in the headlamp in the dark. */
+export function enemyEyes(e: Enemy, t: number): [number, number][] {
+  if (!e.alive) return [];
+  const ex = Math.round(e.x);
+  const ey = Math.round(e.y);
+  switch (e.def.look) {
+    case "fox":
+      return [[e.dir > 0 ? ex + 6 : ex - 7, ey - 8]];
+    case "owl":
+      return [[ex - 2, ey - 5], [ex + 1, ey - 5]];
+    case "bat":
+      return [[ex - 1, ey - 4], [ex + 1, ey - 4]];
+    case "squirrel":
+      return [[e.dir > 0 ? ex + 2 : ex - 3, ey - 10]];
+    case "hedgehog":
+      return [[e.dir > 0 ? ex + 4 : ex - 5, ey - 4]];
+    default:
+      return [];
+  }
+  void t;
+}
+
 const SALMON = ["..bb..", ".bbbb.", ".bebs.", "bbbbss", "bbbsss", "bbssss", ".bbss.", ".bbss.", "..bs..", "..bb..", ".b..b.", "bb..bb"];
 
 /**
@@ -288,6 +389,16 @@ export function drawEnemy(e: Enemy, t: number) {
       return rat(e);
     case "wasp":
       return wasp(e, t);
+    case "fox":
+      return fox(e);
+    case "owl":
+      return owl(e, t);
+    case "bat":
+      return bat(e, t);
+    case "squirrel":
+      return squirrel(e, t);
+    case "anthill":
+      return anthill(e, t);
     case "crow":
       return gull(e, t, CREATURE.crow, CREATURE.crowGrey);
     case "scooter":

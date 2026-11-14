@@ -47,7 +47,7 @@ export const TROLL = { w: 30, h: 40 };
 /** Steps it takes to wake, to raise its club (the telegraph before every slam: a full second), to pull the club out, to flinch in the light. */
 export const TROLL_STEPS = { waking: 90, windup: 60, stuck: 120, hit: 80 };
 /** How fast it walks, faster each time it is hit; how fast it backs off from the light. */
-export const TROLL_SPEED = { walk: [0.5, 0.6, 0.7], retreat: 1.1 };
+export const TROLL_SPEED = { walk: [0.8, 0.95, 1.1], retreat: 1.5 };
 /** It raises the club when he is this close (centre to centre) and on the floor. */
 export const TROLL_REACH = TROLL.w / 2 + 22;
 /** The club, in front of it when it comes down, and how long the blow hurts. */

@@ -4,14 +4,16 @@ import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, leap, mid, on, playMoves, tile, wait, walk, type Move } from "../game/bot";
 import { KIND } from "../game/enemies";
-import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay } from "../game/play";
+import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
 import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, HOLMENKOLLEN_ROUTE, SLOTTET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, HOLMENKOLLEN_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE } from "./routes";
+import { MOOSE, NORDMARKA, TROLL_DEF } from "./nordmarka";
+import { riding } from "./routes/common";
 import { rides } from "./routes/common";
 import { AKERSELVA, BUCKETS, CURTAIN, FALL1, WHEEL } from "./akerselva";
 import { SLOTTET } from "./slottet";
@@ -101,7 +103,8 @@ const ROUTE: Record<string, Move[]> = {
   ],
   slottet: SLOTTET_ROUTE,
   holmenkollen: HOLMENKOLLEN_ROUTE,
-  akerselva: AKERSELVA_ROUTE
+  akerselva: AKERSELVA_ROUTE,
+  nordmarka: NORDMARKA_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -120,19 +123,21 @@ const GOLD: Record<string, Move[]> = {
     jump(-1, { release: 30 }),
     walk(mid(103)),
     jump(0, { second: 18 })
-  ]
+  ],
+  // On the moose's back, two jumps up where it crosses under the bracteate.
+  nordmarka: [...NORDMARKA_ROUTE.slice(0, NORDMARKA_ROUTE.findIndex((m) => m.name === "across on the moose")), wait("on the moose under the bracteate", (q) => riding(q) && cx(q) >= tile(95) + 2), jump(0, { second: 18 })]
 };
 
 /** The first three levels: the scripted player has half the order's target. From level 4 on: at least a minute. */
 const TARGET: Record<string, number> = { langkaia: 60, akershus: 90, radhuset: 120 };
-const NEW = new Set(["slottet", "holmenkollen", "akerselva"]);
+const NEW = new Set(["slottet", "holmenkollen", "akerselva", "nordmarka"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
 const POLE = new Set(["akerselva", "nordmarka"]);
 
 describe("the line", () => {
-  test("ten levels, one per rune of LARS HANSEN, the first six built", () => {
+  test("ten levels, one per rune of LARS HANSEN, the first seven built", () => {
     expect(LINE.map((l) => "LARSHANSEN"[l.rune]).join("")).toBe("LARSHANSEN");
-    expect(BUILT.map((l) => l.id)).toEqual(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva"]);
+    expect(BUILT.map((l) => l.id)).toEqual(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka"]);
     expect(new Set(ORDER).size).toBe(10);
   });
 
@@ -145,7 +150,7 @@ describe("the line", () => {
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
@@ -361,6 +366,32 @@ describe("what the levels promise", () => {
     expect(CURTAIN.push.y).toBeGreaterThan(0);
   });
 
+  test("Nordmarka: the moose carries him across the marsh on its back", () => {
+    const p = newPlay(NORDMARKA, { pole: true, start: { x: tile(86), bottom: tile(18) } });
+    const across = (q: Play) => riding(q) && carrier(q, MOOSE).x >= MOOSE.to.x - 2;
+    const r = playMoves(p, [walk(tile(87) + 4), wait("the moose here", (q) => carrier(q, MOOSE).x <= MOOSE.from.x + 2), jump(1, { release: 10 }), wait("across", across)], { max: 60 * 40, until: across });
+    expect(r.stuck).toBeNull();
+    expect(r.events.some((e) => e.splash)).toBe(false);
+    expect(cx(p)).toBeGreaterThan(tile(100));
+  });
+
+  test("Nordmarka: the troll is three hits, each in the dawn, and only then does the rune show; a flag and a bench stand right before its clearing", () => {
+    const p = newPlay(NORDMARKA, { pole: true });
+    const r = playMoves(p, ROUTE.nordmarka, { max: 60 * 300 });
+    const hits = r.events.flatMap((e) => (e.troll === "hit" ? [p.t] : []));
+    expect(r.events.filter((e) => e.troll === "hit").length).toBe(3);
+    expect(r.events.filter((e) => e.troll === "windup").length).toBeGreaterThanOrEqual(3);
+    expect(r.events.findIndex((e) => e.troll === "stone")).toBeLessThan(r.events.findIndex((e) => e.rune));
+    void hits;
+    const map = levelMap(NORDMARKA);
+    const lastFlag = flagsOf(map).at(-1)!;
+    const bench = benchesOf(map).at(-1)!;
+    for (const s of [lastFlag, bench]) {
+      expect(s.x).toBeLessThan(TROLL_DEF.x0);
+      expect(TROLL_DEF.x0 - s.x).toBeLessThan(8 * TILE);
+    }
+  });
+
   test("Langkaia: the water puts him back on the last ground he stood on, as the old fjord did", () => {
     const p = newPlay(LANGKAIA);
     playMoves(p, [walk(tile(47) + 6)]);
@@ -418,5 +449,5 @@ describe("what the levels promise", () => {
 // The levels compile to the defs the page shows; the plan's other seven are listed, not built.
 test("the planned levels are on the line, not built", () => {
   expect(LINE.length).toBe(10);
-  expect(LINE.filter((l) => l.built).length).toBe(6);
+  expect(LINE.filter((l) => l.built).length).toBe(7);
 });

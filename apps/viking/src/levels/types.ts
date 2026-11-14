@@ -94,6 +94,9 @@ export interface View {
   facing: 1 | -1;
   /** The troll, in a level that has one. */
   troll: Troll | null;
+  /** The flags and when each went up, and the enemies, for a level that lights them in the dark. */
+  flags: readonly { x: number; bottom: number; raisedAt: number | null }[];
+  enemies: readonly Enemy[];
 }
 
 export interface Art {

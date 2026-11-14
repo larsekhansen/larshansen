@@ -3,6 +3,7 @@ import { AKERSELVA } from "../levels/akerselva";
 import { AKERSHUS } from "../levels/akershus";
 import { HOLMENKOLLEN } from "../levels/holmenkollen";
 import { LANGKAIA } from "../levels/langkaia";
+import { NORDMARKA } from "../levels/nordmarka";
 import { RADHUSET } from "../levels/radhuset";
 import { SLOTTET } from "../levels/slottet";
 import type { LevelDef } from "../levels/types";
@@ -13,7 +14,7 @@ import { search } from "./reach";
 // Without the feather, with the ski pole: what the bracteate must be out of reach of.
 
 declare const self: Worker;
-const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA };
+const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA };
 
 self.onmessage = (e: MessageEvent<string>) => {
   const def = LEVELS[e.data];

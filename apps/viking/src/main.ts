@@ -977,13 +977,13 @@ function drawThings(v: View) {
 
 /** His headlamp: a small ring of light round him, and the beam ahead the way he looks. */
 const AROUND: Ring[] = [
-  [20, 0.5],
-  [15, 0]
+  [22, 0.5],
+  [16, 0]
 ];
 const BEAM: Ring[] = [
-  [46, 0.55],
-  [40, 0.25],
-  [34, 0]
+  [60, 0.55],
+  [53, 0.28],
+  [46, 0]
 ];
 
 /**
@@ -997,11 +997,13 @@ function drawNight(v: View) {
   const dark = scene.def.dark!;
   const night = Array.from({ length: view.w }, (_, x) => Math.round(Math.max(0, Math.min(1, dark(x + view.camX, v))) * 20) / 20);
   const hx = Math.round(shown.x + PLAYER.w / 2) - view.camX;
-  const hy = Math.round(shown.y + 4) - view.camY;
+  const hy = Math.round(shown.y + 2) - view.camY;
   const lights: Light[] = [
     { x: hx, y: hy, rings: AROUND },
-    { x: hx + p.body.facing * 28, y: hy + 3, rings: BEAM }
+    { x: hx + p.body.facing * 36, y: hy - 2, rings: BEAM }
   ];
+  // The boards on posts and over doors catch the light: their words can always be read.
+  for (const bd of scene.boards) lights.push({ rect: { x: Math.round(bd.cx - bd.w / 2 - 1) - view.camX, y: bd.y - 1 - view.camY, w: bd.w + 2, h: 13 }, dark: 0.25 });
   for (const l of art.lights?.(v) ?? [])
     lights.push("rect" in l ? { rect: { ...l.rect, x: l.rect.x - view.camX, y: l.rect.y - view.camY }, dark: l.dark } : { x: l.x - view.camX, y: l.y - view.camY, rings: l.rings });
   drawDark(lights, night, "4, 6, 18");
@@ -1027,7 +1029,7 @@ function render(alpha: number) {
   const horizon = p.map.height - 4 * TILE - 34;
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
-  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll };
+  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies };
   if (art.far) pass(kit.depth(0.12), () => art.far!(v), 0.35);
   if (art.mid) pass(kit.depth(0.2), () => art.mid!(v), 0.3);
   if (art.near) pass(kit.depth(0.4), () => art.near!(v), 0.2);
@@ -1191,7 +1193,8 @@ let auto: ((p: Play) => PlayIntent | null) | null = null;
 const AUTO: Record<string, () => Promise<Move[]>> = {
   slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
   holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE),
-  akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE)
+  akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE),
+  nordmarka: () => import("./levels/routes/nordmarka").then((m) => m.NORDMARKA_ROUTE)
 };
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */

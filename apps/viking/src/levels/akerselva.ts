@@ -105,7 +105,7 @@ b.put(2, T1 - 1, "t").put(4, T1 - 1, "S").put(7, T1 - 1, "i");
 b.put(24, 9, "b").put(32, T1 - 1, "i").put(58, T1 - 1, "f").put(86, T1 - 1, "f");
 b.put(104, T2 - 1, "b").put(127, 11, "q").put(133, T2 - 1, "f").put(160, T3 - 1, "f");
 b.put(108, T2 - 1, "i").put(169, T3 - 1, "i").put(189, T3 - 1, "f");
-b.put(245, POOL - 6, "r").put(140, T2 + 3, "&").put(103, 7, "o");
+b.put(215, POOL - 3, "f").put(245, POOL - 6, "r").put(140, T2 + 3, "&").put(103, 7, "o");
 
 // Skilling: the line over the footbridge, the dam's ledge and its spout, the dash over the race,
 // up by the wasp, along the logs and rocks, over the first fall, the mill roof's nook, up the wheel,

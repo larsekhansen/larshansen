@@ -367,10 +367,12 @@ describe("the troll", () => {
     const p = at(12 * TILE);
     expect(steps(p, 100).some((e) => e.troll)).toBe(false);
     const q = at(15 * TILE);
-    const ev = steps(q, TROLL_STEPS.waking + 5);
+    const ev = steps(q, TROLL_STEPS.waking);
     expect(ev.findIndex((e) => e.troll === "wake")).toBe(0);
-    expect(Math.abs(q.troll!.x - ARENA.x)).toBeLessThanOrEqual(3);
+    expect(q.troll!.x).toBe(ARENA.x);
+    steps(q, 2);
     expect(q.troll!.phase).toBe("walk");
+    expect(q.troll!.x).toBeLessThan(ARENA.x);
   });
 
   test("it raises its club for a full second before every slam", () => {
