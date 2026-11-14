@@ -49,13 +49,16 @@ export interface Lift extends Common {
 /**
  * Goes along a line of points at `speed` pixels a step, then is away for `wait` steps (not seen,
  * nothing to stand on) and starts again from the first point: a banner in a parade, a train on a
- * timetable. Always one way.
+ * timetable. Always one way. A train stops: at each of `stops` it stands still at that point for
+ * that many steps before it goes on.
  */
 export interface Path extends Common {
   kind: "path";
   points: { x: number; y: number }[];
   speed: number;
   wait: number;
+  /** Where it stands still on the way: at point `at` (an index into `points`) for `steps`. */
+  stops?: { at: number; steps: number }[];
 }
 
 /**
@@ -80,9 +83,10 @@ export function liftPeriod(d: Lift) {
   return 2 * (Math.ceil((d.bottom - d.top) / d.speed) + d.wait);
 }
 
-const pathLength = (d: Path) => d.points.slice(1).reduce((n, p, i) => n + Math.hypot(p.x - d.points[i].x, p.y - d.points[i].y), 0);
-/** Steps a path carrier takes from its first point to its last. */
-export const pathSteps = (d: Path) => Math.ceil(pathLength(d) / d.speed);
+const pathLength = (d: Path, to = d.points.length - 1) => d.points.slice(1, to + 1).reduce((n, p, i) => n + Math.hypot(p.x - d.points[i].x, p.y - d.points[i].y), 0);
+const stopSteps = (d: Path) => (d.stops ?? []).reduce((n, s) => n + s.steps, 0);
+/** Steps a path carrier takes from its first point to its last, its stops included. */
+export const pathSteps = (d: Path) => Math.ceil(pathLength(d) / d.speed) + stopSteps(d);
 /** Steps in one round of a path carrier: along the path, then away. */
 export const pathPeriod = (d: Path) => pathSteps(d) + d.wait;
 
@@ -95,6 +99,45 @@ export function carrierPeriod(d: CarrierDef): number {
 export function orbitAngle(d: Orbit, step: number): number {
   const t = step + (d.offset ?? 0);
   return 2 * Math.PI * ((d.turn ?? 0) + t / d.period) - Math.PI / 2;
+}
+
+/** Where a path carrier is in its round at a step: 0 as it sets off from its first point. */
+export function pathClock(d: Path, step: number): number {
+  const period = pathPeriod(d);
+  return (((step + (d.offset ?? 0)) % period) + period) % period;
+}
+
+/** The step of its round at which a path carrier comes to stop `i` (of `stops`), and how long it stands there. */
+export function stopAt(d: Path, i: number): { from: number; steps: number } {
+  const stops = [...(d.stops ?? [])].sort((a, b) => a.at - b.at);
+  const s = stops[i];
+  const before = stops.slice(0, i).reduce((n, x) => n + x.steps, 0);
+  return { from: Math.round(pathLength(d, s.at) / d.speed) + before, steps: s.steps };
+}
+
+/** Steps until a path carrier next comes to stop `i`; 0 while it stands there. For a departure board. */
+export function untilStop(d: Path, i: number, step: number): number {
+  const { from, steps } = stopAt(d, i);
+  const k = pathClock(d, step);
+  if (k >= from && k < from + steps) return 0;
+  return (((from - k) % pathPeriod(d)) + pathPeriod(d)) % pathPeriod(d);
+}
+
+/** How far along its line a path carrier has come, `k` steps into its round, standing still at its stops. */
+function pathDistance(d: Path, k: number): number {
+  if (!d.stops?.length) return Math.min(pathSteps(d), k) * d.speed;
+  let left = k;
+  let dist = 0;
+  for (const s of [...d.stops].sort((a, b) => a.at - b.at)) {
+    const to = pathLength(d, s.at);
+    const move = (to - dist) / d.speed;
+    if (left <= move) return dist + left * d.speed;
+    left -= move;
+    dist = to;
+    if (left <= s.steps) return dist;
+    left -= s.steps;
+  }
+  return Math.min(pathLength(d), dist + left * d.speed);
 }
 
 /** False while a path carrier is away between rounds; every other carrier is always there. */
@@ -117,7 +160,7 @@ function pathAt(d: CarrierDef, step: number): { x: number; y: number } {
   const t = step + (d.offset ?? 0);
   if (d.kind === "path") {
     const period = pathPeriod(d);
-    let left = Math.min(pathSteps(d), ((t % period) + period) % period) * d.speed;
+    let left = pathDistance(d, ((t % period) + period) % period);
     for (let i = 1; i < d.points.length; i++) {
       const a = d.points[i - 1];
       const b = d.points[i];

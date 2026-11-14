@@ -3,7 +3,8 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, leap, mid, on, playMoves, tile, wait, walk, type Move } from "../game/bot";
-import { KIND } from "../game/enemies";
+import { KIND, leap as leapOf } from "../game/enemies";
+import { pulsePhase as pulsePhaseOf } from "@larshansen/pixelkit/timed";
 import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
@@ -11,7 +12,11 @@ import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, HOLMENKOLLEN_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE } from "./routes";
+import { NABOLAGET, PLOUGH_DEF, SMOKE, TERRACE } from "./nabolaget";
+import type { Plough } from "../game/plough";
+import { EKEBERG, GUSTS, KNOLLS, TRAMS } from "./ekeberg";
+import { EXPRESSES, HAZARDS, LOCALS, ROOF, STORTINGET, nextLocal } from "./stortinget";
 import { MOOSE, NORDMARKA, TROLL_DEF } from "./nordmarka";
 import { riding } from "./routes/common";
 import { rides } from "./routes/common";
@@ -104,7 +109,10 @@ const ROUTE: Record<string, Move[]> = {
   slottet: SLOTTET_ROUTE,
   holmenkollen: HOLMENKOLLEN_ROUTE,
   akerselva: AKERSELVA_ROUTE,
-  nordmarka: NORDMARKA_ROUTE
+  nordmarka: NORDMARKA_ROUTE,
+  stortinget: STORTINGET_ROUTE,
+  ekeberg: EKEBERG_ROUTE,
+  nabolaget: NABOLAGET_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -125,19 +133,38 @@ const GOLD: Record<string, Move[]> = {
     jump(0, { second: 18 })
   ],
   // On the moose's back, two jumps up where it crosses under the bracteate.
-  nordmarka: [...NORDMARKA_ROUTE.slice(0, NORDMARKA_ROUTE.findIndex((m) => m.name === "across on the moose")), wait("on the moose under the bracteate", (q) => riding(q) && cx(q) >= tile(95) + 2), jump(0, { second: 18 })]
+  nordmarka: [...NORDMARKA_ROUTE.slice(0, NORDMARKA_ROUTE.findIndex((m) => m.name === "across on the moose")), wait("on the moose under the bracteate", (q) => riding(q) && cx(q) >= tile(95) + 2), jump(0, { second: 18 })],
+  // On the express, a jump and a second one up into the cavern's vault.
+  stortinget: [...STORTINGET_ROUTE.slice(0, STORTINGET_ROUTE.findIndex((m) => m.name === "the express comes over him") + 2), jump(1, { second: 14 })],
+  // Up the head to the ring, and two jumps up from the ring.
+  ekeberg: [...EKEBERG_ROUTE.slice(0, EKEBERG_ROUTE.findIndex((m) => m.name === `walk to ${tile(88) + 4}`)), walk(mid(86)), jump(0, { second: 18 })],
+  // Up in the chimney's warm air, and the second jump at the top of it.
+  nabolaget: [
+    ...NABOLAGET_ROUTE.slice(0, NABOLAGET_ROUTE.findIndex((m) => m.name === "up in the chimney's air to the block")),
+    {
+      name: "up the warm air, and once more at its top",
+      keys: (q, s) => {
+        const second = !s.second && q.body.vy > -0.5 && q.body.y < 7 * 16;
+        if (second) s.second = true;
+        const aim = tile(42) + 4 - q.body.vx * 7 - cx(q);
+        return { left: aim < -2, right: aim > 2, jumpHeld: true, jumpPressed: s.i === 0 || second };
+      }
+    }
+  ]
 };
 
 /** The first three levels: the scripted player has half the order's target. From level 4 on: at least a minute. */
 const TARGET: Record<string, number> = { langkaia: 60, akershus: 90, radhuset: 120 };
-const NEW = new Set(["slottet", "holmenkollen", "akerselva", "nordmarka"]);
+const NEW = new Set(["slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
-const POLE = new Set(["akerselva", "nordmarka"]);
+const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget"]);
+/** The last level is held to a longer clear: ninety seconds or more. */
+const LONGEST: Record<string, number> = { nabolaget: 90 };
 
 describe("the line", () => {
-  test("ten levels, one per rune of LARS HANSEN, the first seven built", () => {
+  test("ten levels, one per rune of LARS HANSEN, all ten built", () => {
     expect(LINE.map((l) => "LARSHANSEN"[l.rune]).join("")).toBe("LARSHANSEN");
-    expect(BUILT.map((l) => l.id)).toEqual(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka"]);
+    expect(BUILT.map((l) => l.id)).toEqual(ORDER);
     expect(new Set(ORDER).size).toBe(10);
   });
 
@@ -150,7 +177,7 @@ describe("the line", () => {
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
@@ -196,7 +223,7 @@ for (const def of LEVELS) {
       expect(r.events.filter((e) => e.flag !== null).map((e) => e.flag)).toEqual(flagsOf(map).map((_, i) => i));
       if (NEW.has(def.id)) {
         expect(r.hurt).toEqual([]);
-        expect(r.seconds).toBeGreaterThanOrEqual(60);
+        expect(r.seconds).toBeGreaterThanOrEqual(LONGEST[def.id] ?? 60);
         expect(r.seconds).toBeLessThan(150);
         console.log(`${def.name}: scripted clear ${r.seconds.toFixed(1)} s, ${p.found} of ${p.skilling.length} skilling on the way`);
       } else expect(r.seconds).toBeLessThan(TARGET[def.id] / 2);
@@ -392,6 +419,167 @@ describe("what the levels promise", () => {
     }
   });
 
+  test("Stortinget: the first escalator carries him down, the second runs up against him", () => {
+    const map = levelMap(STORTINGET);
+    const on = (c: number) => ({ x: tile(c), bottom: map.rampAt(tile(c))! });
+    const down = newPlay(STORTINGET, { pole: true, start: on(38) });
+    for (let i = 0; i < 60; i++) stepPlay(down, IDLE);
+    expect(cx(down)).toBeGreaterThan(tile(38) + 20);
+    const up = newPlay(STORTINGET, { pole: true, start: on(55) });
+    for (let i = 0; i < 60; i++) stepPlay(up, IDLE);
+    expect(cx(up)).toBeLessThan(tile(55) - 20);
+    const w = newPlay(STORTINGET, { pole: true, start: on(52) });
+    for (let i = 0; i < 60; i++) stepPlay(w, { ...IDLE, right: true });
+    expect(cx(w) - tile(52)).toBeGreaterThan(40);
+    expect(cx(w) - tile(52)).toBeLessThan(60 * MOVE.run * 0.75);
+  });
+
+  test("Stortinget: the third rail costs a heart and knocks him back out of the track", () => {
+    const p = newPlay(STORTINGET, { pole: true, start: { x: tile(77), bottom: tile(18) } });
+    // While the rat in that crossing is down.
+    do stepPlay(p, IDLE);
+    while (!(leapOf(p.enemies[4], p.t).up === 0 && leapOf(p.enemies[4], p.t - 1).up > 0));
+    let zap = false;
+    for (let i = 0; i < 120 && !zap; i++) zap = stepPlay(p, { ...IDLE, right: true }).zap;
+    expect(zap).toBe(true);
+    expect(p.hearts).toBe(2);
+    for (let i = 0; i < 60; i++) stepPlay(p, IDLE);
+    expect(p.body.onGround).toBe(true);
+    expect(feet(p)).toBe(tile(18));
+    expect(cx(p)).toBeLessThan(tile(79));
+    expect(HAZARDS.length).toBe(3);
+  });
+
+  test("Stortinget: a train stands at the platform when the board says so, and its roof carries him through the tunnel; the beam sweeps him off onto platform 2", () => {
+    const p = newPlay(STORTINGET, { pole: true, start: { x: tile(90), bottom: tile(18) } });
+    while (nextLocal(0, p.t) > 0) stepPlay(p, IDLE);
+    const swept = (q: Play) => q.body.onGround && feet(q) === tile(18) && cx(q) > tile(120);
+    const r = playMoves(p, [jump(0, { hold: 30 }), wait("swept off", swept)], { max: 60 * 30, until: swept });
+    expect(r.stuck).toBeNull();
+    expect(r.events.some((e) => e.splash)).toBe(false);
+    expect(cx(p)).toBeGreaterThan(tile(127));
+    expect(cx(p)).toBeLessThan(tile(130));
+    // No train ever leaves anyone waiting much more than five seconds.
+    let longest = 0;
+    let since = 0;
+    for (let t = 0; t < 4000; t++) {
+      since = nextLocal(0, t) === 0 ? 0 : since + 1;
+      longest = Math.max(longest, since);
+    }
+    expect(longest / 60).toBeLessThan(5.5);
+  });
+
+  test("Stortinget: in the cavern the express passes over the local, and the local goes down to the depot: stay on it and he falls", () => {
+    const p = newPlay(STORTINGET, { pole: true, start: { x: tile(170), bottom: tile(18) } });
+    while (!LOCALS.some((d) => carrier(p, d).x === tile(166))) stepPlay(p, IDLE);
+    const r = playMoves(p, [jump(0, { hold: 30 }), wait("down with the local", (q) => q.hurt)], { max: 60 * 30, until: (q) => q.hurt });
+    expect(r.stuck).toBeNull();
+    expect(r.events.some((e) => e.splash)).toBe(true);
+    // Every express passes over its local before the local dips, a little higher.
+    for (const [i, d] of EXPRESSES.entries()) {
+      let over = 0;
+      for (let t = 0; t < 4000; t++) {
+        const l = carrierAt(LOCALS[i], t);
+        const e = carrierAt(d, t);
+        if (l.y === ROOF && e.y === ROOF - 32 && l.x > tile(176) && Math.abs(e.x - l.x) < 48) over++;
+      }
+      expect(over).toBeGreaterThan(40);
+    }
+  });
+
+  test("Ekeberg: the tram's roof carries him up the trestle to the top of the cliff, and goes down into the hill without him", () => {
+    const p = newPlay(EKEBERG, { pole: true, start: { x: tile(15), bottom: tile(20) } });
+    const top = (q: Play) => q.body.onGround && feet(q) === tile(12) && cx(q) > tile(48);
+    const r = playMoves(p, EKEBERG_ROUTE.slice(2, 6), { max: 60 * 40, until: top });
+    expect(r.stuck).toBeNull();
+    expect(feet(p)).toBe(tile(12));
+    // Waiting in the street is never long: three trams on the line.
+    let longest = 0;
+    let since = 0;
+    for (let t = 0; t < 3000; t++) {
+      const standing = TRAMS.some((d) => carrierAt(d, t).x === tile(13) && carrierAt(d, t - 1).x === tile(13));
+      since = standing ? 0 : since + 1;
+      longest = Math.max(longest, since);
+    }
+    expect(longest / 60).toBeLessThan(4);
+  });
+
+  test("Ekeberg: a gust pushes him only after a second of leaves; on flat ground it slows him, and does no harm", () => {
+    const g = GUSTS[0];
+    const p = newPlay(EKEBERG, { pole: true, start: { x: tile(59), bottom: tile(12) } });
+    let moved = 0;
+    for (let i = 0; i < 1200; i++) {
+      const before = cx(p);
+      stepPlay(p, IDLE);
+      const live = pulsePhaseOf(p.t, g.beat!) === "live";
+      if (!live) expect(cx(p)).toBe(before);
+      else moved += before - cx(p);
+    }
+    expect(moved).toBeGreaterThan(15);
+    expect(p.hearts).toBe(3);
+    expect(g.beat!.warn).toBeGreaterThanOrEqual(60);
+  });
+
+  test("Ekeberg: the quarry is too wide for a jump and the dash; three sheep on their knolls bounce him across", () => {
+    // From the rim, a jump and the dash fall short of the far side.
+    const p = newPlay(EKEBERG, { pole: true, start: { x: tile(141) + 4, bottom: tile(12) } });
+    const r = playMoves(p, [leap(tile(142) - 1, 1, { dash: 12 })], { max: 300 });
+    expect(r.events.some((e) => e.splash) || feet(p) > tile(13)).toBe(true);
+    expect(KNOLLS.length).toBe(3);
+    const q = newPlay(EKEBERG, { pole: true });
+    const route = EKEBERG_ROUTE;
+    const across = (z: Play) => z.body.onGround && cx(z) > tile(158) && feet(z) === tile(13);
+    const r2 = playMoves(q, route.slice(0, route.findIndex((m) => m.name === "across on the sheep") + 1), { max: 60 * 120, until: across });
+    expect(r2.stuck).toBeNull();
+    expect(r2.events.filter((e) => e.bleat).length).toBeGreaterThanOrEqual(3);
+    expect(r2.events.some((e) => e.splash)).toBe(false);
+  });
+
+  test("Nabolaget: the chimney's warm air lifts him from the fourth roof to the block's", () => {
+    const p = newPlay(NABOLAGET, { pole: true });
+    const route = NABOLAGET_ROUTE;
+    const upTo = route.findIndex((m) => m.name === "up in the chimney's air to the block");
+    const r = playMoves(p, route.slice(0, upTo + 1), { max: 60 * 60, until: (q) => q.body.onGround && feet(q) === tile(8) });
+    expect(r.stuck).toBeNull();
+    expect(feet(p)).toBe(tile(8));
+    expect(SMOKE.push.y).toBeLessThan(0);
+  });
+
+  test("Nabolaget: the plough telegraphs every charge for a second, takes three hits (the bounce, the dash, the ride), and only then does the rune show; a flag and a bench stand right before it", () => {
+    const p = newPlay(NABOLAGET, { pole: true });
+    const r = playMoves(p, NABOLAGET_ROUTE, { max: 60 * 200 });
+    expect(r.done).toBe(true);
+    const ev = r.events.map((e) => e.boss);
+    // Every charge comes a full second after its windup.
+    ev.forEach((e, i) => {
+      if (e !== "charge") return;
+      const w = ev.lastIndexOf("windup", i);
+      expect(w).toBeGreaterThanOrEqual(0);
+      expect(i - w).toBeGreaterThanOrEqual(60);
+    });
+    expect(ev.filter((e) => e === "hit").length).toBe(3);
+    expect(ev.filter((e) => e === "line").length).toBeGreaterThanOrEqual(1);
+    expect(r.events.some((e) => e.dash)).toBe(true);
+    expect(ev.indexOf("beaten")).toBeLessThan(r.events.findIndex((e) => e.rune));
+    // The three hits: the first after a bounce on the line, the second after a dash, the third from the tram's roof.
+    const hits = r.events.flatMap((e, i) => (e.boss === "hit" ? [i] : []));
+    expect(ev.lastIndexOf("line", hits[0])).toBeGreaterThan(hits[0] - 120);
+    expect(r.events.slice(hits[1] - 60, hits[1]).some((e) => e.dash)).toBe(true);
+    const map = levelMap(NABOLAGET);
+    for (const s of [flagsOf(map).at(-1)!, benchesOf(map).at(-1)!]) {
+      expect(s.x).toBeLessThan(TERRACE.right);
+      expect(PLOUGH_DEF.rounds[0].x0 - s.x).toBeLessThan(24 * TILE);
+    }
+    expect((p.boss!.state as Plough).phase).toBe("beaten");
+  });
+
+  test("Nabolaget: from his terrace a jump alone reaches neither the plough's cab nor the washing line's far end; the cab is too high to jump onto from the street", () => {
+    const cab = PLOUGH_DEF.floor - 52;
+    expect(PLOUGH_DEF.floor - cab).toBeGreaterThan(46);
+    expect(PLOUGH_DEF.rounds[1].x0 - 32 - TERRACE.right).toBeGreaterThan(54);
+    expect(PLOUGH_DEF.rounds[1].x0 - 32 - TERRACE.right).toBeLessThan(54 + 48);
+  });
+
   test("Langkaia: the water puts him back on the last ground he stood on, as the old fjord did", () => {
     const p = newPlay(LANGKAIA);
     playMoves(p, [walk(tile(47) + 6)]);
@@ -446,8 +634,9 @@ describe("what the levels promise", () => {
   });
 });
 
-// The levels compile to the defs the page shows; the plan's other seven are listed, not built.
-test("the planned levels are on the line, not built", () => {
+// All ten are on the line and built, and the line map has no hoarding left.
+test("all ten levels are built, and the line map has no hoarding", () => {
   expect(LINE.length).toBe(10);
-  expect(LINE.filter((l) => l.built).length).toBe(7);
+  expect(LINE.filter((l) => l.built).length).toBe(10);
+  expect(kartDef(fresh()).map.join("")).not.toContain("F");
 });

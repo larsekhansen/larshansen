@@ -92,5 +92,8 @@ export function furthestOpen(p: Progress, order: readonly string[], built: numbe
   return i;
 }
 
+/** All ten runes: every level on the line cleared. Whatever else an old save holds does not count. */
+export const allRunes = (p: Progress, order: readonly string[]) => order.length > 0 && order.every((id) => p.cleared.includes(id));
+
 /** True once anything at all has been done: then the map is home, not the first level. */
 export const hasProgress = (p: Progress) => p.cleared.length > 0 || p.bracteates.length > 0;

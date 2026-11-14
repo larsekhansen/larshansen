@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "./config";
-import { carrierAt, carrierDrawn, carrierPeriod, carrierShown, carrierState, carriersNear, liftPeriod, pathPeriod, pathSteps, rideShown, type CarrierDef, type Lift, type Orbit, type Path } from "./carrier";
+import { carrierAt, carrierDrawn, carrierPeriod, carrierShown, carrierState, carriersNear, liftPeriod, pathClock, pathPeriod, pathSteps, rideShown, stopAt, untilStop, type CarrierDef, type Lift, type Orbit, type Path } from "./carrier";
 import { createBody, stepBody, type Body, type Intent, type World } from "./physics";
 
 // Open air over a floor far below (row 30), so only the carrier holds him up.
@@ -262,5 +262,39 @@ describe("an orbit, a bucket on a water wheel", () => {
     }
     expect(highest).toBe(11 * TILE);
     expect(feet(b)).toBe(top(bucket, 399).y);
+  });
+});
+
+describe("a train on a timetable: a path that stops", () => {
+  /** In from the left at 2 a step, stands 60 steps at x 200, goes on to 600, then away 100 steps. */
+  const train: Path = { kind: "path", points: [{ x: 0, y: 100 }, { x: 200, y: 100 }, { x: 600, y: 100 }], speed: 2, wait: 100, w: 4 * TILE, stops: [{ at: 1, steps: 60 }] };
+
+  test("it goes at its speed, stands at its stop, goes on, and its round counts the stop", () => {
+    expect(pathSteps(train)).toBe(300 + 60);
+    expect(pathPeriod(train)).toBe(460);
+    expect(carrierAt(train, 50).x).toBe(100);
+    expect(carrierAt(train, 100).x).toBe(200);
+    expect(carrierAt(train, 159).x).toBe(200);
+    expect(carrierAt(train, 160).x).toBe(200);
+    expect(carrierAt(train, 170).x).toBe(220);
+    expect(carrierAt(train, 359).x).toBe(598);
+    expect(carrierShown(train, 361)).toBe(false);
+    expect(carrierState(train, 130).dx).toBe(0);
+  });
+
+  test("the board: the steps until it comes to its stop, and 0 while it stands there", () => {
+    expect(stopAt(train, 0)).toEqual({ from: 100, steps: 60 });
+    expect(untilStop(train, 0, 0)).toBe(100);
+    expect(untilStop(train, 0, 99)).toBe(1);
+    expect(untilStop(train, 0, 130)).toBe(0);
+    expect(untilStop(train, 0, 160)).toBe(400);
+    expect(pathClock({ ...train, offset: 10 }, 0)).toBe(10);
+  });
+
+  test("standing on its roof he stands still at the stop and goes with it after", () => {
+    const b = standOn(train, 120);
+    const out = ride(b, train, 121, 60);
+    expect(out[10].onGround).toBe(true);
+    expect(b.x).toBeGreaterThan(carrierAt(train, 120).x + 20 + 30);
   });
 });

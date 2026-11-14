@@ -15,6 +15,8 @@ export const SHEEP = { w: 12, h: 7, range: 4 * TILE, speed: 0.3, squashSteps: 6 
 
 export interface Sheep {
   home: number;
+  /** How far either side of home it grazes, in pixels. */
+  range: number;
   x: number; // centre
   bottom: number;
   dir: 1 | -1;
@@ -23,8 +25,10 @@ export interface Sheep {
   rnd: () => number;
 }
 
-export function createSheep(spots: SheepSpot[]): Sheep[] {
-  return spots.map((s, i) => ({ home: s.x, x: s.x, bottom: s.bottom, dir: i % 2 ? -1 : 1, grazing: 0, squash: 0, rnd: seeded(101 + i * 37) }));
+/** The flock, from the map's marks. `range`: how far either side of home each grazes, in tiles (four when the level does not say). */
+export function createSheep(spots: SheepSpot[], range?: number): Sheep[] {
+  const r = range === undefined ? SHEEP.range : range * TILE;
+  return spots.map((s, i) => ({ home: s.x, range: r, x: s.x, bottom: s.bottom, dir: i % 2 ? -1 : 1, grazing: 0, squash: 0, rnd: seeded(101 + i * 37) }));
 }
 
 /** One physics step. Deterministic, so the same flock walks the same way on every visit. */
@@ -35,8 +39,8 @@ export function stepSheep(s: Sheep) {
     return;
   }
   s.x += s.dir * SHEEP.speed;
-  if (Math.abs(s.x - s.home) >= SHEEP.range) {
-    s.x = s.home + s.dir * SHEEP.range;
+  if (Math.abs(s.x - s.home) >= s.range) {
+    s.x = s.home + s.dir * s.range;
     s.dir = (s.dir * -1) as 1 | -1;
     s.grazing = 60;
   } else if (s.rnd() < 0.006) s.grazing = 50 + Math.floor(s.rnd() * 80);

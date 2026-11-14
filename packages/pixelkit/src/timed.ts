@@ -25,6 +25,35 @@ export function timedPhase(step: number, b: Beat): TimedPhase {
   return t < b.on ? "on" : t < b.on + b.warn ? "warn" : "off";
 }
 
+/**
+ * Something mostly quiet that comes on for a while after a warning: a gust of wind, a spark. The
+ * same beat as a ledge's, the other way round: at rest, a warning (a second, so he can see it
+ * coming), then live.
+ */
+export interface Pulse {
+  rest: number;
+  warn: number;
+  live: number;
+  offset?: number;
+}
+
+export type PulsePhase = "rest" | "warn" | "live";
+
+/** Where a pulse is at a step: its rest is a ledge's "on", its warning the same, and live is "off". */
+export function pulsePhase(step: number, p: Pulse): PulsePhase {
+  const phase = timedPhase(step, { on: p.rest, warn: p.warn, off: p.live, offset: p.offset });
+  return phase === "on" ? "rest" : phase === "warn" ? "warn" : "live";
+}
+
+/** Steps since a pulse's phase began, and how long that phase lasts: for drawing a warning that grows. */
+export function pulseAge(step: number, p: Pulse): { age: number; of: number } {
+  const period = p.rest + p.warn + p.live;
+  const t = (((step + (p.offset ?? 0)) % period) + period) % period;
+  if (t < p.rest) return { age: t, of: p.rest };
+  if (t < p.rest + p.warn) return { age: t - p.rest, of: p.warn };
+  return { age: t - p.rest - p.warn, of: p.live };
+}
+
 /** A timed ledge in the world: its top left and width (whole tiles), and its beat. */
 export interface TimedLedge extends Beat {
   x: number;

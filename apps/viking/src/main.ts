@@ -12,7 +12,7 @@ import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, mix, target, view } from "@larshansen/pixelkit/paint";
-import { COIN, DUST, FEATHER, FOOD, INK, METAL, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { COIN, DUST, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -58,8 +58,8 @@ import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { autopilot, type Move } from "./game/bot";
 import { strings } from "./game/i18n";
-import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
-import { PROGRESS_KEY, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
+import { HEARTS, LIVES, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
+import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
 import { FENCE_COL, kartDef } from "./levels/kart";
@@ -141,8 +141,9 @@ function readFeather() {
   abilities.pole = hasPole(progress) || params.has("pole");
 }
 readFeather();
-/** The gold helmet from the old game's full run of ten runes is kept by those who earned it. */
-const crowned = store.get("viking.crowned") === "1";
+/** The gold helmet: all ten runes, now or in the old game (`viking.crowned`, kept by those who earned it). */
+const CROWNED = "viking.crowned";
+const crowned = () => store.get(CROWNED) === "1" || allRunes(progress, ORDER);
 /** Lives and the purse of skilling go with him from level to level for this visit; a new visit starts with three lives. */
 const session = { lives: debug && params.has("lives") ? Math.max(1, Number(params.get("lives")) || LIVES) : LIVES, purse: 0 };
 
@@ -558,6 +559,7 @@ function hud() {
     LINE.forEach((l, i) => runeSlots[l.rune]?.classList.toggle("lit", lit[i] === "1"));
     const n = [...lit].filter((c) => c === "1").length;
     runesEl.setAttribute("aria-label", n === 10 ? t.runesAll : t.runes(n));
+    runesEl.classList.toggle("all", n === 10);
   }
   if (!scene.map) {
     const clock = formatTime(elapsedMs(scene.play));
@@ -624,9 +626,16 @@ function showCard(r: CardResult) {
   finishCoins.textContent = t.finishSkilling(r.found, r.total);
   finishClean.hidden = !r.clean && !r.pole;
   finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? t.finishPole : ""].filter(Boolean).join(" ");
+  // The last line counts honestly: the runes he has, on the last level built; and with the tenth, the name, plainly, in both languages.
   const more = $<HTMLElement>("finish-more");
-  more.hidden = scene.def.id !== BUILT[BUILT.length - 1].id;
-  more.textContent = t.moreToBuild(LINE.filter((l) => progress.cleared.includes(l.id)).length);
+  const runes = LINE.filter((l) => progress.cleared.includes(l.id)).length;
+  more.hidden = !r.home && scene.def.id !== BUILT[BUILT.length - 1].id;
+  more.classList.toggle("home", r.home);
+  more.textContent = "";
+  if (r.home) {
+    const other = strings(lang === "nb" ? "en" : "nb");
+    for (const line of [t.homeLine, other.homeLine]) more.appendChild(document.createElement("span")).textContent = line;
+  } else more.textContent = BUILT.length < LINE.length ? t.moreToBuild(runes) : t.runesLeft(runes);
   finishOn.textContent = t.finishOn;
   finishAgain.textContent = t.finishAgain;
   finishEl.hidden = false;
@@ -661,6 +670,8 @@ interface CardResult {
   total: number;
   clean: boolean;
   pole: boolean;
+  /** This rune was the tenth: the card says so, once. */
+  home: boolean;
 }
 let cardResult: CardResult | null = null;
 
@@ -703,6 +714,14 @@ function tryEnter(d: Door) {
       say(text);
       return;
     }
+  }
+  // A door to something still to come (Quintle's kiosk): the front page's padlock and its words.
+  if (!scene.map && d.soon) {
+    d.shake = view.reduced ? 0 : 14;
+    const text = d.id === "quintle" ? t.quintleSoon : t.locked;
+    state.bubble = { text, until: state.steps + 180, door: d };
+    say(text);
+    return;
   }
   startThrough(state, scene.play.body, d);
   sfx.play("door");
@@ -794,6 +813,14 @@ function react(ev: Events) {
     sfx.play("fanfare");
     say(t.trollStone);
   }
+  if (ev.boss) {
+    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", slam: "cannon", hit: "stone", line: "stomp", beaten: "fanfare" };
+    if (sound[ev.boss]) sfx.play(sound[ev.boss]);
+    if (ev.boss === "hit" || ev.boss === "slam") jolt(0, 3);
+    const words = p.def.bossWords?.[ev.boss];
+    if (words) say(words[lang]);
+  }
+  if (ev.zap && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + PLAYER.h - 2, 8, PAINT.warning, 1.1);
   if (ev.over) {
     session.lives = 0;
     showOver();
@@ -815,9 +842,14 @@ function react(ev: Events) {
     say(t.runeFound(RUNE_CHARS[p.def.rune], p.def.name));
     const ms = elapsedMs(p);
     const hadPole = hasPole(progress);
+    const had = allRunes(progress, ORDER);
     const r = clearLevel(progress, p.def.id, ms, p.bracteateAt !== null, { skilling: p.found, clean: !p.hurt });
     saveProgress(r.progress);
-    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole: !hadPole && hasPole(progress) };
+    // The tenth rune: the helmet turns gold, and stays gold.
+    const home = !had && allRunes(progress, ORDER);
+    if (home && !pretend) store.set(CROWNED, "1");
+    if (home && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + 1, 12, METAL.goldLight, 0.8);
+    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole: !hadPole && hasPole(progress), home };
     state.flight = { from: { x: p.rune.x + 8, y: p.rune.y + 8 }, since: state.steps };
     sparksAt(p.rune.x + 8, p.rune.y + 8, 8, PALETTE.runeGlow);
     const bursts = p.def.fireworks;
@@ -906,7 +938,7 @@ function stepArrival() {
 
 const look = (): Look => {
   const a = state.arrive;
-  const base: Look = { outfit: "viking", gold: crowned, pompom: abilities.gold ? METAL.gold : undefined };
+  const base: Look = { outfit: "viking", gold: crowned(), pompom: abilities.gold ? METAL.gold : undefined };
   if (!a) return base;
   return { ...base, helmetOffset: a.off, capeRows: a.t < 45 ? 0 : Math.min(4, Math.floor((a.t - 45) / 4) + 1) };
 };
@@ -960,7 +992,7 @@ function drawThings(v: View) {
       }
     }
   });
-  p.drums.forEach((l, i) => drawDrum(l, p.t, p.drummedAt[i]));
+  p.drums.forEach((l, i) => (art.drum ? art.drum(i, l, p.drummedAt[i], v) : drawDrum(l, p.t, p.drummedAt[i])));
   p.flags.forEach((f, i) => art.flag?.(i, f, p.raisedAt[i], v) || drawCheckpoint(f, p.raisedAt[i], p.t));
   p.benches.forEach((s, i) => drawBench(s.x, s.bottom, p.sitting?.i === i));
   for (const s of p.sheep) drawSheep(s);
@@ -969,8 +1001,9 @@ function drawThings(v: View) {
   for (const e of p.enemies) if (!art.enemy?.(e, v)) drawEnemy(e, p.t);
   for (const s of p.shots) drawShot(s, p.enemies[s.by]?.def.look);
   if (p.troll) art.troll?.(p.troll, v);
+  if (p.boss) art.boss?.(p.boss.state, v);
   if (p.bracteate && p.bracteateAt === null) drawBracteate(p.bracteate.x, p.bracteate.y, p.t);
-  if (p.rune && (!p.troll || p.troll.phase === "stone")) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
+  if (p.rune && runeFree(p)) drawRune(p.rune.x, p.rune.y, RUNE_CHARS[p.def.rune], p.runeAt === null ? "lit" : "ghost", p.t, p.def.rune);
   if (v.flourish !== null) art.flourish?.(v.flourish, v);
   if (p.pole && !p.loaded) skiPole(v);
 }
@@ -1029,10 +1062,11 @@ function render(alpha: number) {
   const horizon = p.map.height - 4 * TILE - 34;
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
-  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies };
-  if (art.far) pass(kit.depth(0.12), () => art.far!(v), 0.35);
-  if (art.mid) pass(kit.depth(0.2), () => art.mid!(v), 0.3);
-  if (art.near) pass(kit.depth(0.4), () => art.near!(v), 0.2);
+  const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt };
+  const haze = scene.def.haze ?? [0.35, 0.3, 0.2];
+  if (art.far) pass(kit.depth(0.12), () => art.far!(v), haze[0]);
+  if (art.mid) pass(kit.depth(0.2), () => art.mid!(v), haze[1]);
+  if (art.near) pass(kit.depth(0.4), () => art.near!(v), haze[2]);
   const street = kit.depth(1);
   pass(street, () => art.back(v));
   pass(street, () => {
@@ -1088,7 +1122,7 @@ function render(alpha: number) {
     player: { body, walk: p.sitting ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * (blink ? 0.25 : 1), phase: sky.phase, look: look() },
     hint:
       door && !touch && !speaking && !frozen() && !state.bubble
-        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.goIn}` }
+        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
         : bench !== null && !touch && !bubble
           ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
           : null,
@@ -1194,7 +1228,10 @@ const AUTO: Record<string, () => Promise<Move[]>> = {
   slottet: () => import("./levels/routes/slottet").then((m) => m.SLOTTET_ROUTE),
   holmenkollen: () => import("./levels/routes/holmenkollen").then((m) => m.HOLMENKOLLEN_ROUTE),
   akerselva: () => import("./levels/routes/akerselva").then((m) => m.AKERSELVA_ROUTE),
-  nordmarka: () => import("./levels/routes/nordmarka").then((m) => m.NORDMARKA_ROUTE)
+  nordmarka: () => import("./levels/routes/nordmarka").then((m) => m.NORDMARKA_ROUTE),
+  stortinget: () => import("./levels/routes/stortinget").then((m) => m.STORTINGET_ROUTE),
+  ekeberg: () => import("./levels/routes/ekeberg").then((m) => m.EKEBERG_ROUTE),
+  nabolaget: () => import("./levels/routes/nabolaget").then((m) => m.NABOLAGET_ROUTE)
 };
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */

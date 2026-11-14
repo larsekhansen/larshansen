@@ -1,8 +1,7 @@
 import { LANGKAIA } from "./langkaia";
 import type { LevelDef, Words } from "./types";
 
-// The ten levels, one per rune of LARS HANSEN, in the order the line runs. Seven are built; the rest
-// are on the plan (docs/games/LEVELS.html) and stand behind the hoarding on the line map.
+// The ten levels, one per rune of LARS HANSEN, in the order the line runs, all ten built.
 //
 // What the line map needs of a level (its name, rune and place) is here, so the map can be drawn
 // without the levels themselves. Each built level's code comes in its own small file when it is
@@ -27,9 +26,9 @@ export const LINE: Station[] = [
   { id: "holmenkollen", rune: 4, name: "Holmenkollen", place: { nb: "Hoppbakken", en: "The ski jump" }, built: true },
   { id: "akerselva", rune: 5, name: "Akerselva", place: { nb: "Nedover elva fra Nydalen til Vaterland", en: "Down the river from Nydalen to Vaterland" }, built: true },
   { id: "nordmarka", rune: 6, name: "Nordmarka", place: { nb: "Skogen nord for byen", en: "The forest north of the city" }, built: true },
-  { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: false },
-  { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: false },
-  { id: "nabolaget", rune: 9, name: "Nabolaget", place: { nb: "Takene på Vålerenga og Kampen", en: "The roofs of Vålerenga and Kampen" }, built: false }
+  { id: "stortinget", rune: 7, name: "Stortinget", place: { nb: "T-banestasjonen under sentrum", en: "The T-bane station under the centre" }, built: true },
+  { id: "ekeberg", rune: 8, name: "Ekeberg", place: { nb: "Lia over Gamle Oslo", en: "The hillside above Gamle Oslo" }, built: true },
+  { id: "nabolaget", rune: 9, name: "Nabolaget", place: { nb: "Takene på Vålerenga og Kampen", en: "The roofs of Vålerenga and Kampen" }, built: true }
 ];
 
 export const ORDER = LINE.map((l) => l.id);
@@ -44,7 +43,10 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   slottet: () => import("./slottet").then((m) => m.SLOTTET),
   holmenkollen: () => import("./holmenkollen").then((m) => m.HOLMENKOLLEN),
   akerselva: () => import("./akerselva").then((m) => m.AKERSELVA),
-  nordmarka: () => import("./nordmarka").then((m) => m.NORDMARKA)
+  nordmarka: () => import("./nordmarka").then((m) => m.NORDMARKA),
+  stortinget: () => import("./stortinget").then((m) => m.STORTINGET),
+  ekeberg: () => import("./ekeberg").then((m) => m.EKEBERG),
+  nabolaget: () => import("./nabolaget").then((m) => m.NABOLAGET)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);
