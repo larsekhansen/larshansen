@@ -141,41 +141,47 @@ What none of this can tell you: whether a jump feels fair, whether timing window
 whether sound, touch, gamepad or reduced motion work, whether the maze inside the viking page
 behaves (it loads by dynamic import after the screenshot is taken).
 
-## Known weak spots, as of order 12
+## Known weak spots, as of order 13
 
 Most important first. Lars had not yet played when this was written; expect his comments to
 reorder this list.
 
-1. **Unplayed.** See above. Every number below is the sloppy player's, not a person's.
-2. **The line is not quite a rising line.** Hearts lost per run by the sloppy player at ±4 after
-   order 12 (`tools/review/after/summary.md`): Slottet is still the easiest level by far (about
-   0.5) and Stortinget is a little under its band (about 1.6); Langkaia, level 1, is at about 1.8,
-   over its 1.5 target. Holmenkollen and Nordmarka are the hardest; see the hand-back of order 12
-   for the exact table.
-3. **Rådhuset's carillon** is still where the sloppy player most often gives up (the swinging
-   bell and the bells must be met in step); a missed bell now costs a few seconds, not nine.
-4. **Standing still.** Rådhuset, Akerselva, Nordmarka and Stortinget still stand still a little
-   over a third of the route (rides count as standing); no forced wait is much over 5 s except
-   Stortinget's locals as the route waits for them (about 6 s with the route's margin; the
-   timetable's own longest gap is under 5.5 s, tested).
-5. **The bosses** explain themselves now (the dawn shaft, bubbles, hints) and Game over at a boss
-   goes on from its bench (ADR 0017). Against the plough, three naive strategies still reach Game
-   over in 43 to 46 s (holding right, or running to the far end), and running at it and jumping can
-   beat it by accident.
-6. **Upright phones** get a view at least 240 art px wide (ADR 0019): more sky, a smaller person.
-   Seen only in a 390 × 844 headless window at a device pixel ratio of 1, not on a phone.
-7. **Art.** Large plain stone, brick and earth areas; repeated window grids on Karl Johan; the
-   Scream bands on Ekeberg are loud; trams leave by sinking into slots (now also into the street
-   beside Nabolaget's narrower last slot); the yellow house reads brown under the night tint; the
-   moose and troll are small; level 1's enemies are dark on dark at night. Order 13 is the look.
-8. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
+1. **Unplayed.** See above. Every number below is the sloppy player's, not a person's, and every
+   picture a headless browser's at a device pixel ratio of 1.
+2. **The line is a rising line, roughly.** Hearts lost per run by the sloppy player at ±4 after
+   order 13 (`tools/review/after13/summary.md`): Langkaia 1.5, Akershus 1.4, Rådhuset 1.6, Slottet
+   0.5 (the rest before the mountain, accepted), Holmenkollen 0.6, Akerselva 2.4, Nordmarka 2.0,
+   Stortinget 1.4 (accepted), Ekeberg 2.8, Nabolaget 1.6. Holmenkollen is easy for the sloppy
+   player because its inrun steers itself; for a person the lip is the test. Thirty runs move by
+   ±0.3; `after13/compare90.txt` has ninety-run numbers for the three that looked worse than order 12.
+3. **Rådhuset's carillon** is still where the sloppy player most often gives up (6 of 30 at ±4):
+   the swinging bell and the bells must be met in step.
+4. **Standing still.** Rådhuset 38 %, Akerselva 36 %, Stortinget 36 % and Nordmarka 34 % of the
+   route stand still (`after13/standing.txt`). In the first three it is nearly all riding (bells,
+   the ferry, the lift, the clock's hand; logs and buckets; trains): standing on the map's own
+   ground is 13, 10 and 9 %. Nordmarka's is the troll's fight, waiting in front of the dawn for it
+   to come. No forced wait is much over 5 s (Stortinget's locals 5.1 and 4.6 s worst).
+5. **The bosses.** The plough now hurts only while it moves and stands in his way when still
+   (ADR 0022): no naive strategy reaches Game over before 79 s, and every one sees a hint within
+   10 s. A player who leans on the resting plough is never charged: the fight waits, with hints.
+   Against the troll, three naive strategies still reach Game over in 72 to 80 s.
+6. **The look**, order 13: flat areas broken with placed things, trams on their rails, a plated
+   banner, enemies with a rim at night, the yellow house lit by its door lamp, digs that read as
+   holes, upright phones that put him two thirds down (ADR 0021). Still plain: the stone under
+   Akershus's quay and walls below the first courses, the Scream bands are loud, the moose and the
+   troll are small, Karl Johan's window grids repeat. A tram leaving into Nabolaget's last slot is
+   cut flat at the street, since the slot is narrower than the tram.
+7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
-   board on a slow line (seen only with `?debug&fetch=hang`).
-9. **Margins.** The first script is 57.84 kB gzipped of a 60 kB budget (the scripted player, the
-   routes, `?debug`'s code and the troll's rules are no longer in it). The viking test suite takes
-   about 90 s of a two-minute budget, nearly all of it the reach and dead-end searches in workers.
-10. **The viking header is solid cream,** not the front page's frosted bar
-   ([ADR 0015](../adr/0015-solid-header-in-viking.md)).
+   board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
+8. **Margins.** The first script is 59.12 kB gzipped of a 60 kB budget (ADR 0011 says what can
+   still move out). The viking test suite takes about 90 s of a two-minute budget, nearly all of it
+   the reach and dead-end searches in workers.
+9. **The viking header is solid cream,** not the front page's frosted bar
+   ([ADR 0015](../adr/0015-solid-header-in-viking.md)); on an upright phone it wraps to three rows,
+   and on a phone on its side its run group is cut at the right.
+10. **The maze's words** keep the original game's taunting voice, one exclamation mark included;
+   order 13 read the viking game's lines, not the maze's.
 
 ## Things considered and not done
 

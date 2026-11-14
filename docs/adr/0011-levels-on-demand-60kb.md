@@ -16,7 +16,7 @@ Decided by the planner (order 8 set the budget; order 10 rule 12 set the means).
 57.4 kB of 60 after batch D; 57.84 kB after order 12, which added rules and page code and moved
 out the scripted player and the routes (fetched only under `?debug&auto`), `?debug`'s own code,
 and the troll's rules (into Nordmarka's file through `LevelDef.trollRules`, as the plough's
-through the boss slot). 59.11 kB after order 13, which added the rims enemies get after dusk, the
+through the boss slot). 59.12 kB after order 13, which added the rims enemies get after dusk, the
 far layers' shift and the ground below the map on upright screens, the plated banner and the
 bosses' bubbles beside them; to make room the duck, the salmon, the bat and the anthill are drawn
 by the one level that has each. Left to move out if needed: the line map's station art, and the

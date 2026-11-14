@@ -1,0 +1,9 @@
+akerselva flag col 160, clock +0: standing still 10 s, first heart lost after never; hearts left 3
+akerselva flag col 160, clock +50: standing still 10 s, first heart lost after never; hearts left 3
+akerselva flag col 160, clock +100: standing still 10 s, first heart lost after never; hearts left 3
+nordmarka flag col 192, clock +0: standing still 10 s, first heart lost after never; hearts left 3
+nordmarka flag col 192, clock +50: standing still 10 s, first heart lost after never; hearts left 3
+nordmarka flag col 192, clock +100: standing still 10 s, first heart lost after never; hearts left 3
+nabolaget flag col 98, clock +0: standing still 10 s, first heart lost after never; hearts left 3
+nabolaget flag col 98, clock +50: standing still 10 s, first heart lost after never; hearts left 3
+nabolaget flag col 98, clock +100: standing still 10 s, first heart lost after never; hearts left 3

@@ -109,8 +109,11 @@ const LONGEST: Record<string, number> = { nabolaget: 80 };
  * Enemies allowed by a route's jump over a pit or water, by name, and why:
  * - Nabolaget's snowball kid stands at the edge of the block's roof, where the leap over the gap begins:
  *   the route stomps him first, and further back his reach would cover the flag on the same roof.
+ * - Nabolaget's cat at the foot of the drift, before the tram's first slot: the route stomps it first.
+ *   The street there is four tiles; a cat sitting still a tile further back was hit twice as often by
+ *   the sloppy player coming down the drift (order 13), so it walks where it did.
  */
-const JUMP_EXCEPTIONS: Record<string, string[]> = { nabolaget: ["thrower:kid@52"] };
+const JUMP_EXCEPTIONS: Record<string, string[]> = { nabolaget: ["thrower:kid@52", "walker:cat@153"] };
 
 /**
  * The route's jumps (its "jump" and "leap" moves) that go over a pit or water: where he left the ground

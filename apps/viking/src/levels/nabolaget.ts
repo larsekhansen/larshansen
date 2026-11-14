@@ -212,8 +212,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 35, r: 5, range: 2, rise: 8, period: 160 },
   { kind: "thrower", look: "kid", c: 52, r: 7, period: 210 },
   { kind: "flyer", look: "crow", c: 72, r: 6, range: 3, rise: 6, period: 170, offset: 60 },
-  // A cat sitting at the foot of the drift, clear of the slot's edge.
-  { kind: "walker", look: "cat", c: 152, r: S - 1, range: 0, speed: 0, w: 12 },
+  { kind: "walker", look: "cat", c: 153, r: S - 1, range: 1, w: 12 },
   { kind: "walker", look: "fox", c: 90, r: S - 1, range: 2, w: 12 },
   { kind: "flyer", look: "owl", c: 96, r: 13, range: 2, rise: 6, period: 170 },
   { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 },
