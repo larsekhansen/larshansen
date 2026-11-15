@@ -447,6 +447,8 @@ function drift() {
       if ((x + 3) % 23 < 9) R(x, y + 16 + ((x * 3) % 4 === 0 ? 1 : 0), 1, 1, ripple);
       if ((x + 11) % 31 < 12) R(x, y + 27, 1, 1, ripple);
       if ((x + 5) % 19 < 7) R(x, y + 40 + Math.floor((x % 19) / 3), 1, 1, ripple);
+      // Older snow deeper in, in packed layers, the day's falls one over another.
+      for (const [d, run] of [[52, 41], [70, 29], [92, 37], [116, 23], [142, 31]] as const) if ((x * 3 + d) % run < run - 6) R(x, y + d + ((x >> 4) % 2), 1, 1, mix(SNOW.shade, INK, 0.18));
     }
     // Someone's steps down beside the tracks.
     for (let x = x0 + 6; x < x1 - 4; x += 7) {
@@ -460,7 +462,7 @@ function drift() {
       R(x, y, 2, 4, mix(PALETTE.woodDark, SNOW.shade, 0.35));
       R(x, y - 1, 2, 1, SNOW.lying);
     }
-    for (let x = x0 + 40; x < x0 + 130; x++) R(x, at(x) + 24, 1, 1, mix(PALETTE.woodDark, SNOW.shade, 0.5));
+    for (let x = x0 + 40; x < x0 + 130; x++) if (x % 5 < 3) R(x, at(x) + 24, 1, 1, mix(PALETTE.woodDark, SNOW.shade, 0.6));
   });
 }
 

@@ -45,11 +45,13 @@ Lars before reversing one of his.
 | [0033](0033-a-lost-life-at-a-boss.md) | A lost life in a boss's fight never puts him further back than its bench; a flag on the serpent's quay | planner (order 17) | holds; adjusts 0017 |
 | [0034](0034-the-sloppy-player-made-honest.md) | The review's sloppy player made honest: four artefacts gone, fresh seeds, every move measured; what that did to line 2's targets | planner (order 17) | holds |
 | [0035](0035-the-budget-enforced.md) | The build fails if the first script is over 60 kB gzipped | planner (order 17) | holds; enforces 0011 |
-| [0036](0036-drawn-once-and-copied.md) | Stonework and other unchanging drawing is drawn once and copied; `?debug&perf` measures a frame | planner | holds |
+| [0036](0036-drawn-once-and-copied.md) | Stonework and other unchanging drawing is drawn once and copied; `?debug&perf` measures a frame | planner | holds; amended by 0041 |
 | [0037](0037-out-to-the-map-after-a-level.md) | After a level the card has one action, to the map, at the station just cleared; any key, a tap, or six seconds | planner (order 18) | holds |
 | [0038](0038-valerenga.md) | The tenth station is shown as Vålerenga; its id stays `nabolaget` | planner (order 18) | holds |
 | [0039](0039-colour-says-what-a-thing-is.md) | Colour says what a thing is: roles and their palettes (enemies outlined and a quarter larger, platforms' standing tops, pickups, him, the bosses' "now"), held by a test | planner, Lars (order 18) | holds; adjusts 0023 |
 | [0040](0040-felt-at-a-glance.md) | Every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use marked in one cyan; his rim after dusk | planner (order 19) | holds; builds on 0039 |
+| [0041](0041-off-the-screen-is-not-drawn.md) | What is off the screen is not drawn; the dark in rectangles, not rows; large unchanging pieces kept as strips, alike shapes stamped; scenery added is drawn so | planner (order 20) | holds; amends 0036 |
+| [0042](0042-flat-places.md) | Flat places found by a walk along every route at both sizes and given what the place has, as scenery drawn once and copied; far layers may rise with a climbed view | planner (order 20) | holds; builds on 0039, 0041 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

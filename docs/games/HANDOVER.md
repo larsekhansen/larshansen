@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, and by order 19's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, and by order 20's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -72,6 +72,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-15 | An adversarial review of line 2 (`reviews/2026-11-15-line-2.md`); order 17 makes it good: the serpent's fight and ending, a lost life at a boss, what line 2 teaches and gives made visible, each level asking more of its idea, the review's tools made honest, the first script's budget enforced | `orders/17-line-2-made-good.md`, branch `line-2-made-good` |
 | 2026-11-15 | Lars plays on his phone after the speed fix (PR #63): the card takes him out to the map (ADR 0037); Nabolaget is shown as Vålerenga (ADR 0038); runes that read at a glance; enemies a quarter larger, outlined, in a palette of their own; platforms with a standing top; every role's colours named and held apart (ADR 0039) | `orders/18-seen-at-a-glance.md`, branch `seen-at-a-glance` |
 | 2026-11-15 | Lars: "do more design polishing like that". Order 19: every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use in one cyan; his rim after dusk; the header between 760 and 1359 px (ADR 0040) | `orders/19-felt-at-a-glance.md`, branch `felt-at-a-glance` |
+| 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`
@@ -141,7 +142,9 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   fresh seeds (101 to 200). Measure on fresh seeds, not the ones a level was tuned on. Remember what the
   sloppy player is: the route's plan with a person's timing. It never finds a better line, and
   "off route" and "gave up" mostly mean it fell somewhere the route never goes.
-- **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame;
+- **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame (if he is hit in those
+  steps the page holds its picture, so nothing is drawn: a picture or `?debug&perf` there shows the frame before or
+  nothing at all, and whether the first frame came first is a race with `feel.ts`'s chunk; use `steps=0` there);
   `?debug&auto&steps=N` plays the scripted route in the page; `bun tools/shots.ts <dir> <url>…`
   takes the pictures with headless Firefox (`--size=390x844` for an upright phone; `--wait=5000`
   for a built page under `?debug&auto`, which fetches after the load event the picture is taken at).
@@ -165,10 +168,16 @@ behaves (it loads by dynamic import after the screenshot is taken).
 ## Speed
 
 Lars found the game lagging on a phone (15 November). `?debug&perf` (ADR 0036) says what a frame
-draws and who draws it. Stonework and Stortinget's rock are now drawn once and copied; a change like
-that must leave the pictures byte-identical (compare against the live site with `tools/shots.ts`).
-Next in line: Nordmarka's dark, colours set on every rectangle, the five stacked canvases. No one
-has measured on a real phone: the numbers are the Pi's software renderer.
+draws and who draws it; `?debug&perf&post=<port>` sends the line to `tools/glance/perf.ts`, which makes a table
+of many places at once. Stonework and Stortinget's rock are drawn once and copied (ADR 0036); since order 20
+what is off the screen is not drawn, Nordmarka's dark is drawn in rectangles not rows, and large or repeated
+pieces are kept or stamped (ADR 0041): Nordmarka from 16,600 to 29,100 rectangles a frame at 390 x 844 to
+4,200 to 5,700, Bygdøy from about 22,000 to 5,800 to 7,300, Korketrekkeren from about 15,700 to 3,400 to 3,700.
+A change like that must leave the pictures byte-identical: take the same addresses from a build before and a
+build after (check which build each preview serves) and compare bytes. Every level's numbers are in
+`apps/viking/tools/review/o20/perf.md`. Next in line: Stortinget (27,000 to 30,000 a frame at 390 x 844, its far
+rock filling a tall view), the far layers' one rectangle per column, colours set on every rectangle, the five
+stacked canvases. No one has measured on a real phone: the numbers are the Pi's software renderer.
 
 ## Line 2: what is built, what order 17 owes
 
@@ -229,7 +238,8 @@ has measured on a real phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
+- **First script**: 59.00 kB gzipped after order 20 (`kept.ts` and the kit's `dark.ts` are chunks of their own now;
+  the far layers' `climbed` and `lift` came in). Before: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
   with the first scene, which took the old sparks, the beaten enemies' puff and the page's freeze with it). Before: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
   59.8). Earlier: 59.18 kB after order 16 (order 16 allowed 59.5). Order 15 moved Nordmarka's
   night drawing out of `main.ts` into `render/night.ts`, which comes with Nordmarka. Left to move: the enemy
@@ -278,6 +288,27 @@ kit's synth (each its own), and with a still answer under reduced motion. The an
   pushed off the right edge, the clock and hearts with it.
 - **Unplayed**: none of it has been heard or seen at speed by a person. The sounds were checked as recipes
   (each different, the near ones apart by register, direction and noise), never listened to on the Pi.
+
+## Order 20: the places at their best
+
+Order 20 (`orders/20-places-at-their-best.md`, ADR 0041, 0042). What to know:
+- **Speed.** See "Speed" above. `kept.ts` has `kept` (a piece in its place), `keptStrips` (a large piece in 128 px
+  strips), `stamp` (a shape alike wherever it stands, on any layer) and `seen` (is this piece of the street on the
+  screen at all); a level that draws across its whole length should use them. The sloppy player's run files on
+  Nordmarka, Bygdøy, Korketrekkeren and Bjørvika (seeds 201 to 260, ±2 and ±4) are byte-identical before and after.
+- **Flat places.** `tools/glance/walk.ts` walks every level along its route, a place every twenty columns, and
+  `tools/glance/flat.py` marks the pictures with a plain area over about a third of the view or an empty far
+  backdrop. What each marked place was given is in ADR 0042 and `tools/review/o20/flat.md`. Akershus's far layers
+  rise when the view climbs the walls (`climbed` in `render/backdrop.ts`); Slottet's city and hills rise with
+  Karl Johan. Left: Nordmarka's dark (by design) and one picture high on Holmenkollen.
+- **LEVELS.html's pictures** have their addresses in `apps/viking/tools/pictures.tsv`; `bun tools/pictures.ts
+  <base> [name ...]` takes them again from a served build (the dawn at Gamlebyen's prow needs its `wait`).
+- **Left from order 19, done**: the walls that close behind him in Gamlebyen tremble and throw dust where they will
+  rise, from the moment he is past until they rise; a sledger leans in before it sets off; turning between two
+  statues makes one sound; Bjørvika's hooks clunk coming in to a landing and ding-dong as they turn (named by
+  `LevelDef.landings`, so the moose and the chairlift stay quiet); Langkaia's one-way ledge crop in the platform
+  sheet is away from the sign.
+- **Unplayed**: none of it has been seen at speed or heard by a person.
 
 ## Known weak spots, as of order 16
 

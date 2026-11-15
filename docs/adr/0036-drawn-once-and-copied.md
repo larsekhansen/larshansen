@@ -35,3 +35,8 @@ site, 28 of 28 front page pictures, three maze pictures.
 - Still heavy, not yet done: Nordmarka's dark (`drawDark` and the lamp, about 10,000 translucent
   rows a frame, 190 ms here); rectangles set their colour every time even when it has not changed;
   each frame composes five stacked canvases.
+
+## Amended by 0041 (order 20)
+Nordmarka's dark, Bygdøy's halls and Korketrekkeren's run are done: what is off the screen is no longer drawn,
+the dark is drawn in rectangles, and `kept.ts` gained `keptStrips`, `stamp` and `seen` and became a chunk of its
+own (no longer Stortinget's alone). See [0041](0041-off-the-screen-is-not-drawn.md).
