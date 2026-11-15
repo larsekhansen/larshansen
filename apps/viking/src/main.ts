@@ -919,7 +919,7 @@ window.addEventListener("keydown", (e) => {
     outToMap();
   }
 });
-stage.addEventListener("click", () => state.card === "clear" && outToMap());
+for (const el of [stage, pad]) el.addEventListener("pointerdown", () => state.card === "clear" && outToMap());
 restartButton.addEventListener("click", () => {
   restartLevel();
   restartButton.blur(); // give the keyboard back to the game

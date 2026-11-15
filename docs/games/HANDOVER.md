@@ -350,4 +350,7 @@ reorder this list.
 - A new rule: pure, in `game/play.ts` or a small module beside it, with a test on a made-up
   level in `rules.test.ts`.
 - Words: Norwegian and English, both, in the dry voice ([ADR 0016](../adr/0016-two-languages-dry-voice.md)).
+- Drawing anything new: its colours come from its role (an enemy from `ENEMY`, outlined by the page; what he
+  stands on with the standing top; DESIGN's "Colour says what a thing is", [ADR 0039](../adr/0039-colour-says-what-a-thing-is.md)).
+  `render/palette.test.ts` says which colour is too near which, and by how much.
 - A decision made or reversed: add or supersede a record in `docs/adr/` and update this file.

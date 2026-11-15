@@ -3,7 +3,7 @@ import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, PAINT, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
@@ -474,10 +474,10 @@ function crane(k: (typeof CRANES)[number], t: number) {
 function hookArt(x: number, y: number, jib: number) {
   R(x + 15, jib + 6, 2, y - jib - 6, S.cable);
   R(x + 11, jib + 5, 10, 3, S.craneDark);
-  R(x, y, 2 * TILE, 8, S.crane);
-  R(x, y, 2 * TILE, 1, S.craneLight);
-  for (let k = 0; k < 2 * TILE; k += 6) for (let i = 0; i < 4; i++) R(x + k + i + 1, y + 2 + (i > 1 ? 1 : 0), 2, 1, S.stripe);
-  R(x, y + 7, 2 * TILE, 1, S.craneDark);
+  // The block he rides: in the platform palette (order 18), its standing top drawn by the page.
+  R(x, y, 2 * TILE, 8, STAND.body);
+  for (let k = 0; k < 2 * TILE; k += 6) for (let i = 0; i < 4; i++) R(x + k + i + 1, y + 2 + (i > 1 ? 1 : 0), 2, 1, STAND.bodyDark);
+  R(x, y + 7, 2 * TILE, 1, STAND.under);
   R(x + 12, y - 4, 8, 4, S.craneDark);
   R(x + 14, y - 3, 4, 2, S.cable);
   // The hook below the block.

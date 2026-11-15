@@ -16,9 +16,10 @@ export const steel = "#9b3d2c";
 export const steelLight = "#c0644c";
 export const steelDark = "#6a281d";
 // The cranes, the hooks' blocks, the hoist.
-export const crane = "#f2c200";
-export const craneLight = "#ffe36a";
-export const craneDark = "#a88400";
+// A quieter ochre than a crane's own yellow (order 18): its yellow was a bracteate's gold at a glance.
+export const crane = "#bfa95e";
+export const craneLight = "#d2c08a";
+export const craneDark = "#7e6e3a";
 export const cable = "#2b2f33";
 export const stripe = "#24262b";
 // The safety net, the sheets of steel the wind lifts.
