@@ -17,8 +17,8 @@ import type { Boss } from "../levels/types";
 // him, seen coming a second before (jump it), and dives; and it rises again somewhere else.
 //
 // After the first hit it rises twice in a round: the first ball sent back it ducks under, and comes up
-// at another place with a ring and a tell of its own; the second dazes it. After the second hit its tail
-// follows each ball along the quay. Three hits, and it sinks for good; the dawn comes, and the rune rises
+// at another place with a ring and a tell of its own; the second dazes it; and its tail comes along the
+// quay after each ball. After the second hit the tail follows each ball closely. Three hits, and it sinks for good; the dawn comes, and the rune rises
 // to the last longship's prow. A ball that hits him ends the round with no tail: it watches him a while
 // before it goes under. It
 // rises at least four tiles from him, within seven where it can (if he walks up to its ring it moves once,
@@ -106,8 +106,8 @@ export const SERPENT = { head: { w: 22, h: 12 }, neck: 14, rear: 60, tail: { w: 
 export const SERPENT_STEPS = { ring: 90, ring2: 60, rise: 30, tell: [90, 75, 60], duck: 30, daze: 240, dazeHint: 90, reel: 50, dive: 30, tailWarn: 60, rest: 150, watch: 150, restHit: 180, stale: 600, dawn: 300, rune: 90 };
 /** How fast the ball flies, and the tail sweeps. */
 export const SERPENT_SPEED = { ball: 2, tail: 2.2 };
-/** Where the tail comes up (this far behind its neck, from him) and how far past him it sweeps. */
-export const TAIL = { behind: 4 * TILE, past: 5 * TILE };
+/** Where the tail comes up (at least this far behind its neck, from him), how far past him it sweeps, and how many steps behind the ball it comes after the first hit and after the second. */
+export const TAIL = { behind: 4 * TILE, past: 5 * TILE, follow: [20, 10] };
 /** It rises no nearer him than this. */
 export const NEAR = 4 * TILE;
 
@@ -175,11 +175,22 @@ function done(s: Serpent, ...hints: string[]) {
 }
 
 /** Its tail comes up behind its neck (from him) and sweeps towards him, a second after its tip breaks the water. */
-function lash(s: Serpent, step: number, hx: number) {
+function lash(s: Serpent, step: number, hx: number, behind = TAIL.behind) {
   if (s.tail) return;
   const dir: 1 | -1 = hx < neckX(s) ? -1 : 1;
-  const x = Math.max(s.def.x0 + 8, Math.min(s.def.x1 - 8, neckX(s) - dir * TAIL.behind));
+  const x = Math.max(s.def.x0 + 8, Math.min(s.def.x1 - 8, neckX(s) - dir * behind));
   s.tail = { x, dir, at: step, hit: false, said: false };
+}
+
+/**
+ * From its first hit on, as it rears its tail breaks the water behind it, far enough back that, sweeping
+ * after its second's warning, it comes to him after the ball: he holds the shield for the ball, lets it go
+ * and jumps the tail (`TAIL.follow` steps behind the ball after the first hit, closely after the second).
+ */
+function follow(s: Serpent, step: number, hx: number) {
+  const ball = Math.max(0, Math.abs(neckX(s) - hx) - 21) / SERPENT_SPEED.ball;
+  const sweep = tellSteps(s) + ball + TAIL.follow[Math.min(s.hits, 2) - 1] - SERPENT_STEPS.tailWarn;
+  lash(s, step, hx, Math.max(TAIL.behind, sweep * SERPENT_SPEED.tail + 14 - Math.abs(neckX(s) - hx)));
 }
 
 /** Under, then a rest before the next round. */
@@ -256,6 +267,7 @@ export function stepSerpent(s: Serpent, step: number, him: Body): string | null 
       if (age >= SERPENT_STEPS.rise) {
         to(s, "rear", step);
         s.dir = hx < neckX(s) ? -1 : 1;
+        if (s.hits >= 1) follow(s, step, hx);
         return "windup";
       }
       return null;
@@ -265,8 +277,6 @@ export function stepSerpent(s: Serpent, step: number, him: Body): string | null 
         const m = mouth(s);
         s.ball = { x: m.x, y: m.y, vx: s.dir * SERPENT_SPEED.ball, back: false };
         to(s, "spit", step);
-        // From its second hit on, its tail follows the ball along the quay.
-        if (s.hits >= 2) lash(s, step, hx);
         return "spit";
       }
       return null;

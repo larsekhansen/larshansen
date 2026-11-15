@@ -65,15 +65,15 @@ b.fill(93, 93, BANK - 4, BANK - 1, "Z");
 // --- The water mirror where the shore was: the banks, the pool, its stepping stones ---------------------------
 b.ground(93, 98, BANK).fill(99, 126, BANK, BANK + 1, "~").ground(99, 126, BANK + 2).ground(127, 137, BANK);
 /**
- * The stepping stones, a row over the water: they rise as he comes. Not all alike: two short hops, a wide
- * stone, one that rises late (only once he is at the edge of the one before) across the widest gap onto a
- * wide landing, and a pair whose first sinks back under him a second after he lands on it.
+ * The stepping stones, a row over the water: they rise as he comes. Not all alike: short hops (no gap is a
+ * full jump's width), wide stones, one that rises late (only once he is at the edge of the one before, so he
+ * goes on from a standstill), and a pair whose first sinks back under him a second after he lands on it.
  */
-export const STEPS = [[101, 102], [105, 107], [111, 113], [116, 117], [120, 121], [124, 125]];
+export const STEPS = [[101, 102], [105, 107], [110, 112], [115, 116], [119, 120], [123, 125]];
 for (const [c0, c1] of STEPS) b.run(c0, c1, BANK - 1, "z");
 /** The stone that rises late, and the one that sinks under him, by their first column. */
-export const LATE = 111;
-export const SINKS = 116;
+export const LATE = 110;
+export const SINKS = 115;
 // --- The town wall and its walk, the arches the archers stand on ---------------------------------------------
 b.ground(138, 175, TOWN, "R");
 b.run(150, 152, TOWN - 3, "R").run(162, 164, TOWN - 3, "R");
@@ -120,7 +120,7 @@ const stepOf = (c: number) => STEPS.find(([c0, c1]) => c >= c0 && c <= c1)?.[0] 
  * him to pass, how near he must come (tiles across), and whether it sinks under him.
  */
 export const STONES = MAP.flatMap((row, r) =>
-  [...row].flatMap((ch, c) => (ch === "Z" || ch === "z" ? [{ c, r, wall: ch === "Z", behind: CLOSERS.includes(c), near: stepOf(c) === LATE ? 4.5 : 6, sinks: stepOf(c) === SINKS }] : []))
+  [...row].flatMap((ch, c) => (ch === "Z" || ch === "z" ? [{ c, r, wall: ch === "Z", behind: CLOSERS.includes(c), near: stepOf(c) === LATE ? 3.5 : 6, sinks: stepOf(c) === SINKS }] : []))
 );
 const STONE_AT = new Map(STONES.map((s, i) => [s.r * COLS + s.c, i]));
 /** Steps a stone takes to rise; how near he must come up or down (tiles); how far past a wall behind him. */

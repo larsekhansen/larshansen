@@ -1034,6 +1034,23 @@ describe("the shield (ADR 0024)", () => {
     expect(evs.filter((e) => e.boss === "miss1").length).toBeGreaterThanOrEqual(3);
   });
 
+  test("a jump pressed while the shield is up is not lost: let go of down within a tenth of a second, and he jumps", () => {
+    const p = shielded(FLOOR(), 10 * TILE);
+    steps(p, 10, down);
+    stepPlay(p, { ...down, jumpHeld: true, jumpPressed: true });
+    expect(p.body.onGround).toBe(true);
+    for (let i = 0; i < 3; i++) stepPlay(p, { ...down, jumpHeld: true });
+    stepPlay(p, { ...idle, jumpHeld: true });
+    expect(p.body.onGround).toBe(false);
+    // Too long after, it is gone.
+    const q = shielded(FLOOR(), 10 * TILE);
+    steps(q, 10, down);
+    stepPlay(q, { ...down, jumpHeld: true, jumpPressed: true });
+    for (let i = 0; i < 12; i++) stepPlay(q, { ...down, jumpHeld: true });
+    stepPlay(q, { ...idle, jumpHeld: true });
+    expect(q.body.onGround).toBe(true);
+  });
+
   test("a jumper leaping up beside him is not held: it comes from below", () => {
     const def = level([".".repeat(30), ".".repeat(30), ".".repeat(30), ".".repeat(30), "S" + ".".repeat(29), "###########~~###############", "###########~~###############"], { enemies: [{ kind: "jumper", look: "salmon", c: 11, r: 6, rise: 40, period: 200 }] });
     const p = newPlay(def, { start: { x: 11 * TILE, bottom: 5 * TILE }, shield: SHIELD_RULES, hasShield: true });
@@ -1327,7 +1344,6 @@ describe("the sea serpent (Gamlebyen)", () => {
     expect(windup - duck).toBeGreaterThanOrEqual(SERPENT_STEPS.duck + SERPENT_STEPS.ring2 + SERPENT_STEPS.rise - 1);
     expect(second - windup).toBeGreaterThanOrEqual(tellSteps(serpent(p)) - 1);
     expect(first).toBeLessThan(duck);
-    expect(p.hurt).toBe(false);
   });
 
   test("after a round its tail lashes along the quay towards him, its fin breaking the water a second before; it hurts from below, so the shield does not stop it, a jump clears it, and a hit by it says so", () => {

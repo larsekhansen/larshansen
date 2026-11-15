@@ -26,11 +26,12 @@ import type { LevelDef, View } from "./types";
 // hoist up the first tower's face; its open floors, rebar and a welder whose sparks fall on a beat; the
 // first hook, over a bay in the floor with a net under it, where a miss costs nothing; two hooks between
 // three towers over the drop; a floor with shafts, loose sheets of steel sliding over them, and gusts;
-// the riveters' girder (the shield); the site hut on the roof with its bench; the long traverse of three
-// hooks in a row under the top crane's jib, a flag before it; and up the crane to the rune at its cab,
-// the fjord and the town below at dusk.
+// the riveters' girder (the shield); the site hut on the roof with its bench; the jib's girder out from the
+// roof, with two more riveters over its far end (the shield twice); the long traverse of three hooks under
+// the top crane's jib, on beats of their own and in a gust, a flag before it; and up the crane to the rune
+// at its cab, the fjord and the town below at dusk.
 
-const COLS = 256;
+const COLS = 272;
 const ROWS = 32;
 /** The quay; the first tower's open floor; the upper slab, the towers' tops and the girder; the roof. */
 export const G = 26;
@@ -67,18 +68,25 @@ b.run(172, 191, F2, "I");
 dock(172, 191);
 b.ground(192, 199, F2, "U").ground(200, 215, ROOF, "U");
 b.run(197, 199, ROOF + 2, "=");
+// --- The jib's girder out from the roof, the riveters' catwalk over its far end ----------------------------------
+/** The second girder: out from the roof's end to the traverse, at the roof's height. */
+export const GIRDER_2 = [216, 231] as const;
+b.run(GIRDER_2[0], GIRDER_2[1], ROOF, "I");
+dock(GIRDER_2[0], GIRDER_2[1]);
 // --- The traverse, and the top crane ----------------------------------------------------------------------
-dock(216, 239);
-b.ground(240, COLS - 1, ROOF, "U");
-b.run(245, 248, ROOF - 2, "=").run(245, 248, ROOF - 4, "=").run(242, 252, ROOF - 6, "=");
+dock(232, 255);
+b.ground(256, COLS - 1, ROOF, "U");
+b.run(261, 264, ROOF - 2, "=").run(261, 264, ROOF - 4, "=").run(258, 268, ROOF - 6, "=");
 
+/** The bracteate's column: high over the second hook of the traverse. */
+export const BRACTEATE = 244;
 // Marks: the start, the door, signs, flags, the bench, the rune, the bracteate, the cheese.
 b.put(2, G - 1, "t").put(4, G - 1, "S");
 b.put(7, G - 1, "i").put(31, G - 1, "i").put(91, F2 - 1, "i");
 b.put(20, G - 1, "f").put(40, F1 - 1, "f").put(70, F1 - 1, "f").put(93, F2 - 1, "f").put(138, F2 - 1, "f").put(170, F2 - 1, "f");
-b.put(213, ROOF - 1, "f").put(243, ROOF - 1, "f");
+b.put(213, ROOF - 1, "f").put(GIRDER_2[1], ROOF - 1, "f").put(259, ROOF - 1, "f");
 b.put(207, ROOF - 1, "b");
-b.put(249, ROOF - 7, "r").put(228, 3, "o").put(82, F1 + 2, "&");
+b.put(265, ROOF - 7, "r").put(BRACTEATE, 3, "o").put(82, F1 + 2, "&");
 
 // Skilling: along the quay, up the hoist, along the open floor and over the rebar, in the bay and over
 // the first hook, along each hook's ride over the drop, over the sheets, along the girder, on the roof,
@@ -94,8 +102,9 @@ const COINS: [number, number][] = [
   [131, 13], [142, 12], [144, 12], [148, 13], [153, 12], [155, 12], [159, 13], [164, 12], [166, 12],
   [175, 13], [180, 13], [185, 13], [189, 13],
   [196, 13], [198, 11], [203, 9], [209, 9],
-  [217, 8], [220, 8], [226, 8], [229, 8], [236, 8], [238, 8],
-  [246, 7], [247, 5], [244, 3]
+  [219, 9], [223, 9], [227, 9],
+  [233, 8], [236, 8], [242, 8], [245, 8], [252, 8], [254, 8],
+  [262, 7], [263, 5], [260, 3]
 ];
 for (const [c, r] of COINS) b.put(c, r, "$");
 
@@ -125,11 +134,16 @@ export const HOOK_1 = hook(75, 84, F1, 300, 257);
 /** Across the drop: from the upper slab to the second tower, and from it to the third. */
 export const HOOK_2 = hook(98, 108, F2, 300, 230);
 export const HOOK_3 = hook(118, 128, F2, 300, 229);
-/** The traverse under the top crane's jib: three hooks in a row, each at its far end as the next is at its near end, a tile apart. (The beats are set so the scripted route meets each hook as it comes: `tools/review/tune-bjorvika.ts`.) */
+/**
+ * The traverse under the top crane's jib: three hooks in a row, a tile apart where they meet, not on one
+ * beat: the middle one swings twice as quick as the other two, so it waits at an end for half as long, and
+ * he must be on his way to it as it comes in; it meets each of the others on every other swing. (Each
+ * meets the next every four seconds; the offsets are set so the scripted route meets each hook as it comes.)
+ */
 const TRAVERSE = 240;
-export const HOOK_5 = hook(216, 224, ROOF, TRAVERSE, 49);
-export const HOOK_6 = hook(224, 232, ROOF, TRAVERSE, 49 + TRAVERSE / 2);
-export const HOOK_7 = hook(232, 240, ROOF, TRAVERSE, 49);
+export const HOOK_5 = hook(232, 240, ROOF, TRAVERSE, 49);
+export const HOOK_6 = hook(240, 248, ROOF, TRAVERSE / 2, 49);
+export const HOOK_7 = hook(248, 256, ROOF, TRAVERSE, 109);
 export const HOOKS = [HOOK_1, HOOK_2, HOOK_3, HOOK_5, HOOK_6, HOOK_7];
 
 /** Loose sheets of steel over the shafts, sliding across in the wind: flush with the floor, a tile and a quarter wide, from one side of the shaft to the other. */
@@ -140,21 +154,33 @@ export const CARRIERS: CarrierDef[] = [HOIST, HOOK_1, HOOK_2, HOOK_3, ...SHEETS,
 
 /** The gusts over the shafts' floor, against him: four seconds still, a second of dust, a second of wind; three of the sheets' rounds to each. */
 export const GUST_BEAT: Pulse = { rest: 240, warn: 60, live: 60, offset: 271 };
-export const GUSTS: Zone[] = [{ x: 139 * TILE, y: 9 * TILE, w: 33 * TILE, h: (F2 - 9) * TILE, push: { x: -0.65, y: 0 }, beat: GUST_BEAT }];
+/**
+ * And over the traverse, against him on the hooks: five seconds still, a second of dust, a second of wind,
+ * on a beat that is not the hooks', so a meeting of two hooks sometimes falls in it and must be let go by.
+ */
+export const TRAVERSE_GUST: Pulse = { rest: 300, warn: 60, live: 60, offset: 260 };
+export const GUSTS: Zone[] = [
+  { x: 139 * TILE, y: 9 * TILE, w: 33 * TILE, h: (F2 - 9) * TILE, push: { x: -0.65, y: 0 }, beat: GUST_BEAT },
+  { x: 232 * TILE, y: (ROOF - 5) * TILE, w: 24 * TILE, h: 5 * TILE, push: { x: -0.5, y: 0 }, beat: TRAVERSE_GUST }
+];
 
 /** The rebar sticking up out of the open floor; the welder's sparks falling past the beam onto it, on a beat. */
 export const REBAR: Hazard = { x: 46 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };
 export const REBAR_2: Hazard = { x: 68 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };
+/** On the third tower, a tile and a half in from the edge: where he comes down if he jumps off the hook instead of stepping off at its end. */
+export const REBAR_3: Hazard = { x: 129 * TILE + 10, y: F2 * TILE - 6, w: 22, h: 6 };
 export const SPARKS: Hazard = { x: 55 * TILE + 2, y: (F2 + 1) * TILE, w: 12, h: (F1 - F2 - 1) * TILE, beat: { rest: 150, warn: 60, live: 60, offset: 126 } };
-export const HAZARDS: Hazard[] = [REBAR, REBAR_2, SPARKS];
+export const HAZARDS: Hazard[] = [REBAR, REBAR_2, REBAR_3, SPARKS];
 
 /**
  * A crow over the quay, a pigeon and a rat by the gate; a pigeon and a rat on the open floor; a pigeon on
- * the second tower, a rat on the third, each away from where the hooks come and go; a pigeon on
+ * the second tower, each away from where the hooks come and go (the third tower's landing has rebar
+ * instead, where a man who jumps off the hook comes down); a pigeon on
  * the girder; the two riveters on the next floor's beam over its far end
  * (further back, out of his reach from the girder), who throw their bolts straight down along it at where a
  * man coming will be, and not at one nearly under them (four tiles: from nearer, a bolt would come down too
- * steeply for the shield) or past them; a pigeon by the top crane.
+ * steeply for the shield) or past them; two more on the jib's catwalk over the second girder's far end; a
+ * pigeon by the top crane.
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 10, r: G - 4, range: 3, rise: 8, period: 160 },
@@ -163,12 +189,15 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "pigeon", c: 59, r: F1 - 1, range: 1 },
   { kind: "walker", look: "rat", c: 64, r: F1 - 1, range: 2 },
   { kind: "walker", look: "pigeon", c: 112.5, r: F2 - 1, range: 1 },
-  { kind: "walker", look: "rat", c: 133, r: F2 - 1, range: 1 },
   { kind: "walker", look: "pigeon", c: 178, r: F2 - 1, range: 2 },
   { kind: "walker", look: "pigeon", c: 184, r: F2 - 1, range: 2, dir: -1 },
   { kind: "thrower", look: "riveter", c: 193, r: ROOF, period: 120, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
   { kind: "thrower", look: "riveter", c: 196, r: ROOF, period: 120, offset: 60, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
-  { kind: "walker", look: "pigeon", c: 252, r: ROOF - 1, range: 1 }
+  // The jib's girder: two more on its catwalk, far apart on their beats, so a man raises the shield, walks
+  // on, and raises it again.
+  { kind: "thrower", look: "riveter", c: 226, r: ROOF - 4, period: 120, straight: true, lead: true, faces: -1, reach: 12, blind: 4 },
+  { kind: "thrower", look: "riveter", c: 229, r: ROOF - 4, period: 120, offset: 60, straight: true, lead: true, faces: -1, reach: 12, blind: 4 },
+  { kind: "walker", look: "pigeon", c: 268, r: ROOF - 1, range: 1 }
 ];
 
 export const BJORVIKA_RULES = { COLS, ROWS };
@@ -402,7 +431,7 @@ function lattice(x: number, y: number, len: number, across: boolean, color: stri
 const CRANES = [
   { mast: 66, foot: F1, jib: 3, from: 60, to: 112 },
   { mast: 134, foot: F2, jib: 3, from: 113, to: 172 },
-  { mast: 246, foot: ROOF, jib: 1, from: 205, to: 255 }
+  { mast: 262, foot: ROOF, jib: 1, from: 205, to: 271 }
 ];
 
 function crane(k: (typeof CRANES)[number], t: number) {
@@ -483,7 +512,7 @@ function welder(t: number) {
 
 /** The rebar: rusty bars sticking up out of the slab, a few with orange caps. */
 function rebarArt() {
-  for (const { x, y, w, h } of [REBAR, REBAR_2])
+  for (const { x, y, w, h } of [REBAR, REBAR_2, REBAR_3])
     for (let k = 1; k < w; k += 3) {
       R(x + k, y + (k % 2), 1, h - (k % 2), S.rebar);
       if (k % 6 === 1) R(x + k - 1, y - 1, 3, 2, S.rebarCap);
@@ -529,11 +558,18 @@ function crewKit() {
   R(198 * TILE, y - 10, 14, 10, PAINT.red);
   R(198 * TILE, y - 10, 14, 2, mix(PAINT.red, WHITE, 0.3));
   for (let k = 0; k < 20; k++) R(196 * TILE + k, y - 2 - Math.round(Math.sin(k * 0.4) * 1.5), 1, 1, INK);
+  // The jib's catwalk over the second girder's far end, hung from the jib on rods.
+  const cy = (ROOF - 3) * TILE;
+  R(224 * TILE, cy, 7 * TILE, 4, S.steelDark);
+  R(224 * TILE, cy, 7 * TILE, 1, S.steel);
+  for (const c of [224, 230]) R(c * TILE + 6, TILE + 4, 2, cy - TILE - 4, S.cable);
+  for (let x = 224 * TILE; x < 231 * TILE; x += 6) R(x, cy - 8, 1, 8, S.steel);
+  R(224 * TILE, cy - 8, 7 * TILE, 1, S.steel);
 }
 
 /** The top crane's cab, its windows lit, the walkway in front of it. */
 function cab() {
-  const x = 248 * TILE;
+  const x = 264 * TILE;
   const y = (ROOF - 6) * TILE;
   R(x, y - 34, 3 * TILE, 34, S.hardhat);
   R(x, y - 34, 3 * TILE, 2, WHITE);

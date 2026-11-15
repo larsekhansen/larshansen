@@ -18,7 +18,7 @@ import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOL
 import { BARRIER, GAP, HAZARDS as RUN_HAZARDS, KORKETREKKEREN, RIDE, speedAt, trackY } from "./korketrekkeren";
 import { follow } from "@larshansen/pixelkit/camera";
 import { HERON, OSTENSJOVANNET, PADS as LILY_PADS, SWAN, W as LW, inStretch } from "./ostensjovannet";
-import { BAY, BJORVIKA, F1 as BF1, F2 as BF2, GUSTS as BJ_GUSTS, HOIST as BJ_HOIST, HOOKS, SHAFTS, SHEETS, SPARKS } from "./bjorvika";
+import { BAY, BJORVIKA, BRACTEATE as BJ_BRACTEATE, F1 as BF1, F2 as BF2, GIRDER_2, GUSTS as BJ_GUSTS, HOIST as BJ_HOIST, HOOKS, REBAR_3, ROOF as BROOF, SHAFTS, SHEETS, SPARKS, TRAVERSE_GUST } from "./bjorvika";
 import type { Travel } from "@larshansen/pixelkit/carrier";
 import { BANK as GBANK, CLOSERS, GAMLEBYEN, GROUNDS as RUIN_GROUNDS, LATE, QUAY as GQ, SERPENT_DEF, SINK as RUIN_SINK, SINKS, STEPS as RUIN_STEPS, STONES, STREET, TOWER, TOWN, WAKE, type Ruins } from "./gamlebyen";
 import { BOY, ENEMIES as VIGELAND_ENEMIES, JET_IN, JET_OUT, SLAB, VIGELANDSPARKEN, W as VW } from "./vigelandsparken";
@@ -122,7 +122,7 @@ const GOLD: Record<string, Move[]> = {
   // On the second hook of the traverse, under the top crane's jib: two jumps up as it passes under the bracteate.
   bjorvika: [
     ...BJORVIKA_ROUTE.slice(0, BJORVIKA_ROUTE.findIndex((m) => m.name === "hop onto the second hook of the traverse") + 1),
-    wait("on the hook under the bracteate", (q) => Math.abs(cx(q) - (tile(228) + 8)) < 6),
+    wait("on the hook under the bracteate", (q) => Math.abs(cx(q) - (tile(BJ_BRACTEATE) + 8)) < 6),
     jump(0, { second: 18 })
   ],
   korketrekkeren: [
@@ -391,7 +391,9 @@ for (const def of LEVELS) {
           for (const f of spots) if (Math.abs(f.bottom - (e.r + 1) * TILE) < 3 * TILE) expect({ enemy: e.c, near: Math.abs(f.x - x) > reachX }).toEqual({ enemy: e.c, near: true });
           if (e.kind === "thrower")
             for (const f of [...spots, ...signs]) {
-              const inReach = Math.abs(f.x - x) < (e.reach ?? 7) * TILE + TILE / 2 && Math.abs(f.bottom - PLAYER.h - (e.r + 1) * TILE) < THROW_REACH.y;
+              // A thrower that faces one way throws only at him in front of it, past its blind distance.
+              const inFront = !e.faces || (f.x - x) * e.faces > (e.blind ?? 1.5) * TILE;
+              const inReach = inFront && Math.abs(f.x - x) < (e.reach ?? 7) * TILE + TILE / 2 && Math.abs(f.bottom - PLAYER.h - (e.r + 1) * TILE) < THROW_REACH.y;
               expect({ thrower: e.c, at: Math.floor(f.x / TILE), inReach }).toEqual({ thrower: e.c, at: Math.floor(f.x / TILE), inReach: false });
             }
         }
@@ -1286,19 +1288,19 @@ describe("Bjørvika: hooks that carry him, and he chooses when to let go", () =>
     let careless = 0;
     let shielded = 0;
     const from = { x: tile(180), bottom: tile(BF2) };
-    const riveters = [9, 10];
+    const riveters = [8, 9];
     // Over one round of their beat.
     for (let t0 = 0; t0 < 120; t0 += 2) {
       const p = P(from);
+      p.enemies[6].alive = false;
       p.enemies[7].alive = false;
-      p.enemies[8].alive = false;
       p.t = t0;
       let hurt = false;
       for (let i = 0; i < 600 && cx(p) < tile(194); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
       if (hurt) careless++;
       const q = P(from);
+      q.enemies[6].alive = false;
       q.enemies[7].alive = false;
-      q.enemies[8].alive = false;
       q.t = t0;
       let hold = 0;
       hurt = false;
@@ -1312,8 +1314,63 @@ describe("Bjørvika: hooks that carry him, and he chooses when to let go", () =>
     expect(shielded).toBe(0);
   });
 
+  test("on the jib's girder, a man who walks on without the shield is hit at most of the moments he could come; one who stops and raises it as each bolt comes never is, and raises it at least twice", () => {
+    let careless = 0;
+    let shielded = 0;
+    let raises = 0;
+    const from = { x: tile(214), bottom: tile(BROOF) };
+    const riveters = [10, 11];
+    for (let t0 = 0; t0 < 150; t0 += 3) {
+      const p = P(from);
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 600 && cx(p) < tile(GIRDER_2[1]); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      if (hurt) careless++;
+      const q = P(from);
+      q.t = t0;
+      let hold = 0;
+      let up = false;
+      hurt = false;
+      for (let i = 0; i < 1500 && cx(q) < tile(GIRDER_2[1]); i++) {
+        if (q.shots.some((s) => riveters.includes(s.by) && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - (q.body.x + PLAYER.w) < 64)) hold = 4;
+        const shield = hold-- > 0;
+        if (shield && !up) raises++;
+        up = shield;
+        hurt = stepPlay(q, shield ? { ...IDLE, shield: true } : { ...IDLE, right: true }).hurt || hurt;
+      }
+      if (hurt) shielded++;
+    }
+    expect(careless / 50).toBeGreaterThanOrEqual(0.6);
+    expect(shielded).toBe(0);
+    expect(raises / 50).toBeGreaterThanOrEqual(2);
+  });
+
+  test("on the third tower, rebar stands where he comes down if he jumps off the hook instead of stepping off at its end", () => {
+    const end = HOOKS[2];
+    // On the block at the front, as it comes to its far end.
+    let t0 = 0;
+    while (carrierAt(end, t0).x !== end.to.x) t0++;
+    const p = P({ x: end.to.x + end.w - 6, bottom: end.to.y });
+    p.t = t0 - 1;
+    // A jump off the hook's front, held, the way he was going: down on the rebar.
+    let hurt = false;
+    for (let i = 0; i < 60; i++) hurt = stepPlay(p, { ...IDLE, right: i < 20, jumpHeld: i < 30, jumpPressed: i === 0 }).hurt || hurt;
+    expect(hurt).toBe(true);
+    // Stepped off at the end, he stands clear of it.
+    expect(REBAR_3.x).toBeGreaterThan(end.to.x + end.w + PLAYER.w);
+  });
+
+  test("the traverse's gust blows against him only after a second of dust, on a beat that is not the hooks'", () => {
+    expect(TRAVERSE_GUST.warn).toBeGreaterThanOrEqual(60);
+    expect((TRAVERSE_GUST.rest + TRAVERSE_GUST.warn + TRAVERSE_GUST.live) % 240).not.toBe(0);
+    const z = BJ_GUSTS[1];
+    expect(z.push.x).toBeLessThan(0);
+    for (const h of HOOKS.slice(3)) expect(z.x <= h.from.x && z.x + z.w >= h.to.x + h.w).toBe(true);
+    expect(new Set(HOOKS.slice(3).map((h) => h.period)).size).toBeGreaterThan(1);
+  });
+
   test("the gusts push against him over the shafts only after a second of dust", () => {
-    for (const z of BJ_GUSTS) {
+    for (const z of BJ_GUSTS.slice(0, 1)) {
       expect(z.beat!.warn).toBeGreaterThanOrEqual(60);
       expect(z.push.x).toBeLessThan(0);
       for (const c of SHAFTS) expect(z.x <= tile(c) && z.x + z.w >= tile(c + 5)).toBe(true);
@@ -1340,9 +1397,11 @@ describe("Gamlebyen: the ruins rebuild as he passes", () => {
     expect(p.map.isOneWay(37, STREET - 4)).toBe(true);
   });
 
-  test("the stepping stones are not all alike: no gap wider than three tiles, one stone rises only from the edge of the one before, and one sinks under him a second after he lands, and comes up again once he has left it", () => {
-    const gaps = RUIN_STEPS.slice(1).map(([c0], i) => c0 - RUIN_STEPS[i][1] - 1);
-    expect(Math.max(...gaps)).toBeLessThanOrEqual(3);
+  test("the stepping stones are not all alike: no gap a full jump wide, one stone rises only from the edge of the one before, and one sinks under him a second after he lands, and comes up again once he has left it", () => {
+    // From the near bank (its last column 98) over the stones to the far bank (its first 127).
+    const edges = [[0, 98], ...RUIN_STEPS, [127, 0]];
+    const gaps = edges.slice(1).map(([c0], i) => c0 - edges[i][1] - 1);
+    expect(Math.max(...gaps)).toBeLessThanOrEqual(2);
     expect(new Set(gaps).size).toBeGreaterThan(1);
     expect(new Set(RUIN_STEPS.map(([c0, c1]) => c1 - c0)).size).toBeGreaterThan(1);
     // The late one: from the middle of the stone before it does not rise; from its edge it does.

@@ -539,9 +539,12 @@ function run(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult 
     const press = (t: number) => t >= 0 && t <= n + K && !!src(t).jumpPressed;
     // (Presses on several steps in a row, as the route's walks give while a threat is ahead, are one press held.)
     const jprime = (t: number) => jraw(t) && !(press(t + 1) && !press(t));
-    if (n >= 1) JJ[n - 1] = jprime(n - 1) && (press(n - 1) || (JJ[n - 2] ?? false));
+    // (A press that reached the game early is held too, while the route holds the key: the route, asked on
+    // the real state, sees him already in the air and never presses, only holds. Before order 17 such a jump
+    // was let go at once, a hop of a few pixels.)
+    if (n >= 1) JJ[n - 1] = jprime(n - 1) && (press(n - 1) || (JJ[n - 2] ?? false) || prevJumpOut);
     const W: boolean[] = [];
-    for (let j = 0; j <= K; j++) W[j] = jprime(n + j) && (press(n + j) || (j === 0 ? JJ[n - 1] ?? false : W[j - 1]));
+    for (let j = 0; j <= K; j++) W[j] = jprime(n + j) && (press(n + j) || (j === 0 ? (JJ[n - 1] ?? false) || prevJumpOut : W[j - 1]));
     const jsrc = (t: number) => (t < 0 ? false : t < n ? JJ[t] ?? false : W[t - n] ?? W[W.length - 1]);
     const lo = n - 3 * Math.max(K, 1) - 4;
     const hi = n + K;

@@ -70,11 +70,14 @@ const serpentFight: Move = {
         const aim = h.x + h.w / 2 - q.body.vx * 7 - hx;
         return { ...NONE, left: aim < -2, right: aim > 2, jumpHeld: true };
       }
-      return { ...NONE, jumpHeld: (m.i as number) - ((m.jumpAt as number) ?? 0) < 30 };
+      // Held while he rises (a jump the key went down for a step or two early is held all the same).
+      return { ...NONE, jumpHeld: q.body.vy < 0 || (m.i as number) - ((m.jumpAt as number) ?? -99) < 30 };
     }
-    // The tail coming at him along the quay: jump it (the shield, if it is up, comes down for it).
+    // The tail coming at him along the quay: jump it (the shield, if it is up, comes down for it), unless
+    // the ball is about to reach the shield: that first.
     const tb = tailBox(s, q.t);
-    if (tb && s.tail) {
+    const incoming = s.ball && !s.ball.back && Math.abs(s.ball.x - hx) < 20;
+    if (tb && s.tail && !incoming) {
       const d = tb.x + tb.w / 2 - hx;
       if (Math.abs(d) < 28 && d * s.tail.dir < 0) {
         m.jumpAt = m.i;

@@ -55,6 +55,8 @@ export interface ShieldState {
   has: boolean;
   raise: number;
   facing: 1 | -1;
+  /** Steps a jump pressed while it was up is kept (see `shield.ts`). */
+  jump?: number;
 }
 
 /**

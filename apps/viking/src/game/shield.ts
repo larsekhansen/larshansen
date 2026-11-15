@@ -8,8 +8,8 @@ import type { PlayIntent, ShieldRules, ShieldState } from "./play";
 
 // The shield, from the longship at Bygdøy (ADR 0024): a held stance, not a parry. Holding down on the
 // ground raises it, facing the way he faces; it takes six steps to come up and stays up as long as
-// down is held. While it is up (and while it comes up) he cannot walk or jump; he can turn, and then
-// it comes up again the other way. Up, it stops what is thrown at its face (the thing falls, harmless)
+// down is held. While it is up (and while it comes up) he cannot walk or jump (a jump pressed then is kept
+// a tenth of a second, and made as down is let go); he can turn, and then it comes up again the other way. Up, it stops what is thrown at its face (the thing falls, harmless)
 // and holds off an enemy or a boss that runs into it: pushed back a tile, and no harm to him. It does
 // not stop a fall, nor anything from above or below, nor anything from behind.
 //
@@ -32,12 +32,19 @@ export function shieldFace(s: ShieldState, b: Body) {
 
 const touches = (a: { x: number; y: number; w: number; h: number }, c: { x: number; y: number; w: number; h: number }) => a.x < c.x + c.w && a.x + a.w > c.x && a.y < c.y + c.h && a.y + a.h > c.y;
 
+/** Steps a jump pressed while the shield is up is kept: let go of down within them, and he jumps. */
+export const JUMP_KEPT = 6;
+
 /** One step of the shield, before his body moves: down on the ground raises it. The keys he is left with. */
 function step(s: ShieldState, b: Body, intent: PlayIntent): PlayIntent {
   if (!s.has || !intent.shield || !b.onGround) {
+    // A jump pressed a moment before down was let go is not lost (order 17): he jumps now.
+    const kept = s.raise > 0 && (s.jump ?? 0) > 0 && intent.jumpHeld && b.onGround;
     s.raise = 0;
-    return intent;
+    s.jump = 0;
+    return kept ? { ...intent, jumpPressed: true } : intent;
   }
+  s.jump = intent.jumpPressed ? JUMP_KEPT : Math.max(0, (s.jump ?? 0) - 1);
   const turn = intent.left ? -1 : intent.right ? 1 : 0;
   if (s.raise === 0) s.facing = b.facing;
   // A turn while it is up brings it round: up again the other way, from the start.
