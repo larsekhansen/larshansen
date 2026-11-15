@@ -31,7 +31,8 @@ A short walk through a wall was also taken as walkable (St. Clement's gable).
 ## Consequences
 - Every level loses fewer hearts than before, line 1 too; numbers from before order 17 are not comparable
   with later ones. Line 1's were rerun (`line2-after/`, with three levels also run on the code from before
-  order 17: the same numbers, so order 17's changes did not make line 1 worse).
+  order 17: the same numbers within a run in a hundred, Nordmarka 8 Game overs at ±4 against 9 before, so
+  order 17's changes did not make line 1 worse).
 - Order 17's targets for line 2 (Bygdøy 1.5 to 2 hearts a run at ±4 rising to Gamlebyen 3.5 to 4.5) were set
   on the old numbers. After order 17's changes, line 2 at ±4 is Bygdøy 0.85, Vigelandsparken 2.41,
   Korketrekkeren 0.21, Østensjøvannet 0.73, Bjørvika 1.64, Gamlebyen 1.04, against line 1's Akerselva 2.40

@@ -165,6 +165,8 @@ stones 0.4, the guards and the market's animals the rest. Where hearts go at ±4
 `obstacles.ts` tries the moves named jump or leap: Gamlebyen's stepping-stone leaps and the traverse's hops are named
 otherwise and are not in it; from the runs above the stepping stones cost 0.4 a run over six leaps (about 0.07 a try),
 the serpent's tail about 0.37 a try (three a run).
+(Wrong, as the review of line 2 found (A1): tried on their own the stones cost 0.20 to 0.50 a try at ±4.
+Order 17 changed them and made `obstacles.ts` try every move; see `../line2-after/obstacles.txt`.)
 
 ```
 bjorvika: clear 60.1 s; standing still 15.8 s (26%): on fixed ground 2.7 s (4%), riding 13.1 s (22%)

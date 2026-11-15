@@ -50,6 +50,9 @@ the card covered 1.4 s later.
   `tools/review/line2-after/`. A player who knows the answer at ±4 loses well under a heart in a fight of
   about 45 s; a learner who does what each hint says beats it in about a minute with two hearts; no naive
   strategy reaches Game over before 75 s, and each hears a true hint within 10 s.
+- In the scripted fight (42 s from waking it) its neck is up for 54 % of the time (29 % before) and seen
+  going down or reeling another 8 %; its head lies on the planks 8 %; its coils show in the ring of foam
+  15 % (`tools/review/phases.ts`).
 - The order asked for two to three hearts a fight at ±4 for a player who knows the answer. With the
   sloppy player made honest, that takes a gap of a tenth of a second between the ball and the tail, a
   reflex test; the gaps were left at a third and a sixth of a second.
