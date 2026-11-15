@@ -1225,6 +1225,8 @@ function camera(elapsedMs: number, snap: boolean) {
   const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
   // On the sledge the camera looks well ahead, so he is drawn left of the middle and sees what comes.
   const focus = { x: shown.x + PLAYER.w / 2 + (p.riding ? p.def.rules?.lead?.(view.w) ?? 0 : 0), y: shown.y + PLAYER.h / 2, facing: p.body.facing, lookUp: look };
+  // `?debug&look=<wx>,<wy>`: the camera on that point, not on him (a contact sheet's subject, order 19).
+  if (lookAt) Object.assign(focus, { x: lookAt[0], y: lookAt[1], facing: 0, lookUp: 0 });
   const floor = scene.def.floor?.(focus.x) ?? scene.play.map.height;
   const bottom = view.h > view.w ? Math.max(floor, Math.round(focus.y + view.h / 3)) : floor;
   const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom, top: bar }, view, elapsedMs, snap);
@@ -1234,6 +1236,7 @@ function camera(elapsedMs: number, snap: boolean) {
   aim({ x: at.x + shake.x, y: at.y + shake.y });
 }
 const shake = { x: 0, y: 0 };
+const lookAt = debug ? params.get("look")?.split(",").map(Number) : null;
 
 function layout() {
   kit.resize();

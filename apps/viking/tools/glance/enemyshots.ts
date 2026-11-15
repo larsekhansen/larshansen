@@ -1,6 +1,8 @@
 // The addresses for order 18's contact sheet of enemies: every kind of enemy once, on the ground it
 // lives on, him three tiles away, with `?debug&where` marking where it is on the screen so a script can
-// crop round it. One line per shot: a label, a tab, the address's path.
+// crop round it, and (since order 19) `?debug&look` putting the camera on it, so it is always in the
+// picture (a crow over Akershus's walls at 1280 was not). One line per shot: a label, a tab, the address's path.
+// `sheet.py` makes the contact sheet.
 //
 //   bun tools/glance/enemyshots.ts > enemies.txt
 
@@ -64,6 +66,6 @@ for (const st of BUILT) {
     for (let t = 0; t < steps; t++) stepPlay(p, IDLE);
     const en = p.enemies[i];
     const wy = Math.round(en.y - en.h / 2);
-    for (const sky of ["day", "night"]) console.log(`${kind}\t${st.id}\t${sky}\t/viking/?debug&steps=${steps}&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(en.x)},${wy}#${st.id}`);
+    for (const sky of ["day", "night"]) console.log(`${kind}\t${st.id}\t${sky}\t/viking/?debug&steps=${steps}&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(en.x)},${wy}&look=${Math.round(en.x)},${wy}#${st.id}`);
   }
 }
