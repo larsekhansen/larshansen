@@ -48,9 +48,18 @@ function readMuted(whenUnset: boolean): boolean {
   }
 }
 
+/**
+ * A sound given as its parts, for a game that has sounds of its own (the viking game's, order 19): a tone
+ * ("t": wave, start and end frequency, seconds, volume, delay) or a burst of filtered noise ("n": start and
+ * end of the filter, seconds, volume, delay). The named sounds above are not made of these.
+ */
+export type Voice = readonly ["t", OscillatorType, number, number, number, number, number?] | readonly ["n", number, number, number, number, number?];
+
 export interface Sfx {
   /** `n` picks the note of the pentatonic set for "pickup" and "bell", so they can climb. */
   play(name: SfxName, n?: number): void;
+  /** A sound of the page's own, from its parts. */
+  voice(parts: readonly Voice[]): void;
   readonly muted: boolean;
   /** Flips the mute, remembers it, and returns the new state. */
   toggleMute(): boolean;
@@ -227,6 +236,10 @@ export function createSfx(opts: { mutedUntilChosen?: boolean } = {}): Sfx {
 
   return {
     play,
+    voice(parts) {
+      if (muted || !ctx) return;
+      for (const v of parts) v[0] === "t" ? tone(v[1], v[2], v[3], v[4], v[5], v[6]) : hiss(v[1], v[2], v[3], v[4], v[5]);
+    },
     get muted() {
       return muted;
     },

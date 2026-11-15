@@ -1,5 +1,5 @@
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { COIN, CREATURE, ENEMY, FOOD, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { COIN, ENEMY, FOOD, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import { KIND, SHOT, sizeOf, type Enemy, type Shot } from "../game/enemies";
 
 // The small things of a level: skilling, the brown cheese, park benches, and the enemies every level
@@ -54,25 +54,6 @@ export function drawBench(x: number, bottom: number, sitting: boolean) {
     R(lx - 1, bottom - 1, 4, 1, METAL.castIron);
   }
   if (sitting) R(left + 19, bottom - 9, 2, 3, METAL.castIron);
-}
-
-/** The squares a beaten enemy turns into, flying out for half a second. */
-function puff(e: Enemy, t: number) {
-  const age = t - (e.beatenAt ?? t);
-  if (age < 0 || age > 30) return;
-  // The squash: one frame flat before it goes.
-  if (age < 3) {
-    R(e.x - e.w / 2 - 1, e.y - 3, e.w + 2, 3, CREATURE.puff);
-    return;
-  }
-  const k = age / 30;
-  const s = Math.max(1, Math.round(3 * (1 - k)));
-  for (let i = 0; i < 6; i++) {
-    const a = (i / 6) * Math.PI * 2;
-    R(e.x + Math.cos(a) * age * 0.5 - s / 2, e.y - e.h / 2 + Math.sin(a) * age * 0.4 - s / 2 - age * 0.1, s, s, CREATURE.puff);
-  }
-  // The skilling it drops goes up and is gone.
-  if (age < 24) drawSkilling(Math.round(e.x - 2), Math.round(e.y - e.h - 4 - age * 0.8), t, 0);
 }
 
 /** Two frames of walking, by its place: legs together and apart. */
@@ -150,7 +131,8 @@ function rat(e: Enemy) {
 
 /** An enemy in one of the looks every level may use (the first level's: pigeons, gulls, rats; and crows). The level draws the rest. */
 export function drawEnemy(e: Enemy, t: number) {
-  if (!e.alive) return puff(e, t);
+  // A beaten enemy is squashed and puffs away in `render/feel.ts` (order 19).
+  if (!e.alive) return;
   switch (e.def.look) {
     case "pigeon":
       return pigeon(e);

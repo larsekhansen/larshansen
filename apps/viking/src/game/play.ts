@@ -194,6 +194,8 @@ export interface Events {
   blocked: boolean;
   /** He took the shield where the level gives it. */
   gift: boolean;
+  /** He came down on a boss that cannot be hurt just now (reeling from a hit): a bounce, and no harm to it. */
+  dud: boolean;
 }
 
 /** The tiles marked with a letter, as boxes or feet. */
@@ -511,6 +513,7 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
     p.dashSpent = false;
     if (landed.hit) ev.boss = "hit";
     else if (landed.event) ev.boss = landed.event;
+    else ev.dud = true;
     return;
   }
   const hurt = bs.rules.hurts(bs.state, p.t, b);
@@ -580,7 +583,8 @@ export function stepPlay(p: Play, intent: PlayIntent): Events {
     boss: null,
     zap: false,
     blocked: false,
-    gift: false
+    gift: false,
+    dud: false
   };
   if (p.run.state === "over") return ev;
   p.t++;

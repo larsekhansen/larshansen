@@ -4,13 +4,14 @@ import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, PALETTE, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
-import { padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
+import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as L from "@larshansen/pixelkit/swatches/lake";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
 import { plain } from "../render/sprite";
+import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -146,8 +147,14 @@ export const GROUNDS: Grounds<Lake> = {
   },
   everywhere: (): Carrier[] => [...padsEverywhere(PADS), { x: HERON.x, y: HERON.y, w: HERON.w, dx: 0, dy: 0 }],
   // The lily pads give way; so does the heron, which flies off.
-  stands: (s, t) => [...PADS.map((p, i) => ({ x: p.x, y: padY(p, s.pads[i], t), w: p.w, how: "gives" as const })), ...(s.gone === null ? [{ x: HERON.x, y: HERON.y, w: HERON.w, how: "gives" as const }] : [])]
+  // About to go (order 19): a pad he has stood on long enough that it will soon sink, the heron about to fly off.
+  stands: (s, t) => [...PADS.map((p, i) => ({ x: p.x, y: padY(p, s.pads[i], t), w: p.w, how: "gives" as const, soon: padSoon(p, s.pads[i]) })), ...(s.gone === null ? [{ x: HERON.x, y: HERON.y, w: HERON.w, how: "gives" as const, soon: heronSoon(s, t) }] : [])]
 };
+
+/** Half a second before a pad starts to sink under him, it trembles (order 19). */
+const padSoon = (p: SinkPad, s: PadState) => s.sinkAt === null && s.on > 0 && s.on >= (p.firm ?? SINK.firm) - 30;
+/** Half a second before the heron flies off, it shifts its feet. */
+const heronSoon = (s: Lake, t: number) => s.landed !== null && t - s.landed >= HERON.stay - 30;
 
 /** The swans' clock: four seconds in a swan's stretch and it comes; for the last second it tells him so. */
 export const SWAN = { tell: 180, come: 240, glide: 0.3, near: 1, speed: 1.3 };
@@ -379,7 +386,7 @@ function lilyPad(p: SinkPad, s: PadState, t: number, i: number) {
   const y = padY(p, s, t);
   const under = y - p.y;
   if (under >= 10) return;
-  const x = p.x;
+  const x = p.x + (padSoon(p, s) ? shiver(t) : 0);
   const c = under > 0 ? mix(L.pad, L.stillDeep, under / 12) : L.pad;
   R(x + 2, y, p.w - 4, 1, mix(c, L.padLight, 0.5));
   R(x, y + 1, p.w, 2, c);

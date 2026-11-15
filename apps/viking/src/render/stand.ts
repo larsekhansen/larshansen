@@ -18,13 +18,21 @@ export interface Standing {
   y: number;
   w: number;
   how: Footing;
+  /** About to give way (order 19): it trembles first. */
+  soon?: boolean;
 }
 
-/** The top edge of something he can stand on, w wide from (x, y), as it holds, moves or gives way. */
-export function standTop(x: number, y: number, w: number, how: Footing) {
+/** What is about to give way trembles: a pixel to and fro every other step; with reduced motion it keeps still. */
+export const shiver = (t: number) => (view.reduced ? 0 : (t >> 1) % 2 ? 1 : -1);
+
+/**
+ * The top edge of something he can stand on, w wide from (x, y), as it holds, moves or gives way. About to
+ * give way (`soon`), the caller moves it by `shiver`; with reduced motion its dashes join instead, a still sign.
+ */
+export function standTop(x: number, y: number, w: number, how: Footing, soon = false) {
   if (x + w < view.camX - 2 || x > view.camX + view.w + 2) return;
   if (how === "gives") {
-    for (let k = 0; k < w; k += 6) R(x + k, y, Math.min(4, w - k), 2, STAND.warn);
+    for (let k = 0; k < w; k += 6) R(x + k, y, Math.min(soon && view.reduced ? 6 : 4, w - k), 2, STAND.warn);
     return;
   }
   R(x, y, w, how === "moves" ? 1 : 2, STAND.top);

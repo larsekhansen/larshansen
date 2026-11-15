@@ -206,7 +206,7 @@ export const GROUNDS: Grounds<Ruins> = {
     };
   },
   // The tower moves; the stone that sinks gives way while it is up.
-  stands: (s) => [{ x: TOWER.x, y: s.y, w: TOWER.w, how: "moves" as const }, ...STONES.flatMap((st, i) => (st.sinks && s.up[i] ? [{ x: st.c * TILE, y: st.r * TILE, w: TILE, how: "gives" as const }] : []))]
+  stands: (s, t) => [{ x: TOWER.x, y: s.y, w: TOWER.w, how: "moves" as const }, ...STONES.flatMap((st, i) => (st.sinks && s.up[i] ? [{ x: st.c * TILE, y: st.r * TILE, w: TILE, how: "gives" as const, soon: s.on[i] !== null && t - (s.on[i] as number) > SINK.firm / 2 }] : []))]
 };
 
 /** The stone a guard was until he came near: within this many tiles it wakes and walks. */

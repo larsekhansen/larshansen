@@ -33,6 +33,7 @@ const came = new Map<string, () => void>();
 const server = Bun.serve({
   port: PORT,
   hostname: "localhost",
+  idleTimeout: 60,
   async fetch(req) {
     const u = new URL(req.url);
     if (u.pathname === "/strip" && req.method === "POST") {

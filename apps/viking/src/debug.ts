@@ -56,8 +56,13 @@ const AUTO: Record<string, () => Promise<Move[]>> = {
 /** `?debug&auto`: the level's scripted route as a step-by-step autopilot, or null for a level with none. */
 export async function autoRoute(id: string): Promise<((p: Play) => PlayIntent | null) | null> {
   const [moves, bot] = await Promise.all([AUTO[id]?.(), import("./game/bot")]);
-  return moves ? bot.autopilot(moves) : null;
+  if (!moves) return null;
+  const pilot = bot.autopilot(moves);
+  // A strip may take the keys back from the route partway (`manual`): then the page's own keys count.
+  return (p) => (manual ? null : pilot(p));
 }
+/** The strip has taken the keys back from the scripted route. */
+let manual = false;
 
 /**
  * `?debug&perf`: draws the frame fifty times and writes on the help line how many rectangles and
@@ -142,6 +147,15 @@ async function strip(params: URLSearchParams, help: HTMLElement) {
       heard.push(name);
       play(name, n);
     };
+    // The page's own sounds (order 19's), by their names in `render/feel.ts`.
+    const voice = g.sfx.voice?.bind(g.sfx);
+    if (voice) {
+      const { VOICES } = await import("./render/feel");
+      g.sfx.voice = (parts: unknown) => {
+        heard.push(Object.entries(VOICES).find(([, v]) => v === parts)?.[0] ?? "voice");
+        voice(parts);
+      };
+    }
   }
   const step = () => {
     const held = keys[k++] ?? [];
@@ -201,26 +215,38 @@ async function strip(params: URLSearchParams, help: HTMLElement) {
     // The header's hearts, lives and skilling, as the page shows them now.
     o.fillStyle = "#fffcf6";
     o.fillRect(x0, 4 + CH, CW, HH);
-    let hx = x0 + 4;
+    // Each pixel where the page has it now (a heart swelling, the halves of a broken one falling apart), a
+    // half again as large, from the left of the hearts; then the lives' number and the skilling's count.
+    const life = document.getElementById("life")!.getBoundingClientRect();
+    const Z = 1.5;
+    const mid = 4 + CH + HH / 2;
     for (const svg of document.querySelectorAll<SVGSVGElement>("#hearts svg, #lives svg")) {
-      const box = svg.getBoundingClientRect();
-      const vb = svg.viewBox.baseVal;
-      const z = (box.width / vb.width) * 1.4;
-      o.globalAlpha = Number(getComputedStyle(svg).opacity);
-      const top = 4 + CH + HH / 2 - (vb.height * z) / 2;
+      if (getComputedStyle(svg).display === "none") continue;
       for (const r of svg.querySelectorAll("rect")) {
+        const at = r.getBoundingClientRect();
+        let a = 1;
+        for (let el: Element | null = r; el && el !== document.body; el = el.parentElement) a *= Number(getComputedStyle(el).opacity);
+        o.globalAlpha = a;
         o.fillStyle = r.getAttribute("fill") ?? "#000";
-        o.fillRect(hx + Number(r.getAttribute("x")) * z, top + Number(r.getAttribute("y")) * z, z, z);
+        o.fillRect(x0 + 4 + (at.left - life.left) * Z, mid + (at.top - (life.top + life.height / 2)) * Z, Math.max(1, at.width * Z), Math.max(1, at.height * Z));
       }
-      o.globalAlpha = 1;
-      hx += vb.width * z + 3;
     }
+    o.globalAlpha = 1;
+    const hx = x0 + 4 + life.width * Z;
     o.fillStyle = "#1f1a17";
     o.font = "bold 13px system-ui, sans-serif";
     o.textBaseline = "middle";
-    const lives = document.querySelector("#lives span")?.textContent ?? "";
-    const coins = (document.getElementById("coins") as HTMLElement | null)?.hidden ? "" : document.getElementById("coinn")?.textContent ?? "";
-    o.fillText(`${lives}  ${coins ? `¤${coins}` : ""}`, hx + 2, 4 + CH + HH / 2);
+    const lives = document.querySelector<HTMLElement>("#lives span");
+    const coinsEl = document.getElementById("coins") as HTMLElement | null;
+    const coins = coinsEl?.hidden ? "" : document.getElementById("coinn")?.textContent ?? "";
+    // A count that has just changed is drawn as the page draws it: larger, in its colour.
+    const size = (el: Element | null | undefined) => (el ? /scale\(([\d.]+)\)/.exec((el as HTMLElement).style.transform)?.[1] : null);
+    o.fillStyle = (lives?.parentElement as HTMLElement | null)?.style.color || "#1f1a17";
+    o.font = `bold ${Math.round(13 * Number(size(lives?.parentElement) ?? 1))}px system-ui, sans-serif`;
+    o.fillText(lives?.textContent ?? "", hx - 12, mid);
+    o.fillStyle = coinsEl?.style.color || "#1f1a17";
+    o.font = `bold ${Math.round(13 * Number(size(coinsEl) ?? 1))}px system-ui, sans-serif`;
+    if (coins) o.fillText(`¤${coins}`, hx + 14, mid);
     // Which frame, and what was heard since the last.
     o.fillStyle = "#e8e8e8";
     o.font = "11px system-ui, sans-serif";
@@ -258,6 +284,9 @@ function trigger(spec: string, g: Game): () => boolean {
   switch (name) {
     case "now":
       return () => true;
+    case "manual":
+      // From here on the strip's keys move him, not the scripted route.
+      return () => (manual = true);
     case "feather":
       // The feather from the maze floats down onto him, as when he comes out of the mound with it.
       return () => {
@@ -313,7 +342,7 @@ function trigger(spec: string, g: Game): () => boolean {
         const was = vy;
         vy = b.vy;
         const e = ev();
-        return was > 1 && b.vy < -2 && !!e && e.stomp === null && !e.bleat && e.drum === null && !e.hurt && !e.step.jumped;
+        return was > 1 && b.vy < -2 && !!e && e.stomp === null && !e.bleat && e.drum === null && !e.hurt && !e.step.jumped && !e.boss && !e.troll;
       };
     }
     case "warn":
@@ -335,7 +364,8 @@ function trigger(spec: string, g: Game): () => boolean {
       });
     case "calm":
     case "wake":
-      return edge(() => p().enemies.some((e) => e.def.look === arg && e.alive && (name === "calm" ? !!e.calm : !e.calm)));
+      // `calm:statue` any statue; `calm:1` the enemy of that index.
+      return edge(() => p().enemies.some((e, k) => (e.def.look === arg || String(k) === arg) && e.alive && (name === "calm" ? !!e.calm : !e.calm)));
     case "windup":
       return edge(() => p().enemies.some((e) => e.def.kind === "thrower" && (!arg || e.def.look === arg) && windingUp(e, p().t)));
     case "swan":
