@@ -411,7 +411,7 @@ function slab(i: number, t: number) {
   R(l.x, l.y + sink, l.w, 1, ICY.iceLight);
   R(l.x, l.y + 6 + sink, l.w, 1, ICY.iceDark);
   R(l.x + 4, l.y + 2 + sink, 7, 1, ICY.iceLight);
-  if (phase === "warn" && Math.floor(t / 8) % 2 === 0) {
+  if (phase === "warn" && (view.reduced || Math.floor(t / 8) % 2 === 0)) {
     // Cracks, and the blink round it that every ledge on a beat has.
     for (const [dx, dy, w] of [[5, 1, 6], [10, 3, 8], [20, 2, 5], [24, 4, 6]] as const) R(l.x + dx, l.y + dy + sink, w, 1, INK);
     R(l.x - 2, l.y - 2, l.w + 4, 2, WHITE);

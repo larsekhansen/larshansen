@@ -699,7 +699,7 @@ function overDark(v: View) {
     R(ex, hy, 2, 1, FOREST.trollEye);
     R(ex + 3, hy, 1, 1, FOREST.trollEye);
     // The club's glint as it is raised: the telegraph shows even where the dark is.
-    if (t.phase === "windup" && Math.floor(v.t / 6) % 2 === 0) R(Math.round(t.x) + (t.dir > 0 ? 6 : -12), TROLL_DEF.floor - 56, 6, 1, FOREST.dawnPale);
+    if (t.phase === "windup" && (view.reduced || Math.floor(v.t / 6) % 2 === 0)) R(Math.round(t.x) + (t.dir > 0 ? 6 : -12), TROLL_DEF.floor - 56, 6, 1, FOREST.dawnPale);
     // The wave in the ground: a hump of earth running out, clods and dust thrown up over it.
     for (const f of waveFronts(t, v.t)) {
       const mx = f.x + f.w / 2;

@@ -271,7 +271,7 @@ function bell(i: number, v: View) {
   }
   const on = Math.abs(v.him.x - cx) < bl.w / 2 + 5 && Math.abs(v.him.y + 7 - bl.y) < 2;
   bellShape(bl.x, bl.y, bl.w, on || v.flourish !== null, v.t);
-  if (phase === "warn" && Math.floor(v.t / 8) % 2 === 0) {
+  if (phase === "warn" && (view.reduced || Math.floor(v.t / 8) % 2 === 0)) {
     const x = bl.x - 2;
     const y = bl.y - 2;
     const w = bl.w + 4;
