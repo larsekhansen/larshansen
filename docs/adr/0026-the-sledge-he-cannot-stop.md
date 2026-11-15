@@ -56,6 +56,8 @@ slope (the kit's ramps are for a few stairways, not a hillside).
 - `Play` has two flags (`riding`, `ducking`) and `LevelDef` a `rules` slot (its own enemies, ground, keys,
   an after-step hook, the search's carry and the camera's lead), shared with Vigelandsparken's statues and
   Østensjøvannet's swans. The ride's code is in Korketrekkeren's file, not the first script.
+- Since order 16, while he rides the help line says that down ducks (and that he cannot walk), and on a touch
+  screen the Shield button says Duck; the sign by the sledge says the button turns into Duck.
 - On the sledge he is drawn seated (three pixels lower, as on a bench), the sledge under him; ducking, the
   level draws him lying back and the page hides his sprite.
 - The standing measure (`tools/review/standing.ts`) counts riding on the sledge as moving: his speed is

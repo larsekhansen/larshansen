@@ -24,6 +24,8 @@ export const LEVELS = [
   ["vigelandsparken", (await imp("levels/vigelandsparken.ts")).VIGELANDSPARKEN, R.VIGELANDSPARKEN_ROUTE],
   ["korketrekkeren", (await imp("levels/korketrekkeren.ts")).KORKETREKKEREN, R.KORKETREKKEREN_ROUTE],
   ["ostensjovannet", (await imp("levels/ostensjovannet.ts")).OSTENSJOVANNET, R.OSTENSJOVANNET_ROUTE],
+  ["bjorvika", (await imp("levels/bjorvika.ts")).BJORVIKA, R.BJORVIKA_ROUTE],
+  ["gamlebyen", (await imp("levels/gamlebyen.ts")).GAMLEBYEN, R.GAMLEBYEN_ROUTE],
 ] as const;
-export const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
+export const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika", "gamlebyen"]);
 

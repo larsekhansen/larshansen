@@ -60,7 +60,7 @@ import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
-import { BUILT, LINE, LINE_1, LINE_2, ORDER, isBuilt, loadLevel, loadedLevel } from "./levels/index";
+import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
 import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
@@ -245,6 +245,14 @@ function layoutBoards(s: Scene): Board[] {
       boards.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10 + (i % 2) * 0, w: boardWidth(text) });
     } else boards.push(doorBoard(d, 13));
   }
+  // On the map, under the end of a line all cleared: its best times added up.
+  if (s.map)
+    [LINE_1, LINE_2].forEach((ids, n) => {
+      const end = s.doors.find((d) => d.id === ids[ids.length - 1]);
+      if (!end || ids.some((id) => progress.best[id] === undefined)) return;
+      const text = t.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0)));
+      boards.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
+    });
   s.signs.forEach((sg) => {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
@@ -309,7 +317,8 @@ function openScene(id: string, at?: string) {
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
   showShieldButton(!!play.shield?.has && !scene.map);
-  help.textContent = scene.map ? t.help : t.helpLevel(pole, !!play.shield?.has);
+  if (scene.map) help.textContent = t.help;
+  else keysLine(play);
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
@@ -537,7 +546,7 @@ function resumeScene(s: Scene) {
   finishEl.hidden = true;
   dashButton.hidden = !s.play.pole;
   showShieldButton(!!s.play.shield?.has);
-  help.textContent = t.helpLevel(s.play.pole, !!s.play.shield?.has);
+  keysLine(s.play);
   layout();
   hud();
 }
@@ -612,8 +621,16 @@ dashButton.textContent = t.dash;
 dashButton.setAttribute("aria-label", t.dash);
 /** The shield's button on the touch pad (down, held), beside the dash: shown once he has the shield. */
 const shieldButton = pad.querySelector<HTMLButtonElement>('[data-action="down"]')!;
-shieldButton.textContent = t.shield;
-shieldButton.setAttribute("aria-label", t.shield);
+/** Whether the help line and the shield's button are as they are on the sledge, where down ducks. */
+let keysRiding: boolean | null = null;
+/** The help line in a level, and the shield's button: on the sledge down ducks, and the button says so. */
+function keysLine(p: Play) {
+  keysRiding = p.riding;
+  help.textContent = p.riding ? t.helpSledge : t.helpLevel(p.pole, !!p.shield?.has);
+  const word = p.riding ? t.duck : t.shield;
+  shieldButton.textContent = word;
+  shieldButton.setAttribute("aria-label", word);
+}
 /** Shows the shield's button or not; with it the pad's buttons are made smaller, so they all fit. */
 function showShieldButton(on: boolean) {
   shieldButton.hidden = !on;
@@ -771,7 +788,8 @@ function showCard(r: CardResult) {
     const other = strings(lang === "nb" ? "en" : "nb");
     for (const line of [t.homeLine, other.homeLine, ...(r.opened ? [t.lineTwoOpened] : [])]) more.appendChild(document.createElement("span")).textContent = line;
   } else if (r.opened) more.textContent = t.lineTwoOpened;
-  else more.textContent = scene.def.id === "nabolaget" ? t.runesLeft(of(LINE_1)) : t.moreToBuild(of(LINE_2));
+  else if (scene.def.id === "nabolaget") more.textContent = t.runesLeft(of(LINE_1));
+  else more.textContent = of(LINE_2) === 6 ? t.vikingLine(ORDER.length - progress.bracteates.length) : t.runesTwoLeft(of(LINE_2));
   finishOn.textContent = t.finishOn;
   finishAgain.textContent = t.finishAgain;
   finishEl.hidden = false;
@@ -842,7 +860,7 @@ finishOn.addEventListener("click", () => {
     return restartLevel();
   }
   const next = ORDER[ORDER.indexOf(scene.def.id) + 1];
-  go("kart", next && isBuilt(LINE[ORDER.indexOf(next)]) ? next : scene.def.id);
+  go("kart", next ?? scene.def.id);
 });
 finishAgain.addEventListener("click", () => {
   if (state.card === "failed") {
@@ -872,11 +890,10 @@ function say(text: string) {
 function tryEnter(d: Door) {
   const i = ORDER.indexOf(d.id);
   if (scene.map && i >= 0) {
-    // A station: open, not open yet, or not built.
-    const notBuilt = !isBuilt(LINE[i]);
-    if (notBuilt || !levelOpen(d.id)) {
+    // A station: open, or not open yet.
+    if (!levelOpen(d.id)) {
       d.shake = view.reduced ? 0 : 14;
-      const text = notBuilt ? t.notBuilt : t.closed(LINE[i - 1].name);
+      const text = t.closed(LINE[i - 1].name);
       state.bubble = { text, until: state.steps + 180, door: d };
       say(text);
       return;
@@ -1009,7 +1026,7 @@ function react(ev: Events) {
     say((touch ? t.shieldGivenTouch : t.shieldGiven).join(" "));
     sparksAt(b.x + PLAYER.w / 2, b.y + 4, 10, METAL.goldLight, 0.8);
     showShieldButton(true);
-    help.textContent = t.helpLevel(p.pole, true);
+    keysLine(p);
   }
   if (ev.troll === "wake") {
     sfx.play("gate");
@@ -1094,6 +1111,7 @@ function play() {
   const airJumps = b.airJumps;
   const vx = b.vx;
   const ev = stepPlay(p, intent);
+  if (p.riding !== keysRiding) keysLine(p);
   session.lives = p.lives;
   session.purse = p.purse;
   if (ev.life && p.cheese?.at === p.t) session.cheese.add(p.def.id);

@@ -13,10 +13,13 @@ import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE, BJORVIKA_ROUTE, GAMLEBYEN_ROUTE } from "./routes";
 import { BARRIER, GAP, HAZARDS as RUN_HAZARDS, KORKETREKKEREN, RIDE, speedAt, trackY } from "./korketrekkeren";
 import { follow } from "@larshansen/pixelkit/camera";
 import { HERON, OSTENSJOVANNET, PADS as LILY_PADS, SWAN, W as LW, inStretch } from "./ostensjovannet";
+import { BAY, BJORVIKA, F1 as BF1, F2 as BF2, GUSTS as BJ_GUSTS, HOIST as BJ_HOIST, HOOKS, SHAFTS, SHEETS, SPARKS } from "./bjorvika";
+import type { Travel } from "@larshansen/pixelkit/carrier";
+import { CLOSERS, GAMLEBYEN, GROUNDS as RUIN_GROUNDS, QUAY as GQ, SERPENT_DEF, STONES, STREET, TOWER, TOWN, WAKE, type Ruins } from "./gamlebyen";
 import { BOY, ENEMIES as VIGELAND_ENEMIES, JET_IN, JET_OUT, SLAB, VIGELANDSPARKEN, W as VW } from "./vigelandsparken";
 import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, LOFT, OARS, PADS, RAFT as BALSA, REED, W } from "./bygdoy";
 import { SHIELD_RULES } from "../game/shield";
@@ -63,7 +66,9 @@ const ROUTE: Record<string, Move[]> = {
   bygdoy: BYGDOY_ROUTE,
   vigelandsparken: VIGELANDSPARKEN_ROUTE,
   korketrekkeren: KORKETREKKEREN_ROUTE,
-  ostensjovannet: OSTENSJOVANNET_ROUTE
+  ostensjovannet: OSTENSJOVANNET_ROUTE,
+  bjorvika: BJORVIKA_ROUTE,
+  gamlebyen: GAMLEBYEN_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -111,6 +116,14 @@ const GOLD: Record<string, Move[]> = {
   // On the sledge over the gap: the jump at its edge, and the second at the top of it.
   // On the stone in the middle of the long crossing: two jumps up.
   ostensjovannet: [...OSTENSJOVANNET_ROUTE.slice(0, OSTENSJOVANNET_ROUTE.findIndex((m) => m.name === "on the stone") + 1), walk(mid(180)), jump(0, { second: 18 })],
+  // From the market's stall up onto the hall's eaves, and two jumps up over its dragon heads.
+  gamlebyen: [...GAMLEBYEN_ROUTE.slice(0, GAMLEBYEN_ROUTE.findIndex((m) => m.name === "stomp enemy 9") + 1), walk(mid(187)), jumpTo(mid(189)), walk(mid(190)), jumpTo(mid(192)), walk(mid(195)), jump(0, { second: 18 })],
+  // On the second hook of the traverse, under the top crane's jib: two jumps up as it passes under the bracteate.
+  bjorvika: [
+    ...BJORVIKA_ROUTE.slice(0, BJORVIKA_ROUTE.findIndex((m) => m.name === "hop onto the second hook of the traverse") + 1),
+    wait("on the hook under the bracteate", (q) => Math.abs(cx(q) - (tile(228) + 8)) < 6),
+    jump(0, { second: 18 })
+  ],
   korketrekkeren: [
     ...KORKETREKKEREN_ROUTE.slice(0, KORKETREKKEREN_ROUTE.findIndex((m) => m.name === "jump the gap")),
     {
@@ -128,9 +141,9 @@ const GOLD: Record<string, Move[]> = {
 };
 
 /** Every level is held to the order's measure: at least a minute for the scripted player, and the size of a level. */
-const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
+const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika", "gamlebyen"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
-const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
+const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika", "gamlebyen"]);
 /** How each level is played in the tests: with the pole from level 6 on, and the shield's rules (Bygdøy gives the shield at its prow; in line 1 he does not have it; after Bygdøy it is his). */
 const opts = (def: LevelDef, more: { feather?: boolean } = {}) => ({ pole: POLE.has(def.id), shield: SHIELD_RULES, hasShield: def.rune > 10, ...more });
 /**
@@ -243,7 +256,7 @@ describe("the lines", () => {
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN, KORKETREKKEREN, OSTENSJOVANNET];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN, KORKETREKKEREN, OSTENSJOVANNET, BJORVIKA, GAMLEBYEN];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
@@ -256,7 +269,7 @@ test("the line's stations say the same as the built levels themselves", () => {
 for (const def of LEVELS) {
   describe(def.name, () => {
     const map = levelMap(def);
-    const known = new Set([".", ...def.legend.solid, ...def.legend.oneWay, ...def.legend.water, ...Object.values(MARKS), ...def.doors.map((d) => d.tile)]);
+    const known = new Set([".", ...def.legend.solid, ...def.legend.oneWay, ...def.legend.water, ...(def.risen ? [...def.risen.solid, ...def.risen.oneWay] : []), ...Object.values(MARKS), ...def.doors.map((d) => d.tile)]);
 
     test("its map: rectangular, one start, one rune, one bracteate, its doors, no letter it does not know", () => {
       for (const row of def.map) expect(row.length).toBe(def.map[0].length);
@@ -1174,6 +1187,259 @@ describe("Østensjøvannet: pads that sink, swans that mind their water", () => 
   });
 });
 
+describe("Bjørvika: hooks that carry him, and he chooses when to let go", () => {
+  const P = (start?: { x: number; bottom: number }) => newPlay(BJORVIKA, { pole: true, shield: SHIELD_RULES, hasShield: true, start });
+  const map = levelMap(BJORVIKA);
+  /** The width of firm floor at a row, from column c going the way `dir` points. */
+  const floorFrom = (c: number, row: number, dir: 1 | -1) => {
+    let n = 0;
+    while (map.isSolid(c + dir * n, row) && !map.isSolid(c + dir * n, row - 1)) n++;
+    return n;
+  };
+
+  test("every hook comes to a tile from its near landing (a hop on) and right up to its far one (a step off), and every landing is four tiles wide or more", () => {
+    for (const h of HOOKS) {
+      const row = h.from.y / TILE;
+      const c0 = h.from.x / TILE;
+      const c1 = h.to.x / TILE + h.w / TILE;
+      // The near end: a tile from a landing, or (on the traverse) a tile from the last hook's far end.
+      const before = HOOKS.find((k) => k.from.y === h.from.y && k.to.x + k.w === h.from.x - TILE);
+      if (!before) {
+        expect(map.isSolid(c0 - 1, row)).toBe(false);
+        expect(floorFrom(c0 - 2, row, -1)).toBeGreaterThanOrEqual(4);
+      }
+      const next = HOOKS.find((k) => k.from.y === h.from.y && k.from.x === (c1 + 1) * TILE);
+      if (!next) expect(floorFrom(c1, row, 1)).toBeGreaterThanOrEqual(4);
+      // Under the gap it crosses: the drop (or the bay's net).
+      for (let c = c0 - 1; c < c1; c++) expect(map.isSolid(c, row)).toBe(false);
+    }
+  });
+
+  test("the hoist, the hooks and the sheets never keep him waiting much more than five seconds", () => {
+    const wait = (at: (t: number) => boolean) => {
+      let longest = 0;
+      let since = 0;
+      for (let t = 0; t < 4000; t++) {
+        since = at(t) ? 0 : since + 1;
+        longest = Math.max(longest, since);
+      }
+      return longest / 60;
+    };
+    expect(wait((t) => carrierAt(BJ_HOIST, t).y === BJ_HOIST.bottom)).toBeLessThan(5.5);
+    for (const d of [...HOOKS, ...SHEETS]) expect(wait((t) => carrierAt(d, t).x === (d as Travel).from.x)).toBeLessThan(5.5);
+  });
+
+  test("a miss at the first hook costs nothing: the net holds him, and its step leads back up to the floor", () => {
+    // Dropped off the hook over the middle of the bay: the net.
+    const p = P({ x: tile(BAY[0] + 4) + 8, bottom: tile(BF1) });
+    p.body.onGround = false;
+    for (let i = 0; i < 90; i++) stepPlay(p, IDLE);
+    expect(p.hurt).toBe(false);
+    expect(feet(p)).toBe(tile(BF1 + 3));
+    // From the net, up the step and back onto the floor before the bay.
+    const r = playMoves(p, [walk(tile(BAY[0] + 2) + 4), jumpTo(tile(BAY[0]) + 8), jumpTo(tile(BAY[0] - 2) + 8)], { max: 600, until: (q) => q.body.onGround && feet(q) === tile(BF1) && cx(q) < tile(BAY[0]) });
+    expect(r.done).toBe(true);
+    expect(p.hurt).toBe(false);
+    expect(feet(p)).toBe(tile(BF1));
+    expect(cx(p)).toBeLessThan(tile(BAY[0]));
+  });
+
+  test("the welder's sparks hurt only on their beat, after a second's warning; between showers he walks under them", () => {
+    const beat = SPARKS.beat!;
+    expect(beat.warn).toBeGreaterThanOrEqual(60);
+    const at = (t0: number) => {
+      const p = P({ x: tile(53), bottom: tile(BF1) });
+      p.t = t0;
+      for (let i = 0; i < 40; i++) stepPlay(p, { ...IDLE, right: true });
+      return p.hurt;
+    };
+    const period = beat.rest + beat.warn + beat.live;
+    const start = (period - (beat.offset ?? 0)) % period;
+    expect(at(start)).toBe(false);
+    expect(at(start + beat.rest + beat.warn - 5)).toBe(true);
+  });
+
+  test("on the riveters' girder, a man who walks on without the shield is hit at most of the moments he could come; one who stops and raises it as each bolt comes never is", () => {
+    let careless = 0;
+    let shielded = 0;
+    const from = { x: tile(180), bottom: tile(BF2) };
+    const riveters = [9, 10];
+    // Over one round of their beat.
+    for (let t0 = 0; t0 < 120; t0 += 2) {
+      const p = P(from);
+      p.enemies[7].alive = false;
+      p.enemies[8].alive = false;
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 600 && cx(p) < tile(194); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      if (hurt) careless++;
+      const q = P(from);
+      q.enemies[7].alive = false;
+      q.enemies[8].alive = false;
+      q.t = t0;
+      let hold = 0;
+      hurt = false;
+      for (let i = 0; i < 1500 && cx(q) < tile(194); i++) {
+        if (q.shots.some((s) => riveters.includes(s.by) && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - (q.body.x + PLAYER.w) < 64)) hold = 4;
+        hurt = stepPlay(q, hold-- > 0 ? { ...IDLE, shield: true } : { ...IDLE, right: true }).hurt || hurt;
+      }
+      if (hurt) shielded++;
+    }
+    expect(careless / 60).toBeGreaterThanOrEqual(0.6);
+    expect(shielded).toBe(0);
+  });
+
+  test("the gusts push against him over the shafts only after a second of dust", () => {
+    for (const z of BJ_GUSTS) {
+      expect(z.beat!.warn).toBeGreaterThanOrEqual(60);
+      expect(z.push.x).toBeLessThan(0);
+      for (const c of SHAFTS) expect(z.x <= tile(c) && z.x + z.w >= tile(c + 5)).toBe(true);
+    }
+  });
+});
+
+describe("Gamlebyen: the ruins rebuild as he passes", () => {
+  const P = (start?: { x: number; bottom: number }) => newPlay(GAMLEBYEN, { pole: true, shield: SHIELD_RULES, hasShield: true, start });
+  const ruins = (p: Play) => p.grounds!.state as Ruins;
+
+  test("a stone is not there until he comes near; then it rises, and stays, and is ground (a wall solid, a ledge one-way)", () => {
+    const p = P({ x: tile(27) + 8, bottom: tile(STREET) });
+    const i = STONES.findIndex((s) => s.c === 37 && s.r === STREET - 4);
+    expect(p.map.isOneWay(37, STREET - 4)).toBe(false);
+    for (let k = 0; k < 20; k++) stepPlay(p, IDLE);
+    expect(ruins(p).at[i]).toBeNull();
+    for (let k = 0; k < 400 && cx(p) < tile(33); k++) stepPlay(p, { ...IDLE, right: true });
+    for (let k = 0; k < 40; k++) stepPlay(p, IDLE);
+    expect(ruins(p).up[i]).toBe(true);
+    expect(p.map.isOneWay(37, STREET - 4)).toBe(true);
+    // Walking away, it stays.
+    for (let k = 0; k < 200; k++) stepPlay(p, { ...IDLE, left: true });
+    expect(p.map.isOneWay(37, STREET - 4)).toBe(true);
+  });
+
+  test("a stone that would rise where he stands waits until he has moved off", () => {
+    // The lowest stone of the first wall that rises behind him: standing under it, his head is in its tile.
+    const st = STONES.findIndex((s) => s.c === CLOSERS[0] && !STONES.some((o) => o.c === s.c && o.r > s.r));
+    const s = STONES[st];
+    const p = P({ x: tile(s.c) + 8, bottom: tile(s.r + 1) });
+    const state = ruins(p);
+    state.at[st] = p.t;
+    for (let k = 0; k < 60; k++) stepPlay(p, IDLE);
+    expect(state.up[st]).toBe(false);
+    expect(p.map.isSolid(s.c, s.r)).toBe(false);
+    // He steps out from under it: it sets.
+    for (let k = 0; k < 20; k++) stepPlay(p, { ...IDLE, right: true });
+    expect(state.up[st]).toBe(true);
+    expect(p.map.isSolid(s.c, s.r)).toBe(true);
+  });
+
+  test("twice a wall rises behind him once he is past it: from his side it is too high to climb, from the side he came it can be climbed", () => {
+    for (const c of CLOSERS) {
+      const wall = STONES.filter((s) => s.c === c);
+      expect(wall.length).toBeGreaterThanOrEqual(3);
+      expect(wall.every((s) => s.wall && s.behind)).toBe(true);
+      const top = Math.min(...wall.map((s) => s.r));
+      const map = levelMap(GAMLEBYEN);
+      const floorAt = (col: number) => {
+        for (let r = 0; r < map.rows; r++) if (map.isSolid(col, r)) return r;
+        return map.rows;
+      };
+      const before = floorAt(c - 1);
+      const after = Math.min(...wall.map((s) => s.r)) + wall.length;
+      // From the side he came, its top is two rows up: a jump. From beyond, four: not.
+      expect(before - top).toBe(2);
+      expect(after - top).toBe(4);
+      // Before he is past, it is not there; once he is three tiles past, it rises.
+      const p = P({ x: tile(c + 1) + 8, bottom: tile(after) });
+      for (let k = 0; k < 20; k++) stepPlay(p, IDLE);
+      expect(p.map.isSolid(c, top)).toBe(false);
+      for (let k = 0; k < 120; k++) stepPlay(p, { ...IDLE, right: cx(p) < tile(c + 4) });
+      expect(p.map.isSolid(c, top)).toBe(true);
+    }
+  });
+
+  test("the bishop's guards are stone (harmless, not to be touched) until he comes near; then they walk", () => {
+    const p = P({ x: tile(63) + 8, bottom: tile(15) });
+    const guards = p.enemies.filter((e) => e.def.look === "guard");
+    expect(guards.length).toBe(3);
+    for (let k = 0; k < 60; k++) stepPlay(p, IDLE);
+    for (const g of guards) {
+      expect(g.calm).toBe(true);
+      expect(g.x).toBe(g.home);
+    }
+    for (let k = 0; k < 200 && cx(p) < guards[0].x - WAKE * TILE + 4; k++) stepPlay(p, { ...IDLE, right: true });
+    for (let k = 0; k < 30; k++) stepPlay(p, IDLE);
+    expect(guards[0].calm).toBe(false);
+    expect(guards[0].x).not.toBe(guards[0].home);
+    expect(guards[2].calm).toBe(true);
+  });
+
+  test("the tower builds itself under him up the town wall, with no wait at its foot, and sinks back once he has left it a while", () => {
+    const p = P({ x: TOWER.x - 8, bottom: TOWER.low });
+    for (let k = 0; k < 20; k++) stepPlay(p, IDLE);
+    expect(ruins(p).y).toBe(TOWER.low);
+    // On it, it starts up at once.
+    for (let k = 0; k < 10; k++) stepPlay(p, { ...IDLE, right: true });
+    expect(ruins(p).y).toBeLessThan(TOWER.low);
+    let k = 0;
+    for (; k < 400 && ruins(p).y > TOWER.high; k++) stepPlay(p, IDLE);
+    expect(ruins(p).y).toBe(TOWER.high);
+    stepPlay(p, IDLE);
+    expect(feet(p)).toBe(TOWER.high);
+    expect(k / 60).toBeLessThan(2);
+    // Off onto the wall walk; after a while it goes back down.
+    for (let i = 0; i < 30; i++) stepPlay(p, { ...IDLE, right: true });
+    expect(feet(p)).toBe(tile(TOWN));
+    for (let i = 0; i < TOWER.wait + 200; i++) stepPlay(p, IDLE);
+    expect(ruins(p).y).toBe(TOWER.low);
+    expect(RUIN_GROUNDS.everywhere().length).toBe(TOWER.low - TOWER.high + 1);
+  });
+
+  test("on the wall walk, a man who walks on without the shield is hit at most of the moments he could come; one who stops and raises it as each arrow comes never is", () => {
+    let careless = 0;
+    let shielded = 0;
+    const from = { x: tile(140), bottom: tile(TOWN) };
+    const archers = [6, 7];
+    for (let t0 = 0; t0 < 120; t0 += 2) {
+      const p = P(from);
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 600 && cx(p) < tile(166); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      if (hurt) careless++;
+      const q = P(from);
+      q.t = t0;
+      let hold = 0;
+      hurt = false;
+      for (let i = 0; i < 1500 && cx(q) < tile(166); i++) {
+        if (q.shots.some((s) => archers.includes(s.by) && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - (q.body.x + PLAYER.w) < 64)) hold = 4;
+        hurt = stepPlay(q, hold-- > 0 ? { ...IDLE, shield: true } : { ...IDLE, right: true }).hurt || hurt;
+      }
+      if (hurt) shielded++;
+    }
+    expect(careless / 50).toBeGreaterThanOrEqual(0.6);
+    expect(shielded).toBe(0);
+  });
+
+  test("the serpent's quay: its bench right before it, its three places along it, and the rune on the last longship only once it is beaten", () => {
+    const map = levelMap(GAMLEBYEN);
+    const bench = benchesOf(map).at(-1)!;
+    expect(SERPENT_DEF.x0 - bench.x).toBeLessThan(4 * TILE);
+    expect(SERPENT_DEF.x1 - SERPENT_DEF.x0).toBeGreaterThanOrEqual(24 * TILE);
+    for (const x of SERPENT_DEF.points) expect(x > SERPENT_DEF.x0 && x < SERPENT_DEF.x1).toBe(true);
+    for (let c = Math.floor(SERPENT_DEF.x0 / TILE); c < Math.floor(SERPENT_DEF.x1 / TILE); c++) expect(map.isSolid(c, GQ)).toBe(true);
+    // The route's fight: three hits, and only then the rune.
+    const p = P();
+    const r = playMoves(p, GAMLEBYEN_ROUTE, { max: 60 * 300 });
+    expect(r.done).toBe(true);
+    const hits = r.events.filter((e) => e.boss === "hit").length;
+    expect(hits).toBe(3);
+    const beaten = r.events.findIndex((e) => e.boss === "beaten");
+    expect(beaten).toBeGreaterThan(0);
+    expect(r.events.findIndex((e) => e.rune)).toBeGreaterThan(beaten);
+    expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("no way out but the restart button, fixed", () => {
   test("Rådhuset: east of the clock tower is the harbour, so a fall off the tower costs a heart and puts him back at the flag by the clock", () => {
     const map = levelMap(RADHUSET);
@@ -1209,9 +1475,9 @@ describe("no way out but the restart button, fixed", () => {
   });
 });
 
-// Line 1's ten are built; line 2's stations not built yet are under construction and cannot be entered.
-test("line 1 is all built; line 2's stations not built have no address to go to", () => {
-  expect(LINE.filter((l) => l.line === 1 && l.built).length).toBe(10);
+// All sixteen are built (order 16): every station has its address, and none stands under construction.
+test("all sixteen stations are built, and every one has an address to go to", () => {
+  expect(LINE.filter((l) => l.built).length).toBe(16);
   const def = kartDef({ ...fresh(), cleared: [...LINE_1] }, kartArt);
-  for (const l of LINE) expect(def.doors.find((d) => d.id === l.id)!.href).toBe(l.built ? `#${l.id}` : "");
+  for (const l of LINE) expect(def.doors.find((d) => d.id === l.id)!.href).toBe(`#${l.id}`);
 });

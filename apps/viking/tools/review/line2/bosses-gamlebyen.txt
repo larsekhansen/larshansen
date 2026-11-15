@@ -1,0 +1,10 @@
+gamlebyen walk in, then stand still facing it     300 s  boss tail hits 0      hits 0 (first -), hearts lost 2, lives lost 0, hints 45 (first 5s) 
+gamlebyen hold right all the time (hops when blocked)  300 s  boss rest hits 0      hits 0 (first -), hearts lost 0, lives lost 0, hints 43 (first 7s) 
+gamlebyen hold right, jump whenever down          300 s  boss rest hits 0      hits 0 (first -), hearts lost 0, lives lost 0, hints 43 (first 7s) 
+gamlebyen walk in, then stand still (any facing)  300 s  boss tail hits 0      hits 0 (first -), hearts lost 2, lives lost 0, hints 45 (first 5s) 
+gamlebyen walk in, jump in place facing it        300 s  boss rest hits 0      hits 0 (first -), hearts lost 1, lives lost 0, hints 43 (first 5s) 
+gamlebyen go to the middle, stand facing it        85 s  boss spit hits 0      hits 0 (first -), hearts lost 9, lives lost 3, hints 12 (first 5s) GAME OVER
+gamlebyen go to the middle, jump constantly       182 s  boss spit hits 0      hits 0 (first -), hearts lost 9, lives lost 3, hints 24 (first 7s) GAME OVER
+gamlebyen wake it, hide at the left edge facing it  300 s  boss asleep hits 0    hits 0 (first -), hearts lost 3, lives lost 1, hints 4 (first 5s) 
+gamlebyen run to the far right edge, stand facing it   94 s  boss spit hits 0      hits 0 (first -), hearts lost 9, lives lost 3, hints 12 (first 7s) GAME OVER
+gamlebyen run at it, jump when close (stomp-minded)  300 s  boss tail hits 0      hits 0 (first -), hearts lost 2, lives lost 0, hints 45 (first 5s) 

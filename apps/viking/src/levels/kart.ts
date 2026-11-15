@@ -12,7 +12,7 @@ import type { Art, LevelDef, SignDef } from "./types";
 // under it to Jernhaugen, the burial mound with the maze; Hjem, the door home, is at the far left.
 // Line 2, orange, leaves at Stortinget: it runs under line 1 on a low deck and comes up beside its
 // end, where its own viaduct carries on with six stations. Until Nabolaget is cleared a gate stands
-// across it, with a sign. A station whose level is not built yet stands behind a hoarding.
+// across it, with a sign.
 //
 //   L  line 1, on its viaduct   O  line 2   #  the floor of the dip   F  the gate   h Hjem
 //   j  Jernhaugen   i  line 2's sign   1 to 9, 0  line 1's stations   U V Y Z G J  line 2's
@@ -76,7 +76,7 @@ export function kartDef(progress: Progress, art: KartArt): LevelDef {
     doors: [
       { id: "home", tile: "h", sign: "Hjem", href: "/?from=viking" },
       { id: "maze", tile: "j", sign: "Jernhaugen", href: "#jernhaugen" },
-      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: l.short ?? l.name, href: l.built ? `#${l.id}` : "" }))
+      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: l.short ?? l.name, href: `#${l.id}` }))
     ],
     art: art(progress, open)
   };

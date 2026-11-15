@@ -15,10 +15,10 @@ export function showErrors(help: HTMLElement) {
     });
 }
 
-/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it. */
+/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it; `all` is every station. */
 export function debugProgress(params: URLSearchParams): Progress | null {
   if (!params.has("cleared") && !params.has("gold") && !params.has("clean")) return null;
-  const list = (k: string) => (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id));
+  const list = (k: string) => (params.get(k) === "all" ? [...ORDER] : (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id)));
   return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
 }
 
@@ -42,7 +42,9 @@ const AUTO: Record<string, () => Promise<Move[]>> = {
   bygdoy: () => import("./levels/routes/bygdoy").then((m) => m.BYGDOY_ROUTE),
   vigelandsparken: () => import("./levels/routes/vigelandsparken").then((m) => m.VIGELANDSPARKEN_ROUTE),
   korketrekkeren: () => import("./levels/routes/korketrekkeren").then((m) => m.KORKETREKKEREN_ROUTE),
-  ostensjovannet: () => import("./levels/routes/ostensjovannet").then((m) => m.OSTENSJOVANNET_ROUTE)
+  ostensjovannet: () => import("./levels/routes/ostensjovannet").then((m) => m.OSTENSJOVANNET_ROUTE),
+  bjorvika: () => import("./levels/routes/bjorvika").then((m) => m.BJORVIKA_ROUTE),
+  gamlebyen: () => import("./levels/routes/gamlebyen").then((m) => m.GAMLEBYEN_ROUTE)
 };
 
 /** `?debug&auto`: the level's scripted route as a step-by-step autopilot, or null for a level with none. */

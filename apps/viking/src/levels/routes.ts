@@ -17,3 +17,5 @@ export { BYGDOY_ROUTE } from "./routes/bygdoy";
 export { VIGELANDSPARKEN_ROUTE } from "./routes/vigelandsparken";
 export { KORKETREKKEREN_ROUTE } from "./routes/korketrekkeren";
 export { OSTENSJOVANNET_ROUTE } from "./routes/ostensjovannet";
+export { BJORVIKA_ROUTE } from "./routes/bjorvika";
+export { GAMLEBYEN_ROUTE } from "./routes/gamlebyen";

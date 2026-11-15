@@ -44,6 +44,8 @@ export interface EnemyDef {
   straight?: boolean;
   /** How far a thrower sees him, in tiles, when not seven. */
   reach?: number;
+  /** For one that faces one way: how near in front of it, in tiles, it does not throw at him, when not one and a half. */
+  blind?: number;
 }
 
 /** Sizes, speeds and beats by kind, when the level does not say. */
@@ -210,7 +212,7 @@ export function stepEnemies(enemies: Enemy[], shots: Shot[], map: TileMap, t: nu
       case "thrower": {
         e.dir = e.def.faces ?? (hx < e.x ? -1 : 1);
         // One that faces one way does not see him right under its perch either.
-        const near = Math.abs(hx - e.x) < (e.def.reach ?? 7) * TILE && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? 1.5 * TILE : 0);
+        const near = Math.abs(hx - e.x) < (e.def.reach ?? 7) * TILE && Math.abs(him.y - e.y) < THROW_REACH.y && (hx - e.x) * e.dir > (e.def.faces ? (e.def.blind ?? 1.5) * TILE : 0);
         if (untilThrow(e, t) === 0 && near && e.def.straight) {
           // Straight at his middle, hard, with no lob (one that leads aims where he will be when it gets there).
           const x = e.x + e.dir * 3;

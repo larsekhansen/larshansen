@@ -1,7 +1,7 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { column } from "@larshansen/pixelkit/backdrop";
-import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, DOORWAY, FACADE, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
@@ -178,19 +178,6 @@ function stationMark(i: number, open: boolean) {
   if (ORDER[i] === "stortinget") R(x - 4, LINE_Y + 4, 8, 2, LINE_2_COLOR);
 }
 
-/** A station not built yet: a hoarding of plywood on the deck, a warning stripe across it. */
-function hoarding(i: number) {
-  const x = stationX(i) - 10;
-  const top = LINE_Y - 22;
-  R(x, top, 20, 22, PAINT.hoarding);
-  for (let y = top + 3; y < LINE_Y; y += 5) R(x, y, 20, 1, PAINT.hoardingLine);
-  R(x, top, 1, 22, INK);
-  R(x + 19, top, 1, 22, INK);
-  for (let y = top + 13; y < top + 18; y++) for (let k = 0; k < 18; k++) if (((k + y) >> 1) % 2 === 0) R(x + 1 + k, y, 1, 1, PAINT.warning);
-  R(x + 4, top - 4, 1, 4, PALETTE.woodDark);
-  R(x + 15, top - 4, 1, 4, PALETTE.woodDark);
-}
-
 /** The gate across line 2 while it is closed: boards up to the sky, braces, a warning stripe. */
 function gate() {
   const x = GATE_COL * TILE;
@@ -263,7 +250,35 @@ function stationBack(i: number, cleared: boolean, clean: boolean, v: View) {
   if (clean) waffle(x + 9, LINE_Y - 44);
 }
 
+/** Both lines done: a longship comes out under the viaducts, sailing slowly along the fjord, its sail striped. */
+function longship(v: View) {
+  const span = KART_COLS * TILE + 160;
+  const x = (((view.reduced ? 40 * TILE : v.t * 0.25) % span) + span) % span - 80;
+  const y = LINE_Y + 2 * TILE + 34;
+  const bob = view.reduced ? 0 : Math.round(Math.sin(v.t * 0.04));
+  R(x, y + bob, 40, 4, PALETTE.woodDark);
+  R(x + 3, y + 4 + bob, 34, 2, mix(PALETTE.woodDark, INK, 0.3));
+  for (let k = 0; k < 6; k++) R(x - 3 + Math.round(k * 0.3), y - k + bob, 2, 1, PALETTE.wood);
+  for (let k = 0; k < 6; k++) R(x + 41 - Math.round(k * 0.3), y - k + bob, 2, 1, PALETTE.wood);
+  for (let k = 4; k < 36; k += 6) R(x + k, y + 1 + bob, 4, 3, k % 12 ? HAT_RED : PALETTE.sail);
+  R(x + 19, y - 22 + bob, 2, 22, PALETTE.woodDark);
+  for (let r = 0; r < 14; r++) R(x + 9, y - 21 + r + bob, 22, 1, r % 4 < 2 ? PALETTE.sail : PALETTE.sailStripe);
+}
+
+/** Both lines done: lanterns along both viaducts, lit after dusk. */
+function lanterns(v: View) {
+  for (let x = 3 * TILE; x < KART_COLS * TILE; x += 3 * TILE) {
+    if (x > 8 * TILE && x < 18 * TILE) continue;
+    R(x, LINE_Y - 7, 1, 7, METAL.lampPost);
+    R(x - 1, LINE_Y - 9, 3, 2, METAL.brass);
+    light(x - 1, LINE_Y - 9, 3, 2, "lamp");
+  }
+  void v;
+}
+
 export function kartArt(progress: Progress, open: boolean): Art {
+  /** Both lines, all sixteen runes: the map gains its longship and its lanterns. */
+  const complete = ORDER.every((id) => progress.cleared.includes(id));
   const cleared = (i: number) => progress.cleared.includes(ORDER[i]);
   const two = (i: number) => LINE[i].line === 2;
   return {
@@ -282,6 +297,7 @@ export function kartArt(progress: Progress, open: boolean): Art {
         R(home.x + home.w - 4, home.bottom - 16, 2, 2, METAL.brass);
       }
       viaduct();
+      if (complete) longship(v);
       faintly(!open, lowTrack);
       mound(v.doors.get("maze"), v.sky.snow);
       branch();
@@ -289,12 +305,11 @@ export function kartArt(progress: Progress, open: boolean): Art {
         if (!two(i)) stationBack(i, cleared(i), progress.clean.includes(l.id), v);
         else faintly(!open, () => stationBack(i, cleared(i), progress.clean.includes(l.id), v));
       });
-      LINE.forEach((l, i) => !l.built && faintly(!open, () => hoarding(i)));
       if (!open) gate();
     },
-    front() {
-      LINE.forEach((l, i) => {
-        if (!l.built) return;
+    front(v) {
+      if (complete) lanterns(v);
+      LINE.forEach((_l, i) => {
         if (two(i)) faintly(!open, () => stationMark(i, open && isOpen(progress, ORDER, i)));
         else stationMark(i, isOpen(progress, ORDER, i));
       });

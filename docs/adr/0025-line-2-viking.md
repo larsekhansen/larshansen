@@ -1,5 +1,8 @@
 # 0025. Line 2: six more levels spelling VIKING, opened by Nabolaget
 
+State: holds; completed by [0030](0030-the-end-of-line-2.md) (order 16 built the last two; nothing is under
+construction any more).
+
 Decided 2026-11-14 by the planner (`docs/games/PLAN-LINE-2.md`, shown to Lars, who asked for more
 levels to be planned); built from order 14 on. Extends [0006](0006-ten-levels-lars-hansen-line-map.md).
 Lars had not answered the plan's open questions (the word, the places, the sledge run) when building

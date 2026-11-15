@@ -271,7 +271,8 @@ export interface PlayOptions {
 }
 
 export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
-  const map = levelMap(def);
+  const grounds = def.grounds ? { rules: def.grounds, state: def.grounds.create() } : null;
+  const map = grounds?.rules.map?.(grounds.state, levelMap(def)) ?? levelMap(def);
   const start = opts.start ?? map.spawn();
   const flags = flagsOf(map);
   const cannons = cannonsOf(def, map);
@@ -324,7 +325,7 @@ export function newPlay(def: LevelDef, opts: PlayOptions = {}): Play {
     shield: opts.shield ? { rules: opts.shield, has: !!opts.hasShield, raise: 0, facing: 1 } : null,
     gift: giftOf(map),
     giftAt: opts.hasShield ? -1 : null,
-    grounds: def.grounds ? { rules: def.grounds, state: def.grounds.create() } : null,
+    grounds,
     riding: false,
     ducking: false
   };

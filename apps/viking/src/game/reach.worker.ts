@@ -13,8 +13,10 @@ import { BYGDOY } from "../levels/bygdoy";
 import { VIGELANDSPARKEN } from "../levels/vigelandsparken";
 import { KORKETREKKEREN } from "../levels/korketrekkeren";
 import { OSTENSJOVANNET } from "../levels/ostensjovannet";
+import { BJORVIKA } from "../levels/bjorvika";
+import { GAMLEBYEN } from "../levels/gamlebyen";
 import type { LevelDef } from "../levels/types";
-import { bracteateOf, levelMap, runeOf } from "./play";
+import { bracteateOf, flagsOf, levelMap, runeOf } from "./play";
 import { TILE } from "@larshansen/pixelkit/config";
 import { deadEnds, describeSpots, search } from "./reach";
 
@@ -27,21 +29,25 @@ import { deadEnds, describeSpots, search } from "./reach";
 declare const self: Worker;
 /** Holmenkollen's rune is reached down the inrun at speed, which the search does not model; the scripted player shows it from the hut at the top. */
 const HUT = { x: 207 * TILE, y: 15 * TILE, w: 6 * TILE, h: TILE };
-const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA, stortinget: STORTINGET, ekeberg: EKEBERG, nabolaget: NABOLAGET, bygdoy: BYGDOY, vigelandsparken: VIGELANDSPARKEN, korketrekkeren: KORKETREKKEREN, ostensjovannet: OSTENSJOVANNET };
+const LEVELS: Record<string, LevelDef> = { langkaia: LANGKAIA, akershus: AKERSHUS, radhuset: RADHUSET, slottet: SLOTTET, holmenkollen: HOLMENKOLLEN, akerselva: AKERSELVA, nordmarka: NORDMARKA, stortinget: STORTINGET, ekeberg: EKEBERG, nabolaget: NABOLAGET, bygdoy: BYGDOY, vigelandsparken: VIGELANDSPARKEN, korketrekkeren: KORKETREKKEREN, ostensjovannet: OSTENSJOVANNET, bjorvika: BJORVIKA, gamlebyen: GAMLEBYEN };
 
-self.onmessage = (e: MessageEvent<{ id: string; pole: boolean }>) => {
-  const def = LEVELS[e.data.id];
+/**
+ * One world's searches: where he can get to, the dead ends, and (with gusts on a beat) the calm too. A
+ * level whose stones rise as he passes (Gamlebyen) is searched twice: with every stone risen, and with
+ * none (`risen`): the rune and the dead ends as everywhere in the first, and in the second, no spot he can
+ * get to from which neither the rune nor a fall can be reached (before the stones rise, he is not stuck).
+ */
+function searchWorld(def: LevelDef, pole: boolean, from?: { x: number; bottom: number }) {
   const map = levelMap(def);
-  const s = map.spawn();
+  const s = from ?? map.spawn();
   const t0 = performance.now();
   const boxes = [runeOf(map)!, bracteateOf(map)!, ...(def.id === "holmenkollen" ? [HUT] : [])];
   const r = search(def, { x: s.x - PLAYER.w / 2, feet: s.bottom }, false, boxes, { pole: true, graph: true });
-  const d = deadEnds(r.graph!, e.data.pole, def.id === "holmenkollen" ? [0, 2] : [0]);
+  const d = deadEnds(r.graph!, pole, def.id === "holmenkollen" ? [0, 2] : [0]);
   // Gusts on a beat: searched blowing all the time, and again with none at all.
   const calm = def.zones?.some((z) => z.beat) ? search(def, { x: s.x - PLAYER.w / 2, feet: s.bottom }, false, boxes, { pole: true, calm: true }) : null;
   const hit = (i: number) => r.hit[i] || !!calm?.hit[i];
-  self.postMessage({
-    id: def.id,
+  return {
     rune: hit(0),
     bracteate: hit(1),
     spots: r.spots.length + (calm?.spots.length ?? 0),
@@ -49,5 +55,20 @@ self.onmessage = (e: MessageEvent<{ id: string; pole: boolean }>) => {
     dead: describeSpots(d.dead.map((i) => r.spots[i])),
     onlyByFalling: describeSpots(d.onlyByFalling.map((i) => r.spots[i])),
     ms: Math.round(performance.now() - t0)
+  };
+}
+
+self.onmessage = (e: MessageEvent<{ id: string; pole: boolean }>) => {
+  const def = LEVELS[e.data.id];
+  if (!def.risen) return self.postMessage({ id: def.id, ...searchWorld(def, e.data.pole) });
+  const up = searchWorld({ ...def, legend: { ...def.legend, solid: def.legend.solid + def.risen.solid, oneWay: def.legend.oneWay + def.risen.oneWay } }, e.data.pole);
+  // With none risen, from the start and from every flag: each stretch as it is before its stones rise.
+  const downs = [undefined, ...flagsOf(levelMap(def))].map((f) => searchWorld(def, e.data.pole, f));
+  self.postMessage({
+    id: def.id,
+    ...up,
+    bracteate: up.bracteate || downs.some((d) => d.bracteate),
+    dead: [...up.dead, ...downs.flatMap((d) => d.dead.map((s) => `before the stones rise: ${s}`))],
+    ms: up.ms + downs.reduce((n, d) => n + d.ms, 0)
   });
 };

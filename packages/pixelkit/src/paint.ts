@@ -78,9 +78,10 @@ export function layerX(wx: number, factor: number) {
 
 // Windows and lamps register themselves while a layer is drawn, and come on after dark.
 export type LightKind = "window" | "soft" | "lamp" | "pool";
-export const lights: { x: number; y: number; w: number; h: number; kind: LightKind }[] = [];
-export function light(x: number, y: number, w: number, h: number, kind: LightKind = "window") {
-  lights.push({ x, y, w, h, kind });
+export const lights: { x: number; y: number; w: number; h: number; kind: LightKind; color?: string }[] = [];
+/** A light that comes on after dark; `color`, when given, is its own (a low sun's), in place of the kind's. */
+export function light(x: number, y: number, w: number, h: number, kind: LightKind = "window", color?: string) {
+  lights.push({ x, y, w, h, kind, color });
 }
 
 export function drawLights() {
@@ -104,7 +105,7 @@ export function drawLights() {
       g.fillStyle = "rgba(255, 205, 120, 0.22)";
       g.fillRect(x - 1, y + l.h, l.w + 2, 1);
     }
-    g.fillStyle = l.kind === "soft" ? "rgba(255, 214, 120, 0.45)" : "#ffd36b";
+    g.fillStyle = l.color ?? (l.kind === "soft" ? "rgba(255, 214, 120, 0.45)" : "#ffd36b");
     g.fillRect(x, y, l.w, l.h);
   }
   lights.length = 0;
