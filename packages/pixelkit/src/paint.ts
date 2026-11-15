@@ -146,8 +146,16 @@ function stoneHash(x: number, y: number) {
  * and the maze's walls are both drawn with it.
  */
 export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, gapBottom = 0, stone: Stone = STONE) {
+  // Stonework is the same every frame, and a wall of it is tens of thousands of single pixels: so
+  // it is drawn once into squares kept beside the page, and a column is then a strip copied from them.
+  if (gapBottom > gapTop && gapTop < bottom && gapBottom > top) {
+    stoneWall(x, top, 1, Math.min(bottom, gapTop), stone);
+    stoneWall(x, Math.max(top, gapBottom), 1, bottom, stone);
+  } else stoneWall(x, top, 1, bottom, stone);
+}
+
+function stonePixels(x: number, top: number, bottom: number, stone: Stone) {
   for (let y = top; y < bottom; y++) {
-    if (y >= gapTop && y < gapBottom) continue;
     const course = Math.floor(y / 4);
     const offset = (course * 5) % 7;
     const block = Math.floor((x + offset) / 6);
@@ -155,5 +163,60 @@ export function stoneColumn(x: number, top: number, bottom: number, gapTop = 0, 
     const shade = stoneHash(block, course);
     const color = isMortar ? stone.mortar : shade < 0.33 ? stone.dark : shade < 0.75 ? stone.base : stone.light;
     R(x, y, 1, 1, color);
+  }
+}
+
+/** Side of a kept square of stonework, in art pixels, and how many are kept before starting over. */
+const STONE_SQUARE = 128;
+const STONE_KEPT = 160;
+const stoneSquares = new Map<Stone, Map<string, HTMLCanvasElement>>();
+let stoneCount = 0;
+
+function stoneSquare(stone: Stone, cx: number, cy: number): HTMLCanvasElement {
+  let squares = stoneSquares.get(stone);
+  if (!squares) stoneSquares.set(stone, (squares = new Map()));
+  const key = `${cx},${cy}`;
+  let square = squares.get(key);
+  if (square) return square;
+  if (stoneCount >= STONE_KEPT) {
+    stoneSquares.clear();
+    stoneCount = 0;
+    stoneSquares.set(stone, (squares = new Map()));
+  }
+  square = document.createElement("canvas");
+  square.width = square.height = STONE_SQUARE;
+  const was = { g, camX: view.camX, camY: view.camY };
+  g = square.getContext("2d")!;
+  view.camX = cx * STONE_SQUARE;
+  view.camY = cy * STONE_SQUARE;
+  for (let i = 0; i < STONE_SQUARE; i++) stonePixels(view.camX + i, view.camY, view.camY + STONE_SQUARE, stone);
+  g = was.g;
+  view.camX = was.camX;
+  view.camY = was.camY;
+  squares.set(key, square);
+  stoneCount++;
+  return square;
+}
+
+/** A whole wall of stonework, `w` columns from x, `top` to `bottom`: the same pixels as that many `stoneColumn`s, copied in as few pieces as it crosses kept squares. */
+export function stoneWall(x: number, top: number, w: number, bottom: number, stone: Stone = STONE) {
+  if (typeof document === "undefined" || (x | 0) !== x || (top | 0) !== top || (bottom | 0) !== bottom) {
+    for (let i = 0; i < w; i++) stonePixels(x + i, top, bottom, stone);
+    return;
+  }
+  const x0 = Math.max(x, view.camX);
+  const x1 = Math.min(x + w, view.camX + g.canvas.width);
+  const y0 = Math.max(top, view.camY);
+  const y1 = Math.min(bottom, view.camY + g.canvas.height);
+  for (let yy = y0; yy < y1; ) {
+    const cy = Math.floor(yy / STONE_SQUARE);
+    const yEnd = Math.min(y1, (cy + 1) * STONE_SQUARE);
+    for (let xx = x0; xx < x1; ) {
+      const cx = Math.floor(xx / STONE_SQUARE);
+      const xEnd = Math.min(x1, (cx + 1) * STONE_SQUARE);
+      g.drawImage(stoneSquare(stone, cx, cy), xx - cx * STONE_SQUARE, yy - cy * STONE_SQUARE, xEnd - xx, yEnd - yy, xx - view.camX, yy - view.camY, xEnd - xx, yEnd - yy);
+      xx = xEnd;
+    }
+    yy = yEnd;
   }
 }

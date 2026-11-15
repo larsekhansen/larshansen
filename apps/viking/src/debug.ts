@@ -52,3 +52,45 @@ export async function autoRoute(id: string): Promise<((p: Play) => PlayIntent | 
   const [moves, bot] = await Promise.all([AUTO[id]?.(), import("./game/bot")]);
   return moves ? bot.autopilot(moves) : null;
 }
+
+/**
+ * `?debug&perf`: draws the frame fifty times and writes on the help line how many rectangles and
+ * images one frame takes and how long it took here, so a change to the drawing can be measured.
+ */
+export function perf(frame: () => void, help: HTMLElement) {
+  const proto = CanvasRenderingContext2D.prototype;
+  const count = { fillRect: 0, drawImage: 0, fillStyle: 0 };
+  const { fillRect, drawImage } = proto;
+  const style = Object.getOwnPropertyDescriptor(proto, "fillStyle")!;
+  // Every fortieth rectangle says who drew it (the first function up the stack that is not the kit's
+  // own rectangle helpers), so the line can name the busiest drawers.
+  const who = new Map<string, number>();
+  proto.fillRect = function (...a) {
+    if (++count.fillRect % 40 === 0) {
+      const names = (new Error().stack ?? "").split("\n").map((l) => l.split("@")[0].trim()).filter((n) => n && !/^(R|S|disc|wdisc|gable|perf|proto\.fillRect|fillRect)$/.test(n) && !n.includes("debug"));
+      const name = names.slice(0, 2).join("<");
+      who.set(name, (who.get(name) ?? 0) + 40);
+    }
+    return fillRect.apply(this, a);
+  };
+  proto.drawImage = function (this: CanvasRenderingContext2D, ...a: unknown[]) {
+    count.drawImage++;
+    return (drawImage as (...a: unknown[]) => void).apply(this, a);
+  } as typeof drawImage;
+  Object.defineProperty(proto, "fillStyle", {
+    ...style,
+    set(v) {
+      count.fillStyle++;
+      style.set!.call(this, v);
+    }
+  });
+  const N = 50;
+  const t0 = performance.now();
+  for (let i = 0; i < N; i++) frame();
+  const ms = (performance.now() - t0) / N;
+  proto.fillRect = fillRect;
+  proto.drawImage = drawImage;
+  Object.defineProperty(proto, "fillStyle", style);
+  help.textContent = `perf: ${Math.round(count.fillRect / N)} rects, ${Math.round(count.fillStyle / N)} colours, ${Math.round(count.drawImage / N)} images, ${ms.toFixed(1)} ms a frame. ` + [...who].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([n, c]) => `${n} ${Math.round(c / N)}`).join(", ");
+  help.hidden = false;
+}

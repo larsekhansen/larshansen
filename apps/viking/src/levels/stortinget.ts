@@ -2,6 +2,7 @@ import { box } from "@larshansen/pixelkit/backdrop";
 import { carrierAt, carrierShown, pathPeriod, stopAt, untilStop, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
+import { kept } from "@larshansen/pixelkit/kept";
 import { R, layerOrigin, layerX, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
 import { INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
@@ -682,6 +683,10 @@ const drilled = (c: number) => (c * 7) % 23 === 3;
 
 /** A tile of rock: the layers slant across it, a world-wide pattern, never the same tile twice. */
 function shaleTile(c: number, x: number, y: number) {
+  kept(`shale ${x} ${y}`, x, y, TILE, TILE, () => shalePixels(c, x, y));
+}
+
+function shalePixels(c: number, x: number, y: number) {
   for (let yy = 0; yy < TILE; yy++)
     for (let xx = 0; xx < TILE; xx += 4) {
       const wx = x + xx;
