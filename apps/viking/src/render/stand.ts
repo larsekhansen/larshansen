@@ -36,7 +36,8 @@ export function standTop(x: number, y: number, w: number, how: Footing, soon = f
     return;
   }
   R(x, y, w, how === "moves" ? 1 : 2, STAND.top);
-  if (how === "moves") R(x, y + 1, w, 1, STAND.moving);
+  // What moves and is about to set off (order 19): its whole top in the moving colour, flashing.
+  if (how === "moves") R(x, soon ? y : y + 1, w, soon ? 2 : 1, STAND.moving);
 }
 
 /** A tile he stands on that a level draws its own way (a risen stone, a crate): its standing top. */

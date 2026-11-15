@@ -1,4 +1,4 @@
-import { carrierDrawn, carrierShown } from "@larshansen/pixelkit/carrier";
+import { carrierDrawn, carrierShown, type CarrierDef } from "@larshansen/pixelkit/carrier";
 import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, ctx, target as setTarget, view } from "@larshansen/pixelkit/paint";
@@ -6,7 +6,7 @@ import { COIN, DUST, ENEMY, FEATHER, FLAG, FOOD, LAMP, METAL, PALETTE, ROLES, ST
 import { playerPixels, type Look } from "@larshansen/pixelkit/person";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Sfx, Voice } from "@larshansen/pixelkit/sfx";
-import { snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
+import { FONT, fontPx, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import type { Enemy } from "../game/enemies";
 import { HEARTS, type Events, type Play } from "../game/play";
@@ -413,7 +413,8 @@ export function createFeel(host: Host) {
         voice("lifeLost");
         pop.lives = t;
         pop.livesDown = true;
-        fill = { from: 0, at: t + 20 };
+        // The hearts come back one by one once the last has broken.
+        fill = { from: 0, at: t + 30 };
       }
       if (ev.life) {
         pop.lives = t;
@@ -701,6 +702,53 @@ export function createFeel(host: Host) {
       }
     },
 
+    /**
+     * Things to use (order 19): doors, benches and signs have their corners marked in the "use" cyan, one
+     * family at a glance, and keep their light after dark.
+     */
+    use(p: Play, doors: readonly { x: number; w: number; h: number; bottom: number }[], boards: readonly { cx: number; y: number; w: number; post?: number }[], map: boolean) {
+      for (let i = 0; i < doors.length; i++) {
+        const d = doors[i];
+        corners(d.x - 1, d.bottom - d.h - 1, d.w + 2, d.h + 1);
+      }
+      if (!map)
+        for (let i = 0; i < p.benches.length; i++) {
+          const s = p.benches[i];
+          corners(s.x - 12, s.bottom - 15, 24, 15);
+        }
+      for (let i = 0; i < boards.length; i++) {
+        const b = boards[i];
+        if (b.post !== undefined) corners(Math.round(b.cx - b.w / 2) - 1, b.y - 1, Math.round(b.w) + 2, 12);
+      }
+    },
+
+    /** The bubble that says which key (up at a door, at a bench; down at the shield's lesson): framed in the same cyan. */
+    hint(h: { x: number; y: number; text: string } | null) {
+      if (!h) return;
+      const u = textCtx();
+      u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;
+      const w = u.measureText(h.text).width + 18;
+      const hh = Math.max(24, fontPx() + 12);
+      const left = Math.max(6, Math.min(view.cssW - w - 6, sx(h.x) - w / 2));
+      const bottom = sy(h.y) - 8;
+      u.strokeStyle = ROLES.use;
+      u.lineWidth = 2;
+      u.beginPath();
+      if (u.roundRect) u.roundRect(left - 1, bottom - hh - 1, w + 2, hh + 2, hh / 2 + 1);
+      else u.rect(left - 1, bottom - hh - 1, w + 2, hh + 2);
+      u.stroke();
+    },
+
+    /** A lift or a train that stands and will set off within two thirds of a second: its stripe flashes (steady with reduced motion). */
+    leaving(d: CarrierDef, t: number): boolean {
+      if (!(d.kind === "lift" || (d.kind === "path" && d.stops?.length))) return false;
+      const a = carrierDrawn(d, t, 1);
+      const b = carrierDrawn(d, t - 1, 1);
+      if (a.x !== b.x || a.y !== b.y) return false;
+      const c = carrierDrawn(d, t + 40, 1);
+      return (c.x !== a.x || c.y !== a.y) && (view.reduced || (t >> 3) % 2 === 0);
+    },
+
     /** How strongly he is drawn: blinking after a hit, he is drawn half there every other fifth of a step. */
     alpha(p: Play): number {
       if (!blink(p) || view.reduced) return 1;
@@ -722,7 +770,7 @@ export function createFeel(host: Host) {
       fillGrid(body, walk, phase, look);
       const blinking = blink(p);
       if (phase !== "day" || (blinking && view.reduced)) {
-        g.globalAlpha = alpha * (phase === "night" ? 0.9 : 0.75);
+        g.globalAlpha = alpha * (phase === "day" ? 0.75 : RIM_ALPHA[phase]);
         g.fillStyle = blinking && view.reduced ? WHITE : RIM;
         for (let r = 0; r < GH; r++)
           for (let c = 0; c < GW; c++) {
@@ -770,13 +818,13 @@ export function createFeel(host: Host) {
       // The heart lost: it breaks in two where it was, the halves falling apart (still, with reduced motion).
       const broke = now - pop.broke;
       const host0 = hearts[pop.broken];
-      if (broke < 36 && host0) {
+      if (broke < 30 && host0) {
         const bh = brokenHeart(host0);
-        const k = reduced ? 0.2 : Math.min(1, broke / 30);
+        const k = reduced ? 0.2 : Math.min(1, broke / 24);
         bh.svg.style.display = "";
         bh.left.setAttribute("transform", `translate(${(-1.5 * k).toFixed(2)} ${(3 * k * k).toFixed(2)}) rotate(${(-25 * k).toFixed(1)} 3 6)`);
         bh.right.setAttribute("transform", `translate(${(1.5 * k).toFixed(2)} ${(3 * k * k).toFixed(2)}) rotate(${(25 * k).toFixed(1)} 4 6)`);
-        bh.svg.style.opacity = reduced ? "1" : (1 - Math.max(0, broke - 18) / 18).toFixed(2);
+        bh.svg.style.opacity = reduced ? "1" : (1 - Math.max(0, broke - 12) / 18).toFixed(2);
       } else if (bh0) bh0.svg.style.display = "none";
       ticked(host.coins, now - pop.coins, "#8f5326");
       ticked(host.lives, now - pop.lives, pop.livesDown ? ENEMY.warning : "#2e7d32");
@@ -811,9 +859,10 @@ export function createFeel(host: Host) {
 
 // --- Drawing helpers -----------------------------------------------------------------------------------
 
-/** The pale of his blinking figure; the warm rim round him after dusk (not the enemies' cold one). */
+/** The pale of his blinking figure; the warm rim round him after dusk (not the enemies' cold one), and how strongly it is drawn. */
 const PALE = "#fff6e0";
-const RIM = "#ffe2a0";
+export const RIM = "#ffe2a0";
+export const RIM_ALPHA = { evening: 0.75, twilight: 0.75, night: 0.9 };
 /** The dash's streak beside his blue; the fireworks' colours, the flag's and a lamp's. */
 const STREAK = "#90a3c6";
 const FIRE = [FLAG.red, FLAG.white, FLAG.blue, LAMP];
@@ -824,6 +873,20 @@ function glint(x: number, y: number) {
 }
 
 const CHECK = [3, 4, 3, 2, 1];
+/** The corners of a thing to use, two pixels each way, in the "use" cyan. */
+function corners(x: number, y: number, w: number, h: number) {
+  if (x + w < view.camX || x > view.camX + view.w || y + h < view.camY || y > view.camY + view.h) return;
+  const c = ROLES.use;
+  R(x, y, 3, 1, c);
+  R(x, y, 1, 3, c);
+  R(x + w - 3, y, 3, 1, c);
+  R(x + w - 1, y, 1, 3, c);
+  R(x, y + h - 1, 3, 1, c);
+  R(x, y + h - 3, 1, 3, c);
+  R(x + w - 3, y + h - 1, 3, 1, c);
+  R(x + w - 1, y + h - 3, 1, 3, c);
+}
+
 /** A tick: the dark disc with the pale check, as on a raised flag and an earned rune. */
 function tick(x: number, y: number) {
   R(x + 1, y, 5, 7, "#1f1a17");

@@ -10,6 +10,7 @@
 //   take     what he picks up: copper and gold with a pale glint (swatches/coin.ts, the gold in metal.ts)
 //   now      what a boss shows before it acts, and where to hit it: one violet, at all three bosses
 //   speech   the white bubbles and the dark plate of a place's name (the kit's text.ts)
+//   use      things to use, up at them (doors, benches, signs): one cyan, their corner marks and the arrow bubble's frame
 // Part of the palette: import it from there, as ROLES.
 
 import * as COIN from "./coin";
@@ -27,6 +28,8 @@ export const hurt = { edge: ENEMY.warning, stripe: ENEMY.outline };
 export const now = "#cc33ff";
 /** The speech bubbles' white and the banner's dark plate. */
 export const speech = { bubble: "#ffffff", plate: "#141622" };
+/** Things to use, up at them (order 19): doors, benches and signs have their corners marked in it, and the bubble that says which key frames itself in it. */
+export const use = "#1ad9ff";
 
 /** Every role's colours that must stand apart, by role (outlines, eyes and the line under a platform are contrast, not role, colours). */
 export const COLOURS: Record<string, readonly string[]> = {
@@ -34,5 +37,6 @@ export const COLOURS: Record<string, readonly string[]> = {
   enemy: [ENEMY.red, ENEMY.redLight, ENEMY.orange, ENEMY.orangeLight, ENEMY.plum, ENEMY.plumLight, ENEMY.poison, ENEMY.poisonLight],
   stand: [STAND.top, STAND.body, STAND.bodyLight, STAND.bodyDark, STAND.moving, STAND.warn],
   take: Object.values(take),
-  now: [now]
+  now: [now],
+  use: [use]
 };

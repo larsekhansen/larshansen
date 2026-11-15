@@ -170,13 +170,19 @@ async function strip(params: URLSearchParams, help: HTMLElement) {
     return link >= chain.length;
   };
   let waited = 0;
+  /** Where he was the step before the event (`at=was` crops round it: where he fell in, not where he is put back). */
+  const was = { x: g.shown.x, y: g.shown.y };
   if (!on()) while (waited++ < max) {
     heard.length = 0;
+    was.x = g.play.body.x;
+    was.y = g.play.body.y;
     step();
     if (on()) break;
   }
   if (waited > max) throw new Error(`no ${params.get("on")} in ${max} steps`);
-  const at = (params.get("at") ?? "").split(",").map(Number);
+  // `skip=N`: the frames begin N steps after the event (the feather is a while falling).
+  for (let k = Number(params.get("skip") ?? 0); k > 0; k--) step();
+  const at = params.get("at") === "was" ? [was.x + 5, was.y + 7] : (params.get("at") ?? "").split(",").map(Number);
   const fixed = at.length === 2 && at.every(Number.isFinite) ? { x: at[0], y: at[1] } : null;
   const CW = 224;
   const CH = 144;
@@ -194,7 +200,8 @@ async function strip(params: URLSearchParams, help: HTMLElement) {
     g.still();
     const x0 = 4 + f * (CW + 4);
     // The crop: CW x CH screen pixels at two per art pixel, round him (or the spot asked for).
-    const scale = 2 / view.k;
+    // Two screen pixels to an art pixel; with `scale=1`, one, so the crop takes in twice as much.
+    const scale = Number(params.get("scale") ?? 2) / view.k;
     const wx = fixed ? fixed.x : g.shown.x + 5;
     const wy = fixed ? fixed.y : g.shown.y + 7;
     const cx = sx(wx) * view.dpr;
@@ -367,7 +374,7 @@ function trigger(spec: string, g: Game): () => boolean {
       // `calm:statue` any statue; `calm:1` the enemy of that index.
       return edge(() => p().enemies.some((e, k) => (e.def.look === arg || String(k) === arg) && e.alive && (name === "calm" ? !!e.calm : !e.calm)));
     case "windup":
-      return edge(() => p().enemies.some((e) => e.def.kind === "thrower" && (!arg || e.def.look === arg) && windingUp(e, p().t)));
+      return edge(() => p().enemies.some((e, k) => e.def.kind === "thrower" && (!arg || e.def.look === arg || String(k) === arg) && windingUp(e, p().t)));
     case "swan":
       return () => p().enemies.some((e) => e.def.look === "swan" && e.n === Number(arg ?? 180));
     case "door":

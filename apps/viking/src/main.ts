@@ -1347,7 +1347,7 @@ function standing(v: View) {
   p.def.carriers.forEach((d) => {
     if (!carrierShown(d, p.t)) return;
     const at = carrierDrawn(d, p.t, v.alpha);
-    standTop(at.x, at.y, d.w, "moves");
+    standTop(at.x, at.y, d.w, "moves", feel?.leaving(d, p.t));
   });
   for (const l of p.def.timed) {
     const phase = timedPhase(p.t, l);
@@ -1489,6 +1489,7 @@ function render(alpha: number) {
   art.night?.(v, shown, scene.boards, p.map);
   drawSparks(state.sparks);
   feel?.world(p, p.t);
+  feel?.use(p, scene.doors, scene.boards, scene.map);
   if (state.feather) {
     const f = Math.min(1, (state.steps - state.feather.since) / FEATHER_FALL);
     if (f < 1) {
@@ -1537,24 +1538,27 @@ function render(alpha: number) {
   const seen = p.loaded || p.ducking ? 0 : state.alpha * (1 - state.fade);
   const seated = p.sitting || p.riding;
   const body = seated ? { ...shown, y: shown.y + 3 } : shown;
+  const hint =
+    door && !touch && !speaking && !frozen() && !state.bubble
+      ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
+      : bench !== null && !touch && !bubble
+        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
+        : lesson && !touch && !bubble
+          ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${shieldKit?.SHIELD_WORDS[lang].shield}` }
+          : null;
+  const shownBubble = door && !speaking && !state.bubble ? null : bubble;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
     banner: plated(state.banner),
     world: p.map,
     boards: scene.boards,
     player: { body, walk: seated ? 0 : state.walk, alpha: seen * (feel?.alpha(p) ?? 1), phase: sky.phase, look: look() },
-    hint:
-      door && !touch && !speaking && !frozen() && !state.bubble
-        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
-        : bench !== null && !touch && !bubble
-          ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
-          : lesson && !touch && !bubble
-            ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${shieldKit?.SHIELD_WORDS[lang].shield}` }
-            : null,
-    bubble: door && !speaking && !state.bubble ? null : bubble,
+    hint,
+    bubble: shownBubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
   feel?.him(p, body, seated ? 0 : state.walk, sky.phase, look(), seen);
+  if (!shownBubble) feel?.hint(hint);
   drawFlight();
   follows(door ?? (bench !== null ? benchStop : null), state.moved && state.steps > state.helpUntil);
   // The touch pad's button says what up does here: go in at a door, sit at a bench.
