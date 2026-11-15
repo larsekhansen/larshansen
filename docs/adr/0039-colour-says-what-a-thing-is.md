@@ -27,11 +27,16 @@ own.
   are found there and shine after dark (ADR 0023's eye-shine, now for every enemy with eyes). Stone does not
   bite: a statue he watches, Gamlebyen's guards while they are statues, a pulled-off sledger, the troll
   asleep or all stone, the plough parked are drawn plain.
-- **A quarter larger**, redrawn at that size (not scaled). Boxes grew with the pictures by a quarter where
-  the levels still pass their scripted clears, reach and dead-end searches and jump tests, and the sloppy
-  player's hearts did not rise by more than 0.3 a run; see the order's hand-back and DESIGN for which kept
-  their boxes. Where a box is kept the picture is wider round it, its top the box's top, so he lands on its
-  head where the head is drawn (tested within two pixels for every enemy he can stomp).
+- **A quarter larger**, redrawn at that size (not scaled). Boxes grew with the pictures by a quarter
+  (`GROW`, `sizeOf` in `game/enemies.ts`) on Holmenkollen, Nordmarka, Ekeberg, Vålerenga, Bygdøy,
+  Vigelandsparken, Korketrekkeren and Østensjøvannet, but for Ekeberg's magpie at column 116 and
+  Østensjøvannet's coot at 110 (a bigger box broke the scripted clear) and the statues (their heads are steps).
+  On Langkaia, Akershus, Rådhuset, Slottet, Akerselva, Stortinget, Bjørvika and Gamlebyen growing cost the
+  sloppy player more than 0.3 hearts a run against the code before, so every enemy there keeps its box
+  (`keepBoxes`) and plays exactly as before (`apps/viking/tools/review/o18/summary.md`); so do Slottet's
+  hot-dog cart and Stortinget's umbrella. A kept box's picture is as wide as the others and drawn to the box's
+  height (`parts`), so he lands on its head where the head is drawn (tested within two pixels for every enemy
+  he can stomp).
 - **The bosses** keep their looks, outlined; while they can hurt (the troll walking or raising its club, the
   plough driving or charging, the serpent's tail) the outline is the warning red, since they are dark on
   dark ground.
