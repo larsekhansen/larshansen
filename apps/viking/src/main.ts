@@ -309,7 +309,8 @@ function openScene(id: string, at?: string) {
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
   showShieldButton(!!play.shield?.has && !scene.map);
-  help.textContent = scene.map ? t.help : t.helpLevel(pole, !!play.shield?.has);
+  if (scene.map) help.textContent = t.help;
+  else keysLine(play);
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
@@ -537,7 +538,7 @@ function resumeScene(s: Scene) {
   finishEl.hidden = true;
   dashButton.hidden = !s.play.pole;
   showShieldButton(!!s.play.shield?.has);
-  help.textContent = t.helpLevel(s.play.pole, !!s.play.shield?.has);
+  keysLine(s.play);
   layout();
   hud();
 }
@@ -612,8 +613,16 @@ dashButton.textContent = t.dash;
 dashButton.setAttribute("aria-label", t.dash);
 /** The shield's button on the touch pad (down, held), beside the dash: shown once he has the shield. */
 const shieldButton = pad.querySelector<HTMLButtonElement>('[data-action="down"]')!;
-shieldButton.textContent = t.shield;
-shieldButton.setAttribute("aria-label", t.shield);
+/** Whether the help line and the shield's button are as they are on the sledge, where down ducks. */
+let keysRiding: boolean | null = null;
+/** The help line in a level, and the shield's button: on the sledge down ducks, and the button says so. */
+function keysLine(p: Play) {
+  keysRiding = p.riding;
+  help.textContent = p.riding ? t.helpSledge : t.helpLevel(p.pole, !!p.shield?.has);
+  const word = p.riding ? t.duck : t.shield;
+  shieldButton.textContent = word;
+  shieldButton.setAttribute("aria-label", word);
+}
 /** Shows the shield's button or not; with it the pad's buttons are made smaller, so they all fit. */
 function showShieldButton(on: boolean) {
   shieldButton.hidden = !on;
@@ -1009,7 +1018,7 @@ function react(ev: Events) {
     say((touch ? t.shieldGivenTouch : t.shieldGiven).join(" "));
     sparksAt(b.x + PLAYER.w / 2, b.y + 4, 10, METAL.goldLight, 0.8);
     showShieldButton(true);
-    help.textContent = t.helpLevel(p.pole, true);
+    keysLine(p);
   }
   if (ev.troll === "wake") {
     sfx.play("gate");
@@ -1094,6 +1103,7 @@ function play() {
   const airJumps = b.airJumps;
   const vx = b.vx;
   const ev = stepPlay(p, intent);
+  if (p.riding !== keysRiding) keysLine(p);
   session.lives = p.lives;
   session.purse = p.purse;
   if (ev.life && p.cheese?.at === p.t) session.cheese.add(p.def.id);

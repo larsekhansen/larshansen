@@ -1,6 +1,6 @@
 import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { R, ctx, layerX, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { INK, LAND, PALETTE, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
@@ -15,7 +15,8 @@ import type { Grounds, LevelDef, LevelRules, View } from "./types";
 // Level 14, rune I: Østensjøvannet, in the early morning, quiet. Its one idea: lily pads that sink
 // under him, and swans that mind their water. A swan glides along its stretch of the lake and lets him
 // be, but once he has been in its stretch four seconds it comes for him: for the last second before
-// that it lowers its neck and hisses (drawn still, with reduced motion). Leaving its stretch calms it.
+// that it lowers its neck and hisses (drawn still, with reduced motion). Leaving its stretch calms it,
+// and so does catching him. A lily pad holds him a second and two thirds before it goes under.
 // So the level asks him to keep moving over pads that will not hold him long, without rushing blind.
 //
 //   #  the paths and the island   P  the boardwalk over the shallows   K  a stone in the water
@@ -89,8 +90,13 @@ export const MAP = b.rows_();
 
 // --- The pads, the heron, the swans -------------------------------------------------------------------
 
+/**
+ * How long a lily pad holds him before it starts to go under: a second and two thirds, longer than a
+ * bundle of balsa (two thirds of a second), so a man who stops to look on one has time to see it go.
+ */
+export const LILY_FIRM = 100;
 /** A lily pad: its left end and its width (two tiles, or two and a half on a swan's water), its top on the water. */
-const pad = (x: number, w = 40): SinkPad => ({ x, y: FLOOR, w });
+const pad = (x: number, w = 40): SinkPad => ({ x, y: FLOOR, w, firm: LILY_FIRM });
 /** Pads in a row from x, each `w` wide, every `step` pixels. */
 const row = (x: number, n: number, w = 40, step = 60) => Array.from({ length: n }, (_, i) => pad(x + i * step, w));
 /**
@@ -194,6 +200,11 @@ export const RULES: LevelRules = {
     if (e.def.look !== "swan") return false;
     swan(e, p);
     return true;
+  },
+  // A swan that has caught him has made its point: while he blinks it lets him be, and starts counting again.
+  after(p) {
+    if (p.t >= p.safeUntil) return;
+    for (const e of p.enemies) if (e.def.look === "swan" && (e.n ?? 0) >= SWAN.come) e.n = 0;
   }
 };
 
@@ -224,26 +235,55 @@ const P = PALETTE;
 /** How far the sun is up, by how near he is to the far hide (and more once the rune is taken). */
 const sunUp = (v: View) => Math.max(0, Math.min(1, (v.him.x - 196 * TILE) / (44 * TILE))) + (v.flourish !== null ? Math.min(0.5, v.flourish / 120) : 0);
 
+/** The low sun's own colours, after the twilight's tint: its glow over the hills, gold high up to red low down, and its disc. */
+const GLOW = ["255, 214, 150", "255, 204, 140", "255, 192, 128", "255, 180, 118", "255, 166, 108", "255, 152, 100", "255, 138, 94", "255, 126, 90"];
+const DISC = ["#fff0c0", "#ffe2a0", "#ffd28a", "#ffbe72", "#ffa860", "#ff9452"];
+
 /** The far shore's low hills and the town's lights going out; at the far end, the sun coming up behind them. */
 function farShore(v: View) {
   const base = FLOOR - 22;
   const k = sunUp(v);
+  const hillTop = (x: number) => {
+    const wx = layerWorldX(x, 0.12);
+    return base - (14 + Math.round(5 * Math.sin(wx * 0.021) + 3 * Math.sin(wx * 0.07)));
+  };
   if (k > 0) {
     // The sun's disc rising over the far hills, a warm band along the sky above them.
-    const sx = layerX(248 * TILE, 0.12);
-    const sy = base - 8 - Math.round(k * 26);
+    // Off to the right of the far hide as he stands at the rune, so the hide does not hide it.
+    const sx = layerX(297 * TILE, 0.12);
+    const sy = base - 8 - Math.round(k * 34);
     const r = 11;
     for (let x = -r; x <= r; x++) {
       const h = Math.round(Math.sqrt(r * r - x * x));
       column(sx + x, sy - h, sy + h, x * x + 4 < r * r ? L.sun : mix(L.sun, WHITE, 0.4));
     }
     for (let x = 0; x < view.w; x++) column(x, base - 40, base - 30, `rgba(${L.sunGlow}, ${(0.18 * k * Math.max(0, 1 - Math.abs(x - sx) / 260)).toFixed(3)})`);
+    // The twilight's tint goes over the layer, and would leave the sun a grey disc: its own light comes
+    // on after it, as a window's does. A glow over the hills, red low down and gold higher, and the
+    // disc, gold, redder at its foot; none of it over the hills that stand in front of it.
+    for (let x = 0; x < view.w; x++) {
+      const near = k * Math.max(0, 1 - Math.abs(x - sx) / 240);
+      if (near <= 0.01) continue;
+      const top = hillTop(x);
+      // Eight bands, warmer and stronger down to the hills.
+      for (let i = 0; i < 8; i++) {
+        const y0 = base - 80 + i * 10;
+        const bottom = Math.min(y0 + 10, top);
+        if (bottom > y0) light(x + view.camX, y0, 1, bottom - y0, "soft", `rgba(${GLOW[i]}, ${(0.05 * (i + 1) * near).toFixed(3)})`);
+      }
+    }
+    // The disc: pale gold at the top, orange at its foot, none of it over the hills.
+    for (let x = -r; x <= r; x++) {
+      const h = Math.round(Math.sqrt(r * r - x * x));
+      const foot = Math.min(sy + h, hillTop(sx + x));
+      for (let y = sy - h; y < foot; y += 3) light(sx + x + view.camX, y, 1, Math.min(3, foot - y), "soft", DISC[Math.min(DISC.length - 1, Math.floor(((y - sy + r) / (2 * r + 1)) * DISC.length))]);
+    }
   }
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
-    const h = 14 + Math.round(5 * Math.sin(wx * 0.021) + 3 * Math.sin(wx * 0.07));
-    column(x, base - h, base, mix(LAND.farHills, STONE.dark, 0.3));
-    if (Math.floor(wx) % 17 === 0) column(x, base - h + 3, base - h + 4, L.sun);
+    const top = hillTop(x);
+    column(x, top, base, mix(LAND.farHills, STONE.dark, 0.3));
+    if (Math.floor(wx) % 17 === 0) column(x, top + 3, top + 4, L.sun);
   }
 }
 
@@ -525,7 +565,11 @@ function sunrise(v: View) {
   for (let x = Math.max(196 * TILE, view.camX); x < Math.min(COLS * TILE, view.camX + view.w); x += 4) {
     const near = Math.max(0, 1 - Math.abs(x - cx) / 700);
     R(x, view.camY, 4, FLOOR - view.camY, `rgba(${L.sunGlow}, ${(0.08 * k * near).toFixed(3)})`);
-    if (x % 8 === 0) R(x, FLOOR + 3 + ((x * 3) % 5), 6, 1, `rgba(${L.sunGlow}, ${(0.35 * k * near).toFixed(3)})`);
+    if (x % 8 === 0) {
+      R(x, FLOOR + 3 + ((x * 3) % 5), 6, 1, `rgba(${L.sunGlow}, ${(0.35 * k * near).toFixed(3)})`);
+      // The sun's path on the water, its own light after the twilight's tint.
+      if (near > 0.3) light(x, FLOOR + 3 + ((x * 3) % 5), 6, 1, "soft", `rgba(255, 200, 130, ${(0.5 * k * near).toFixed(3)})`);
+    }
   }
   g.globalCompositeOperation = "source-over";
 }

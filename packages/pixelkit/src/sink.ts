@@ -14,6 +14,8 @@ export interface SinkPad {
   w: number;
   /** How far it goes under. */
   depth?: number;
+  /** Steps it stands firm under him before it starts to go under, when not `SINK.firm`. */
+  firm?: number;
 }
 
 /** Steps it stands firm under him, steps it takes to go under, steps after he leaves until it is back; and how deep it goes. */
@@ -54,7 +56,7 @@ export function stepPads(pads: readonly SinkPad[], states: PadState[], step: num
     const on = b.onGround && Math.abs(b.y + PLAYER.h - padY(p, s, step)) < 0.01 && b.x + PLAYER.w > p.x && b.x < p.x + p.w;
     if (on) {
       s.leftAt = null;
-      if (s.sinkAt === null && ++s.on >= SINK.firm) s.sinkAt = step;
+      if (s.sinkAt === null && ++s.on >= (p.firm ?? SINK.firm)) s.sinkAt = step;
       return;
     }
     if (s.sinkAt === null) s.on = 0;

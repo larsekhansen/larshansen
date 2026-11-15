@@ -14,7 +14,12 @@
 // with him on a different floor than the perfect run (a fall that cost no heart), the route is
 // re-synchronised to the nearest place the perfect run stood, so he climbs back as a person would.
 //
-// Run:   bun /path/to/sloppy.ts [levels=all|id,id] [ks=0,2,4,8] [seeds=30] [drop=0] [overhold=0] [out=file.jsonl]
+// The hesitating player (`hesitate=0.2`): the same, but before a share of its moves (seeded) it stands
+// still 0.5 to 1.5 s first, as a person who stops to look does. Only where a person would: on the
+// ground, not while a raft or a hook carries him, and not right after a move that only stood and
+// waited for something (that wait was the timing; a pause after it would be a different plan).
+//
+// Run:   bun /path/to/sloppy.ts [levels=all|id,id] [ks=0,2,4,8] [seeds=30] [drop=0] [overhold=0] [hesitate=0] [out=file.jsonl]
 // e.g.   bun sloppy.ts levels=radhuset ks=4 seeds=20
 // Output: one JSON line per run (to out=, default stdout) and a summary table per level and k.
 
@@ -87,8 +92,26 @@ interface Auto {
   mem: any;
   /** A walk to where the perfect run stood, first, after he was put back or re-synchronised elsewhere. */
   pre?: { move: any; mem: any };
+  /** Steps the hesitating player still stands before it goes on. */
+  hold?: number;
 }
-function botKeys(moves: any[], p: any, A: Auto): Intent {
+/** The hesitating player's share of moves it stops before, and its seed. */
+export interface Hesitate {
+  share: number;
+  seed: number;
+}
+/** Riding something of the level's that moves on its own (a raft, a hook, a lift): no time to stop and look. */
+const ridingCarrier = (p: any) =>
+  p.body.onGround &&
+  p.def.carriers.some((d: any) => {
+    const c = BOT.carrier(p, d);
+    return Math.abs(p.body.y + PH - c.y) < 0.01 && p.body.x + PW > c.x && p.body.x < c.x + d.w;
+  });
+function botKeys(moves: any[], p: any, A: Auto, hes?: Hesitate): Intent {
+  if (A.hold) {
+    A.hold--;
+    return NONE;
+  }
   if (A.pre) {
     const k = A.pre.move.keys(p, A.pre.mem);
     if (k !== "done" && A.pre.mem.i < 600) {
@@ -100,11 +123,22 @@ function botKeys(moves: any[], p: any, A: Auto): Intent {
   while (A.m < moves.length) {
     const k = moves[A.m].keys(p, A.mem);
     if (k === "done") {
+      // A move that only stood still (a wait for a raft, a beat) was the timing: no pause after it.
+      const waited = A.mem.i > 1 && !A.mem.busy;
       A.m++;
       A.mem = { i: 0, air: false };
+      if (hes && !waited && A.m < moves.length && p.body.onGround && !ridingCarrier(p)) {
+        // Seeded by the run, the move and the clock, so the look-ahead's copy decides as the run itself will.
+        const r = rng(hes.seed * 1000003 + A.m * 7919 + p.t * 31);
+        if (r() < hes.share) {
+          A.hold = 30 + Math.floor(r() * 61) - 1;
+          return NONE;
+        }
+      }
       continue;
     }
     A.mem.i++;
+    if (k.left || k.right || k.jumpHeld || k.jumpPressed || k.shield || k.dash) A.mem.busy = true;
     return k;
   }
   return NONE;
@@ -233,6 +267,8 @@ export interface Cfg {
   startPlay?: any;
   startA?: { m: number; mem: any };
   stopAt?: number;
+  /** The hesitating player: the share of moves before which it stands 0.5 to 1.5 s (0 or absent: never). */
+  hesitate?: number;
 }
 
 export interface Hurt {
@@ -280,6 +316,7 @@ export interface RunResult {
 
 export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult {
   const r = rng(cfg.seed * 7919 + cfg.k * 104729 + 17);
+  const hes: Hesitate | undefined = cfg.hesitate ? { share: cfg.hesitate, seed: cfg.seed * 13 + cfg.k } : undefined;
   const p = cfg.startPlay ?? newPlay(def, { pole: cfg.pole, lives: cfg.lives });
   if (!cfg.startPlay) fixSheep(p);
   let A: Auto = cfg.startA ? { m: cfg.startA.m, mem: { ...cfg.startA.mem } } : { m: 0, mem: { i: 0, air: false } };
@@ -360,7 +397,7 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
       prevM = A.m;
     }
     const mBefore = A.m;
-    H[n] = botKeys(moves, p, A);
+    H[n] = botKeys(moves, p, A, hes);
     // A jump that went nowhere (pressed too early from a standstill, or too short, and he is back on
     // the floor he left): a person jumps again. The route would walk on as if it had worked.
     if (A.m > mBefore && p.body.onGround && !fight && timedMove(moves[mBefore].name)) {
@@ -374,7 +411,7 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
         if (c <= RETRIES) {
           res.resyncs.push({ t: n, x: Math.round(cx(p)), feet: feet(p), refCost: 0 });
           A = { m: mBefore, mem: { i: 0, air: false }, pre: Math.abs(cx(p) - start.x) > 2 ? { move: BOT.walk(start.x), mem: { i: 0, air: false } } : undefined };
-          H[n] = botKeys(moves, p, A);
+          H[n] = botKeys(moves, p, A, hes);
         }
       }
     }
@@ -383,10 +420,10 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
     const F: Intent[] = [H[n]];
     if (K > 0) {
       const q = clonePlay(p);
-      const B: Auto = { m: A.m, mem: { ...A.mem }, pre: A.pre && { move: A.pre.move, mem: { ...A.pre.mem } } };
+      const B: Auto = { m: A.m, mem: { ...A.mem }, pre: A.pre && { move: A.pre.move, mem: { ...A.pre.mem } }, hold: A.hold };
       for (let j = 1; j <= K; j++) {
         stepPlay(q, F[j - 1]);
-        F.push(q.run.state === "done" || q.run.state === "over" ? NONE : botKeys(moves, q, B));
+        F.push(q.run.state === "done" || q.run.state === "over" ? NONE : botKeys(moves, q, B, hes));
       }
     }
     const src = (t: number): Intent => (t < 0 ? NONE : t <= n ? H[t] ?? NONE : F[t - n] ?? F[F.length - 1]);
@@ -580,6 +617,7 @@ if (import.meta.main) {
   const seeds = Number(args.seeds ?? 30);
   const drop = Number(args.drop ?? 0);
   const overhold = Number(args.overhold ?? 0);
+  const hesitate = Number(args.hesitate ?? 0);
   const outFile = args.out;
   const lines: string[] = [];
   for (const [id, def, moves] of LEVELS) {
@@ -591,7 +629,7 @@ if (import.meta.main) {
       const runs: RunResult[] = [];
       const t0 = performance.now();
       for (let seed = 1; seed <= (k === 0 ? 1 : seeds); seed++) {
-        const res = sloppyRun(id, def, moves as any[], ref, { k, drop, overhold, seed, pole });
+        const res = sloppyRun(id, def, moves as any[], ref, { k, drop, overhold, seed, pole, hesitate });
         runs.push(res);
         lines.push(JSON.stringify(res));
       }
@@ -601,7 +639,7 @@ if (import.meta.main) {
       const lives = runs.reduce((a, x) => a + x.livesLost, 0) / runs.length;
       const secs = runs.filter((x) => x.outcome === "clear").map((x) => x.seconds);
       console.error(
-        `  k=${k} drop=${drop} overhold=${overhold}: clear ${clear}/${runs.length}, game over ${over}, timeout ${runs.length - clear - over}; hearts lost ${hearts.toFixed(1)}/run, lives ${lives.toFixed(2)}/run; clear time median ${secs.length ? secs.sort((a, b) => a - b)[Math.floor(secs.length / 2)].toFixed(0) : "-"} s (${((performance.now() - t0) / 1000).toFixed(0)} s wall)`
+        `  k=${k} drop=${drop} overhold=${overhold}${hesitate ? ` hesitate=${hesitate}` : ""}: clear ${clear}/${runs.length}, game over ${over}, timeout ${runs.length - clear - over}; hearts lost ${hearts.toFixed(1)}/run, lives ${lives.toFixed(2)}/run; clear time median ${secs.length ? secs.sort((a, b) => a - b)[Math.floor(secs.length / 2)].toFixed(0) : "-"} s (${((performance.now() - t0) / 1000).toFixed(0)} s wall)`
       );
     }
   }
