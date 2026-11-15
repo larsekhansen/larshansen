@@ -72,9 +72,9 @@ b.run(182, 190, 10, "_");
 // storehouses on stilts behind him, the ridges of their turf roofs the slingers' perches -
 b.fill(LOFT[0], LOFT[1], 11, W - 2, "L");
 for (const c of [222, 231]) b.run(c, c + 1, 13, "^");
-// The slip in the yard where a boat lies moored, its deck rocking: the second deck crossing, under the
-// first storehouse's slinger.
-water(215, 224);
+// The slip in the yard where a boat lies moored, its deck rocking at the yard's height: the second deck
+// crossing, under the first storehouse's slinger. The water in the slip lies a tile lower than the fjord's.
+b.fill(215, 224, W, W, ".").fill(215, 224, W + 1, W + 2, "~").ground(215, 224, W + 3);
 // --- The museum's stepped gable, up to the roof's ridge ---------------------------------------------
 b.run(238, 240, 17, "-").run(241, 243, 15, "-").run(244, 246, 13, "-").run(247, 249, 11, "-").run(250, 255, 9, "-");
 
@@ -162,7 +162,7 @@ export const GJOA_DECK: Deck = { x: 98 * TILE, y: 200, w: 11 * TILE, seg: 4, til
  * The boat moored in the yard's slip, level with the yard: its deck rocks, its middle stays (the firm place
  * to stop and raise the shield), and the slinger on the storehouse over its far half throws at him on it.
  */
-export const YARD_DECK: Deck = { x: 215 * TILE, y: FLOOR, w: 10 * TILE, seg: 4, tilt: [10, -10], hold: 90, move: 50, offset: 20 };
+export const YARD_DECK: Deck = { x: 215 * TILE, y: FLOOR, w: 10 * TILE, seg: 4, tilt: [8, -8], hold: 90, move: 50, offset: 20 };
 const DECKS = [FRAM_DECK, GJOA_DECK, YARD_DECK];
 
 /** Bundles of balsa logs between the rafts: they hold him a moment, then go under. */

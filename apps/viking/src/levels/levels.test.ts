@@ -910,7 +910,7 @@ describe("Bygdøy, the first of line 2", () => {
     const middles = new Set(Array.from({ length: 400 }, (_, t) => deckTops(YARD_DECK, t)[Math.floor(n / 2)]));
     expect([...middles].every((y) => Math.abs(y - YARD_DECK.y) <= 1)).toBe(true);
     const ends = new Set(Array.from({ length: 400 }, (_, t) => deckTops(YARD_DECK, t)[0]));
-    expect(Math.max(...ends) - Math.min(...ends)).toBeGreaterThanOrEqual(16);
+    expect(Math.max(...ends) - Math.min(...ends)).toBeGreaterThanOrEqual(8);
     // The slinger on the first storehouse throws at him on the boat's near half.
     const slinger = BYGDOY.enemies!.find((e) => e.c === 222)!;
     const mid = YARD_DECK.x + YARD_DECK.w / 2 - TILE;
