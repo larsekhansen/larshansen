@@ -281,6 +281,12 @@ const RECOVER: Record<string, { at: (p: any) => boolean; moves: (p: any) => any[
     at: (p) => (Math.abs(feet(p) - 21 * 16) < 1 || Math.abs(feet(p) - 19 * 16) < 1) && cx(p) > 75 * 16 && cx(p) < 84 * 16,
     moves: (p) => (feet(p) > 20 * 16 ? [BOT.walk(77 * 16 + 4), BOT.jumpTo(76 * 16), BOT.jumpTo(73 * 16 + 8)] : [BOT.jumpTo(73 * 16 + 8)]),
     resume: "the first hook at this end"
+  },
+  // Off St. Clement's rising stones onto the floor inside the ruin: back up the west wall's stub.
+  gamlebyen: {
+    at: (p) => Math.abs(feet(p) - 19 * 16) < 1 && cx(p) > 35 * 16 && cx(p) < 48 * 16,
+    moves: () => [BOT.walk(35 * 16 + 4), BOT.jumpTo(34 * 16 + 8)],
+    resume: "the stone at 37,15 risen"
   }
 };
 
@@ -393,18 +399,19 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
       res.outcome = "over";
       break;
     }
-    // A move that never ends (a walk that bounces on a washing line for ever): on to the next.
-    if (A.m < moves.length && A.mem.i > 900 && !p.body.onGround) {
+    const fight = (p.troll && !["asleep", "stone"].includes(p.troll.phase)) || (p.boss && !["parked", "asleep", "beaten"].includes(p.boss.state.phase));
+    // A move that never ends (a walk that bounces on a washing line for ever): on to the next. (Not a
+    // boss's fight, which is one long move of its own.)
+    if (A.m < moves.length && A.mem.i > 900 && !p.body.onGround && !fight) {
       res.resyncs.push({ t: n, x: Math.round(cx(p)), feet: feet(p), refCost: 0 });
       A = { m: A.m + 1, mem: { i: 0, air: false } };
     }
-    const fight = (p.troll && !["asleep", "stone"].includes(p.troll.phase)) || (p.boss && !["parked", "asleep", "beaten"].includes(p.boss.state.phase));
     // Re-synchronise to the nearest place the perfect run stood. If that place cannot be walked to
     // from here (he fell somewhere the route never goes), the run ends "offroute"; after RETRIES
     // at one place it ends "gaveup".
     let why: string | null = null;
     if (p.body.onGround && n - lastResync > 30) {
-      if (A.m >= moves.length || A.mem.i > 900) why = "lost";
+      if (A.m >= moves.length || (A.mem.i > 900 && !fight)) why = "lost";
       else if (!fight && p.map.supports(p.body) && feet(p) > (ref.lowest.get(A.m) ?? Infinity) + 12) why = "fell";
     }
     if (why) {

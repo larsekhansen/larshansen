@@ -15,10 +15,10 @@ export function showErrors(help: HTMLElement) {
     });
 }
 
-/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it. */
+/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it; `all` is every station. */
 export function debugProgress(params: URLSearchParams): Progress | null {
   if (!params.has("cleared") && !params.has("gold") && !params.has("clean")) return null;
-  const list = (k: string) => (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id));
+  const list = (k: string) => (params.get(k) === "all" ? [...ORDER] : (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id)));
   return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
 }
 

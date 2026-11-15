@@ -63,7 +63,7 @@ b.fill(93, 93, BANK - 4, BANK - 1, "Z");
 // --- The water mirror where the shore was: the banks, the pool, its stepping stones ---------------------------
 b.ground(93, 98, BANK).fill(99, 126, BANK, BANK + 1, "~").ground(99, 126, BANK + 2).ground(127, 137, BANK);
 /** The stepping stones, a row over the water: they rise as he comes. */
-export const STEPS = [[101, 102], [105, 106], [109, 110], [113, 114], [117, 118], [121, 122], [125, 125]];
+export const STEPS = [[101, 102], [106, 107], [111, 112], [116, 117], [121, 122], [125, 125]];
 for (const [c0, c1] of STEPS) b.run(c0, c1, BANK - 1, "z");
 // --- The town wall and its walk, the arches the archers stand on ---------------------------------------------
 b.ground(138, 175, TOWN, "R");
@@ -91,7 +91,7 @@ const COINS: [number, number][] = [
   [10, 18], [12, 16], [13, 16], [20, 15], [24, 16], [25, 16],
   [36, 14], [38, 14], [41, 12], [44, 10], [48, 7], [49, 7], [56, 20], [57, 20],
   [64, 13], [68, 13], [72, 13], [76, 13], [80, 13], [84, 13], [88, 13],
-  [100, 15], [103, 14], [107, 14], [111, 14], [115, 14], [119, 14], [123, 14],
+  [100, 15], [104, 14], [109, 14], [114, 14], [119, 14], [123, 14],
   [136, 14], [136, 12], [137, 10],
   [143, 9], [147, 9], [151, 9], [155, 9], [159, 9], [163, 9], [167, 9], [171, 9],
   [180, 11], [184, 11], [189, 8], [192, 6], [196, 6], [201, 11],
@@ -108,7 +108,7 @@ export const MAP = b.rows_();
 export const STONES = MAP.flatMap((row, r) => [...row].flatMap((ch, c) => (ch === "Z" || ch === "z" ? [{ c, r, wall: ch === "Z", behind: CLOSERS.includes(c) }] : [])));
 const STONE_AT = new Map(STONES.map((s, i) => [s.r * COLS + s.c, i]));
 /** Steps a stone takes to rise; how near he must come (tiles across, and up or down). */
-export const RISE = { steps: 20, near: 5, up: 7, behind: 3 };
+export const RISE = { steps: 20, near: 6, up: 7, behind: 3 };
 
 /** The tower that builds itself under his feet: where it stands, how low and how high it goes, how fast, how long it waits for him before it sinks back. */
 export const TOWER = { x: 136 * TILE, w: 2 * TILE, low: BANK * TILE, high: TOWN * TILE, up: 1, down: 1, wait: 180 };
@@ -210,12 +210,12 @@ export const LONGSHIPS: CarrierDef[] = [
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 9, r: STREET - 1, range: 2 },
   { kind: "flyer", look: "owl", c: 27, r: STREET - 4, range: 2, rise: 6, period: 180 },
-  { kind: "walker", look: "guard", c: 70, r: WALL - 1, range: 2, speed: 0.4 },
-  { kind: "walker", look: "guard", c: 78, r: WALL - 1, range: 2, speed: 0.4, dir: -1 },
-  { kind: "walker", look: "guard", c: 86, r: WALL - 1, range: 2, speed: 0.4 },
+  { kind: "walker", look: "guard", c: 70, r: WALL - 1, range: 2, speed: 0.5 },
+  { kind: "walker", look: "guard", c: 78, r: WALL - 1, range: 2, speed: 0.5, dir: -1 },
+  { kind: "walker", look: "guard", c: 86, r: WALL - 1, range: 2, speed: 0.5 },
   { kind: "walker", look: "rat", c: 57, r: STREET + 1, range: 1 },
-  { kind: "thrower", look: "archer", c: 150, r: TOWN - 4, period: 120, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
-  { kind: "thrower", look: "archer", c: 162, r: TOWN - 4, period: 120, offset: 60, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
+  { kind: "thrower", look: "archer", c: 150, r: TOWN - 4, period: 100, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
+  { kind: "thrower", look: "archer", c: 162, r: TOWN - 4, period: 100, offset: 50, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
   { kind: "walker", look: "goose", c: 195, r: MARKET - 1, range: 2, speed: 0.45 },
   { kind: "walker", look: "goose", c: 200, r: MARKET - 1, range: 1, speed: 0.45, dir: -1 },
   { kind: "walker", look: "dog", c: 210, r: MARKET - 1, range: 1, speed: 0.5 }
@@ -372,6 +372,11 @@ function market(t: number) {
   for (let x = x0; x < x1; x += 4) R(x, g - 4 * TILE, 1, 4 * TILE, G.timberDark);
   R(x0 + 64, g - 30, 18, 30, mix(G.timberDark, INK, 0.4));
   light(x0 + 66, g - 28, 14, 26, "soft", "rgba(255, 170, 90, 0.35)");
+  // Firelight from inside: slits in the plank wall, and the light from the door on the street.
+  for (const wx of [x0 + 18, x0 + 40, x0 + 110, x0 + 140]) light(wx, g - 44, 3, 10, "window");
+  light(x0 + 50, g - 1, 50, 4, "pool");
+  // The shingles catch the torches' light along their lower edge.
+  for (let x = x0 + 8; x < x1 - 8; x += 6) light(x, g - 4 * TILE - 1, 3, 1, "soft", "rgba(255, 190, 120, 0.4)");
   for (let k = 0; k < 4 * TILE; k++) R(x0 + 8 + Math.floor(k / 2), g - 4 * TILE - k, x1 - x0 - 16 - k, 1, k % 6 === 0 ? G.timberDark : G.shingle);
   for (const [x, d] of [[x0 + 2, -1], [x1 - 2, 1]] as const) {
     for (let k = 0; k < 12; k++) R(x + d * k, g - 4 * TILE - 22 - Math.round(k * 0.8), 2, 2, G.dragon);
@@ -464,6 +469,8 @@ function quayPlank(c: number, x: number, y: number) {
   if (c % 3 === 0) R(x + 6, y + 6, 4, TILE - 6, G.plankDark);
 }
 
+/** The water under the quay's deck, below its top: where the ring of foam shows, and the tail's tip breaks it. */
+const WATERLINE = TILE + 6;
 /** The moonlit rim on the serpent after dark, as an enemy's (ADR 0023). */
 const RIM = "rgba(201, 216, 255, 0.55)";
 
@@ -477,8 +484,8 @@ function serpentArt(s: Serpent, v: View) {
     const r = ringRadius(age, view.reduced);
     for (let k = -r; k <= r; k++) {
       const dy = Math.round(Math.sqrt(Math.max(0, r * r - k * k)) * 0.35);
-      light(x + k, floor + 6 + dy, 1, 1, "soft", G.foam);
-      light(x + k, floor + 6 - dy, 1, 1, "soft", G.foam);
+      light(x + k, floor + WATERLINE + dy, 1, 1, "soft", G.foam);
+      light(x + k, floor + WATERLINE - dy, 1, 1, "soft", G.foam);
     }
     return;
   }
@@ -520,14 +527,15 @@ function serpentArt(s: Serpent, v: View) {
     if (s.phase === "dazed" && !view.reduced) for (let k = 0; k < 3; k++) R(h.x + h.w / 2 + Math.round(Math.cos(t * 0.1 + k * 2.1) * 9), h.y - 4 + Math.round(Math.sin(t * 0.1 + k * 2.1) * 2), 2, 2, G.brine);
     return;
   }
-  if (s.phase === "dive" && !view.reduced) for (let k = 0; k < 6; k++) R(x - 10 + k * 4, floor + 4 - ((age + k * 3) % 8), 2, 2, G.foam);
+  if (s.phase === "dive" && !view.reduced) for (let k = 0; k < 6; k++) R(x - 10 + k * 4, floor + WATERLINE - ((age + k * 3) % 8), 2, 2, G.foam);
   if (s.phase === "tail") {
     const tb = tailBox(s, t);
     if (!tb && s.tail) {
       // The tip breaking the water at the quay's end: the warning.
       const wx = s.tail.x - s.tail.dir * 6;
-      R(wx - 3, floor + 2, 6, 6, G.serpentDark);
-      R(wx - 6, floor + 6, 12, 2, G.foam);
+      R(wx - 3, floor + WATERLINE - 6, 6, 6, G.serpentDark);
+      light(wx - 3, floor + WATERLINE - 7, 6, 1, "soft", RIM);
+      R(wx - 6, floor + WATERLINE, 12, 2, G.foam);
       return;
     }
     if (tb) {

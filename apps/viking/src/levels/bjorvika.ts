@@ -108,13 +108,14 @@ export const HOIST: Lift = { kind: "lift", x: 34 * TILE, w: 2 * TILE, bottom: G 
 
 /**
  * A crane hook: its block two tiles wide, level with the landings, there and back on its beat over the
- * gap between them, slow at each end, where it comes to a tile from the landing's edge: on and off are a
- * hop, and the moment is his to pick. `c0` and `c1` are the gap's first column and the landing's beyond it.
+ * gap between them, slow at each end. At the near end it comes to a tile from the landing's edge, so on is
+ * a hop at the moment he picks; at the far end it comes right up to the next landing (or to a tile from the
+ * next hook), and off is a step. `c0` and `c1` are the gap's first column and the landing's beyond it.
  */
 const hook = (c0: number, c1: number, row: number, period: number, offset: number): Travel => ({
   kind: "travel",
   from: { x: (c0 + 1) * TILE, y: row * TILE },
-  to: { x: (c1 - 3) * TILE, y: row * TILE },
+  to: { x: (c1 - 2) * TILE, y: row * TILE },
   w: 2 * TILE,
   period,
   offset
@@ -122,24 +123,24 @@ const hook = (c0: number, c1: number, row: number, period: number, offset: numbe
 /** The first hook, over the bay and its net: from the floor's end to the floor beyond it. */
 export const HOOK_1 = hook(75, 84, F1, 300, 257);
 /** Across the drop: from the upper slab to the second tower, and from it to the third. */
-export const HOOK_2 = hook(98, 108, F2, 300, 214);
-export const HOOK_3 = hook(118, 128, F2, 300, 198);
+export const HOOK_2 = hook(98, 108, F2, 300, 230);
+export const HOOK_3 = hook(118, 128, F2, 300, 229);
 /** The traverse under the top crane's jib: three hooks in a row, each at its far end as the next is at its near end, a tile apart. (The beats are set so the scripted route meets each hook as it comes: `tools/review/tune-bjorvika.ts`.) */
 const TRAVERSE = 240;
-export const HOOK_5 = hook(216, 225, ROOF, TRAVERSE, 47);
-export const HOOK_6 = hook(224, 233, ROOF, TRAVERSE, 47 + TRAVERSE / 2);
-export const HOOK_7 = hook(232, 240, ROOF, TRAVERSE, 47);
+export const HOOK_5 = hook(216, 224, ROOF, TRAVERSE, 49);
+export const HOOK_6 = hook(224, 232, ROOF, TRAVERSE, 49 + TRAVERSE / 2);
+export const HOOK_7 = hook(232, 240, ROOF, TRAVERSE, 49);
 export const HOOKS = [HOOK_1, HOOK_2, HOOK_3, HOOK_5, HOOK_6, HOOK_7];
 
-/** Loose sheets of steel over the shafts, sliding across in the wind: flush with the floor, a tile and a half wide, from one side of the shaft to the other. */
-const SHEET_PERIOD = 180;
-export const SHEETS: Travel[] = SHAFTS.map((c, i) => ({ kind: "travel", from: { x: c * TILE, y: F2 * TILE }, to: { x: (c + 5) * TILE - 24, y: F2 * TILE }, w: 24, period: SHEET_PERIOD, offset: [34, 43, 52][i] }));
+/** Loose sheets of steel over the shafts, sliding across in the wind: flush with the floor, a tile and a quarter wide, from one side of the shaft to the other. */
+const SHEET_PERIOD = 120;
+export const SHEETS: Travel[] = SHAFTS.map((c, i) => ({ kind: "travel", from: { x: c * TILE, y: F2 * TILE }, to: { x: (c + 5) * TILE - 20, y: F2 * TILE }, w: 20, period: SHEET_PERIOD, offset: [25, 1, 98][i] }));
 
 export const CARRIERS: CarrierDef[] = [HOIST, HOOK_1, HOOK_2, HOOK_3, ...SHEETS, HOOK_5, HOOK_6, HOOK_7];
 
-/** The gusts over the shafts' floor, against him: five seconds still, a second of dust, a second and a half of wind. */
-export const GUST_BEAT: Pulse = { rest: 300, warn: 60, live: 90, offset: 310 };
-export const GUSTS: Zone[] = [{ x: 139 * TILE, y: 9 * TILE, w: 33 * TILE, h: (F2 - 9) * TILE, push: { x: -0.55, y: 0 }, beat: GUST_BEAT }];
+/** The gusts over the shafts' floor, against him: four seconds still, a second of dust, a second of wind; three of the sheets' rounds to each. */
+export const GUST_BEAT: Pulse = { rest: 240, warn: 60, live: 60, offset: 271 };
+export const GUSTS: Zone[] = [{ x: 139 * TILE, y: 9 * TILE, w: 33 * TILE, h: (F2 - 9) * TILE, push: { x: -0.65, y: 0 }, beat: GUST_BEAT }];
 
 /** The rebar sticking up out of the open floor; the welder's sparks falling past the beam onto it, on a beat. */
 export const REBAR: Hazard = { x: 46 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };

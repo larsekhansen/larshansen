@@ -110,7 +110,7 @@ export const GAMLEBYEN_ROUTE: Move[] = [
   // The street and the park: the rat, the low walls, the dig.
   walk(mid(16)),
   walk(tile(23)),
-  leapTo(tile(24) - 2, mid(27), "over the dig"),
+  leapTo(tile(24) - 2, mid(27), "leap over the dig"),
   // St. Clement's ruin: up its rising stones to the gable, and down into the street.
   walk(mid(33)),
   jumpTo(mid(34)),
@@ -128,7 +128,7 @@ export const GAMLEBYEN_ROUTE: Move[] = [
   walk(mid(52)),
   // Over the crypt's hole, onto the bishop's wall, the guards as they wake.
   walk(tile(54) + 2),
-  leapTo(tile(55) - 2, mid(57), "over the crypt's hole"),
+  leapTo(tile(55) - 2, mid(57), "leap over the crypt's hole"),
   walk(mid(59)),
   jumpTo(mid(61)),
   jumpTo(mid(63)),

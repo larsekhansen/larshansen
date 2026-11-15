@@ -45,25 +45,6 @@ const across = (d: Travel, name: string, off: number, ready: (q: Play) => boolea
   walk(off)
 ];
 
-/**
- * Runs right from where he stands and jumps as his front reaches `edge` (a number, or the edge of the
- * block he rides), steering in the air to come down on the middle of `to` (a block, or a spot).
- */
-const hopTo = (name: string, edge: (q: Play) => number, to: (q: Play) => number): Move => ({
-  name,
-  keys(q, s) {
-    if (s.air && q.body.onGround) return "done";
-    if (!q.body.onGround) s.air = true;
-    if (s.took === undefined) {
-      if (q.body.x + PLAYER.w < edge(q) - 1 && q.body.onGround) return { ...NONE, right: true };
-      s.took = s.i;
-    }
-    const k = s.i - (s.took as number);
-    const aim = to(q) - q.body.vx * 7 - cx(q);
-    return { left: aim < -2, right: aim > 2, jumpHeld: k < 30, jumpPressed: k === 0 };
-  }
-});
-
 /** The middle of a hook's block now. */
 const blockMiddle = (d: Travel) => (q: Play) => carrierAt(d, q.t).x + d.w / 2;
 
@@ -76,8 +57,7 @@ const hook = (d: Travel, name: string, off: number): Move[] => [
   wait(`${name} at this end`, (q) => atFrom(q, d)),
   jumpTo(d.from.x + d.w / 2),
   wait(`on ${name} to the far end`, (q) => atTo(q, d)),
-  walk(d.to.x + 8),
-  hopTo(`off ${name}`, () => d.to.x + d.w - 2, () => off)
+  walk(off)
 ];
 
 /** To the front of the block he rides, keeping up with it as it goes. */
@@ -106,7 +86,7 @@ const hop = (from: Travel, to: Travel, name: string): Move[] => [
 ];
 
 /** The gust is calm, and stays calm while a sheet is crossed. */
-const calm = (q: Play) => pulsePhase(q.t, GUST_BEAT) === "rest" && pulseAge(q.t, GUST_BEAT).age < GUST_BEAT.rest - 130;
+const calm = (q: Play) => pulsePhase(q.t, GUST_BEAT) === "rest" && pulseAge(q.t, GUST_BEAT).age < GUST_BEAT.rest - 75;
 
 /** The riveters (enemies 9 and 10): a bolt coming at him, or one of them about to throw at him. */
 const RIVETERS = [9, 10];
@@ -167,8 +147,6 @@ export const BJORVIKA_ROUTE: Move[] = [
   ...hop(HOOK_5, HOOK_6, "onto the second hook of the traverse"),
   ...hop(HOOK_6, HOOK_7, "onto the third hook of the traverse"),
   wait("on the third hook to the crane", (q) => atTo(q, HOOK_7)),
-  walk(HOOK_7.to.x + 8),
-  hopTo("off onto the crane", () => HOOK_7.to.x + HOOK_7.w - 2, () => mid(241)),
   walk(mid(243)),
   // Up the crane's rungs to the walkway, and the rune at the cab.
   walk(mid(245)),

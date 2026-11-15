@@ -23,7 +23,7 @@ for (const [id, def, moves] of LEVELS) {
   const lines: string[] = [];
   for (const { m, snap } of starts) {
     const mv = (moves as any)[m];
-    if (/troll|plough|down, round|swept|scoops|on the moose|on the chair|across|through the tunnel|up the trestle|to the|under the|the last log|the tip he rides|far end|express comes|on the express|parks|together|over the bundle|over the wake/.test(mv.name)) continue; // rides and boss waits: not a wait at a stop
+    if (/troll|plough|serpent|down, round|swept|scoops|on the moose|on the chair|across|through the tunnel|up the trestle|to the|under the|the last log|the tip he rides|far end|express comes|on the express|parks|together|over the bundle|over the wake/.test(mv.name)) continue; // rides and boss waits: not a wait at a stop
     let worst = 0, sum = 0, cnt = 0;
     for (let d = 0; d < 1800; d += 15) {
       const q = clonePlay(snap);

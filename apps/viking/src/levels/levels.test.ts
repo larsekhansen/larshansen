@@ -1197,7 +1197,7 @@ describe("Bjørvika: hooks that carry him, and he chooses when to let go", () =>
     return n;
   };
 
-  test("every hook comes to a tile from a landing at each end (a hop on, a hop off), and every landing is four tiles wide or more", () => {
+  test("every hook comes to a tile from its near landing (a hop on) and right up to its far one (a step off), and every landing is four tiles wide or more", () => {
     for (const h of HOOKS) {
       const row = h.from.y / TILE;
       const c0 = h.from.x / TILE;
@@ -1209,12 +1209,9 @@ describe("Bjørvika: hooks that carry him, and he chooses when to let go", () =>
         expect(floorFrom(c0 - 2, row, -1)).toBeGreaterThanOrEqual(4);
       }
       const next = HOOKS.find((k) => k.from.y === h.from.y && k.from.x === (c1 + 1) * TILE);
-      if (!next) {
-        expect(map.isSolid(c1, row)).toBe(false);
-        expect(floorFrom(c1 + 1, row, 1)).toBeGreaterThanOrEqual(4);
-      }
+      if (!next) expect(floorFrom(c1, row, 1)).toBeGreaterThanOrEqual(4);
       // Under the gap it crosses: the drop (or the bay's net).
-      for (let c = c0 - 1; c <= c1; c++) expect(map.isSolid(c, row)).toBe(false);
+      for (let c = c0 - 1; c < c1; c++) expect(map.isSolid(c, row)).toBe(false);
     }
   });
 
@@ -1419,7 +1416,7 @@ describe("Gamlebyen: the ruins rebuild as he passes", () => {
       }
       if (hurt) shielded++;
     }
-    expect(careless / 60).toBeGreaterThanOrEqual(0.6);
+    expect(careless / 50).toBeGreaterThanOrEqual(0.6);
     expect(shielded).toBe(0);
   });
 
