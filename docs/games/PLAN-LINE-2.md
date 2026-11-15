@@ -1,7 +1,7 @@
 # Linje 2: six more levels
 
-**Built.** Orders 14 to 16 built all six (14 to 15 November 2026); order 17 reviews them. Where the build
-left this plan is at the end.
+**Built.** Orders 14 to 16 built all six (14 to 15 November 2026); order 17 made them good after an
+adversarial review. Where the build left this plan is at the end.
 
 Written 14 November 2026 by the planner, after orders 12 and 13 were merged. Lars asked for more
 levels to be planned; this is the plan as it was shown to him. He had not yet answered the open
@@ -93,3 +93,24 @@ station not yet built shows on the map as "under construction" and cannot be ent
 - **The end**: all sixteen built; VIKING whole on the header and Gamlebyen's card; the map adds each line's
   best times, and with all sixteen sails a longship and lights lanterns (ADR 0030). The gold helmet is still
   line 1's ten.
+
+## As built after order 17
+
+- **The serpent** (ADR 0031): the whole quay is its fight, from the planks' first board to the prow, and its
+  ball flies at the height he stands at; hints only when true; after the first hit it rises twice a round and
+  its tail follows its ball along the quay. It rises four to seven tiles from him, a neck four times his
+  height with a crest, an eye and a jaw; its dazed head lies on the planks. Beaten, it sinks, the dawn comes
+  up over the harbour, the torches go out, and the rune rises to the last longship's dragon prow.
+- **A lost life at a boss** never puts him further back than its bench (ADR 0033); the shield keeps a jump
+  pressed while it is up, and the troll is no longer frozen by it (ADR 0032).
+- **More asked of each level**: a second rocking deck at Bygdøy (a boat in the yard's slip, under a slinger);
+  two more statues and a ledge on a beat before Vigelandsparken's rune; a longer last crossing at
+  Østensjøvannet with two swans whose waters overlap; at Bjørvika the traverse's hooks on different beats with
+  a gust of its own, a second riveters' girder, and rebar where a man who jumps off a hook early comes down;
+  Gamlebyen's stepping stones varied, one late and one that sinks.
+- **Difficulty**, measured with the sloppy player made honest (ADR 0034) on fresh seeds, hearts a run at ±4:
+  Bygdøy 0.85, Vigelandsparken 2.41, Korketrekkeren 0.21, Østensjøvannet 0.73, Bjørvika 1.64, Gamlebyen 1.04;
+  no Game over at ±2 or ±4 in line 2. The rise from Bygdøy to Gamlebyen that this plan wanted (and order 17
+  asked for, 1.5 to 4.5) is not there: the corrected player loses fewer hearts everywhere, line 1 too, and
+  retuning six levels against it is left for a later order (`apps/viking/tools/review/line2-after/`).
+- **The map's longship** lies at anchor past the end of line 2 instead of sailing under the help line.

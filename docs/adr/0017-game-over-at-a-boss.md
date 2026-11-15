@@ -1,5 +1,7 @@
 # 0017. Game over at a boss goes on from its bench
 
+State (order 17): adjusted by [0033](0033-a-lost-life-at-a-boss.md): a single lost life in the fight never puts him further back than this bench.
+
 Decided 2026-11-14 by the order 12 implementer, on the planner's order (order 12, item 9), after
 the adversarial review of the same day (C1). Adjusts [0008](0008-hearts-lives-enemies-pits.md).
 

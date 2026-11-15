@@ -1,0 +1,6 @@
+langkaia k=2: clear 99/100, over 0, offroute 0, gaveup 1, timeout 0; hearts 0.15/run
+langkaia k=4: clear 92/100, over 0, offroute 5, gaveup 3, timeout 0; hearts 1.19/run
+nabolaget k=2: clear 58/100, over 0, offroute 17, gaveup 0, timeout 25; hearts 0.94/run
+nabolaget k=4: clear 27/100, over 0, offroute 41, gaveup 1, timeout 31; hearts 1.56/run
+nordmarka k=2: clear 97/100, over 3, offroute 0, gaveup 0, timeout 0; hearts 0.81/run
+nordmarka k=4: clear 91/100, over 9, offroute 0, gaveup 0, timeout 0; hearts 1.76/run

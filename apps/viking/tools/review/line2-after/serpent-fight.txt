@@ -1,0 +1,4 @@
+±0: 1/1 beaten, Game over 0; time from the bench to beaten: median 43 s, 90th pct 43 s, max 43 s; hearts 0.00, lives 0.00 per fight; standing still 29 s per fight
+±2: 60/60 beaten, Game over 0; time from the bench to beaten: median 43 s, 90th pct 43 s, max 46 s; hearts 0.00, lives 0.00 per fight; standing still 29 s per fight
+±4: 60/60 beaten, Game over 0; time from the bench to beaten: median 43 s, 90th pct 46 s, max 47 s; hearts 0.08, lives 0.00 per fight; standing still 30 s per fight
+±8: 60/60 beaten, Game over 0; time from the bench to beaten: median 48 s, 90th pct 64 s, max 80 s; hearts 2.45, lives 0.43 per fight; standing still 33 s per fight

@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, and by order 16's the same night. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, and by order 17's the next day. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -45,7 +45,7 @@ page is published as a private artifact on Lars's claude.ai account.
   0024); Vigelandsparken, Korketrekkeren (the sledge he cannot stop, ADR 0026) and Østensjøvannet came
   with order 15, Bjørvika (crane hooks) and Gamlebyen (the ruins that rise as he passes, ADR 0028; the sea
   serpent, ADR 0027) with order 16. All sixteen are built; with all six of line 2 the header's VIKING is gold,
-  and with all sixteen the map gets a longship and lanterns (ADR 0030).
+  and with all sixteen the map gets a longship at anchor at the end of the line and lanterns (ADR 0030, 0031).
 - **Jernhaugen** (`packages/maze`; alone at maze.larshansen.dev through `apps/iron-maze`, and
   inside the viking game at `#jernhaugen`): seven maze levels. It is a bonus stop on the line and
   is never required. Clearing its level 3 gives the raven's feather (a double jump); all seven
@@ -68,6 +68,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-14 | Lars asks for more levels; the planner plans line 2. Order 14, its groundwork: line 2 on the map, sixteen runes, the shield, the rocking deck, the sinking pad and the oar bank, and Bygdøy | `PLAN-LINE-2.md`, `orders/14-line-2-groundwork.md`, PR #59 |
 | 2026-11-14 to 15 | Order 15: Bygdøy's gull and the passage under the loft; Vigelandsparken (statues), Korketrekkeren (the sledge), Østensjøvannet (swans and lily pads); a level's own rules (`LevelDef.rules`) | `orders/15-three-stations.md`, PR #60 |
 | 2026-11-15 | Order 16: the sledge's help line, the lake's sunrise, a hesitating player (and the lake eased for it); Bjørvika (hooks), Gamlebyen (rising ruins), the sea serpent; the end of line 2 | `orders/16-the-last-two.md`, branch `the-last-two` |
+| 2026-11-15 | An adversarial review of line 2 (`reviews/2026-11-15-line-2.md`); order 17 makes it good: the serpent's fight and ending, a lost life at a boss, what line 2 teaches and gives made visible, each level asking more of its idea, the review's tools made honest, the first script's budget enforced | `orders/17-line-2-made-good.md`, branch `line-2-made-good` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`
@@ -130,7 +131,11 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   `bun test`. `before/`, `after/` and `after13/` hold the numbers from the review, after order 12
   and after order 13, and `line2/` line 2's (orders 14 and 15); `./runall.sh` reruns line 1's study in about
   20 minutes. The sloppy player holds the shield as it holds a direction. The review itself is
-  [`reviews/2026-11-14-adversarial.md`](reviews/2026-11-14-adversarial.md). Remember what the
+  [`reviews/2026-11-14-adversarial.md`](reviews/2026-11-14-adversarial.md), and line 2's
+  [`reviews/2026-11-15-line-2.md`](reviews/2026-11-15-line-2.md). **Order 17 made the sloppy player honest**
+  (ADR 0034: the serpent's ball and tail moved k times too fast, early jumps were let go at once, two more):
+  numbers from before it are not comparable with later ones; `line2-after/` has both lines measured again on
+  fresh seeds (101 to 200). Measure on fresh seeds, not the ones a level was tuned on. Remember what the
   sloppy player is: the route's plan with a person's timing. It never finds a better line, and
   "off route" and "gave up" mostly mean it fell somewhere the route never goes.
 - **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame;
@@ -139,13 +144,14 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   for a built page under `?debug&auto`, which fetches after the load event the picture is taken at).
 - **The front page gate**: 28 reference screenshots of the front page, taken before any of this
   work. After every kit change they must be byte-identical (`cmp`). The references live in
-  `/tmp/shots-before` with addresses in `/tmp/shots-urls.txt` (the `:5180` lines); `/tmp` does
+  `/tmp/shots-before-jernhaugen` (earlier `/tmp/shots-before`) with addresses in `/tmp/shots-urls.txt` (the `:5180` lines); `/tmp` does
   not survive a reboot, so re-create them from a commit you trust if they are gone: build
   `apps/landing`, serve it with `bunx vite preview --port 5180 --strictPort`, and shoot those
   addresses.
 - **The deploy** (`.github/workflows/deploy.yml`) runs the tests of `packages/pixelkit`,
-  `packages/maze`, `apps/landing` and `apps/viking` before publishing (about 90 s on the Pi) and
-  stops on red. Its smoke test greps the live viking script for `Langkaia`, fetches a level chunk
+  `packages/maze`, `apps/landing` and `apps/viking` before publishing (about two and a half minutes on the
+  Pi since order 16, nearly all of it the viking suite) and stops on red; the viking build fails if its first
+  script is over 60 kB gzipped (ADR 0035). Its smoke test greps the live viking script for `Langkaia`, fetches a level chunk
   and the maze's scene chunk named in it, and greps the maze host for `Jernhaugen`. Bun is pinned
   to the Pi's version (1.4.4).
 
@@ -186,7 +192,23 @@ behaves (it loads by dynamic import after the screenshot is taken).
   the hoarding, its bubble and `moreToBuild` are gone. The review's tools gained the hesitating player
   (`hesitate=0.2`, ADR 0029) and ways back the route never takes (`RECOVER`); `tryroute.ts`, `reachone.ts` and
   `tune-bjorvika.ts` help build a level. Numbers in `apps/viking/tools/review/line2/summary.md`.
-- **Order 17** reviews line 2. What to attack first: (1) the serpent: its neck never hurts and a ball that
+- **Order 17 (done)**: the review of line 2 (`reviews/2026-11-15-line-2.md`) and its order. The serpent
+  (ADR 0031): the whole quay is its fight and its ball flies at his height, so nothing can stall it; its hints
+  are only said when true; a flag on its quay, and a lost life at any boss never puts him behind its bench
+  (ADR 0033); two rises a round after its first hit and its tail after each ball; a neck four times his height
+  with a head, a crest, coils, a tail with a fin, lit; the dawn, the torches going out, the rune rising to a
+  dragon prow before it can be taken. The shield keeps a jump pressed while it is up and the troll is not frozen
+  by it (ADR 0032). The help line comes back when it changes; the shield's key shows at Bygdøy's passage; the
+  map's banner names both lines; the longship lies at anchor in view. Each level asks more of its idea:
+  Bygdøy's boat in the yard's slip under a slinger, Vigelandsparken's step on a beat between two statues,
+  Østensjøvannet's longer crossing with overlapping swans, Bjørvika's jib girder with riveters, its traverse on
+  two beats in a gust and rebar where a careless let-go lands, Gamlebyen's varied stepping stones (one late,
+  one sinking) and its owl off the dig. The review's tools made honest (ADR 0034); the first script's budget
+  enforced (ADR 0035). **Not met**: the order's hearts-a-run targets for line 2 (they were set on the old
+  numbers): measured honestly line 2 does not rise (Bygdøy 0.85, Vigelandsparken 2.41, Korketrekkeren 0.21,
+  Østensjøvannet 0.73, Bjørvika 1.64, Gamlebyen 1.04 at ±4, against Akerselva 2.40 and Ekeberg 2.80), and the
+  serpent is easy for a player who knows its answer. A next order should retune the six against these numbers.
+- **What order 16 handed order 17**, kept for the record: What to attack first: (1) the serpent: its neck never hurts and a ball that
   hits him ends the round with a seven-second rest, which keeps naive players alive (no Game over before
   85 s) but may make the fight slow for a person; is the ring of foam seen in time on a narrow screen (it
   rises within eleven tiles of him where it can)? (2) Gamlebyen's stones: the search proves the two extreme
@@ -208,7 +230,12 @@ reorder this list.
 
 1. **Unplayed.** See above. Every number below is the sloppy player's, not a person's, and every
    picture a headless browser's at a device pixel ratio of 1.
-2. **The line is a rising line, roughly.** Hearts lost per run by the sloppy player at ±4 after
+2. **The line is a rising line, roughly; line 2 is not.** Measured honestly after order 17 (ADR 0034,
+   `tools/review/line2-after/`, fresh seeds, ±4): Langkaia 1.2, Akershus 1.0, Rådhuset 1.5, Slottet 0.3,
+   Holmenkollen 0.2, Akerselva 2.4, Nordmarka 1.7 (8 Game overs in 100, the troll's third round), Stortinget
+   1.5, Ekeberg 2.8, Nabolaget 1.6 (line 1's often end off route, so these are lower bounds); Bygdøy 0.9,
+   Vigelandsparken 2.4, Korketrekkeren 0.2, Østensjøvannet 0.7, Bjørvika 1.6, Gamlebyen 1.0. The older
+   numbers below were measured with the artefacts. Hearts lost per run by the sloppy player at ±4 after
    order 13 (`tools/review/after13/summary.md`): Langkaia 1.5, Akershus 1.4, Rådhuset 1.6, Slottet
    0.5 (the rest before the mountain, accepted), Holmenkollen 0.6, Akerselva 2.4, Nordmarka 2.0,
    Stortinget 1.4 (accepted), Ekeberg 2.8, Nabolaget 1.6. Line 2 after order 15 (`line2/summary.md`):
@@ -236,8 +263,9 @@ reorder this list.
 7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
-8. **Margins.** The first script is 59.18 kB gzipped of a 60 kB budget (ADR 0011 says what can
-   still move out). The viking test suite takes about 130 s of a three-and-a-half-minute budget, nearly
+8. **Margins.** The first script is 59.34 kB gzipped of a 60 kB budget, and the build fails over it
+   (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
+   130 s of a three-and-a-half-minute budget, nearly
    all of it the reach and dead-end searches in sixteen workers on four cores (Gamlebyen's, eight searches
    in one worker, is the slowest).
 9. **The viking header is solid cream,** not the front page's frosted bar

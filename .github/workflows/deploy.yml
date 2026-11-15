@@ -32,7 +32,7 @@ jobs:
 
       - name: Test the games
         # The kit, the maze, the front page and Vikingfjorden (the scripted players, the reach and
-        # dead-end searches, the level measure). About 80 s on the Pi, nearly all of it the viking
+        # dead-end searches, the level measure). About 130 s on the Pi, nearly all of it the viking
         # suite's searches; a red test stops the deploy before anything is published.
         run: |
           set -euo pipefail
