@@ -1005,8 +1005,9 @@ function line(l: Launcher, firedAt: number, v: View) {
 export const NABOLAGET: LevelDef = {
   id: "nabolaget",
   rune: 9,
-  name: "Nabolaget",
-  landmark: { nb: "Over takene hjem til Kværnertoppen", en: "Over the roofs, home to Kværnertoppen" },
+  // The name a player reads (ADR 0038): the id stays "nabolaget" for stored progress, addresses and files.
+  name: "Vålerenga",
+  landmark: { nb: "Hjemover gjennom Gamle Oslo", en: "Homeward through Gamle Oslo" },
   place: { nb: "Fra Vålerenga hjem til Kværnertoppen", en: "From Vålerenga home to Kværnertoppen" },
   sky: "winter",
   map: MAP,
@@ -1042,7 +1043,7 @@ export const NABOLAGET: LevelDef = {
   },
   signs: [
     {
-      label: { nb: "Nabolaget", en: "Nabolaget" },
+      label: { nb: "Vålerenga", en: "Vålerenga" },
       lines: { nb: ["Takene er glatte. Klessnorene er ikke til å henge på.", "Varmen fra pipene går rett opp."], en: ["The roofs are slippery. The washing lines are not for hanging on.", "The warm air from the chimneys goes straight up."] }
     },
     {
