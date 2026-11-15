@@ -18,10 +18,11 @@ import { BYGDOY } from "../src/levels/bygdoy";
 import { VIGELANDSPARKEN } from "../src/levels/vigelandsparken";
 import { KORKETREKKEREN } from "../src/levels/korketrekkeren";
 import { OSTENSJOVANNET } from "../src/levels/ostensjovannet";
+import { BJORVIKA } from "../src/levels/bjorvika";
 import { SHIELD_RULES } from "../src/game/shield";
 import { NORDMARKA } from "../src/levels/nordmarka";
 import { RADHUSET } from "../src/levels/radhuset";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE } from "../src/levels/routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE, BJORVIKA_ROUTE } from "../src/levels/routes";
 import { SLOTTET } from "../src/levels/slottet";
 import { STORTINGET } from "../src/levels/stortinget";
 import { MARKS } from "../src/levels/types";
@@ -40,7 +41,8 @@ const LEVELS = [
   [BYGDOY, BYGDOY_ROUTE, true],
   [VIGELANDSPARKEN, VIGELANDSPARKEN_ROUTE, true],
   [KORKETREKKEREN, KORKETREKKEREN_ROUTE, true],
-  [OSTENSJOVANNET, OSTENSJOVANNET_ROUTE, true]
+  [OSTENSJOVANNET, OSTENSJOVANNET_ROUTE, true],
+  [BJORVIKA, BJORVIKA_ROUTE, true]
 ] as const;
 
 const facts: Record<string, { cols: number; clear: number; enemies: number; coins: number; flags: number; benches: number }> = {};

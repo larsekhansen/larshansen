@@ -39,7 +39,7 @@ export const LINE: Station[] = [
   two("vigelandsparken", 11, "Vigelandsparken", true, "Vigeland"),
   two("korketrekkeren", 12, "Korketrekkeren", true),
   two("ostensjovannet", 13, "Østensjøvannet", true, "Østensjø"),
-  two("bjorvika", 14, "Bjørvika", false),
+  two("bjorvika", 14, "Bjørvika", true),
   two("gamlebyen", 15, "Gamlebyen", false)
 ];
 
@@ -69,7 +69,8 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   bygdoy: () => import("./bygdoy").then((m) => m.BYGDOY),
   vigelandsparken: () => import("./vigelandsparken").then((m) => m.VIGELANDSPARKEN),
   korketrekkeren: () => import("./korketrekkeren").then((m) => m.KORKETREKKEREN),
-  ostensjovannet: () => import("./ostensjovannet").then((m) => m.OSTENSJOVANNET)
+  ostensjovannet: () => import("./ostensjovannet").then((m) => m.OSTENSJOVANNET),
+  bjorvika: () => import("./bjorvika").then((m) => m.BJORVIKA)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);

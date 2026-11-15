@@ -13,10 +13,12 @@ import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
 import { ICE } from "@larshansen/pixelkit/surface";
 import { HOLMENKOLLEN, LIFT as TOWER_LIFT, LIP } from "./holmenkollen";
 import { BANNERS } from "./slottet";
-import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE } from "./routes";
+import { AKERSELVA_ROUTE, AKERSHUS_ROUTE, BYGDOY_ROUTE, EKEBERG_ROUTE, HOLMENKOLLEN_ROUTE, LANGKAIA_ROUTE, NABOLAGET_ROUTE, NORDMARKA_ROUTE, RADHUSET_ROUTE, SLOTTET_ROUTE, STORTINGET_ROUTE, VIGELANDSPARKEN_ROUTE, KORKETREKKEREN_ROUTE, OSTENSJOVANNET_ROUTE, BJORVIKA_ROUTE } from "./routes";
 import { BARRIER, GAP, HAZARDS as RUN_HAZARDS, KORKETREKKEREN, RIDE, speedAt, trackY } from "./korketrekkeren";
 import { follow } from "@larshansen/pixelkit/camera";
 import { HERON, OSTENSJOVANNET, PADS as LILY_PADS, SWAN, W as LW, inStretch } from "./ostensjovannet";
+import { BAY, BJORVIKA, F1 as BF1, F2 as BF2, GUSTS as BJ_GUSTS, HOIST as BJ_HOIST, HOOKS, HOOK_1, SHAFTS, SHEETS, SPARKS } from "./bjorvika";
+import type { Travel } from "@larshansen/pixelkit/carrier";
 import { BOY, ENEMIES as VIGELAND_ENEMIES, JET_IN, JET_OUT, SLAB, VIGELANDSPARKEN, W as VW } from "./vigelandsparken";
 import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, LOFT, OARS, PADS, RAFT as BALSA, REED, W } from "./bygdoy";
 import { SHIELD_RULES } from "../game/shield";
@@ -63,7 +65,8 @@ const ROUTE: Record<string, Move[]> = {
   bygdoy: BYGDOY_ROUTE,
   vigelandsparken: VIGELANDSPARKEN_ROUTE,
   korketrekkeren: KORKETREKKEREN_ROUTE,
-  ostensjovannet: OSTENSJOVANNET_ROUTE
+  ostensjovannet: OSTENSJOVANNET_ROUTE,
+  bjorvika: BJORVIKA_ROUTE
 };
 
 /** The way to each level's bracteate with the feather, from the start. */
@@ -111,6 +114,12 @@ const GOLD: Record<string, Move[]> = {
   // On the sledge over the gap: the jump at its edge, and the second at the top of it.
   // On the stone in the middle of the long crossing: two jumps up.
   ostensjovannet: [...OSTENSJOVANNET_ROUTE.slice(0, OSTENSJOVANNET_ROUTE.findIndex((m) => m.name === "on the stone") + 1), walk(mid(180)), jump(0, { second: 18 })],
+  // On the second hook of the traverse, under the top crane's jib: two jumps up as it passes under the bracteate.
+  bjorvika: [
+    ...BJORVIKA_ROUTE.slice(0, BJORVIKA_ROUTE.findIndex((m) => m.name === "hop onto the second hook of the traverse") + 1),
+    wait("on the hook under the bracteate", (q) => Math.abs(cx(q) - (tile(228) + 8)) < 4),
+    jump(0, { second: 18 })
+  ],
   korketrekkeren: [
     ...KORKETREKKEREN_ROUTE.slice(0, KORKETREKKEREN_ROUTE.findIndex((m) => m.name === "jump the gap")),
     {
@@ -128,9 +137,9 @@ const GOLD: Record<string, Move[]> = {
 };
 
 /** Every level is held to the order's measure: at least a minute for the scripted player, and the size of a level. */
-const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
+const NEW = new Set(["langkaia", "akershus", "radhuset", "slottet", "holmenkollen", "akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika"]);
 /** From level 6 on he has the ski pole: it is given for clearing Holmenkollen, the level before. */
-const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet"]);
+const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika"]);
 /** How each level is played in the tests: with the pole from level 6 on, and the shield's rules (Bygdøy gives the shield at its prow; in line 1 he does not have it; after Bygdøy it is his). */
 const opts = (def: LevelDef, more: { feather?: boolean } = {}) => ({ pole: POLE.has(def.id), shield: SHIELD_RULES, hasShield: def.rune > 10, ...more });
 /**
@@ -243,7 +252,7 @@ describe("the lines", () => {
 });
 
 /** The built levels, imported here as they are, not through the page's loaders. */
-const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN, KORKETREKKEREN, OSTENSJOVANNET];
+const LEVELS: LevelDef[] = [LANGKAIA, AKERSHUS, RADHUSET, SLOTTET, HOLMENKOLLEN, AKERSELVA, NORDMARKA, STORTINGET, EKEBERG, NABOLAGET, BYGDOY, VIGELANDSPARKEN, KORKETREKKEREN, OSTENSJOVANNET, BJORVIKA];
 
 test("the line's stations say the same as the built levels themselves", () => {
   for (const def of LEVELS) {
@@ -1171,6 +1180,114 @@ describe("Østensjøvannet: pads that sink, swans that mind their water", () => 
     expect(hurt).toBe(false);
     const swan = p.enemies.find((e) => e.def.look === "swan" && e.def.c === 149.5)!;
     expect(inStretch(swan, p.body)).toBe(false);
+  });
+});
+
+describe("Bjørvika: hooks that carry him, and he chooses when to let go", () => {
+  const P = (start?: { x: number; bottom: number }) => newPlay(BJORVIKA, { pole: true, shield: SHIELD_RULES, hasShield: true, start });
+  const map = levelMap(BJORVIKA);
+  /** The width of firm floor at a row, from column c going the way `dir` points. */
+  const floorFrom = (c: number, row: number, dir: 1 | -1) => {
+    let n = 0;
+    while (map.isSolid(c + dir * n, row) && !map.isSolid(c + dir * n, row - 1)) n++;
+    return n;
+  };
+
+  test("every hook comes flush to the edge of a landing at each end, and every landing is four tiles wide or more", () => {
+    for (const h of HOOKS) {
+      const row = h.from.y / TILE;
+      const c0 = h.from.x / TILE;
+      const c1 = h.to.x / TILE + h.w / TILE;
+      // The near end comes to a landing, or (on the traverse) to the last hook's far end, a tile away.
+      const before = HOOKS.find((k) => k.from.y === h.from.y && k.to.x + k.w === h.from.x - TILE);
+      if (!before) expect(floorFrom(c0 - 1, row, -1)).toBeGreaterThanOrEqual(4);
+      // The far end comes to the next landing, or (on the traverse) to the next hook's near end, a tile away.
+      const next = HOOKS.find((k) => k.from.y === h.from.y && k.from.x === (c1 + 1) * TILE);
+      if (next) expect(next.from.x - (h.to.x + h.w)).toBe(TILE);
+      else expect(floorFrom(c1, row, 1)).toBeGreaterThanOrEqual(4);
+      // Under the gap it crosses: the drop (or the bay's net).
+      for (let c = c0; c < c1; c++) expect(map.isSolid(c, row)).toBe(false);
+    }
+  });
+
+  test("the hoist, the hooks and the sheets never keep him waiting much more than five seconds", () => {
+    const wait = (at: (t: number) => boolean) => {
+      let longest = 0;
+      let since = 0;
+      for (let t = 0; t < 4000; t++) {
+        since = at(t) ? 0 : since + 1;
+        longest = Math.max(longest, since);
+      }
+      return longest / 60;
+    };
+    expect(wait((t) => carrierAt(BJ_HOIST, t).y === BJ_HOIST.bottom)).toBeLessThan(5.5);
+    for (const d of [...HOOKS, ...SHEETS]) expect(wait((t) => carrierAt(d, t).x === (d as Travel).from.x)).toBeLessThan(5.5);
+  });
+
+  test("a miss at the first hook costs nothing: the net holds him, and its step leads back up to the floor", () => {
+    // Dropped off the hook over the middle of the bay: the net.
+    const p = P({ x: tile(BAY[0] + 4) + 8, bottom: tile(BF1) });
+    p.body.onGround = false;
+    for (let i = 0; i < 90; i++) stepPlay(p, IDLE);
+    expect(p.hurt).toBe(false);
+    expect(feet(p)).toBe(tile(BF1 + 3));
+    // From the net, up the step and back onto the floor before the bay.
+    const r = playMoves(p, [walk(tile(BAY[0] + 2) + 4), jumpTo(tile(BAY[0]) + 8), jumpTo(tile(BAY[0] - 2) + 8)], { max: 600, until: (q) => q.body.onGround && feet(q) === tile(BF1) && cx(q) < tile(BAY[0]) });
+    expect(r.done).toBe(true);
+    expect(p.hurt).toBe(false);
+    expect(feet(p)).toBe(tile(BF1));
+    expect(cx(p)).toBeLessThan(tile(BAY[0]));
+  });
+
+  test("the welder's sparks hurt only on their beat, after a second's warning; between showers he walks under them", () => {
+    const beat = SPARKS.beat!;
+    expect(beat.warn).toBeGreaterThanOrEqual(60);
+    const at = (t0: number) => {
+      const p = P({ x: tile(53), bottom: tile(BF1) });
+      p.t = t0;
+      for (let i = 0; i < 40; i++) stepPlay(p, { ...IDLE, right: true });
+      return p.hurt;
+    };
+    const period = beat.rest + beat.warn + beat.live;
+    const start = (period - (beat.offset ?? 0)) % period;
+    expect(at(start)).toBe(false);
+    expect(at(start + beat.rest + beat.warn - 5)).toBe(true);
+  });
+
+  test("on the riveters' girder, a man who walks on without the shield is hit at most of the moments he could come; one who stops and raises it as each bolt comes never is", () => {
+    let careless = 0;
+    let shielded = 0;
+    const from = { x: tile(180), bottom: tile(BF2) };
+    const riveters = [7, 8];
+    // Over one round of their beat.
+    for (let t0 = 0; t0 < 120; t0 += 2) {
+      const p = P(from);
+      p.enemies[6].alive = false;
+      p.t = t0;
+      let hurt = false;
+      for (let i = 0; i < 600 && cx(p) < tile(194); i++) hurt = stepPlay(p, { ...IDLE, right: true }).hurt || hurt;
+      if (hurt) careless++;
+      const q = P(from);
+      q.enemies[6].alive = false;
+      q.t = t0;
+      let hold = 0;
+      hurt = false;
+      for (let i = 0; i < 1500 && cx(q) < tile(194); i++) {
+        if (q.shots.some((s) => riveters.includes(s.by) && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - (q.body.x + PLAYER.w) < 64)) hold = 4;
+        hurt = stepPlay(q, hold-- > 0 ? { ...IDLE, shield: true } : { ...IDLE, right: true }).hurt || hurt;
+      }
+      if (hurt) shielded++;
+    }
+    expect(careless / 60).toBeGreaterThanOrEqual(0.6);
+    expect(shielded).toBe(0);
+  });
+
+  test("the gusts push against him over the shafts only after a second of dust", () => {
+    for (const z of BJ_GUSTS) {
+      expect(z.beat!.warn).toBeGreaterThanOrEqual(60);
+      expect(z.push.x).toBeLessThan(0);
+      for (const c of SHAFTS) expect(z.x <= tile(c) && z.x + z.w >= tile(c + 5)).toBe(true);
+    }
   });
 });
 

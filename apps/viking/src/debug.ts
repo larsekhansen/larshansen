@@ -42,7 +42,8 @@ const AUTO: Record<string, () => Promise<Move[]>> = {
   bygdoy: () => import("./levels/routes/bygdoy").then((m) => m.BYGDOY_ROUTE),
   vigelandsparken: () => import("./levels/routes/vigelandsparken").then((m) => m.VIGELANDSPARKEN_ROUTE),
   korketrekkeren: () => import("./levels/routes/korketrekkeren").then((m) => m.KORKETREKKEREN_ROUTE),
-  ostensjovannet: () => import("./levels/routes/ostensjovannet").then((m) => m.OSTENSJOVANNET_ROUTE)
+  ostensjovannet: () => import("./levels/routes/ostensjovannet").then((m) => m.OSTENSJOVANNET_ROUTE),
+  bjorvika: () => import("./levels/routes/bjorvika").then((m) => m.BJORVIKA_ROUTE)
 };
 
 /** `?debug&auto`: the level's scripted route as a step-by-step autopilot, or null for a level with none. */
