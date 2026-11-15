@@ -45,6 +45,7 @@ Lars before reversing one of his.
 | [0033](0033-a-lost-life-at-a-boss.md) | A lost life in a boss's fight never puts him further back than its bench; a flag on the serpent's quay | planner (order 17) | holds; adjusts 0017 |
 | [0034](0034-the-sloppy-player-made-honest.md) | The review's sloppy player made honest: four artefacts gone, fresh seeds, every move measured; what that did to line 2's targets | planner (order 17) | holds |
 | [0035](0035-the-budget-enforced.md) | The build fails if the first script is over 60 kB gzipped | planner (order 17) | holds; enforces 0011 |
+| [0036](0036-drawn-once-and-copied.md) | Stonework and other unchanging drawing is drawn once and copied; `?debug&perf` measures a frame | planner | holds |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

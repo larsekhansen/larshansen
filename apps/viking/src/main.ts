@@ -1696,6 +1696,8 @@ async function start() {
   }
 
   launch({ stage, layout, still, loop, harness, input, step: () => (mode === "maze" && maze ? maze.step() : stepOnce()) });
+  // `?debug&perf`: how much one frame draws and how long it takes, on the help line.
+  if (debugging && params.has("perf")) void debugging.then((d) => d.perf(still, help));
   if (location.hash === MAZE_HASH) sync();
 }
 void start();

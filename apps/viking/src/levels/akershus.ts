@@ -1,6 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
-import { R, layerX, light, mix, stoneColumn, view } from "@larshansen/pixelkit/paint";
+import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
 import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, flagCloth, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Enemy, EnemyDef } from "../game/enemies";
@@ -214,7 +214,7 @@ function block(x: number, w: number, top: number, roof: number, plaster: number,
   R(x, top, w, plaster - top, PAINT.trim);
   R(x, top, 2, plaster - top, mix(PAINT.trim, INK, 0.12));
   for (let y = top + 6; y < plaster; y += 6) R(x + 2, y, w - 2, 1, mix(PAINT.trim, INK, 0.05));
-  for (let xx = x; xx < x + w; xx++) stoneColumn(xx, plaster, WATER, 0, 0, STONE_BACK);
+  stoneWall(x, plaster, w, WATER, STONE_BACK);
   for (let i = 0; i < roof; i++) R(x - 2 + Math.floor(i / 2), top - roof + i, w + 4 - Math.floor(i / 2) * 2, 1, i < 2 && snow ? SNOW.lying : i % 5 === 4 ? mix(ROOF.slate, WHITE, 0.12) : ROOF.slate);
   for (let dx = 12; dx < w - 12; dx += 28) {
     R(x + dx, top - roof + 6, 7, 6, PAINT.trim);
@@ -257,7 +257,7 @@ function pillars() {
     [116, 122, WALL]
   ] as const)
     for (let x = c0 * TILE + 2; x < (c1 + 1) * TILE - 4; x += 3 * TILE)
-      for (let k = 0; k < 6; k++) stoneColumn(x + k, (row + 1) * TILE, WATER, 0, 0, STONE_BACK);
+      stoneWall(x, (row + 1) * TILE, 6, WATER, STONE_BACK);
 }
 
 /** The copper spire on the keep's corner, from its top floor up to the tip, where it carries a little walk (the map's ledge). */
@@ -409,7 +409,7 @@ function cellar() {
   const x0 = 62 * TILE;
   const x1 = 71 * TILE;
   const y0 = (G + 1) * TILE;
-  for (let x = x0; x < x1; x++) stoneColumn(x, y0, y0 + 2 * TILE, 0, 0, INSIDE);
+  stoneWall(x0, y0, x1 - x0, y0 + 2 * TILE, INSIDE);
   R(67 * TILE, y0, 2 * TILE, 2 * TILE, mix(INSIDE.light, WHITE, 0.08));
   R(70 * TILE - 2, y0 + 2 * TILE - 12, 9, 12, P.woodDark);
   R(70 * TILE - 2, y0 + 2 * TILE - 9, 9, 1, METAL.chain);
@@ -419,7 +419,7 @@ function cellar() {
 /** The inside of the keep: its stone in shadow, seen past its open front. */
 const INSIDE: Stone = { base: mix(STONE_BACK.base, INK, 0.35), light: mix(STONE_BACK.light, INK, 0.35), dark: mix(STONE_BACK.dark, INK, 0.35), mortar: mix(STONE_BACK.mortar, INK, 0.35), moss: STONE_BACK.moss };
 function keepInside() {
-  for (let x = (KEEP[0] + 1) * TILE; x < KEEP[1] * TILE; x++) stoneColumn(x, (TOP + 1) * TILE, KEEP_FLOOR * TILE, 0, 0, INSIDE);
+  stoneWall((KEEP[0] + 1) * TILE, (TOP + 1) * TILE, (KEEP[1] - KEEP[0] - 1) * TILE, KEEP_FLOOR * TILE, INSIDE);
   // Two fire baskets on the walls inside, lit: only to see by.
   for (const [x, y] of [
     [218 * TILE + 4, 16 * TILE + 6],

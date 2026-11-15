@@ -159,6 +159,14 @@ What none of this can tell you: whether a jump feels fair, whether timing window
 whether sound, touch, gamepad or reduced motion work, whether the maze inside the viking page
 behaves (it loads by dynamic import after the screenshot is taken).
 
+## Speed
+
+Lars found the game lagging on a phone (15 November). `?debug&perf` (ADR 0036) says what a frame
+draws and who draws it. Stonework and Stortinget's rock are now drawn once and copied; a change like
+that must leave the pictures byte-identical (compare against the live site with `tools/shots.ts`).
+Next in line: Nordmarka's dark, colours set on every rectangle, the five stacked canvases. No one
+has measured on a real phone: the numbers are the Pi's software renderer.
+
 ## Line 2: what is built, what order 17 owes
 
 - **Built (order 14)**: line 2 on the map (orange, from Stortinget, the gate until Nabolaget, the

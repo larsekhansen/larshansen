@@ -1,6 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Sky } from "@larshansen/pixelkit/oslo";
-import { R, mix, stoneColumn, view } from "@larshansen/pixelkit/paint";
+import { R, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
@@ -63,7 +63,7 @@ export function drawWater(map: TileMap, t: number) {
 }
 
 function quay(c: number, r: number, x: number, y: number, map: TileMap, sky: Sky) {
-  for (let i = 0; i < TILE; i++) stoneColumn(x + i, y, y + TILE);
+  stoneWall(x, y, TILE, y + TILE);
   if (map.tileAt(c, r - 1) === "~" || map.isSolid(c, r - 1)) return;
   // The edge of the quay: a dressed granite kerb, and an iron bollard now and then.
   R(x, y, TILE, 3, sky.snow ? SNOW.lying : MASONRY.worn);
@@ -86,7 +86,7 @@ function marble(c: number, r: number, x: number, y: number, map: TileMap, sky: S
 }
 
 function fortress(c: number, r: number, x: number, y: number, map: TileMap, sky: Sky) {
-  for (let i = 0; i < TILE; i++) stoneColumn(x + i, y, y + TILE);
+  stoneWall(x, y, TILE, y + TILE);
   outlineTile(x, y, edgesOf(map.tileAt, c, r), MASONRY.edge);
   if (map.isSolid(c, r - 1)) return;
   R(x + 1, y + 1, TILE - 2, 1, sky.snow ? SNOW.lying : MASONRY.worn);
