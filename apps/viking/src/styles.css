@@ -366,6 +366,34 @@ body {
   }
 }
 
+/*
+ * 760 to 1279 px (order 19): the links' row has no room for the run as well. Since order 18 made the runes
+ * larger, the run was pushed off the bar's right edge there (from 999 px down the clock, the hearts and the
+ * lives with it; with sixteen runes from 1279 px down). So the run takes a row of its own under the links,
+ * all of it in view; with sixteen up to 1359 px. Not in the mound, where the links make way for it.
+ */
+@media (min-width: 760px) and (max-width: 1279px) {
+  body:not(.in-maze) .bar {
+    flex-wrap: wrap;
+  }
+
+  body:not(.in-maze) .run {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (min-width: 1280px) and (max-width: 1359px) {
+  body:not(.in-maze) .bar:has(.run.sixteen) {
+    flex-wrap: wrap;
+  }
+
+  body:not(.in-maze) .run.sixteen {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+}
+
 /* The best time is small print; the bar has no room for it until the window is wide. */
 @media (min-width: 760px) and (max-width: 999px) {
   .clock small {
