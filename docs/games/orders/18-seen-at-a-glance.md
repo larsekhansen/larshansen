@@ -159,3 +159,64 @@ after section 4.
   level's backdrop, at 1280 x 800 and 390 x 844. An ADR for the platform palette and its promise; DESIGN
   updated. In the hand-back, add a section for it: what each kind looks like now, any that could not take
   the palette and why.
+
+## 6. Every role has its colours
+
+Added by the planner the same day, after Lars asked to "consider other assets that have to have a
+different palette too". Done after section 5. It turns the enemy and platform palettes into one system.
+
+Write one file in `packages/pixelkit/src/swatches/` (or an index over the palette files) that names the
+roles and owns their colours, so a later level cannot quietly reuse a role's colour for something else.
+The roles, beyond enemies (section 4) and platforms (section 5):
+
+- **Him.** His blue tunic, helmet and skin are his alone: no enemy, platform, pickup or backdrop field
+  uses his blue. Check every level (Bygdøy's water, Østensjøvannet at dawn, night tints) that he never
+  sits blue on blue; where he does, it is the backdrop that moves.
+- **Things to take**: skilling, the brown cheese, the bracteate, the feather, the ski pole, the shield
+  where they lie. One family (copper and gold with a bright glint), kept away from honey-wood platforms
+  and from orange enemies: with section 4's orange and section 5's honey this is the likeliest collision,
+  so decide the three together and test their distances.
+- **Things that hurt but are not enemies**: spikes, rebar, braziers' fire, sparks, the dig's edge,
+  anything a touch costs a heart for. They share the enemy family's warning colour on the dangerous part
+  (already asked in section 4); make it the same colour and the same stripe or edge everywhere.
+- **Where he falls**: water he drowns in and pits must read as "not ground". Deep water and holes get a
+  consistent look (a dark band at the lip, no surface that looks walkable; Slottet's dig was mistaken for
+  a slab once). Water that is only scenery (far fjord) must look different from water under his feet.
+- **Things to use**: doors, benches, flags before and after they are raised, sign boards, the rune
+  stone. One family for "press up here / this saves you" (the flags' red-white-blue and the benches may
+  keep their identity, but each must stand off its level's backdrop by day and night, and a raised flag
+  must differ from an unraised one at a glance, as the runes now must).
+- **What a boss shows before it acts, and where to hit it**: every tell (the troll's raised club, the
+  plough's blade and beacons, the serpent's rear and its foam ring) and every weak spot (the dawn shaft,
+  the dazed head) uses one "now" colour, the same across the three bosses, not used for anything else.
+- **Speech and hints**: the white bubbles and the dark banner plate are theirs; nothing in a backdrop
+  should look like a bubble.
+- **Scenery.** The inverse promise: backdrops, far layers and decorative foreground are lower in
+  saturation and contrast than every role above, and nothing decorative looks standable. Go through each
+  level for scenery that breaks this (bright flags and balloons at Slottet, lit windows, Bjørvika's
+  yellow crane, lanterns, the Scream sky at Ekeberg) and decide case by case: tone it down, or leave it
+  and say why it cannot be mistaken for a role.
+
+Then:
+
+- Extend the palette test to all roles: every role colour at least the set distance from every other
+  role's colours and from every level's ground, wall, sky, water and far-layer colours, by day and under
+  the evening, twilight and night tints. Where two roles must be near (pickup gold and a flag's yellow
+  finial), list the exception by name with the reason.
+- A colour-blind check: run the role colours through deuteranopia and protanopia simulation matrices in
+  the test, and require enemies, platforms, pickups and him to stay apart there too, or to differ by a
+  shape cue (outline, tick, stripe) that the test names.
+- One picture for the owner: a "legend" contact sheet in `/tmp/shots-glance/` showing each role's
+  swatches and two examples of each in a real level by day and at night. Put the same legend, small,
+  into LEVELS.html.
+- An ADR for the role system (it can be the same record as the enemy and platform palettes: one
+  decision, "colour says what a thing is"), and DESIGN's section on drawing rewritten around it, with
+  the rule for anyone adding a level.
+- Same limits as before: no change to any hit box, place or timing from this section; front page 28 of
+  28 byte-identical; no more rectangles a frame on Akershus and Bygdøy; first script at or under 59.8 kB
+  (the palettes that only some levels use go with those levels).
+- In the hand-back: the legend, the table of role distances (the smallest ones), every exception, every
+  piece of scenery you toned down or left, and anything that could not be made to fit.
+
+If doing all of this properly would make the order much later, do sections 1 to 5 fully first and
+commit them, then 6; say in the hand-back how far 6 got.
