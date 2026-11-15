@@ -432,3 +432,36 @@ body {
     font-size: 14px;
   }
 }
+
+/* The card after a rune has one way on, to the map, and goes there by itself after six seconds: a thin
+   line under the button fills meanwhile (not under reduced motion, where the card waits). Starting the
+   level again is not offered here; the map is where a level is played again. */
+.card.auto .primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.card.auto .primary::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: #ffd36b;
+  transform-origin: left;
+  animation: card-goes 6s linear both;
+}
+
+@keyframes card-goes {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.cleared #restart {
+  display: none;
+}

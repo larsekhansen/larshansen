@@ -56,6 +56,7 @@ import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
+import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
 import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
@@ -210,6 +211,8 @@ function extraState() {
     nudge: { x: 0, y: 0, until: 0 },
     /** The card shown: a level cleared, the game over, or a level's file that would not come. */
     card: null as "clear" | "over" | "failed" | null,
+    /** The step the card came. */
+    cardAt: 0,
     /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
     bossLine: null as { lines: string[]; until: number } | null,
     /** The moment he is given the shield: his own words over him for a while. */
@@ -316,6 +319,7 @@ function openScene(id: string, at?: string) {
   const door = at ? doors.find((d) => d.id === at) : undefined;
   if (door) standAt(door);
   document.body.classList.toggle("on-map", scene.map);
+  document.body.classList.remove("cleared");
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
   showShieldButton(!!play.shield?.has && !scene.map);
@@ -745,12 +749,10 @@ function hud() {
 
 restartButton.setAttribute("aria-label", t.restart);
 restartButton.title = `${t.restart} (R)`;
-$<HTMLElement>("finish-on").textContent = t.finishOn;
-$<HTMLElement>("finish-again").textContent = t.finishAgain;
 
 /** The level again from its start, the clock at zero. Lives stay as they are. On the card after a Game over in a boss's fight: on again from the bench before it. */
 function restartLevel() {
-  if (scene.map) return;
+  if (scene.map || state.card === "clear") return;
   if (state.card === "over" && scene.play.overAtBoss) return tryAgainAtBoss();
   openScene(scene.def.id);
 }
@@ -771,14 +773,31 @@ function tryAgainAtBoss() {
 }
 
 const finishOn = $<HTMLButtonElement>("finish-on");
-const finishAgain = $<HTMLButtonElement>("finish-again");
+const finishMap = $<HTMLButtonElement>("finish-map");
+/** A card comes: which, and from when, for the card after a rune going by itself; the header's restart is not for it. */
+function cardUp(kind: "clear" | "over" | "failed") {
+  state.finished = true;
+  state.card = kind;
+  state.cardAt = state.steps;
+  document.body.classList.toggle("cleared", kind === "clear");
+  finishMap.hidden = kind === "clear";
+  finishMap.textContent = t.toMap;
+  finishOn.textContent = kind === "clear" ? t.toMap : t.overAgain;
+  finishEl.classList.toggle("auto", kind === "clear" && !view.reduced);
+}
+/** After a rune: out to the map, at the station just cleared. Once, whatever asked first (a key, a tap, the button, the six seconds). */
+function outToMap() {
+  if (state.card !== "clear") return;
+  state.card = null;
+  document.body.classList.remove("cleared");
+  go("kart", arriveAfterClear(scene.def.id));
+}
 const finishCoins = $<HTMLElement>("finish-coins");
 const finishClean = $<HTMLElement>("finish-clean");
 
 /** The rune is in its slot: the card with the time, the best, the skilling, the bracteate, and a clean run. */
 function showCard(r: CardResult) {
-  state.finished = true;
-  state.card = "clear";
+  cardUp("clear");
   $<HTMLElement>("finish-title").textContent = `${RUNE_CHARS[scene.def.rune]} · ${scene.def.name}`;
   $<HTMLElement>("finish-line").textContent = `${formatTime(r.ms)} · ${r.newBest ? t.finishNew : t.finishBest(formatTime(progress.best[scene.def.id] ?? r.ms))}`;
   const gold = $<HTMLElement>("finish-gold");
@@ -802,18 +821,15 @@ function showCard(r: CardResult) {
   } else if (r.opened) more.textContent = t.lineTwoOpened;
   else if (scene.def.id === "nabolaget") more.textContent = t.runesLeft(of(LINE_1));
   else more.textContent = of(LINE_2) === 6 ? t.vikingLine(ORDER.length - progress.bracteates.length) : t.runesTwoLeft(of(LINE_2));
-  finishOn.textContent = t.finishOn;
-  finishAgain.textContent = t.finishAgain;
   finishEl.hidden = false;
-  say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""}`);
+  say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""} ${t.toMap}.`);
   sfx.play("clear");
   finishOn.focus({ preventScroll: true });
 }
 
 /** No lives left: a plain card, and the level starts over with three lives. */
 function showOver() {
-  state.finished = true;
-  state.card = "over";
+  cardUp("over");
   const line = scene.play.overAtBoss ? t.overLineBoss : t.overLine;
   $<HTMLElement>("finish-title").textContent = t.overTitle;
   $<HTMLElement>("finish-line").textContent = line;
@@ -821,8 +837,6 @@ function showOver() {
   finishCoins.hidden = true;
   finishClean.hidden = true;
   $<HTMLElement>("finish-more").hidden = true;
-  finishOn.textContent = t.overAgain;
-  finishAgain.textContent = t.overMap;
   finishEl.hidden = false;
   say(`${t.overTitle}. ${line}`);
   sfx.play("over");
@@ -834,13 +848,10 @@ let failedLevel: string | null = null;
 function showLoadFailed(id: string) {
   failedLevel = id;
   const name = nameOf(id);
-  state.finished = true;
-  state.card = "failed";
+  cardUp("failed");
   $<HTMLElement>("finish-title").textContent = t.loadFailedTitle;
   $<HTMLElement>("finish-line").textContent = t.loadFailedLine(name);
   for (const el of ["finish-gold", "finish-coins", "finish-clean", "finish-more"]) $<HTMLElement>(el).hidden = true;
-  finishOn.textContent = t.overAgain;
-  finishAgain.textContent = t.overMap;
   finishEl.hidden = false;
   say(`${t.loadFailedTitle}. ${t.loadFailedLine(name)}`);
   finishOn.focus({ preventScroll: true });
@@ -871,10 +882,9 @@ finishOn.addEventListener("click", () => {
     session.lives = LIVES;
     return restartLevel();
   }
-  const next = ORDER[ORDER.indexOf(scene.def.id) + 1];
-  go("kart", next ?? scene.def.id);
+  outToMap();
 });
-finishAgain.addEventListener("click", () => {
+finishMap.addEventListener("click", () => {
   if (state.card === "failed") {
     finishEl.hidden = true;
     state.finished = false;
@@ -885,8 +895,15 @@ finishAgain.addEventListener("click", () => {
     session.lives = LIVES;
     return go("kart", scene.def.id);
   }
-  restartLevel();
 });
+// The card after a rune: any key newly pressed, or a tap or click anywhere on the game, takes him to the map.
+window.addEventListener("keydown", (e) => {
+  if (cardKey(state.card, e.key, e.repeat, state.steps - state.cardAt)) {
+    e.preventDefault();
+    outToMap();
+  }
+});
+stage.addEventListener("click", () => state.card === "clear" && outToMap());
 restartButton.addEventListener("click", () => {
   restartLevel();
   restartButton.blur(); // give the keyboard back to the game
@@ -1176,6 +1193,7 @@ function stepOnce() {
     state.flight = null;
     showCard(cardResult);
   }
+  if (cardGoes(state.card, state.steps - state.cardAt, view.reduced)) outToMap();
   stepEnd(state, scene.doors, input, scene.skies);
 }
 
@@ -1576,7 +1594,7 @@ wirePointer(stage, () => scene?.doors ?? [], state, {
 
 // T steps through every sky and back to the real one; R starts the level again (M, the sound, is wired by the kit).
 wireSkyKey(() => scene.skies, state, t.skies, () => mode === "scene");
-onKey("KeyR", () => mode === "scene" && !scene.map && restartLevel());
+onKey("KeyR", () => mode === "scene" && !scene.map && (state.card === "over" || !state.finished) && restartLevel());
 
 // The header link to the maze keeps its address for visitors without JavaScript; with it, a click goes in.
 links.find((l) => l.id === "maze")?.el.addEventListener("click", (e) => {
