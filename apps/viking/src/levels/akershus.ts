@@ -1,10 +1,11 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
-import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
+import { ENEMY, FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, flagCloth, type LedgeLook } from "@larshansen/pixelkit/props";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
+import { parts } from "../render/pickups";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -439,40 +440,37 @@ function pier(c: number) {
   for (let k = 0; k < 2 * TILE; k += 7) R(x + k, WATER - 2, 3, 2, PLANTS.hedgeDark);
 }
 
-/** A guard of the fortress on his round: a dark greatcoat, a cap, a rifle on the shoulder; two steps of a march. */
+/** A guard of the fortress: a red coat, a plum helmet with a plume, a pike at his back. 13 x 20. */
 function guard(e: Enemy) {
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
-  const f = e.dir;
-  const at = (dx: number) => (f > 0 ? x + dx : x + 9 - dx);
-  const step = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
-  R(x + 2, y - 14, 6, 2, INK);
-  R(at(6), y - 14, 3, 1, PARADE.plume);
-  R(x + 2, y - 12, 6, 3, SKIN);
-  R(at(6), y - 11, 1, 1, INK);
-  R(x + 1, y - 9, 8, 6, PARADE.guard);
-  R(x + 1, y - 6, 8, 1, PARADE.guardBelt);
-  R(at(1), y - 15, 1, 9, METAL.lampPost);
-  R(x + 2 + step, y - 3, 2, 3, PARADE.guard);
-  R(x + 6 - step, y - 3, 2, 3, PARADE.guard);
-  R(x + 1 + step, y - 1, 3, 1, INK);
-  R(x + 5 - step, y - 1, 3, 1, INK);
+  const r = parts(e, 13);
+  const s = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
+  r(1, -19, 1, 11, ENEMY.plum);
+  r(1, -20, 1, 1, ENEMY.pale);
+  r(3, -18, 7, 3, ENEMY.plum);
+  r(8, -19, 4, 1, ENEMY.poisonLight);
+  r(3, -15, 7, 4, ENEMY.orangeLight);
+  r(8, -14, 1, 1, ENEMY.eye);
+  r(2, -11, 9, 8, ENEMY.red);
+  r(2, -7, 9, 1, ENEMY.plum);
+  r(3 + s, -3, 3, 3, ENEMY.red);
+  r(7 - s, -3, 3, 3, ENEMY.red);
+  r(2 + s, -1, 4, 1, ENEMY.plum);
+  r(7 - s, -1, 4, 1, ENEMY.plum);
 }
 
-/** A brazier on the wall: an iron basket on a stone foot, coals and flames. Landing on it hurts. */
+/** A brazier on its stone foot: a red iron basket, flames over the rim. It hurts from above. 13 x 16. */
 function brazier(e: Enemy, t: number) {
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
-  R(x + 2, y - 4, 6, 4, STONE.base);
-  R(x + 2, y - 4, 6, 1, STONE.light);
-  R(x, y - 9, 10, 5, METAL.lampPost);
-  for (let k = 1; k < 10; k += 3) R(x + k, y - 9, 1, 5, P.ironDark);
+  const r = parts(e, 13);
+  r(3, -5, 7, 5, ENEMY.plum);
+  r(3, -5, 7, 1, ENEMY.plumLight);
+  r(0, -11, 13, 6, ENEMY.red);
+  for (let k = 1; k < 13; k += 4) r(k, -11, 1, 6, ENEMY.plum);
   const flick = view.reduced ? 0 : Math.floor(t / 5) % 3;
-  R(x + 1, y - 10, 8, 1, FIRE.glow);
-  R(x + 2 + flick, y - 12, 2, 2, FIRE.flame);
-  R(x + 6 - flick, y - 13, 2, 3, FIRE.flame);
-  R(x + 4, y - 11, 2, 1, FIRE.core);
-  light(x + 1, y - 13, 8, 4, "soft");
+  r(1, -12, 11, 1, ENEMY.orange);
+  r(2 + flick, -15, 3, 3, ENEMY.orange);
+  r(8 - flick, -16, 2, 4, ENEMY.orangeLight);
+  r(5, -14, 3, 2, ENEMY.orangeLight);
+  light(Math.round(e.x - 5), Math.round(e.y) - 16, 10, 5, "soft");
 }
 
 /** The flourish: the flag runs up the keep's pole, and the saluting battery fires three times, puffs of square smoke over the walls. */
@@ -514,7 +512,8 @@ export const AKERSHUS: LevelDef = {
   carriers: [HOIST],
   timed: [],
   cannons: CANNONS,
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   flourish: 140,
   flourishLook: 30,
   signs: [

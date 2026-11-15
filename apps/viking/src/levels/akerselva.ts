@@ -2,12 +2,15 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { CREATURE, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import { leap, type Enemy, type EnemyDef } from "../game/enemies";
+import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook } from "../render/looks";
+import { parts } from "../render/pickups";
+import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -223,49 +226,50 @@ export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
 const stride = (e: Enemy) => (view.reduced ? 0 : Math.floor(e.x / 3) % 2);
 
 function duck(e: Enemy) {
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 10 - dx);
-  // A mallard waddling: brown body, a green head bobbing, a yellow bill, orange feet.
-  R(x + 1, y - 5, 8, 4, CREATURE.duck);
-  R(at(0), y - 4, 2, 2, mix(CREATURE.duck, INK, 0.3));
-  R(x + 2, y - 4, 4, 1, mix(CREATURE.duck, WHITE, 0.25));
+  const r = parts(e, 13);
   const bob = stride(e);
-  R(at(7), y - 8 + bob, 3, 3, CREATURE.duckHead);
-  R(at(9) + (e.dir > 0 ? 1 : -1), y - 7 + bob, 2, 1, CREATURE.duckBill);
-  R(at(8), y - 7 + bob, 1, 1, INK);
-  R(at(3) + bob, y - 1, 2, 1, CREATURE.beak);
-  R(at(6) - bob, y - 1, 2, 1, CREATURE.beak);
+  // A mallard waddling: an orange body, a poison-green head bobbing, a red bill and feet.
+  r(1, -7, 10, 5, ENEMY.orange);
+  r(0, -6, 2, 3, ENEMY.orange);
+  r(3, -6, 5, 1, ENEMY.orangeLight);
+  r(9, -10 + bob, 4, 4, ENEMY.poison);
+  r(13, -9 + bob, 2, 1, ENEMY.red);
+  r(11, -9 + bob, 1, 1, ENEMY.eye);
+  r(4 + bob, -2, 2, 2, ENEMY.red);
+  r(8 - bob, -2, 2, 2, ENEMY.red);
 }
 
-const SALMON = ["..bb..", ".bbbb.", ".bebs.", "bbbbss", "bbbsss", "bbssss", ".bbss.", ".bbss.", "..bs..", "..bb..", ".b..b.", "bb..bb"];
+const SALMON = ["...bb...", "..bbbb..", ".bbbbbb.", ".bbebbs.", "bbbbbsss", "bbbbssss", "bbbsssss", "bbbsssss", ".bbssss.", ".bbsss..", "..bss...", "..bbs...", "...bb...", ".bb..bb.", "bb....bb"];
 
 /**
- * A salmon leaping: nose up on the way out of the water, nose down on the way back, a dark back, a
- * pale side, the tail fin spread. `water`: the y of the surface, below which nothing of it shows.
+ * A salmon leaping: nose up on the way out of the water, nose down on the way back, red, a lighter
+ * side, the tail fin spread. `water`: the y of the surface, below which nothing of it shows.
  */
 function drawSalmon(e: Enemy, t: number, water = Infinity) {
   const l = leap(e, t);
-  const x = Math.round(e.x - 3);
-  const y = Math.round(e.y) - 12;
-  if (l.ripple && !view.reduced && Math.floor(t / 6) % 2) {
-    R(Math.round(e.x - 5), Math.min(water, Math.round(e.y)) - 1, 10, 1, P.foam);
-    R(Math.round(e.x - 3), Math.min(water, Math.round(e.y)) - 2, 6, 1, mix(P.foam, P.water, 0.4));
-  }
+  const x = Math.round(e.x - 4);
+  // Drawn fifteen rows tall, to its box's height (it keeps the box it had before order 18).
+  const y = Math.round(e.y) - e.h;
+  const rowAt = (r: number) => Math.round((r * e.h) / 15);
+  if (l.ripple && !view.reduced && Math.floor(t / 6) % 2)
+    plain(() => {
+      R(Math.round(e.x - 6), Math.min(water, Math.round(e.y)) - 1, 12, 1, P.foam);
+      R(Math.round(e.x - 4), Math.min(water, Math.round(e.y)) - 2, 8, 1, mix(P.foam, P.water, 0.4));
+    });
   if (l.up <= 0) return;
   // Past the top of its leap it turns over.
   const falling = leap(e, t + 1).up < l.up;
-  const colors: Record<string, string> = { b: mix(CREATURE.salmon, INK, 0.12), s: mix(CREATURE.salmon, WHITE, 0.45), e: INK };
+  const colors: Record<string, string> = { b: ENEMY.red, s: ENEMY.redLight, e: ENEMY.eye };
   SALMON.forEach((row, r) =>
     [...row].forEach((ch, c) => {
       if (ch === ".") return;
-      const yy = y + (falling ? 11 - r : r);
+      const yy = y + rowAt(falling ? 14 - r : r);
       if (yy >= water) return;
-      R(x + (e.dir > 0 ? c : 5 - c), yy, 1, 1, ch === "b" && (r < 2 || c === 0) ? mix(CREATURE.salmon, INK, 0.35) : colors[ch]);
+      R(x + (e.dir > 0 ? c : 7 - c), yy, 1, 1, colors[ch]);
     })
   );
   // The splash it leaves where it broke the surface.
-  if (water < Infinity && l.up < 14 && !view.reduced) for (const dx of [-5, 5]) R(Math.round(e.x) + dx, water - 2 - (l.up % 3), 2, 2, P.foam);
+  if (water < Infinity && l.up < 14 && !view.reduced) plain(() => [-6, 5].forEach((dx) => R(Math.round(e.x) + dx, water - 2 - (l.up % 3), 2, 2, P.foam)));
 }
 
 // --- Art ------------------------------------------------------------------------------------------------
@@ -939,7 +943,8 @@ export const AKERSELVA: LevelDef = {
   carriers: CARRIERS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   zones: ZONES,
   flourish: 120,
   // The view goes four rows under the ground, and six by the cave behind the curtain.
@@ -1031,7 +1036,7 @@ export const AKERSELVA: LevelDef = {
       if (!e.alive) return false;
       if (e.def.look === "salmon") drawSalmon(e, v.t, waterTop(e.x));
       else if (e.def.look === "duck") duck(e);
-      else return false;
+      else return drawLook(e, v.t);
       return true;
     },
     flourish: (age) => flourish(age)

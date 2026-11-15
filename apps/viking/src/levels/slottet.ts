@@ -2,14 +2,15 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, ENEMY, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
+import { parts } from "../render/pickups";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -184,7 +185,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "gull", c: 98, r: 15, range: 2, rise: 6, period: 170, offset: 40 },
   { kind: "walker", look: "pigeon", c: 112, r: 22, range: 2 },
   { kind: "flyer", look: "gull", c: 119, r: 14, range: 3, rise: 8, period: 160 },
-  { kind: "walker", look: "hotdog", c: 128, r: 22, range: 2, speed: 0.4, w: 18, h: 14 },
+  { kind: "walker", look: "hotdog", c: 128, r: 22, range: 2, speed: 0.4, w: 18, h: 14, small: true },
   { kind: "walker", look: "pigeon", c: 160, r: 21, range: 2 },
   { kind: "walker", look: "pigeon", c: 172, r: 21, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 175, r: 18, range: 3, rise: 8, period: 150, offset: 70 },
@@ -236,23 +237,27 @@ function balloons(i: number, t: number) {
   }
 }
 
-/** The hot-dog cart, pushed along the street on 17 May: a striped awning, the steamer, two wheels. */
+/**
+ * A hot-dog cart rolling along the parade by itself: a red cart, a striped canopy, a sausage on the
+ * grill and a bun. It keeps its old box (order 18: a bigger one broke the route); the picture is wider
+ * round it, its top the box's top. 22 x 14.
+ */
 function hotdogCart(e: Enemy, t: number) {
   if (!e.alive) return;
-  const x = Math.round(e.x - e.w / 2);
-  const y = Math.round(e.y);
-  R(x, y - 10, e.w, 7, PARADE.blouse);
-  R(x, y - 10, e.w, 1, mix(PARADE.blouse, INK, 0.2));
-  R(x + 2, y - 8, 7, 3, METAL.pipe);
-  R(x + 11, y - 8, 5, 2, PARADE.drumShell);
-  for (let k = 0; k < e.w; k += 4) R(x + k, y - 14, 2, 3, PARADE.balloonRed);
-  for (let k = 2; k < e.w; k += 4) R(x + k, y - 14, 2, 3, WHITE);
-  R(x + 1, y - 11, 1, 1, P.woodDark);
-  R(x + e.w - 2, y - 11, 1, 1, P.woodDark);
+  // Drawn for the box it keeps already: not squeezed again.
+  const r = parts({ ...e, def: { ...e.def, small: false } }, 22);
+  r(0, -11, 22, 8, ENEMY.red);
+  r(0, -11, 22, 1, ENEMY.redLight);
+  r(3, -9, 9, 3, ENEMY.orange);
+  r(14, -9, 6, 3, ENEMY.orangeLight);
+  for (let k = 0; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.red);
+  for (let k = 2; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.orangeLight);
+  r(1, -12, 1, 1, ENEMY.plum);
+  r(20, -12, 1, 1, ENEMY.plum);
   const roll = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  for (const wx of [x + 3, x + e.w - 6]) {
-    R(wx, y - 3, 4, 3, INK);
-    R(wx + 1 + roll, y - 2, 1, 1, METAL.pipe);
+  for (const wx of [3, 15]) {
+    r(wx, -3, 4, 3, ENEMY.plum);
+    r(wx + 1 + roll, -2, 1, 1, ENEMY.plumLight);
   }
   void t;
 }
@@ -826,7 +831,8 @@ export const SLOTTET: LevelDef = {
   carriers: CARRIERS,
   timed: BALLOONS,
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   drum: 7,
   flourish: 150,
   flourishLook: 80,

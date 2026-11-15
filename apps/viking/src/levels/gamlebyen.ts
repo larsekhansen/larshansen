@@ -2,16 +2,19 @@ import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, PALETTE, ROLES, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
+import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
 import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook } from "../render/looks";
+import { parts } from "../render/pickups";
+import { outlined, plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -201,7 +204,9 @@ export const GROUNDS: Grounds<Ruins> = {
         return Math.abs(feet - r * TILE) < 0.01 && (isSolid(c, r) || isOneWay(c, r));
       }
     };
-  }
+  },
+  // The tower moves; the stone that sinks gives way while it is up.
+  stands: (s) => [{ x: TOWER.x, y: s.y, w: TOWER.w, how: "moves" as const }, ...STONES.flatMap((st, i) => (st.sinks && s.up[i] ? [{ x: st.c * TILE, y: st.r * TILE, w: TILE, how: "gives" as const }] : []))]
 };
 
 /** The stone a guard was until he came near: within this many tiles it wakes and walks. */
@@ -849,7 +854,12 @@ function serpentArt(s: Serpent, v: View) {
   const base = floor + WATERLINE - 2;
   const sway = view.reduced ? 0 : Math.round(Math.sin(t * 0.07) * 2);
   if (s.phase === "beaten" || s.phase === "asleep") return;
-  if (s.tail) tailArt(s, v);
+  // Outlined as every enemy is (order 18); its tail, which hurts, with its rim in the warning colour, since
+  // it is dark on the dark water; its fin breaking the water before it is not outlined.
+  if (s.tail) {
+    if (tailBox(s, v.t)) outlined(() => tailArt(s, v), undefined, ENEMY.warning);
+    else tailArt(s, v);
+  }
   if (s.phase === "ring" || s.phase === "rest" || s.phase === "dive" || s.phase === "duck") coils(s, v);
   if (s.phase === "ring") {
     // A dark shape under the water, and a ring of foam over it.
@@ -857,8 +867,9 @@ function serpentArt(s: Serpent, v: View) {
     R(x - r + 3, floor + WATERLINE - 1, 2 * r - 6, 3, mix(PALETTE.waterDeep, INK, 0.4));
     for (let k = -r; k <= r; k++) {
       const dy = Math.round(Math.sqrt(Math.max(0, r * r - k * k)) * 0.35);
-      light(x + k, floor + WATERLINE + dy, 1, 1, "soft", G.foam);
-      light(x + k, floor + WATERLINE - dy, 1, 1, "soft", G.foam);
+      // Where it will rise, its tell: the ring in the bosses' "now" colour (order 18).
+      light(x + k, floor + WATERLINE + dy, 1, 1, "soft", ROLES.now);
+      light(x + k, floor + WATERLINE - dy, 1, 1, "soft", ROLES.now);
     }
     return;
   }
@@ -870,13 +881,15 @@ function serpentArt(s: Serpent, v: View) {
     const low = s.phase === "lash" || s.phase === "watch";
     const headY = spit ? mouth(s).y - 8 : low ? floor - SERPENT.rear + 10 : floor - Math.round((SERPENT.rear + 4) * rising);
     const lean = spit ? s.dir * 12 : low ? s.dir * 6 : -s.dir * 3;
-    serpentNeck(x, headY + 6, base, s.dir, lean, sway);
     const tellK = s.phase === "rear" ? age / Math.max(1, SERPENT_STEPS.tell[Math.min(s.hits, 2)]) : 0;
     const open = spit ? 4 : s.phase === "rear" && tellK > 0.5 ? (tellK > 0.8 ? 3 : 1) : 0;
-    serpentHead(x + lean + sway, headY, s.dir, open);
-    // Its tell, plain to see: the throat swells pale as it gathers the brine.
-    if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, G.brine);
-    if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, G.brine);
+    outlined(() => {
+      serpentNeck(x, headY + 6, base, s.dir, lean, sway);
+      serpentHead(x + lean + sway, headY, s.dir, open);
+      // Its tell, plain to see: the throat swells pale as it gathers the brine.
+      if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
+      if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
+    });
     if (s.phase === "rise" || (s.phase === "rear" && age < 40)) streaming(x, headY, base, age + (s.phase === "rear" ? SERPENT_STEPS.rise : 0), 10);
     return;
   }
@@ -888,15 +901,18 @@ function serpentArt(s: Serpent, v: View) {
     const d = s.dir;
     const hx = h.x + h.w / 2 - d * 2;
     const bx = hx - d * 18;
-    for (let y = floor - 9; y < base; y++) {
-      const f = (y - floor + 9) / (base - floor + 9);
-      bodyRow(bx + Math.round(d * 6 * (1 - f) ** 2), y, Math.round(12 + 6 * f), d, y);
-    }
-    for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3), 9, d, i);
-    serpentHead(hx, h.y - 1, d, s.phase === "reel" ? 2 : 1, true);
+    outlined(() => {
+      for (let y = floor - 9; y < base; y++) {
+        const f = (y - floor + 9) / (base - floor + 9);
+        bodyRow(bx + Math.round(d * 6 * (1 - f) ** 2), y, Math.round(12 + 6 * f), d, y);
+      }
+      for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3), 9, d, i);
+      serpentHead(hx, h.y - 1, d, s.phase === "reel" ? 2 : 1, true);
+    });
     if (s.phase === "dazed") for (let k = 0; k < 3; k++) {
       const a = view.reduced ? k * 2.1 : t * 0.1 + k * 2.1;
-      R(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, G.brine);
+      // Its dazed head is where to hit it: the stars over it in the bosses' "now" colour (order 18).
+      R(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, ROLES.now);
       light(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, "soft", "rgba(220, 240, 255, 0.6)");
     }
     return;
@@ -917,91 +933,96 @@ function runeRising(s: Serpent, v: View, rune: { x: number; y: number }) {
   if (!view.reduced) for (let i = 0; i < 4; i++) R(rune.x + 3 + i * 3, y + 16 + ((v.t + i * 4) % 10), 1, 2, G.foam);
 }
 
-/** The ball of brine, flying at him; sent back by the shield, going home. */
+/** The ball of brine, flying at him (what it throws, in the enemy's colours, outlined); sent back by the shield, going home. */
 function ballArt(s: Serpent, t: number) {
   const b = s.ball;
   if (!b) return;
   const x = Math.round(b.x);
   const y = Math.round(b.y);
-  R(x - 3, y - 3, 6, 6, G.brine);
-  R(x - 2, y - 2, 2, 2, WHITE);
-  light(x - 3, y - 3, 6, 6, "soft", "rgba(207, 232, 240, 0.7)");
   if (!view.reduced) for (let k = 1; k < 4; k++) R(x - Math.sign(b.vx) * k * 4, y - 1 + ((t + k) % 2), 2, 1, G.foam);
+  outlined(() => {
+    R(x - 3, y - 4, 6, 8, ENEMY.poison);
+    R(x - 4, y - 3, 8, 6, ENEMY.poison);
+    R(x - 2, y - 2, 3, 2, ENEMY.poisonLight);
+  });
+  light(x - 4, y - 4, 8, 8, "soft", "rgba(190, 240, 120, 0.5)");
 }
 
-/** A guard of the bishop's: a statue of grey stone until he comes near; then mail and a red coat, a spear. */
+/**
+ * The bishop's guard: while he is a statue, grey stone and not outlined (stone does not bite); woken, a
+ * plum coat over red mail, a halberd held out beside him. Squat, his head where his box's top is. 13 x 10.
+ */
 function guardArt(e: Enemy) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y);
   const stone = !e.n;
-  const coat = stone ? G.statue : G.guardCoat;
-  const mail = stone ? mix(G.statue, INK, 0.15) : G.guardMail;
-  const f = e.dir;
-  const step = stone || view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  R(x - 3, y - 4, 2, 4 - step, mail);
-  R(x + 1, y - 4, 2, 4 - (1 - step), mail);
-  R(x - 4, y - 10, 8, 6, coat);
-  R(x - 3, y - 13, 6, 3, mail);
-  R(x - 3, y - 14, 6, 1, mix(mail, WHITE, 0.2));
-  R(f > 0 ? x + 1 : x - 2, y - 11, 1, 1, stone ? mix(G.statue, INK, 0.4) : INK);
-  R(f > 0 ? x + 5 : x - 6, y - 16, 1, 14, stone ? G.statue : G.timberLight);
-  R(f > 0 ? x + 4 : x - 7, y - 18, 3, 2, stone ? G.statue : G.guardMail);
+  const draw = () => {
+    const r = parts(e, 13);
+    const coat = stone ? G.statue : ENEMY.plum;
+    const mail = stone ? mix(G.statue, INK, 0.15) : ENEMY.red;
+    const step = stone || view.reduced ? 0 : Math.floor(e.x / 3) % 2;
+    r(3, -3, 3, 3 - step, mail);
+    r(7, -3, 3, 3 - (1 - step), mail);
+    r(2, -7, 9, 4, coat);
+    r(3, -10, 7, 3, mail);
+    r(3, -10, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.redLight);
+    r(8, -9, 1, 1, stone ? mix(G.statue, INK, 0.4) : ENEMY.eye);
+    r(12, -13, 1, 12, stone ? G.statue : ENEMY.orange);
+    r(12, -15, 2, 2, stone ? G.statue : ENEMY.pale);
+  };
+  if (stone) plain(draw);
+  else draw();
 }
 
-/** An archer on the arch: a green coat, a bow drawn as he makes ready. */
+/** An archer on the wall walk: a red coat, a hood, a bow drawn as the shot comes. 11 x 16. */
 function archerArt(e: Enemy, t: number) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y);
+  const r = parts(e, 11);
   const up = windingUp(e, t);
-  R(x - 3, y - 4, 2, 4, G.timberDark);
-  R(x + 1, y - 4, 2, 4, G.timberDark);
-  R(x - 4, y - 10, 8, 6, G.archerCoat);
-  R(x - 2, y - 13, 5, 3, "#e0b48a");
-  R(x - 3, y - 14, 6, 2, G.archerCoat);
-  R(e.dir > 0 ? x + 1 : x - 2, y - 12, 1, 1, INK);
-  const bx = e.dir > 0 ? x + 5 : x - 6;
-  for (let k = -5; k <= 5; k++) R(bx + Math.round((1 - (k / 5) ** 2) * (up ? 3 : 2)) * e.dir, y - 9 + k, 1, 1, G.timberLight);
-  if (up) R(Math.min(bx, x) , y - 9, Math.abs(bx - x), 1, G.sail);
+  r(2, -5, 3, 5, ENEMY.plum);
+  r(6, -5, 3, 5, ENEMY.plum);
+  r(1, -12, 9, 7, ENEMY.red);
+  r(3, -15, 6, 3, ENEMY.orangeLight);
+  r(2, -16, 8, 2, ENEMY.red);
+  r(7, -14, 1, 1, ENEMY.eye);
+  for (let k = -6; k <= 6; k++) r(11 + Math.round((1 - (k / 6) ** 2) * (up ? 3 : 2)), -10 + k, 1, 1, ENEMY.orange);
+  if (up) r(6, -10, 6, 1, ENEMY.pale);
 }
 
-/** A goose, white, its neck out as it comes; a dog, brown, its tail up. */
+/** A goose of the market: an orange-light body, its neck up, an orange beak and feet. 14 x 13. */
 function gooseArt(e: Enemy) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y);
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x - dx);
-  R(x - 5, y - 6, 10, 5, G.goose);
-  R(at(4), y - 11, 2, 6, G.goose);
-  R(at(5), y - 11, 3, 2, G.goose);
-  R(e.dir > 0 ? at(8) : at(9), y - 10, 2, 1, G.gooseBeak);
-  R(at(6), y - 11, 1, 1, INK);
-  R(x - 2, y - 1, 1, 1, G.gooseBeak);
-  R(x + 1, y - 1, 1, 1, G.gooseBeak);
+  const r = parts(e, 14);
+  r(1, -8, 11, 6, ENEMY.orangeLight);
+  r(2, -6, 6, 1, ENEMY.orange);
+  r(9, -12, 3, 6, ENEMY.orangeLight);
+  r(10, -12, 3, 2, ENEMY.orangeLight);
+  r(13, -11, 2, 1, ENEMY.orange);
+  r(11, -11, 1, 1, ENEMY.eye);
+  r(4, -2, 2, 2, ENEMY.orange);
+  r(8, -2, 2, 2, ENEMY.orange);
 }
+/** A market dog: a plum coat, ears up, a wagging tail. 16 x 12. */
 function dogArt(e: Enemy) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y);
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x - dx);
+  const r = parts(e, 16);
   const leg = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  R(x - 6, y - 7, 12, 4, G.dog);
-  R(at(5), y - 10, 4, 4, G.dog);
-  R(e.dir > 0 ? at(8) : at(9), y - 8, 2, 2, mix(G.dog, INK, 0.3));
-  R(at(6), y - 9, 1, 1, INK);
-  R(at(-7), y - 10, 1, 4, G.dog);
-  for (const dx of [-5, -2, 2, 5]) R(x + dx, y - 3, 1, 3 - ((dx > 0 ? leg : 1 - leg) ? 1 : 0), mix(G.dog, INK, 0.2));
+  r(1, -9, 13, 5, ENEMY.plum);
+  r(11, -11, 5, 5, ENEMY.plum);
+  r(15, -9, 2, 2, ENEMY.plumLight);
+  r(13, -10, 1, 1, ENEMY.eye);
+  r(11, -12, 1, 1, ENEMY.plum);
+  r(0, -12, 1, 5, ENEMY.plum);
+  r(12, -7, 2, 1, ENEMY.red);
+  for (const dx of [2, 5, 9, 12]) r(dx, -4, 2, 4 - ((dx > 7 ? leg : 1 - leg) ? 1 : 0), ENEMY.plum);
 }
 
-/** An arrow: a thin shaft with its head; stopped by the shield, it drops, spinning. */
 function arrowArt(s: Shot, t: number) {
   const x = Math.round(s.x);
   const y = Math.round(s.y);
   if (s.spent !== undefined) {
     const k = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    R(x - 3 + k, y - k * 2, 6 - k * 4, 1 + k * 3, G.timberLight);
+    R(x - 3 + k, y - k * 2, 6 - k * 4, 1 + k * 3, ENEMY.orange);
     return;
   }
   const d = Math.hypot(s.vx, s.vy) || 1;
-  for (let k = 0; k < 8; k++) R(x - Math.round((s.vx / d) * k), y - Math.round((s.vy / d) * k), 1, 1, k < 2 ? G.guardMail : G.timberLight);
-  R(x - Math.round((s.vx / d) * 8), y - Math.round((s.vy / d) * 8) - 1, 1, 3, G.sail);
+  for (let k = 0; k < 9; k++) R(x - Math.round((s.vx / d) * k), y - Math.round((s.vy / d) * k), 1, 1, k < 2 ? ENEMY.red : ENEMY.orange);
+  R(x - Math.round((s.vx / d) * 9), y - Math.round((s.vy / d) * 9) - 1, 1, 3, ENEMY.plumLight);
 }
 
 const BOARDS: LedgeLook = { body: G.timber, top: G.timberLight, edge: G.timberDark, joint: G.timberDark };
@@ -1020,7 +1041,13 @@ export const GAMLEBYEN: LevelDef = {
   carriers: LONGSHIPS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // The card's last line: line 2's runes, and with all six, what is left to find.
+  cardLine: {
+    nb: (n, left) => (n === 6 ? `Seks av seks runer: VIKING. Igjen å finne: ${left === 0 ? "bedre tider." : `${left === 1 ? "én brakteat" : `${left} brakteater`} og bedre tider.`}` : `${["Null", "Én", "To", "Tre", "Fire", "Fem"][n] ?? n} av seks runer på linje 2. Resten ligger langs linja.`),
+    en: (n, left) => (n === 6 ? `Six of six runes: VIKING. Still to find: ${left === 0 ? "better times." : `${left === 1 ? "one bracteate" : `${left} bracteates`}, and better times.`}` : `${["None", "One", "Two", "Three", "Four", "Five"][n] ?? n} of six runes on line 2. The rest are along the line.`)
+  },
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   grounds: GROUNDS,
   rules: RULES,
   boss: serpentBoss(SERPENT_DEF),
@@ -1117,7 +1144,7 @@ export const GAMLEBYEN: LevelDef = {
       else if (e.def.look === "archer") archerArt(e, v.t);
       else if (e.def.look === "goose") gooseArt(e);
       else if (e.def.look === "dog") dogArt(e);
-      else return false;
+      else return drawLook(e, v.t);
       return true;
     },
     shot(s, v) {

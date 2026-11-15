@@ -1,7 +1,7 @@
 import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, LAND, PALETTE, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, LAND, PALETTE, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
@@ -9,6 +9,8 @@ import * as L from "@larshansen/pixelkit/swatches/lake";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
+import { parts } from "../render/pickups";
+import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -142,7 +144,9 @@ export const GROUNDS: Grounds<Lake> = {
       s.landed = null;
     }
   },
-  everywhere: (): Carrier[] => [...padsEverywhere(PADS), { x: HERON.x, y: HERON.y, w: HERON.w, dx: 0, dy: 0 }]
+  everywhere: (): Carrier[] => [...padsEverywhere(PADS), { x: HERON.x, y: HERON.y, w: HERON.w, dx: 0, dy: 0 }],
+  // The lily pads give way; so does the heron, which flies off.
+  stands: (s, t) => [...PADS.map((p, i) => ({ x: p.x, y: padY(p, s.pads[i], t), w: p.w, how: "gives" as const })), ...(s.gone === null ? [{ x: HERON.x, y: HERON.y, w: HERON.w, how: "gives" as const }] : [])]
 };
 
 /** The swans' clock: four seconds in a swan's stretch and it comes; for the last second it tells him so. */
@@ -216,7 +220,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "duck", c: 22, r: W - 1, range: 2, speed: 0.3 },
   { kind: "walker", look: "duck", c: 229, r: W - 1, range: 2, speed: 0.3 },
   { kind: "spiky", look: "swan", c: 70.5, r: W - 1, range: 8, w: 16, h: 12 },
-  { kind: "walker", look: "coot", c: 110, r: W - 1, range: 2, speed: 0.4 },
+  { kind: "walker", look: "coot", c: 110, r: W - 1, range: 2, speed: 0.4, small: true },
   // The gulls' beats chosen (by a search) so that a man who walks on along the shore is dived at nearly every time.
   { kind: "thrower", look: "nester", c: 117, r: W - 3, period: 110, straight: true, lead: true, faces: -1 },
   { kind: "thrower", look: "nester", c: 123, r: W - 3, period: 110, offset: 10, straight: true, lead: true, faces: -1 },
@@ -420,95 +424,90 @@ function heronArt(s: Lake | null, t: number) {
   R(x + HERON.w + 4, y - 8 - lift, 5, 1, L.swanBeak);
 }
 
-/** A swan: white, its neck up and gliding; telling him, neck down and wings half up; coming, neck stretched forward. */
 function swanArt(e: Enemy, t: number) {
-  const x = Math.round(e.x);
-  const y = waterOf(e);
-  const f = e.dir;
+  const r = parts({ ...e, y: waterOf(e) }, 20);
   const tell = telling(e);
   const coming = !e.calm;
-  const at = (dx: number) => x + f * dx;
-  // The body on the water.
-  R(x - 8, y - 6, 16, 6, L.swan);
-  R(x - 8, y - 6, 16, 1, WHITE);
-  R(x - 8, y - 2, 16, 2, L.swanShade);
-  R(f > 0 ? x - 10 : x + 8, y - 5, 2, 3, L.swanShade);
+  // The body on the water: a pink-plum swan, as nothing else on the lake is.
+  r(0, -7, 18, 7, ENEMY.plumLight);
+  r(0, -2, 18, 2, ENEMY.plum);
+  r(-2, -6, 2, 3, ENEMY.plum);
   if (tell || coming) {
     // Wings half raised.
-    R(x - 6, y - 9, 10, 3, L.swanShade);
-    R(x - 5, y - 10, 8, 1, L.swan);
+    r(2, -11, 12, 4, ENEMY.plum);
+    r(3, -12, 10, 1, ENEMY.plumLight);
   }
   if (coming) {
     // Neck stretched low and forward, the beak open.
-    for (let k = 0; k < 6; k++) R(at(7 + k), y - 6 - Math.floor(k / 3), 2, 2, L.swan);
-    R(at(13), y - 9, 3, 3, L.swan);
-    R(f > 0 ? at(15) : at(17), y - 8, 3, 1, L.swanBeak);
-    R(f > 0 ? at(15) : at(17), y - 6, 3, 1, L.swanBeak);
+    for (let k = 0; k < 7; k++) r(16 + k, -7 - Math.floor(k / 3), 2, 2, ENEMY.plumLight);
+    r(22, -11, 4, 4, ENEMY.plumLight);
+    r(24, -10, 1, 1, ENEMY.eye);
+    r(26, -10, 3, 1, ENEMY.red);
+    r(26, -8, 3, 1, ENEMY.red);
   } else if (tell) {
     // Neck down, head low over the water, hissing: the tell (still with reduced motion).
     const shake = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    for (let k = 0; k < 4; k++) R(at(7 + k), y - 7 + k, 2, 2, L.swan);
-    R(at(10) + shake, y - 4, 3, 3, L.swan);
-    R(f > 0 ? at(13) + shake : at(14) + shake, y - 3, 3, 1, L.swanBeak);
-    R(at(11) + shake, y - 4, 1, 1, INK);
+    for (let k = 0; k < 5; k++) r(16 + k, -8 + k, 2, 2, ENEMY.plumLight);
+    r(20 + shake, -5, 4, 3, ENEMY.plumLight);
+    r(24 + shake, -4, 3, 1, ENEMY.red);
+    r(21 + shake, -5, 1, 1, ENEMY.eye);
   } else {
-    // At peace: the neck in its S, the head high.
-    R(at(6), y - 14, 2, 9, L.swan);
-    R(at(6), y - 16, 3, 3, L.swan);
-    R(f > 0 ? at(9) : at(10), y - 15, 2, 1, L.swanBeak);
-    R(at(7), y - 15, 1, 1, INK);
+    // At peace: the neck up, the head high.
+    r(15, -17, 2, 11, ENEMY.plumLight);
+    r(15, -19, 4, 3, ENEMY.plumLight);
+    r(19, -18, 2, 1, ENEMY.red);
+    r(17, -18, 1, 1, ENEMY.eye);
   }
 }
 
-/** A duck, a mallard drake on the boards: brown body, green head, yellow bill. */
 function duckArt(e: Enemy) {
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
+  const r = parts(e, 13);
   const bob = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 10 - dx);
-  R(x + 1, y - 5, 8, 4, mix(L.reedHead, STONE.base, 0.3));
-  R(x + 2, y - 4, 4, 1, mix(L.reedHead, WHITE, 0.25));
-  R(at(7), y - 8 + bob, 3, 3, L.padDark);
-  R(at(9) + (e.dir > 0 ? 1 : -1), y - 7 + bob, 2, 1, L.sun);
-  R(at(8), y - 7 + bob, 1, 1, INK);
-  R(at(3) + bob, y - 1, 2, 1, L.swanBeak);
-  R(at(6) - bob, y - 1, 2, 1, L.swanBeak);
+  r(1, -7, 10, 5, ENEMY.orange);
+  r(0, -6, 2, 3, ENEMY.orange);
+  r(3, -6, 5, 1, ENEMY.orangeLight);
+  r(9, -10 + bob, 4, 4, ENEMY.poison);
+  r(13, -9 + bob, 2, 1, ENEMY.red);
+  r(11, -9 + bob, 1, 1, ENEMY.eye);
+  r(4 + bob, -2, 2, 2, ENEMY.red);
+  r(8 - bob, -2, 2, 2, ENEMY.red);
 }
 
-/** A coot: black, round, the white shield on its brow, pecking as it goes. */
+/** A coot: plum, a pale shield on its brow, poison-green feet. 13 x 10. */
 function cootArt(e: Enemy) {
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
+  const r = parts(e, 13);
   const peck = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 10 - dx);
-  R(x + 1, y - 6, 8, 5, L.coot);
-  R(at(7), y - 8 + peck, 3, 3, L.coot);
-  R(at(9), y - 7 + peck, 2, 2, L.cootShield);
-  R(at(8), y - 7 + peck, 1, 1, mix(L.swanBeak, INK, 0.3));
-  R(at(3), y - 1, 1, 1, mix(L.swanBeak, L.pad, 0.5));
-  R(at(6), y - 1, 1, 1, mix(L.swanBeak, L.pad, 0.5));
+  r(1, -8, 10, 6, ENEMY.plum);
+  r(3, -7, 5, 1, ENEMY.plumLight);
+  r(9, -10 + peck, 4, 4, ENEMY.plum);
+  r(12, -9 + peck, 2, 2, ENEMY.pale);
+  r(11, -9 + peck, 1, 1, ENEMY.eye);
+  r(4, -2, 2, 2, ENEMY.poison);
+  r(8, -2, 2, 2, ENEMY.poison);
 }
 
-/** A gull on its nest on a rock by the shore; as it makes ready to dive it stands up and spreads its wings. */
+/** A gull on its nest in the reeds (the nest is not outlined: it does not bite), rising to dive. 11 x 16. */
 function nesterArt(e: Enemy, t: number) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
-  R(x - 2, y - 2, 14, 3, L.reedHead);
-  const up = windingUp(e, t);
-  if (up) {
+  plain(() => R(x - 3, y - 2, 16, 3, L.reedHead));
+  const r = parts(e, 11);
+  if (windingUp(e, t)) {
     const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
-    R(x + 1, y - 9, 8, 6, L.gull);
-    R(x - 4, y - 10 - flap * 2, 6, 2, L.gullWing);
-    R(x + 8, y - 10 - flap * 2, 6, 2, L.gullWing);
-    R(e.dir > 0 ? x + 8 : x - 1, y - 11, 3, 3, L.gull);
-    R(e.dir > 0 ? x + 10 : x - 3, y - 10, 2, 1, L.sun);
+    r(1, -12, 9, 7, ENEMY.orangeLight);
+    r(-4, -13 - flap * 2, 6, 2, ENEMY.orange);
+    r(9, -13 - flap * 2, 6, 2, ENEMY.orange);
+    r(8, -16, 4, 4, ENEMY.orangeLight);
+    r(12, -15, 2, 1, ENEMY.red);
+    r(10, -15, 1, 1, ENEMY.eye);
   } else {
-    R(x + 1, y - 6, 8, 4, L.gull);
-    R(x + 1, y - 6, 8, 1, L.gullWing);
-    R(e.dir > 0 ? x + 7 : x, y - 8, 3, 3, L.gull);
-    R(e.dir > 0 ? x + 9 : x - 2, y - 7, 2, 1, L.sun);
+    r(1, -9, 9, 6, ENEMY.orangeLight);
+    r(1, -9, 9, 1, ENEMY.orange);
+    r(8, -13, 2, 4, ENEMY.orangeLight);
+    r(7, -16, 4, 4, ENEMY.orangeLight);
+    r(11, -15, 2, 1, ENEMY.red);
+    r(9, -15, 1, 1, ENEMY.eye);
   }
-  R(e.dir > 0 ? x + 8 : x + 1, y - 7 - (up ? 3 : 0), 1, 1, INK);
 }
 
 /** The rocks the gulls nest on, behind the island's path: broad at the foot, lumpy, lit on top. */
@@ -525,21 +524,21 @@ function nestRocks() {
   }
 }
 
-/** A gull diving at him: wings swept back, beak first; turned away by the shield, it flaps off. */
 function diveArt(s: Shot, t: number) {
   const x = Math.round(s.x);
   const y = Math.round(s.y);
   const d = s.vx < 0 ? -1 : 1;
   if (s.spent !== undefined) {
     const flap = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    R(x - 4, y - 2, 8, 3, L.gull);
-    R(x - 7, y - 3 - flap * 2, 14, 1, L.gullWing);
+    R(x - 5, y - 2, 10, 4, ENEMY.orangeLight);
+    R(x - 9, y - 3 - flap * 2, 18, 2, ENEMY.orange);
     return;
   }
-  R(x - 3, y - 1, 7, 3, L.gull);
-  R(x - d * 6, y - 3, 6, 1, L.gullWing);
-  R(x - d * 6, y + 3, 6, 1, L.gullWing);
-  R(x + d * 4, y, 2, 1, L.sun);
+  R(x - 4, y - 1, 9, 4, ENEMY.orangeLight);
+  R(x - d * 8 - (d < 0 ? 7 : 0), y - 3, 8, 2, ENEMY.orange);
+  R(x - d * 8 - (d < 0 ? 7 : 0), y + 3, 8, 2, ENEMY.orange);
+  R(x + d * 5 - (d < 0 ? 2 : 0), y, 3, 1, ENEMY.red);
+  R(x + d * 3, y - 1, 1, 1, ENEMY.eye);
 }
 
 /** The mist over the water past the first swan: it hides the far bank, but never what is close to him. */

@@ -1,6 +1,6 @@
 # 0011. Levels load on demand; the first script stays under 60 kB
 
-State (order 17): enforced by [0035](0035-the-budget-enforced.md): the build fails over the budget. 59.34 kB after order 17.
+State (order 18): enforced by [0035](0035-the-budget-enforced.md): the build fails over the budget. 59.34 kB after order 17, 59.75 after the speed fix (ADR 0036), 59.70 after order 18 (the enemy looks only some levels share went to a chunk of their own, `render/looks.ts`; the troll's lines to Nordmarka; the shield's and the sledge's words to the shield's chunk; the line map's words to its chunk; Gamlebyen's card line and the kiosk's words to their levels).
 
 Decided by the planner (order 8 set the budget; order 10 rule 12 set the means).
 

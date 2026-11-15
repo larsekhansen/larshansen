@@ -117,7 +117,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   <ol class="spell" id="spell" aria-label="The ten levels, one per letter of LARS HANSEN"></ol>
   <p class="cap">Same person as the front page, same jump, same pixels, same Oslo sky. The front page stays the walk through Gamle Oslo; the Opera's secret door opens onto the rest of the city.</p>
   <p><span class="tag done">built</span> All ten levels, the line map, two bosses, the ending, and the maze as a bonus stop. <span class="tag todo">not yet</span> Played by a person at real speed. Everything here was checked by scripted players and still pictures.</p>
-  <p><span class="tag done">line 2</span> Since order 14 a second line leaves the map at Stortinget: six more levels spelling VIKING, opened by clearing Nabolaget. Bygdøy (order 14) gives the shield; Vigelandsparken, Korketrekkeren and Østensjøvannet came with order 15, Bjørvika and Gamlebyen with the sea serpent in order 16: all sixteen are built. Order 17 answered an adversarial review of line 2: the serpent's fight and its ending made good, each level asking more of what it teaches. <a href="#line-2">Line 2</a> below.</p>
+  <p><span class="tag done">line 2</span> Since order 14 a second line leaves the map at Stortinget: six more levels spelling VIKING, opened by clearing Vålerenga. Bygdøy (order 14) gives the shield; Vigelandsparken, Korketrekkeren and Østensjøvannet came with order 15, Bjørvika and Gamlebyen with the sea serpent in order 16: all sixteen are built. Order 17 answered an adversarial review of line 2: the serpent's fight and its ending made good, each level asking more of what it teaches. <a href="#line-2">Line 2</a> below.</p>
   <p class="cap">This page began on 13 November as the plan, with hand-drawn sketches of each level. The sketches are gone (they are in the file's git history); the pictures below are screenshots of the game. Where the build left the plan, the last section says how.</p>
 </header>
 
@@ -165,7 +165,18 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
     <div><strong>Five kinds of enemy</strong><p>Walkers, flyers, throwers and jumpers are beaten by landing on them. Spiky things hurt from above too. Throwers lob on a beat after a one-second wind-up, and never at a flag, a bench or a sign. Jumpers leap out of water after a ripple. A beaten enemy gives a skilling. Each kind first appears alone, and none stands at the take-off or landing of a jump over water, or on ice.</p></div>
     <div><strong>Skilling, cheese, bracteates</strong><p>52 to 79 copper skilling per level; a hundred is a life. One slice of brown cheese per level, in a secret, is a life. One gold bracteate per level can only be reached with the raven's feather from the maze.</p></div>
     <div><strong>The ski pole</strong><p>Clearing Holmenkollen gives a dash: three tiles in ten steps, level, once each time he is in the air and again on the ground after a short rest (Shift or X, or the Dash button). From Akerselva on some gaps need it.</p></div>
-    <div><strong>Two bosses</strong><p>The troll in Nordmarka and the snow plough in Nabolaget. Three hits each. Both show what they are about to do for a full second first, say their lines in a bubble beside them, and after a round with no hit give a short hint; the troll's dawn falls as a bright shaft on the floor. The plough hurts only while it moves at him, and standing still it is in his way.</p></div>
+    <div><strong>Two bosses</strong><p>The troll in Nordmarka and the snow plough in Vålerenga. Three hits each. Both show what they are about to do for a full second first, say their lines in a bubble beside them, and after a round with no hit give a short hint; the troll's dawn falls as a bright shaft on the floor. The plough hurts only while it moves at him, and standing still it is in his way.</p></div>
+  </div>
+</section>
+
+<section id="colours">
+  <h2>Colour says what a thing is</h2>
+  <div class="prose"><p>Since order 18 (ADR 0039) every thing on the screen has a role, and every role its own colours, used for nothing else and held apart by a test (CIEDE2000, 10 or more from every other role and from every level's fields, by day and under the tints). Enemies are a quarter larger and outlined in near-black; what he stands on has a mint top two pixels thick (a violet stripe under it where it moves, lavender dashes where it gives way); a boss's tell and the place to hit it are one violet at all three bosses.</p></div>
+  <div class="rulegrid">
+    <div><strong>What can hurt him</strong><div class="swatches"><i style="background:#e8262e"></i><i style="background:#ff7b70"></i><i style="background:#ff7a1a"></i><i style="background:#ff9a30"></i><i style="background:#c23a8f"></i><i style="background:#f07ccb"></i><i style="background:#9ae62a"></i><i style="background:#d8ff8a"></i><i style="background:#1a0f14"></i></div><p>Enemies and what they throw; the bosses' rim while they hurt, and the stripe on rebar, the third rail, branches, the barrier and sparks is its red and black.</p></div>
+    <div><strong>What he stands on</strong><div class="swatches"><i style="background:#7dffd4"></i><i style="background:#47c2b8"></i><i style="background:#8be3d9"></i><i style="background:#2c9a91"></i><i style="background:#123b3a"></i><i style="background:#5a48f0"></i><i style="background:#c8a8ff"></i></div><p>The standing top, the teal body, the line under, what moves, what gives way.</p></div>
+    <div><strong>Him, and what he takes</strong><div class="swatches"><i style="background:#2b4c8c"></i><i style="background:#f1c27d"></i><i style="background:#6b7480"></i><i style="background:#b06a3a"></i><i style="background:#e8b923"></i><i style="background:#fff0c0"></i></div><p>His tunic, skin and helmet; copper and gold with a pale glint.</p></div>
+    <div><strong>A boss's "now"; things done</strong><div class="swatches"><i style="background:#cc33ff"></i><i style="background:#1f1a17"></i><i style="background:#ffffff"></i></div><p>The one violet for every tell and weak spot; the tick (a dark disc, a pale check) on an earned rune and a raised flag.</p></div>
   </div>
 </section>
 
@@ -203,8 +214,8 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
 
 <section id="line-2">
   <h2>Line 2: VIKING</h2>
-  <div class="prose"><p>Planned on 14 November (<code>docs/games/PLAN-LINE-2.md</code>) and begun in order 14. Line 2 is orange, as Oslo's line 2 is. It leaves line 1 at Stortinget, runs under it on a low deck and comes up beside its end, where six stations stand on its own viaduct. Until Nabolaget is cleared a gate stands across it, with a sign, and all of it is drawn faint. Once it is open the header shows a second group of six rune slots, gold when all six are taken. Order 15 built three more and order 16 the last two and the serpent; order 17 made them good after an adversarial review. Under the last station of a line all cleared, a board adds up its best times; with all sixteen, a longship lies at anchor past the end of line 2 and lanterns light the viaducts.</p></div>
-  <figure><img class="shot" src="shots/kart-line2.png" width="1280" height="800" loading="lazy" alt="The line map at Stortinget: line 1 red on its viaduct, line 2 orange, leaving Stortinget under line 1 and coming up beside its end onto its own viaduct, Bygdøy's station beyond"><figcaption class="cap">Line 2 leaves at Stortinget (the orange bar on its station), runs under line 1 past Ekeberg and Nabolaget, and comes up onto its own viaduct.</figcaption></figure>
+  <div class="prose"><p>Planned on 14 November (<code>docs/games/PLAN-LINE-2.md</code>) and begun in order 14. Line 2 is orange, as Oslo's line 2 is. It leaves line 1 at Stortinget, runs under it on a low deck and comes up beside its end, where six stations stand on its own viaduct. Until Vålerenga is cleared a gate stands across it, with a sign, and all of it is drawn faint. Once it is open the header shows a second group of six rune slots, gold when all six are taken. Order 15 built three more and order 16 the last two and the serpent; order 17 made them good after an adversarial review. Under the last station of a line all cleared, a board adds up its best times; with all sixteen, a longship lies at anchor past the end of line 2 and lanterns light the viaducts.</p></div>
+  <figure><img class="shot" src="shots/kart-line2.png" width="1280" height="800" loading="lazy" alt="The line map at Stortinget: line 1 red on its viaduct, line 2 orange, leaving Stortinget under line 1 and coming up beside its end onto its own viaduct, Bygdøy's station beyond"><figcaption class="cap">Line 2 leaves at Stortinget (the orange bar on its station), runs under line 1 past Ekeberg and Vålerenga, and comes up onto its own viaduct.</figcaption></figure>
   <ol class="line" id="line2"></ol>
   <div class="prose"><p><strong>The shield</strong> (ADR 0024), given at Bygdøy's longship and his from then on: hold down on the ground and it comes up in six steps, facing the way he faces, for as long as down is held. Up, it stops a throw coming at him from in front and holds off a charge, pushing it back a tile; he cannot walk while it is up. It does not stop falls, anything from above or below, or anything from behind. A held stance, not a parry: the sloppy player's ±4 steps fail any window of a few steps, a person on a phone too.</p></div>
   <div id="levels2" style="display:flex;flex-direction:column;gap:44px"></div>
@@ -229,8 +240,8 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   </div>
   <ol class="asks">
     <li><span class="tag done">in</span> The school banner in Slottet's parade is Høyenhall skole's: navy, gold fringe, an open book. It is the high banner he rides over the second roadworks dig.</li>
-    <li><span class="tag done">in</span> Home is Kværnertoppen. Nabolaget's subtitle, the church sign and a plate past the yellow house say so.</li>
-    <li><span class="tag done">in</span> The place that is yours is Kruttverket, a screen wide in Nabolaget, just before the plough. Look at its windows.</li>
+    <li><span class="tag done">in</span> Home is Kværnertoppen. The church sign and a plate past the yellow house say so.</li>
+    <li><span class="tag done">in</span> The place that is yours is Kruttverket, a screen wide in Vålerenga, just before the plough. Look at its windows.</li>
     <li><span class="tag done">in</span> Verkstedet on Langkaia has a window with the 3D printer at work on a small orange longship.</li>
     <li><span class="tag ask">open</span> The sign lines are still my drafts, dry and short, in Norwegian and English. Overwrite any of them.</li>
     <li><span class="tag ask">open</span> The old fjord's longhouse and stave tower have no home. The longship went to Langkaia and the sheep to Akershus and Ekeberg.</li>
@@ -247,7 +258,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
       <tr><td class="num">7 – 9</td><td>The level kit, the line map, saved progress, three short levels, the maze made better and joined on as the bonus stop.</td><td>PR #49</td></tr>
       <tr><td class="num">10 A</td><td>Slottet and Holmenkollen. Hearts, lives, enemies, pits, benches, skilling. Levels fetched on demand.</td><td>PR #50</td></tr>
       <tr><td class="num">10 B</td><td>Akerselva and Nordmarka. The dash, zones, the dark, the troll.</td><td>PR #51</td></tr>
-      <tr><td class="num">10 C</td><td>Stortinget, Ekeberg and Nabolaget. Belts, trains, the third rail, gusts, the plough, the ending.</td><td>PR #52</td></tr>
+      <tr><td class="num">10 C</td><td>Stortinget, Ekeberg and Nabolaget (now shown as Vålerenga). Belts, trains, the third rail, gusts, the plough, the ending.</td><td>PR #52</td></tr>
       <tr><td class="num">10 D</td><td>Langkaia, Akershus and Rådhuset lengthened to the same measure as the rest.</td><td>PR #53</td></tr>
       <tr><td class="num">11</td><td>Høyenhall's banner, Kværnertoppen, Kruttverket; the handover and sixteen decision records.</td><td>PR #54</td></tr>
       <tr><td class="num">12</td><td>Made fair after an adversarial review with a sloppy scripted player: rules at the edges, Game over at a boss, waits cut, the joins, the engineering.</td><td>PR #57</td></tr>
@@ -357,71 +368,71 @@ const FACTS = {
 // ---- the game as data: the words by hand, the numbers from FACTS above ----
 const LEVELS = [
   { ch: "L", id: "langkaia", name: "Langkaia", where: "Bjørvika, on the water side of the Opera", sky: "Oslo right now", foes: "pigeons, gulls, a rat", ride: "on foot along the harbour promenade",
-    shot: "Two sauna rafts drifting side by side in the harbour, him on the first, skilling over the cabin roofs and a gull between them",
-    cap: "The two rafts that drift together: moving ground onto moving ground.",
+    shot: "Langkaia's quay by day under the place's name: the shed Verkstedet with its mint-topped roof, him on the granite quay, and a plum pigeon with an orange breast, outlined, walking at him",
+    cap: "The first enemy, on its own: a pigeon on the quay, in the enemies' colours since order 18.",
     add: "Everything from nothing: walking, the jump, ledges you jump up through, the first skilling, one pigeon on its own, the first bench and flag. Then the first water, two tiles wide, and the first ground that moves: sauna rafts.",
     beats: ["Out of the stage tower's door, down the Opera's marble roof to the quay and its two sheds, Runesmia and Verkstedet. Nothing can be lost here.", "The sauna rafts, over water on moving ground, to the sauna club's pier and the middle flag.", "Two rafts that drift towards each other, a high road over the cabin roofs, gulls, and Sørenga's diving tower with the brown cheese on top.", "The moored longship: aboard, up the mast, along the yard to rune L."],
     oslo: "Langkaia is the quay beside the Opera where the floating saunas are tied up. MUNCH and the Barcode stand behind, as on the front page.",
     you: "It starts where the front page ends: the same Opera, seen from the other side. The longship is the one from the old game.", kit: "carrier (bob, drift)" },
   { ch: "A", id: "akershus", name: "Akershus festning", where: "The fortress above the harbour", sky: "Day", foes: "guards, braziers, crows, rats", ride: "three hundred metres along the quay",
-    shot: "He flies through the air between three cannons standing on stone piers in the harbour",
-    cap: "The saluting battery: each cannon fires him into the next.",
+    shot: "Akershus by day: him at the foot of the fortress wall, teal ledges with mint tops up the shaft beside it, a skilling in the passage below",
+    cap: "What he can stand on is teal with a mint top since order 18: the way up reads at a glance.",
     add: "The cannon. Walk in, a third of a second in the barrel with the arc shown dotted, then the shot; in the air the keys only lean on the flight. And the brazier, the first thing that hurts to land on.",
     beats: ["Up the outer wall on stone ledges and ivy, past a brazier on its own, into a cannon that cannot miss, onto the gate tower and the first flag.", "The wall-walk with guards on it, a cannon over the ward and one over the dry ditch. A fall only lands him below, with ledges back up and a bench by the well. The well goes down to a cellar with the cheese.", "The moat, where a hoist goes up and down through the cannon's line of fire, and the saluting battery: three cannons on piers, each firing him into the next.", "The keep: a climb inside past its guard, out beside the copper spire, rune A."],
     oslo: "Begun in 1299. The sign reads: “Never taken by siege. You are welcome to try.”",
     you: "The first A of your name.", kit: "checkpoint, launcher" },
   { ch: "R", id: "radhuset", name: "Rådhuset", where: "The two brick towers on Rådhusplassen", sky: "Day", foes: "pigeons, gulls that throw chips, an e-scooter", ride: "up Karl Johans gate",
-    shot: "He stands on the tip of the gilded hand of the clock on the brick tower, a flag and a swinging bell to the left",
-    cap: "Up the clock tower on the tip of the clock's own hand.",
+    shot: "The promenade under Rådhuset by day: him by a lamp post, a plum pigeon outlined on the granite, the fjord and its far shore behind",
+    cap: "Pigeons on the promenade, plum and orange: no longer grey on grey.",
     add: "Ledges on a beat. The carillon's bells are there for two seconds, shimmer for one, and are gone for two. And the first thrower: a gull with chips. The level climbs; it is 52 rows tall.",
     beats: ["Along Rådhusbrygga: three low bells over the promenade, where a fall costs nothing, and a chip-throwing gull on its own.", "Across the water on the island ferry's roof, over the square past an e-scooter, three bells over the fountain.", "The window cleaners' lift up the west tower while a second gull throws, then the carillon: bells rising between the towers, one that swings on its rod.", "The clock tower, ridden up on the tip of the clock's gilded hand, to the parapet and rune R."],
     oslo: "The east tower holds 49 bells that play on the hour. Here they also ring when he lands on them.",
     you: "Known to be hard for a third level: a fall from the upper bells is a long climb back.", kit: "timed, carrier (lift, swing, orbit)" },
   { ch: "S", id: "slottet", name: "Slottet", where: "Karl Johan, uphill to the palace", sky: "Always 17 May", foes: "pigeons, gulls, a hot-dog cart", ride: "T-bane line 1 from Nationaltheatret",
-    shot: "Karl Johan on 17 May: he stands on the navy school banner reading Høyenhall skole, carried high over a crowd with flags",
-    cap: "The second roadworks dig. Høyenhall skole's banner is the way over.",
+    shot: "Karl Johan on 17 May: the crowd with its flags behind the barrier, the yellow palace front, an orange gull flying over the parade",
+    cap: "A gull over the parade: what moves at him is the only thing outlined.",
     add: "Ground that travels. The parade's banners are ledges carried up the street; stand on a crossbar and it takes him over the crowd. The band's bass drum throws him straight up. The breather after the towers.",
     beats: ["Egertorget: the first banners, over plain street.", "Spikersuppa: a banner over the pond.", "Past Nationaltheatret and the University: the drum up to the high banner over the roadworks (“Digging in progress. Since 2019.”).", "Slottsparken and the palace: the King's Guard march in step and their hats lift him to the terrace; up the front to the balcony and rune S. The royals wave."],
     oslo: "Flags on every pole, whatever the real date: the kit's 17 May sky, pinned.",
     you: "The high banner is Høyenhall skole's.", kit: "carrier (path), launcher (drum)" },
   { ch: "H", id: "holmenkollen", name: "Holmenkollen", where: "The ski jump", sky: "Always winter, snowing", foes: "snowball kids, foxes, a hedgehog, a fire basket, crows", ride: "on skis through the forest to the river",
-    shot: "He is in the air off the ski jump, rune H ahead of him and the city far below",
-    cap: "Off the lip. Rune H hangs in the flight path.",
+    shot: "Snow among the spruces at Holmenkollen: him by the sign The steps, an orange fox trotting towards him",
+    cap: "A fox on the snow, in the enemies' orange.",
     add: "Ice and the inrun. On ice he keeps sliding after you let go; red rails stop a slide. On an inrun there is no steering, the speed climbs past a run, and one button matters: the jump at the lip.",
     beats: ["Off the train at the top, along a path where the snow has turned to ice and nothing can go wrong.", "The icy steps, over small drops and gaps. Nobody has gritted. Nobody will.", "Two gullies: one crossed by the snow cannon, one by the chairlift. A children's hill to practise the lip.", "The start hut, the inrun, the flight. Miss the rune and the landing hill lets him down; the steps under the inrun take him back up."],
     oslo: "Line 1 climbs past the jump on its way to Frognerseteren. The city lies below in the backdrop, the reverse of the front page's view.",
     you: "The H of Hansen. Clearing it gives the ski pole.", kit: "surface (ice, inrun), launcher" },
   { ch: "A", id: "akerselva", name: "Akerselva", where: "Down the river from Nydalen to Vaterland", sky: "Day, summer", foes: "salmon, rats, wasps, a gull, a duck", ride: "T-bane line 5 to Sognsvann",
-    shot: "The water wheel at Hjula with him standing in one of its buckets, the brick mill behind",
-    cap: "The wheel at Hjula: on at the bottom, off at the top.",
+    shot: "Akerselva by day: the red mill on the river, him on the bank, a plum rat on the path and an acid-green wasp over the roof",
+    cap: "A rat and a wasp by the mill.",
     add: "Current, and the dash. Logs drift downstream and come round again; a waterfall pushes down so hard a jump barely leaves the ground. The ski pole's dash goes straight through one. The salmon is the first jumper.",
     beats: ["Nydalen: a salmon on its own, a fall over dry ground, the dash over a dry mill race, the first logs.", "Bjølsen: logs between rocks, the first fall over its pool.", "Hjula: the water wheel, Runesmia by the falls (the door to the QR maker), the middle flag. Then a curtain of falling water to dash through, with a cave behind it.", "Vaterland: Aamodt bru, off the last fall onto the logs, the last pool, rune A on the far bank."],
     oslo: "The sign on Aamodt bru is real: a hundred men it can carry, but not marching in step. The only level that goes downhill all the way.",
     you: "The second A, and your QR maker gets a proper workshop.", kit: "zone (push), carrier (drift, orbit), dash" },
   { ch: "N", id: "nordmarka", name: "Nordmarka", where: "The forest north of the city", sky: "Always a summer night", foes: "foxes, owls, a hedgehog, squirrels, a bat, an anthill; and the troll", ride: "line 5 back down to the centre",
-    shot: "A dark spruce forest lit only by his headlamp; a green troll raises its club in a shaft of dawn light",
-    cap: "The clearing. The troll's club is up, and the dawn is coming through the trees.",
+    shot: "Nordmarka at night: under the spruces only his headlamp's circle, an orange owl gliding through it",
+    cap: "In the forest's dark an owl, outlined, its eyes shining.",
     add: "The dark. Under the spruces only the headlamp's circle shows, more the way he faces; lit windows, the blue trail marks, signs and eyes show through. Then the first boss.",
     beats: ["From Sognsvann into the trees: the dark where nothing can go wrong, the first blue-painted trunk (this level's flag), a fox's eyes.", "Bog pits in the dark, stones over a bog, and a moose that crosses the marsh and does not care that he rides its back.", "Ullevålseter with one lit window, Jernhaugen's mound with its door into the maze, and a gorge in the darkest part, crossed with the dash.", "The clearing. A boulder that is a troll: it raises its club for a second, slams, and the club sticks. Caught in the dawn with the headlamp on it, a third of it turns to stone. Three times, and rune N is on the boulder."],
     oslo: "The level starts at the end of the line, where the city stops and the forest begins. “Waffles for everyone, every day. Not now. It is night.”",
     you: "Your 2019 maze gets a place on the ground, not only on the map.", kit: "dark, carrier (walk), troll" },
   { ch: "S", id: "stortinget", name: "Stortinget", where: "The T-bane station under the centre", sky: "None: underground", foes: "rats, pigeons, an umbrella, a trolley, an e-scooter", ride: "the tram up Ekebergbakken",
-    shot: "A tiled station platform, STORTINGET in white on its blue band, a white T-bane train standing at it and him beside it",
-    cap: "The train stands. Its roof is the only way through the tunnel.",
+    shot: "Under Stortinget: the platform's tiles, teal ledges with mint tops up to a cage of skilling, a pigeon flying and one walking, both plum",
+    cap: "Under the city: two pigeons, and the ledges up to the cage.",
     add: "Belts and a timetable. Escalators and a walkway add to his speed or take from it. Trains stand at the platforms on a schedule the board counts down to. The third rail is the first hazard: a heart, and it throws him clear.",
     beats: ["The ticket hall and the escalators: one with him, one against, where nothing can go wrong.", "Platform 1: the board, the first crossing of the open track, the first train roof through a tunnel. A low beam sweeps a rider off at the next platform.", "Platform 2: the kiosk that is Quintle's door, the middle flag, a walkway against him with umbrellas on it, and a track too wide for a jump.", "The cavern where the lines cross: two trains pass, and the lower one goes to the depot, so he changes roofs on the way. Rune S past the gate."],
     oslo: "Every line in the city passes through this station. “Doors closing. They always say so.”",
     you: "Quintle's kiosk is padlocked with the front page's words until it is out.", kit: "surface (belt), carrier (stops), hazard" },
   { ch: "E", id: "ekeberg", name: "Ekeberg", where: "The hillside above Gamle Oslo", sky: "Always evening", foes: "magpies, crows, hedgehogs, squirrels, wasps", ride: "on foot down through Gamlebyen",
-    shot: "Under a banded orange evening sky he bounces across a quarry on the backs of sheep",
-    cap: "The quarry: three sheep are the only way over.",
+    shot: "Ekeberg in the evening: The Scream's bands, toned down, over the city; the tram on its viaduct, him on the hillside, an acid-green wasp",
+    cap: "The Scream's sky is quieter since order 18, so a wasp stands off it.",
     add: "Wind. Leaves stream through for a second as a warning, then for a second and a half the gust pushes him sideways. And sheep chains: bounce to bounce, steering through the gust.",
     beats: ["Up from Gamlebyen on the tram's roof as it climbs its trestle, and one gust over flat ground.", "The sculpture park: the sculptures are the ledges (“Do not climb on the art. It says nothing about jumping.”), with gusts over small drops and a pond.", "The old quarry, on the backs of three sheep.", "Up the bank to the viewpoint. Every place he has cleared shows a light in the city below. Rune E at the end of the railing."],
     oslo: "Munch set The Scream on this hillside. The evening sky here gets the bands.",
     you: "From here he can see home.", kit: "zone (gust on a beat), launcher (sheep)" },
-  { ch: "N", id: "nabolaget", name: "Nabolaget", where: "From Vålerenga home to Kværnertoppen", sky: "Always a winter night, northern lights", foes: "cats, crows, a snowball kid, a fox, an owl; and the snow plough", ride: "the door Hjem, to the front page's first house",
-    shot: "A winter night: he stands by Kruttverket, a long brick building with arched lit windows and people at café tables, reading its sign",
-    cap: "Down the snow from the church, past Kruttverket.",
+  { ch: "N", id: "nabolaget", name: "Vålerenga", where: "From Vålerenga home to Kværnertoppen", sky: "Always a winter night, northern lights", foes: "cats, crows, a snowball kid, a fox, an owl; and the snow plough", ride: "the door Hjem, to the front page's first house",
+    shot: "Vålerenga at night under its name: the roofs in snow, him by a chimney, a plum crow over the houses, their windows lit",
+    cap: "A crow over the roofs of Vålerenga.",
     add: "Nothing new. Everything from the nine levels before, once each: icy roofs, washing lines that throw him, warm chimney air that lifts, a dark lane, a tram roof. Then the last boss.",
     beats: ["Up onto the roofs of the front page's wooden houses, icy, seen from above the eaves.", "Roof to roof over the back yards on washing lines and chimney air.", "Down into the lane behind Vålerenga kirke, dark but for the church windows and his headlamp, and up the tower: the spire is the last climb.", "Down the snow into Kværnerdalen, past Kruttverket, to a flag and a bench. Then the snow plough: a bounce off the washing line, the dash from a roof, a ride on the tram. Three times on its cab and it parks for good.", "The yellow house on Kværnertoppen. In the window, a Raspberry Pi serving the game you are playing; its light turns green when rune N is taken. The helmet turns gold."],
     oslo: "“They made gunpowder here. Now they make coffee. Fewer bangs.” The walk ends where the front page begins: through the door Hjem he is back at the first house, hat on.",
@@ -438,43 +449,43 @@ const LINE2 = [
 ];
 const LEVELS2 = [
   { ch: "V", id: "bygdoy", name: "Bygdøy", where: "The museums on Bygdøy", sky: "Day", foes: "crabs, gulls, a pigeon, rats, two penguins; three slingers", ride: "",
-    shot: "Fram's hall: the polar ship's deck tilted, him on its low end, the foredeck with a flag and a bench above, portholes in her black hull",
-    cap: "Fram's deck rocks; only from its far end, as it rises, does a jump reach the foredeck.",
+    shot: "Bygdøy's beach by day: the red boathouse with its mint-topped gallery, a red crab at its doors, an orange gull overhead, the sign Bygdøy",
+    cap: "A crab on the beach and a gull over the boathouse.",
     add: "Ground that rocks, drifts and sinks. The polar ship's deck tilts on a beat, a row of narrow ledges that rise and fall in whole pixels; bundles of balsa hold him forty steps and go under; the longship's oars are a stair on a beat. At its prow, the shield; in the yard, slingers who lead a man who walks on.",
     beats: ["The ferry from Rådhusbrygga lands him at the pier, skilling over its wake.", "The beach: two boathouses (up over their roofs), a slipway, crabs and gulls, the first sign.", "Fram in her hall: up to the gallery, her rocking deck, the foredeck with a flag and a bench, the crow's nest with the cheese; then Gjøa's deck rocking over the hold, and a penguin on the gallery past it.", "Outside: the balsa raft drifts out to a bundle, over another to a rock; the reed boat out to a last bundle and the shore.", "The longship's hall: up the oars as each comes out, along the deck to the prow and the shield; out through the low passage under the loft, where the first slinger throws straight along it and a man who walks on is always hit (walk, stop and raise it, walk); over him, and past two more on the storehouses' ridges, the first over a boat moored in the yard's slip whose deck rocks under him.", "Up the museum's stepped gable to rune V on its ridge. The bracteate hangs over the longship's mast, the feather's only."],
     oslo: "“Fram has been further north and further south than any other wooden ship. The deck has not forgotten.” The Oseberg ship: buried in 834, dug up in 1904, not rowed since.",
     you: "The first rune of VIKING, and the shield.", kit: "deck.ts, sink.ts, oars.ts; game/shield.ts" },
   { ch: "I", id: "vigelandsparken", name: "Vigelandsparken", where: "The sculpture park in Frogner Park", sky: "Day", foes: "statues in granite and bronze, the Angry Boy, crows, a pigeon; two granite groups that throw rings", ride: "",
-    shot: "The bridge over the pond: a bronze statue behind him with its eyes open, the loose slab over the broken span, the Angry Boy on his post beyond it, the sign",
-    cap: "The bridge: the bronze figure behind him walks while his back is turned. The Angry Boy's stamping shakes the slab loose.",
+    shot: "Vigelandsparken's bridge by day: him among the granite statues, still while he faces them",
+    cap: "Statues on the bridge: grey stone while he looks, plum or orange when they walk.",
     add: "Statues that move only while his back is turned. A statue walks toward him while he faces away, at half his run, and is stone while he faces it: harmless, in his way as a wall is, and a step to stand on. Looking is his facing, nothing more.",
     beats: ["The gate from Kirkeveien and the first statue alone on the lawn; the sign says only that the park is quiet.", "The bridge and its bronze figures, one of them walking; the Angry Boy stamps on his post, jumps, lands, and the loose slab over the broken span drops for a while.", "The fountain: a jet lifts him from the rim to the giants' bowl, the other catches him on the far side; the cheese in the upper basin.", "The rose garden, a statue at each end: watch the one ahead and climb it onto the pergola. The courtyard: a statue led to the far wall by turning his back on it, faced, climbed.", "The Monolith, climbed by its figures, crows clear of the landings; the plateau, where two granite groups throw rings from their pedestals (the shield); down the steps between two more statues, one on the path and one on the plinth, and up a ledge that comes and goes on a beat, to rune I in the Wheel of Life."],
     oslo: "“The Angry Boy has stamped here since 1940. The bridge holds. Mostly.” The Monolith: a hundred and twenty-one figures in one stone.",
     you: "The second rune of VIKING.", kit: "LevelDef.rules (statues), timed, carrier (lift)" },
   { ch: "K", id: "korketrekkeren", name: "Korketrekkeren", where: "The sledge run from Frognerseteren to Midtstuen", sky: "A winter afternoon", foes: "boys with snowballs, a crow, three sledgers, an owl, a fox", ride: "",
-    shot: "On the sledge down the run between snowy spruce, him drawn left of the middle, a child on a blue sledge ahead",
-    cap: "The sledge carries him; a slower sledger ahead, to jump. He sees what comes for over a second at any width.",
+    shot: "Korketrekkeren's hut: three snowball kids in red jackets and green hats on its balcony, him on the snow below",
+    cap: "The snowball kids at the hut.",
     add: "A sledge he cannot stop (ADR 0026). On the run it carries him at the stretch's speed whatever he presses; he can jump, and duck (down, where the shield would be). A hit costs a heart and he rides on. The run is drawn steep but is a stair of narrow ledges: no slope under his body.",
     beats: ["Frognerseteren: off the train, the sign, the bench, boys throwing snowballs from the restaurant's balcony (the shield); the sign by the sledge says that down is a duck on it.", "The first bends, with snow bumps that toss him up; two sledgers, slower, to jump.", "Low branches to duck; the crossing of the line, its barrier coming down on a beat he can read from far off.", "Down the steep bit and over the gap where the old bridge is gone, onto a long clear landing; the bracteate hangs over it, the feather's only.", "The trees at dusk with lanterns, branches and a last sledger; the run-out to Midtstuen, where the sledge stops and rune K stands by the platform."],
     oslo: "“Two kilometres down to Midtstuen. The sledge stops there. Not before.” The T-bane goes back up from Midtstuen; the sledge you pull yourself.",
     you: "The breather of line 2, as Slottet is of line 1.", kit: "LevelDef.rules (the ride), grounds (the run), hazard (on a beat)" },
   { ch: "I", id: "ostensjovannet", name: "Østensjøvannet", where: "The bird lake in Østensjø", sky: "Early morning", foes: "ducks, coots, three swans, three nesting gulls that dive", ride: "",
-    shot: "The first swan's water: lily pads in a row, a white swan gliding at peace, the sign about the swans on the reedy bank",
-    cap: "The first swan's stretch: keep moving over the pads, and it lets you be.",
+    shot: "Østensjøvannet before sunrise: the bird hide on its stilts, its floor and roof ledges teal with mint tops, him on the shore by the sign",
+    cap: "The hide's floors in the platform palette.",
     add: "Lily pads that sink, swans that mind their water. A pad holds him two thirds of a second; a swan lets him be until he has been in its stretch four seconds, lowers its neck and hisses for the last of them, and then comes. Leaving its stretch calms it.",
     beats: ["The path from the metro under the first bird hide (the sign about the lake); the boardwalk over the shallows, a duck on it.", "The first pads, with firm stones between them; then the first swan's water, its pads wide enough apart that crossing takes about three seconds.", "The mist, which hides the far bank but never what is close: a pad at the shore's edge, the heron that stands as a tall step up to the second hide's deck and flies off a second after he lands on it.", "The island: a coot, and gulls nesting on rocks along the path that dive straight at him (the shield); the bench.", "The long crossing, fourteen pads, two swans whose stretches overlap, over a stone near its end; the far shore, and rune I at the far hide as the sun comes up over the lake."],
     oslo: "“A nature reserve in the middle of the city. The birds were here first.” “The swans do not own the water. They have just not heard.”",
     you: "The third rune of VIKING.", kit: "sink.ts, LevelDef.rules (swans), grounds (the heron)" },
   { ch: "N", id: "bjorvika", name: "Bjørvika", where: "The building site behind the Opera, high up", sky: "Evening", foes: "pigeons, rats, a crow; two riveters who throw bolts along a girder", ride: "",
-    shot: "On the upper slab of the first tower, the sign about the hook; a crane hook's yellow block out over the drop on its cable, the Barcode's towers and the fjord below at dusk",
-    cap: "A hook comes to a tile from the slab, slow at its end: on with a hop when he chooses, off with a step at the far side.",
+    shot: "Bjørvika at dusk: the building site's fence and the Barcode behind, him on the quay, a plum rat by the hoarding",
+    cap: "A rat on the quay below the cranes.",
     add: "Crane hooks that carry him, and he chooses when. A hook travels on a beat between two landings, slow at each end: it comes to a tile from the landing it leaves, so on is a hop at the moment he picks, and right up to the one it reaches, so off is a step. Every landing over the drop is four tiles wide or more.",
     beats: ["The quay at street level, the Opera's white slope far off, the sign; through the site's gate and up the hoist on the first tower's face.", "The open floor: rebar to jump, a welder whose sparks fall on a beat, a pigeon and a rat; the first hook over a bay with a safety net under it, where a miss costs nothing (and the cheese waits).", "Up to the slab, and two hooks across the drop between three towers; rebar on the third tower's landing where a man who jumps off the hook early comes down.", "A floor of shafts, loose sheets of steel sliding across them, gusts against him; the girder, with two riveters on the next floor's beam who throw bolts along it (the shield).", "The site hut's bench on the roof; a second girder under the jib's catwalk, its two riveters each needing the shield; the traverse, three hooks in a row on different beats, hop to hop, with a gust against him on its own beat; up the crane's rungs to rune N at its cab, the fjord and the town below. The bracteate hangs under the jib, the feather's only."],
     oslo: "“The Opera, the library, Munch. And cranes. Mostly cranes.” “No admittance. Helmet required. You have one.”",
     you: "The fifth rune of VIKING.", kit: "carrier (travel, lift), zone (gusts), hazard (on a beat)" },
   { ch: "G", id: "gamlebyen", name: "Gamlebyen", where: "The medieval park in Gamlebyen, then the harbour", sky: "Night", foes: "rats, an owl, three guards who were statues, two archers, geese, a dog; the sea serpent", ride: "",
-    shot: "The serpent's quay at night: the serpent reared out of the harbour four times his height, its crest of spines lit by the moon, its yellow eye on him; him by the bench and the flag, torches along the quay, the sign: The harbour",
-    cap: "The serpent rears for its tell. The shield sends its ball back from anywhere on the quay; dazed, its head lies on the planks for a stomp, and its tail comes along the quay after the ball.",
+    shot: "Gamlebyen at night: him on the town wall's walk under the northern lights, a plum rat on the wall",
+    cap: "A rat on the wall walk.",
     add: "The ruins rebuild as he passes. A ruin's missing stones rise as ledges and walls when he comes near, and stay; twice a wall rises behind him once he is past it. By the end the town is a thousand years younger, and the sea serpent is in the harbour: the shield sends its ball back, its dazed head takes a stomp, its tail is jumped; after the first hit it rises twice a round, and its tail follows its ball.",
     beats: ["The street and the medieval park's low walls under street lamps, a dig, the sign.", "St. Clement's ruin, its stones rising as he climbs to the gable; a crypt under the street with the cheese.", "The bishop's wall, its guards stone until he comes near; down off its end, and a wall rises behind him.", "The water mirror where the shore was, its stepping stones rising; the tower that builds itself under him up the town wall; archers on the wall walk's arches (the shield); a wall rises behind him at the town gate.", "The market by torchlight, the stave-built hall, a bench; across the harbour on two longships; the serpent's bench, the serpent, and rune G on the prow of the last longship as the dawn comes."],
     oslo: "“Oslo stood here for five hundred years. Then it burned, and the town moved.” “The fishermen speak of something in the water. No one has seen it dry.”",

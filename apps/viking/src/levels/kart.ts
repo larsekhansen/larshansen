@@ -51,7 +51,7 @@ export const lineTwoOpen = (p: Progress) => isOpen(p, ORDER, LINE_2_AT);
 /** The sign by line 2's gate, which says when it opens, and once open, where it goes. */
 export const LINE_2_SIGN = (open: boolean): SignDef => ({
   label: { nb: "Linje 2", en: "Line 2" },
-  lines: open ? { nb: ["Seks stopp, fra Stortinget."], en: ["Six stops, from Stortinget."] } : { nb: ["Åpner når du har klart Nabolaget."], en: ["Opens once Nabolaget is cleared."] }
+  lines: open ? { nb: ["Seks stopp, fra Stortinget."], en: ["Six stops, from Stortinget."] } : { nb: ["Åpner når du har klart Vålerenga."], en: ["Opens once Vålerenga is cleared."] }
 });
 
 /** How the map is drawn, from `kartArt.ts`: fetched on its own. */

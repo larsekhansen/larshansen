@@ -13,10 +13,15 @@ body {
   background: rgb(255, 252, 246);
 }
 
-/* The run, in the header bar: ten rune slots, the clock, and two small buttons (their base is in the kit). */
+/*
+ * The run, in the header bar: the rune slots, the clock, and two small buttons (their base is in the kit).
+ * A rune he has is a solid gold tile with the rune dark on it and a tick at its corner; one he has not is
+ * an empty slot, a faint dashed outline with the rune barely there: so they can be counted at a glance,
+ * and without telling gold from grey. The level he is in is ringed. (Order 18.)
+ */
 .runes {
   display: flex;
-  gap: 2px;
+  gap: 3px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -28,53 +33,191 @@ body {
 
 /* Line 2's group stands a little apart from line 1's. */
 .runes.two {
-  margin-left: 4px;
-}
-
-/* With line 2's group as well, sixteen slots: narrower, so the run still fits its row at any width. */
-.run.sixteen .runes {
-  gap: 1px;
-}
-
-.run.sixteen .runes li {
-  width: 14px;
-  height: 20px;
-  border-radius: 5px;
-}
-
-.run.sixteen .runes svg {
-  width: 8px;
-  height: 12px;
+  margin-left: 6px;
 }
 
 .runes li {
+  position: relative;
   display: grid;
   place-items: center;
-  width: 18px;
-  height: 22px;
-  border: 1px solid rgba(31, 26, 23, 0.14);
-  border-radius: 6px;
-  background: #fff;
-}
-
-.runes li.lit {
-  border-color: #c9a227;
-  background: #ffe9a8;
+  width: 27px;
+  height: 33px;
+  border: 1.5px dashed rgba(31, 26, 23, 0.3);
+  border-radius: 7px;
+  background: transparent;
 }
 
 .runes svg {
-  width: 9px;
-  height: 14px;
+  width: 14px;
+  height: 20px;
   fill: none;
-  stroke: rgba(31, 26, 23, 0.25);
+  stroke: rgba(31, 26, 23, 0.14);
   stroke-width: 1.6;
   stroke-linecap: square;
   stroke-linejoin: miter;
   overflow: visible;
 }
 
+.runes li.lit {
+  border: 2px solid #7a5608;
+  background: #f0b92a;
+}
+
 .runes li.lit svg {
   stroke: var(--ink);
+  stroke-width: 2.2;
+}
+
+/* The tick: a dark disc with a pale check, over the tile's top right corner. */
+.runes li.lit::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 6.2l2 2 4-4.4' fill='none' stroke='%23fffcf6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / 100% no-repeat;
+  box-shadow: 0 0 0 1.5px rgb(255, 252, 246);
+}
+
+/* The level he is in now: ringed. */
+.runes li.here {
+  outline: 2px solid #541321;
+  outline-offset: 2px;
+}
+
+/* All ten (or all six): the tiles glow. */
+.runes.all li.lit {
+  box-shadow: 0 0 5px rgba(240, 185, 42, 0.9);
+}
+
+/* With line 2's group as well, sixteen slots: narrower, so the run still fits its row. */
+.run.sixteen .runes {
+  gap: 2px;
+}
+
+.run.sixteen .runes li {
+  width: 21px;
+  height: 30px;
+  border-radius: 6px;
+}
+
+.run.sixteen .runes svg {
+  width: 11px;
+  height: 17px;
+}
+
+.run.sixteen .runes li.lit::after {
+  top: -4px;
+  right: -4px;
+  width: 10px;
+  height: 10px;
+}
+
+/* With sixteen of the larger slots the bar's one row has no room for the best time below 1400 px: it is on the card. */
+@media (max-width: 1399px) {
+  .run.sixteen .clock small {
+    display: none;
+  }
+}
+
+/* A window too narrow for the bar's one row (below 760 px): the bar wraps, and the slots are a size between. */
+@media (max-width: 759px) {
+  .runes li {
+    width: 22px;
+    height: 28px;
+  }
+
+  .runes svg {
+    width: 11px;
+    height: 16px;
+  }
+
+  .run.sixteen .runes li {
+    width: 16px;
+    height: 24px;
+    border-radius: 5px;
+  }
+
+  .run.sixteen .runes svg {
+    width: 8px;
+    height: 13px;
+  }
+
+  .run.sixteen .runes li.lit::after {
+    width: 9px;
+    height: 9px;
+  }
+}
+
+/*
+ * An upright phone: the four links share one row (smaller), which leaves the runes a row of their own
+ * at the size that fills it, and the clock, the hearts and the rest a row under them, all in view: four
+ * rows, as before (the name, the links on two rows, the run).
+ */
+@media (max-width: 480px) {
+  .apps {
+    font-size: 11px;
+  }
+
+  .apps ul {
+    flex-wrap: nowrap;
+    gap: 3px;
+  }
+
+  .apps a {
+    padding: 2px 6px;
+    white-space: nowrap;
+  }
+
+  .run {
+    flex-basis: 100%;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+  }
+
+  .run::before {
+    content: "";
+    order: 1;
+    flex-basis: 100%;
+  }
+
+  .run > * {
+    order: 2;
+  }
+
+  .run > .runes {
+    order: 0;
+  }
+
+  .runes li {
+    width: 30px;
+    height: 34px;
+  }
+
+  .runes svg {
+    width: 15px;
+    height: 21px;
+  }
+
+  .run.sixteen .runes li {
+    width: 19px;
+    height: 28px;
+  }
+
+  .run.sixteen .runes svg {
+    width: 10px;
+    height: 16px;
+  }
+
+  .clock {
+    min-width: 4.2em;
+  }
+
+  .clock small {
+    display: none;
+  }
 }
 
 .clock {
@@ -185,54 +328,11 @@ body {
   .run {
     margin-left: 0;
   }
-
-  .runes li {
-    width: 16px;
-    height: 20px;
-  }
-
-  .runes svg {
-    width: 8px;
-    height: 12px;
-  }
-
-  /* With line 2's group as well, sixteen slots: narrower, so the run still fits the row it had. */
-  .run.sixteen .runes {
-    gap: 1px;
-  }
-
-  .run.sixteen .runes li {
-    width: 12px;
-    height: 18px;
-    border-radius: 4px;
-  }
-
-  .run.sixteen .runes svg {
-    width: 7px;
-    height: 11px;
-  }
-
-  .run.sixteen .runes.two {
-    margin-left: 3px;
-  }
 }
 
-/* On an upright phone, sixteen slots take no more room than line 1's ten took before line 2. */
-@media (max-width: 480px) {
-  .run.sixteen .runes li {
-    width: 10px;
-    height: 18px;
-    border-radius: 3px;
-  }
-
-  .run.sixteen .runes svg {
-    width: 6px;
-    height: 11px;
-  }
-
-  .run.sixteen .clock small {
-    display: none;
-  }
+/* In the mound the run's row break has nothing to break. */
+.in-maze .run::before {
+  display: none;
 }
 
 /* From 760 px up the bar is one row: the name, the links, then the run pushed to the right. */
@@ -307,12 +407,6 @@ body {
   display: none;
 }
 
-/* While the rune flies to its slot, the slot it is going to waits unlit. */
-.runes li.coming {
-  border-color: rgba(31, 26, 23, 0.14);
-  background: #fff;
-}
-
 /* Hearts and lives: three waffle hearts, and a small helmet with the lives beside it. */
 .life {
   display: flex;
@@ -369,7 +463,7 @@ body {
   height: 10px;
   border: 2px solid #8f5326;
   border-radius: 50%;
-  background: #d08443;
+  background: #b06a3a;
   box-sizing: border-box;
 }
 
@@ -382,12 +476,6 @@ body {
   .coins span small {
     display: none;
   }
-}
-
-/* All ten runes: the name is spelled in gold. */
-.runes.all li.lit {
-  background: #ffd36b;
-  border-color: #a8801a;
 }
 
 /* The tenth rune: the card says so, plainly, in both languages, the visitor's own first. */
@@ -431,4 +519,37 @@ body {
     padding: 0 8px;
     font-size: 14px;
   }
+}
+
+/* The card after a rune has one way on, to the map, and goes there by itself after six seconds: a thin
+   line under the button fills meanwhile (not under reduced motion, where the card waits). Starting the
+   level again is not offered here; the map is where a level is played again. */
+.card.auto .primary {
+  position: relative;
+  overflow: hidden;
+}
+
+.card.auto .primary::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: #ffd36b;
+  transform-origin: left;
+  animation: card-goes 6s linear both;
+}
+
+@keyframes card-goes {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.cleared #restart {
+  display: none;
 }

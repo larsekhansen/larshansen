@@ -15,6 +15,7 @@ import type { Board } from "@larshansen/pixelkit/text";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Troll, TrollDef, TrollEvent } from "../game/troll";
 import type { Play, PlayIntent } from "../game/play";
+import type { Standing } from "../render/stand";
 
 // What a level is, as data: its map and legend, the things in it, its words, and how it is drawn.
 // One runner (game/play.ts for the rules, main.ts and render/ for the page) plays any of them.
@@ -219,6 +220,8 @@ export interface Grounds<S = unknown> {
   everywhere(): Carrier[];
   /** Ground of its own in the map (Gamlebyen's stones that rise as he passes and stay): the map he plays on, from the level's own. */
   map?(s: S, base: TileMap): TileMap;
+  /** Its tops as he sees them this step, and whether each holds, moves or gives way: the page marks them (order 18). */
+  stands?(s: S, t: number): Standing[];
 }
 
 /**
@@ -295,6 +298,10 @@ export interface LevelDef {
   boss?: Boss<any>;
   /** What the page says when the boss does something, by its event's name. */
   bossWords?: Record<string, Words>;
+  /** The last line of its card, from the runes of its line he has and the bracteates left to find (Gamlebyen's, the end of line 2). */
+  cardLine?: { nb: (runes: number, left: number) => string; en: (runes: number, left: number) => string };
+  /** What a padlocked door says (Quintle's kiosk), when not the front page's "coming soon". */
+  soon?: Words;
   /** Things that hurt to touch: the third rail. */
   hazards?: Hazard[];
   /** How far either side of home the sheep graze, in tiles, when not four: on a knoll, they stand. */

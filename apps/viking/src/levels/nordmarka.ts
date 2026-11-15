@@ -4,12 +4,14 @@ import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { CREATURE, DOORWAY, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
-import { enemyEyes } from "../render/pickups";
+import { drawLook, drawLookShot } from "../render/looks";
+import { parts } from "../render/pickups";
+import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
@@ -148,28 +150,29 @@ export const ENEMIES: EnemyDef[] = [
 
 // --- The forest's own creatures: the bat and the anthill (drawn here, as no other level has them) -----------
 
+/** A bat: a plum body with ears, wide wings flapping, eyes. 17 x 10. */
 function bat(e: Enemy, t: number) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y) - 3;
+  const r = parts(e, 17);
   const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
-  R(x - 1, y - 2, 3, 4, CREATURE.bat);
-  R(x - 1, y - 3, 1, 1, CREATURE.bat);
-  R(x + 1, y - 3, 1, 1, CREATURE.bat);
-  R(x - 6, y - 1 - flap * 2, 5, 2, CREATURE.bat);
-  R(x + 2, y - 1 - flap * 2, 5, 2, CREATURE.bat);
-  R(x - 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
-  R(x + 7, y + 1 - flap * 3, 1, 1, CREATURE.bat);
+  r(7, -8, 3, 6, ENEMY.plum);
+  r(7, -9, 1, 1, ENEMY.plum);
+  r(9, -9, 1, 1, ENEMY.plum);
+  r(7, -7, 1, 1, ENEMY.eye);
+  r(9, -7, 1, 1, ENEMY.eye);
+  r(1, -6 - flap * 2, 6, 2, ENEMY.plumLight);
+  r(10, -6 - flap * 2, 6, 2, ENEMY.plumLight);
+  r(0, -4 - flap * 3, 1, 1, ENEMY.plum);
+  r(16, -4 - flap * 3, 1, 1, ENEMY.plum);
 }
 
+/** An anthill, alive: a heap of needles in orange bands, ants running over it. It hurts from above. 18 x 10. */
 function anthill(e: Enemy, t: number) {
-  const x = Math.round(e.x - 7);
-  const y = Math.round(e.y);
-  // A heap of needles, alive: ants running over it.
-  for (let k = 0; k < 8; k++) R(x + 7 - k, y - 8 + k, 1 + k * 2, 1, k % 2 ? CREATURE.hedgehog : mix(CREATURE.hedgehog, INK, 0.2));
+  const r = parts(e, 18);
+  for (let k = 0; k < 10; k++) r(9 - k, -10 + k, Math.max(1, k * 2), 1, k % 2 ? ENEMY.orange : ENEMY.orangeLight);
   if (view.reduced) return;
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 5; i++) {
     const k = ((t * 0.3 + i * 7) % 16) / 16;
-    R(x + 2 + Math.round(k * 10), y - 2 - Math.round(Math.sin(k * Math.PI) * 6), 1, 1, INK);
+    r(3 + Math.round(k * 12), -2 - Math.round(Math.sin(k * Math.PI) * 7), 1, 1, ENEMY.red);
   }
 }
 
@@ -489,6 +492,11 @@ function dawnShaft(v: View) {
   R(d[0], G * TILE - 1, d[1] - d[0], 3, `rgba(255, 225, 160, ${(0.45 + pulse * 0.4).toFixed(3)})`);
   for (const ex of [d[0], d[1] - 1]) R(ex, G * TILE - 10, 1, 10, `rgba(255, 220, 150, ${(0.2 + pulse * 0.3).toFixed(3)})`);
   g.globalCompositeOperation = "source-over";
+  // While its club is stuck, where it has to stand is marked in the bosses' "now" colour (order 18).
+  if (stuck && (view.reduced || pulse > 0.3)) {
+    R(d[0], G * TILE - 1, d[1] - d[0], 1, ROLES.now);
+    for (const ex of [d[0], d[1] - 1]) R(ex, G * TILE - 8, 1, 7, ROLES.now);
+  }
   if (!view.reduced)
     for (let i = 0; i < 12; i++) {
       const k = ((v.t * 0.25 + i * 37) % 160) / 160;
@@ -576,7 +584,7 @@ const CREATURE_ANTLER = FOREST.antler;
  * wakes; the club goes up for a second before every slam and sticks in the ground after; each hit of
  * the dawn turns a third of it to stone from the feet up, and at the end it is all stone.
  */
-function troll(t: Troll, v: View) {
+function trollBody(t: Troll, v: View) {
   const step = v.t;
   const fl = TROLL_DEF.floor;
   const x = Math.round(t.x);
@@ -642,8 +650,9 @@ function troll(t: Troll, v: View) {
   if (t.phase === "windup") {
     const lift = Math.min(1, age / 14);
     box(6, 22, 4, 6 + Math.round(12 * lift), FOREST.troll);
-    for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - lift)) : x - 10 - Math.round(k * (1 - lift)), fl - 34 - Math.round(lift * 10) - Math.round(k * lift), 4, 2, FOREST.club);
-    R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(lift * 2), 6, 6, mix(FOREST.club, INK, 0.2));
+    // The club raised, its tell, in the bosses' "now" colour (order 18).
+    for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - lift)) : x - 10 - Math.round(k * (1 - lift)), fl - 34 - Math.round(lift * 10) - Math.round(k * lift), 4, 2, ROLES.now);
+    R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(lift * 2), 6, 6, ROLES.now);
   } else if (t.phase === "stuck") {
     box(9, 10, 4, 12, FOREST.troll);
     for (let k = 0; k < 14; k++) R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 2, FOREST.club);
@@ -663,14 +672,25 @@ function troll(t: Troll, v: View) {
     for (let k = 0; k < 14; k++) R(x - 2 + (k % 3), fl - 30 + k, 1, 1, FOREST.stoneDark);
   }
   // In the light of the dawn, a white flash where it hits.
-  if (flash) for (let k = 0; k < 6; k++) R(x - 14 + k * 5, fl - 20 - ((k * 7) % 16), 2, 2, WHITE);
+  if (flash) plain(() => [0, 1, 2, 3, 4, 5].forEach((k) => R(x - 14 + k * 5, fl - 20 - ((k * 7) % 16), 2, 2, WHITE)));
+}
+
+/**
+ * The troll, outlined as every enemy is (order 18), its rim in the enemy palette's warning colour while it
+ * can hurt (walking at him, the club raised): dark on the dark floor of the forest, it is the rim that says
+ * so. Asleep (a boulder) or all stone at the end, it is not outlined: stone does not bite.
+ */
+function troll(t: Troll, v: View) {
+  const sleeping = t.phase === "asleep" || (t.phase === "waking" && v.t - t.since < TROLL_STEPS.waking / 2);
+  if (sleeping || t.phase === "stone") return plain(() => trollBody(t, v));
+  outlined(() => trollBody(t, v), undefined, t.phase === "walk" || t.phase === "windup" ? ENEMY.warning : ENEMY.outline);
 }
 
 /** Over the dark: eyes that shine, the troll's eyes, the fireflies, the wave of the troll's slam in the dust. */
 function overDark(v: View) {
   dawnShaft(v);
   sunrise(v);
-  for (const e of v.enemies) for (const [x, y] of enemyEyes(e, v.t)) R(x, y, 1, 1, CREATURE.eye);
+  for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, CREATURE.eye);
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);
   const t = v.troll;
   if (t && t.phase !== "asleep" && t.phase !== "stone") {
@@ -766,6 +786,16 @@ export const NORDMARKA: LevelDef = {
   cannons: [],
   enemies: ENEMIES,
   troll: TROLL_DEF,
+  // The troll's lines, in a bubble beside it: as it wakes, at each hit, when a round goes by with no hit (or
+  // it gives up waiting under him), and at the end.
+  bossWords: {
+    wake: { nb: "Steinen reiser seg. Det er et troll.", en: "The boulder stands up. It is a troll." },
+    hit1: { nb: "En tredjedel av trollet er stein.", en: "A third of the troll is stone." },
+    hit2: { nb: "To tredjedeler stein.", en: "Two thirds stone." },
+    hit3: { nb: "Trollet blir til stein.", en: "The troll turns to stone." },
+    miss: { nb: "Det må stå i lyset når kølla sitter fast.\nSe det i øynene da.", en: "It must stand in the light when its club sticks.\nThen look it in the eye." },
+    stone: { nb: "Trollet er stein. Sola er oppe.", en: "The troll is stone. The sun is up." }
+  },
   trollRules: TROLL_RULES,
   dark,
   flourish: FLOURISH,
@@ -849,9 +879,10 @@ export const NORDMARKA: LevelDef = {
       if (!e.alive) return false;
       if (e.def.look === "bat") bat(e, v.t);
       else if (e.def.look === "anthill") anthill(e, v.t);
-      else return false;
+      else return drawLook(e, v.t);
       return true;
     },
+    shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     troll: (t, v) => troll(t, v),
     flourish: (age) => flourish(age)
   }

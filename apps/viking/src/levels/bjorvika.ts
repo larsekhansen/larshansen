@@ -3,13 +3,14 @@ import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, PAINT, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
+import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
+import { parts } from "../render/pickups";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -473,10 +474,10 @@ function crane(k: (typeof CRANES)[number], t: number) {
 function hookArt(x: number, y: number, jib: number) {
   R(x + 15, jib + 6, 2, y - jib - 6, S.cable);
   R(x + 11, jib + 5, 10, 3, S.craneDark);
-  R(x, y, 2 * TILE, 8, S.crane);
-  R(x, y, 2 * TILE, 1, S.craneLight);
-  for (let k = 0; k < 2 * TILE; k += 6) for (let i = 0; i < 4; i++) R(x + k + i + 1, y + 2 + (i > 1 ? 1 : 0), 2, 1, S.stripe);
-  R(x, y + 7, 2 * TILE, 1, S.craneDark);
+  // The block he rides: in the platform palette (order 18), its standing top drawn by the page.
+  R(x, y, 2 * TILE, 8, STAND.body);
+  for (let k = 0; k < 2 * TILE; k += 6) for (let i = 0; i < 4; i++) R(x + k + i + 1, y + 2 + (i > 1 ? 1 : 0), 2, 1, STAND.bodyDark);
+  R(x, y + 7, 2 * TILE, 1, STAND.under);
   R(x + 12, y - 4, 8, 4, S.craneDark);
   R(x + 14, y - 3, 4, 2, S.cable);
   // The hook below the block.
@@ -610,32 +611,29 @@ function gust(z: Zone, t: number) {
   }
 }
 
-/** A riveter: hard hat, vest with its stripes, the bolt in his raised hand as he makes ready to throw. */
+/** A riveter on the girder: an orange vest with a hi-vis stripe, a red hard hat, a bolt raised to throw. 11 x 18. */
 function riveter(e: Enemy, t: number) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y);
-  const f = e.dir;
+  const r = parts(e, 11);
   const up = windingUp(e, t);
-  R(x - 3, y - 4, 2, 4, S.overalls);
-  R(x + 1, y - 4, 2, 4, S.overalls);
-  R(x - 4, y - 10, 8, 6, S.vest);
-  R(x - 4, y - 7, 8, 1, S.vestStripe);
-  R(x - 2, y - 13, 5, 3, "#e0b48a");
-  R(x - 3, y - 15, 7, 2, S.hardhat);
-  R(f > 0 ? x + 1 : x - 2, y - 12, 1, 1, INK);
+  r(2, -5, 3, 5, ENEMY.plum);
+  r(6, -5, 3, 5, ENEMY.plum);
+  r(1, -11, 9, 6, ENEMY.orange);
+  r(1, -8, 9, 1, ENEMY.poisonLight);
+  r(3, -15, 6, 4, ENEMY.orangeLight);
+  r(2, -17, 8, 2, ENEMY.red);
+  r(3, -18, 6, 1, ENEMY.red);
+  r(7, -14, 1, 1, ENEMY.eye);
   if (up) {
-    R(f > 0 ? x - 4 : x + 3, y - 16, 2, 6, S.vest);
-    R(f > 0 ? x - 5 : x + 3, y - 18, 3, 2, S.bolt);
-  } else R(f > 0 ? x + 4 : x - 6, y - 9, 2, 4, S.vest);
+    r(-1, -19, 2, 8, ENEMY.orange);
+    r(-2, -21, 4, 2, ENEMY.red);
+  } else r(10, -10, 2, 5, ENEMY.orange);
 }
-
-/** A bolt in flight, turning; stopped by the shield, it drops. */
 function boltArt(s: Shot, t: number) {
   const x = Math.round(s.x);
   const y = Math.round(s.y);
   const turn = view.reduced ? 0 : Math.floor(t / 4) % 2;
-  R(x - 2, y - 1 + turn, 5, 2, S.bolt);
-  R(x - 1, y - 2, 2, 4, S.boltDark);
+  R(x - 3, y - 1 + turn, 6, 2, ENEMY.red);
+  R(x - 1, y - 2, 3, 4, ENEMY.plum);
 }
 
 const BOARDS: LedgeLook = { body: S.formwork, top: mix(S.formwork, WHITE, 0.3), edge: S.formworkDark, joint: S.formworkDark };
@@ -653,7 +651,8 @@ export const BJORVIKA: LevelDef = {
   carriers: CARRIERS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   zones: GUSTS,
   hazards: HAZARDS,
   floor: (x) => (x < 36 * TILE ? (G + 3) * TILE : (DOCK + 2) * TILE),

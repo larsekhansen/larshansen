@@ -163,3 +163,29 @@ export function drawShieldOn(b: { x: number; y: number }, facing: 1 | -1, up: nu
   // A glint along its rim once it is up.
   if (up >= 1 && !view.reduced) R(facing > 0 ? x + 4 : x, top + 1, 1, 3, mix(PALETTE.iron, WHITE, 0.5));
 }
+
+/**
+ * The shield's words (and the sledge's, where its key ducks), in both languages: they come with the shield,
+ * so the first script does not carry them (order 18 made room there).
+ */
+export const SHIELD_WORDS = {
+  nb: {
+    help: " Hold pil ned for skjoldet.",
+    /** On the sledge he cannot walk or dash, and down ducks. */
+    helpSledge: "På kjelken: mellomrom eller pil opp for å hoppe, pil ned for å dukke. R starter banen på nytt.",
+    /** The touch pad's shield button, and the moment he is given the shield. */
+    shield: "Skjold",
+    /** The same button on the sledge, where down ducks. */
+    duck: "Dukk",
+    given: ["Skjoldet er ditt.", "Hold pil ned for å løfte det."],
+    givenTouch: ["Skjoldet er ditt.", "Hold Skjold-knappen for å løfte det."]
+  },
+  en: {
+    help: " Hold down for the shield.",
+    helpSledge: "On the sledge: Space or up to jump, down to duck. R starts the level again.",
+    shield: "Shield",
+    duck: "Duck",
+    given: ["The shield is yours.", "Hold down to raise it."],
+    givenTouch: ["The shield is yours.", "Hold the Shield button to raise it."]
+  }
+};

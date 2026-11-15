@@ -2,13 +2,15 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { GLASS, INK, LAMP, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, GLASS, INK, LAMP, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import type { EnemyDef } from "../game/enemies";
+import type { Enemy, EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook, drawLookShot } from "../render/looks";
+import { parts } from "../render/pickups";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -172,7 +174,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "spiky", look: "hedgehog", c: 137, r: G1 - 1, range: 0, speed: 0 },
   { kind: "thrower", look: "squirrel", c: 97, r: G1 - 1, period: 200 },
   { kind: "flyer", look: "crow", c: 100, r: 9, range: 3, rise: 8, period: 170 },
-  { kind: "walker", look: "magpie", c: 116, r: G1 + 1, range: 1 },
+  { kind: "walker", look: "magpie", c: 116, r: G1 + 1, range: 1, small: true },
   { kind: "thrower", look: "squirrel", c: 107, r: 9, period: 210, offset: 80 },
   { kind: "walker", look: "magpie", c: 168, r: 11, range: 2 },
   { kind: "spiky", look: "hedgehog", c: 178, r: 12, range: 0, speed: 0 },
@@ -585,20 +587,20 @@ function gustLeaves(z: Zone, t: number) {
   }
 }
 
-/** A magpie: black and white, a long tail with a blue sheen, hopping. */
-function magpie(x0: number, y0: number, dir: number, t: number) {
-  const hop = view.reduced ? 0 : Math.floor(t / 9 + x0 / 7) % 2;
-  const x = Math.round(x0 - 5);
-  const y = Math.round(y0) - hop;
-  const at = (dx: number) => (dir > 0 ? x + dx : x + 10 - dx);
-  R(x + 2, y - 7, 6, 4, HILL.magpie);
-  R(x + 3, y - 5, 4, 2, HILL.magpieWhite);
-  R(at(7), y - 9, 3, 3, HILL.magpie);
-  R(at(10), y - 8, 1, 1, INK);
-  R(at(-3), y - 6, 5, 1, HILL.magpieBlue);
-  R(at(-4), y - 7, 3, 1, HILL.magpie);
-  R(at(4), y - 3, 1, 3, INK);
-  R(at(6), y - 3, 1, 3, INK);
+/** A magpie hopping: plum with a pale-green flash on its side and a poison sheen on its long tail. 13 x 11. */
+function magpie(e: Enemy, t: number) {
+  const hop = view.reduced ? 0 : Math.floor(t / 9 + e.x / 7) % 2;
+  const r = parts(e, 13);
+  const d = -hop;
+  r(2, -9 + d, 7, 5, ENEMY.plum);
+  r(3, -7 + d, 5, 2, ENEMY.poisonLight);
+  r(8, -11 + d, 4, 4, ENEMY.plum);
+  r(10, -10 + d, 1, 1, ENEMY.eye);
+  r(12, -9 + d, 2, 1, ENEMY.plumLight);
+  r(-3, -8 + d, 6, 1, ENEMY.poison);
+  r(-4, -9 + d, 4, 1, ENEMY.plum);
+  r(4, -4 + d, 1, 4, ENEMY.red);
+  r(6, -4 + d, 1, 4, ENEMY.red);
 }
 
 /** Grass on the hill: a top of evening grass with tufts, soil under. Rock: grey with lichen, in courses. */
@@ -753,10 +755,12 @@ export const EKEBERG: LevelDef = {
       tram(at, v.t);
     },
     enemy(e, v) {
-      if (e.def.look !== "magpie" || !e.alive) return false;
-      magpie(e.x, e.y, e.dir, v.t);
+      if (!e.alive) return false;
+      if (e.def.look !== "magpie") return drawLook(e, v.t);
+      magpie(e, v.t);
       return true;
     },
+    shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     flourish: (age, v) => flourish(age, v)
   }
 };

@@ -2,7 +2,7 @@ import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, LAND, METAL, PALETTE, PLANTS, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, LAND, METAL, PALETTE, PLANTS, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as K from "@larshansen/pixelkit/swatches/sledge";
@@ -10,6 +10,9 @@ import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook } from "../render/looks";
+import { parts } from "../render/pickups";
+import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -436,21 +439,21 @@ function lyingBack(x: number, y: number) {
   R(x + 4, y - 7, 6, 2, P.ironDark);
 }
 
-/** A sledger: a child in a bright jacket on a plastic sledge. Pulled off the run at the end of its stretch. */
+/** A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, it is out of the way and harmless, drawn faint and not outlined. 19 x 15. */
 function sledgerArt(e: Enemy) {
   const x = Math.round(e.x);
   const y = Math.round(e.y);
-  if (e.calm) {
-    // Pulled off to the side, behind: smaller, paler.
-    R(x + 10, y - 6, 10, 3, mix(e.def.c % 2 ? K.sledgeRed : K.sledgeBlue, K.slope, 0.4));
-    return;
-  }
-  const jacket = e.def.c % 2 ? K.sledgeBlue : K.sledgeRed;
-  sledgeAt(x, y, e.def.c % 2 ? K.sledgeRed : K.sledgeBlue);
-  R(x - 3, y - 11, 6, 7, jacket);
-  R(x - 2, y - 14, 4, 3, mix(P.sail, P.sailStripe, 0.2));
-  R(x - 3, y - 15, 6, 2, e.def.c % 2 ? K.sledgeRed : K.sledgeBlue);
-  R(x + 1, y - 13, 1, 1, INK);
+  if (e.calm) return plain(() => R(x + 12, y - 7, 12, 4, mix(K.sledgeWood, K.slope, 0.4)));
+  const r = parts(e, 18);
+  r(0, -5, 17, 4, ENEMY.orange);
+  r(0, -5, 17, 1, ENEMY.orangeLight);
+  r(-1, -1, 20, 1, ENEMY.plum);
+  r(17, -5, 1, 4, ENEMY.plum);
+  r(18, -6, 1, 2, ENEMY.plum);
+  r(5, -10, 8, 5, e.def.c % 2 ? ENEMY.plum : ENEMY.red);
+  r(6, -13, 6, 3, ENEMY.orangeLight);
+  r(5, -15, 8, 2, ENEMY.poison);
+  r(10, -12, 1, 1, ENEMY.eye);
 }
 
 const PORCH: LedgeLook = { body: K.logs, top: mix(K.carved, WHITE, 0.2), edge: mix(K.logs, INK, 0.3), joint: K.logs };
@@ -536,8 +539,9 @@ export const KORKETREKKEREN: LevelDef = {
       return true;
     },
     ledges: { "=": PORCH },
-    enemy(e) {
-      if (e.def.look !== "sledger") return false;
+    enemy(e, v) {
+      if (!e.alive) return false;
+      if (e.def.look !== "sledger") return drawLook(e, v.t);
       sledgerArt(e);
       return true;
     }

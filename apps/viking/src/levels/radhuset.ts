@@ -6,9 +6,10 @@ import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, GLASS, GROUND, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, ROOF, SHIMMER, SNOW, WHITE } from "@larshansen/pixelkit/palette";
 import { WOOD_LEDGE, lampPool, lampPost, pane, type LedgeLook } from "@larshansen/pixelkit/props";
 import { timedPhase } from "@larshansen/pixelkit/timed";
-import type { EnemyDef } from "../game/enemies";
+import { keepBoxes, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, View } from "./types";
 
@@ -532,7 +533,8 @@ export const RADHUSET: LevelDef = {
   carriers: CARRIERS,
   timed: BELLS,
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   flourish: 150,
   flourishLook: 30,
   chime: [0, 2, 4, 1, 3, 0, 2, 4],
@@ -586,6 +588,8 @@ export const RADHUSET: LevelDef = {
       lantern(c, r, x, y, sky.snow);
       return true;
     },
+    enemy: (e, v) => e.alive && drawLook(e, v.t),
+    shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     ledges: { "=": BRICK_LEDGE, _: WOOD_LEDGE },
     carrier(i, at, v) {
       if (i === 0) ferry(at);

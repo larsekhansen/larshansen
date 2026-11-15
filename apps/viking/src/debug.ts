@@ -2,6 +2,7 @@ import type { Move } from "./game/bot";
 import type { Play, PlayIntent } from "./game/play";
 import type { Progress } from "./game/progress";
 import { ORDER } from "./levels/index";
+import { sx, sy } from "@larshansen/pixelkit/text";
 
 // What only `?debug` needs, fetched when it is asked for: no visitor's first script carries it.
 
@@ -93,4 +94,27 @@ export function perf(frame: () => void, help: HTMLElement) {
   Object.defineProperty(proto, "fillStyle", style);
   help.textContent = `perf: ${Math.round(count.fillRect / N)} rects, ${Math.round(count.fillStyle / N)} colours, ${Math.round(count.drawImage / N)} images, ${ms.toFixed(1)} ms a frame. ` + [...who].sort((a, b) => b[1] - a[1]).slice(0, 6).map(([n, c]) => `${n} ${Math.round(c / N)}`).join(", ");
   help.hidden = false;
+}
+
+/** What `?debug` does once the page has started and drawn its first frame: `perf`, `where`. */
+export function afterStart(params: URLSearchParams, frame: () => void, help: HTMLElement) {
+  if (params.has("perf")) perf(frame, help);
+  if (params.has("where")) where(params.get("where") ?? "");
+}
+
+/**
+ * `?debug&where=<wx>,<wy>`: where that world point is on the screen, written into the picture's two
+ * bottom-left pixels (x as red and green, then y as red and green), so a script can crop a contact
+ * sheet round it from a headless screenshot. They are two one-pixel elements over the page, so a redraw
+ * of the canvases does not take them away; they are the only change to the picture.
+ */
+function where(at: string) {
+  const [wx, wy] = at.split(",").map(Number);
+  if (!Number.isFinite(wx) || !Number.isFinite(wy)) return;
+  const x = Math.max(0, Math.round(sx(wx)));
+  const y = Math.max(0, Math.round(sy(wy)));
+  [x, y].forEach((v, i) => {
+    const px = document.body.appendChild(document.createElement("i"));
+    px.style.cssText = `position:fixed;z-index:99;left:${i}px;bottom:0;width:1px;height:1px;background:rgb(${v >> 8},${v & 255},0)`;
+  });
 }

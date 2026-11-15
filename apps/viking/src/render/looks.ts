@@ -1,0 +1,209 @@
+import { R as rect, light, view } from "@larshansen/pixelkit/paint";
+import { ENEMY } from "@larshansen/pixelkit/palette";
+import { SHOT, windingUp, type Enemy, type Shot } from "../game/enemies";
+import { parts, stride } from "./pickups";
+
+// The enemy looks that several levels share but the first level does not: they come in a small file
+// of their own with the first level that needs one (order 18 moved them out of the first script). Each
+// is drawn a quarter larger than before, from the enemy palette only; the page outlines it.
+
+const E = ENEMY;
+
+/** A gull standing on the bank with a chip in its beak, flicking it at him on its beat. 12 x 16. */
+function gullStanding(e: Enemy, t: number) {
+  const r = parts(e, 12);
+  const up = windingUp(e, t) ? 1 : 0;
+  r(1, -12, 9, 7, E.orangeLight);
+  r(1, -9, 6, 3, E.orange);
+  r(0, -9, 2, 3, E.orange);
+  r(7, -16 - up, 4, 4, E.orangeLight);
+  r(8, -15 - up, 1, 1, E.eye);
+  r(10, -14 - up, 2, 1, E.red);
+  if (up) r(11, -16, 2, 2, E.orange);
+  r(3, -5, 1, 5, E.red);
+  r(7, -5, 1, 5, E.red);
+}
+
+/** A rented e-scooter riding itself: deck, stem, bars, two small wheels, a lamp. 18 x 15. */
+function scooter(e: Enemy) {
+  const r = parts(e, 18);
+  r(2, -5, 13, 2, E.poison);
+  r(2, -4, 13, 1, E.poisonLight);
+  r(14, -15, 2, 10, E.poison);
+  r(12, -15, 5, 1, E.red);
+  for (const wx of [1, 14]) {
+    r(wx, -3, 4, 3, E.red);
+    r(wx + 1, -2, 2, 1, E.redLight);
+  }
+  r(16, -12, 1, 1, E.eye);
+}
+
+/** A hedgehog: a red back of spines over an orange body, a pointed snout. 15 x 10. */
+function hedgehog(e: Enemy) {
+  const r = parts(e, 15);
+  const s = stride(e);
+  r(1, -6, 11, 5, E.orange);
+  for (let i = 0; i < 12; i += 2) r(i, -10 + (i % 4 ? 1 : 0), 2, 4, E.red);
+  r(11, -5, 3, 3, E.orangeLight);
+  r(14, -4, 1, 1, E.plum);
+  r(12, -5, 1, 1, E.eye);
+  r(3 + s, -1, 2, 1, E.plum);
+  r(8 - s, -1, 2, 1, E.plum);
+}
+
+/** A fire basket on three legs, coals glowing, flames over the rim. 15 x 15. */
+function grill(e: Enemy, t: number) {
+  const r = parts(e, 15);
+  r(1, -9, 13, 5, E.red);
+  r(0, -10, 15, 1, E.redLight);
+  for (const lx of [2, 7, 12]) r(lx, -4, 1, 4, E.red);
+  const flick = view.reduced ? 0 : Math.floor(t / 5) % 3;
+  r(2, -11, 11, 1, E.orange);
+  r(3 + flick, -14, 3, 3, E.orange);
+  r(9 - flick, -15, 2, 4, E.orangeLight);
+  r(6, -13, 2, 2, E.orangeLight);
+  light(Math.round(e.x - 5), Math.round(e.y) - 15, 10, 5, "soft");
+}
+
+/** A kid in a bobble hat and a puffy jacket, a snowball raised behind while it winds up. 11 x 17. */
+function kid(e: Enemy, t: number) {
+  const r = parts(e, 11);
+  const up = windingUp(e, t);
+  const thrown = t - e.thrownAt < 10;
+  const jacket = e.def.c % 2 ? E.red : E.plum;
+  r(3, -17, 6, 3, E.poison);
+  r(5, -18, 2, 1, E.poisonLight);
+  r(3, -14, 6, 4, E.orangeLight);
+  r(7, -13, 1, 1, E.eye);
+  r(2, -10, 8, 7, jacket);
+  r(2, -3, 3, 3, E.plum);
+  r(7, -3, 3, 3, E.plum);
+  // The arm: down, raised behind with a snowball while it winds up, forward as it throws.
+  if (up) {
+    r(0, -16, 2, 6, jacket);
+    r(-1, -19, 4, 4, E.redLight);
+  } else if (thrown) r(10, -11, 4, 2, jacket);
+  else r(9, -9, 2, 5, jacket);
+}
+
+/** A wasp: acid bands, wings a blur over it, a sting behind. 12 x 8. */
+function wasp(e: Enemy, t: number) {
+  const r = parts(e, 12);
+  const buzz = view.reduced ? 0 : Math.floor(t / 2) % 2;
+  r(2, -5, 8, 4, E.poisonLight);
+  r(4, -5, 1, 4, E.poison);
+  r(7, -5, 1, 4, E.poison);
+  r(10, -5, 2, 3, E.poison);
+  r(11, -5, 1, 1, E.eye);
+  r(0, -3, 2, 1, E.red);
+  r(3, -8 - buzz, 3, 2, E.plumLight);
+  r(6, -8 + buzz - 1, 3, 2, E.plumLight);
+}
+
+/** A fox at a trot: a long body, a pale-tipped brush, pointed ears, a light chin. 16 x 12. */
+function fox(e: Enemy) {
+  const r = parts(e, 16);
+  const s = stride(e);
+  r(3, -8, 10, 5, E.orange);
+  r(11, -10, 4, 5, E.orange);
+  r(14, -8, 2, 2, E.orange);
+  r(13, -9, 1, 1, E.eye);
+  r(11, -12, 1, 2, E.red);
+  r(14, -12, 1, 2, E.red);
+  r(12, -6, 3, 1, E.orangeLight);
+  r(0, -9, 4, 3, E.orange);
+  r(-1, -9, 1, 3, E.orangeLight);
+  r(4 + s, -3, 1, 3, E.red);
+  r(11 - s, -3, 1, 3, E.red);
+}
+
+/** A tawny owl gliding: a round head, a light face, wide soft wings. 20 x 11. */
+function owl(e: Enemy, t: number) {
+  const r = parts(e, 20);
+  const up = view.reduced ? 0 : Math.floor(t / 9) % 2;
+  r(6, -9, 8, 7, E.orange);
+  r(7, -9, 6, 3, E.orangeLight);
+  r(8, -11, 4, 2, E.orange);
+  r(8, -8, 1, 1, E.eye);
+  r(11, -8, 1, 1, E.eye);
+  r(9, -6, 2, 1, E.red);
+  if (up) {
+    r(0, -9, 6, 3, E.orange);
+    r(14, -9, 6, 3, E.orange);
+  } else {
+    r(0, -5, 6, 3, E.orange);
+    r(14, -5, 6, 3, E.orange);
+  }
+}
+
+/** A red squirrel sitting up, its tail a curl behind, a cone held up to throw. 11 x 17. */
+function squirrel(e: Enemy, t: number) {
+  const r = parts(e, 11);
+  const up = windingUp(e, t);
+  r(3, -10, 5, 8, E.red);
+  r(5, -9, 2, 5, E.orangeLight);
+  r(5, -14, 4, 4, E.red);
+  r(6, -15, 1, 1, E.red);
+  r(8, -13, 1, 1, E.eye);
+  r(-1, -15, 4, 12, E.red);
+  r(-2, -17, 4, 4, E.redLight);
+  r(3, -2, 2, 2, E.plum);
+  r(6, -2, 2, 2, E.plum);
+  if (up) r(8, -18, 4, 4, E.orange);
+  else r(8, -9, 2, 3, E.orange);
+}
+
+/** One of the looks in this file, and says so; false for any other. */
+export function drawLook(e: Enemy, t: number): boolean {
+  switch (e.def.look) {
+    case "gull":
+      if (e.def.kind !== "thrower") return false;
+      gullStanding(e, t);
+      return true;
+    case "scooter":
+      scooter(e);
+      return true;
+    case "hedgehog":
+      hedgehog(e);
+      return true;
+    case "grill":
+      grill(e, t);
+      return true;
+    case "kid":
+      kid(e, t);
+      return true;
+    case "wasp":
+      wasp(e, t);
+      return true;
+    case "fox":
+      fox(e);
+      return true;
+    case "owl":
+      owl(e, t);
+      return true;
+    case "squirrel":
+      squirrel(e, t);
+      return true;
+  }
+  return false;
+}
+
+/** What these looks throw: a gull's chip, a squirrel's cone. False for any other (a snowball is the page's). */
+export function drawLookShot(s: Shot, look?: string): boolean {
+  const x = Math.round(s.x - SHOT.w / 2);
+  const y = Math.round(s.y - SHOT.h / 2);
+  const R = (dx: number, dy: number, w: number, h: number, c: string) => rect(x + dx, y + dy, w, h, c);
+  if (look === "gull") {
+    R(1, 1, 5, 2, E.orangeLight);
+    R(0, 2, 2, 3, E.orangeLight);
+    R(4, 1, 1, 1, E.orange);
+    return true;
+  }
+  if (look === "squirrel") {
+    R(1, 0, 4, 6, E.orange);
+    R(0, 1, 6, 4, E.orange);
+    for (const [dx, dy] of [[1, 1], [3, 2], [1, 3], [4, 4]]) R(dx, dy, 1, 1, E.red);
+    return true;
+  }
+  return false;
+}

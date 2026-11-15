@@ -1088,7 +1088,7 @@ describe("statues (Vigelandsparken): they move only while his back is turned", (
     "##############################",
     "##############################"
   ];
-  const def: EnemyDef = { kind: "spiky", look: "statue", c: 14, r: 5, range: 6, speed: 0.5, w: 10, h: 16 };
+  const def: EnemyDef = { kind: "spiky", look: "statue", c: 14, r: 5, range: 6, speed: 0.5, w: 10, h: 16, small: true };
   const PARK = level(map, { enemies: [def], rules: STATUE_RULES });
   const at = (x: number) => newPlay(PARK, { start: { x, bottom: 6 * TILE } });
   const face = (p: Play, dir: 1 | -1) => stepPlay(p, dir > 0 ? right : left);
