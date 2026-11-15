@@ -81,7 +81,9 @@ export function clonePlay(p: any): any {
     cheese: p.cheese && { ...p.cheese },
     dash: p.dash && { ...p.dash },
     troll: p.troll && { ...p.troll, wave: p.troll.wave && { ...p.troll.wave } },
-    boss: p.boss && { rules: p.boss.rules, state: { ...p.boss.state } },
+    // Deep: the serpent's ball and tail are objects of their own, and a shallow copy let the look-ahead
+    // move the real run's ball and tail k steps further every step (fixed for order 17).
+    boss: p.boss && { rules: p.boss.rules, state: structuredClone(p.boss.state) },
     shield: p.shield && { ...p.shield },
     grounds: p.grounds && { rules: p.grounds.rules, state: structuredClone(p.grounds.state) }
   };
@@ -95,6 +97,8 @@ interface Auto {
   /** Steps the hesitating player still stands before it goes on. */
   hold?: number;
 }
+/** A person's walks (any run with timing errors or held keys, never the perfect run): see `personWalk`. */
+let lenient = false;
 /** The hesitating player's share of moves it stops before, and its seed. */
 export interface Hesitate {
   share: number;
@@ -107,13 +111,30 @@ const ridingCarrier = (p: any) =>
     const c = BOT.carrier(p, d);
     return Math.abs(p.body.y + PH - c.y) < 0.01 && p.body.x + PW > c.x && p.body.x < c.x + d.w;
   });
+/**
+ * A walk as a person ends it (order 17, the review's A5): the route's walk is done only within 2 px of
+ * its mark and at rest, so a direction held a little too long overshoots, turns, overshoots again, for
+ * ever (the "mistakes" profile timed out at walks with no heart lost). A person who has turned back once
+ * is done within 4 px; and a walk that has carried him onto the sledge, which he cannot steer, is over.
+ */
+function personWalk(move: any, p: any, mem: any, k: any): any {
+  const at = /^walk to (-?[\d.]+)$/.exec(move.name);
+  if (!at || k === "done") return k;
+  if (p.riding) return "done";
+  const d = k.left ? -1 : k.right ? 1 : 0;
+  if (d && mem.wd && d !== mem.wd) mem.turned = true;
+  if (d) mem.wd = d;
+  return mem.turned && p.body.onGround && Math.abs(Number(at[1]) - cx(p)) <= 4 ? "done" : k;
+}
+
 function botKeys(moves: any[], p: any, A: Auto, hes?: Hesitate): Intent {
   if (A.hold) {
     A.hold--;
     return NONE;
   }
   if (A.pre) {
-    const k = A.pre.move.keys(p, A.pre.mem);
+    let k = A.pre.move.keys(p, A.pre.mem);
+    if (lenient) k = personWalk(A.pre.move, p, A.pre.mem, k);
     if (k !== "done" && A.pre.mem.i < 600) {
       A.pre.mem.i++;
       return k;
@@ -121,7 +142,8 @@ function botKeys(moves: any[], p: any, A: Auto, hes?: Hesitate): Intent {
     A.pre = undefined;
   }
   while (A.m < moves.length) {
-    const k = moves[A.m].keys(p, A.mem);
+    let k = moves[A.m].keys(p, A.mem);
+    if (lenient) k = personWalk(moves[A.m], p, A.mem, k);
     if (k === "done") {
       // A move that only stood still (a wait for a raft, a beat) was the timing: no pause after it.
       const waited = A.mem.i > 1 && !A.mem.busy;
@@ -160,6 +182,9 @@ export interface Ref {
   endOf: Map<number, { x: number; feet: number }>;
   /** The lowest ground (largest feet) the perfect run stood on during each move, its start and end included. */
   lowest: Map<number, number>;
+  /** The moves that only stood and waited (no key for two steps or more), and the step each move began. */
+  waits: Set<number>;
+  first: Map<number, number>;
   steps: number;
   seconds: number;
   done: boolean;
@@ -172,12 +197,17 @@ export function reference(def: any, moves: any[], pole: boolean): Ref {
   const rec: Ref["rec"] = [];
   const saveAt = new Map<string, number>();
   const endOf = new Map<number, { x: number; feet: number }>();
+  const busy = new Map<number, boolean>();
+  const first = new Map<number, number>();
   let n = 0;
   let lastM = 0;
   for (; n < 60 * 300 && p.run.state !== "done"; n++) {
     const intent = botKeys(moves, p, A);
     for (let m = lastM; m < A.m; m++) endOf.set(m, { x: cx(p), feet: feet(p) });
     lastM = A.m;
+    if (!first.has(A.m)) first.set(A.m, n);
+    const pressed = intent.left || intent.right || intent.jumpHeld || intent.jumpPressed || !!intent.shield || !!intent.dash || !!intent.sit;
+    busy.set(A.m, (busy.get(A.m) ?? false) || pressed);
     rec.push({ m: A.m, i: A.mem.i - 1, x: cx(p), feet: feet(p), ground: p.body.onGround });
     (globalThis as any).__refTrace?.push(intent);
     stepPlay(p, intent);
@@ -190,7 +220,8 @@ export function reference(def: any, moves: any[], pole: boolean): Ref {
     lowest.set(r.m, Math.max(lowest.get(r.m) ?? -Infinity, r.feet));
     if (i > 0 && rec[i - 1].m !== r.m) lowest.set(rec[i - 1].m, Math.max(lowest.get(rec[i - 1].m) ?? -Infinity, r.feet));
   }
-  return { rec, saveAt, endOf, lowest, steps: n, seconds: p.run.steps / 60, done: p.run.state === "done" };
+  const waits = new Set([...busy].filter(([m, b]) => !b && (endOf.has(m) ? (first.get(m + 1) ?? n) - (first.get(m) ?? 0) >= 2 : false)).map(([m]) => m));
+  return { rec, saveAt, endOf, lowest, waits, first, steps: n, seconds: p.run.steps / 60, done: p.run.state === "done" };
 }
 
 /**
@@ -244,6 +275,16 @@ function floorBetween(map: any, x0: number, x1: number, f: number): boolean {
 }
 
 function resumeAt(ref: Ref, moves: any[], s: number, p?: any): Auto {
+  // Put back where the perfect run was walking on after a wait (onto the ferry once it stood at the quay),
+  // a person waits again first: resume at the latest wait before the place, if it was at the same place
+  // (order 17, the review's A5; the harness used to walk him straight back into the water).
+  for (let j = ref.rec[s].m - 1; j >= 0 && j >= ref.rec[s].m - 2; j--) {
+    if (!/^walk to/.test(moves[j + 1]?.name ?? "")) break;
+    if (!ref.waits.has(j)) continue;
+    const w = ref.rec[ref.first.get(j) ?? s];
+    if (w && Math.abs(w.feet - ref.rec[s].feet) < 4 && Math.abs(w.x - ref.rec[s].x) < 48) s = ref.first.get(j)!;
+    break;
+  }
   const r = ref.rec[s];
   let m = r.m;
   const pre = p && Math.abs(cx(p) - r.x) > 3 && Math.abs(feet(p) - r.feet) < 4 && (Math.abs(cx(p) - r.x) < 64 || floorBetween(p.map, cx(p), r.x, feet(p))) ? { move: BOT.walk(r.x), mem: { i: 0, air: false } } : undefined;
@@ -353,6 +394,16 @@ export interface RunResult {
 }
 
 export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult {
+  const was = lenient;
+  lenient = cfg.k > 0 || cfg.overhold > 0;
+  try {
+    return run(id, def, moves, ref, cfg);
+  } finally {
+    lenient = was;
+  }
+}
+
+function run(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult {
   const r = rng(cfg.seed * 7919 + cfg.k * 104729 + 17);
   const hes: Hesitate | undefined = cfg.hesitate ? { share: cfg.hesitate, seed: cfg.seed * 13 + cfg.k } : undefined;
   const p = cfg.startPlay ?? newPlay(def, { pole: cfg.pole, lives: cfg.lives });
