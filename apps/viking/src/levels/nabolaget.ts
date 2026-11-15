@@ -2,6 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
+import { keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, gable, layerX, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
@@ -424,15 +425,45 @@ function church() {
   R(tx - 2, ty - 2, 4 * TILE + 4, 3, SNOW.lying);
 }
 
-/** The snow down the far side of the tower: a drift, its top packed and glittering. */
+/**
+ * The snow down the far side of the tower: a drift, its top packed and glittering; in it (order 20: it was one
+ * plain slope) the tracks of the sledges that came down it today, the wind's ripples, the steps of someone who
+ * walked down beside them, and the tops of a fence buried to its rails. Kept as strips, drawn once (ADR 0036).
+ */
 function drift() {
   const [, [x0, y0], [x1, y1]] = DRIFT.points;
-  for (let x = x0; x < x1; x++) {
-    const y = Math.round(y0 + ((x - x0) / (x1 - x0)) * (y1 - y0));
-    R(x, y, 1, S * TILE + 40 - y, mix(SNOW.lying, SNOW.shade, 0.5));
-    R(x, y, 1, 2, SNOW.lying);
-    if ((x * 7) % 13 === 0) R(x, y + 4 + (x % 9), 1, 1, WHITE);
-  }
+  keptStrips("nb-drift", x0, y0, x1 - x0, S * TILE + 40 - y0, () => {
+    const at = (x: number) => Math.round(y0 + ((x - x0) / (x1 - x0)) * (y1 - y0));
+    const ripple = mix(SNOW.lying, SNOW.shade, 0.25);
+    const track = mix(SNOW.shade, INK, 0.12);
+    for (let x = x0; x < x1; x++) {
+      const y = at(x);
+      R(x, y, 1, S * TILE + 40 - y, mix(SNOW.lying, SNOW.shade, 0.5));
+      R(x, y, 1, 2, SNOW.lying);
+      if ((x * 7) % 13 === 0) R(x, y + 4 + (x % 9), 1, 1, WHITE);
+      // Two sledges' runners, down the face a little under the top, and the wind's ripples deeper in.
+      R(x, y + 5, 1, 1, track);
+      R(x, y + 8, 1, 1, track);
+      if ((x + 3) % 23 < 9) R(x, y + 16 + ((x * 3) % 4 === 0 ? 1 : 0), 1, 1, ripple);
+      if ((x + 11) % 31 < 12) R(x, y + 27, 1, 1, ripple);
+      if ((x + 5) % 19 < 7) R(x, y + 40 + Math.floor((x % 19) / 3), 1, 1, ripple);
+      // Older snow deeper in, in packed layers, the day's falls one over another.
+      for (const [d, run] of [[52, 41], [70, 29], [92, 37], [116, 23], [142, 31]] as const) if ((x * 3 + d) % run < run - 6) R(x, y + d + ((x >> 4) % 2), 1, 1, mix(SNOW.shade, INK, 0.18));
+    }
+    // Someone's steps down beside the tracks.
+    for (let x = x0 + 6; x < x1 - 4; x += 7) {
+      const y = at(x);
+      R(x, y + 12, 2, 1, track);
+      R(x + 3, y + 13, 2, 1, track);
+    }
+    // A fence buried to its rails high on the slope, by the tower: post tops and the top rail just showing.
+    for (let x = x0 + 40; x < x0 + 130; x += 12) {
+      const y = at(x) + 22;
+      R(x, y, 2, 4, mix(PALETTE.woodDark, SNOW.shade, 0.35));
+      R(x, y - 1, 2, 1, SNOW.lying);
+    }
+    for (let x = x0 + 40; x < x0 + 130; x++) if (x % 5 < 3) R(x, at(x) + 24, 1, 1, mix(PALETTE.woodDark, SNOW.shade, 0.6));
+  });
 }
 
 // --- Kruttverket ---------------------------------------------------------------------------------------------

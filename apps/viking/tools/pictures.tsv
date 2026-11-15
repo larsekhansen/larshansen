@@ -1,0 +1,23 @@
+# The pictures in docs/games/LEVELS.html (docs/games/shots/<name>.png), each with the address it is taken from,
+# at 1280 x 800, against a built page: `bun tools/pictures.ts http://localhost:5181 [name ...]` takes them again.
+# A third column `wait` takes it with --wait=5000 (a page under ?debug&auto fetches its route after the load event).
+01-langkaia	/viking/?debug&steps=2&level=langkaia&x=2046#langkaia
+02-akershus	/viking/?debug&steps=2&level=akershus&x=1006#akershus
+03-radhuset	/viking/?debug&steps=2&level=radhuset&x=782#radhuset
+04-slottet	/viking/?debug&steps=2&level=slottet&x=974#slottet
+05-holmenkollen	/viking/?debug&steps=2&level=holmenkollen&x=942#holmenkollen
+06-akerselva	/viking/?debug&steps=2&level=akerselva&x=670#akerselva
+07-nordmarka	/viking/?debug&steps=2&level=nordmarka&x=846#nordmarka
+08-stortinget	/viking/?debug&steps=2&level=stortinget&x=430#stortinget
+09-ekeberg	/viking/?debug&steps=2&level=ekeberg&x=558#ekeberg
+10-nabolaget	/viking/?debug&steps=2&level=nabolaget&x=1102#nabolaget
+11-bygdoy	/viking/?debug&steps=2&level=bygdoy&x=622#bygdoy
+12-vigelandsparken	/viking/?debug&steps=2&level=vigelandsparken&x=654#vigelandsparken
+13-korketrekkeren	/viking/?debug&steps=2&level=korketrekkeren&x=254#korketrekkeren
+14-ostensjovannet	/viking/?debug&steps=2&level=ostensjovannet&x=1078#ostensjovannet
+15-bjorvika	/viking/?debug&steps=2&level=bjorvika&x=382#bjorvika
+16-gamlebyen	/viking/?debug&steps=2&level=gamlebyen&x=1070#gamlebyen
+16-gamlebyen-dawn	/viking/?debug&auto&steps=6126&level=gamlebyen#gamlebyen	wait
+kart	/viking/?debug&steps=30&sky=day&cleared=langkaia,akershus,radhuset&x=392#kart
+kart-line2	/viking/?debug&steps=30&sky=day&cleared=langkaia,akershus,radhuset,slottet,holmenkollen,akerselva,nordmarka,stortinget,ekeberg,nabolaget&x=792#kart
+kart-end	/viking/?debug&steps=30&sky=day&cleared=all&x=1528#kart

@@ -1,8 +1,9 @@
-import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { carrierAt, type CarrierDef, type Travel } from "@larshansen/pixelkit/carrier";
 import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
+import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
@@ -292,6 +293,10 @@ function farRidges(v: View) {
   }
 }
 
+// The trees are the same pixels wherever they stand, and a spruce is a hundred rows: each shape is drawn
+// once and copied after (ADR 0036), and what is off the screen is not drawn at all. The pictures are
+// the same to the byte.
+
 /** Nearer forest: rows of spruce, darker the nearer. */
 function midSpruces() {
   const base = 220 + view.camY * 0.75;
@@ -300,10 +305,13 @@ function midSpruces() {
     const x = layerX(wx, 0.2);
     if (x < -12 || x > view.w + 12) continue;
     const h = 26 + ((i * 29) % 26);
-    for (let k = 0; k < h; k++) {
-      const half = Math.floor(1 + (k % 6) * 0.7 + k * 0.2);
-      box(x - half, base - h + k, half * 2 + 1, 1, mix(LAND.headland, LAND.farHills, 0.15 + (i % 3) * 0.05));
-    }
+    const colour = mix(LAND.headland, LAND.farHills, 0.15 + (i % 3) * 0.05);
+    const halfOf = (k: number) => Math.floor(1 + (k % 6) * 0.7 + k * 0.2);
+    let most = 0;
+    for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
+    stamp(`nm-mid ${h} ${i % 3}`, x - most, Math.round(base) - h - view.camY, most * 2 + 1, h, () => {
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, colour);
+    });
   }
 }
 
@@ -317,29 +325,41 @@ function nearTrunks() {
     if (x < -20 || x > view.w + 20) continue;
     const foot = G * TILE;
     const h = 90 + ((i * 23) % 40);
-    box(x, foot - h, 4, h, mix(FOREST.trunk, LAND.headland, 0.4));
-    for (let k = 0; k < h - 20; k += 2) {
-      const half = Math.floor(3 + (k % 14) * 0.9 + k * 0.08);
-      if (k % 14 < 2) continue;
-      box(x + 2 - half, foot - h + k, half * 2, 2, mix(FOREST.needlesDark, LAND.headland, 0.35));
-    }
+    const halfOf = (k: number) => Math.floor(3 + (k % 14) * 0.9 + k * 0.08);
+    let most = 2;
+    for (let k = 0; k < h - 20; k += 2) if (k % 14 >= 2) most = Math.max(most, halfOf(k));
+    stamp(`nm-near ${h}`, x + 2 - most, foot - h - view.camY, most * 2, h, () => {
+      R(most - 2, 0, 4, h, mix(FOREST.trunk, LAND.headland, 0.4));
+      for (let k = 0; k < h - 20; k += 2) {
+        if (k % 14 < 2) continue;
+        R(most - halfOf(k), k, halfOf(k) * 2, 2, mix(FOREST.needlesDark, LAND.headland, 0.35));
+      }
+    });
   }
 }
 
 /** A spruce in the street layer: a trunk, tiers of needles, lighter at each tier's top edge. */
 function spruce(x: number, foot: number, h: number, seed: number) {
-  R(x - 2, foot - h + 10, 4, h - 10, FOREST.trunk);
-  R(x - 2, foot - h + 10, 1, h - 10, FOREST.trunkDark);
   const tiers = 5 + (seed % 3);
   const step = Math.floor((h - 12) / tiers);
-  for (let k = 0; k < h - 12; k++) {
-    const tier = Math.floor(k / step);
-    const inTier = k % step;
-    const half = Math.floor(2 + inTier * 1.3 + tier * 1.6);
-    const col = inTier === 0 ? FOREST.needlesLight : inTier > step - 3 ? FOREST.needlesDark : FOREST.needles;
-    R(x - half, foot - h + k, half * 2, 1, col);
-    if (inTier === step - 1) R(x - half - 1, foot - h + k, 2, 1, FOREST.needlesDark);
-  }
+  const halfOf = (k: number) => Math.floor(2 + (k % step) * 1.3 + Math.floor(k / step) * 1.6);
+  let most = 2;
+  for (let k = 0; k < h - 12; k++) most = Math.max(most, halfOf(k));
+  // Its left edge, one more than its widest row for the dark tip at each tier's foot.
+  const left = x - most - 1;
+  if (!seen(left, x + most)) return;
+  stamp(`nm-spruce ${h} ${tiers}`, left - view.camX, foot - h - view.camY, most * 2 + 1, h, () => {
+    const cx = most + 1;
+    R(cx - 2, 10, 4, h - 10, FOREST.trunk);
+    R(cx - 2, 10, 1, h - 10, FOREST.trunkDark);
+    for (let k = 0; k < h - 12; k++) {
+      const inTier = k % step;
+      const half = halfOf(k);
+      const col = inTier === 0 ? FOREST.needlesLight : inTier > step - 3 ? FOREST.needlesDark : FOREST.needles;
+      R(cx - half, k, half * 2, 1, col);
+      if (inTier === step - 1) R(cx - half - 1, k, 2, 1, FOREST.needlesDark);
+    }
+  });
 }
 
 /** Ferns and blueberry heather at the foot of the trees. */
@@ -448,10 +468,12 @@ function mound(v: View) {
 
 /** The gorge: its rock walls going down into the dark. */
 function gorge() {
-  for (let x = 158 * TILE; x < 163 * TILE; x++) {
-    for (let y = G * TILE; y < ROWS * TILE; y += 4) R(x, y, 1, 4, mix(STONE.dark, INK, Math.min(0.85, (y - G * TILE) / 90)));
-    if ((x * 7) % 13 === 0) R(x, G * TILE + 2 + (x % 9), 1, 6, STONE.moss);
-  }
+  kept("nm-gorge", 158 * TILE, G * TILE, 5 * TILE, (ROWS - G) * TILE, () => {
+    for (let x = 158 * TILE; x < 163 * TILE; x++) {
+      for (let y = G * TILE; y < ROWS * TILE; y += 4) R(x, y, 1, 4, mix(STONE.dark, INK, Math.min(0.85, (y - G * TILE) / 90)));
+      if ((x * 7) % 13 === 0) R(x, G * TILE + 2 + (x % 9), 1, 6, STONE.moss);
+    }
+  });
 }
 
 /** The clearing: the canopy over it with the gap the dawn comes through, and the dawn falling on the floor. */
@@ -832,7 +854,7 @@ export const NORDMARKA: LevelDef = {
       // The forest along the path, skipping the lake, the marsh, the clearings and the gorge; blue marks on some.
       for (const tr of TREES) {
         spruce(tr.x, tr.foot, tr.h, tr.i);
-        undergrowth(tr.x - 14, tr.foot, tr.i);
+        if (seen(tr.x - 15, tr.x + 4)) undergrowth(tr.x - 14, tr.foot, tr.i);
       }
       // The trunk past the gorge that carries a mark.
       R(GORGE_MARK.x - 1, G * TILE - 70, 4, 70, FOREST.trunk);

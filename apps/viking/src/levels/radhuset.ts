@@ -1,5 +1,6 @@
 import { box, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
+import { keptStrips, stamp } from "@larshansen/pixelkit/kept";
 import { osloClock } from "@larshansen/pixelkit/oslo";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
@@ -366,8 +367,11 @@ function townHallFaces() {
   }
 }
 
-/** The clock tower over its block: brick drawn behind him, in courses, up to the parapet. */
+/** The clock tower over its block: brick drawn behind him, in courses, up to the parapet. Thousands of rectangles: kept as strips (ADR 0036, 0041). */
 function upperTower() {
+  keptStrips("rh-upper", 197 * TILE, 6 * TILE, 12 * TILE, (BLOCK - 6) * TILE, upperTowerBrick);
+}
+function upperTowerBrick() {
   const x0 = 197 * TILE;
   const x1 = 209 * TILE;
   for (let y = 6 * TILE; y < BLOCK * TILE; y++) {
@@ -377,6 +381,35 @@ function upperTower() {
   }
   R(x0, 6 * TILE, 2, (BLOCK - 6) * TILE, mix(BRICK.red, WHITE, 0.2));
   R(x1 - 2, 6 * TILE, 2, (BLOCK - 6) * TILE, mix(BRICK.red, INK, 0.3));
+}
+
+/**
+ * The clock tower's face below the clock (order 20: brick and small windows, nothing else): bands of paler
+ * brick across it between the rows of windows, the brick between the window columns stepped forward in
+ * lighter piers, and a plaque of granite over its foot. Kept as strips, drawn once (ADR 0036). Nothing on it
+ * looks standable: the bands are flush, with no shadow under them, none of the standing top's colours.
+ */
+function clockTowerFace() {
+  keptStrips("rh-face", 197 * TILE, BLOCK * TILE, 12 * TILE, (G - BLOCK) * TILE, () => {
+    const x0 = 197 * TILE;
+    const x1 = 209 * TILE;
+    // The piers between the window columns (windows at 198, 201, 204, 207).
+    for (const c of [199.75, 202.75, 205.75]) {
+      const x = Math.round(c * TILE);
+      R(x, BLOCK * TILE, 4, (G - BLOCK) * TILE, mix(BRICK.red, WHITE, 0.12));
+      R(x + 3, BLOCK * TILE, 1, (G - BLOCK) * TILE, mix(BRICK.red, INK, 0.18));
+    }
+    // Bands of paler brick between the rows of windows (rows 19, 22, ... 43), flush with the wall: no shadow
+    // under them, so they read as wall and not as ledges.
+    for (let r = 18; r <= 45; r += 9) R(x0, r * TILE + 8, x1 - x0, 2, mix(BRICK.red, MASONRY.worn, 0.3));
+    // A plaque over the foot, with the city's arms cut shallow in it.
+    const px = 200 * TILE + 4;
+    const py = 46 * TILE + 2;
+    R(px - 1, py - 1, 4 * TILE + 2, 12, MASONRY.lintel);
+    R(px, py, 4 * TILE, 10, MASONRY.worn);
+    R(px + 4 * TILE / 2 - 4, py + 2, 8, 6, mix(MASONRY.worn, INK, 0.2));
+    R(px + 4 * TILE / 2 - 2, py + 3, 4, 3, mix(MASONRY.worn, WHITE, 0.3));
+  });
 }
 
 /** The clock on the east tower: a big cream face rimmed in gold, hour marks, the hour hand at Oslo's time. */
@@ -439,6 +472,25 @@ function lantern(c: number, r: number, x: number, y: number, snow: boolean) {
     R(x + 10, y + 3, 10, 11, LAMP);
     light(x - 4, y + 3, 24, 11, "soft");
   }
+}
+
+/** The quay's granite under the paving: blocks in courses eight pixels high, joints offset, a block a shade off here and there. Each tile drawn once and copied. */
+function quayStone(c: number, r: number, x: number, y: number) {
+  const n = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453;
+  const k = Math.floor((n - Math.floor(n)) * 6);
+  const shift = (c + r) % 2;
+  stamp(`rh-quay ${k} ${shift}`, x - view.camX, y - view.camY, TILE, TILE, () => {
+    const face = mix(MASONRY.gatePost, INK, 0.04);
+    const joint = mix(MASONRY.gatePost, INK, 0.2);
+    R(0, 0, TILE, TILE, face);
+    if (k === 0) R(0, 0, TILE, 8, mix(MASONRY.gatePost, WHITE, 0.08));
+    if (k === 1) R(0, 8, TILE, 8, mix(MASONRY.gatePost, INK, 0.1));
+    R(0, 7, TILE, 1, joint);
+    R(0, 15, TILE, 1, joint);
+    R(shift ? 3 : 11, 0, 1, 7, joint);
+    R(shift ? 11 : 3, 8, 1, 7, joint);
+    if (k === 2) R(6, 3, 3, 1, mix(MASONRY.gatePost, WHITE, 0.2));
+  });
 }
 
 /** The passage through the west tower: dark, with a lamp on its wall. */
@@ -572,6 +624,7 @@ export const RADHUSET: LevelDef = {
       tbaneDoor(v.doors.get("tbane"));
     },
     front(v: View) {
+      clockTowerFace();
       townHallFaces();
       windows(162, 171, 16, 27, 3);
       windows(162, 171, 34, 45, 3);
@@ -583,7 +636,12 @@ export const RADHUSET: LevelDef = {
       for (const x of LAMPS) lampPool(x, SQUARE);
     },
     ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: MASONRY.gatePost }),
-    tile(t, c, r, x, y, _map, sky) {
+    tile(t, c, r, x, y, map, sky) {
+      // Under the promenade's paving, the quay's granite in courses (order 20: it was one plain fill).
+      if (t === "#" && map.isSolid(c, r - 1) && map.tileAt(c, r - 1) === "#") {
+        quayStone(c, r, x, y);
+        return true;
+      }
       if (t !== "N") return false;
       lantern(c, r, x, y, sky.snow);
       return true;

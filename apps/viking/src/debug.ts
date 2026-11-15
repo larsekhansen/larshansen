@@ -106,16 +106,27 @@ export function perf(frame: () => void, help: HTMLElement) {
   help.hidden = false;
 }
 
+/** `?debug&perf&post=<port>`: the perf line is also sent to `localhost:<port>` (`tools/glance/perf.ts`), so a table can be made of it. */
+function sent(params: URLSearchParams, help: HTMLElement) {
+  const port = params.get("post");
+  if (!port) return;
+  const name = params.get("name") ?? location.search;
+  void fetch(`http://localhost:${port}/perf?name=${encodeURIComponent(name)}`, { method: "POST", mode: "no-cors", headers: { "content-type": "text/plain" }, body: help.textContent ?? "" });
+}
+
 /** What `?debug` does once the page has started and drawn its first frame: `perf`, `where`, `strip`. */
 export function afterStart(params: URLSearchParams, frame: () => void, help: HTMLElement) {
   if (params.has("strip")) return void strip(params, help).catch((e) => (help.textContent = `strip: ${e}`));
   // `?debug&perf&on=<event>[&skip=N]`: measured with what answers the event in the air (order 19).
   if (params.has("perf") && params.has("on"))
     return void reach(params, (window as unknown as { __game: Game }).__game).then(
-      () => perf(frame, help),
+      () => (perf(frame, help), sent(params, help)),
       (e) => (help.textContent = `perf: ${e}`)
     );
-  if (params.has("perf")) perf(frame, help);
+  if (params.has("perf")) {
+    perf(frame, help);
+    sent(params, help);
+  }
   if (params.has("where")) where(params.get("where") ?? "");
 }
 

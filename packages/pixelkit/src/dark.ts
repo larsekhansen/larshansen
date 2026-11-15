@@ -83,12 +83,37 @@ export function nightCutsOf(night: readonly number[]): number[] {
 }
 
 /**
+ * Rows `from` to `to` of pieces, each filled by `fill`; a piece the same as one in the row above (the
+ * same x, width and dark) is not filled again but makes that one a row taller. The same pixels, each
+ * covered once as before, in far fewer rectangles: away from the lights every row of the dark is alike.
+ */
+export function merged(from: number, to: number, runsOf: (row: number) => readonly Run[], fill: (r: Run, y: number, h: number) => void) {
+  let open = new Map<string, { r: Run; y: number }>();
+  for (let row = from; row < to; row++) {
+    const next = new Map<string, { r: Run; y: number }>();
+    for (const r of runsOf(row)) {
+      const key = `${r.x} ${r.w} ${r.dark}`;
+      const o = open.get(key);
+      if (o) open.delete(key);
+      next.set(key, o ?? { r, y: row });
+    }
+    for (const o of open.values()) fill(o.r, o.y, row - o.y);
+    open = next;
+  }
+  for (const o of open.values()) fill(o.r, o.y, to - o.y);
+}
+
+/**
  * Draws the dark over the whole screen on the current canvas, in `rgb` ("r, g, b"): fully dark is
  * the colour itself, anything less is the colour at that alpha. `night` is the dark before any
  * light: one value for all of it, or one per screen column.
  */
 export function drawDark(lights: readonly Light[], night: number | readonly number[] = 1, rgb = "5, 5, 12") {
   const cuts = typeof night === "number" ? [] : nightCutsOf(night);
-  for (let row = 0; row < view.h; row++)
-    for (const r of darkRow(row, view.w, lights, night, cuts)) if (r.dark > 0) S(r.x, row, r.w, 1, r.dark >= 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${r.dark})`);
+  merged(
+    0,
+    view.h,
+    (row) => darkRow(row, view.w, lights, night, cuts).filter((r) => r.dark > 0),
+    (r, y, h) => S(r.x, y, r.w, h, r.dark >= 1 ? `rgb(${rgb})` : `rgba(${rgb}, ${r.dark})`)
+  );
 }

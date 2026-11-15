@@ -1,5 +1,6 @@
 import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
+import { stamp } from "@larshansen/pixelkit/kept";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, PALETTE, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
@@ -363,10 +364,31 @@ function bank(c: number, r: number, x: number, y: number, map: { isSolid(c: numb
     for (let k = 0; k < 3; k++) R(x + ((c * 7 + k * 5) % 14), y + 4 + k * 3, 1, 3, mix(L.reedDark, L.mud, 0.4));
     return;
   }
-  const soil = mix(mix(L.mud, L.reed, 0.25), INK, Math.min(0.3, depth * 0.07));
-  R(x, y, TILE, TILE, soil);
-  if ((c * 13 + r * 7) % 4 === 0) R(x + ((c * 3) % 9) + 2, y + 5 + (r % 3) * 2, 4, 3, mix(STONE.base, soil, 0.35));
-  if ((c + r) % 3 === 1) R(x + ((c * 11) % 13), y + ((r * 5) % 12), 1, 3, mix(L.reedDark, soil, 0.5));
+  // Under the grass: the lake's old bed in layers (order 20), each tile drawn once and copied (ADR 0036, 0041).
+  // Reed roots near the top, then mud with a band of peat running on from tile to tile, pebbles, a lens of
+  // pale clay, an old root, a freshwater mussel's shell; darker deeper down.
+  const d = Math.min(4, depth);
+  const n = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453;
+  const kind = Math.floor((n - Math.floor(n)) * 9);
+  const band = (r * 5) % 7;
+  stamp(`ov-bed ${d} ${band} ${kind}`, x - view.camX, y - view.camY, TILE, TILE, () => {
+    const soil = mix(mix(L.mud, L.reed, 0.25), INK, Math.min(0.3, depth * 0.07));
+    R(0, 0, TILE, TILE, soil);
+    R(0, 3 + band, TILE, 2, mix(soil, INK, 0.25));
+    R(0, 5 + band, TILE, 1, mix(soil, L.reed, 0.2));
+    if (d <= 1) for (let k = 0; k < 3; k++) R(2 + k * 5, 0, 1, 3 + ((k + kind) % 3), mix(L.reedDark, soil, 0.4));
+    if (kind === 0) {
+      R(3, 10, 4, 3, mix(STONE.base, soil, 0.35));
+      R(9, 12, 2, 2, mix(STONE.base, soil, 0.5));
+    } else if (kind === 1) {
+      R(2, 11, 9, 2, mix(soil, STONE.light, 0.3));
+      R(4, 13, 5, 1, mix(soil, STONE.light, 0.2));
+    } else if (kind === 2) for (let k = 0; k < 6; k++) R(1 + k * 2, 9 + (k % 3), 2, 1, mix(L.reedHead, soil, 0.5));
+    else if (kind === 3) {
+      R(6, 11, 4, 2, mix(STONE.light, soil, 0.45));
+      R(7, 10, 2, 1, mix(STONE.light, soil, 0.6));
+    } else if (kind === 4) R(11, 9, 2, 2, mix(STONE.base, soil, 0.4));
+  });
 }
 
 /** A stone in the water: wet and dark, a light edge where the dawn catches it. */

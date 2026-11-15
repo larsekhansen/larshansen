@@ -38,15 +38,29 @@ const rnd = seeded(53);
 const FAR_HOUSES = Array.from({ length: 9 }, (_, i) => ({ wx: 200 + i * 230 + Math.floor(rnd() * 90), color: [PAINT.farRed, PAINT.farWhite, PAINT.farOchre][i % 3] }));
 const bank = (wx: number) => 7 + 4 * Math.sin(wx * 0.011 + 1) + 3 * Math.sin(wx * 0.037 + 2);
 
-/** The far shore of the fjord and its water, with glints that move. */
-export function drawFjord(t: number, ground: number) {
+/**
+ * How far the far layers rise with the view once it has climbed above where it stands over the level's
+ * ground (`floor`, the camera's lowest edge), up to `most` (order 20): so from a tower's top the hills stay on
+ * the horizon behind him instead of sinking out of the view, and the fjord spreads down under them. Nothing on
+ * the ground (the pictures there are as before), nor on an upright screen, whose far layers are already moved
+ * round him.
+ */
+export function climbed(floor: number, most: number) {
+  if (view.h > view.w) return 0;
+  return Math.min(most, Math.max(0, Math.round(floor - view.h - view.camY)));
+}
+
+/** The far shore of the fjord and its water, with glints that move; `lift` raises the shore and the water's line, the water running on down under it. */
+export function drawFjord(t: number, ground: number, lift = 0) {
+  const deep = ground + 8;
+  ground -= lift;
   const SHORE = ground - 22;
   const WATER_LINE = ground - 18; // the far water, which runs down behind the street
   const g = ctx();
   const tt = view.reduced ? 0 : t;
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, FJORD);
-    column(x, WATER_LINE, ground + 8, PALETTE.water);
+    column(x, WATER_LINE, deep, PALETTE.water);
     const h = bank(wx);
     column(x, SHORE - h, WATER_LINE, LAND.forest);
     if ((Math.floor(wx / 3) + Math.floor(h)) % 7 === 0) column(x, SHORE - h, SHORE - h + 2, LAND.forestDark);
@@ -123,13 +137,13 @@ export function drawHeadlands(sky: Sky, ground: number) {
   }
 }
 
-/** Low hills along the far side of the Oslofjord, with a darker band of forest at their foot. */
-export function drawOsloHills(sky: Sky, ground: number) {
-  const base = ground - 20;
+/** Low hills along the far side of the Oslofjord, with a darker band of forest at their foot; `lift` raises them (`climbed`), their slopes running on down. */
+export function drawOsloHills(sky: Sky, ground: number, lift = 0) {
+  const base = ground - 20 - lift;
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, MOUNTAINS);
     const h = 26 + 9 * Math.sin(wx * 0.004 + 1.2) + 5 * Math.sin(wx * 0.013 + 0.4);
-    column(x, base - h, base, LAND.farHills);
+    column(x, base - h, base + lift, LAND.farHills);
     if (sky.snow && h > 34) column(x, base - h, base - h + 2, SNOW.far);
     const f = 6 + 3 * Math.sin(wx * 0.021);
     column(x, base - f, base, LAND.forest);

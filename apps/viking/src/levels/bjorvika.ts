@@ -649,6 +649,8 @@ export const BJORVIKA: LevelDef = {
   legend: { solid: "#UI", oneWay: "=N", water: "~" },
   ramps: [],
   carriers: CARRIERS,
+  // The hooks come in to a landing at each end of their swing, and sound so (order 20).
+  landings: HOOKS.map((h) => CARRIERS.indexOf(h)),
   timed: [],
   cannons: [],
   // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.

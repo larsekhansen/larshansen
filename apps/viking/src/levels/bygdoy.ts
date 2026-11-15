@@ -3,6 +3,7 @@ import type { CarrierDef, Path } from "@larshansen/pixelkit/carrier";
 import { carrierAt } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { deckEverywhere, deckGround, deckTops, type Deck } from "@larshansen/pixelkit/deck";
+import { keptStrips, seen } from "@larshansen/pixelkit/kept";
 import { drawOar, oarBank, type Oar } from "@larshansen/pixelkit/oars";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
@@ -403,12 +404,11 @@ function fram() {
     R(x, keel - 6, 1, 6, mix(P.woodDark, M.framHull, 0.4));
     if (k < 0.02 || k > 0.98) R(x, top, 1, keel - top, M.framHullLight);
   }
-  // Portholes along her side, lit from inside.
+  // Portholes along her side, lit from inside (their light: `framLights`).
   for (let x = x0 + 30; x < x1 - 30; x += 34) {
     const y = (x < 89 * TILE ? 244 : 11 * TILE + 8) + 14;
     R(x, y, 5, 5, M.framTrim);
     R(x + 1, y + 1, 3, 3, mix(GLASS.pane, P.sail, 0.4));
-    light(x + 1, y + 1, 3, 3);
   }
   for (const c of [79, 85, 92]) {
     R(c * TILE, FLOOR - 26, 10, 26, P.woodDark);
@@ -439,10 +439,15 @@ function fram() {
   for (let i = 0; i < 30; i++) R(97 * TILE + 8 + i, 11 * TILE + 2 - Math.round(i * 0.4), 2, 2, P.woodDark);
 }
 
-/** Gjøa beside her: a small white-hulled sloop with a dark rail; its deck rocks too. The hold under it is dark. */
-function gjoa() {
+/** The dark hold under Gjøa, down past the floor. */
+function hold() {
+  if (!seen(98 * TILE, 109 * TILE)) return;
   R(98 * TILE, FLOOR, 11 * TILE, ROWS * TILE - FLOOR + 400, M.hold);
   for (let x = 98 * TILE; x < 109 * TILE; x += 6) R(x, FLOOR + 4 + ((x * 3) % 7), 2, 1, mix(M.hold, P.woodDark, 0.5));
+}
+
+/** Gjøa beside her: a small white-hulled sloop with a dark rail; its deck rocks too. The hold under it is dark (`hold`). */
+function gjoa() {
   // Her hull: white strakes over a black band, narrowing to the keel, on two posts down into the hold.
   const x0 = 99 * TILE - 4;
   const x1 = 109 * TILE + 4;
@@ -560,10 +565,7 @@ function kontikiHall() {
   R(x, g - 8, 30 * TILE, 8, mix(M.plasterShade, STONE.base, 0.4));
   for (let i = 0; i < 30 * TILE; i++) R(x + i, g - 60 - Math.round(i * 0.06), 1, Math.round(i * 0.06) + 1, M.plasterShade);
   R(x, g - 62, 30 * TILE, 3, ROOF.slate);
-  for (let xx = x + 20; xx < x + 30 * TILE - 20; xx += 28) {
-    R(xx, g - 44, 14, 20, GLASS.pane);
-    light(xx, g - 44, 14, 20);
-  }
+  for (let xx = x + 20; xx < x + 30 * TILE - 20; xx += 28) R(xx, g - 44, 14, 20, GLASS.pane);
   R(x + 120, g - 56, 120, 8, INK);
   for (let i = 0; i < 14; i++) R(x + 126 + i * 8, g - 54, 5, 4, M.plaster);
   // A low wall along the water, the far bank's grass.
@@ -600,7 +602,6 @@ function shipHall() {
     R(x, 5 * TILE, 18, 40, GLASS.pane);
     for (let j = 0; j < 9; j++) R(x + j, 5 * TILE - 9 + j, 18 - j * 2, 1, GLASS.pane);
     R(x + 8, 5 * TILE - 4, 2, 44, M.plasterShade);
-    light(x, 5 * TILE, 18, 40, "soft");
   }
   // The doorway in, and the doorway out to the yard.
   R(x0 + 30, FLOOR - 30, 20, 30, mix(M.plasterShade, INK, 0.15));
@@ -706,7 +707,6 @@ function loft() {
   for (const wx of [x + 24, x + w - 36]) {
     R(wx, top + 46, 12, 10, GLASS.pane);
     R(wx + 5, top + 46, 1, 10, M.oakDark);
-    light(wx, top + 46, 12, 10);
   }
   // The beam over the passage and the corner posts at either end of it.
   R(x, floor - 3, w, 3, M.oakDark);
@@ -744,8 +744,42 @@ function gableEnd() {
   for (let x = x0 + 30; x < x1 - 20; x += 40) {
     R(x, 15 * TILE + 4, 10, 18, GLASS.pane);
     for (let j = 0; j < 5; j++) R(x + j, 15 * TILE + 4 - 5 + j, 10 - j * 2, 1, GLASS.pane);
-    light(x, 15 * TILE + 4, 10, 18);
   }
+}
+
+/**
+ * Everything behind the street from the pier on. None of it ever changes, and the halls are thousands of
+ * rectangles: what is off the screen is not drawn, and the halls and ships are kept as strips and copied
+ * (ADR 0036). Their lit windows come on after dark as before: they are registered here each frame. The
+ * pictures are the same to the byte.
+ */
+function halls() {
+  if (seen(28 * TILE + 6, 34 * TILE + 15)) pier();
+  if (seen(35 * TILE, 69 * TILE + 2)) beach();
+  if (seen(40 * TILE - 2, 45 * TILE + 2)) boathouse(40, 44);
+  if (seen(56 * TILE - 2, 62 * TILE + 2)) boathouse(56, 61);
+  keptStrips("by-fram", 68 * TILE, 0, 53 * TILE, FLOOR, () => {
+    framHall();
+    fram();
+    gjoa();
+  });
+  hold();
+  for (let x = 77 * TILE - 8 + 30; x < 98 * TILE + 4 - 30; x += 34) light(x + 1, (x < 89 * TILE ? 244 : 11 * TILE + 8) + 15, 3, 3);
+  const g = FLOOR - 18;
+  keptStrips("by-kontiki", 124 * TILE - 20, g - 89, 32 * TILE + 40, FLOOR - (g - 89), kontikiHall);
+  for (let xx = 124 * TILE + 20; xx < 124 * TILE + 30 * TILE - 20; xx += 28) light(xx, g - 44, 14, 20);
+  keptStrips("by-ship", 157 * TILE - 2, TILE, 48 * TILE + 2, FLOOR - TILE, () => {
+    shipHall();
+    longship();
+  });
+  for (let x = 157 * TILE + 30; x < 205 * TILE - 20; x += 96) light(x, 5 * TILE, 18, 40, "soft");
+  const lx = LOFT[0] * TILE;
+  const lw = (LOFT[1] - LOFT[0] + 1) * TILE;
+  keptStrips("by-loft", lx - 12, 11 * TILE - 14, lw + 26, (W - 1) * TILE + TILE - (11 * TILE - 14), loft);
+  for (const wx of [lx + 24, lx + lw - 36]) light(wx, 11 * TILE + 46, 12, 10);
+  for (const c of [221, 230]) if (seen(c * TILE - 6, c * TILE + 5 * TILE + 6)) storehouse(c);
+  keptStrips("by-gable", 237 * TILE, 9 * TILE, (COLS - 237) * TILE, FLOOR - 9 * TILE, gableEnd);
+  for (let x = 237 * TILE + 30; x < COLS * TILE - 20; x += 40) light(x, 15 * TILE + 4, 10, 18);
 }
 
 // --- The creatures: the crab, the penguin, the slingers ------------------------------------------------
@@ -868,19 +902,7 @@ export const BYGDOY: LevelDef = {
     },
     back(v) {
       radhusbrygga(v);
-      pier();
-      beach();
-      boathouse(40, 44);
-      boathouse(56, 61);
-      framHall();
-      fram();
-      gjoa();
-      kontikiHall();
-      shipHall();
-      longship();
-      loft();
-      for (const c of [221, 230]) storehouse(c);
-      gableEnd();
+      halls();
     },
     front(v) {
       DECKS.forEach((d) => deckArt(d, v.t));

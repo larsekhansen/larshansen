@@ -1,6 +1,7 @@
-import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
+import { seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, METAL, PALETTE, PLANTS, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
@@ -255,7 +256,7 @@ function farHills(v: View) {
   }
 }
 
-/** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. */
+/** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. Each shape is drawn once and copied (ADR 0036). */
 function spruces(factor: number, n: number, fade: number) {
   for (let i = 0; i < n; i++) {
     const wx = i * 31 + ((i * 17) % 13);
@@ -266,11 +267,13 @@ function spruces(factor: number, n: number, fade: number) {
     const sx = x + view.camX;
     const dusk = sx > 196 * TILE && sx < 236 * TILE ? 0.45 : 0;
     const green = mix(mix(PLANTS.spruce, LAND.farHills, fade), K.dusk, dusk);
-    for (let k = 0; k < h; k++) {
-      const half = Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
-      box(x - half, foot - h + k, half * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
-    }
-    box(x, foot, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+    const halfOf = (k: number) => Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
+    let most = 1;
+    for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
+    stamp(`kt ${fade} ${h} ${dusk}`, x - most, foot - h - view.camY, most * 2 + 1, h + 4, () => {
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
+      R(most, h, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+    });
   }
 }
 
@@ -280,6 +283,7 @@ function frognerseteren(v: View) {
   const g = TOP_ROW * TILE;
   const x0 = 11 * TILE;
   const x1 = 28 * TILE;
+  if (!seen(x0 - 12, 32 * TILE)) return;
   // The log walls, up to the roof.
   for (let y = g - 4 * TILE; y < g; y += 4) {
     R(x0, y, x1 - x0, 4, (y >> 2) % 2 ? K.logs : K.logsLight);
@@ -312,23 +316,28 @@ function frognerseteren(v: View) {
 
 /** The run: packed snow along the stair of ledges, a groove from the runners, banks either side, the slope under it. */
 function theRun() {
-  TOPS.forEach((y, i) => {
+  // The run is two kilometres of rectangles end to end: only what is on the screen is drawn.
+  const i1 = Math.min(TOPS.length, Math.ceil((view.camX + view.w - X0) / SEG) + 1);
+  for (let i = Math.max(0, Math.floor((view.camX - X0) / SEG) - 1); i < i1; i++) {
     const x = X0 + i * SEG;
-    if (y === null) return;
+    const y = TOPS[i];
+    if (y === null) continue;
     R(x, y, SEG, 3, K.run);
     R(x, y + 3, SEG, 2, K.runGroove);
     R(x, y + 5, SEG, 260, K.slope);
     R(x, y + 18, SEG, 2, K.slopeShade);
     if (i % 3 === 0) R(x, y - 2, 2, 2, K.bank);
-  });
+  }
   // The hillside under the run: shading along it, young spruce, stones and a fence, so it is not one plain sheet.
-  for (let x = X0; x < RIDE.to; x += 2) {
+  for (let x = X0 + Math.max(0, Math.floor((view.camX - 2 - X0) / 2) * 2); x < Math.min(RIDE.to, view.camX + view.w); x += 2) {
     const y = trackY(x);
     if (y === null) continue;
     R(x, y + 34, 2, 2, K.slopeShade);
     R(x, y + 70, 2, 3, mix(K.slopeShade, K.slope, 0.4));
   }
+  hillside();
   for (let x = X0 + 10, i = 0; x < RIDE.to; x += 37, i++) {
+    if (!seen(x - 4, x + 34)) continue;
     const y = trackY(x);
     if (y === null) continue;
     const top = y + 44 + ((i * 13) % 30);
@@ -339,8 +348,95 @@ function theRun() {
   }
 }
 
+/** A small number from a place, the same every visit. */
+const hash = (a: number, b: number) => {
+  const n = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+};
+
+/**
+ * What the hillside under the run has, so it is not one sheet of snow (order 20): drifts the wind has
+ * packed, a boulder under its cap, a sapling buried to its top, a hare's tracks, the old fence's last
+ * posts, the shadow of a hollow. Placed along the run at depths below it, each drawn once and copied
+ * (ADR 0036, 0041); quieter than anything he meets, and nothing with a top to stand on.
+ */
+const HILLSIDE = Array.from({ length: 140 }, (_, i) => {
+  const x = X0 + 24 + i * 26 + Math.floor(hash(i, 1) * 14);
+  // Half near the run, where a wide view sees them; half deeper, for a tall one.
+  return { x, depth: i % 2 ? 28 + Math.floor(hash(i, 2) * 44) : 72 + Math.floor(hash(i, 2) * 130), kind: Math.floor(hash(i, 3) * 6) };
+}).filter((f) => f.x < RIDE.to - 24 && trackY(f.x) !== null);
+const DRIFT = mix(K.bank, K.slope, 0.35);
+const HOLLOW = mix(K.slope, K.slopeShade, 0.55);
+const SAPLING = mix(PLANTS.spruce, K.slope, 0.55);
+const BOULDER = mix(STONE.base, K.slope, 0.5);
+const TRACK = mix(K.slopeShade, K.runGroove, 0.5);
+function hillside() {
+  for (const f of HILLSIDE) {
+    if (!seen(f.x - 2, f.x + 26)) continue;
+    const y = (trackY(f.x) as number) + f.depth;
+    stamp(`kt-hill ${f.kind}`, f.x - view.camX, y - view.camY, 26, 12, () => {
+      if (f.kind === 0) {
+        // A drift: a lit crest, its lee in shade.
+        R(2, 6, 20, 1, DRIFT);
+        R(5, 5, 12, 1, DRIFT);
+        R(4, 7, 18, 1, HOLLOW);
+      } else if (f.kind === 1) {
+        // A boulder under a cap of snow, only its side showing.
+        R(6, 6, 9, 4, BOULDER);
+        R(7, 10, 7, 1, HOLLOW);
+        R(5, 5, 11, 2, DRIFT);
+      } else if (f.kind === 2) {
+        // A sapling buried to its top tier.
+        R(10, 3, 1, 7, SAPLING);
+        R(8, 6, 5, 1, SAPLING);
+        R(7, 8, 7, 1, SAPLING);
+        R(9, 4, 3, 1, DRIFT);
+        R(6, 9, 9, 1, HOLLOW);
+      } else if (f.kind === 3) {
+        // A hare's tracks across the slope.
+        for (let k = 0; k < 5; k++) {
+          R(2 + k * 5, 6 + (k % 2), 1, 2, TRACK);
+          R(4 + k * 5, 6 + (k % 2), 1, 1, TRACK);
+        }
+      } else if (f.kind === 4) {
+        // The old fence's last posts, leaning, nearly buried.
+        for (let k = 0; k < 3; k++) R(4 + k * 7 + (k % 2), 4 + k, 1, 6 - k, mix(P.woodDark, K.slope, 0.45));
+        R(3, 9, 20, 1, HOLLOW);
+      } else {
+        // A hollow in the snow, its far edge lit.
+        R(3, 7, 18, 2, HOLLOW);
+        R(6, 6, 12, 1, DRIFT);
+      }
+    });
+  }
+}
+
+/** Under the flats (the top and Midtstuen): the snow in packed layers, a stone, a root, a lens of ice. Each tile is drawn once and copied. */
+function snowBody(c: number, r: number, x: number, y: number) {
+  const depth = r - (c < 100 ? TOP_ROW : END_ROW);
+  const fill = mix(K.slope, K.slopeShade, Math.min(0.8, depth * 0.18));
+  const layer = (r * 7) % 6;
+  const kind = Math.floor(hash(c, r) * 9);
+  stamp(`kt-snow ${Math.min(5, depth)} ${layer} ${kind}`, x - view.camX, y - view.camY, TILE, TILE, () => {
+    R(0, 0, TILE, TILE, fill);
+    // The wind's layers, a crust lighter over a shade, running on from tile to tile in every other row.
+    if (layer % 2 === 0) {
+      R(0, 4 + layer, TILE, 1, mix(fill, K.bank, 0.4));
+      R(0, 5 + layer, TILE, 1, mix(fill, K.slopeShade, 0.3));
+    }
+    if (kind === 0) {
+      R(4, 9, 6, 3, mix(STONE.base, fill, 0.5));
+      R(4, 8, 6, 1, mix(fill, K.bank, 0.6));
+    } else if (kind === 1) {
+      for (let k = 0; k < 3; k++) R(5 + k * 2, 11 - k, 2, 1, mix(P.woodDark, fill, 0.6));
+    } else if (kind === 2) R(8, 12, 5, 2, mix(fill, K.runGroove, 0.6));
+    else if (kind === 3) R(2, 13, 3, 1, mix(fill, K.slopeShade, 0.7));
+  });
+}
+
 /** The gap in the run: a gully, its snowy sides going down in shade to the stream, the stumps of the old bridge. */
 function gap() {
+  if (!seen(GAP.from - 3, GAP.to + 3)) return;
   const y0 = trackY(GAP.from - 2)!;
   const w = GAP.to - GAP.from;
   for (let k = 0; k < w; k++) {
@@ -389,6 +485,7 @@ function crossing(t: number) {
 
 /** A low spruce branch over the run, its needles hanging to head height, snow on it. */
 function branchArt(h: Hazard, dusk: boolean) {
+  if (!seen(h.x - 30, Math.max(h.x + 20, h.x + h.w + 3))) return;
   const green = dusk ? mix(PLANTS.spruce, K.dusk, 0.3) : PLANTS.spruce;
   R(h.x - 30, h.y - 4, 50, 3, PLANTS.spruceTrunk);
   for (let k = 0; k < h.w + 6; k++) R(h.x - 3 + k, h.y - 2, 1, 4 + ((k * 3) % 5), green);
@@ -439,18 +536,43 @@ function lyingBack(x: number, y: number) {
   R(x + 4, y - 7, 6, 2, P.ironDark);
 }
 
-/** A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, it is out of the way and harmless, drawn faint and not outlined. 19 x 15. */
-function sledgerArt(e: Enemy) {
+/**
+ * Whether a sledger is about to set off, or just has: from four tiles before he comes near enough to set it
+ * going (ten tiles) until a fifth of a second after it has. Drawing only: when it goes is the rules' (order 20).
+ */
+export function sledgerReady(e: Enemy, him: number, t: number) {
+  const start = e.home - (e.def.range ?? 0) * TILE;
+  return e.n === undefined ? him >= start - 14 * TILE : t - e.n < 12;
+}
+
+/**
+ * A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, it is out of
+ * the way and harmless, drawn faint and not outlined. About to set off, it leans forward over the sledge's
+ * nose and digs its mittens into the snow either side to push (order 20). 19 x 15.
+ */
+function sledgerArt(e: Enemy, v: View) {
   const x = Math.round(e.x);
   const y = Math.round(e.y);
   if (e.calm) return plain(() => R(x + 12, y - 7, 12, 4, mix(K.sledgeWood, K.slope, 0.4)));
   const r = parts(e, 18);
+  const coat = e.def.c % 2 ? ENEMY.plum : ENEMY.red;
   r(0, -5, 17, 4, ENEMY.orange);
   r(0, -5, 17, 1, ENEMY.orangeLight);
   r(-1, -1, 20, 1, ENEMY.plum);
   r(17, -5, 1, 4, ENEMY.plum);
   r(18, -6, 1, 2, ENEMY.plum);
-  r(5, -10, 8, 5, e.def.c % 2 ? ENEMY.plum : ENEMY.red);
+  if (sledgerReady(e, v.him.x, v.t)) {
+    // Leaning forward, arms down past the sledge's nose, mittens in the snow.
+    r(7, -10, 8, 5, coat);
+    r(13, -9, 4, 2, coat);
+    r(17, -8, 2, 6, coat);
+    r(19, -3, 2, 3, ENEMY.orangeLight);
+    r(9, -13, 6, 3, ENEMY.orangeLight);
+    r(8, -15, 8, 2, ENEMY.poison);
+    r(13, -12, 1, 1, ENEMY.eye);
+    return;
+  }
+  r(5, -10, 8, 5, coat);
   r(6, -13, 6, 3, ENEMY.orangeLight);
   r(5, -15, 8, 2, ENEMY.poison);
   r(10, -12, 1, 1, ENEMY.eye);
@@ -506,6 +628,7 @@ export const KORKETREKKEREN: LevelDef = {
     front(v) {
       // The trees at dusk: the light goes there, under the spruce, but for the lanterns.
       for (let x = 192 * TILE; x < 240 * TILE; x += 4) {
+        if (!seen(x, x + 4)) continue;
         const k = Math.min(1, (x - 192 * TILE) / 64, (240 * TILE - x) / 64);
         R(x, view.camY, 4, view.h, `rgba(20, 28, 60, ${(0.32 * k).toFixed(3)})`);
       }
@@ -529,20 +652,24 @@ export const KORKETREKKEREN: LevelDef = {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.
       const top = !map.isSolid(c, r - 1);
-      R(x, y, TILE, TILE, top ? K.slope : mix(K.slope, K.slopeShade, Math.min(0.8, (r - (c < 100 ? TOP_ROW : END_ROW)) * 0.18)));
+      if (!top) {
+        snowBody(c, r, x, y);
+        return true;
+      }
+      R(x, y, TILE, TILE, K.slope);
       if (top) {
         R(x, y, TILE, 2, K.bank);
         R(x + ((c * 5) % 11), y + 4, 3, 1, K.runGroove);
         R(x + ((c * 3) % 9) + 4, y + 8, 2, 1, K.runGroove);
         if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
-      } else if ((c * 7 + r * 3) % 6 === 0) R(x + 4, y + 6, 6, 3, mix(STONE.base, K.slope, 0.45));
+      }
       return true;
     },
     ledges: { "=": PORCH },
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look !== "sledger") return drawLook(e, v.t);
-      sledgerArt(e);
+      sledgerArt(e, v);
       return true;
     }
   }
