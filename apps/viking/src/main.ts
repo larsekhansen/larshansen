@@ -1043,6 +1043,8 @@ let firstClear: string | null = debug ? params.get("justCleared") : null;
  */
 function react(ev: Events) {
   const p = scene.play;
+  /** This level's bracteate was found on an earlier visit: taking it again is quiet. */
+  const known = owned(p);
   if (ev.moved) state.moved = true;
   if (ev.loaded !== null) sfx.play("door");
   if (ev.fired !== null) sfx.play("cannon");
@@ -1091,7 +1093,7 @@ function react(ev: Events) {
     session.lives = 0;
     showOver();
   }
-  if (ev.bracteate && p.bracteate && !owned(p)) {
+  if (ev.bracteate && p.bracteate && !known) {
     sfx.play("gold");
     say(t.goldAnnounce);
     saveProgress(findBracteate(progress, p.def.id));
@@ -1115,7 +1117,7 @@ function react(ev: Events) {
     cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole, home, opened: !wasOpen && lineTwoOpen(progress) };
     state.flight = { from: { x: p.rune.x + 8, y: p.rune.y + 8 }, since: state.steps };
   }
-  feel?.react(p, ev, pole, abilities.gold);
+  feel?.react(p, ev, pole, abilities.gold, known);
 }
 
 function play() {

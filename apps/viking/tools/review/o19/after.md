@@ -74,3 +74,14 @@ same step for step), and **every answer is at the thing**, in its role's colour 
 9. Forty particles at most, from pools made once; the fireworks thirteen to a burst.
 10. 40 events, each with its sound; the page's own sounds all different; a hit, a stomp, a block and a dud differ
     in at least two of register, direction, noise and length.
+
+## The rules did not change, and the frame costs little more
+
+The sloppy player (`fresh.ts`, ADR 0034) on seeds 201 to 260, ±2 and ±4, on order 18's code and on this branch
+(at `6d67aaf`, each from a worktree): every run's record (outcome, hearts lost with where and when, time) is
+byte-identical on Akershus (md5 5a1eac08e46e, 0.52 / 1.00 hearts a run), Bygdøy (9e982a3ca1bf, 0.40 / 0.80),
+Nordmarka (58bfcf501657, 0.65 / 2.00) and Gamlebyen (54db73ff6304, 0.47 / 1.07): the same as order 18's hand-back.
+
+`?debug&perf&on=<event>&skip=6` at 390 x 844, with a stomp's answers (Bygdøy: a block's) in the air, rectangles a
+frame, order 18 then order 19: Akershus day 7938 / 7961, night 9276 / 9344; Bygdøy day 22357 / 22359, night
+23354 / 23398; Stortinget day 27412 / 27374, night 28528 / 28534 (at most 68 more; 300 allowed).

@@ -264,7 +264,7 @@ kit's synth (each its own), and with a still answer under reduced motion. The an
 - **The page no longer freezes the rules** after a stomp or a hit. The hold after a hit is the picture only
   (four steps). The page and the tests now run exactly the same game; `render/feel.test.ts` holds it, and the
   sloppy player's runs on Akershus, Bygdøy, Nordmarka and Gamlebyen (seeds 201 to 260) are byte-identical
-  before and after (`tools/review/o19/summary.md`).
+  before and after (`tools/review/o19/after.md`).
 - **Looking at an event**: `?debug&steps=0&on=<event>` steps to it; `bun tools/glance/strips.ts` makes frame
   strips of every event in `tools/glance/events.tsv` (a strip is made in the page and sent to the tool, so its
   size is not the window's); `?debug&perf&on=<event>&skip=6` measures a frame with the answers in the air;

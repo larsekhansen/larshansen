@@ -335,8 +335,11 @@ export function createFeel(host: Host) {
       was.lives = p.lives;
     },
 
-    /** After the rules' step: the answers to what happened. `poleNew`: this rune gave the ski pole. */
-    react(p: Play, ev: Events, poleNew = false, gold = false) {
+    /**
+     * After the rules' step: the answers to what happened. `poleNew`: this rune gave the ski pole; `gold`: the
+     * feather is gold; `owned`: this level's bracteate was found before (then it is quiet).
+     */
+    react(p: Play, ev: Events, poleNew = false, gold = false, owned = false) {
       const b = p.body;
       const cx = b.x + PLAYER.w / 2;
       const t = now;
@@ -447,7 +450,7 @@ export function createFeel(host: Host) {
         ring(cx, b.y + 6, 4, 18, 20, METAL.goldLight, t);
         burst(cx, b.y + 4, 10, 0.8, 24, METAL.goldLight, COIN.shine);
       }
-      if (ev.bracteate && p.bracteate) {
+      if (ev.bracteate && p.bracteate && !owned) {
         risen.bract = { x: p.bracteate.x, y: p.bracteate.y, at: t };
         ring(p.bracteate.x + 6, p.bracteate.y + 6, 4, 16, 16, METAL.goldLight, t);
         burst(p.bracteate.x + 6, p.bracteate.y + 6, 10, 0.9, 22, METAL.goldLight, WHITE);
@@ -493,6 +496,7 @@ export function createFeel(host: Host) {
           burst(box.x + box.w / 2, box.y + 8, 10, 1.2, 16, ROLES.now, WHITE);
         }
         if (ev.troll === "stone" && box) burst(box.x + box.w / 2, box.y + 8, 14, 1, 30, METAL.goldLight, ROLES.now);
+        if (ev.troll === "slam") jolt(0, 3);
       }
       if (ev.boss && p.boss) {
         const top = p.boss.rules.top(p.boss.state);
@@ -507,6 +511,7 @@ export function createFeel(host: Host) {
           ring(top.x, top.y + 2, 3, 14, 10, ROLES.now, t);
         }
         if (ev.boss === "beaten") burst(top.x, top.y + 6, 14, 1, 30, METAL.goldLight, ROLES.now);
+        if (ev.boss === "slam") jolt(0, 3);
       }
     },
 
