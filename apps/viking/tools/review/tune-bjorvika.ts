@@ -15,9 +15,9 @@ const run = () => {
 const mod = (a: number, n: number) => ((a % n) + n) % n;
 const steps: [string, (t: number) => void][] = [
   ["the welder's sparks done", (t) => (L.SPARKS.beat!.offset = mod(-(t + 4), 270))],
-  ["the first hook at this end", (t) => (L.HOOK_1.offset = mod(-(t + 8), L.HOOK_1.period))],
-  ["the second hook at this end", (t) => (L.HOOK_2.offset = mod(-(t + 8), L.HOOK_2.period))],
-  ["the third hook at this end", (t) => (L.HOOK_3.offset = mod(-(t + 8), L.HOOK_3.period))],
+  ["the first hook at this end", (t) => (L.HOOK_1.offset = mod(-(t + 2), L.HOOK_1.period))],
+  ["the second hook at this end", (t) => (L.HOOK_2.offset = mod(-(t + 2), L.HOOK_2.period))],
+  ["the third hook at this end", (t) => (L.HOOK_3.offset = mod(-(t + 2), L.HOOK_3.period))],
   ["the sheet over shaft 1 at this end", (t) => {
     const g = L.GUST_BEAT;
     g.offset = mod(-(t + 2), g.rest + g.warn + g.live);
@@ -26,7 +26,7 @@ const steps: [string, (t: number) => void][] = [
   ["the sheet over shaft 2 at this end", (t) => (L.SHEETS[1].offset = mod(-(t + 8), L.SHEETS[1].period))],
   ["the sheet over shaft 3 at this end", (t) => (L.SHEETS[2].offset = mod(-(t + 8), L.SHEETS[2].period))],
   ["the first hook of the traverse at this end", (t) => {
-    L.HOOK_5.offset = mod(-(t + 8), L.HOOK_5.period);
+    L.HOOK_5.offset = mod(-(t + 2), L.HOOK_5.period);
     L.HOOK_6.offset = mod(L.HOOK_5.offset + L.HOOK_6.period / 2, L.HOOK_6.period);
     L.HOOK_7.offset = L.HOOK_5.offset;
   }]

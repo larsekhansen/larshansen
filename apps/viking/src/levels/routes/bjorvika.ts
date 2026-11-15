@@ -20,7 +20,7 @@ const NONE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const atFrom = (q: Play, d: Travel) => carrierAt(d, q.t).x === d.from.x;
 const atTo = (q: Play, d: Travel) => carrierAt(d, q.t).x === d.to.x;
 
-/** Onto the block (or the sheet) and to its middle, as it sets off; done once he stands there. */
+/** Onto the sheet and to its middle, as it sets off; done once he stands there. */
 const board = (d: Travel, name: string): Move => ({
   name: `onto ${name}`,
   keys(q) {
@@ -36,7 +36,7 @@ const hold = (name: string, x: number, until: (q: Play) => boolean): Move => ({
   keys: (q) => (until(q) && Math.abs(cx(q) - x) <= 3 ? "done" : { ...NONE, left: cx(q) > x + 2, right: cx(q) < x - 2 })
 });
 
-/** A hook or a sheet across: wait at the edge for it, on, ride it to the far end, and off onto the far side. */
+/** A sheet across a shaft, flush with the floor: wait at the edge for it, on, ride it over, and off. */
 const across = (d: Travel, name: string, off: number, ready: (q: Play) => boolean = () => true): Move[] => [
   walk(d.from.x - 6),
   hold(`${name} at this end`, d.from.x - 6, (q) => atFrom(q, d) && ready(q)),
@@ -46,25 +46,60 @@ const across = (d: Travel, name: string, off: number, ready: (q: Play) => boolea
 ];
 
 /**
- * From one hook of the traverse to the next as they meet: to the near end of the block he rides, and as
- * the two are at their ends, a hop from its edge over the tile between them, steering onto the next.
+ * Runs right from where he stands and jumps as his front reaches `edge` (a number, or the edge of the
+ * block he rides), steering in the air to come down on the middle of `to` (a block, or a spot).
  */
-const hop = (from: Travel, to: Travel, name: string): Move[] => [
-  {
-    name: `to the end of the block, for ${name}`,
-    keys(q) {
-      const edge = carrierAt(from, q.t).x + from.w - PLAYER.w / 2 - 3;
-      if (Math.abs(cx(q) - edge) <= 2 && Math.abs(q.body.vx) < 0.1) return "done";
-      return { ...NONE, left: cx(q) > edge + 2, right: cx(q) < edge - 2 };
+const hopTo = (name: string, edge: (q: Play) => number, to: (q: Play) => number): Move => ({
+  name,
+  keys(q, s) {
+    if (s.air && q.body.onGround) return "done";
+    if (!q.body.onGround) s.air = true;
+    if (s.took === undefined) {
+      if (q.body.x + PLAYER.w < edge(q) - 1 && q.body.onGround) return { ...NONE, right: true };
+      s.took = s.i;
     }
-  },
+    const k = s.i - (s.took as number);
+    const aim = to(q) - q.body.vx * 7 - cx(q);
+    return { left: aim < -2, right: aim > 2, jumpHeld: k < 30, jumpPressed: k === 0 };
+  }
+});
+
+/** The middle of a hook's block now. */
+const blockMiddle = (d: Travel) => (q: Play) => carrierAt(d, q.t).x + d.w / 2;
+
+/**
+ * A hook across the drop: to the landing's edge, wait for the block at its near end, a hop onto it, ride
+ * it over, and a hop off its far end onto the landing as it comes to its end.
+ */
+const hook = (d: Travel, name: string, off: number): Move[] => [
+  walk(d.from.x - TILE - 6),
+  wait(`${name} at this end`, (q) => atFrom(q, d)),
+  jumpTo(d.from.x + d.w / 2),
+  wait(`on ${name} to the far end`, (q) => atTo(q, d)),
+  walk(d.to.x + 8),
+  hopTo(`off ${name}`, () => d.to.x + d.w - 2, () => off)
+];
+
+/** To the front of the block he rides, keeping up with it as it goes. */
+const toFront = (d: Travel, name: string): Move => ({
+  name: `to the front of ${name}`,
+  keys(q) {
+    const front = carrierAt(d, q.t).x + d.w - PLAYER.w / 2 - 2;
+    if (Math.abs(cx(q) - front) <= 2 && rides(d, q.t, q.body)) return "done";
+    return { ...NONE, left: cx(q) > front + 2, right: cx(q) < front - 2 };
+  }
+});
+
+/** From one hook of the traverse to the next as they meet: at the front of the block, and a hop over the tile between them onto the next. */
+const hop = (from: Travel, to: Travel, name: string): Move[] => [
+  toFront(from, "the block"),
   wait(`${name} as they meet`, (q) => atTo(q, from) && atFrom(q, to)),
   {
     name: `hop ${name}`,
     keys(q, s) {
       if (s.air && q.body.onGround) return "done";
       if (!q.body.onGround) s.air = true;
-      const aim = carrierAt(to, q.t).x + to.w / 2 - q.body.vx * 7 - cx(q);
+      const aim = blockMiddle(to)(q) - q.body.vx * 7 - cx(q);
       return { left: aim < -2, right: aim > 2, jumpHeld: s.i < 30, jumpPressed: s.i === 0 };
     }
   }
@@ -73,8 +108,8 @@ const hop = (from: Travel, to: Travel, name: string): Move[] => [
 /** The gust is calm, and stays calm while a sheet is crossed. */
 const calm = (q: Play) => pulsePhase(q.t, GUST_BEAT) === "rest" && pulseAge(q.t, GUST_BEAT).age < GUST_BEAT.rest - 130;
 
-/** The riveters (enemies 7 and 8): a bolt coming at him, or one of them about to throw at him. */
-const RIVETERS = [7, 8];
+/** The riveters (enemies 9 and 10): a bolt coming at him, or one of them about to throw at him. */
+const RIVETERS = [9, 10];
 const bolts = (q: Play): 1 | null => {
   const front = q.body.x + PLAYER.w;
   const coming = q.shots.some((s) => RIVETERS.includes(s.by) && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - front < 64);
@@ -96,24 +131,29 @@ export const BJORVIKA_ROUTE: Move[] = [
   walk(mid(40)),
   // The open floor: over the rebar, past the welder between showers, the pigeon and the rat.
   walk(tile(45) - 2),
-  leap(tile(46) - 2, 1),
+  leap(tile(46) - 6, 1),
   walk(tile(54) - 2),
   wait("the welder's sparks done", (q) => pulsePhase(q.t, SPARKS.beat!) === "rest" && pulseAge(q.t, SPARKS.beat!).age < 60),
+  walk(tile(67) - 2),
+  leap(tile(68) - 6, 1),
   walk(mid(70)),
   // The first hook, over the bay and its net.
-  ...across(HOOK_1, "the first hook", mid(85)),
+  ...hook(HOOK_1, "the first hook", mid(85)),
   // Up to the slab, and on the hooks across the drop.
   jumpTo(mid(87) + 8),
   jumpTo(mid(91)),
   walk(mid(93)),
-  ...across(HOOK_2, "the second hook", mid(110)),
-  ...across(HOOK_3, "the third hook", mid(130)),
-  walk(mid(136)),
+  ...hook(HOOK_2, "the second hook", mid(109)),
+  walk(mid(110)),
+  ...hook(HOOK_3, "the third hook", mid(129)),
+  walk(mid(130)),
+  walk(mid(138)),
   // The shafts: on each sheet as it comes, in the calm between gusts.
   ...SHAFTS.flatMap((c, i) => across(SHEETS[i], `the sheet over shaft ${i + 1}`, mid(c + 6), calm)),
   walk(mid(170)),
   // The girder: the pigeon first, then on with the shield up as each bolt comes, under the riveters.
-  stomp(6),
+  stomp(7),
+  stomp(8),
   shieldedWalk(`along the girder to ${mid(195)}, the shield up as each bolt comes`, mid(195), bolts, 4),
   // Up past them to the roof, the bench in the hut.
   walk(mid(197) + 4),
@@ -123,10 +163,12 @@ export const BJORVIKA_ROUTE: Move[] = [
   sit(),
   walk(mid(213)),
   // The traverse: the three hooks in a row, each meeting the next.
-  ...across(HOOK_5, "the first hook of the traverse", 0).slice(0, 3),
+  ...hook(HOOK_5, "the first hook of the traverse", 0).slice(0, 3),
   ...hop(HOOK_5, HOOK_6, "onto the second hook of the traverse"),
   ...hop(HOOK_6, HOOK_7, "onto the third hook of the traverse"),
   wait("on the third hook to the crane", (q) => atTo(q, HOOK_7)),
+  walk(HOOK_7.to.x + 8),
+  hopTo("off onto the crane", () => HOOK_7.to.x + HOOK_7.w - 2, () => mid(241)),
   walk(mid(243)),
   // Up the crane's rungs to the walkway, and the rune at the cab.
   walk(mid(245)),

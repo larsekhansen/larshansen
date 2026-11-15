@@ -40,7 +40,7 @@ export const LINE: Station[] = [
   two("korketrekkeren", 12, "Korketrekkeren", true),
   two("ostensjovannet", 13, "Østensjøvannet", true, "Østensjø"),
   two("bjorvika", 14, "Bjørvika", true),
-  two("gamlebyen", 15, "Gamlebyen", false)
+  two("gamlebyen", 15, "Gamlebyen", true)
 ];
 
 /** Every station's id, line 1 then line 2: a station opens when the one before it is cleared, so line 2 opens with Nabolaget. */
@@ -70,7 +70,8 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   vigelandsparken: () => import("./vigelandsparken").then((m) => m.VIGELANDSPARKEN),
   korketrekkeren: () => import("./korketrekkeren").then((m) => m.KORKETREKKEREN),
   ostensjovannet: () => import("./ostensjovannet").then((m) => m.OSTENSJOVANNET),
-  bjorvika: () => import("./bjorvika").then((m) => m.BJORVIKA)
+  bjorvika: () => import("./bjorvika").then((m) => m.BJORVIKA),
+  gamlebyen: () => import("./gamlebyen").then((m) => m.GAMLEBYEN)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);

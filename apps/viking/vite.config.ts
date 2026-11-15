@@ -6,13 +6,13 @@ import { defineConfig } from "vite";
 // fetch. The last three levels' own swatches, and the bosses' rules, go with their level. The
 // scripted routes (for `?debug&auto`) and the scripted player are files of their own, fetched
 // only under `?debug&auto`; what only `?debug` needs is one more. The maze splits as it likes.
-const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget|bygdoy|vigelandsparken|korketrekkeren|ostensjovannet|bjorvika)\.ts$/;
+const LEVEL = /\/src\/levels\/(akershus|radhuset|slottet|holmenkollen|akerselva|nordmarka|stortinget|ekeberg|nabolaget|bygdoy|vigelandsparken|korketrekkeren|ostensjovannet|bjorvika|gamlebyen)\.ts$/;
 const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 // A level's own swatches and its boss come with it: they are imported by that level alone.
 // Line 2's kit pieces come with the level that uses them (the rocking deck and the oars with Bygdøy); the
 // sinking pad, which Bygdøy and Østensjøvannet both use, is a small file of its own that both fetch.
-const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "game/plough": "nabolaget", "game/troll": "nordmarka", "render/night": "nordmarka", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
-const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|swatches\/park|swatches\/sledge|swatches\/lake|swatches\/site|game\/plough|game\/troll|render\/night|deck|sink|oars)\.ts$/;
+const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "swatches/ruins": "gamlebyen", "game/serpent": "gamlebyen", "game/plough": "nabolaget", "game/troll": "nordmarka", "render/night": "nordmarka", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
+const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|swatches\/park|swatches\/sledge|swatches\/lake|swatches\/site|swatches\/ruins|game\/serpent|game\/plough|game\/troll|render\/night|deck|sink|oars)\.ts$/;
 
 export default defineConfig({
   base: "/viking/",

@@ -1,4 +1,4 @@
-// The two bosses against naive strategies, from the bench before each, with three lives, through the real rules.
+// The three bosses against naive strategies, from the bench before each, with three lives, through the real rules.
 import { LEVELS, play as P } from "./common.ts";
 const NONE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 type Strat = (p: any, n: number, s: any) => any;
@@ -41,9 +41,10 @@ const toward = (p: any, x: number, extra: any = {}) => {
   return { ...NONE, left: cx(p) > x + 2, right: cx(p) < x - 2, ...extra, jumpHeld: hop || hopping || !!extra.jumpHeld, jumpPressed: hop || !!extra.jumpPressed };
 };
 const faceTo = (p: any, x: number) => ({ ...NONE, left: x < cx(p) && p.body.facing > 0, right: x > cx(p) && p.body.facing < 0 });
-for (const id of (process.argv[2] ? [process.argv[2]] : ["nordmarka", "nabolaget"])) {
-  const arena = id === "nordmarka" ? { in: 199 * 16 + 8, mid: 212 * 16, left: 200 * 16 + 6, right: 225 * 16 - 6 } : { in: 167 * 16, mid: 190 * 16, left: 175 * 16 + 8, right: 222 * 16 };
-  const bossX = (p: any) => (p.troll ? p.troll.x : p.boss.state.x);
+for (const id of (process.argv[2] ? [process.argv[2]] : ["nordmarka", "nabolaget", "gamlebyen"])) {
+  const arena = id === "nordmarka" ? { in: 199 * 16 + 8, mid: 212 * 16, left: 200 * 16 + 6, right: 225 * 16 - 6 } : id === "nabolaget" ? { in: 167 * 16, mid: 190 * 16, left: 175 * 16 + 8, right: 222 * 16 } : { in: 247 * 16 + 8, mid: 259 * 16, left: 246 * 16 + 8, right: 271 * 16 };
+  // The plough's centre; the serpent's neck, where it is this round.
+  const bossX = (p: any) => (p.troll ? p.troll.x : p.boss.state.x ?? p.boss.state.def.points[p.boss.state.at]);
   run(id, "walk in, then stand still facing it", (p, n, s) => (!s.in && cx(p) < arena.in ? toward(p, arena.in + 4) : ((s.in = true), faceTo(p, bossX(p)))));
   run(id, "hold right all the time (hops when blocked)", (p) => toward(p, 99999));
   run(id, "hold right, jump whenever down", (p) => ({ ...NONE, right: true, jumpHeld: true, jumpPressed: p.body.onGround }));
@@ -51,7 +52,7 @@ for (const id of (process.argv[2] ? [process.argv[2]] : ["nordmarka", "nabolaget
   run(id, "walk in, jump in place facing it", (p, n, s) => (!s.in && cx(p) < arena.in ? toward(p, arena.in + 4) : ((s.in = true), { ...faceTo(p, bossX(p)), jumpHeld: true, jumpPressed: p.body.onGround })));
   run(id, "go to the middle, stand facing it", (p) => (Math.abs(cx(p) - arena.mid) > 3 ? toward(p, arena.mid) : faceTo(p, bossX(p))));
   run(id, "go to the middle, jump constantly", (p) => (Math.abs(cx(p) - arena.mid) > 3 ? toward(p, arena.mid, { jumpHeld: true, jumpPressed: p.body.onGround }) : { ...faceTo(p, bossX(p)), jumpHeld: true, jumpPressed: p.body.onGround }));
-  run(id, "wake it, hide at the left edge facing it", (p, n, s) => { if (!s.woke && (p.troll ? p.troll.phase !== "asleep" : p.boss.state.phase !== "parked")) s.woke = true; return s.woke ? (Math.abs(cx(p) - arena.left) > 3 ? toward(p, arena.left) : faceTo(p, bossX(p))) : toward(p, arena.in + 40); });
+  run(id, "wake it, hide at the left edge facing it", (p, n, s) => { if (!s.woke && (p.troll ? p.troll.phase !== "asleep" : p.boss.rules.awake(p.boss.state))) s.woke = true; return s.woke ? (Math.abs(cx(p) - arena.left) > 3 ? toward(p, arena.left) : faceTo(p, bossX(p))) : toward(p, arena.in + 40); });
   run(id, "run to the far right edge, stand facing it", (p) => (Math.abs(cx(p) - arena.right) > 3 ? toward(p, arena.right, { jumpHeld: true, jumpPressed: p.body.onGround && Math.abs(p.body.vx) < 0.1 }) : faceTo(p, bossX(p))));
   run(id, "run at it, jump when close (stomp-minded)", (p) => { const d = bossX(p) - cx(p); const t = toward(p, bossX(p)); return { ...t, jumpHeld: true, jumpPressed: t.jumpPressed || (p.body.onGround && Math.abs(d) < 60) }; });
 }

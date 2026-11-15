@@ -252,6 +252,38 @@ function resumeAt(ref: Ref, moves: any[], s: number, p?: any): Auto {
   return { m, mem: { i: 0, air: false }, pre };
 }
 
+/** Moves played one after another as one, for a way back the route never takes. */
+const seq = (list: any[]) => ({
+  name: `${list.map((m) => m.name).join(", then ")}`,
+  keys(p: any, mem: any) {
+    mem.k ??= 0;
+    mem.sub ??= { i: 0, air: false };
+    while (mem.k < list.length) {
+      const k = list[mem.k].keys(p, mem.sub);
+      if (k !== "done") {
+        mem.sub.i++;
+        return k;
+      }
+      mem.k++;
+      mem.sub = { i: 0, air: false };
+    }
+    return "done";
+  }
+});
+
+/**
+ * Ways back that a person takes and the route never needs: where he lands, the moves that bring him back
+ * up, and the move of the route to go on from. Bjørvika's net under the first hook catches a miss, and its
+ * step leads back up to the floor before the bay.
+ */
+const RECOVER: Record<string, { at: (p: any) => boolean; moves: (p: any) => any[]; resume: string }> = {
+  bjorvika: {
+    at: (p) => (Math.abs(feet(p) - 21 * 16) < 1 || Math.abs(feet(p) - 19 * 16) < 1) && cx(p) > 75 * 16 && cx(p) < 84 * 16,
+    moves: (p) => (feet(p) > 20 * 16 ? [BOT.walk(77 * 16 + 4), BOT.jumpTo(76 * 16), BOT.jumpTo(73 * 16 + 8)] : [BOT.jumpTo(73 * 16 + 8)]),
+    resume: "the first hook at this end"
+  }
+};
+
 export interface Cfg {
   k: number;
   drop: number;
@@ -366,7 +398,7 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
       res.resyncs.push({ t: n, x: Math.round(cx(p)), feet: feet(p), refCost: 0 });
       A = { m: A.m + 1, mem: { i: 0, air: false } };
     }
-    const fight = (p.troll && !["asleep", "stone"].includes(p.troll.phase)) || (p.boss && !["parked", "beaten"].includes(p.boss.state.phase));
+    const fight = (p.troll && !["asleep", "stone"].includes(p.troll.phase)) || (p.boss && !["parked", "asleep", "beaten"].includes(p.boss.state.phase));
     // Re-synchronise to the nearest place the perfect run stood. If that place cannot be walked to
     // from here (he fell somewhere the route never goes), the run ends "offroute"; after RETRIES
     // at one place it ends "gaveup".
@@ -386,15 +418,22 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
         res.outcome = "gaveup";
         break;
       }
-      if (!walkable) {
+      const rec = RECOVER[id];
+      if (!walkable && rec?.at(p)) {
+        A = { m: moves.findIndex((m: any) => m.name === rec.resume), mem: { i: 0, air: false }, pre: { move: seq(rec.moves(p)), mem: { i: 0, air: false } } };
+        res.resyncs.push({ t: n, x: Math.round(cx(p)), feet: feet(p), refCost: 0 });
+        lastResync = n;
+        prevM = A.m;
+      } else if (!walkable) {
         res.outcome = "offroute";
         break;
+      } else {
+        const at = ref.rec.findIndex((q) => q.m >= A.m);
+        res.resyncs.push({ t: n, x: Math.round(cx(p)), feet: feet(p), refCost: why === "fell" ? Math.max(0, (at - s) / 60) : 0 });
+        A = resumeAt(ref, moves, s, p);
+        lastResync = n;
+        prevM = A.m;
       }
-      const at = ref.rec.findIndex((q) => q.m >= A.m);
-      res.resyncs.push({ t: n, x: Math.round(cx(p)), feet: feet(p), refCost: why === "fell" ? Math.max(0, (at - s) / 60) : 0 });
-      A = resumeAt(ref, moves, s, p);
-      lastResync = n;
-      prevM = A.m;
     }
     const mBefore = A.m;
     H[n] = botKeys(moves, p, A, hes);

@@ -75,7 +75,7 @@ b.run(245, 248, ROOF - 2, "=").run(245, 248, ROOF - 4, "=").run(242, 252, ROOF -
 // Marks: the start, the door, signs, flags, the bench, the rune, the bracteate, the cheese.
 b.put(2, G - 1, "t").put(4, G - 1, "S");
 b.put(7, G - 1, "i").put(31, G - 1, "i").put(91, F2 - 1, "i");
-b.put(20, G - 1, "f").put(40, F1 - 1, "f").put(70, F1 - 1, "f").put(93, F2 - 1, "f").put(136, F2 - 1, "f").put(170, F2 - 1, "f");
+b.put(20, G - 1, "f").put(40, F1 - 1, "f").put(70, F1 - 1, "f").put(93, F2 - 1, "f").put(138, F2 - 1, "f").put(170, F2 - 1, "f");
 b.put(213, ROOF - 1, "f").put(243, ROOF - 1, "f");
 b.put(207, ROOF - 1, "b");
 b.put(249, ROOF - 7, "r").put(228, 3, "o").put(82, F1 + 2, "&");
@@ -108,46 +108,49 @@ export const HOIST: Lift = { kind: "lift", x: 34 * TILE, w: 2 * TILE, bottom: G 
 
 /**
  * A crane hook: its block two tiles wide, level with the landings, there and back on its beat over the
- * gap between them, slow at each end, where it comes right up to the landing's edge.
+ * gap between them, slow at each end, where it comes to a tile from the landing's edge: on and off are a
+ * hop, and the moment is his to pick. `c0` and `c1` are the gap's first column and the landing's beyond it.
  */
 const hook = (c0: number, c1: number, row: number, period: number, offset: number): Travel => ({
   kind: "travel",
-  from: { x: c0 * TILE, y: row * TILE },
-  to: { x: c1 * TILE, y: row * TILE },
+  from: { x: (c0 + 1) * TILE, y: row * TILE },
+  to: { x: (c1 - 3) * TILE, y: row * TILE },
   w: 2 * TILE,
   period,
   offset
 });
 /** The first hook, over the bay and its net: from the floor's end to the floor beyond it. */
-export const HOOK_1 = hook(75, 82, F1, 300, 287);
+export const HOOK_1 = hook(75, 84, F1, 300, 257);
 /** Across the drop: from the upper slab to the second tower, and from it to the third. */
-export const HOOK_2 = hook(98, 106, F2, 300, 262);
-export const HOOK_3 = hook(118, 126, F2, 300, 288);
-/** The traverse under the top crane's jib: three hooks in a row, each at its far end as the next is at its near end. (The beats are set so the scripted route meets each hook as it comes: `tools/review/tune-bjorvika.ts`.) */
+export const HOOK_2 = hook(98, 108, F2, 300, 214);
+export const HOOK_3 = hook(118, 128, F2, 300, 198);
+/** The traverse under the top crane's jib: three hooks in a row, each at its far end as the next is at its near end, a tile apart. (The beats are set so the scripted route meets each hook as it comes: `tools/review/tune-bjorvika.ts`.) */
 const TRAVERSE = 240;
-export const HOOK_5 = hook(216, 221, ROOF, TRAVERSE, 174);
-export const HOOK_6 = hook(224, 230, ROOF, TRAVERSE, 174 + TRAVERSE / 2);
-export const HOOK_7 = hook(233, 238, ROOF, TRAVERSE, 174);
+export const HOOK_5 = hook(216, 225, ROOF, TRAVERSE, 47);
+export const HOOK_6 = hook(224, 233, ROOF, TRAVERSE, 47 + TRAVERSE / 2);
+export const HOOK_7 = hook(232, 240, ROOF, TRAVERSE, 47);
 export const HOOKS = [HOOK_1, HOOK_2, HOOK_3, HOOK_5, HOOK_6, HOOK_7];
 
-/** Loose sheets of steel over the shafts, sliding across in the wind: flush with the floor, two tiles wide, three tiles of travel. */
+/** Loose sheets of steel over the shafts, sliding across in the wind: flush with the floor, a tile and a half wide, from one side of the shaft to the other. */
 const SHEET_PERIOD = 180;
-export const SHEETS: Travel[] = SHAFTS.map((c, i) => ({ kind: "travel", from: { x: c * TILE, y: F2 * TILE }, to: { x: (c + 3) * TILE, y: F2 * TILE }, w: 2 * TILE, period: SHEET_PERIOD, offset: [160, 164, 170][i] }));
+export const SHEETS: Travel[] = SHAFTS.map((c, i) => ({ kind: "travel", from: { x: c * TILE, y: F2 * TILE }, to: { x: (c + 5) * TILE - 24, y: F2 * TILE }, w: 24, period: SHEET_PERIOD, offset: [34, 43, 52][i] }));
 
 export const CARRIERS: CarrierDef[] = [HOIST, HOOK_1, HOOK_2, HOOK_3, ...SHEETS, HOOK_5, HOOK_6, HOOK_7];
 
 /** The gusts over the shafts' floor, against him: five seconds still, a second of dust, a second and a half of wind. */
-export const GUST_BEAT: Pulse = { rest: 300, warn: 60, live: 90, offset: 436 };
-export const GUSTS: Zone[] = [{ x: 139 * TILE, y: 9 * TILE, w: 33 * TILE, h: (F2 - 9) * TILE, push: { x: -0.45, y: 0 }, beat: GUST_BEAT }];
+export const GUST_BEAT: Pulse = { rest: 300, warn: 60, live: 90, offset: 310 };
+export const GUSTS: Zone[] = [{ x: 139 * TILE, y: 9 * TILE, w: 33 * TILE, h: (F2 - 9) * TILE, push: { x: -0.55, y: 0 }, beat: GUST_BEAT }];
 
 /** The rebar sticking up out of the open floor; the welder's sparks falling past the beam onto it, on a beat. */
-export const REBAR: Hazard = { x: 46 * TILE + 2, y: F1 * TILE - 7, w: 2 * TILE - 4, h: 7 };
+export const REBAR: Hazard = { x: 46 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };
+export const REBAR_2: Hazard = { x: 68 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };
 export const SPARKS: Hazard = { x: 55 * TILE + 2, y: (F2 + 1) * TILE, w: 12, h: (F1 - F2 - 1) * TILE, beat: { rest: 150, warn: 60, live: 60, offset: 126 } };
-export const HAZARDS: Hazard[] = [REBAR, SPARKS];
+export const HAZARDS: Hazard[] = [REBAR, REBAR_2, SPARKS];
 
 /**
- * A crow over the quay, a pigeon and a rat by the gate; a pigeon and a rat on the open floor; a crow over
- * the second tower; a pigeon on the girder; the two riveters on the next floor's beam over its far end
+ * A crow over the quay, a pigeon and a rat by the gate; a pigeon and a rat on the open floor; a pigeon on
+ * the second tower, a rat on the third, each away from where the hooks come and go; a pigeon on
+ * the girder; the two riveters on the next floor's beam over its far end
  * (further back, out of his reach from the girder), who throw their bolts straight down along it at where a
  * man coming will be, and not at one nearly under them (four tiles: from nearer, a bolt would come down too
  * steeply for the shield) or past them; a pigeon by the top crane.
@@ -158,8 +161,10 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 27, r: G - 1, range: 2 },
   { kind: "walker", look: "pigeon", c: 59, r: F1 - 1, range: 1 },
   { kind: "walker", look: "rat", c: 64, r: F1 - 1, range: 2 },
-  { kind: "flyer", look: "crow", c: 112, r: F2 - 4, range: 2, rise: 6, period: 170 },
+  { kind: "walker", look: "pigeon", c: 112.5, r: F2 - 1, range: 1 },
+  { kind: "walker", look: "rat", c: 133, r: F2 - 1, range: 1 },
   { kind: "walker", look: "pigeon", c: 178, r: F2 - 1, range: 2 },
+  { kind: "walker", look: "pigeon", c: 184, r: F2 - 1, range: 2, dir: -1 },
   { kind: "thrower", look: "riveter", c: 193, r: ROOF, period: 120, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
   { kind: "thrower", look: "riveter", c: 196, r: ROOF, period: 120, offset: 60, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
   { kind: "walker", look: "pigeon", c: 252, r: ROOF - 1, range: 1 }
@@ -444,11 +449,11 @@ function hoistArt(x: number, y: number) {
 }
 
 /** A loose sheet of steel over a shaft: corrugated, its edge lifting a little in the wind. */
-function sheetArt(x: number, y: number) {
-  R(x, y, 2 * TILE, 4, S.sheet);
-  R(x, y, 2 * TILE, 1, S.sheetLight);
-  for (let k = 2; k < 2 * TILE; k += 4) R(x + k, y + 1, 1, 3, S.sheetDark);
-  R(x, y + 4, 2 * TILE, 1, S.sheetDark);
+function sheetArt(x: number, y: number, w: number) {
+  R(x, y, w, 4, S.sheet);
+  R(x, y, w, 1, S.sheetLight);
+  for (let k = 2; k < w; k += 4) R(x + k, y + 1, 1, 3, S.sheetDark);
+  R(x, y + 4, w, 1, S.sheetDark);
 }
 
 /** The welder on his beam: kneeling, his mask down, his torch at the steel; sparks falling below on the beat. */
@@ -477,11 +482,11 @@ function welder(t: number) {
 
 /** The rebar: rusty bars sticking up out of the slab, a few with orange caps. */
 function rebarArt() {
-  const { x, y, w, h } = REBAR;
-  for (let k = 1; k < w; k += 3) {
-    R(x + k, y + (k % 2), 1, h - (k % 2), S.rebar);
-    if (k % 6 === 1) R(x + k - 1, y - 1, 3, 2, S.rebarCap);
-  }
+  for (const { x, y, w, h } of [REBAR, REBAR_2])
+    for (let k = 1; k < w; k += 3) {
+      R(x + k, y + (k % 2), 1, h - (k % 2), S.rebar);
+      if (k % 6 === 1) R(x + k - 1, y - 1, 3, 2, S.rebarCap);
+    }
 }
 
 /** The fence round the site at the quay, the gate open in it, its sign. */
@@ -652,7 +657,7 @@ export const BJORVIKA: LevelDef = {
     carrier(i, at, v) {
       const d = CARRIERS[i];
       if (d === HOIST) return hoistArt(at.x, at.y);
-      if (SHEETS.includes(d as Travel)) return sheetArt(at.x, at.y);
+      if (SHEETS.includes(d as Travel)) return sheetArt(at.x, at.y, d.w);
       const c = CRANES.find((k) => at.x >= k.from * TILE - 32 && at.x <= k.to * TILE) ?? CRANES[0];
       hookArt(at.x, at.y, c.jib * TILE);
       void v;

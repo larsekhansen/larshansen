@@ -217,6 +217,8 @@ export interface Grounds<S = unknown> {
   after?(s: S, t: number, him: Body): void;
   /** Everywhere it ever is, as still ground: for the reach search. */
   everywhere(): Carrier[];
+  /** Ground of its own in the map (Gamlebyen's stones that rise as he passes and stay): the map he plays on, from the level's own. */
+  map?(s: S, base: TileMap): TileMap;
 }
 
 /**
@@ -305,6 +307,8 @@ export interface LevelDef {
   grounds?: Grounds<any>;
   /** Its own rules (see `LevelRules`). */
   rules?: LevelRules;
+  /** Letters that are open until they rise (`Grounds.map`), and then solid or one-way: for the tests and the reach search. */
+  risen?: { solid: string; oneWay: string };
   art: Art;
 }
 
