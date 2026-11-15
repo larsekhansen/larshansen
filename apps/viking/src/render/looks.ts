@@ -12,14 +12,18 @@ const E = ENEMY;
 /** A gull standing on the bank with a chip in its beak, flicking it at him on its beat. 12 x 16. */
 function gullStanding(e: Enemy, t: number) {
   const r = parts(e, 12);
-  const up = windingUp(e, t) ? 1 : 0;
+  // Winding up (order 19) it rears: its head goes up two, its wing lifts over its back, the chip held high.
+  const up = windingUp(e, t) ? 2 : 0;
   r(1, -12, 9, 7, E.orangeLight);
   r(1, -9, 6, 3, E.orange);
   r(0, -9, 2, 3, E.orange);
-  r(7, -16 - up, 4, 4, E.orangeLight);
+  r(7, -16 - up, 4, 4 + up, E.orangeLight);
   r(8, -15 - up, 1, 1, E.eye);
   r(10, -14 - up, 2, 1, E.red);
-  if (up) r(11, -16, 2, 2, E.orange);
+  if (up) {
+    r(1, -15, 5, 3, E.orange);
+    r(11, -18, 2, 2, E.orange);
+  }
   r(3, -5, 1, 5, E.red);
   r(7, -5, 1, 5, E.red);
 }

@@ -53,6 +53,8 @@ export default defineConfig({
           if (/\/src\/levels\/kartArt\.ts$/.test(id)) return "kart";
           // The enemy looks several levels share but the first does not: fetched with the first level that has one.
           if (/\/src\/render\/looks\.ts$/.test(id)) return "looks";
+          // What answers events (order 19): fetched as the page starts, alongside the map's look.
+          if (/\/src\/render\/feel\.ts$/.test(id)) return "feel";
           // The shield's rules and drawing: fetched when he has it, or goes where it is given.
           if (/\/src\/game\/shield\.ts$/.test(id)) return "shield";
           const level = LEVEL.exec(id);

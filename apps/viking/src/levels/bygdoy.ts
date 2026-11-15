@@ -7,12 +7,13 @@ import { drawOar, oarBank, type Oar } from "@larshansen/pixelkit/oars";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
-import { padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
+import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
+import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, View } from "./types";
 
@@ -179,9 +180,12 @@ export const GROUNDS: Grounds<Ground> = {
   carriers: (s, t, him) => [...DECKS.flatMap((d) => deckGround(d, t, him)), ...padsGround(PADS, s.pads, t)],
   after: (s, t, him) => stepPads(PADS, s.pads, t, him),
   everywhere: () => [...DECKS.flatMap(deckEverywhere), ...padsEverywhere(PADS)],
-  // The decks rock (they move); the bundles of balsa give way.
-  stands: (s, t) => [...DECKS.flatMap((d) => deckTops(d, t).map((y, i) => ({ x: d.x + i * d.seg, y, w: d.seg, how: "moves" as const }))), ...PADS.map((p, i) => ({ x: p.x, y: padY(p, s.pads[i], t), w: p.w, how: "gives" as const }))]
+  // The decks rock (they move); the bundles of balsa give way, and tremble half a second before they go (order 19).
+  stands: (s, t) => [...DECKS.flatMap((d) => deckTops(d, t).map((y, i) => ({ x: d.x + i * d.seg, y, w: d.seg, how: "moves" as const }))), ...PADS.map((p, i) => ({ x: p.x, y: padY(p, s.pads[i], t), w: p.w, how: "gives" as const, soon: bundleSoon(s.pads[i]) }))]
 };
+
+/** Half a second before a bundle starts to go under him. */
+const bundleSoon = (s: PadState) => s.sinkAt === null && s.on > 0 && s.on >= SINK.firm - 30;
 
 /** The longship's oars, a stair from the hall's floor to its deck, each a stroke behind the one below. */
 export const OARS: Oar[] = oarBank({ x: 164 * TILE, y: FLOOR - 20, n: 4, dx: 24, dy: -20, beat: { on: 120, warn: 60, off: 90 }, turn: 45, port: { x: 172 * TILE + 6, y: 15 * TILE + 2 }, portDx: 7 }).map((o) => ({ ...o, note: -1 }));
@@ -536,7 +540,8 @@ function bundle(p: SinkPad, s: PadState, t: number) {
   const y = padY(p, s, t);
   const shown = Math.min(7, FLOOR + 7 - y);
   if (shown <= 0) return;
-  for (let k = 0; k < p.w; k += 8) R(p.x + k, y, 8, shown, k % 16 ? M.balsa : M.balsaDark);
+  const dx = bundleSoon(s) ? shiver(t) : 0;
+  for (let k = 0; k < p.w; k += 8) R(p.x + dx + k, y, 8, shown, k % 16 ? M.balsa : M.balsaDark);
   R(p.x, y, p.w, 1, mix(M.balsa, WHITE, 0.4));
   R(p.x + 6, y, 1, shown, M.rope);
   R(p.x + p.w - 7, y, 1, shown, M.rope);
@@ -792,6 +797,8 @@ function slinger(e: Enemy, t: number) {
   if (windingUp(e, t)) {
     // The sling goes round over his head, faster as the throw comes.
     const a = view.reduced ? 0 : t * 0.4;
+    // His arm up, the sling's cord from his fist (order 19: the pose differs in outline from his rest).
+    r(8, -18, 2, 6, coat);
     r(9, -20, 1, 5, ENEMY.orangeLight);
     r(9 + Math.round(Math.cos(a) * 6), -22 + Math.round(Math.sin(a) * 2), 3, 3, ENEMY.plum);
   } else r(9, -11, 3, 1, ENEMY.orangeLight);

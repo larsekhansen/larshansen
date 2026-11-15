@@ -206,7 +206,7 @@ export const GROUNDS: Grounds<Ruins> = {
     };
   },
   // The tower moves; the stone that sinks gives way while it is up.
-  stands: (s) => [{ x: TOWER.x, y: s.y, w: TOWER.w, how: "moves" as const }, ...STONES.flatMap((st, i) => (st.sinks && s.up[i] ? [{ x: st.c * TILE, y: st.r * TILE, w: TILE, how: "gives" as const }] : []))]
+  stands: (s, t) => [{ x: TOWER.x, y: s.y, w: TOWER.w, how: "moves" as const }, ...STONES.flatMap((st, i) => (st.sinks && s.up[i] ? [{ x: st.c * TILE, y: st.r * TILE, w: TILE, how: "gives" as const, soon: s.on[i] !== null && t - (s.on[i] as number) > SINK.firm / 2 }] : []))]
 };
 
 /** The stone a guard was until he came near: within this many tiles it wakes and walks. */
@@ -950,7 +950,7 @@ function ballArt(s: Serpent, t: number) {
 
 /**
  * The bishop's guard: while he is a statue, grey stone and not outlined (stone does not bite); woken, a
- * plum coat over red mail, a halberd held out beside him. Squat, his head where his box's top is. 13 x 10.
+ * plum coat over red mail, his halberd levelled at him. Squat, his head where his box's top is. 13 x 10.
  */
 function guardArt(e: Enemy) {
   const stone = !e.n;
@@ -965,8 +965,14 @@ function guardArt(e: Enemy) {
     r(3, -10, 7, 3, mail);
     r(3, -10, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.redLight);
     r(8, -9, 1, 1, stone ? mix(G.statue, INK, 0.4) : ENEMY.eye);
-    r(12, -13, 1, 12, stone ? G.statue : ENEMY.orange);
-    r(12, -15, 2, 2, stone ? G.statue : ENEMY.pale);
+    // The halberd: upright beside the statue; woken (order 19: a change of outline), levelled at him.
+    if (stone) {
+      r(12, -13, 1, 12, G.statue);
+      r(12, -15, 2, 2, G.statue);
+    } else {
+      r(9, -6, 8, 1, ENEMY.orange);
+      r(17, -7, 2, 3, ENEMY.pale);
+    }
   };
   if (stone) plain(draw);
   else draw();
@@ -982,8 +988,13 @@ function archerArt(e: Enemy, t: number) {
   r(3, -15, 6, 3, ENEMY.orangeLight);
   r(2, -16, 8, 2, ENEMY.red);
   r(7, -14, 1, 1, ENEMY.eye);
-  for (let k = -6; k <= 6; k++) r(11 + Math.round((1 - (k / 6) ** 2) * (up ? 3 : 2)), -10 + k, 1, 1, ENEMY.orange);
-  if (up) r(6, -10, 6, 1, ENEMY.pale);
+  // Drawing (order 19), the bow comes up two and bends further, the arrow on the string and his arm back.
+  const lift = up ? 2 : 0;
+  for (let k = -6; k <= 6; k++) r(11 + Math.round((1 - (k / 6) ** 2) * (up ? 3 : 2)), -10 - lift + k, 1, 1, ENEMY.orange);
+  if (up) {
+    r(5, -12, 8, 1, ENEMY.pale);
+    r(3, -13, 3, 2, ENEMY.red);
+  }
 }
 
 /** A goose of the market: an orange-light body, its neck up, an orange beak and feet. 14 x 13. */

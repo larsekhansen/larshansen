@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, and by order 18's after that. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, and by order 19's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -71,6 +71,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-15 | Order 16: the sledge's help line, the lake's sunrise, a hesitating player (and the lake eased for it); Bjørvika (hooks), Gamlebyen (rising ruins), the sea serpent; the end of line 2 | `orders/16-the-last-two.md`, branch `the-last-two` |
 | 2026-11-15 | An adversarial review of line 2 (`reviews/2026-11-15-line-2.md`); order 17 makes it good: the serpent's fight and ending, a lost life at a boss, what line 2 teaches and gives made visible, each level asking more of its idea, the review's tools made honest, the first script's budget enforced | `orders/17-line-2-made-good.md`, branch `line-2-made-good` |
 | 2026-11-15 | Lars plays on his phone after the speed fix (PR #63): the card takes him out to the map (ADR 0037); Nabolaget is shown as Vålerenga (ADR 0038); runes that read at a glance; enemies a quarter larger, outlined, in a palette of their own; platforms with a standing top; every role's colours named and held apart (ADR 0039) | `orders/18-seen-at-a-glance.md`, branch `seen-at-a-glance` |
+| 2026-11-15 | Lars: "do more design polishing like that". Order 19: every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use in one cyan; his rim after dusk; the header between 760 and 1359 px (ADR 0040) | `orders/19-felt-at-a-glance.md`, branch `felt-at-a-glance` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`
@@ -228,7 +229,8 @@ has measured on a real phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
+- **First script**: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
+  with the first scene, which took the old sparks, the beaten enemies' puff and the page's freeze with it). Before: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
   59.8). Earlier: 59.18 kB after order 16 (order 16 allowed 59.5). Order 15 moved Nordmarka's
   night drawing out of `main.ts` into `render/night.ts`, which comes with Nordmarka. Left to move: the enemy
   looks that two or three levels share (`render/pickups.ts`). Never alias a palette namespace in a level
@@ -246,11 +248,36 @@ apart; `render/palette.test.ts` holds it. What it left:
   Korketrekkeren, Østensjøvannet). On the other eight growing cost the sloppy player more than 0.3 hearts a run,
   so their enemies keep their old boxes and are drawn to them (`keepBoxes`); `tools/review/o18/summary.md`.
 - His tunic's blue is held off every field by day only: under the evening tint the game's water comes within
-  5 to 7 of it.
+  5 to 7 of it. (Order 19: a warm rim round him after dusk tells him apart, tested.)
 - Carriers, decks and pads keep their own bodies (wood, balsa, lily pads); only their top edge is from the
   platform palette. One-way ledges are wholly in it.
-- Doors, benches and signs were not recoloured; flags got the tick when raised.
+- Doors, benches and signs were not recoloured; flags got the tick when raised. (Order 19: doors, benches and
+  signs are marked at their corners in one cyan, `ROLES.use`.)
 - Unplayed: none of it has been seen on a phone.
+
+## Order 19: felt at a glance
+
+Order 19 (`orders/19-felt-at-a-glance.md`, ADR 0040, DESIGN's "What just happened") made what just happened
+readable: every event answers within two frames, where it happened, in its role's colour, with a sound of the
+kit's synth (each its own), and with a still answer under reduced motion. The answers are `render/feel.ts`
+(lazy); they read the play and never write to it. What to know:
+- **The page no longer freezes the rules** after a stomp or a hit. The hold after a hit is the picture only
+  (four steps). The page and the tests now run exactly the same game; `render/feel.test.ts` holds it, and the
+  sloppy player's runs on Akershus, Bygdøy, Nordmarka and Gamlebyen (seeds 201 to 260) are byte-identical
+  before and after (`tools/review/o19/after.md`).
+- **Looking at an event**: `?debug&steps=0&on=<event>` steps to it; `bun tools/glance/strips.ts` makes frame
+  strips of every event in `tools/glance/events.tsv` (a strip is made in the page and sent to the tool, so its
+  size is not the window's); `?debug&perf&on=<event>&skip=6` measures a frame with the answers in the air;
+  `?debug&look=x,y` puts the camera on a point (the contact sheets' subjects; `tools/glance/sheet.py`).
+- **Tells**: what gives way trembles (`Standing.soon`, `shiver`); every thrower's wind-up changes its outline by
+  18 pixels or more (the gull, slinger, archer and ring-thrower were given bigger poses; a woken guard levels
+  its halberd). Tested.
+- **Things to use** (doors, benches, signs) are marked at their corners in `ROLES.use`, a cyan held off every
+  field and role; the bubble naming the key is framed in it. **His rim** after dusk tells him from the water.
+- **The header** from 760 to 1279 px (with sixteen runes to 1359) puts the run on a row of its own: it was
+  pushed off the right edge, the clock and hearts with it.
+- **Unplayed**: none of it has been heard or seen at speed by a person. The sounds were checked as recipes
+  (each different, the near ones apart by register, direction and noise), never listened to on the Pi.
 
 ## Known weak spots, as of order 16
 

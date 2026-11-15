@@ -15,6 +15,7 @@ import type { LevelDef, View } from "../levels/types";
 import { areaRecorder, colourBlind, deltaE, levelFields, mixRgb, parseColour, tinted, type Rgb } from "./fields";
 import { drawEnemy, drawShot } from "./pickups";
 import { eyes, outlined } from "./sprite";
+import { RIM as HIM_RIM, RIM_ALPHA } from "./feel";
 
 // Order 18 (ADR 0039): colour says what a thing is. What can hurt him is drawn from the enemy palette
 // (`packages/pixelkit/src/swatches/enemy.ts`) and nothing else, outlined, a quarter larger, its head where
@@ -244,7 +245,8 @@ describe("every role has its colours", () => {
   /** How each role is seen under a tint: him dimmed as the kit dims him; what he takes nearly as by day (it shines after dark); a boss's tell tinted, with a quarter of its own light. */
   const DIM: Record<Phase, number> = { day: 0, evening: 0.12, twilight: 0.18, night: 0.25 };
   const shown = (role: string, c: string, phase: Phase): Rgb => {
-    if (phase === "day") return rgb(c);
+    // Things to use are marked after the night's tint, in their own light (order 19).
+    if (phase === "day" || role === "use") return rgb(c);
     if (role === "him") return mixRgb(rgb(c), rgb("#141c46"), DIM[phase]);
     return mixRgb(tinted(rgb(c), phase), rgb(c), role === "take" ? 0.8 : 0.25);
   };
@@ -259,12 +261,13 @@ describe("every role has its colours", () => {
     him: { colours: [ROLES.him.tunic], phases: ["day"] },
     // The copper of a coin and the gold of a bracteate; their rims and glints are details on them, as an enemy's eyes are.
     take: { colours: [ROLES.take.copper, ROLES.take.gold, ROLES.take.goldDark], phases: ["day", "evening", "twilight", "night"] },
-    now: { colours: ROLES.COLOURS.now, phases: ["day", "evening", "twilight", "night"] }
+    now: { colours: ROLES.COLOURS.now, phases: ["day", "evening", "twilight", "night"] },
+    use: { colours: ROLES.COLOURS.use, phases: ["day", "evening", "twilight", "night"] }
   };
 
-  test(`his blue by day, what he takes and a boss's "now" under every sky, stand ${MIN_DELTA} or more off every level's fields`, () => {
+  test(`his blue by day, what he takes, a boss's "now" and the mark of things to use under every sky, stand ${MIN_DELTA} or more off every level's fields`, () => {
     const near: string[] = [];
-    for (const role of ["him", "take", "now"])
+    for (const role of ["him", "take", "now", "use"])
       for (const phase of FIELDS_OF[role].phases)
         for (const [id, f] of fields)
           for (const field of [...f.keys(), ...(SKY_FIELDS.get(phase) ?? [])])
@@ -273,6 +276,28 @@ describe("every role has its colours", () => {
               if (d < MIN_DELTA) near.push(`${role} ${c} near ${field} in ${id} (${phase}): ${d.toFixed(1)}`);
             }
     expect([...new Set(near)]).toEqual([]);
+  });
+
+  /**
+   * Under the tints his blue is not held (the water is blue, and the tint brings it within 5 to 7 of his
+   * tunic): what tells him apart there is the shape round him, the warm rim the page draws round him after
+   * dusk (`render/feel.ts`, order 19). The rim, as drawn over each tinted field at its strength, stands the
+   * set distance off that field, and off the enemies' cold rim.
+   */
+  test(`after dusk the warm rim round him stands ${MIN_DELTA} or more off every level's tinted fields`, () => {
+    const near: string[] = [];
+    const worst: Record<string, number> = {};
+    for (const phase of ["evening", "twilight", "night"] as const)
+      for (const [id, f] of fields)
+        for (const field of [...f.keys(), ...(SKY_FIELDS.get(phase) ?? [])]) {
+          const bg = tinted(rgb(field), phase);
+          const d = deltaE(mixRgb(bg, rgb(HIM_RIM), RIM_ALPHA[phase]), bg);
+          worst[phase] = Math.min(worst[phase] ?? Infinity, d);
+          if (d < MIN_DELTA) near.push(`rim near ${field} in ${id} (${phase}): ${d.toFixed(1)}`);
+        }
+    console.log(`His rim's smallest distances: ${Object.entries(worst).map(([k, v]) => `${k} ${v.toFixed(1)}`).join(", ")}; from the enemies' rim ${deltaE(rgb(HIM_RIM), rgb("#c9d8ff")).toFixed(1)}`);
+    expect([...new Set(near)]).toEqual([]);
+    expect(deltaE(rgb(HIM_RIM), rgb("#c9d8ff"))).toBeGreaterThanOrEqual(MIN_DELTA);
   });
 
   /** Where two roles may be near, by name, and why: none. */
@@ -305,12 +330,13 @@ describe("every role has its colours", () => {
     enemy: "a dark outline round its whole shape",
     stand: "a top edge two pixels thick (striped when it moves, broken when it gives way)",
     take: "small, round, turning, with a glint",
-    him: "the one person: helmet, cape, the waffle hearts in the header",
-    now: "it comes on and goes with the boss's tell"
+    him: "the one person: helmet, cape, the waffle hearts in the header; after dusk a warm rim round him",
+    now: "it comes on and goes with the boss's tell",
+    use: "marks at a thing's four corners, and the frame of the bubble that names the key"
   };
 
   test("seen without telling red from green, the roles that come near each other differ by a shape the test names", () => {
-    const roles = ["enemy", "stand", "take", "him", "now"];
+    const roles = ["enemy", "stand", "take", "him", "now", "use"];
     const table: string[] = [];
     const unnamed: string[] = [];
     for (const kind of ["deutan", "protan"] as const)

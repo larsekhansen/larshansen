@@ -49,6 +49,7 @@ Lars before reversing one of his.
 | [0037](0037-out-to-the-map-after-a-level.md) | After a level the card has one action, to the map, at the station just cleared; any key, a tap, or six seconds | planner (order 18) | holds |
 | [0038](0038-valerenga.md) | The tenth station is shown as Vålerenga; its id stays `nabolaget` | planner (order 18) | holds |
 | [0039](0039-colour-says-what-a-thing-is.md) | Colour says what a thing is: roles and their palettes (enemies outlined and a quarter larger, platforms' standing tops, pickups, him, the bosses' "now"), held by a test | planner, Lars (order 18) | holds; adjusts 0023 |
+| [0040](0040-felt-at-a-glance.md) | Every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use marked in one cyan; his rim after dusk | planner (order 19) | holds; builds on 0039 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

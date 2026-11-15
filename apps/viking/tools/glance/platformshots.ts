@@ -1,6 +1,7 @@
 // The addresses for order 18's contact sheet of platforms: every kind of thing he stands on once, on its
-// own level, him three tiles before it, with `?debug&where` marking it for the crop. One line per shot:
-// a label, the level, the sky, the address's path.
+// own level, him three tiles before it, with `?debug&where` marking it for the crop and (since order 19)
+// `?debug&look` putting the camera on it, so every row shows its subject. One line per shot: a label, the
+// level, the sky, the address's path. `sheet.py` makes the contact sheet.
 //
 //   bun tools/glance/platformshots.ts > platforms.tsv
 
@@ -52,7 +53,7 @@ for (const st of BUILT) {
     const statueish = th.label === "statue";
     const hx = Math.round(statueish ? th.x - 2 * TILE : th.x - 3 * TILE);
     const hy = Math.max(0, Math.round(th.y - 2 * TILE));
-    for (const sky of ["day", "night"]) out.push(`${th.label}\t${st.id}\t${sky}\t/viking/?debug&steps=2&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}#${st.id}`);
+    for (const sky of ["day", "night"]) out.push(`${th.label}\t${st.id}\t${sky}\t/viking/?debug&steps=2&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}&look=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}#${st.id}`);
   }
 }
 console.log(out.join("\n"));

@@ -1,5 +1,5 @@
 import { TILE } from "./config";
-import { R } from "./paint";
+import { R, view } from "./paint";
 import { PALETTE, SHIMMER } from "./palette";
 import type { Carrier } from "./physics";
 import { STONE_LEDGE, ledge, type LedgeLook } from "./props";
@@ -77,7 +77,8 @@ export function drawTimed(l: TimedLedge, step: number, snow: boolean, look: Ledg
   if (phase === "off") return;
   const n = Math.max(1, Math.round(l.w / TILE));
   for (let i = 0; i < n; i++) ledge(l.x + i * TILE, l.y, look, i === 0, i === n - 1, snow);
-  if (phase === "warn" && Math.floor(step / 8) % 2 === 0) {
+  // With reduced motion the warning holds still instead of blinking (order 19: nothing flashes three times a second).
+  if (phase === "warn" && (view.reduced || Math.floor(step / 8) % 2 === 0)) {
     // The maze's warning, on a box two pixels round the ledge (which is five high with its edge).
     const x = l.x - 2;
     const y = l.y - 2;

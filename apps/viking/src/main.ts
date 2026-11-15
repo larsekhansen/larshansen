@@ -10,8 +10,8 @@ import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
-import { R, TINT, ctx, lights, mix, target, view } from "@larshansen/pixelkit/paint";
-import { COIN, DUST, ENEMY, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { R, TINT, ctx, lights, target, view } from "@larshansen/pixelkit/paint";
+import { DUST, ENEMY, FEATHER, FOOD, INK, METAL, PALETTE, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -26,7 +26,6 @@ import {
   dropParam,
   followGoal,
   followReducedMotion,
-  hardLanding,
   intentFrom,
   isTouch,
   launch,
@@ -48,7 +47,7 @@ import {
   wireSkyKey
 } from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
-import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
+import { drawSparks } from "@larshansen/pixelkit/sparks";
 import { drawTimed, pulsePhase, timedPhase } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { boardWidth, doorBoard, drawOverlay, fontPx, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
@@ -59,7 +58,7 @@ import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
 import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
 import { carefulStep } from "./game/careful";
-import { HEARTS, LIVES, againAtBoss, benchAt, blinking, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
+import { HEARTS, LIVES, againAtBoss, benchAt, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
@@ -68,7 +67,8 @@ import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { eyes, outlined } from "./render/sprite";
-import { STAND_LEDGE, standTop } from "./render/stand";
+import { STAND_LEDGE, shiver, standTop } from "./render/stand";
+import type { Feel } from "./render/feel";
 import type { Enemy, Shot } from "./game/enemies";
 import { drawTiles, drawWater, standTops } from "./render/tiles";
 
@@ -212,9 +212,6 @@ function extraState() {
     finished: false,
     /** Steps the dotted arc has been shown while he sits in a cannon. */
     lastEvents: null as Events | null,
-    /** Steps the world holds still after a stomp or a hit, and the little shake of the view. */
-    freeze: 0,
-    nudge: { x: 0, y: 0, until: 0 },
     /** The card shown: a level cleared, the game over, or a level's file that would not come. */
     card: null as "clear" | "over" | "failed" | null,
     /** The step the card came. */
@@ -336,6 +333,13 @@ function openScene(id: string, at?: string) {
   showShieldButton(!!play.shield?.has && !scene.map);
   if (scene.map) help.textContent = t.help;
   else keysLine(play);
+  feel?.reset(play);
+  // On the map after a level cleared for the first time: its stone and the station it opened answer.
+  if (scene.map && firstClear) {
+    const i = ORDER.indexOf(firstClear);
+    feel?.arrive(i, ORDER[i + 1] && isOpen(progress, ORDER, i + 1) ? i + 1 : null, firstClear === "nabolaget");
+  }
+  firstClear = null;
   layout();
   hud();
   // On the map, the open levels' code is fetched while he walks, so going in is quick.
@@ -377,7 +381,8 @@ const nameOf = (id: string) => (id === "kart" ? "T-banen" : LINE.find((l) => l.i
  * level's file.
  */
 function needed(id: string): Promise<unknown> | null {
-  const waits: Promise<unknown>[] = [];
+  // What answers events comes with the first scene; a scene opens without it if it does not come.
+  const waits: Promise<unknown>[] = feel ? [] : [loadFeel().catch(() => undefined)];
   if (id === "kart") {
     if (!kartArt) waits.push(loadKart());
   } else {
@@ -664,6 +669,22 @@ function showShieldButton(on: boolean) {
   shieldButton.hidden = !on;
   pad.classList.toggle("armed", on);
 }
+/**
+ * What answers what just happened (`render/feel.ts`, order 19): where it happened, in its role's colour,
+ * with a sound; the header's hearts breaking and filling. Fetched as the page starts, with the map's look.
+ */
+let feel: Feel | null = null;
+let feelLoading: Promise<void> | null = null;
+function loadFeel() {
+  return (feelLoading ??= import("./render/feel").then(
+    (m) => void (feel = m.createFeel({ sfx, hearts, lives: livesEl, coins: coinsEl, gold: goldEl })),
+    (e) => {
+      feelLoading = null;
+      throw e;
+    }
+  ));
+}
+void loadFeel().catch(() => undefined);
 const restartButton = $<HTMLButtonElement>("restart");
 const finishEl = $<HTMLElement>("finish");
 
@@ -735,7 +756,7 @@ function hud() {
     if (bestText !== shownHud.best) bestEl.textContent = shownHud.best = bestText;
   }
   const p = scene.play;
-  const heartsShown = scene.map ? HEARTS : p.hearts;
+  const heartsShown = scene.map ? HEARTS : feel?.heartsShown(p) ?? p.hearts;
   if (heartsShown !== shownHud.hearts) {
     shownHud.hearts = heartsShown;
     hearts.forEach((h, i) => h.classList.toggle("gone", i >= heartsShown));
@@ -784,6 +805,7 @@ function tryAgainAtBoss() {
   Object.assign(shown, p.body);
   before.x = p.body.x;
   before.y = p.body.y;
+  feel?.reset(p);
   layout();
   hud();
 }
@@ -978,14 +1000,6 @@ function goThrough() {
   }
 }
 
-function sparksAt(x: number, y: number, n: number, color: string, speed = 0.7) {
-  if (view.reduced) return;
-  for (let k = 0; k < n; k++) {
-    const a = (k / n) * Math.PI * 2;
-    state.sparks.push({ x, y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed - 0.1, life: 20, color });
-  }
-}
-
 /** How long a boss's line, and a hint after a round with no hit, stay over it. */
 const BOSS_LINE_STEPS = 180;
 const BOSS_HINT_STEPS = 300;
@@ -1019,10 +1033,18 @@ function bossBubbleAt(p: Play, lines: string[]): { x: number; y: number } | null
 /** This level's bracteate was found on an earlier visit: drawn as a pale outline, and quiet. */
 const owned = (p: Play) => progress.bracteates.includes(p.def.id);
 
-/** What the level's rules did this step, made audible and visible. */
+/** A level cleared for the first time: the map answers when he arrives on it (the stone, the station it opened). */
+let firstClear: string | null = debug ? params.get("justCleared") : null;
+
+/**
+ * What the level's rules did this step, made audible: the kit's sounds the page has always played, and
+ * words for a screen reader. Everything else that answers an event (where it happened, in its role's
+ * colour, with its own sound) is `render/feel.ts`'s (order 19).
+ */
 function react(ev: Events) {
   const p = scene.play;
-  const b = p.body;
+  /** This level's bracteate was found on an earlier visit: taking it again is quiet. */
+  const known = owned(p);
   if (ev.moved) state.moved = true;
   if (ev.loaded !== null) sfx.play("door");
   if (ev.fired !== null) sfx.play("cannon");
@@ -1034,77 +1056,49 @@ function react(ev: Events) {
   if (ev.bell !== null && (p.def.timed[ev.bell].note ?? 0) >= 0) sfx.play("bell", p.def.timed[ev.bell].note ?? ev.bell);
   if (ev.bleat) sfx.play("bleat");
   if (ev.drum !== null) sfx.play("stomp");
-  if (ev.coin !== null) {
-    sfx.play("coin", ev.coin);
-    const s = p.skilling.find((k) => k.at === p.t);
-    if (s) sparksAt(s.box.x + 4, s.box.y + 4, 4, COIN.shine, 0.5);
-  }
-  if (ev.stomp !== null) {
-    sfx.play("stomp");
-    jolt(0, 2);
-  }
-  if (ev.hurt) {
-    sfx.play("hurt");
-    jolt(b.facing * -2, 0);
-    if (!ev.lifeLost && p.hearts > 0) say(t.hurt(p.hearts));
-  }
+  if (ev.coin !== null) sfx.play("coin", ev.coin);
+  if (ev.hurt && !ev.lifeLost && p.hearts > 0) say(t.hurt(p.hearts));
   if (ev.lifeLost && !ev.over) say(t.lifeLost(p.lives));
   if (ev.life) {
     sfx.play("life");
     say(t.lifeWon);
-    sparksAt(b.x + PLAYER.w / 2, b.y, 8, FOOD.cheeseLight, 0.7);
   }
   if (ev.bench !== null) {
     sfx.play("bench");
     say(t.benchSat);
   }
   if (ev.dash) sfx.play("dash");
-  // The shield: a thud as it stops something, and the moment it is given (ADR 0024).
-  if (ev.blocked) {
-    sfx.play("stomp");
-    const sh = p.shield;
-    if (sh) sparksAt(b.x + PLAYER.w / 2 + sh.facing * 9, b.y + 3, 4, PALETTE.iron, 0.5);
-  }
+  // The shield given (ADR 0024).
   if (ev.gift) {
     sfx.play("fanfare");
     state.gift = { since: state.steps };
     say(shieldWords().join(" "));
-    sparksAt(b.x + PLAYER.w / 2, b.y + 4, 10, METAL.goldLight, 0.8);
     showShieldButton(true);
     keysLine(p);
   }
   if (ev.troll) {
-    // The troll's sounds; its words are its level's, as the other bosses' are.
-    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", slam: "cannon", hit: "stone", stone: "fanfare" };
+    // The troll's sounds (its tell and a hit are feel's); its words are its level's, as the other bosses' are.
+    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", slam: "cannon", stone: "fanfare" };
     if (sound[ev.troll]) sfx.play(sound[ev.troll]);
-    if (ev.troll === "slam") jolt(0, 3);
-    if (ev.troll === "hit") jolt(2, 0);
     const words = p.def.bossWords?.[ev.troll === "hit" ? `hit${Math.min(3, p.troll?.hits ?? 1)}` : ev.troll === "rest" ? "miss" : ev.troll];
     if (words) bossSays(words[lang].split("\n"), ev.troll === "miss" || ev.troll === "rest" ? BOSS_HINT_STEPS : BOSS_LINE_STEPS);
   }
   if (ev.boss) {
-    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", slam: "cannon", hit: "stone", line: "stomp", beaten: "fanfare" };
+    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", slam: "cannon", line: "stomp", beaten: "fanfare" };
     if (sound[ev.boss]) sfx.play(sound[ev.boss]);
-    if (ev.boss === "hit" || ev.boss === "slam") jolt(0, 3);
     const words = p.def.bossWords?.[ev.boss];
     if (words) bossSays(words[lang].split("\n"), /^miss|^rest/.test(ev.boss) ? BOSS_HINT_STEPS : BOSS_LINE_STEPS);
   }
-  if (ev.zap && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + PLAYER.h - 2, 8, PAINT.warning, 1.1);
   if (ev.over) {
     session.lives = 0;
     showOver();
   }
-  if (ev.splash) {
-    sfx.play("splash");
-    if (!view.reduced)
-      for (let i = 0; i < 8; i++) state.sparks.push({ x: b.x + PLAYER.w / 2 + (i - 4) * 1.5, y: b.y + PLAYER.h - 1, vx: (i - 3.5) * 0.18, vy: -0.8 - Math.random() * 0.6, life: 22, color: PALETTE.foam });
-  }
-  if (ev.bracteate && p.bracteate && !owned(p)) {
+  if (ev.bracteate && p.bracteate && !known) {
     sfx.play("gold");
     say(t.goldAnnounce);
     saveProgress(findBracteate(progress, p.def.id));
-    sparksAt(p.bracteate.x + 6, p.bracteate.y + 6, 10, METAL.goldLight, 0.9);
   }
+  let pole = false;
   if (ev.rune && p.rune) {
     sfx.play("pickup", p.def.rune);
     if (p.def.flourish && !p.def.chime) sfx.play("hurra");
@@ -1113,18 +1107,17 @@ function react(ev: Events) {
     const hadPole = hasPole(progress);
     const had = allRunes(progress, LINE_1);
     const wasOpen = lineTwoOpen(progress);
+    if (!progress.cleared.includes(p.def.id)) firstClear = p.def.id;
     const r = clearLevel(progress, p.def.id, ms, p.bracteateAt !== null, { skilling: p.found, clean: !p.hurt });
     saveProgress(r.progress);
     // The tenth rune: the helmet turns gold, and stays gold.
     const home = !had && allRunes(progress, LINE_1);
     if (home && !pretend) store.set(CROWNED, "1");
-    if (home && !view.reduced) sparksAt(b.x + PLAYER.w / 2, b.y + 1, 12, METAL.goldLight, 0.8);
-    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole: !hadPole && hasPole(progress), home, opened: !wasOpen && lineTwoOpen(progress) };
+    pole = !hadPole && hasPole(progress);
+    cardResult = { ms, newBest: r.newBest, gold: p.bracteateAt !== null || progress.bracteates.includes(p.def.id), found: p.found, total: p.skilling.length, clean: !p.hurt, pole, home, opened: !wasOpen && lineTwoOpen(progress) };
     state.flight = { from: { x: p.rune.x + 8, y: p.rune.y + 8 }, since: state.steps };
-    sparksAt(p.rune.x + 8, p.rune.y + 8, 8, PALETTE.runeGlow);
-    const bursts = p.def.fireworks;
-    if (bursts && !view.reduced) fireworks(state.sparks, (k) => ({ x: bursts[k % bursts.length][0], y: bursts[k % bursts.length][1] }));
   }
+  feel?.react(p, ev, pole, abilities.gold, known);
 }
 
 function play() {
@@ -1144,23 +1137,15 @@ function play() {
   // The scripted route (under ?debug&auto) is asked every step, held or not, as the tests ask it.
   const scripted = auto?.(p) ?? null;
   const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash"), shield: !held && input.held.down };
-  const airJumps = b.airJumps;
-  const vx = b.vx;
+  feel?.before(p, state.steps);
   const ev = stepPlay(p, intent);
   if (p.riding !== keysRiding) keysLine(p);
   session.lives = p.lives;
   session.purse = p.purse;
   if (ev.life && p.cheese?.at === p.t) session.cheese.add(p.def.id);
   if (ev.coin !== null || ev.stomp !== null) session.paid.set(p.def.id, [...p.paid]);
-  // Dust when he turns at speed, and a streak behind a dash.
-  if (b.onGround && Math.abs(vx) > 1.2 && Math.sign(b.vx) !== Math.sign(vx) && !view.reduced) state.sparks.push({ x: b.x + PLAYER.w / 2, y: b.y + PLAYER.h - 1, vx: -vx * 0.2, vy: -0.3, life: 14, color: DUST });
-  if (p.dash && !view.reduced)
-    for (let k = 0; k < 3; k++) state.sparks.push({ x: b.x + PLAYER.w / 2 - p.dash.dir * (6 + k * 2), y: b.y + 3 + k * 4, vx: -p.dash.dir * 0.4, vy: 0, life: 12, color: k === 1 ? SWEATER : mix(SWEATER, WHITE, 0.45) });
   state.lastEvents = ev;
-  if (ev.step.jumped && b.airJumps < airJumps && !view.reduced)
-    for (let i = 0; i < 3; i++) state.sparks.push({ x: b.x + PLAYER.w / 2 + (i - 1) * 3, y: b.y + PLAYER.h - 2 + i, vx: (i - 1) * 0.12, vy: 0.02, life: 70 + i * 12, color: abilities.gold ? METAL.gold : FEATHER.vane });
   afterStep(state, b, intent, ev.step, sfx);
-  if (!ev.bleat) hardLanding(state, b, ev.step, sfx);
   react(ev);
   // A level whose flourish is a peal of bells rings them one after another.
   const chime = p.def.chime;
@@ -1178,19 +1163,12 @@ function carefully(p: Play, k: Intent): Intent {
   return STILL;
 }
 
-/** A stomp or a hit: the world holds still for two steps and the view gives a little. */
-function jolt(dx: number, dy: number) {
-  if (view.reduced) return;
-  state.freeze = 2;
-  state.nudge = { x: dx, y: dy, until: state.steps + 6 };
-}
-
 function stepOnce() {
   stepStart(state, scene.play.body, before);
   stepArrival();
   input.pollPad();
-  if (state.freeze > 0) state.freeze--;
-  else if (state.mode === "play") play();
+  // The rules step every step: what holds after a hit is the picture only (order 19, ADR 0040).
+  if (state.mode === "play") play();
   else if (state.mode === "enter") goThrough();
   else if (!loading && !fetching && ++state.modeSteps > 300) reopen(state, scene.doors, input); // the place never opened
   if (state.bubble && state.steps > state.bubble.until) state.bubble = null;
@@ -1201,6 +1179,8 @@ function stepOnce() {
     showCard(cardResult);
   }
   if (cardGoes(state.card, state.steps - state.cardAt, view.reduced)) outToMap();
+  feel?.step(scene.play, state.steps);
+  if (state.feather && state.steps - state.feather.since === FEATHER_FALL) feel?.feather(shown.x + PLAYER.w / 2, shown.y + 4);
   stepEnd(state, scene.doors, input, scene.skies);
 }
 
@@ -1247,14 +1227,18 @@ function camera(elapsedMs: number, snap: boolean) {
   const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
   // On the sledge the camera looks well ahead, so he is drawn left of the middle and sees what comes.
   const focus = { x: shown.x + PLAYER.w / 2 + (p.riding ? p.def.rules?.lead?.(view.w) ?? 0 : 0), y: shown.y + PLAYER.h / 2, facing: p.body.facing, lookUp: look };
+  // `?debug&look=<wx>,<wy>`: the camera on that point, not on him (a contact sheet's subject, order 19).
+  if (lookAt) Object.assign(focus, { x: lookAt[0], y: lookAt[1], facing: 0, lookUp: 0 });
   const floor = scene.def.floor?.(focus.x) ?? scene.play.map.height;
   const bottom = view.h > view.w ? Math.max(floor, Math.round(focus.y + view.h / 3)) : floor;
   const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom, top: bar }, view, elapsedMs, snap);
-  shake.x = state.steps < state.nudge.until ? state.nudge.x : 0;
-  shake.y = state.steps < state.nudge.until ? state.nudge.y : 0;
+  const nudge = feel?.nudge(state.steps);
+  shake.x = nudge?.x ?? 0;
+  shake.y = nudge?.y ?? 0;
   aim({ x: at.x + shake.x, y: at.y + shake.y });
 }
 const shake = { x: 0, y: 0 };
+const lookAt = debug ? params.get("look")?.split(",").map(Number) : null;
 
 function layout() {
   kit.resize();
@@ -1307,7 +1291,15 @@ function drawThings(v: View) {
     if (art.carrier) art.carrier(i, at, v);
     else drawCarrier(d, p.t, v.alpha, v.sky.snow, STAND_LEDGE);
   });
-  p.def.timed.forEach((l, i) => (art.timed ? art.timed(i, v) : drawTimed(l, p.t, v.sky.snow, STAND_LEDGE)));
+  p.def.timed.forEach((l, i) => {
+    // About to go, it trembles (order 19): drawn a pixel to and fro.
+    const dx = timedPhase(p.t, l) === "warn" ? shiver(p.t) : 0;
+    const g = ctx();
+    g.translate(dx, 0);
+    if (art.timed) art.timed(i, v);
+    else drawTimed(l, p.t, v.sky.snow, STAND_LEDGE);
+    g.translate(-dx, 0);
+  });
   p.cannons.forEach((l, i) => {
     const loadedAt = p.loaded?.i === i ? p.loaded.at : -999;
     if (art.cannon) art.cannon(i, l, loadedAt, p.firedAt[i], v);
@@ -1360,16 +1352,20 @@ function standing(v: View) {
   p.def.carriers.forEach((d) => {
     if (!carrierShown(d, p.t)) return;
     const at = carrierDrawn(d, p.t, v.alpha);
-    standTop(at.x, at.y, d.w, "moves");
+    standTop(at.x, at.y, d.w, "moves", feel?.leaving(d, p.t));
   });
-  for (const l of p.def.timed) if (timedPhase(p.t, l) !== "off") standTop(l.x, l.y, l.w, "gives");
-  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x, s.y, s.w, s.how);
+  for (const l of p.def.timed) {
+    const phase = timedPhase(p.t, l);
+    if (phase !== "off") standTop(l.x + (phase === "warn" ? shiver(p.t) : 0), l.y, l.w, "gives", phase === "warn");
+  }
+  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x + (s.soon ? shiver(p.t) : 0), s.y, s.w, s.how, s.soon);
   for (const c of p.def.rules?.ground?.(p) ?? []) standTop(c.x, c.y, c.w, "holds");
 }
 
 /** An enemy in its look (the level's own, or one every level may meet), outlined; once beaten, the squares it puffs into. */
 function foe(e: Enemy, v: View) {
-  if (!e.alive) return drawEnemy(e, v.t);
+  // Beaten: squashed in its own shape, then a puff of its own colours (`render/feel.ts`).
+  if (!e.alive) return void feel?.beaten(e, v.t, () => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)));
   outlined(() => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)), e);
 }
 /**
@@ -1466,6 +1462,9 @@ function skiPole(v: View) {
 }
 
 function render(alpha: number) {
+  // A hit holds the picture a moment (not the rules, which go on stepping).
+  feel?.at(state.steps);
+  if (feel?.held(state.steps)) return;
   const sky = scene.skies.sky;
   const art = scene.def.art;
   const p = scene.play;
@@ -1494,6 +1493,8 @@ function render(alpha: number) {
   // Under the trees at night: the level's own dark (Nordmarka's, with his headlamp), drawn by its file.
   art.night?.(v, shown, scene.boards, p.map);
   drawSparks(state.sparks);
+  feel?.world(p, p.t);
+  feel?.use(p, scene.doors, scene.boards, scene.map);
   if (state.feather) {
     const f = Math.min(1, (state.steps - state.feather.since) / FEATHER_FALL);
     if (f < 1) {
@@ -1537,28 +1538,32 @@ function render(alpha: number) {
     if (bubble) say(bubble.lines.join(" "));
   }
 
-  // Blinking after a hit (with reduced motion, drawn at half strength the whole time instead); sitting, a
-  // little lower, on the bench or the sledge; lying back on the sledge, he is the level's to draw.
-  const safe = (blinking(p) ? (view.reduced ? 0.5 : Math.floor(p.t / 4) % 2 === 0 ? 0.25 : 1) : 1) * (p.ducking ? 0 : 1);
+  // Blinking after a hit (`render/feel.ts` draws the rest of it over him); sitting, a little lower, on the
+  // bench or the sledge; lying back on the sledge, he is the level's to draw.
+  const seen = p.loaded || p.ducking ? 0 : state.alpha * (1 - state.fade);
   const seated = p.sitting || p.riding;
   const body = seated ? { ...shown, y: shown.y + 3 } : shown;
+  const hint =
+    door && !touch && !speaking && !frozen() && !state.bubble
+      ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
+      : bench !== null && !touch && !bubble
+        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
+        : lesson && !touch && !bubble
+          ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${shieldKit?.SHIELD_WORDS[lang].shield}` }
+          : null;
+  const shownBubble = door && !speaking && !state.bubble ? null : bubble;
   drawOverlay({
     ...sceneOverlay(state, shown, sky, look()),
     banner: plated(state.banner),
     world: p.map,
     boards: scene.boards,
-    player: { body, walk: seated ? 0 : state.walk, alpha: p.loaded ? 0 : state.alpha * (1 - state.fade) * safe, phase: sky.phase, look: look() },
-    hint:
-      door && !touch && !speaking && !frozen() && !state.bubble
-        ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
-        : bench !== null && !touch && !bubble
-          ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
-          : lesson && !touch && !bubble
-            ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${shieldKit?.SHIELD_WORDS[lang].shield}` }
-            : null,
-    bubble: door && !speaking && !state.bubble ? null : bubble,
+    player: { body, walk: seated ? 0 : state.walk, alpha: seen * (feel?.alpha(p) ?? 1), phase: sky.phase, look: look() },
+    hint,
+    bubble: shownBubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
+  feel?.him(p, body, seated ? 0 : state.walk, sky.phase, look(), seen);
+  if (!shownBubble) feel?.hint(hint);
   drawFlight();
   follows(door ?? (bench !== null ? benchStop : null), state.moved && state.steps > state.helpUntil);
   // The touch pad's button says what up does here: go in at a door, sit at a bench.
@@ -1568,6 +1573,8 @@ function render(alpha: number) {
     enterButton.setAttribute("aria-label", label);
   }
   hud();
+  feel?.hud(p, scene.map);
+  feel?.drew(state.steps);
 }
 /** What the pad's enter button stands for at a bench. */
 const benchStop = { id: "bench" };
@@ -1794,6 +1801,7 @@ if (debugging)
       state,
       view,
       input,
+      sfx,
       step: stepOnce,
       frame: loop.frame,
       still,
