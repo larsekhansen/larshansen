@@ -228,10 +228,29 @@ has measured on a real phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.18 kB gzipped (60 is the budget; order 16 allowed 59.5). Order 15 moved Nordmarka's
+- **First script**: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
+  59.8). Earlier: 59.18 kB after order 16 (order 16 allowed 59.5). Order 15 moved Nordmarka's
   night drawing out of `main.ts` into `render/night.ts`, which comes with Nordmarka. Left to move: the enemy
   looks that two or three levels share (`render/pickups.ts`). Never alias a palette namespace in a level
   (`const P = PAINT`): it pulls the whole namespace into the first script.
+
+## Order 18: seen at a glance
+
+Lars played on his phone after the speed fix. Order 18 (`orders/18-seen-at-a-glance.md`, with two sections the
+planner added the same day): the card after a level takes him out to the map (ADR 0037); Nabolaget is shown as
+Vålerenga (ADR 0038); the header's runes are gold tiles with a tick or empty dashed slots, the level ringed;
+and colour says what a thing is (ADR 0039, DESIGN's "Colour says what a thing is"): enemies a quarter larger,
+outlined, in a palette of their own; what he stands on with a mint top; pickups, him and the bosses' tells held
+apart; `render/palette.test.ts` holds it. What it left:
+- Boxes grew only on eight levels (Holmenkollen, Nordmarka, Ekeberg, Vålerenga, Bygdøy, Vigelandsparken,
+  Korketrekkeren, Østensjøvannet). On the other eight growing cost the sloppy player more than 0.3 hearts a run,
+  so their enemies keep their old boxes and are drawn to them (`keepBoxes`); `tools/review/o18/summary.md`.
+- His tunic's blue is held off every field by day only: under the evening tint the game's water comes within
+  5 to 7 of it.
+- Carriers, decks and pads keep their own bodies (wood, balsa, lily pads); only their top edge is from the
+  platform palette. One-way ledges are wholly in it.
+- Doors, benches and signs were not recoloured; flags got the tick when raised.
+- Unplayed: none of it has been seen on a phone.
 
 ## Known weak spots, as of order 16
 

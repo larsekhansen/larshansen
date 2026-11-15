@@ -40,9 +40,22 @@ for (const st of BUILT) {
     // He stands three tiles before it (a statue: after it, his back to it, so it walks).
     const statue = e.look === "statue" || e.look === "bronze";
     const ex = e.c * TILE + TILE / 2;
-    const hx = Math.round(ex + (statue ? 3 : -3) * TILE);
-    const hy = Math.max(0, (Math.floor(e.r) - 4) * TILE);
+    let hx = Math.round(ex + (statue ? 3 : -3) * TILE);
+    let hy = Math.max(0, (Math.floor(e.r) - 4) * TILE);
     const p = newPlay(def, { pole: i0 >= ORDER.indexOf("akerselva"), shield: SHIELD_RULES, hasShield: i0 > ORDER.indexOf("bygdoy") });
+    // A flyer: him on ground not far under it, so it is in the view with him.
+    if (e.kind === "flyer") {
+      const fy = (e.r + 1) * TILE;
+      for (let k = 2; k <= 14; k++)
+        for (const side of [-1, 1]) {
+          const x = Math.round(ex + side * k * TILE);
+          const at = p.map.surfaceBelow(x, fy - TILE);
+          if (at !== null && at - fy <= 4 * TILE && at - fy >= 0 && hx === Math.round(ex - 3 * TILE)) {
+            hx = x;
+            hy = fy - TILE;
+          }
+        }
+    }
     const at = p.map.surfaceBelow(hx, hy);
     if (at !== null) {
       placeBody(p.body, hx, at);
