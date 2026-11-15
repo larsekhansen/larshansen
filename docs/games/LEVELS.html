@@ -117,7 +117,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
   <ol class="spell" id="spell" aria-label="The ten levels, one per letter of LARS HANSEN"></ol>
   <p class="cap">Same person as the front page, same jump, same pixels, same Oslo sky. The front page stays the walk through Gamle Oslo; the Opera's secret door opens onto the rest of the city.</p>
   <p><span class="tag done">built</span> All ten levels, the line map, two bosses, the ending, and the maze as a bonus stop. <span class="tag todo">not yet</span> Played by a person at real speed. Everything here was checked by scripted players and still pictures.</p>
-  <p><span class="tag done">line 2</span> Since order 14 a second line leaves the map at Stortinget: six more levels spelling VIKING, opened by clearing Nabolaget. Bygdøy (order 14) gives the shield; Vigelandsparken, Korketrekkeren and Østensjøvannet are built (order 15); Bjørvika and Gamlebyen stand under construction. <a href="#line-2">Line 2</a> below.</p>
+  <p><span class="tag done">line 2</span> Since order 14 a second line leaves the map at Stortinget: six more levels spelling VIKING, opened by clearing Nabolaget. Bygdøy (order 14) gives the shield; Vigelandsparken, Korketrekkeren and Østensjøvannet came with order 15, Bjørvika and Gamlebyen with the sea serpent in order 16: all sixteen are built. <a href="#line-2">Line 2</a> below.</p>
   <p class="cap">This page began on 13 November as the plan, with hand-drawn sketches of each level. The sketches are gone (they are in the file's git history); the pictures below are screenshots of the game. Where the build left the plan, the last section says how.</p>
 </header>
 
@@ -203,7 +203,7 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
 
 <section id="line-2">
   <h2>Line 2: VIKING</h2>
-  <div class="prose"><p>Planned on 14 November (<code>docs/games/PLAN-LINE-2.md</code>) and begun in order 14. Line 2 is orange, as Oslo's line 2 is. It leaves line 1 at Stortinget, runs under it on a low deck and comes up beside its end, where six stations stand on its own viaduct. Until Nabolaget is cleared a gate stands across it, with a sign, and all of it is drawn faint; a station not built yet stands behind a hoarding and says it is under construction. Once it is open the header shows a second group of six rune slots. Order 15 built three more; order 16 builds the last two and the serpent; order 17 reviews them.</p></div>
+  <div class="prose"><p>Planned on 14 November (<code>docs/games/PLAN-LINE-2.md</code>) and begun in order 14. Line 2 is orange, as Oslo's line 2 is. It leaves line 1 at Stortinget, runs under it on a low deck and comes up beside its end, where six stations stand on its own viaduct. Until Nabolaget is cleared a gate stands across it, with a sign, and all of it is drawn faint. Once it is open the header shows a second group of six rune slots, gold when all six are taken. Order 15 built three more and order 16 the last two and the serpent; order 17 reviews them. Under the last station of a line all cleared, a board adds up its best times; with all sixteen, a longship sails the fjord under the map and lanterns light the viaducts.</p></div>
   <figure><img class="shot" src="shots/kart-line2.png" width="1280" height="800" loading="lazy" alt="The line map at Stortinget: line 1 red on its viaduct, line 2 orange, leaving Stortinget under line 1 and coming up beside its end onto its own viaduct, Bygdøy's station beyond"><figcaption class="cap">Line 2 leaves at Stortinget (the orange bar on its station), runs under line 1 past Ekeberg and Nabolaget, and comes up onto its own viaduct.</figcaption></figure>
   <ol class="line" id="line2"></ol>
   <div class="prose"><p><strong>The shield</strong> (ADR 0024), given at Bygdøy's longship and his from then on: hold down on the ground and it comes up in six steps, facing the way he faces, for as long as down is held. Up, it stops a throw coming at him from in front and holds off a charge, pushing it back a tile; he cannot walk while it is up. It does not stop falls, anything from above or below, or anything from behind. A held stance, not a parry: the sloppy player's ±4 steps fail any window of a few steps, a person on a phone too.</p></div>
@@ -251,7 +251,8 @@ figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
       <tr><td class="num">12</td><td>Made fair after an adversarial review with a sloppy scripted player: rules at the edges, Game over at a boss, waits cut, the joins, the engineering.</td><td>PR #57</td></tr>
       <tr><td class="num">13</td><td>The look and the words: flat areas broken, trams on their rails, a plated banner, enemies that read at night, upright phones; every line read again; the last unfair places.</td><td>PR #58</td></tr>
       <tr><td class="num">14</td><td>Line 2's groundwork: the second line on the map, sixteen runes, the shield, the rocking deck, the sinking pad and the oar bank in the kit, and Bygdøy.</td><td>PR #59</td></tr>
-      <tr><td class="num">15</td><td>Vigelandsparken, Korketrekkeren and Østensjøvannet: statues, the sledge, swans and lily pads; Bygdøy's gull and the passage under the loft.</td><td>branch <code>three-stations</code></td></tr>
+      <tr><td class="num">15</td><td>Vigelandsparken, Korketrekkeren and Østensjøvannet: statues, the sledge, swans and lily pads; Bygdøy's gull and the passage under the loft.</td><td>PR #60</td></tr>
+      <tr><td class="num">16</td><td>Bjørvika and Gamlebyen: crane hooks, the ruins that rise as he passes, the sea serpent; the end of line 2; a hesitating player for the review's tools.</td><td>branch <code>the-last-two</code></td></tr>
     </tbody>
   </table></div>
 </section>
@@ -344,7 +345,9 @@ const FACTS = {
   "bygdoy":{"cols":256,"clear":69,"enemies":14,"coins":67,"flags":7,"benches":1},
   "vigelandsparken":{"cols":250,"clear":52,"enemies":14,"coins":55,"flags":9,"benches":1},
   "korketrekkeren":{"cols":270,"clear":48,"enemies":9,"coins":51,"flags":7,"benches":1},
-  "ostensjovannet":{"cols":256,"clear":48,"enemies":11,"coins":48,"flags":8,"benches":1}
+  "ostensjovannet":{"cols":256,"clear":48,"enemies":11,"coins":48,"flags":8,"benches":1},
+  "bjorvika":{"cols":256,"clear":73,"enemies":12,"coins":55,"flags":8,"benches":1},
+  "gamlebyen":{"cols":272,"clear":96,"enemies":11,"coins":54,"flags":6,"benches":2}
 };
 // ---- end of FACTS ----
 
@@ -427,8 +430,8 @@ const LINE2 = [
   { ch: "I", id: "vigelandsparken", name: "Vigelandsparken", built: true, idea: "statues that move only while his back is turned" },
   { ch: "K", id: "korketrekkeren", name: "Korketrekkeren", built: true, idea: "the sledge run, where he cannot stop" },
   { ch: "I", id: "ostensjovannet", name: "Østensjøvannet", built: true, idea: "lily pads that sink, swans that mind their water" },
-  { ch: "N", id: "bjorvika", name: "Bjørvika", built: false, idea: "crane hooks between half-built towers, and the wind" },
-  { ch: "G", id: "gamlebyen", name: "Gamlebyen", built: false, idea: "the ruins rebuilt as he passes; the sea serpent" }
+  { ch: "N", id: "bjorvika", name: "Bjørvika", built: true, idea: "crane hooks he chooses when to leave, between half-built towers, and the wind" },
+  { ch: "G", id: "gamlebyen", name: "Gamlebyen", built: true, idea: "the ruins rebuilt as he passes; the sea serpent" }
 ];
 const LEVELS2 = [
   { ch: "V", id: "bygdoy", name: "Bygdøy", where: "The museums on Bygdøy", sky: "Day", foes: "crabs, gulls, a pigeon, rats, two penguins; three slingers", ride: "",
@@ -458,7 +461,21 @@ const LEVELS2 = [
     add: "Lily pads that sink, swans that mind their water. A pad holds him two thirds of a second; a swan lets him be until he has been in its stretch four seconds, lowers its neck and hisses for the last of them, and then comes. Leaving its stretch calms it.",
     beats: ["The path from the metro under the first bird hide (the sign about the lake); the boardwalk over the shallows, a duck on it.", "The first pads, with firm stones between them; then the first swan's water, its pads wide enough apart that crossing takes about three seconds.", "The mist, which hides the far bank but never what is close: a pad at the shore's edge, the heron that stands as a tall step up to the second hide's deck and flies off a second after he lands on it.", "The island: a coot, and gulls nesting on rocks along the path that dive straight at him (the shield); the bench.", "The long crossing, two swans whose stretches meet, over a stone in the middle; the far shore, and rune I at the far hide as the sun comes up over the lake."],
     oslo: "“A nature reserve in the middle of the city. The birds were here first.” “The swans do not own the water. They have just not heard.”",
-    you: "The third rune of VIKING.", kit: "sink.ts, LevelDef.rules (swans), grounds (the heron)" }
+    you: "The third rune of VIKING.", kit: "sink.ts, LevelDef.rules (swans), grounds (the heron)" },
+  { ch: "N", id: "bjorvika", name: "Bjørvika", where: "The building site behind the Opera, high up", sky: "Evening", foes: "pigeons, rats, a crow; two riveters who throw bolts along a girder", ride: "",
+    shot: "On the upper slab of the first tower, the sign about the hook; a crane hook's yellow block out over the drop on its cable, the Barcode's towers and the fjord below at dusk",
+    cap: "A hook comes to a tile from the slab, slow at its end: on with a hop when he chooses, off with a step at the far side.",
+    add: "Crane hooks that carry him, and he chooses when. A hook travels on a beat between two landings, slow at each end: it comes to a tile from the landing it leaves, so on is a hop at the moment he picks, and right up to the one it reaches, so off is a step. Every landing over the drop is four tiles wide or more.",
+    beats: ["The quay at street level, the Opera's white slope far off, the sign; through the site's gate and up the hoist on the first tower's face.", "The open floor: rebar to jump, a welder whose sparks fall on a beat, a pigeon and a rat; the first hook over a bay with a safety net under it, where a miss costs nothing (and the cheese waits).", "Up to the slab, and two hooks across the drop between three towers.", "A floor of shafts, loose sheets of steel sliding across them, gusts against him; the girder, with two riveters on the next floor's beam who throw bolts along it (the shield).", "The site hut's bench on the roof; the traverse, three hooks in a row under the top crane's jib, hop to hop; up the crane's rungs to rune N at its cab, the fjord and the town below. The bracteate hangs under the jib, the feather's only."],
+    oslo: "“The Opera, the library, Munch. And cranes. Mostly cranes.” “No admittance. Helmet required. You have one.”",
+    you: "The fifth rune of VIKING.", kit: "carrier (travel, lift), zone (gusts), hazard (on a beat)" },
+  { ch: "G", id: "gamlebyen", name: "Gamlebyen", where: "The medieval park in Gamlebyen, then the harbour", sky: "Night", foes: "rats, an owl, three guards who were statues, two archers, geese, a dog; the sea serpent", ride: "",
+    shot: "The serpent's quay at night: the serpent reared out of the harbour, its eye lit, about to spit; his shield up, facing it; torches along the quay",
+    cap: "The shield sends the serpent's ball back; dazed, its head lies on the quay for a stomp.",
+    add: "The ruins rebuild as he passes. A ruin's missing stones rise as ledges and walls when he comes near, and stay; twice a wall rises behind him once he is past it. By the end the town is a thousand years younger, and the sea serpent is in the harbour: the shield sends its ball back, its dazed head takes a stomp, its tail is jumped.",
+    beats: ["The street and the medieval park's low walls under street lamps, a dig, the sign.", "St. Clement's ruin, its stones rising as he climbs to the gable; a crypt under the street with the cheese.", "The bishop's wall, its guards stone until he comes near; down off its end, and a wall rises behind him.", "The water mirror where the shore was, its stepping stones rising; the tower that builds itself under him up the town wall; archers on the wall walk's arches (the shield); a wall rises behind him at the town gate.", "The market by torchlight, the stave-built hall, a bench; across the harbour on two longships; the serpent's bench, the serpent, and rune G on the prow of the last longship as the dawn comes."],
+    oslo: "“Oslo stood here for five hundred years. Then it burned, and the town moved.” “The fishermen speak of something in the water. No one has seen it dry.”",
+    you: "The last rune of VIKING, and the end of line 2.", kit: "grounds (Grounds.map, the tower), LevelDef.rules (guards), game/serpent.ts" }
 ];
 
 const LADDER = [

@@ -102,3 +102,89 @@ is hit 100 times in 100; one who stops and raises the shield whenever a stone is
 | akerselva | 28/30 | 1/30 | 2.3 | 28/30, 1/30, 2.3 |
 
 Line 1's scripted clears are unchanged (the tests).
+
+## Order 16: the hesitating player, Bjørvika, Gamlebyen, the serpent (15 November)
+
+From this folder: `bun sloppy.ts levels=<id> ks=2,4 seeds=30 [hesitate=0.2]`, `bun obstacles.ts levels=bjorvika,gamlebyen
+ks=2,4 seeds=40`, `bun standing.ts`, `bun worstwait.ts`, `bun bosses.ts gamlebyen`. `bun sloppy.ts ks=0` clears all
+sixteen 1/1. The hesitating player (`hesitate=0.2`, ADR 0029) is the sloppy player that also stands 0.5 to 1.5 s before
+one move in five, seeded, where a person would stop to look (on the ground, not riding, not right after a wait).
+
+Wanted by order 16, hearts a run at ±4: Bjørvika about 3 (at most 3.5); Gamlebyen about 3.5 (at most 4.5) with at most 2
+Game overs in 30; no Game over at ±2; no single jump over 0.4 hearts a try. Østensjøvannet for the hesitating player:
+between about 2 and 3.5.
+
+### The lake and the hesitating player (30 runs each)
+
+| Level | player | ±2 hearts (game over) | ±4 hearts (game over) |
+|---|---|---|---|
+| ostensjovannet, as order 15 left it | hesitating | 7.2 (21) | 7.3 (18) |
+| ostensjovannet, lily pads 1.7 s, a swan that caught him lets him be | hesitating | 3.7 (0) | 2.6 (1) |
+| ostensjovannet, as now | sloppy | 1.0 (0) | 1.2 (0) |
+| langkaia | hesitating | 0.1 (0) | 1.4 (0) |
+| bygdoy | hesitating | 1.1 (0) | 2.0 (0) |
+
+At ±4 the eased lake's hesitating player loses 1.1 hearts a run to its swans (none before) and 0.5 to falls; at ±2 more
+of its pauses fall in a swan's stretch (2.0 to swans), so ±2 measures worse than ±4 there.
+
+### Bjørvika and Gamlebyen (30 runs each)
+
+| Level | player | k | clear | game over | hearts lost per run | lives lost per run | median clear (s) |
+|---|---|---|---|---|---|---|---|
+| bjorvika | sloppy | ±2 | 30/30 | 0 | 1.1 | 0.03 | 88 |
+| bjorvika | sloppy | ±4 | 30/30 | 0 | 1.6 | 0.10 | 107 |
+| bjorvika | hesitating | ±2 | 30/30 | 0 | 1.6 | 0.10 | 98 |
+| bjorvika | hesitating | ±4 | 30/30 | 0 | 1.8 | 0.30 | 112 |
+| gamlebyen | sloppy | ±2 | 30/30 | 0 | 1.3 | 0.00 | 90 |
+| gamlebyen | sloppy | ±4 | 30/30 | 0 | 2.9 | 0.27 | 111 |
+| gamlebyen | hesitating | ±2 | 30/30 | 0 | 1.4 | 0.07 | 103 |
+| gamlebyen | hesitating | ±4 | 30/30 | 0 | 3.3 | 0.27 | 120 |
+
+**Both are under the mark**, Bjørvika well under (1.6 against about 3): its hooks cost almost nothing once the hop off
+at the far end became a step (that hop cost half a heart a try at ±4, over the limit), and what it loses is to walkers
+(each 0.1 to 0.2) and the rebar. Gamlebyen is 2.9 against about 3.5: the serpent's tail 1.1, the water mirror's stepping
+stones 0.4, the guards and the market's animals the rest. Where hearts go at ±4:
+
+| Level | place (cols) | what | hearts per run |
+|---|---|---|---|
+| bjorvika | 12–15 | pigeon on the quay | 0.23 |
+| bjorvika | 24–27, 64–67, 132–135 | the rats by the gate, on the open floor, on the third tower | 0.17 each |
+| bjorvika | 112–115, 180–183 | the pigeons on the second tower and the girder | 0.13 each |
+| gamlebyen | 244–255 | the serpent's tail | 1.10 |
+| gamlebyen | 76–79 | a guard on the bishop's wall | 0.27 |
+| gamlebyen | 104–111 | falls between the stepping stones | 0.40 |
+| gamlebyen | 208–211 | the dog | 0.20 |
+
+### Every jump on its own (40 tries each), standing and waits
+
+| Level | jumps tried | all made without a heart lost, ±2 | ±4 | worst hearts a try at ±4 |
+|---|---|---|---|---|
+| bjorvika | 15 | 95.0 % | 79.4 % | 0.07 (the leap over the second rebar, col 68) |
+| gamlebyen | 8 | 100 % | 95.0 % | 0.00 |
+
+`obstacles.ts` tries the moves named jump or leap: Gamlebyen's stepping-stone leaps and the traverse's hops are named
+otherwise and are not in it; from the runs above the stepping stones cost 0.4 a run over six leaps (about 0.07 a try),
+the serpent's tail about 0.37 a try (three a run).
+
+```
+bjorvika: clear 60.1 s; standing still 15.8 s (26%): on fixed ground 2.7 s (4%), riding 13.1 s (22%)
+gamlebyen: clear 96.3 s; standing still 24.3 s (25%): on fixed ground 22.7 s (24%), riding 1.6 s (2%)
+```
+
+Longest waits on arrival (`worstwait.ts`): Bjørvika's hoist 4.4 s, a sheet over a shaft in the calm between gusts 5.8 s
+worst; Gamlebyen's tower 1.6 s, its stepping stones under a third of a second. The wall walk with the archers lists
+7.5 s, but that is the whole walk with the shield, not a wait; the serpent's fight is left out, as the other bosses'.
+
+### The serpent against ten naive strategies (`bosses-gamlebyen.txt`)
+
+Every one sees its first hint within 5 to 7 s. Three reach Game over, at 85, 94 and 182 s; seven are alive at 300 s. None
+wins: the answer is the shield.
+
+### Line 1 and line 2 spot-checks (±4, 30 runs)
+
+| Level | clear | game over | hearts lost per run | before order 16 |
+|---|---|---|---|---|
+| bygdoy | 30/30 | 0 | 1.2 | 1.2 |
+| vigelandsparken | 30/30 | 0 | 2.1 | 2.1 |
+
+The scripted clears of all fourteen earlier levels pass (the tests).

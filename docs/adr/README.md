@@ -34,8 +34,12 @@ Lars before reversing one of his.
 | [0022](0022-the-plough-hurts-only-while-it-moves.md) | The plough hurts only while it moves; standing still it is in his way; running into him shows the round's hint | planner (order 13) | holds |
 | [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds |
 | [0024](0024-the-shield-is-a-held-stance.md) | The shield: held down on the ground it comes up in six steps and stops throws and charges from in front; a held stance, not a parry | planner (order 14) | holds |
-| [0025](0025-line-2-viking.md) | Line 2: six more levels spelling VIKING, orange, leaving at Stortinget, opened by Nabolaget; stations not built are under construction | planner (plan for line 2, shown to Lars; order 14) | holds; extends 0006 |
+| [0025](0025-line-2-viking.md) | Line 2: six more levels spelling VIKING, orange, leaving at Stortinget, opened by Nabolaget; stations not built are under construction | planner (plan for line 2, shown to Lars; order 14) | holds; extends 0006; completed by 0030 |
 | [0026](0026-the-sledge-he-cannot-stop.md) | Korketrekkeren: on the sledge he cannot stop; the speed is the level's by stretch, the run a stair of narrow ledges; jump or duck | planner (order 15) | holds |
+| [0027](0027-the-sea-serpent.md) | The sea serpent: the shield sends its ball back and dazes it, a stomp on its head; its tail jumped; its neck in his way, never a hurt | planner (order 16) | holds |
+| [0028](0028-the-ruins-rise-as-he-passes.md) | Gamlebyen's stones rise as he passes and stay; a level's ground may change its map; the reach search with every stone risen and with none | planner (order 16) | holds |
+| [0029](0029-the-hesitating-player.md) | The review's hesitating player; Østensjøvannet's lily pads hold him longer for it | planner (order 16) | holds |
+| [0030](0030-the-end-of-line-2.md) | All sixteen built: nothing under construction; VIKING on Gamlebyen's card; the map's line totals, longship and lanterns | planner (order 16) | holds; completes 0025 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

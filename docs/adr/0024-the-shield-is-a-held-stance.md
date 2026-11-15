@@ -48,6 +48,11 @@ level can design around: walk, stop and raise, walk.
 - A thrower's lob is no threat to a player who stands with the shield up facing it; the line 2
   levels put their throwers where standing still is the question (Bygdøy's slingers lead their
   target, so walking on under them is what hurts).
+- A thrower that faces one way may be blind nearer than its usual one and a half tiles (`EnemyDef.blind`):
+  Bjørvika's riveters and Gamlebyen's archers throw from above and lead their man, and from within four tiles
+  their bolt would come down too steeply (slower across than 0.3 px a step) for the shield; they do not throw
+  then (order 16).
+- The sea serpent's ball is the shield's answer to the third boss ([0027](0027-the-sea-serpent.md)).
 - Line 1's bosses meet a shield on a return visit: the plough charging into it backs off as if it had
   run into him; the troll's club and wave go through, so Nordmarka's fight is unchanged.
 - The rules tests (`rules.test.ts`, "the shield") cover a stone from the front, from behind and from

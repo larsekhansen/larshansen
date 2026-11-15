@@ -27,7 +27,12 @@ the debug chunk; the shield's rules (`shield.ts`) and line 2's kit pieces come l
 allowed 59.5. 58.83 kB after order 15 (three more levels, each its own file, and a slot in `play.ts`
 for a level's own rules), which moved Nordmarka's night drawing out of `main.ts` into `render/night.ts`,
 fetched with Nordmarka, and made the sinking pad a small file of its own that Bygdøy and Østensjøvannet
-both fetch. Left to move: the enemy looks that two or three levels share.
+both fetch. Left to move: the enemy looks that two or three levels share. 59.18 kB after order 16 (Bjørvika,
+Gamlebyen, the serpent, the end of line 2; the order allowed 59.5): each level's swatches and the serpent's
+rules come with their level; what grew the first script is a level's own ground changing its map (one line in
+`play.ts`), a one-way thrower's blind distance, the sledge's help line, the card's VIKING line and the map's
+line totals. A level that aliases a palette namespace (`const P = PAINT`) pulls the whole namespace into the
+first script (about 0.25 kB): use `PAINT.warning`, never an alias.
 
 ## Not chosen
 - One bundle. It would be about 110 kB gzipped.

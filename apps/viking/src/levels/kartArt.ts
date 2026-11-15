@@ -254,7 +254,7 @@ function stationBack(i: number, cleared: boolean, clean: boolean, v: View) {
 function longship(v: View) {
   const span = KART_COLS * TILE + 160;
   const x = (((view.reduced ? 40 * TILE : v.t * 0.25) % span) + span) % span - 80;
-  const y = LINE_Y + 2 * TILE + 50;
+  const y = LINE_Y + 2 * TILE + 34;
   const bob = view.reduced ? 0 : Math.round(Math.sin(v.t * 0.04));
   R(x, y + bob, 40, 4, PALETTE.woodDark);
   R(x + 3, y + 4 + bob, 34, 2, mix(PALETTE.woodDark, INK, 0.3));
