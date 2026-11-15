@@ -126,3 +126,36 @@ every level since the enemies changed, into `docs/games/shots/`), `tools/facts.t
 4. Every changed line of text, both languages, and where the level's display name lives.
 5. The perf numbers, first-script size, what was moved out of the first script.
 6. Departures, doubts, found and not fixed. Branch, commits, tests, front page comparison.
+
+## 5. Platforms that stand out
+
+Added by the planner the same day, after Lars said: "all platforms also need a separate palette". Done
+after section 4.
+
+- Everything he can stand on that is not the level's main ground or wall (ledges of every kind, one-way
+  platforms, carriers: rafts, lifts, ferries, bells, hooks, sheets, logs, lily pads, decks, oars, rising
+  stones, crates, the statues-as-steps) gets its top from one platform palette, its own file in
+  `packages/pixelkit/src/swatches/`, separate from the enemy palette and from every background.
+- The promise, as with enemies: one glance says "I can stand there". A bright, consistent top edge (two
+  pixels) in the palette's standing colour, a clear body colour under it from a small family (say a warm
+  honey wood, a pale stone-cream, a teal metal), and a dark underside line. Each thing keeps its identity
+  (a raft is still a raft, a lily pad still a pad) but its top edge and body are from the family. The main
+  ground keeps the levels' own surfaces, but its walkable top edge should also read: check it against each
+  level's backdrop.
+- Things that move or will give way must look different from things that hold: carriers keep the
+  standing top and add a marker (a stripe or studs in the palette's moving colour); things that sink, fall
+  or vanish on a beat (sinking pads, the lake's lily pads, ledges on a beat, the stone that sinks back) get
+  the palette's warning top (not the enemy family's colours), the same everywhere.
+- The three families must not collide: add to the palette test that no platform colour is within the set
+  distance of any enemy-palette colour or of any background, wall, sky, water or far-layer colour of any
+  level, by day and under the evening, twilight and night tints. Under the night tint a platform's top
+  edge keeps some light, as ADR 0023 does for skilling.
+- No change to any platform's size, place or timing: this is colour and edge only, so routes, the reach
+  search and fairness are untouched (say so if any test disagreed).
+- The front page is not part of this (28 of 28 byte-identical still); if a kit function it shares draws
+  ledges, add an option the viking game passes, as `drawBanner`'s plate did.
+- Speed: no more rectangles a frame than before on Akershus and Bygdøy (`?debug&perf`).
+- Look at it: one contact sheet of every platform kind before and after, by day and at night, on its own
+  level's backdrop, at 1280 x 800 and 390 x 844. An ADR for the platform palette and its promise; DESIGN
+  updated. In the hand-back, add a section for it: what each kind looks like now, any that could not take
+  the palette and why.
