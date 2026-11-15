@@ -1,4 +1,5 @@
-import { defineConfig } from "vite";
+import { gzipSync } from "node:zlib";
+import { defineConfig, type Plugin } from "vite";
 
 // Served from larshansen.dev/viking/, next to the landing page (see .github/workflows/deploy.yml).
 // Each level after the first is one file, fetched when it is first needed; everything the levels
@@ -14,8 +15,31 @@ const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "swatches/ruins": "gamlebyen", "game/serpent": "gamlebyen", "game/plough": "nabolaget", "game/troll": "nordmarka", "render/night": "nordmarka", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
 const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|swatches\/park|swatches\/sledge|swatches\/lake|swatches\/site|swatches\/ruins|game\/serpent|game\/plough|game\/troll|render\/night|deck|sink|oars)\.ts$/;
 
+/**
+ * The first script's budget (ADR 0011): the script the page loads first (the kit, the rules, the line map,
+ * Langkaia) must stay under 60 kB gzipped, measured as vite reports it (zlib's gzip in the process vite runs
+ * in). Over it, the build fails, so the budget is enforced and not remembered.
+ */
+const BUDGET_KB = 60;
+function firstScriptBudget(): Plugin {
+  return {
+    name: "first-script-budget",
+    apply: "build",
+    // After vite's own plugins have finished the chunks, so this is the code that is written.
+    enforce: "post",
+    writeBundle(_options, bundle) {
+      for (const file of Object.values(bundle)) {
+        if (file.type !== "chunk" || !file.isEntry) continue;
+        const kb = gzipSync(file.code).length / 1000;
+        if (kb > BUDGET_KB) this.error(`The first script, ${file.fileName}, is ${kb.toFixed(2)} kB gzipped, over the ${BUDGET_KB} kB budget (ADR 0011): move what one level alone uses into its file.`);
+      }
+    }
+  };
+}
+
 export default defineConfig({
   base: "/viking/",
+  plugins: [firstScriptBudget()],
   build: {
     rollupOptions: {
       output: {

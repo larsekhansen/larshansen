@@ -213,7 +213,9 @@ function extraState() {
     /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
     bossLine: null as { lines: string[]; until: number } | null,
     /** The moment he is given the shield: his own words over him for a while. */
-    gift: null as { since: number } | null
+    gift: null as { since: number } | null,
+    /** Until this step the help line stays up, though he moves: it has just changed (the shield, the sledge, the pole). */
+    helpUntil: 0
   };
 }
 const before = { x: 0, y: 0 };
@@ -623,10 +625,20 @@ dashButton.setAttribute("aria-label", t.dash);
 const shieldButton = pad.querySelector<HTMLButtonElement>('[data-action="down"]')!;
 /** Whether the help line and the shield's button are as they are on the sledge, where down ducks. */
 let keysRiding: boolean | null = null;
-/** The help line in a level, and the shield's button: on the sledge down ducks, and the button says so. */
+/** What the help line last said in a level. */
+let keysSaid = "";
+/**
+ * The help line in a level, and the shield's button: on the sledge down ducks, and the button says so.
+ * When what it says changes (the shield given, the sledge, the pole), it comes back for five seconds.
+ */
 function keysLine(p: Play) {
   keysRiding = p.riding;
-  help.textContent = p.riding ? t.helpSledge : t.helpLevel(p.pole, !!p.shield?.has);
+  const text = p.riding ? t.helpSledge : t.helpLevel(p.pole, !!p.shield?.has);
+  if (keysSaid && text !== keysSaid && !touch) {
+    help.hidden = false;
+    state.helpUntil = state.steps + 300;
+  }
+  help.textContent = keysSaid = text;
   const word = p.riding ? t.duck : t.shield;
   shieldButton.textContent = word;
   shieldButton.setAttribute("aria-label", word);
@@ -1439,8 +1451,11 @@ function render(alpha: number) {
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
   if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [t.featherLine] };
-  // The shield given: his own bubble for five seconds.
-  if (state.gift && state.steps - state.gift.since > 300) state.gift = null;
+  // Where the level teaches the shield (Bygdøy's passage), its key over him while he has it there.
+  const at = scene.def.shieldLesson;
+  const lesson = at && p.shield?.has && cx > at[0] && cx < at[1];
+  // The shield given: his own bubble for five seconds, or until the passage, where the key shows.
+  if (state.gift && (state.steps - state.gift.since > 300 || lesson)) state.gift = null;
   if (state.gift && state.mode === "play") bubble = { x: cx, y: shown.y - 4, lines: touch ? t.shieldGivenTouch : t.shieldGiven };
   const nearKey = bubble ? bubble.lines[0] : null;
   if (nearKey !== state.nearSign) {
@@ -1464,12 +1479,14 @@ function render(alpha: number) {
         ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${door.soon && !scene.map ? t.locked : t.goIn}` }
         : bench !== null && !touch && !bubble
           ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
-          : null,
+          : lesson && !touch && !bubble
+            ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${t.shield}` }
+            : null,
     bubble: door && !speaking && !state.bubble ? null : bubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
   drawFlight();
-  follows(door ?? (bench !== null ? benchStop : null), state.moved);
+  follows(door ?? (bench !== null ? benchStop : null), state.moved && state.steps > state.helpUntil);
   // The touch pad's button says what up does here: go in at a door, sit at a bench.
   const label = !door && bench !== null ? t.sitButton : t.enter;
   if (enterButton.textContent !== label) {

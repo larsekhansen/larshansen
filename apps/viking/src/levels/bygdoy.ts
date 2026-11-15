@@ -195,7 +195,8 @@ export const ENEMIES: EnemyDef[] = [
   // The lesson: the first slinger alone, on the floor past the low passage under the loft, throwing
   // straight along it on a short steady beat. In the passage a man cannot jump, so walking on without
   // the shield is always hit, and stopping to raise it as a stone comes never is.
-  { kind: "thrower", look: "slinger", c: 214, r: W - 1, period: 100, faces: -1, straight: true, reach: 14 },
+  // (Its reach is ten tiles, so on the narrowest view he sees it wind up within a few steps of its starting.)
+  { kind: "thrower", look: "slinger", c: 214, r: W - 1, period: 100, faces: -1, straight: true, reach: 10 },
   // Then the other two on the storehouses' ridges, nine tiles apart, the second a little behind: their
   // beats chosen (by a search over every pair) so that a man who walks on through the yard meets a
   // throw coming at him as often as can be, a little under every other time.
@@ -807,6 +808,8 @@ const STEPS: LedgeLook = { body: M.plasterShade, top: M.plaster, edge: mix(M.pla
 export const BYGDOY: LevelDef = {
   id: "bygdoy",
   rune: 10,
+  // The passage under the loft, up to its slinger: the shield's key over him.
+  shieldLesson: [LOFT[0] * TILE - 8, (LOFT[1] + 3) * TILE],
   name: "Bygdøy",
   landmark: { nb: "Museumsskipene", en: "The museum ships" },
   place: { nb: "Museene på Bygdøy", en: "The museums on Bygdøy" },

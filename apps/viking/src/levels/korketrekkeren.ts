@@ -480,7 +480,7 @@ export const KORKETREKKEREN: LevelDef = {
     },
     {
       label: { nb: "Kjelken", en: "The sledge" },
-      lines: { nb: ["På kjelken er pil ned å dukke.", "Skjoldet ligger i sekken til Midtstuen."], en: ["On the sledge, down is to duck.", "The shield stays packed until Midtstuen."] },
+      lines: { nb: ["På kjelken dukker du med pil ned.", "Skjoldet ligger i sekken til Midtstuen."], en: ["On the sledge, down ducks.", "The shield stays packed until Midtstuen."] },
       touch: { nb: ["På kjelken blir Skjold-knappen til Dukk.", "Skjoldet ligger i sekken til Midtstuen."], en: ["On the sledge, the Shield button turns into Duck.", "The shield stays packed until Midtstuen."] }
     },
     {

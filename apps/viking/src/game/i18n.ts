@@ -28,7 +28,7 @@ const STRINGS = {
     goldMissed: "Brakteaten: ikke funnet. Den henger høyt.",
     /** On Gamlebyen's card: line 2's runes, and with all six, what is left to find. */
     runesTwoLeft: (n: number) => `${NB_COUNT[n] ?? n} av seks runer på linje 2. Resten ligger langs linja.`,
-    vikingLine: (left: number) => `Seks av seks runer: VIKING. Igjen å finne: ${left === 0 ? "bedre tider." : `${left === 1 ? "én brakteat" : `${left} brakteater`}, og bedre tider.`}`,
+    vikingLine: (left: number) => `Seks av seks runer: VIKING. Igjen å finne: ${left === 0 ? "bedre tider." : `${left === 1 ? "én brakteat" : `${left} brakteater`} og bedre tider.`}`,
     /** The line map's board at the end of a line all cleared: its best times added up. */
     lineTime: (n: number, time: string) => `Linje ${n} ${time}`,
     lineTwoOpened: "Linje 2 har åpnet. Den går fra Stortinget.",

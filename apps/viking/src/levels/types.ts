@@ -309,6 +309,8 @@ export interface LevelDef {
   rules?: LevelRules;
   /** Letters that are open until they rise (`Grounds.map`), and then solid or one-way: for the tests and the reach search. */
   risen?: { solid: string; oneWay: string };
+  /** Where the level first asks for the shield (world x, from and to): its key is shown over him there. */
+  shieldLesson?: [number, number];
   art: Art;
 }
 
