@@ -1794,6 +1794,7 @@ if (debugging)
       state,
       view,
       input,
+      sfx,
       step: stepOnce,
       frame: loop.frame,
       still,
