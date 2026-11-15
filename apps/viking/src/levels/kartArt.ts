@@ -5,9 +5,8 @@ import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, DOORWAY, FACADE, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
-import { drawRune } from "../render/actors";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
-import { RUNE_CHARS } from "../game/runes";
+import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import { isOpen, type Progress } from "../game/progress";
 import { LINE, ORDER } from "./index";
 import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, UP, stationX } from "./kart";
@@ -242,12 +241,53 @@ function deck(x: number, y: number) {
   R(x, y + 10, TILE, 1, FACADE.marbleSeam);
 }
 
-/** Behind a station: its place's skyline, and its rune carved on a stone above, lit once the level is cleared. */
-function stationBack(i: number, cleared: boolean, clean: boolean, v: View) {
+/** The stone's dashed outline and faint carving while its level is not cleared: an empty slot, as in the header. */
+const SLOT = "rgba(31, 26, 23, 0.5)";
+const SLOT_RUNE = "rgba(31, 26, 23, 0.16)";
+const SLOT_NIGHT = "rgba(220, 228, 255, 0.45)";
+
+/**
+ * A station's rune stone, 16 x 16 from (x, y), in the header's language (order 18): cleared, a gold tile
+ * with the rune dark on it and a tick at its corner, lit after dark; not yet, an empty slot, a faint dashed
+ * outline with the rune barely there.
+ */
+function runeStone(x: number, y: number, char: RuneChar, cleared: boolean) {
+  const cells = runeCells(char, 9, 11);
+  if (!cleared) {
+    // Its dashes are dark by day and stay pale after dark, so the empty slot is seen as one in any sky.
+    for (let k = 1; k < 15; k += 2)
+      for (const [dx, dy] of [[k, 0], [k, 15], [0, k], [15, k]]) {
+        R(x + dx, y + dy, 1, 1, SLOT);
+        light(x + dx, y + dy, 1, 1, "window", SLOT_NIGHT);
+      }
+    cells.forEach((row, ry) => row.forEach((on, rx) => on && R(x + 4 + rx, y + 3 + ry, 1, 1, SLOT_RUNE)));
+    return;
+  }
+  R(x + 1, y, 14, 16, METAL.goldDark);
+  R(x, y + 1, 16, 14, METAL.goldDark);
+  R(x + 1, y + 1, 14, 14, METAL.gold);
+  R(x + 1, y + 1, 14, 1, METAL.goldLight);
+  R(x + 1, y + 1, 1, 14, METAL.goldLight);
+  cells.forEach((row, ry) => row.forEach((on, rx) => on && R(x + 4 + rx, y + 3 + ry, 1, 1, INK)));
+  // The tick: a dark disc over the top right corner with a pale check in it.
+  const tx = x + 11;
+  const ty = y - 3;
+  R(tx + 1, ty, 5, 7, INK);
+  R(tx, ty + 1, 7, 5, INK);
+  for (const [dx, dy] of [[1, 3], [2, 4], [3, 3], [4, 2], [5, 1]]) {
+    R(tx + dx, ty + dy, 1, 1, WHITE);
+    light(tx + dx, ty + dy, 1, 1, "window", WHITE);
+  }
+  // After dark its frame glows; the rune and the tick stay dark on it.
+  for (const [lx, ly, lw, lh] of [[x + 1, y, 14, 1], [x + 1, y + 15, 14, 1], [x, y + 1, 1, 14], [x + 15, y + 1, 1, 14]]) light(lx, ly, lw, lh, "soft");
+}
+
+/** Behind a station: its place's skyline, and its rune stone above it: gold with a tick once the level is cleared. */
+function stationBack(i: number, cleared: boolean, clean: boolean) {
   const x = stationX(i);
   skyline(i, x, LINE_Y);
-  drawRune(x - 8, LINE_Y - 46, RUNE_CHARS[LINE[i].rune], cleared ? "lit" : "dark", v.t, i);
-  if (clean) waffle(x + 9, LINE_Y - 44);
+  runeStone(x - 8, LINE_Y - 46, RUNE_CHARS[LINE[i].rune] as RuneChar, cleared);
+  if (clean) waffle(x + 9, LINE_Y - 37);
 }
 
 /**
@@ -334,8 +374,8 @@ export function kartArt(progress: Progress, open: boolean): Art {
       mound(v.doors.get("maze"), v.sky.snow);
       branch();
       LINE.forEach((l, i) => {
-        if (!two(i)) stationBack(i, cleared(i), progress.clean.includes(l.id), v);
-        else faintly(!open, () => stationBack(i, cleared(i), progress.clean.includes(l.id), v));
+        if (!two(i)) stationBack(i, cleared(i), progress.clean.includes(l.id));
+        else faintly(!open, () => stationBack(i, cleared(i), progress.clean.includes(l.id)));
       });
       if (!open) gate();
     },

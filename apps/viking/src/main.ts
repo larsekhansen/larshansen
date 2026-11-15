@@ -696,17 +696,21 @@ livesEl.appendChild(pixelSvg(["...w...", "..iii..", ".iiiii.", "iiiiiii", "rrrrr
 const livesN = livesEl.appendChild(document.createElement("span"));
 
 const shownHud = { clock: "", lit: "", gold: -1, best: "", hearts: -1, lives: -1, coins: "" };
-/** The rune slots light for the levels cleared; the one a rune is flying to waits. Line 2's group shows once line 2 is open. */
+/** The rune slots fill for the levels cleared; the one a rune is flying to waits; the level he is in is ringed. Line 2's group shows once line 2 is open. */
 function hud() {
-  const lit = LINE.map((l) => (progress.cleared.includes(l.id) && !(state.flight && scene.def.id === l.id) ? "1" : "0")).join("") + (lineTwoOpen(progress) ? "+" : "");
+  const here = scene.map ? -1 : scene.def.rune;
+  const lit = LINE.map((l) => (progress.cleared.includes(l.id) && !(state.flight && scene.def.id === l.id) ? "1" : "0")).join("") + (lineTwoOpen(progress) ? "+" : "") + here;
   if (lit !== shownHud.lit) {
     shownHud.lit = lit;
-    LINE.forEach((l, i) => runeSlots[l.rune]?.classList.toggle("lit", lit[i] === "1"));
+    LINE.forEach((l, i) => {
+      runeSlots[l.rune]?.classList.toggle("lit", lit[i] === "1");
+      runeSlots[l.rune]?.classList.toggle("here", l.rune === here);
+    });
     const n = [...lit.slice(0, 10)].filter((c) => c === "1").length;
     const n2 = [...lit.slice(10, 16)].filter((c) => c === "1").length;
     runesEl.setAttribute("aria-label", n === 10 ? t.runesAll : t.runes(n));
     runesEl.classList.toggle("all", n === 10);
-    runesTwoEl.hidden = !lit.endsWith("+");
+    runesTwoEl.hidden = !lit.includes("+");
     runesEl.parentElement!.classList.toggle("sixteen", !runesTwoEl.hidden);
     runesTwoEl.setAttribute("aria-label", t.runesTwo(n2));
     runesTwoEl.classList.toggle("all", n2 === 6);
