@@ -1,7 +1,7 @@
 import { column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { stamp } from "@larshansen/pixelkit/kept";
+import { seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerOrigin, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, PALETTE, ROLES, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
@@ -363,17 +363,17 @@ function far(v: View) {
 /**
  * Ekeberg's slope over the old town, under the far ridge's line (order 20: it was one dark band): woods, a road
  * going up, houses with a window lit here and there. In strips of the far layer drawn once and copied (ADR
- * 0036, 0041), a band from just under the ridge's lowest line down: at dawn the hills' dark goes over it and it
- * goes with them.
+ * 0036, 0041), a band from just under the ridge's lowest line down to behind the town; at dawn the hills' dark
+ * goes over its upper half and the windows go out.
  */
-const SLOPE = { w: 128, h: 36, strips: 4 };
+const SLOPE = { w: 128, h: 76, top: -4, strips: 4 };
 const slopeHash = (a: number, b: number) => {
   const n = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
   return n - Math.floor(n);
 };
 /** The houses on the slope, by strip: where, in the strip's own pixels, and whether a window is lit. */
 const SLOPE_HOUSES = Array.from({ length: SLOPE.strips }, (_, j) =>
-  Array.from({ length: 7 }, (_, k) => ({ u: 6 + k * 17 + Math.floor(slopeHash(j, k) * 9), y: 4 + Math.floor(slopeHash(k, j + 5) * 24), lit: slopeHash(j + 9, k) < 0.6 }))
+  Array.from({ length: 11 }, (_, k) => ({ u: 4 + ((k * 23 + Math.floor(slopeHash(j, k) * 11)) % 118), y: 6 + Math.floor(slopeHash(k, j + 5) * (SLOPE.h - 12)), lit: slopeHash(j + 9, k) < 0.6 }))
 );
 function drawSlope(j: number) {
   const hill = mix(G.stoneDark, INK, 0.45);
@@ -390,7 +390,7 @@ function drawSlope(j: number) {
   }
   for (let u = 0; u < SLOPE.w; u++) {
     const U = j * SLOPE.w + u;
-    R(u, 10 + Math.round(((U % 96) / 96) * 14), 1, 1, mix(hill, house, 0.5));
+    R(u, 12 + Math.round(((U % 170) / 170) * 50), 1, 1, mix(hill, house, 0.5));
   }
   for (const h of SLOPE_HOUSES[j]) {
     R(h.u, h.y + 1, 4, 3, house);
@@ -403,8 +403,8 @@ function ekeberg(horizon: number, dawn: number) {
   for (let i = Math.floor(o / SLOPE.w); i * SLOPE.w - o < view.w; i++) {
     const j = ((i % SLOPE.strips) + SLOPE.strips) % SLOPE.strips;
     const sx = i * SLOPE.w - o;
-    stamp(`gb-slope ${j}`, sx, horizon + 2 - view.camY, SLOPE.w, SLOPE.h, () => drawSlope(j));
-    if (dawn < 0.6) for (const h of SLOPE_HOUSES[j]) if (h.lit) lit(sx + h.u + 1, horizon + 2 + h.y + 2, 1, 1);
+    stamp(`gb-slope ${j}`, sx, horizon + SLOPE.top - view.camY, SLOPE.w, SLOPE.h, () => drawSlope(j));
+    if (dawn < 0.6) for (const h of SLOPE_HOUSES[j]) if (h.lit) lit(sx + h.u + 1, horizon + SLOPE.top + h.y + 2, 1, 1);
   }
 }
 
@@ -420,6 +420,10 @@ function mid() {
     const wall = old ? mix(G.timberDark, INK, 0.2) : mix(G.stoneDark, INK, 0.3);
     for (let k = 0; k < w; k++) column(x + k, base - h + (old ? Math.abs(k - w / 2) * 0.8 : 0), base + 200, wall);
     if (n % 3 !== 1) light(x + 3 + view.camX, base - h + 8, 2, 2, old ? "soft" : "window");
+    // The modern town's flats have more windows lit, a floor at a time (order 20: its walls were one dark band).
+    if (!old)
+      for (let y = base - h + 15, f = 0; y < base - 4; y += 7, f++)
+        for (let k = 2; k + 2 < w; k += 5) if (slopeHash(n * 7 + f, k) < 0.35) light(x + k + view.camX, y, 2, 2, "window");
     x += w + 2;
   }
 }
@@ -462,6 +466,8 @@ function church() {
   const g = STREET * TILE;
   const x0 = 34 * TILE;
   const x1 = 48 * TILE;
+  // Off the screen it is not drawn (ADR 0041): a thousand rectangles, and it pays for the windows lit on the far slope.
+  if (!seen(x0, 48 * TILE + 18)) return;
   const back = mix(G.stoneDark, INK, 0.3);
   for (let x = x0; x < x1; x += 2) {
     const k = (x - x0) / (x1 - x0);
@@ -503,6 +509,7 @@ function townWall() {
 /** The market: stalls with cloth awnings, the stave-built hall with its dragon heads and shingles. */
 function market(t: number) {
   const g = MARKET * TILE;
+  if (!seen(188 * TILE, 201 * TILE + 14)) return;
   // A stall: posts, an awning (its roof the ledge), goods.
   R(188 * TILE, g - 2 * TILE, 2, 2 * TILE, G.timber);
   R(191 * TILE - 2, g - 2 * TILE, 2, 2 * TILE, G.timber);
@@ -569,6 +576,7 @@ function lastLongship(t: number) {
   const deck = (QUAY - 2) * TILE;
   const x0 = 261 * TILE;
   const x1 = COLS * TILE;
+  if (!seen(x0, x1)) return;
   const bob = view.reduced ? 0 : Math.round(Math.sin(t * 0.03));
   const keel = g + TILE + 8;
   /** The top of its side at x: level with the quay amidships, sweeping up to the prow's deck. */
