@@ -1,7 +1,7 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { carrierAt, rides, type Travel } from "@larshansen/pixelkit/carrier";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
-import { cx, jump, jumpTo, leap, mid, sit, stomp, tile, wait, walk, type Move } from "../../game/bot";
+import { cx, jumpTo, leap, mid, sit, stomp, tile, wait, walk, type Move } from "../../game/bot";
 import { THROW_REACH, untilThrow } from "../../game/enemies";
 import type { Play } from "../../game/play";
 import { shieldedWalk } from "./common";
@@ -143,9 +143,8 @@ export const BJORVIKA_ROUTE: Move[] = [
   ...hook(HOOK_2, "the second hook", mid(109)),
   walk(mid(110)),
   ...hook(HOOK_3, "the third hook", mid(128)),
-  // Stepped off at the hook's end, he hops the rebar where a man who jumped off would have come down.
-  walk(REBAR_3.x - 8),
-  jump(1, { hold: 14, release: 30 }),
+  // Stepped off at the hook's end, he jumps the rebar where a man who jumped off would have come down.
+  leap(REBAR_3.x - 6, 1),
   walk(mid(138)),
   // The shafts: on each sheet as it comes, in the calm between gusts.
   ...SHAFTS.flatMap((c, i) => across(SHEETS[i], `the sheet over shaft ${i + 1}`, mid(c + 6), calm)),

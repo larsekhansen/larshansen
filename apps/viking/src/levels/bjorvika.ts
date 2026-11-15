@@ -167,8 +167,8 @@ export const GUSTS: Zone[] = [
 /** The rebar sticking up out of the open floor; the welder's sparks falling past the beam onto it, on a beat. */
 export const REBAR: Hazard = { x: 46 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };
 export const REBAR_2: Hazard = { x: 68 * TILE + 4, y: F1 * TILE - 6, w: 10, h: 6 };
-/** On the third tower, a tile and a half in from the edge: where he comes down if he jumps off the hook instead of stepping off at its end. */
-export const REBAR_3: Hazard = { x: 129 * TILE + 10, y: F2 * TILE - 6, w: 22, h: 6 };
+/** On the third tower, two tiles in from the edge: where he comes down if he jumps off the hook instead of stepping off at its end. */
+export const REBAR_3: Hazard = { x: 130 * TILE + 5, y: F2 * TILE - 6, w: 16, h: 6 };
 export const SPARKS: Hazard = { x: 55 * TILE + 2, y: (F2 + 1) * TILE, w: 12, h: (F1 - F2 - 1) * TILE, beat: { rest: 150, warn: 60, live: 60, offset: 126 } };
 export const HAZARDS: Hazard[] = [REBAR, REBAR_2, REBAR_3, SPARKS];
 
@@ -260,10 +260,28 @@ function mid() {
     for (let y = base + 16 - h; y < base + 12; y += 4) if ((n + y) % 3) light(x + 2 + view.camX, y, w - 4, 1, "soft");
     x += w + 1;
   }
-  // The Opera, far off at the start, its white roof sloping down into the water, the stage tower.
+  // The Opera, far off at the start, as on the front page: its white marble roof rising out of the water in
+  // a long slope to the flat top, the marble walls under it with their seams, the glass foyer under the high
+  // part, lit, and the stage tower over it in its dotted cladding.
   const ox = layerX(4 * TILE, f);
-  for (let k = 0; k < 70; k++) column(ox + k, base - 4 - Math.round(k * 0.32), base + 6, k % 9 === 0 ? S.operaShade : S.opera);
-  for (let k = 0; k < 14; k++) column(ox + 30 + k, base - 38, base - 26, k % 3 ? mix(S.operaShade, S.town, 0.3) : S.operaShade);
+  const roof = (k: number) => (k < 64 ? Math.round(k * 0.42) : 27);
+  for (let k = 0; k < 96; k++) {
+    const top = base + 2 - roof(k);
+    column(ox + k, top, top + 2, S.opera);
+    column(ox + k, top + 2, top + 3, S.operaShade);
+    if (k < 48) column(ox + k, top + 3, base + 6, k % 8 === 0 ? mix(S.operaShade, S.town, 0.35) : mix(S.opera, S.operaShade, 0.55));
+    else {
+      // The foyer's glass, its mullions, and the light inside.
+      column(ox + k, top + 3, base + 6, k % 4 === 0 ? mix(S.operaShade, S.town, 0.5) : mix(S.glass, S.glassLight, (k % 4) * 0.2));
+      if (k % 4 === 2) light(ox + k + view.camX, top + 5, 1, base + 4 - top - 5, "soft");
+    }
+  }
+  for (let k = 0; k < 22; k++) {
+    const x = ox + 58 + k;
+    column(x, base - 25 - 18, base - 25, k % 2 ? mix(S.opera, S.operaShade, 0.6) : S.operaShade);
+    column(x, base - 25 - 18, base - 25 - 17, S.opera);
+    for (let y = base - 41; y < base - 26; y += 3) if ((k + y) % 2) column(x, y, y + 1, mix(S.operaShade, S.town, 0.4));
+  }
   // The Barcode: a row of slim towers of different heights, stripes of window, lit.
   for (let i = 0; i < 12; i++) {
     const x = layerX(60 * TILE + i * 70, f);

@@ -618,6 +618,9 @@ function stoneTile(c: number, r: number, x: number, y: number, wall: boolean) {
   const top = y + (wall ? TILE : h) - shown;
   R(x, top, TILE, shown, G.risen);
   R(x, top, TILE, 1, G.risenLight);
+  // After dark, the new stone keeps a little light of its own along its top, so it reads as ground.
+  light(x, top, TILE, 1, "soft", "rgba(236, 230, 214, 0.55)");
+  if (k < 1 && !view.reduced) light(x, top - 1, TILE, 1, "soft", "rgba(236, 230, 214, 0.3)");
   if (wall) for (let yy = top + 5; yy < y + TILE; yy += 6) R(x, yy, TILE, 1, G.mortar);
   else {
     R(x, top + shown - 1, TILE, 1, mix(G.risen, INK, 0.3));

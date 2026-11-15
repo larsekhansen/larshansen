@@ -95,21 +95,21 @@ export const OSTENSJOVANNET_ROUTE: Move[] = [
     4
   ),
   walk(mid(138)),
-  // The long crossing: from the island onto the first pad, pad to pad through two swans' stretches, onto
-  // the stone in the middle; on over two more pads to the far shore.
-  ...acrossPads(9, 20),
-  padToPad(20, mid(180), "leap from the last pad to the stone"),
+  // The long crossing: from the island onto the first pad, pad to pad through two swans' stretches (where
+  // they overlap both mind him) and on over the pads past them, onto the stone; on over two more to the shore.
+  ...acrossPads(9, 22),
+  padToPad(22, mid(187), "leap from the last pad to the stone"),
   wait("on the stone", (q) => q.body.onGround),
-  walk(mid(181)),
-  walk(tile(182) - 6),
-  jumpTo(middle(21)),
-  ...acrossPads(21, 22),
-  padToPad(22, mid(192), "leap from the last pad to the far shore"),
+  walk(mid(188)),
+  walk(tile(189) - 6),
+  jumpTo(middle(23)),
+  ...acrossPads(23, 24),
+  padToPad(24, mid(199), "leap from the last pad to the far shore"),
   // The far shore, and up the far hide to the rune.
-  walk(mid(198)),
-  walk(mid(228)),
-  walk(tile(234) - 4),
-  jumpTo(mid(235)),
-  jumpTo(mid(239)),
-  walk(mid(244))
+  walk(mid(205)),
+  walk(mid(235)),
+  walk(tile(241) - 4),
+  jumpTo(mid(242)),
+  jumpTo(mid(246)),
+  walk(mid(251))
 ];
