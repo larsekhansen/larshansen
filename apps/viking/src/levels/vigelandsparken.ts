@@ -628,7 +628,11 @@ function ringer(e: Enemy, t: number) {
   });
   figure(x, y - 2, 3, e.dir, WOKEN_GRANITE);
   R(e.dir > 0 ? x + 6 : x + 3, y - 16, 1, 1, ENEMY.eye);
-  if (windingUp(e, t)) ring(x + 2, y - 24);
+  // Winding up, its arm goes up with the ring over its head (order 19: a change of outline).
+  if (windingUp(e, t)) {
+    R(e.dir > 0 ? x + 7 : x + 2, y - 22, 1, 6, WOKEN_GRANITE.base);
+    ring(x + 2, y - 24);
+  }
 }
 
 function ring(x: number, y: number) {

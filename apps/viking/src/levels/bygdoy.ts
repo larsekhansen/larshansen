@@ -797,6 +797,8 @@ function slinger(e: Enemy, t: number) {
   if (windingUp(e, t)) {
     // The sling goes round over his head, faster as the throw comes.
     const a = view.reduced ? 0 : t * 0.4;
+    // His arm up, the sling's cord from his fist (order 19: the pose differs in outline from his rest).
+    r(8, -18, 2, 6, coat);
     r(9, -20, 1, 5, ENEMY.orangeLight);
     r(9 + Math.round(Math.cos(a) * 6), -22 + Math.round(Math.sin(a) * 2), 3, 3, ENEMY.plum);
   } else r(9, -11, 3, 1, ENEMY.orangeLight);
