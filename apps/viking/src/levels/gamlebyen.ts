@@ -1,7 +1,8 @@
-import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { R, light, mix, view } from "@larshansen/pixelkit/paint";
+import { stamp } from "@larshansen/pixelkit/kept";
+import { R, layerOrigin, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, PALETTE, ROLES, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
@@ -338,6 +339,7 @@ function far(v: View) {
     column(x, top(x), horizon + 200, mix(G.stoneDark, INK, 0.45));
     if (Math.floor(wx) % 29 === 0 && dawn < 0.6) light(x + view.camX, top(x) + 5, 1, 1);
   }
+  ekeberg(horizon, dawn);
   if (dawn <= 0) return;
   const a = dawn.toFixed(3);
   for (let y = Math.min(view.camY, horizon - 240); y < horizon; y += 3) light(view.camX, y, view.w, 3, "soft", `rgba(${dawnColor(horizon - y)}, ${a})`);
@@ -355,6 +357,54 @@ function far(v: View) {
     light(x + view.camX, top(x), 1, horizon + 40 - top(x), "soft", `rgba(58, 53, 82, ${a})`);
     const near = Math.max(0, 1 - Math.abs(x - sx) / 160);
     light(x + view.camX, top(x), 1, 1, "soft", `rgba(${G.dawnRim}, ${(dawn * (0.3 + 0.7 * near)).toFixed(3)})`);
+  }
+}
+
+/**
+ * Ekeberg's slope over the old town, under the far ridge's line (order 20: it was one dark band): woods, a road
+ * going up, houses with a window lit here and there. In strips of the far layer drawn once and copied (ADR
+ * 0036, 0041), a band from just under the ridge's lowest line down: at dawn the hills' dark goes over it and it
+ * goes with them.
+ */
+const SLOPE = { w: 128, h: 36, strips: 4 };
+const slopeHash = (a: number, b: number) => {
+  const n = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+};
+/** The houses on the slope, by strip: where, in the strip's own pixels, and whether a window is lit. */
+const SLOPE_HOUSES = Array.from({ length: SLOPE.strips }, (_, j) =>
+  Array.from({ length: 7 }, (_, k) => ({ u: 6 + k * 17 + Math.floor(slopeHash(j, k) * 9), y: 4 + Math.floor(slopeHash(k, j + 5) * 24), lit: slopeHash(j + 9, k) < 0.6 }))
+);
+function drawSlope(j: number) {
+  const hill = mix(G.stoneDark, INK, 0.45);
+  const wood = mix(G.grassDark, INK, 0.62);
+  const house = mix(G.stoneDark, INK, 0.2);
+  const roof = mix(G.timberDark, INK, 0.35);
+  // Woods in clumps, the road between them in a few long bends.
+  for (let u = 0; u < SLOPE.w; u += 3) {
+    const U = j * SLOPE.w + u;
+    const crown = 3 + Math.floor(slopeHash(U, 1) * 4);
+    const y = Math.floor(slopeHash(U, 2) * (SLOPE.h - 6));
+    if (slopeHash(U, 3) < 0.55) R(u, y, 3, crown, wood);
+    if (slopeHash(U, 4) < 0.25) R(u + 1, y - 1, 1, 1, wood);
+  }
+  for (let u = 0; u < SLOPE.w; u++) {
+    const U = j * SLOPE.w + u;
+    R(u, 10 + Math.round(((U % 96) / 96) * 14), 1, 1, mix(hill, house, 0.5));
+  }
+  for (const h of SLOPE_HOUSES[j]) {
+    R(h.u, h.y + 1, 4, 3, house);
+    R(h.u - 1, h.y, 6, 1, roof);
+    R(h.u + 1, h.y + 2, 1, 1, mix(house, INK, 0.4));
+  }
+}
+function ekeberg(horizon: number, dawn: number) {
+  const o = Math.floor(layerOrigin(0.12));
+  for (let i = Math.floor(o / SLOPE.w); i * SLOPE.w - o < view.w; i++) {
+    const j = ((i % SLOPE.strips) + SLOPE.strips) % SLOPE.strips;
+    const sx = i * SLOPE.w - o;
+    stamp(`gb-slope ${j}`, sx, horizon + 2 - view.camY, SLOPE.w, SLOPE.h, () => drawSlope(j));
+    if (dawn < 0.6) for (const h of SLOPE_HOUSES[j]) if (h.lit) lit(sx + h.u + 1, horizon + 2 + h.y + 2, 1, 1);
   }
 }
 

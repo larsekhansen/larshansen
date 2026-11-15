@@ -8,7 +8,7 @@ import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
-import { drawOsloHills } from "../render/backdrop";
+import { climbed, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
 import { mapBuilder } from "./build";
@@ -766,20 +766,29 @@ function flourish(age: number) {
 }
 
 /** The far hills, with the ski jump on the ridge, small: the next stop. */
-function farHills(sky: Sky) {
-  drawOsloHills(sky, BASE + 2 * TILE);
+/**
+ * How far the city and the hills behind the street are raised where he is (order 20): as far as Karl Johan has
+ * climbed from its foot, so up by the palace they still stand over the crowd instead of sinking out of the view,
+ * and as far again as the view has climbed over the street (high on the banners). Nothing at the street's foot.
+ */
+const up = (him: number) => climbed(Math.min(ROWS * TILE, streetY(him) + 2 * TILE + 8), 60);
+const raised = (him: number) => BASE - streetY(him) + up(him);
+
+function farHills(sky: Sky, him: number) {
+  const lift = raised(him);
+  drawOsloHills(sky, BASE + 2 * TILE, lift);
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
     const d = wx - 3100;
     if (d < 0 || d > 24) continue;
     // The jump: a thin white line down from the ridge.
-    column(x, BASE - 74 + d * 1.2, BASE - 70 + d * 1.2, mix(PAINT.trim, LAND.farHills, 0.2));
+    column(x, BASE - 74 + d * 1.2 - lift, BASE - 70 + d * 1.2 - lift, mix(PAINT.trim, LAND.farHills, 0.2));
   }
 }
 
-/** The city between: roofs in pale colours, and flags on every pole. */
-function cityRoofs(t: number) {
-  const ground = BASE - 8;
+/** The city between: roofs in pale colours, and flags on every pole. Raised with the street (`raised`). */
+function cityRoofs(t: number, him: number) {
+  const ground = BASE - 8 - raised(him);
   for (let i = 0; i < 40; i++) {
     const wx = i * 110 + ((i * 37) % 50);
     const x = layerX(wx, 0.2);
@@ -787,7 +796,8 @@ function cityRoofs(t: number) {
     const h = 24 + ((i * 53) % 26);
     const w = 22 + ((i * 29) % 18);
     const color = FACADE.blocks[i % FACADE.blocks.length];
-    box(x, ground - h, w, h, color);
+    // Its walls go on down to the street (as far as the view has climbed over it).
+    box(x, ground - h, w, h + up(him), color);
     box(x, ground - h, w, 2, mix(color, WHITE, 0.3));
     for (let y = ground - h + 5; y < ground - 4; y += 6) for (let wx2 = x + 3; wx2 < x + w - 3; wx2 += 5) {
       box(wx2, y, 2, 3, mix(color, INK, 0.25));
@@ -862,8 +872,8 @@ export const SLOTTET: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
-    far: (v) => farHills(v.sky),
-    mid: (v) => cityRoofs(v.t),
+    far: (v) => farHills(v.sky, v.him.x),
+    mid: (v) => cityRoofs(v.t, v.him.x),
     near: () => nearTrees(),
     back(v) {
       townHouse(0, 8 * TILE, 26 * TILE, 78, PAINT.ochre, v.t);

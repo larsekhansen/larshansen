@@ -4,7 +4,7 @@ import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/pai
 import { ENEMY, FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, flagCloth, type LedgeLook } from "@larshansen/pixelkit/props";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
-import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
+import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { parts } from "../render/pickups";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
@@ -536,8 +536,9 @@ export const AKERSHUS: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
-    far: (v) => drawOsloHills(v.sky, WATER),
-    mid: (v) => drawFjord(v.t, WATER),
+    // On the walls and the battery the hills stay on the horizon and the fjord spreads under them (order 20).
+    far: (v) => drawOsloHills(v.sky, WATER, climbed(ROWS * TILE, ROWS * TILE)),
+    mid: (v) => drawFjord(v.t, WATER, climbed(ROWS * TILE, ROWS * TILE)),
     near(v) {
       // Bjørvika across the harbour, small: MUNCH, the Barcode.
       munch(layerX(1500, 0.4), WATER - 6);

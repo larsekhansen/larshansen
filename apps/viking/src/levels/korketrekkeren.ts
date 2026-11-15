@@ -335,6 +335,7 @@ function theRun() {
     R(x, y + 34, 2, 2, K.slopeShade);
     R(x, y + 70, 2, 3, mix(K.slopeShade, K.slope, 0.4));
   }
+  hillside();
   for (let x = X0 + 10, i = 0; x < RIDE.to; x += 37, i++) {
     if (!seen(x - 4, x + 34)) continue;
     const y = trackY(x);
@@ -345,6 +346,92 @@ function theRun() {
     if (i % 3 === 1) R(x + 14, top + 22, 6, 3, mix(STONE.base, K.slope, 0.4));
     if (i % 4 === 2) for (let k = 0; k < 3; k++) R(x + 20 + k * 6, top - 6, 1, 6, P.woodDark);
   }
+}
+
+/** A small number from a place, the same every visit. */
+const hash = (a: number, b: number) => {
+  const n = Math.sin(a * 12.9898 + b * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+};
+
+/**
+ * What the hillside under the run has, so it is not one sheet of snow (order 20): drifts the wind has
+ * packed, a boulder under its cap, a sapling buried to its top, a hare's tracks, the old fence's last
+ * posts, the shadow of a hollow. Placed along the run at depths below it, each drawn once and copied
+ * (ADR 0036, 0041); quieter than anything he meets, and nothing with a top to stand on.
+ */
+const HILLSIDE = Array.from({ length: 140 }, (_, i) => {
+  const x = X0 + 24 + i * 26 + Math.floor(hash(i, 1) * 14);
+  // Half near the run, where a wide view sees them; half deeper, for a tall one.
+  return { x, depth: i % 2 ? 28 + Math.floor(hash(i, 2) * 44) : 72 + Math.floor(hash(i, 2) * 130), kind: Math.floor(hash(i, 3) * 6) };
+}).filter((f) => f.x < RIDE.to - 24 && trackY(f.x) !== null);
+const DRIFT = mix(K.bank, K.slope, 0.35);
+const HOLLOW = mix(K.slope, K.slopeShade, 0.55);
+const SAPLING = mix(PLANTS.spruce, K.slope, 0.55);
+const BOULDER = mix(STONE.base, K.slope, 0.5);
+const TRACK = mix(K.slopeShade, K.runGroove, 0.5);
+function hillside() {
+  for (const f of HILLSIDE) {
+    if (!seen(f.x - 2, f.x + 26)) continue;
+    const y = (trackY(f.x) as number) + f.depth;
+    stamp(`kt-hill ${f.kind}`, f.x - view.camX, y - view.camY, 26, 12, () => {
+      if (f.kind === 0) {
+        // A drift: a lit crest, its lee in shade.
+        R(2, 6, 20, 1, DRIFT);
+        R(5, 5, 12, 1, DRIFT);
+        R(4, 7, 18, 1, HOLLOW);
+      } else if (f.kind === 1) {
+        // A boulder under a cap of snow, only its side showing.
+        R(6, 6, 9, 4, BOULDER);
+        R(7, 10, 7, 1, HOLLOW);
+        R(5, 5, 11, 2, DRIFT);
+      } else if (f.kind === 2) {
+        // A sapling buried to its top tier.
+        R(10, 3, 1, 7, SAPLING);
+        R(8, 6, 5, 1, SAPLING);
+        R(7, 8, 7, 1, SAPLING);
+        R(9, 4, 3, 1, DRIFT);
+        R(6, 9, 9, 1, HOLLOW);
+      } else if (f.kind === 3) {
+        // A hare's tracks across the slope.
+        for (let k = 0; k < 5; k++) {
+          R(2 + k * 5, 6 + (k % 2), 1, 2, TRACK);
+          R(4 + k * 5, 6 + (k % 2), 1, 1, TRACK);
+        }
+      } else if (f.kind === 4) {
+        // The old fence's last posts, leaning, nearly buried.
+        for (let k = 0; k < 3; k++) R(4 + k * 7 + (k % 2), 4 + k, 1, 6 - k, mix(P.woodDark, K.slope, 0.45));
+        R(3, 9, 20, 1, HOLLOW);
+      } else {
+        // A hollow in the snow, its far edge lit.
+        R(3, 7, 18, 2, HOLLOW);
+        R(6, 6, 12, 1, DRIFT);
+      }
+    });
+  }
+}
+
+/** Under the flats (the top and Midtstuen): the snow in packed layers, a stone, a root, a lens of ice. Each tile is drawn once and copied. */
+function snowBody(c: number, r: number, x: number, y: number) {
+  const depth = r - (c < 100 ? TOP_ROW : END_ROW);
+  const fill = mix(K.slope, K.slopeShade, Math.min(0.8, depth * 0.18));
+  const layer = (r * 7) % 6;
+  const kind = Math.floor(hash(c, r) * 9);
+  stamp(`kt-snow ${Math.min(5, depth)} ${layer} ${kind}`, x - view.camX, y - view.camY, TILE, TILE, () => {
+    R(0, 0, TILE, TILE, fill);
+    // The wind's layers, a crust lighter over a shade, running on from tile to tile in every other row.
+    if (layer % 2 === 0) {
+      R(0, 4 + layer, TILE, 1, mix(fill, K.bank, 0.4));
+      R(0, 5 + layer, TILE, 1, mix(fill, K.slopeShade, 0.3));
+    }
+    if (kind === 0) {
+      R(4, 9, 6, 3, mix(STONE.base, fill, 0.5));
+      R(4, 8, 6, 1, mix(fill, K.bank, 0.6));
+    } else if (kind === 1) {
+      for (let k = 0; k < 3; k++) R(5 + k * 2, 11 - k, 2, 1, mix(P.woodDark, fill, 0.6));
+    } else if (kind === 2) R(8, 12, 5, 2, mix(fill, K.runGroove, 0.6));
+    else if (kind === 3) R(2, 13, 3, 1, mix(fill, K.slopeShade, 0.7));
+  });
 }
 
 /** The gap in the run: a gully, its snowy sides going down in shade to the stream, the stumps of the old bridge. */
@@ -565,13 +652,17 @@ export const KORKETREKKEREN: LevelDef = {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.
       const top = !map.isSolid(c, r - 1);
-      R(x, y, TILE, TILE, top ? K.slope : mix(K.slope, K.slopeShade, Math.min(0.8, (r - (c < 100 ? TOP_ROW : END_ROW)) * 0.18)));
+      if (!top) {
+        snowBody(c, r, x, y);
+        return true;
+      }
+      R(x, y, TILE, TILE, K.slope);
       if (top) {
         R(x, y, TILE, 2, K.bank);
         R(x + ((c * 5) % 11), y + 4, 3, 1, K.runGroove);
         R(x + ((c * 3) % 9) + 4, y + 8, 2, 1, K.runGroove);
         if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
-      } else if ((c * 7 + r * 3) % 6 === 0) R(x + 4, y + 6, 6, 3, mix(STONE.base, K.slope, 0.45));
+      }
       return true;
     },
     ledges: { "=": PORCH },
