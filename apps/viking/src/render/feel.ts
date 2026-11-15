@@ -100,6 +100,8 @@ export const SOUND_OF: Record<string, VoiceName | `kit:${string}`> = {
   "pad starts to sink": "glug",
   "carrier arrives": "arrive",
   "carrier about to leave": "leave",
+  "hook comes in to a landing": "arrive",
+  "hook turns at a landing": "leave",
   "statue wakes": "wake",
   "statue freezes": "freeze",
   "thrower throws": "throw",
@@ -560,12 +562,16 @@ export function createFeel(host: Host) {
             voice("glug");
             for (let k = 0; k < 4; k++) spark(b.x + 1 + k * 3, b.y + PLAYER.h + 1, 0, -0.3 - k * 0.05, 18, PALETTE.foam, 1, 0);
           }
-      // Statues and guards that wake and freeze; swans that turn.
+      // Statues and guards that wake and freeze; swans that turn. Turning between two statues wakes one and
+      // freezes the other in the same step: one sound for the pair, the grind of the one that wakes (order 20).
+      let woke = false;
+      let froze = false;
       for (let i = 0; i < p.enemies.length; i++) {
         const e = p.enemies[i];
         const c = !!e.calm;
         if (primed && e.alive && c !== calm[i] && STONY.has(e.def.look) && seen(e.x, e.y)) {
-          voice(c ? "freeze" : "wake");
+          if (c) froze = true;
+          else woke = true;
           if (!c) for (let dx = -4; dx <= 4; dx += 8) spark(e.x + dx, e.y - 1, dx * 0.08, -0.2, 16, DUST);
           else ring(e.x, e.y - e.h / 2, e.w / 2 + 6, e.w / 2 + 2, 8, WHITE, now);
         }
@@ -578,10 +584,29 @@ export function createFeel(host: Host) {
           if (e.n === 240) voice("honk");
         }
       }
+      if (woke) voice("wake");
+      else if (froze) voice("freeze");
       primed = true;
       // Carriers near him: a clunk as one comes to a stop; a ding-dong two thirds of a second before it leaves.
       for (let i = 0; i < p.def.carriers.length; i++) {
         const d = p.def.carriers[i];
+        // A hook swinging between two landings never stops: a clunk as it comes within four pixels of one,
+        // the ding-dong as it turns there and goes back (order 20).
+        if (d.kind === "travel" && p.def.landings?.includes(i)) {
+          const a = carrierDrawn(d, t, 1);
+          if (!near(p, a.x + d.w / 2, 8) || Math.abs(a.y - b.y) > 6 * TILE) continue;
+          const span = Math.hypot(d.to.x - d.from.x, d.to.y - d.from.y);
+          const k = (s: number) => (1 - Math.cos((2 * Math.PI * (s + (d.offset ?? 0))) / d.period)) / 2;
+          const landed = (s: number) => Math.min(k(s), 1 - k(s)) * span <= 4;
+          if (landed(t) && !landed(t - 1)) {
+            voice("arrive");
+            spark(a.x + 1, a.y + 2, 0, -0.2, 12, DUST);
+            spark(a.x + d.w - 2, a.y + 2, 0, -0.2, 12, DUST);
+          }
+          const half = (s: number) => Math.floor(((s + (d.offset ?? 0)) * 2) / d.period);
+          if (half(t) !== half(t - 1)) voice("leave");
+          continue;
+        }
         // Only what stops on its way: a lift at its ends, a train at its platforms.
         if (!(d.kind === "lift" || (d.kind === "path" && d.stops?.length)) || !carrierShown(d, t)) continue;
         const a = carrierDrawn(d, t, 1);

@@ -449,18 +449,43 @@ function lyingBack(x: number, y: number) {
   R(x + 4, y - 7, 6, 2, P.ironDark);
 }
 
-/** A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, it is out of the way and harmless, drawn faint and not outlined. 19 x 15. */
-function sledgerArt(e: Enemy) {
+/**
+ * Whether a sledger is about to set off, or just has: from four tiles before he comes near enough to set it
+ * going (ten tiles) until a fifth of a second after it has. Drawing only: when it goes is the rules' (order 20).
+ */
+export function sledgerReady(e: Enemy, him: number, t: number) {
+  const start = e.home - (e.def.range ?? 0) * TILE;
+  return e.n === undefined ? him >= start - 14 * TILE : t - e.n < 12;
+}
+
+/**
+ * A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, it is out of
+ * the way and harmless, drawn faint and not outlined. About to set off, it leans forward over the sledge's
+ * nose and digs its mittens into the snow either side to push (order 20). 19 x 15.
+ */
+function sledgerArt(e: Enemy, v: View) {
   const x = Math.round(e.x);
   const y = Math.round(e.y);
   if (e.calm) return plain(() => R(x + 12, y - 7, 12, 4, mix(K.sledgeWood, K.slope, 0.4)));
   const r = parts(e, 18);
+  const coat = e.def.c % 2 ? ENEMY.plum : ENEMY.red;
   r(0, -5, 17, 4, ENEMY.orange);
   r(0, -5, 17, 1, ENEMY.orangeLight);
   r(-1, -1, 20, 1, ENEMY.plum);
   r(17, -5, 1, 4, ENEMY.plum);
   r(18, -6, 1, 2, ENEMY.plum);
-  r(5, -10, 8, 5, e.def.c % 2 ? ENEMY.plum : ENEMY.red);
+  if (sledgerReady(e, v.him.x, v.t)) {
+    // Leaning forward, arms down past the sledge's nose, mittens in the snow.
+    r(7, -10, 8, 5, coat);
+    r(13, -9, 4, 2, coat);
+    r(17, -8, 2, 6, coat);
+    r(19, -3, 2, 3, ENEMY.orangeLight);
+    r(9, -13, 6, 3, ENEMY.orangeLight);
+    r(8, -15, 8, 2, ENEMY.poison);
+    r(13, -12, 1, 1, ENEMY.eye);
+    return;
+  }
+  r(5, -10, 8, 5, coat);
   r(6, -13, 6, 3, ENEMY.orangeLight);
   r(5, -15, 8, 2, ENEMY.poison);
   r(10, -12, 1, 1, ENEMY.eye);
@@ -553,7 +578,7 @@ export const KORKETREKKEREN: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look !== "sledger") return drawLook(e, v.t);
-      sledgerArt(e);
+      sledgerArt(e, v);
       return true;
     }
   }

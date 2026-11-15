@@ -263,6 +263,11 @@ export interface LevelDef {
   legend: { solid: string; oneWay: string; water: string };
   ramps: Ramp[];
   carriers: CarrierDef[];
+  /**
+   * Carriers (by index) that swing between two landings and come in to each (Bjørvika's hooks): they sound
+   * as a lift does, a clunk as one comes in, the ding-dong as it turns and goes (order 20).
+   */
+  landings?: readonly number[];
   /** Ledges on a beat: as one-way ledges while on or warning. */
   timed: BellLedge[];
   /** By the cannon letters on the map, left to right, top to bottom. */

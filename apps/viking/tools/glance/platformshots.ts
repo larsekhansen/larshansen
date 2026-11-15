@@ -10,6 +10,7 @@ import { carrierDrawn, carrierShown } from "@larshansen/pixelkit/carrier";
 import { newPlay, stepPlay } from "../../src/game/play";
 import { SHIELD_RULES } from "../../src/game/shield";
 import { BUILT, ORDER, loadLevel } from "../../src/levels/index";
+import { MARKS } from "../../src/levels/types";
 
 const IDLE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const out: string[] = [];
@@ -41,10 +42,12 @@ for (const st of BUILT) {
   // A statue he can stand on.
   const statue = p.enemies.find((e) => e.def.look === "statue");
   if (statue) things.push({ label: "statue", x: statue.x - statue.w / 2, y: statue.y - statue.h, w: statue.w });
-  // The first one-way ledge past the start.
+  // The first one-way ledge past the start with no sign near where he stands for it: a sign's bubble would
+  // cover the ledge (Langkaia's, at 390 wide; order 20).
+  const signNear = (x: number) => def.map.some((row) => [...row].some((ch, c) => ch === MARKS.sign && Math.abs(c * TILE + TILE / 2 - x) < 5 * TILE));
   outer: for (let c = Math.floor(p.body.x / TILE) + 4; c < p.map.cols; c++)
     for (let r = 0; r < p.map.rows; r++)
-      if (p.map.isOneWay(c, r) && !p.map.isOneWay(c, r - 1)) {
+      if (p.map.isOneWay(c, r) && !p.map.isOneWay(c, r - 1) && !signNear(c * TILE - 3 * TILE)) {
         things.push({ label: "one-way ledge", x: c * TILE, y: r * TILE, w: TILE });
         break outer;
       }

@@ -134,6 +134,43 @@ describe("the answers are pictures and sounds only", () => {
 });
 
 describe("every event has a sound, and neighbours are told apart", () => {
+  test("Bjørvika's hooks sound as a lift does: a clunk coming in to each landing, the ding-dong as it turns there", async () => {
+    const def = await loadLevel("bjorvika");
+    const p = newPlay(def, optsFor(def));
+    const i = def.landings![0];
+    const hook = def.carriers[i] as { from: { x: number; y: number }; period: number };
+    placeBody(p.body, hook.from.x + 40, hook.from.y - 40);
+    const heard: Voice[][] = [];
+    const feel = createFeel({ sfx: { voice: (v) => void heard.push([...v]) } });
+    feel.reset(p);
+    const count = (name: "arrive" | "leave") => heard.filter((v) => JSON.stringify(v) === JSON.stringify(VOICES[name])).length;
+    for (let s = 1; s <= hook.period; s++) {
+      p.t = s;
+      feel.step(p, s);
+    }
+    expect(count("arrive")).toBe(2);
+    expect(count("leave")).toBe(2);
+  });
+
+  test("turning between two statues makes one sound, not two", async () => {
+    const def = await loadLevel("vigelandsparken");
+    const p = newPlay(def, optsFor(def));
+    const [a, b] = p.enemies.filter((e) => e.def.look === "statue");
+    Object.assign(view, { camX: Math.min(a.x, b.x) - 40, camY: Math.min(a.y, b.y) - 100, w: 400, h: 300 });
+    const heard: Voice[][] = [];
+    const feel = createFeel({ sfx: { voice: (v) => void heard.push([...v]) } });
+    feel.reset(p);
+    a.calm = true;
+    b.calm = false;
+    feel.step(p, 1);
+    heard.length = 0;
+    a.calm = false;
+    b.calm = true;
+    feel.step(p, 2);
+    expect(heard.length).toBe(1);
+    expect(heard[0]).toEqual([...VOICES.wake]);
+  });
+
   const KIT = ["coin", "life", "gold", "fanfare", "flag", "bench", "pickup", "over", "door", "hiss", "stomp", "hurt"];
 
   test("every event in the table has a sound: one of the page's own, or one of the kit's", () => {
@@ -225,6 +262,18 @@ describe("what is about to happen is seen before it happens", () => {
       turned(e);
       const b = look(def, p, e, 10);
       expect(differ(a, b), `${id}'s ${kind}`).toBeGreaterThanOrEqual(POSE);
+    }
+  });
+
+  test(`a sledger about to set off leans into a pose ${POSE} or more pixels unlike its rest`, async () => {
+    const def = await loadLevel("korketrekkeren");
+    const p = newPlay(def, optsFor(def));
+    for (const e of p.enemies.filter((x) => x.def.look === "sledger")) {
+      const start = e.home - (e.def.range ?? 0) * 16;
+      const at = (him: number) => cover(() => void def.art.enemy?.(e, { ...viewAt(p, 10), him: { x: him, y: 0 } }));
+      // Far off it sits; four tiles before he sets it going (ten tiles), it leans forward and digs in.
+      expect(differ(at(start - 20 * 16), at(start - 12 * 16)), `the sledger at ${e.def.c}`).toBeGreaterThanOrEqual(POSE);
+      expect(differ(at(start - 20 * 16), at(start - 15 * 16)), `the sledger at ${e.def.c}`).toBe(0);
     }
   });
 
