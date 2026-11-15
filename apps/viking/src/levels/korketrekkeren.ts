@@ -1,6 +1,7 @@
-import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
+import { seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, METAL, PALETTE, PLANTS, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
@@ -255,7 +256,7 @@ function farHills(v: View) {
   }
 }
 
-/** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. */
+/** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. Each shape is drawn once and copied (ADR 0036). */
 function spruces(factor: number, n: number, fade: number) {
   for (let i = 0; i < n; i++) {
     const wx = i * 31 + ((i * 17) % 13);
@@ -266,11 +267,13 @@ function spruces(factor: number, n: number, fade: number) {
     const sx = x + view.camX;
     const dusk = sx > 196 * TILE && sx < 236 * TILE ? 0.45 : 0;
     const green = mix(mix(PLANTS.spruce, LAND.farHills, fade), K.dusk, dusk);
-    for (let k = 0; k < h; k++) {
-      const half = Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
-      box(x - half, foot - h + k, half * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
-    }
-    box(x, foot, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+    const halfOf = (k: number) => Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
+    let most = 1;
+    for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
+    stamp(`kt ${fade} ${h} ${dusk}`, x - most, foot - h - view.camY, most * 2 + 1, h + 4, () => {
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
+      R(most, h, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+    });
   }
 }
 
@@ -280,6 +283,7 @@ function frognerseteren(v: View) {
   const g = TOP_ROW * TILE;
   const x0 = 11 * TILE;
   const x1 = 28 * TILE;
+  if (!seen(x0 - 12, 32 * TILE)) return;
   // The log walls, up to the roof.
   for (let y = g - 4 * TILE; y < g; y += 4) {
     R(x0, y, x1 - x0, 4, (y >> 2) % 2 ? K.logs : K.logsLight);
@@ -312,23 +316,27 @@ function frognerseteren(v: View) {
 
 /** The run: packed snow along the stair of ledges, a groove from the runners, banks either side, the slope under it. */
 function theRun() {
-  TOPS.forEach((y, i) => {
+  // The run is two kilometres of rectangles end to end: only what is on the screen is drawn.
+  const i1 = Math.min(TOPS.length, Math.ceil((view.camX + view.w - X0) / SEG) + 1);
+  for (let i = Math.max(0, Math.floor((view.camX - X0) / SEG) - 1); i < i1; i++) {
     const x = X0 + i * SEG;
-    if (y === null) return;
+    const y = TOPS[i];
+    if (y === null) continue;
     R(x, y, SEG, 3, K.run);
     R(x, y + 3, SEG, 2, K.runGroove);
     R(x, y + 5, SEG, 260, K.slope);
     R(x, y + 18, SEG, 2, K.slopeShade);
     if (i % 3 === 0) R(x, y - 2, 2, 2, K.bank);
-  });
+  }
   // The hillside under the run: shading along it, young spruce, stones and a fence, so it is not one plain sheet.
-  for (let x = X0; x < RIDE.to; x += 2) {
+  for (let x = X0 + Math.max(0, Math.floor((view.camX - 2 - X0) / 2) * 2); x < Math.min(RIDE.to, view.camX + view.w); x += 2) {
     const y = trackY(x);
     if (y === null) continue;
     R(x, y + 34, 2, 2, K.slopeShade);
     R(x, y + 70, 2, 3, mix(K.slopeShade, K.slope, 0.4));
   }
   for (let x = X0 + 10, i = 0; x < RIDE.to; x += 37, i++) {
+    if (!seen(x - 4, x + 34)) continue;
     const y = trackY(x);
     if (y === null) continue;
     const top = y + 44 + ((i * 13) % 30);
@@ -341,6 +349,7 @@ function theRun() {
 
 /** The gap in the run: a gully, its snowy sides going down in shade to the stream, the stumps of the old bridge. */
 function gap() {
+  if (!seen(GAP.from - 3, GAP.to + 3)) return;
   const y0 = trackY(GAP.from - 2)!;
   const w = GAP.to - GAP.from;
   for (let k = 0; k < w; k++) {
@@ -389,6 +398,7 @@ function crossing(t: number) {
 
 /** A low spruce branch over the run, its needles hanging to head height, snow on it. */
 function branchArt(h: Hazard, dusk: boolean) {
+  if (!seen(h.x - 30, Math.max(h.x + 20, h.x + h.w + 3))) return;
   const green = dusk ? mix(PLANTS.spruce, K.dusk, 0.3) : PLANTS.spruce;
   R(h.x - 30, h.y - 4, 50, 3, PLANTS.spruceTrunk);
   for (let k = 0; k < h.w + 6; k++) R(h.x - 3 + k, h.y - 2, 1, 4 + ((k * 3) % 5), green);
@@ -506,6 +516,7 @@ export const KORKETREKKEREN: LevelDef = {
     front(v) {
       // The trees at dusk: the light goes there, under the spruce, but for the lanterns.
       for (let x = 192 * TILE; x < 240 * TILE; x += 4) {
+        if (!seen(x, x + 4)) continue;
         const k = Math.min(1, (x - 192 * TILE) / 64, (240 * TILE - x) / 64);
         R(x, view.camY, 4, view.h, `rgba(20, 28, 60, ${(0.32 * k).toFixed(3)})`);
       }

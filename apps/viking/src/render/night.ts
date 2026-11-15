@@ -1,5 +1,5 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { darkRow, darknessAt, drawDark, nightCutsOf, type Light, type Ring } from "@larshansen/pixelkit/dark";
+import { darkRow, darknessAt, drawDark, merged, nightCutsOf, type Light, type Ring, type Run } from "@larshansen/pixelkit/dark";
 import { S, ctx, view } from "@larshansen/pixelkit/paint";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Board } from "@larshansen/pixelkit/text";
@@ -83,26 +83,40 @@ function lampOnlyLightsTheStreet(lamp: Light[], others: Light[], night: number[]
   const ys = lamp.flatMap((l) => ("rings" in l ? [l.y] : []));
   const cuts = nightCutsOf(night);
   const all = [...lamp, ...others];
-  const fill = (x: number, y: number, w: number, a: number) => S(x, y, w, 1, `rgba(${NIGHT}, ${a})`);
-  for (let y = Math.max(0, Math.floor(Math.min(...ys) - reach)); y < Math.min(view.h, Math.ceil(Math.max(...ys) + reach)); y++)
+  const y0 = Math.max(0, Math.floor(Math.min(...ys) - reach));
+  const y1 = Math.min(view.h, Math.ceil(Math.max(...ys) + reach));
+  // Each row's pieces where the night goes back: behind the street, and over the soil. Filled after, a
+  // piece alike in the row above making it a row taller (`merged`): every pixel gets the same fills in
+  // the same order as row by row (behind first, then over the soil), in far fewer rectangles.
+  const behind: Run[][] = [];
+  const overSoil: Run[][] = [];
+  for (let y = y0; y < y1; y++) {
+    const back: Run[] = [];
+    const over: Run[] = [];
     for (const run of darkRow(y, view.w, all, night, cuts)) {
       const without = darknessAt(run.x + run.w / 2, y + 0.5, night[Math.min(night.length - 1, run.x)] ?? 0, others);
       if (without <= run.dark || run.dark >= 1) continue;
       const a = (without - run.dark) / (1 - run.dark);
       // The backdrop behind the street: only where nothing of the street is drawn.
-      g.globalCompositeOperation = "destination-over";
-      fill(run.x, y, run.w, a);
-      g.globalCompositeOperation = "source-over";
+      back.push({ x: run.x, w: run.w, dark: a });
       // The soil: from a few pixels under the ground's top down, column by column.
       let from = -1;
       for (let x = run.x; x <= run.x + run.w; x++) {
         const deep = x < run.x + run.w && y >= soilTop(x);
         if (deep && from < 0) from = x;
         else if (!deep && from >= 0) {
-          fill(from, y, x - from, a);
+          over.push({ x: from, w: x - from, dark: a });
           from = -1;
         }
       }
     }
+    behind.push(back);
+    overSoil.push(over);
+  }
+  const fill = (r: Run, y: number, h: number) => S(r.x, y, r.w, h, `rgba(${NIGHT}, ${r.dark})`);
+  g.globalCompositeOperation = "destination-over";
+  merged(y0, y1, (y) => behind[y - y0], fill);
+  g.globalCompositeOperation = "source-over";
+  merged(y0, y1, (y) => overSoil[y - y0], fill);
 }
 
