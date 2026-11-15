@@ -43,7 +43,7 @@ so the page and the tests did not quite run the same game.
   at most 68 rectangles a frame more than order 18's code at the same moment (300 allowed).
 - **First script.** `render/feel.ts` is a chunk of its own, fetched with the first scene (a scene opens
   without it if it does not come). It pays for itself: the page's old sparks, the beaten enemies' puff and
-  the freeze moved into it, and the first script went from 59.72 to about 59.4 kB.
+  the freeze moved into it, and the first script went from 59.72 to 59.43 kB (`feel.ts` is 8.0 kB gzipped on its own).
 - **Things to use** (left from order 18): doors, benches and signs are one family, marked at their four
   corners in one cyan (`ROLES.use`), and the bubble that names the key is framed in it; held off every field
   and every role by the palette test. **His blue after dusk** (left from order 18): the evening's water comes

@@ -229,7 +229,7 @@ has measured on a real phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: about 59.4 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
+- **First script**: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
   with the first scene, which took the old sparks, the beaten enemies' puff and the page's freeze with it). Before: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
   59.8). Earlier: 59.18 kB after order 16 (order 16 allowed 59.5). Order 15 moved Nordmarka's
   night drawing out of `main.ts` into `render/night.ts`, which comes with Nordmarka. Left to move: the enemy
