@@ -6,7 +6,7 @@ import { cx, jumpTo, leap, mid, stomp, tile, wait, walk, type Move } from "../..
 import { THROW_REACH, untilThrow, windingUp } from "../../game/enemies";
 import type { Play } from "../../game/play";
 import { shieldedWalk } from "./common";
-import { FERRY, FRAM_DECK, GJOA_DECK, OARS, RAFT, REED } from "../bygdoy";
+import { FERRY, FRAM_DECK, GJOA_DECK, OARS, RAFT, REED, YARD_DECK } from "../bygdoy";
 
 // Bygdøy's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
 // rules, the single jump, the ski pole and the shield he is given on the way: the ferry over from
@@ -77,15 +77,16 @@ const throughThePassage = (x: number): Move =>
  * or one of their stones is in the air, stopping and raising the shield; holding it a moment after
  * the stone has been stopped, then walking on.
  */
-const pastTheSlingers = (x: number): Move =>
+const pastTheSlingers = (x: number, until?: (q: Play) => boolean, name = `through the yard to ${x}, the shield up as each sling lets go`): Move =>
   shieldedWalk(
-    `through the yard to ${x}, the shield up as each sling lets go`,
+    name,
     x,
     (q) => {
       const at = SLINGERS.find((k) => (inReach(q, k) && windingUp(q.enemies[k], q.t) && untilThrow(q.enemies[k], q.t) <= 12) || q.shots.some((sh) => sh.by === k && sh.spent === undefined));
       return at === undefined ? null : ((Math.sign(q.enemies[at].x - cx(q)) || 1) as 1 | -1);
     },
-    6
+    6,
+    until
   );
 const oarOut = (i: number, steps: number) => (q: Play) => timedPhase(q.t, OARS[i]) === "on" && timedPhase(q.t + steps, OARS[i]) === "on";
 
@@ -156,6 +157,11 @@ export const BYGDOY_ROUTE: Move[] = [
   walk(tile(201) + 4),
   throughThePassage(tile(212)),
   stomp(PASSAGE),
+  // Onto the boat in the slip as its near end comes level, along its rocking deck (stopping on it, the
+  // shield up, when the slinger over it lets go), off its far end into the yard, past the last slinger.
+  walk(tile(215) - 6),
+  wait("the boat's near end level with the yard", (q) => [0, 4].every((k) => Math.abs(deckTops(YARD_DECK, q.t + k)[0] - YARD_DECK.y) <= 2)),
+  pastTheSlingers(mid(220), (q) => [0, 8].every((k) => Math.abs(deckTops(YARD_DECK, q.t + k).at(-1)! - YARD_DECK.y) <= 2), "on the boat's middle, the shield up as each sling lets go, until its far end is level"),
   pastTheSlingers(mid(226)),
   pastTheSlingers(mid(236)),
   // Up the museum's gable to the rune on its ridge.

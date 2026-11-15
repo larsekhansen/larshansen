@@ -72,6 +72,9 @@ b.run(182, 190, 10, "_");
 // storehouses on stilts behind him, the ridges of their turf roofs the slingers' perches -
 b.fill(LOFT[0], LOFT[1], 11, W - 2, "L");
 for (const c of [222, 231]) b.run(c, c + 1, 13, "^");
+// The slip in the yard where a boat lies moored, its deck rocking at the yard's height: the second deck
+// crossing, under the first storehouse's slinger. The water in the slip lies a tile lower than the fjord's.
+b.fill(215, 224, W, W, ".").fill(215, 224, W + 1, W + 2, "~").ground(215, 224, W + 3);
 // --- The museum's stepped gable, up to the roof's ridge ---------------------------------------------
 b.run(238, 240, 17, "-").run(241, 243, 15, "-").run(244, 246, 13, "-").run(247, 249, 11, "-").run(250, 255, 9, "-");
 
@@ -155,7 +158,12 @@ const CARRIERS: CarrierDef[] = [FERRY, RAFT, REED];
 /** Fram's main deck, and Gjøa's: each rocks between its two angles, holding each for a second and a half. */
 export const FRAM_DECK: Deck = { x: 77 * TILE, y: 228, w: 12 * TILE, seg: 4, tilt: [12, -12], hold: 100, move: 60 };
 export const GJOA_DECK: Deck = { x: 98 * TILE, y: 200, w: 11 * TILE, seg: 4, tilt: [12, -12], hold: 100, move: 60, offset: 80 };
-const DECKS = [FRAM_DECK, GJOA_DECK];
+/**
+ * The boat moored in the yard's slip, level with the yard: its deck rocks, its middle stays (the firm place
+ * to stop and raise the shield), and the slinger on the storehouse over its far half throws at him on it.
+ */
+export const YARD_DECK: Deck = { x: 215 * TILE, y: FLOOR, w: 10 * TILE, seg: 4, tilt: [8, -8], hold: 90, move: 50, offset: 20 };
+const DECKS = [FRAM_DECK, GJOA_DECK, YARD_DECK];
 
 /** Bundles of balsa logs between the rafts: they hold him a moment, then go under. */
 export const PADS: SinkPad[] = [131 * TILE, 134.5 * TILE, 148 * TILE].map((x) => ({ x, y: FLOOR, w: 2 * TILE }));
@@ -195,7 +203,9 @@ export const ENEMIES: EnemyDef[] = [
   // The lesson: the first slinger alone, on the floor past the low passage under the loft, throwing
   // straight along it on a short steady beat. In the passage a man cannot jump, so walking on without
   // the shield is always hit, and stopping to raise it as a stone comes never is.
-  { kind: "thrower", look: "slinger", c: 214, r: W - 1, period: 100, faces: -1, straight: true, reach: 14 },
+  // (Its reach is twelve tiles, the least that still catches a careless walker at every moment of its beat;
+  // on the narrowest view its wind-up can begin some 50 px off the screen's edge, its stone seen 1.5 s.)
+  { kind: "thrower", look: "slinger", c: 214, r: W - 1, period: 100, faces: -1, straight: true, reach: 12 },
   // Then the other two on the storehouses' ridges, nine tiles apart, the second a little behind: their
   // beats chosen (by a search over every pair) so that a man who walks on through the yard meets a
   // throw coming at him as often as can be, a little under every other time.
@@ -807,6 +817,8 @@ const STEPS: LedgeLook = { body: M.plasterShade, top: M.plaster, edge: mix(M.pla
 export const BYGDOY: LevelDef = {
   id: "bygdoy",
   rune: 10,
+  // The passage under the loft, up to its slinger: the shield's key over him.
+  shieldLesson: [LOFT[0] * TILE - 8, (LOFT[1] + 3) * TILE],
   name: "Bygdøy",
   landmark: { nb: "Museumsskipene", en: "The museum ships" },
   place: { nb: "Museene på Bygdøy", en: "The museums on Bygdøy" },

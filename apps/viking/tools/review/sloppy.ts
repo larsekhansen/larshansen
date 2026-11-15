@@ -81,7 +81,9 @@ export function clonePlay(p: any): any {
     cheese: p.cheese && { ...p.cheese },
     dash: p.dash && { ...p.dash },
     troll: p.troll && { ...p.troll, wave: p.troll.wave && { ...p.troll.wave } },
-    boss: p.boss && { rules: p.boss.rules, state: { ...p.boss.state } },
+    // Deep: the serpent's ball and tail are objects of their own, and a shallow copy let the look-ahead
+    // move the real run's ball and tail k steps further every step (fixed for order 17).
+    boss: p.boss && { rules: p.boss.rules, state: structuredClone(p.boss.state) },
     shield: p.shield && { ...p.shield },
     grounds: p.grounds && { rules: p.grounds.rules, state: structuredClone(p.grounds.state) }
   };
@@ -95,6 +97,8 @@ interface Auto {
   /** Steps the hesitating player still stands before it goes on. */
   hold?: number;
 }
+/** A person's walks (any run with timing errors or held keys, never the perfect run): see `personWalk`. */
+let lenient = false;
 /** The hesitating player's share of moves it stops before, and its seed. */
 export interface Hesitate {
   share: number;
@@ -107,13 +111,32 @@ const ridingCarrier = (p: any) =>
     const c = BOT.carrier(p, d);
     return Math.abs(p.body.y + PH - c.y) < 0.01 && p.body.x + PW > c.x && p.body.x < c.x + d.w;
   });
+/**
+ * A walk as a person ends it (order 17, the review's A5): the route's walk is done only within 2 px of
+ * its mark and at rest, so a direction held a little too long overshoots, turns, overshoots again, for
+ * ever (the "mistakes" profile timed out at walks with no heart lost). A person who has gone past and back
+ * and past again is done within 4 px (one turn back is the usual correction, and a walk up to a jump's edge
+ * must still end where the route ends it); and a walk that has carried him onto the sledge, which he
+ * cannot steer, is over.
+ */
+function personWalk(move: any, p: any, mem: any, k: any): any {
+  const at = /^walk to (-?[\d.]+)$/.exec(move.name);
+  if (!at || k === "done") return k;
+  if (p.riding) return "done";
+  const d = k.left ? -1 : k.right ? 1 : 0;
+  if (d && mem.wd && d !== mem.wd) mem.turns = (mem.turns ?? 0) + 1;
+  if (d) mem.wd = d;
+  return (mem.turns ?? 0) >= 2 && p.body.onGround && Math.abs(Number(at[1]) - cx(p)) <= 4 ? "done" : k;
+}
+
 function botKeys(moves: any[], p: any, A: Auto, hes?: Hesitate): Intent {
   if (A.hold) {
     A.hold--;
     return NONE;
   }
   if (A.pre) {
-    const k = A.pre.move.keys(p, A.pre.mem);
+    let k = A.pre.move.keys(p, A.pre.mem);
+    if (lenient) k = personWalk(A.pre.move, p, A.pre.mem, k);
     if (k !== "done" && A.pre.mem.i < 600) {
       A.pre.mem.i++;
       return k;
@@ -121,7 +144,8 @@ function botKeys(moves: any[], p: any, A: Auto, hes?: Hesitate): Intent {
     A.pre = undefined;
   }
   while (A.m < moves.length) {
-    const k = moves[A.m].keys(p, A.mem);
+    let k = moves[A.m].keys(p, A.mem);
+    if (lenient) k = personWalk(moves[A.m], p, A.mem, k);
     if (k === "done") {
       // A move that only stood still (a wait for a raft, a beat) was the timing: no pause after it.
       const waited = A.mem.i > 1 && !A.mem.busy;
@@ -160,6 +184,9 @@ export interface Ref {
   endOf: Map<number, { x: number; feet: number }>;
   /** The lowest ground (largest feet) the perfect run stood on during each move, its start and end included. */
   lowest: Map<number, number>;
+  /** The moves that only stood and waited (no key for two steps or more), and the step each move began. */
+  waits: Set<number>;
+  first: Map<number, number>;
   steps: number;
   seconds: number;
   done: boolean;
@@ -172,12 +199,17 @@ export function reference(def: any, moves: any[], pole: boolean): Ref {
   const rec: Ref["rec"] = [];
   const saveAt = new Map<string, number>();
   const endOf = new Map<number, { x: number; feet: number }>();
+  const busy = new Map<number, boolean>();
+  const first = new Map<number, number>();
   let n = 0;
   let lastM = 0;
   for (; n < 60 * 300 && p.run.state !== "done"; n++) {
     const intent = botKeys(moves, p, A);
     for (let m = lastM; m < A.m; m++) endOf.set(m, { x: cx(p), feet: feet(p) });
     lastM = A.m;
+    if (!first.has(A.m)) first.set(A.m, n);
+    const pressed = intent.left || intent.right || intent.jumpHeld || intent.jumpPressed || !!intent.shield || !!intent.dash || !!intent.sit;
+    busy.set(A.m, (busy.get(A.m) ?? false) || pressed);
     rec.push({ m: A.m, i: A.mem.i - 1, x: cx(p), feet: feet(p), ground: p.body.onGround });
     (globalThis as any).__refTrace?.push(intent);
     stepPlay(p, intent);
@@ -190,7 +222,8 @@ export function reference(def: any, moves: any[], pole: boolean): Ref {
     lowest.set(r.m, Math.max(lowest.get(r.m) ?? -Infinity, r.feet));
     if (i > 0 && rec[i - 1].m !== r.m) lowest.set(rec[i - 1].m, Math.max(lowest.get(rec[i - 1].m) ?? -Infinity, r.feet));
   }
-  return { rec, saveAt, endOf, lowest, steps: n, seconds: p.run.steps / 60, done: p.run.state === "done" };
+  const waits = new Set([...busy].filter(([m, b]) => !b && (endOf.has(m) ? (first.get(m + 1) ?? n) - (first.get(m) ?? 0) >= 2 : false)).map(([m]) => m));
+  return { rec, saveAt, endOf, lowest, waits, first, steps: n, seconds: p.run.steps / 60, done: p.run.state === "done" };
 }
 
 /**
@@ -208,7 +241,7 @@ function nearestRef(ref: Ref, x: number, f: number, maxM: number, map?: any): nu
         const r = ref.rec[s];
         if (!r.ground || r.m > maxM !== !behind || Math.abs(r.feet - f) >= 4) continue;
         const dx = Math.abs(r.x - x);
-        if (dx >= 64 && !floorBetween(map, x, r.x, f)) continue;
+        if (dx >= 64 ? !floorBetween(map, x, r.x, f) : wallBetween(map, x, r.x, f)) continue;
         ok.push(s);
         bestDx = Math.min(bestDx, dx);
       }
@@ -243,10 +276,27 @@ function floorBetween(map: any, x0: number, x1: number, f: number): boolean {
   return true;
 }
 
+/** A wall at his height between x0 and x1 (order 17: a short walk through St. Clement's gable was taken as walkable). */
+function wallBetween(map: any, x0: number, x1: number, f: number): boolean {
+  const r = Math.round(f / 16);
+  for (let c = Math.floor(Math.min(x0, x1) / 16); c <= Math.floor(Math.max(x0, x1) / 16); c++) if (map.isSolid(c, r - 1)) return true;
+  return false;
+}
+
 function resumeAt(ref: Ref, moves: any[], s: number, p?: any): Auto {
+  // Put back where the perfect run was walking on after a wait (onto the ferry once it stood at the quay),
+  // a person waits again first: resume at the latest wait before the place, if it was at the same place
+  // (order 17, the review's A5; the harness used to walk him straight back into the water).
+  for (let j = ref.rec[s].m - 1; j >= 0 && j >= ref.rec[s].m - 2; j--) {
+    if (!/^walk to/.test(moves[j + 1]?.name ?? "")) break;
+    if (!ref.waits.has(j)) continue;
+    const w = ref.rec[ref.first.get(j) ?? s];
+    if (w && Math.abs(w.feet - ref.rec[s].feet) < 4 && Math.abs(w.x - ref.rec[s].x) < 48) s = ref.first.get(j)!;
+    break;
+  }
   const r = ref.rec[s];
   let m = r.m;
-  const pre = p && Math.abs(cx(p) - r.x) > 3 && Math.abs(feet(p) - r.feet) < 4 && (Math.abs(cx(p) - r.x) < 64 || floorBetween(p.map, cx(p), r.x, feet(p))) ? { move: BOT.walk(r.x), mem: { i: 0, air: false } } : undefined;
+  const pre = p && Math.abs(cx(p) - r.x) > 3 && Math.abs(feet(p) - r.feet) < 4 && ((Math.abs(cx(p) - r.x) < 64 && !wallBetween(p.map, cx(p), r.x, feet(p))) || floorBetween(p.map, cx(p), r.x, feet(p))) ? { move: BOT.walk(r.x), mem: { i: 0, air: false } } : undefined;
   // A jump already in the air at that place is over by the time he is put back there: the next move.
   if (!r.ground && r.i > 0 && m < moves.length && timedMove(moves[m].name)) m++;
   return { m, mem: { i: 0, air: false }, pre };
@@ -353,6 +403,16 @@ export interface RunResult {
 }
 
 export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult {
+  const was = lenient;
+  lenient = cfg.k > 0 || cfg.overhold > 0;
+  try {
+    return run(id, def, moves, ref, cfg);
+  } finally {
+    lenient = was;
+  }
+}
+
+function run(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult {
   const r = rng(cfg.seed * 7919 + cfg.k * 104729 + 17);
   const hes: Hesitate | undefined = cfg.hesitate ? { share: cfg.hesitate, seed: cfg.seed * 13 + cfg.k } : undefined;
   const p = cfg.startPlay ?? newPlay(def, { pole: cfg.pole, lives: cfg.lives });
@@ -420,7 +480,7 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
       tried.set(k, c);
       const s = nearestRef(ref, cx(p), feet(p), Math.min(A.m, moves.length - 1), p.map);
       const r = ref.rec[s];
-      const walkable = Math.abs(cx(p) - r.x) <= 3 || (Math.abs(feet(p) - r.feet) < 4 && (Math.abs(cx(p) - r.x) < 64 || floorBetween(p.map, cx(p), r.x, feet(p))));
+      const walkable = Math.abs(cx(p) - r.x) <= 3 || (Math.abs(feet(p) - r.feet) < 4 && ((Math.abs(cx(p) - r.x) < 64 && !wallBetween(p.map, cx(p), r.x, feet(p))) || floorBetween(p.map, cx(p), r.x, feet(p))));
       if (c > RETRIES) {
         res.outcome = "gaveup";
         break;
@@ -479,9 +539,12 @@ export function sloppyRun(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg
     const press = (t: number) => t >= 0 && t <= n + K && !!src(t).jumpPressed;
     // (Presses on several steps in a row, as the route's walks give while a threat is ahead, are one press held.)
     const jprime = (t: number) => jraw(t) && !(press(t + 1) && !press(t));
-    if (n >= 1) JJ[n - 1] = jprime(n - 1) && (press(n - 1) || (JJ[n - 2] ?? false));
+    // (A press that reached the game early is held too, while the route holds the key: the route, asked on
+    // the real state, sees him already in the air and never presses, only holds. Before order 17 such a jump
+    // was let go at once, a hop of a few pixels.)
+    if (n >= 1) JJ[n - 1] = jprime(n - 1) && (press(n - 1) || (JJ[n - 2] ?? false) || prevJumpOut);
     const W: boolean[] = [];
-    for (let j = 0; j <= K; j++) W[j] = jprime(n + j) && (press(n + j) || (j === 0 ? JJ[n - 1] ?? false : W[j - 1]));
+    for (let j = 0; j <= K; j++) W[j] = jprime(n + j) && (press(n + j) || (j === 0 ? (JJ[n - 1] ?? false) || prevJumpOut : W[j - 1]));
     const jsrc = (t: number) => (t < 0 ? false : t < n ? JJ[t] ?? false : W[t - n] ?? W[W.length - 1]);
     const lo = n - 3 * Math.max(K, 1) - 4;
     const hi = n + K;

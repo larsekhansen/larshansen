@@ -1,5 +1,7 @@
 # 0024. The shield is a held stance, not a parry
 
+State (order 17): adjusted by [0032](0032-the-shield-keeps-a-jump-and-the-troll-comes.md): a jump pressed while it is up is kept a tenth of a second; the troll, walking into it, raises its club there, so Nordmarka's fight is unchanged in fact.
+
 Decided 2026-11-14 by the order 14 implementer, on the planner's order (order 14, step 3; the plan
 for line 2, `docs/games/PLAN-LINE-2.md`). Adds an ability, as [0003](0003-fixed-body-constants.md)
 asks: `MOVE` and `JUMP` do not change.

@@ -5,14 +5,15 @@ import { cx, jumpTo, leap, mid, sit, stomp, tile, wait, walk, type Move } from "
 import { THROW_REACH, untilThrow } from "../../game/enemies";
 import type { Play } from "../../game/play";
 import { shieldedWalk } from "./common";
-import { G, GUST_BEAT, HOIST, HOOK_1, HOOK_2, HOOK_3, HOOK_5, HOOK_6, HOOK_7, SHAFTS, SHEETS, SPARKS } from "../bjorvika";
+import { G, GIRDER_2, GUST_BEAT, HOIST, HOOK_1, HOOK_2, HOOK_3, HOOK_5, HOOK_6, HOOK_7, REBAR_3, SHAFTS, SHEETS, SPARKS, TRAVERSE_GUST } from "../bjorvika";
 
 // Bjørvika's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
 // rules, the single jump, the ski pole and the shield: along the quay, up the hoist, along the open floor
 // over the rebar and past the welder between showers, across the bay on the first hook, up to the slab,
-// on the hooks across the drop to the second tower and the third, over the shafts on the sliding sheets
-// between gusts, along the girder with the shield up as each bolt comes, under the riveters, up to the
-// roof and the bench in the hut, along the traverse hook to hook, up the crane to the rune.
+// on the hooks across the drop to the second tower and the third (stepping off, and over the rebar), over
+// the shafts on the sliding sheets between gusts, along the girder with the shield up as each bolt comes,
+// under the riveters, up to the roof and the bench in the hut, along the jib's girder with the shield up
+// as each bolt comes again, along the traverse hook to hook between its gusts, up the crane to the rune.
 
 const NONE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 
@@ -70,10 +71,27 @@ const toFront = (d: Travel, name: string): Move => ({
   }
 });
 
-/** From one hook of the traverse to the next as they meet: at the front of the block, and a hop over the tile between them onto the next. */
-const hop = (from: Travel, to: Travel, name: string): Move[] => [
+/** The traverse's gust is calm, and stays calm half a second more. */
+const still = (q: Play) => pulsePhase(q.t, TRAVERSE_GUST) === "rest" && pulseAge(q.t, TRAVERSE_GUST).age < TRAVERSE_GUST.rest - 30;
+
+/** Rides at the front of the block, keeping there against the gust, until the test holds. */
+const atFrontUntil = (d: Travel, name: string, until: (q: Play) => boolean): Move => ({
+  name,
+  keys(q) {
+    if (until(q)) return "done";
+    const front = carrierAt(d, q.t).x + d.w - PLAYER.w / 2 - 2;
+    return { ...NONE, left: cx(q) > front + 2, right: cx(q) < front - 2 };
+  }
+});
+
+/**
+ * From one hook of the traverse to the next as they meet, in a calm: at the front of the block, and a hop
+ * over the tile between them onto the next. Onto a quick hook he goes as it comes in (`lead` steps before
+ * it is at its end), so he comes down on it as it stops.
+ */
+const hop = (from: Travel, to: Travel, name: string, lead = 0): Move[] => [
   toFront(from, "the block"),
-  wait(`${name} as they meet`, (q) => atTo(q, from) && atFrom(q, to)),
+  atFrontUntil(from, `${name} as they meet`, (q) => Math.abs(carrierAt(from, q.t).x - from.to.x) <= 2 && carrierAt(to, q.t + lead).x === to.from.x && still(q)),
   {
     name: `hop ${name}`,
     keys(q, s) {
@@ -88,9 +106,8 @@ const hop = (from: Travel, to: Travel, name: string): Move[] => [
 /** The gust is calm, and stays calm while a sheet is crossed. */
 const calm = (q: Play) => pulsePhase(q.t, GUST_BEAT) === "rest" && pulseAge(q.t, GUST_BEAT).age < GUST_BEAT.rest - 75;
 
-/** The riveters (enemies 9 and 10): a bolt coming at him, or one of them about to throw at him. */
-const RIVETERS = [9, 10];
-const bolts = (q: Play): 1 | null => {
+/** A pair of riveters (enemies 8 and 9 on the first girder, 10 and 11 on the jib's): a bolt coming at him, or one of them about to throw at him. */
+const bolts = (RIVETERS: number[]) => (q: Play): 1 | null => {
   const front = q.body.x + PLAYER.w;
   const coming = q.shots.some((s) => RIVETERS.includes(s.by) && s.spent === undefined && s.vx < 0 && s.x > q.body.x && s.x - front < 64);
   const about = RIVETERS.some((k) => {
@@ -125,16 +142,17 @@ export const BJORVIKA_ROUTE: Move[] = [
   walk(mid(93)),
   ...hook(HOOK_2, "the second hook", mid(109)),
   walk(mid(110)),
-  ...hook(HOOK_3, "the third hook", mid(129)),
-  walk(mid(130)),
+  ...hook(HOOK_3, "the third hook", mid(128)),
+  // Stepped off at the hook's end, he jumps the rebar where a man who jumped off would have come down.
+  leap(REBAR_3.x - 6, 1),
   walk(mid(138)),
   // The shafts: on each sheet as it comes, in the calm between gusts.
   ...SHAFTS.flatMap((c, i) => across(SHEETS[i], `the sheet over shaft ${i + 1}`, mid(c + 6), calm)),
   walk(mid(170)),
   // The girder: the pigeon first, then on with the shield up as each bolt comes, under the riveters.
+  stomp(6),
   stomp(7),
-  stomp(8),
-  shieldedWalk(`along the girder to ${mid(195)}, the shield up as each bolt comes`, mid(195), bolts, 4),
+  shieldedWalk(`along the girder to ${mid(195)}, the shield up as each bolt comes`, mid(195), bolts([8, 9]), 4),
   // Up past them to the roof, the bench in the hut.
   walk(mid(197) + 4),
   jumpTo(mid(198)),
@@ -142,16 +160,20 @@ export const BJORVIKA_ROUTE: Move[] = [
   walk(mid(207)),
   sit(),
   walk(mid(213)),
-  // The traverse: the three hooks in a row, each meeting the next.
-  ...hook(HOOK_5, "the first hook of the traverse", 0).slice(0, 3),
-  ...hop(HOOK_5, HOOK_6, "onto the second hook of the traverse"),
+  // The jib's girder: the shield up as each bolt comes, twice or more, under the second pair of riveters.
+  shieldedWalk(`along the jib's girder to ${mid(GIRDER_2[1])}, the shield up as each bolt comes`, mid(GIRDER_2[1]), bolts([10, 11]), 4),
+  // The traverse: the three hooks in a row, each meeting the next in its own time, hops made in a calm.
+  walk(HOOK_5.from.x - TILE - 6),
+  wait("the first hook of the traverse at this end, in a calm", (q) => atFrom(q, HOOK_5) && still(q)),
+  jumpTo(HOOK_5.from.x + HOOK_5.w / 2),
+  ...hop(HOOK_5, HOOK_6, "onto the second hook of the traverse", 10),
   ...hop(HOOK_6, HOOK_7, "onto the third hook of the traverse"),
-  wait("on the third hook to the crane", (q) => atTo(q, HOOK_7)),
-  walk(mid(243)),
+  atFrontUntil(HOOK_7, "on the third hook to the crane", (q) => atTo(q, HOOK_7)),
+  walk(mid(259)),
   // Up the crane's rungs to the walkway, and the rune at the cab.
-  walk(mid(245)),
-  jumpTo(mid(246)),
-  jumpTo(mid(246)),
-  jumpTo(mid(247)),
-  walk(mid(249))
+  walk(mid(261)),
+  jumpTo(mid(262)),
+  jumpTo(mid(262)),
+  jumpTo(mid(263)),
+  walk(mid(265))
 ];

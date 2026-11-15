@@ -1,0 +1,53 @@
+Gamlebyen: 32 stones in 11 groups (wall 176, ledge 44,11, ledge 40,13, wall 93, ledge 36,15, ledge 101,16, ledge 105,16, ledge 110,16, ledge 115,16, ledge 119,16, ledge 123,16); searched from 10 starts each.
+every stone risen                                              13513 spots, 45 s: no dead end
+none risen                                                     11606 spots, 36 s: no dead end
+both walls behind him risen, nothing else                       5360 spots, 15 s: no dead end
+all but wall 176                                               20058 spots, 62 s: no dead end
+all but ledge 44,11                                             9275 spots, 27 s: no dead end
+all but ledge 40,13                                             9245 spots, 27 s: no dead end
+all but wall 93                                                13896 spots, 43 s: no dead end
+all but ledge 36,15                                             9215 spots, 27 s: no dead end
+all but ledge 101,16                                           13458 spots, 41 s: no dead end
+all but ledge 105,16                                           13438 spots, 41 s: no dead end
+all but ledge 110,16                                           13438 spots, 41 s: no dead end
+all but ledge 115,16                                           13458 spots, 41 s: no dead end
+all but ledge 119,16                                           13458 spots, 41 s: no dead end
+all but ledge 123,16                                           13438 spots, 41 s: no dead end
+only wall 176                                                   5552 spots, 16 s: no dead end
+only ledge 44,11                                               11606 spots, 38 s: no dead end
+only ledge 40,13                                               11606 spots, 38 s: no dead end
+only wall 93                                                   11414 spots, 36 s: no dead end
+only ledge 36,15                                               11636 spots, 38 s: no dead end
+only ledge 101,16                                              11628 spots, 38 s: no dead end
+only ledge 105,16                                              11636 spots, 37 s: no dead end
+only ledge 110,16                                              11606 spots, 37 s: no dead end
+only ledge 115,16                                              11606 spots, 38 s: no dead end
+only ledge 119,16                                              11672 spots, 37 s: no dead end
+only ledge 123,16                                              11696 spots, 37 s: no dead end
+route at col 4 (0 risen)                                       11606 spots, 38 s: no dead end
+route at col 32 (1 risen)                                      11620 spots, 38 s: no dead end
+route at col 33 (2 risen)                                      11628 spots, 37 s: no dead end
+route at col 33 (3 risen)                                      11636 spots, 38 s: no dead end
+route at col 36 (4 risen)                                      11650 spots, 38 s: no dead end
+route at col 37 (5 risen)                                      11658 spots, 38 s: no dead end
+route at col 38 (6 risen)                                      11666 spots, 38 s: no dead end
+route at col 40 (7 risen)                                      12130 spots, 40 s: no dead end
+route at col 41 (8 risen)                                      12138 spots, 40 s: no dead end
+route at col 42 (9 risen)                                      12146 spots, 40 s: no dead end
+route at col 96 (10 risen)                                     12174 spots, 40 s: no dead end
+route at col 96 (14 risen)                                     11984 spots, 39 s: no dead end
+route at col 97 (15 risen)                                     12000 spots, 39 s: no dead end
+route at col 101 (16 risen)                                    12028 spots, 39 s: no dead end
+route at col 102 (17 risen)                                    12044 spots, 39 s: no dead end
+route at col 103 (18 risen)                                    12060 spots, 40 s: no dead end
+route at col 107 (19 risen)                                    12088 spots, 39 s: no dead end
+route at col 110 (20 risen)                                    12104 spots, 40 s: no dead end
+route at col 110 (21 risen)                                    12120 spots, 39 s: no dead end
+route at col 111 (22 risen)                                    12148 spots, 40 s: no dead end
+route at col 111 (23 risen)                                    12164 spots, 40 s: no dead end
+route at col 115 (24 risen)                                    19628 spots, 62 s: no dead end
+route at col 116 (25 risen)                                    19908 spots, 63 s: no dead end
+route at col 119 (26 risen)                                    19978 spots, 74 s: no dead end
+route at col 120 (27 risen)                                    20018 spots, 72 s: no dead end
+route at col 121 (28 risen)                                    20058 spots, 64 s: no dead end
+route at col 181 (32 risen)                                    13513 spots, 46 s: no dead end

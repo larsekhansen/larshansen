@@ -21,7 +21,7 @@ const STILL = { left: false, right: false, jumpHeld: false, jumpPressed: false }
  * way it comes from), stops, turns to face it and holds the shield up, a few steps longer than the
  * danger lasts; then walks on.
  */
-export const shieldedWalk = (name: string, x: number, danger: (q: Play) => 1 | -1 | null, hold: number): Move => ({
+export const shieldedWalk = (name: string, x: number, danger: (q: Play) => 1 | -1 | null, hold: number, until?: (q: Play) => boolean): Move => ({
   name,
   keys(q, s) {
     const face = danger(q);
@@ -34,7 +34,7 @@ export const shieldedWalk = (name: string, x: number, danger: (q: Play) => 1 | -
       return { ...STILL, left: s.face === -1 && q.body.facing !== -1, right: s.face === 1 && q.body.facing !== 1, shield: true };
     }
     const dx = x - (q.body.x + PLAYER.w / 2);
-    if (Math.abs(dx) <= 2 && q.body.onGround && Math.abs(q.body.vx) < 0.05) return "done";
+    if (Math.abs(dx) <= 2 && q.body.onGround && Math.abs(q.body.vx) < 0.05) return !until || until(q) ? "done" : STILL;
     const near = Math.abs(dx) < Math.abs(q.body.vx) * 4;
     return { ...STILL, left: !near && dx < 0, right: !near && dx > 0 };
   }

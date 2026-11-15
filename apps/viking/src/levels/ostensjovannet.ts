@@ -26,10 +26,10 @@ import type { Grounds, LevelDef, LevelRules, View } from "./types";
 // boardwalk, ducks on it; the first pads over shallow water, firm stones between them; the first swan's
 // stretch, its pads wide apart; the mist, and the heron that stands as a tall step up to the second
 // hide's deck and flies off a second after he lands on it; the island, with coots and a row of nesting
-// gulls that dive at him (the shield), and the bench; the long crossing, two swans whose stretches meet;
-// the far shore, and the rune at the far hide with the sun coming up over the lake.
+// gulls that dive at him (the shield), and the bench; the long crossing, two swans whose stretches overlap,
+// and more pads past them to the stone; the far shore, and the rune at the far hide with the sun coming up.
 
-const COLS = 256;
+const COLS = 263;
 const ROWS = 24;
 /** The water line and the ground: the top of row 19. */
 export const W = 19;
@@ -55,20 +55,20 @@ water(86, 100);
 b.run(91, 101, W - 4, "=");
 // --- The island -------------------------------------------------------------------------------------------
 b.ground(101, 140, W);
-// --- The long crossing: two swans, a stone in the middle ----------------------------------------------
-water(141, 189);
-b.fill(179, 181, W, W + 1, "K");
+// --- The long crossing: two swans whose waters overlap, more pads past them, a stone near the end -------------
+water(141, 196);
+b.fill(186, 188, W, W + 1, "K");
 // --- The far shore and the far hide ------------------------------------------------------------------
-b.ground(190, COLS - 1, W);
-b.run(234, 236, W - 2, "=").run(238, 247, W - 4, "=");
+b.ground(197, COLS - 1, W);
+b.run(241, 243, W - 2, "=").run(245, 254, W - 4, "=");
 
 // Marks: the start, the door, signs, flags, the bench, the rune, the bracteate, the cheese.
 b.put(2, W - 1, "t").put(4, W - 1, "S");
 b.put(7, W - 1, "i").put(60, W - 1, "i").put(84, W - 1, "i");
-for (const c of [29, 57, 83, 103, 138, 198, 228]) b.put(c, W - 1, "f");
-b.put(181, W - 1, "f");
+for (const c of [29, 57, 83, 103, 138, 205, 235]) b.put(c, W - 1, "f");
+b.put(188, W - 1, "f");
 b.put(137, W - 1, "b");
-b.put(244, W - 5, "r").put(180, W - 6, "o").put(11, W - 5, "&");
+b.put(251, W - 5, "r").put(187, W - 6, "o").put(11, W - 5, "&");
 
 // Skilling: over the path and the hide, along the boardwalk, over the pads and stones, up to the deck,
 // round the island, across the long crossing, along the far shore and up the far hide.
@@ -79,10 +79,10 @@ const COINS: [number, number][] = [
   [65, 17], [68, 16], [72, 17], [75, 16], [79, 17],
   [87, 17], [90, 15], [94, 14], [97, 14], [100, 14],
   [106, 18], [114, 18], [120, 18], [126, 18], [132, 18],
-  [144, 17], [148, 16], [151, 17], [158, 16], [162, 17], [165, 16], [172, 17], [176, 16], [180, 17],
-  [184, 17], [187, 16],
-  [196, 18], [201, 18], [209, 18], [217, 18], [226, 18],
-  [235, 16], [240, 14], [242, 14], [246, 14]
+  [144, 17], [148, 16], [151, 17], [158, 16], [162, 17], [165, 16], [172, 17], [176, 16], [180, 17], [183, 16],
+  [191, 17], [194, 16],
+  [203, 18], [208, 18], [216, 18], [224, 18], [233, 18],
+  [242, 16], [247, 14], [249, 14], [253, 14]
 ];
 for (const [c, r] of COINS) b.put(c, r, "$");
 
@@ -108,8 +108,8 @@ export const PADS: SinkPad[] = [
   ...[44, 48, 52].map((c) => pad(c * TILE - 8, 32)),
   ...row(63 * TILE, 5, 32, 56),
   pad(86 * TILE),
-  ...row(141 * TILE, 12, 24, 52),
-  ...row(183 * TILE, 2, 24, 56)
+  ...row(141 * TILE, 14, 24, 52),
+  ...row(190 * TILE, 2, 24, 56)
 ];
 
 /**
@@ -214,17 +214,18 @@ export const RULES: LevelRules = {
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "duck", c: 22, r: W - 1, range: 2, speed: 0.3 },
-  { kind: "walker", look: "duck", c: 222, r: W - 1, range: 2, speed: 0.3 },
+  { kind: "walker", look: "duck", c: 229, r: W - 1, range: 2, speed: 0.3 },
   { kind: "spiky", look: "swan", c: 70.5, r: W - 1, range: 8, w: 16, h: 12 },
   { kind: "walker", look: "coot", c: 110, r: W - 1, range: 2, speed: 0.4 },
   // The gulls' beats chosen (by a search) so that a man who walks on along the shore is dived at nearly every time.
   { kind: "thrower", look: "nester", c: 117, r: W - 3, period: 110, straight: true, lead: true, faces: -1 },
   { kind: "thrower", look: "nester", c: 123, r: W - 3, period: 110, offset: 10, straight: true, lead: true, faces: -1 },
   { kind: "thrower", look: "nester", c: 129, r: W - 3, period: 110, offset: 40, straight: true, lead: true, faces: -1 },
+  // The long crossing's two swans: their waters overlap by four tiles and a half, where both mind him.
   { kind: "spiky", look: "swan", c: 149.5, r: W - 1, range: 8.25, w: 16, h: 12 },
-  { kind: "spiky", look: "swan", c: 166.5, r: W - 1, range: 8.25, w: 16, h: 12, dir: -1 },
-  { kind: "walker", look: "coot", c: 206, r: W - 1, range: 2, speed: 0.4 },
-  { kind: "walker", look: "duck", c: 215, r: W - 1, range: 2, speed: 0.3 }
+  { kind: "spiky", look: "swan", c: 161.5, r: W - 1, range: 8.25, w: 16, h: 12, dir: -1 },
+  { kind: "walker", look: "coot", c: 213, r: W - 1, range: 2, speed: 0.4 },
+  { kind: "walker", look: "duck", c: 222, r: W - 1, range: 2, speed: 0.3 }
 ];
 
 export const OSTENSJO_RULES = { COLS, ROWS };
@@ -233,7 +234,7 @@ export const OSTENSJO_RULES = { COLS, ROWS };
 const P = PALETTE;
 
 /** How far the sun is up, by how near he is to the far hide (and more once the rune is taken). */
-const sunUp = (v: View) => Math.max(0, Math.min(1, (v.him.x - 196 * TILE) / (44 * TILE))) + (v.flourish !== null ? Math.min(0.5, v.flourish / 120) : 0);
+const sunUp = (v: View) => Math.max(0, Math.min(1, (v.him.x - 203 * TILE) / (44 * TILE))) + (v.flourish !== null ? Math.min(0.5, v.flourish / 120) : 0);
 
 /** The low sun's own colours, after the twilight's tint: its glow over the hills, gold high up to red low down, and its disc. */
 const GLOW = ["255, 214, 150", "255, 204, 140", "255, 192, 128", "255, 180, 118", "255, 166, 108", "255, 152, 100", "255, 138, 94", "255, 126, 90"];
@@ -561,8 +562,8 @@ function sunrise(v: View) {
   if (k <= 0) return;
   const g = ctx();
   g.globalCompositeOperation = "lighter";
-  const cx = 248 * TILE;
-  for (let x = Math.max(196 * TILE, view.camX); x < Math.min(COLS * TILE, view.camX + view.w); x += 4) {
+  const cx = 255 * TILE;
+  for (let x = Math.max(203 * TILE, view.camX); x < Math.min(COLS * TILE, view.camX + view.w); x += 4) {
     const near = Math.max(0, 1 - Math.abs(x - cx) / 700);
     R(x, view.camY, 4, FLOOR - view.camY, `rgba(${L.sunGlow}, ${(0.08 * k * near).toFixed(3)})`);
     if (x % 8 === 0) {
@@ -617,11 +618,11 @@ export const OSTENSJOVANNET: LevelDef = {
       tbaneDoor(v.doors.get("tbane"));
       hide(10, 13, W - 2, W - 4);
       hide(92, 101, W - 4, null);
-      hide(238, 247, W - 4, W - 7);
+      hide(245, 254, W - 4, W - 7);
       reeds(15, 18, v.t);
       reeds(56, 62, v.t);
       reeds(81, 85, v.t);
-      reeds(190, 232, v.t);
+      reeds(197, 239, v.t);
       nestRocks();
     },
     front(v) {

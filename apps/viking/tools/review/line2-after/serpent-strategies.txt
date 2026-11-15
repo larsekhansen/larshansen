@@ -1,0 +1,23 @@
+From the serpent's bench (col 243), three lives, 600 s each; after Game over, "Try again" from the bench.
+| strategy | outcome | hits (times, s) | hearts lost (ball / tail) | lives | Game overs | first hint (s) | hints said | standing still |
+|---|---|---|---|---|---|---|---|---|
+| walk in, stand facing it | Game over at 84 s | 0 | 64 (50 / 14) | 21 | 7 | 6 | 85: 6:miss 16:miss 17:miss 27:miss 34:miss 44:miss … | 94 % |
+| hold right (hops when blocked) | Game over at 91 s | 0 | 59 (26 / 33) | 19 | 6 | 9 | 79: 9:miss 10:missTail 20:missTurn 30:missTurn 39:miss 41:missTail … | 0 % |
+| hold right, jump whenever down | Game over at 117 s | 0 | 46 (36 / 10) | 15 | 5 | 5 | 91: 5:miss 15:miss 17:missTurn 27:missTurn 28:miss 38:miss … | 0 % |
+| walk in, jump in place | Game over at 112 s | 0 | 48 (37 / 11) | 16 | 5 | 6 | 80: 6:miss 16:miss 18:miss 28:miss 30:miss 44:miss … | 0 % |
+| middle, stand facing it | Game over at 79 s | 0 | 68 (53 / 15) | 22 | 7 | 6 | 91: 6:miss 16:miss 16:miss 26:miss 32:miss 42:miss … | 83 % |
+| middle, jump constantly | Game over at 142 s | 0 | 38 (13 / 25) | 12 | 4 | 9 | 89: 9:miss 11:missTail 19:miss 29:miss 33:miss 43:miss … | 0 % |
+| far right end of the quay (on the quay) | Game over at 90 s | 0 | 60 (26 / 34) | 20 | 6 | 9 | 80: 9:miss 10:missTail 19:miss 29:miss 39:miss 40:missTail … | 58 % |
+| run at it, jump when close | alive at 600 s | 0 | 1 (0 / 1) | 0 | 0 | 8 | 94: 8:miss 9:missTail 19:missTail 21:miss 31:miss 33:miss … | 0 % |
+| dash at it whenever it is up | Game over at 78 s | 0 | 69 (53 / 16) | 23 | 7 | 5 | 92: 5:miss 15:miss 16:miss 26:miss 31:miss 41:miss … | 0 % |
+| shield held all the time, facing it, never jumps | Game over at 150 s | 0 | 35 (0 / 35) | 11 | 3 | 9 | 72: 9:missHead 14:missTail 24:missTail 28:missHead 34:missTail 45:missHead … | 95 % |
+| shield when it is up, jumps the tail, never stomps | alive at 600 s | 0 | 0 (0 / 0) | 0 | 0 | 9 | 34: 9:missHead 27:missHead 45:missHead 63:missHead 81:missHead 99:missHead … | 97 % |
+| shield when it is up, stomps, never jumps the tail | beaten at 65 s | 3 (10, 44, 64) | 8 (0 / 8) | 2 | 0 | 9 | 9: 9:missHead 12:missTail 21:missTail 32:missTail 39:missTail 43:missHead … | 71 % |
+| shield facing right only (never turns) | Game over at 150 s | 0 | 35 (0 / 35) | 11 | 3 | 9 | 72: 9:missHead 14:missTail 24:missTail 28:missHead 34:missTail 45:missHead … | 95 % |
+| learner: does what each hint says, once seen | beaten at 61 s | 3 (20, 40, 60) | 2 (1 / 1) | 0 | 0 | 6 | 6: 6:miss 16:miss 19:missHead 22:missTail 32:missTail 59:missHead | 77 % |
+| learner who also keeps 5 tiles from the neck | beaten at 71 s | 3 (34, 52, 70) | 2 (1 / 1) | 0 | 0 | 5 | 4: 5:miss 15:miss 19:missHead 24:missTail | 74 % |
+| knows everything (shield, stomp, tail) | beaten at 47 s | 3 (10, 27, 46) | 0 (0 / 0) | 0 | 0 | 9 | 3: 9:missHead 27:missHead 45:missHead | 70 % |
+| wake it, then up on the prow | Game over at 86 s | 0 | 62 (27 / 35) | 20 | 6 | 9 | 83: 9:miss 10:missTail 19:missTurn 29:missTurn 38:miss 39:missTail … | 57 % |
+| wake it, up on the prow, the shield up facing it | Game over at 123 s | 0 | 44 (0 / 44) | 14 | 4 | 9 | 74: 9:miss 10:missTail 21:missHead 26:missTail 36:missHead 50:miss … | 69 % |
+| wake it, then back to the bench | alive at 600 s | 0 | 3 (2 / 1) | 1 | 0 | 5 | 4: 5:miss 15:miss 16:missTurn 26:missTurn | 99 % |
+| wake it, back to the bench, the shield up facing it | alive at 600 s | 0 | 3 (0 / 3) | 1 | 0 | 7 | 6: 7:missHead 12:missTail 22:missTail 25:missHead 30:missTail 41:missHead | 100 % |

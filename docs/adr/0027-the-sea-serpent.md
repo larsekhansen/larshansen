@@ -1,5 +1,7 @@
 # 0027. The sea serpent: the shield sends its ball back, a stomp on its dazed head
 
+State (order 17): adjusted by [0031](0031-the-serpent-made-good.md): the whole quay is its fight, its ball flies at his height, its hints are said only when true, it rises twice a round after its first hit and its tail follows its ball, it rests three seconds (not seven) after its ball hits him, and the dawn comes before the rune can be taken.
+
 Decided 2026-11-15 by the order 16 implementer, on the planner's order (order 16, "The serpent"; the plan
 for line 2, `docs/games/PLAN-LINE-2.md`: "three bosses, three answers: light for the troll, timing for the
 plough, the shield for the serpent"). Builds on [0017](0017-game-over-at-a-boss.md),

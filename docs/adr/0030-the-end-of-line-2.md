@@ -1,5 +1,7 @@
 # 0030. The end of line 2: all sixteen built, and what they give
 
+State (order 17): adjusted by [0031](0031-the-serpent-made-good.md): the longship lies at anchor at the end of the line, in view, instead of sailing under the help line.
+
 Decided 2026-11-15 by the order 16 implementer, on the planner's order (order 16, "The end of line 2").
 Completes [0025](0025-line-2-viking.md).
 

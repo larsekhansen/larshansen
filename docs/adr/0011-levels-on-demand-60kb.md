@@ -1,5 +1,7 @@
 # 0011. Levels load on demand; the first script stays under 60 kB
 
+State (order 17): enforced by [0035](0035-the-budget-enforced.md): the build fails over the budget. 59.34 kB after order 17.
+
 Decided by the planner (order 8 set the budget; order 10 rule 12 set the means).
 
 ## Decision

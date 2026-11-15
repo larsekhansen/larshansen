@@ -250,19 +250,51 @@ function stationBack(i: number, cleared: boolean, clean: boolean, v: View) {
   if (clean) waffle(x + 9, LINE_Y - 44);
 }
 
-/** Both lines done: a longship comes out under the viaducts, sailing slowly along the fjord, its sail striped. */
+/**
+ * Both lines done: a longship lies at anchor at the end of the line, past the last station's boards and
+ * under the end of the viaduct, in view where he stands after the last level: its hull with a row of shields, a carved dragon at
+ * the prow and a curl at the stern, its striped sail set on the yard, a lantern at the stern lit after
+ * dusk, and its reflection in the fjord. It stays; it is the game's last picture.
+ */
 function longship(v: View) {
-  const span = KART_COLS * TILE + 160;
-  const x = (((view.reduced ? 40 * TILE : v.t * 0.25) % span) + span) % span - 80;
-  const y = LINE_Y + 2 * TILE + 34;
+  // Past the last station's boards, below them, and to the right of the help line on a wide screen.
+  const w = 48;
+  const x = KART_COLS * TILE - w - 12;
+  const y = LINE_Y + 4 * TILE + 2;
   const bob = view.reduced ? 0 : Math.round(Math.sin(v.t * 0.04));
-  R(x, y + bob, 40, 4, PALETTE.woodDark);
-  R(x + 3, y + 4 + bob, 34, 2, mix(PALETTE.woodDark, INK, 0.3));
-  for (let k = 0; k < 6; k++) R(x - 3 + Math.round(k * 0.3), y - k + bob, 2, 1, PALETTE.wood);
-  for (let k = 0; k < 6; k++) R(x + 41 - Math.round(k * 0.3), y - k + bob, 2, 1, PALETTE.wood);
-  for (let k = 4; k < 36; k += 6) R(x + k, y + 1 + bob, 4, 3, k % 12 ? HAT_RED : PALETTE.sail);
-  R(x + 19, y - 22 + bob, 2, 22, PALETTE.woodDark);
-  for (let r = 0; r < 14; r++) R(x + 9, y - 21 + r + bob, 22, 1, r % 4 < 2 ? PALETTE.sail : PALETTE.sailStripe);
+  const yy = y + bob;
+  const wood = PALETTE.woodDark;
+  // Its reflection, broken by the water.
+  for (let k = 0; k < 5; k++) R(x + 4 + ((k * 7) % 9), y + 9 + k * 3, w - 8 - k * 6, 1, mix(PALETTE.water, wood, 0.35));
+  // The hull: a long low curve, the strakes along it, the stem and the sternpost rising at the ends.
+  for (let i = 0; i < w; i++) {
+    const f = i / (w - 1);
+    const rise = Math.round(5 * (Math.abs(f - 0.5) * 2) ** 3);
+    R(x + i, yy - rise, 1, 7 + rise - Math.round(4 * (Math.abs(f - 0.5) * 2) ** 2), wood);
+    R(x + i, yy - rise, 1, 1, mix(wood, WHITE, 0.25));
+    R(x + i, yy + 3 - Math.round(rise / 2), 1, 1, mix(wood, INK, 0.35));
+  }
+  // The dragon at the prow (to the right, out to sea) and the curl of the stern.
+  for (let k = 0; k < 12; k++) R(x + w - 1 + Math.round(Math.sin((k / 12) * Math.PI * 0.5) * 4), yy - 5 - k, 2, 1, PALETTE.wood);
+  R(x + w + 2, yy - 18, 6, 3, PALETTE.wood);
+  R(x + w + 6, yy - 17, 3, 2, PALETTE.wood);
+  R(x + w + 4, yy - 17, 1, 1, HAT_RED);
+  R(x + w + 7, yy - 15, 2, 1, HAT_RED);
+  for (let k = 0; k < 9; k++) R(x - 1 - Math.round(Math.sin((k / 9) * Math.PI * 0.6) * 3), yy - 5 - k, 2, 1, PALETTE.wood);
+  R(x - 5, yy - 15, 3, 3, PALETTE.wood);
+  // Shields along its side, red and white.
+  for (let k = 6; k < w - 6; k += 6) {
+    R(x + k, yy - 1, 5, 4, k % 12 ? HAT_RED : PALETTE.sail);
+    R(x + k + 2, yy, 1, 1, PALETTE.ironDark);
+  }
+  // The mast, the yard, the sail with its stripes.
+  R(x + w / 2 - 1, yy - 30, 2, 30, wood);
+  R(x + 12, yy - 29, w - 24, 2, wood);
+  for (let r = 0; r < 18; r++) for (let c = 0; c < w - 26; c += 4) R(x + 13 + c, yy - 27 + r, 4, 1, (c / 4) % 2 ? PALETTE.sailStripe : PALETTE.sail);
+  // A lantern at the stern, lit after dusk.
+  R(x + 2, yy - 13, 1, 6, METAL.lampPost);
+  R(x + 1, yy - 15, 3, 3, METAL.brass);
+  light(x + 1, yy - 15, 3, 3, "lamp");
 }
 
 /** Both lines done: lanterns along both viaducts, lit after dusk. */

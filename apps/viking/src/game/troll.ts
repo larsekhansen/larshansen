@@ -234,9 +234,17 @@ export function trollHurts(t: Troll, step: number, him: Body): { fromX: number; 
   return null;
 }
 
-/** It walked into his raised shield: back a tile, within its clearing. */
-function shoveTroll(t: Troll, _step: number, dir: 1 | -1) {
+/**
+ * It walked into his raised shield: back a tile, within its clearing; and since it can come no nearer, it
+ * raises its club there and then (the shield does not stop the club, nor the wave). A shield held at the
+ * clearing's mouth does not freeze it.
+ */
+function shoveTroll(t: Troll, step: number, dir: 1 | -1) {
   t.x = Math.max(t.def.x0 + TROLL.w / 2, Math.min(t.def.x1 - TROLL.w / 2, t.x + dir * TILE));
+  if (t.phase === "walk") {
+    t.waited = 0;
+    to(t, "windup", step);
+  }
 }
 
 /** The troll's rules for its level's slot (`LevelDef.trollRules`): play.ts runs them through the level. */

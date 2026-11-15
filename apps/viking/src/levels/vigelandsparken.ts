@@ -54,16 +54,16 @@ b.fill(154, 158, W - 3, W - 1, "G");
 // --- The Monolith: a stair of figures up its side, onto the plateau ------------------------------------
 b.run(171, 174, W - 2, "=").run(176, 179, W - 4, "=").run(171, 174, W - 6, "=").run(176, 180, W - 8, "=");
 b.fill(182, 212, W - 8, W - 1, "G");
-// --- The plateau's steps down to the Wheel of Life, and its plinth -----------------------------------
+// --- The plateau's steps down to the Wheel of Life, and its high plinth (a ledge on a beat the step up) ---
 b.fill(213, 215, W - 6, W - 1, "G").fill(216, 218, W - 4, W - 1, "G").fill(219, 221, W - 2, W - 1, "G");
-b.fill(236, 243, W - 1, W - 1, "G");
+b.fill(235, COLS - 1, W - 3, W - 1, "G");
 
 // Marks: the start, the door, signs, flags, benches, the rune, the bracteate, the cheese.
 b.put(2, W - 1, "t").put(4, W - 1, "S");
 b.put(9, W - 1, "i").put(51, W - 1, "i").put(168, W - 1, "i");
 b.put(33, W - 1, "f").put(53, W - 1, "f").put(82, W - 1, "f").put(109, W - 1, "f").put(135, W - 4, "f").put(157, W - 4, "f").put(169, W - 1, "f").put(188, W - 9, "f").put(216, W - 5, "f");
 b.put(112, W - 1, "b");
-b.put(239, W - 2, "r").put(178, W - 13, "o").put(96, W - 8, "&");
+b.put(240, W - 4, "r").put(178, W - 13, "o").put(96, W - 8, "&");
 
 // Skilling: along the path from the gate, over the first statue, along the bridge and over the broken
 // span, up the jets and across the bowl, through the rose garden and over the pergola, the courtyard,
@@ -84,7 +84,7 @@ const COINS: [number, number][] = [
   [162, 19], [173, 17], [177, 15], [173, 13], [178, 11],
   [184, 11], [186, 11], [192, 11], [200, 11], [208, 11], [211, 11],
   [214, 13], [217, 15], [220, 17],
-  [225, 19], [228, 19], [231, 19], [234, 19], [244, 19], [247, 19]
+  [225, 19], [228, 19], [231, 19], [234, 19], [244, 16], [247, 16]
 ];
 for (const [c, r] of COINS) b.put(c, r, "$");
 
@@ -109,6 +109,12 @@ export const BOY = { c: 63, period: 170 };
  * (his stamping included), shaking while he is in the air, and gone a while after he comes down.
  */
 export const SLAB: BellLedge = { x: 57 * TILE, y: FLOOR, w: 3 * TILE, on: 90, warn: 30, off: 50, offset: 90, note: -1 };
+/**
+ * The step up to the Wheel of Life's plinth, a slab that comes and goes on its own beat (two seconds there,
+ * a second shaking, two and a half gone): he waits at its foot between the statue behind him on the path and
+ * the statue ahead of him on the plinth, and can face only one of them at a time.
+ */
+export const STEP: BellLedge = { x: 233 * TILE, y: FLOOR - 2 * TILE, w: 2 * TILE, on: 120, warn: 60, off: 150, offset: 40, note: -1 };
 
 // --- The statues ------------------------------------------------------------------------------------
 
@@ -149,7 +155,8 @@ const statueSpans = (defs: readonly EnemyDef[]): Carrier[] =>
 /**
  * The first statue alone on the lawn; two in bronze on the bridge; the Angry Boy on his post; one at
  * each end of the rose garden; one in the courtyard to be led; pigeons, crows; on the plateau two
- * granite groups that throw rings, and they face the way he comes.
+ * granite groups that throw rings, and they face the way he comes; and two by the Wheel of Life, one on the
+ * path and one on its plinth, either side of the step up that comes and goes.
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 16, r: W - 8, range: 3, rise: 5, period: 180 },
@@ -168,6 +175,9 @@ export const ENEMIES: EnemyDef[] = [
   // search over every pair) so that a man who walks on across the plateau is hit about four times in five.
   { kind: "thrower", look: "ringer", c: 196, r: W - 12, period: 130, lead: true, faces: -1 },
   { kind: "thrower", look: "ringer", c: 205, r: W - 12, period: 130, offset: 100, lead: true, faces: -1 },
+  // The way to the Wheel of Life: one on the path behind him as he waits for the step, one on the plinth ahead.
+  { kind: "spiky", look: "statue", c: 227, r: W - 1, range: 5, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 239, r: W - 4, range: 3, speed: 0.8, w: 10, h: 16 },
   { kind: "flyer", look: "crow", c: 229, r: W - 7, range: 3, rise: 6, period: 150 }
 ];
 
@@ -193,7 +203,7 @@ export const RULES: LevelRules = {
   everywhere: (def) => statueSpans(def.enemies ?? [])
 };
 
-export const VIGELAND_RULES = { COLS, ROWS, CARRIERS, SLAB };
+export const VIGELAND_RULES = { COLS, ROWS, CARRIERS, SLAB, STEP };
 
 // --- Art ----------------------------------------------------------------------------------------------
 const P = PALETTE;
@@ -543,10 +553,23 @@ function plateau() {
   }
 }
 
+/** The step up to the plinth: a granite slab on iron brackets, shaking before it goes, gone a while. */
+function step(t: number) {
+  const phase = timedPhase(t, STEP);
+  R(STEP.x + 2, STEP.y + 6, 3, 2, P.ironDark);
+  R(STEP.x + STEP.w - 5, STEP.y + 6, 3, 2, P.ironDark);
+  if (phase === "off") return;
+  const shake = phase === "warn" && !view.reduced ? (Math.floor(t / 3) % 2 ? 1 : -1) : 0;
+  R(STEP.x + shake, STEP.y, STEP.w, 6, V.granite);
+  R(STEP.x + shake, STEP.y, STEP.w, 1, V.graniteLight);
+  R(STEP.x + shake, STEP.y + 5, STEP.w, 1, V.graniteDark);
+  if (phase === "warn" && view.reduced) R(STEP.x, STEP.y + 2, STEP.w, 1, V.graniteShade);
+}
+
 /** The Wheel of Life: a ring of figures holding one another, on its plinth, the rune inside it. */
 function wheel(t: number) {
-  const cx = 239 * TILE + 8;
-  const cy = FLOOR - 2 * TILE - 2;
+  const cx = 240 * TILE + 8;
+  const cy = FLOOR - 4 * TILE - 2;
   const r = 30;
   for (let i = 0; i < 18; i++) {
     const a = (i / 18) * Math.PI * 2 + (view.reduced ? 0 : 0);
@@ -618,7 +641,7 @@ export const VIGELANDSPARKEN: LevelDef = {
   legend: { solid: "#G", oneWay: "=-", water: "~" },
   ramps: [],
   carriers: CARRIERS,
-  timed: [SLAB],
+  timed: [SLAB, STEP],
   cannons: [],
   enemies: ENEMIES,
   rules: RULES,
@@ -653,6 +676,7 @@ export const VIGELANDSPARKEN: LevelDef = {
       monolith();
       plateau();
       wheel(v.t);
+      step(v.t);
     },
     front(v) {
       slab(v.t);

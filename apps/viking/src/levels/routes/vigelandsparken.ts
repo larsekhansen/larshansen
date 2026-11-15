@@ -4,7 +4,7 @@ import { cx, feet, jumpTo, mid, tile, wait, walk, type Move } from "../../game/b
 import { THROW_REACH, untilThrow, windingUp } from "../../game/enemies";
 import type { Play } from "../../game/play";
 import { shieldedWalk } from "./common";
-import { JET_IN, SLAB, W } from "../vigelandsparken";
+import { JET_IN, SLAB, STEP, W } from "../vigelandsparken";
 
 // Vigelandsparken's scripted route, played by the tests (and by the page under `?debug&auto`) with the
 // real rules, the single jump, the ski pole and the shield: through the gate and over the first statue,
@@ -116,9 +116,20 @@ export const VIGELANDSPARKEN_ROUTE: Move[] = [
     },
     6
   ),
-  // Down the steps to the Wheel of Life.
-  walk(mid(226)),
-  walk(mid(234)),
-  walk(mid(239))
+  // Down the steps, over the statue on the path, to the foot of the step that comes and goes; watching the
+  // statue behind him until the step is there and stays a while, then up it, onto the plinth, past the
+  // statue there (still, since he faces it) to the Wheel of Life.
+  walk(mid(222)),
+  walk(mid(232)),
+  {
+    name: "at the step's foot, watching the statue behind until the step is there",
+    keys(q) {
+      if (timedPhase(q.t, STEP) === "on" && timedPhase(q.t + 45, STEP) === "on") return "done";
+      return { ...NONE, left: q.body.facing > 0 };
+    }
+  },
+  jumpTo(STEP.x + STEP.w / 2),
+  jumpTo(mid(236)),
+  walk(mid(240))
 ];
 

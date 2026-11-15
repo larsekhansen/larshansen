@@ -1,10 +1,10 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { cx, jumpTo, mid, sit, stomp, tile, wait, walk, type Move } from "../../game/bot";
 import { THROW_REACH, untilThrow } from "../../game/enemies";
-import type { Play, PlayIntent } from "../../game/play";
-import { headBox, neckX, tailBox, type Serpent } from "../../game/serpent";
+import { runeFree, type Play, type PlayIntent } from "../../game/play";
+import { headBox, neckUp, neckX, tailBox, type Serpent } from "../../game/serpent";
 import { shieldedWalk } from "./common";
-import { STEPS, STONES, TOWER, type Ruins } from "../gamlebyen";
+import { LATE, SINKS, STEPS, STONES, TOWER, type Ruins } from "../gamlebyen";
 
 // Gamlebyen's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
 // rules, the single jump, the ski pole and the shield: through the park and over the dig, up St.
@@ -54,7 +54,8 @@ const arrows = (q: Play): 1 | null => {
 
 /**
  * The fight: keeps clear of its neck, faces it with the shield up from its tell until the ball is back,
- * runs to its dazed head and comes down on it, and jumps its tail as it comes along the quay.
+ * runs to its dazed head and comes down on it, and jumps its tail as it comes along the quay (after a
+ * round, and from its second hit on right behind each ball).
  */
 const serpentFight: Move = {
   name: "the serpent: the shield as it spits, a stomp on its head, a jump over its tail",
@@ -69,11 +70,14 @@ const serpentFight: Move = {
         const aim = h.x + h.w / 2 - q.body.vx * 7 - hx;
         return { ...NONE, left: aim < -2, right: aim > 2, jumpHeld: true };
       }
-      return { ...NONE, jumpHeld: (m.i as number) - ((m.jumpAt as number) ?? 0) < 30 };
+      // Held while he rises (a jump the key went down for a step or two early is held all the same).
+      return { ...NONE, jumpHeld: q.body.vy < 0 || (m.i as number) - ((m.jumpAt as number) ?? -99) < 30 };
     }
-    // The tail coming at him along the quay: jump it.
+    // The tail coming at him along the quay: jump it (the shield, if it is up, comes down for it), unless
+    // the ball is about to reach the shield: that first.
     const tb = tailBox(s, q.t);
-    if (tb && s.tail) {
+    const incoming = s.ball && !s.ball.back && Math.abs(s.ball.x - hx) < 20;
+    if (tb && s.tail && !incoming) {
       const d = tb.x + tb.w / 2 - hx;
       if (Math.abs(d) < 28 && d * s.tail.dir < 0) {
         m.jumpAt = m.i;
@@ -89,14 +93,15 @@ const serpentFight: Move = {
       return { ...NONE, left: d < -2, right: d > 2, jumpHeld: true, jumpPressed: true };
     }
     const nx = neckX(s);
-    // Up and about to spit, or the ball on its way: face it, shield up.
-    if (s.phase === "rear" || (s.phase === "spit" && s.ball && !s.ball.back) || s.phase === "rise") {
+    // Up and about to spit, or the ball on its way (and until it is well on its way back): face it, shield up.
+    const ball = s.ball && (!s.ball.back || Math.abs(s.ball.x - hx) < 3 * TILE);
+    if (s.phase === "rear" || (s.phase === "spit" && ball) || s.phase === "rise") {
       if (Math.abs(nx - hx) < 3 * TILE) return { ...NONE, left: hx < nx, right: hx >= nx };
       const toward = nx > hx ? 1 : -1;
       return { ...NONE, left: toward < 0 && q.body.facing > 0, right: toward > 0 && q.body.facing < 0, shield: true };
     }
-    // Otherwise keep five tiles or so from where it is or will be, on the quay.
-    if (Math.abs(nx - hx) < 5 * TILE) {
+    // Otherwise keep five tiles or so from where it is or will be, on the quay (and off its neck while it is up).
+    if (Math.abs(nx - hx) < (neckUp(s) ? 3 : 5) * TILE) {
       const away = hx < nx ? -1 : 1;
       const room = away < 0 ? hx - s.def.x0 > 2 * TILE : s.def.x1 - hx > 2 * TILE;
       const go = room ? away : -away;
@@ -137,11 +142,16 @@ export const GAMLEBYEN_ROUTE: Move[] = [
   stomp(4),
   // Down off its end; the wall rises behind him.
   walk(mid(96)),
-  // The water mirror's stepping stones as they rise.
+  // The water mirror's stepping stones as they rise: the one that rises late is waited for at the edge of
+  // the one before; the one that sinks is left at once.
   walk(tile(97)),
   risen(101, 16),
   leapTo(tile(99) - 2, tile(102), "onto the first stepping stone"),
-  ...STEPS.slice(1).flatMap(([c0, c1], i) => [risen(c0, 16), leapTo(tile(STEPS[i][1] + 1) - 2, tile(c0) + ((c1 - c0 + 1) * TILE) / 2, `onto the stepping stone at ${c0}`)]),
+  ...STEPS.slice(1).flatMap(([c0, c1], i) => [
+    ...(c0 === LATE ? [walk(tile(STEPS[i][1] + 1) - PLAYER.w / 2 - 2)] : []),
+    risen(c0, 16),
+    leapTo(tile(STEPS[i][1] + 1) - 2, c0 === SINKS ? tile(c1) + 2 : tile(c0) + ((c1 - c0 + 1) * TILE) / 2, `onto the stepping stone at ${c0}`)
+  ]),
   leapTo(tile(126) - 2, mid(128), "onto the far bank"),
   // The tower that builds itself, up the town wall.
   walk(mid(134)),
@@ -166,7 +176,8 @@ export const GAMLEBYEN_ROUTE: Move[] = [
   sit(),
   walk(mid(248)),
   serpentFight,
-  // Onto the last longship's prow, the rune.
+  // The dawn comes, the torches go out, and the rune rises to the last longship's prow; onto it, the rune.
+  wait("the dawn, and the rune risen to the prow", runeFree),
   walk(tile(267)),
   jumpTo(mid(269)),
   walk(mid(270))

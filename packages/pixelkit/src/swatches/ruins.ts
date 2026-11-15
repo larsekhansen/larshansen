@@ -38,10 +38,15 @@ export const plankDark = "#4f3a26";
 export const hull = "#4a3424";
 export const sail = "#d8cfba";
 export const sailStripe = "#a8432f";
-export const serpent = "#2f5a4a";
-export const serpentLight = "#4f8a6a";
-export const serpentDark = "#1c3a30";
-export const serpentBelly = "#a8b88a";
+export const serpent = "#3d7058";
+export const serpentLight = "#64a07c";
+export const serpentDark = "#234a3c";
+export const serpentBelly = "#cdd6a0";
+export const serpentBellyDark = "#9fa978";
+export const crest = "#a5583a";
+export const crestLight = "#d78a5a";
+export const eye = "#ffe066";
+export const tooth = "#f2ecd8";
 export const brine = "#cfe8f0";
 export const foam = "#e8f4f8";
 // The guards (stone, then alive), the archers, the geese, the dog.
@@ -52,6 +57,10 @@ export const archerCoat = "#3a5a3a";
 export const goose = "#eceae2";
 export const gooseBeak = "#e08a2f";
 export const dog = "#8a6a44";
-// The dawn after the serpent.
-export const dawn = "255, 190, 130";
-export const dawnSky = "#e8a87a";
+// The dawn after the serpent: the sky from the horizon up (height over it, and its colour), the sun, the hills against it.
+export const dawnSky: [number, string][] = [[0, "255, 214, 156"], [26, "250, 166, 112"], [70, "204, 120, 128"], [130, "104, 90, 142"], [230, "44, 56, 112"]];
+export const sun = "#fff1c8";
+export const sunGlow = "255, 214, 150";
+export const dawnHill = "#3a3552";
+export const dawnRim = "240, 160, 112";
+export const smoke = "#8a8a94";
