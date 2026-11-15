@@ -32,7 +32,7 @@ Lars before reversing one of his.
 | [0020](0020-waiting-is-not-length.md) | The scripted clear's floor is 40 s (80 s), now that waits are cut | planner (order 12) | holds; adjusts 0009's measure |
 | [0021](0021-the-upright-view-stands-him-two-thirds-down.md) | On an upright screen he stands two thirds down; the ground goes on under him, the far layers sit behind the street | planner (order 13) | holds; adjusts 0019 |
 | [0022](0022-the-plough-hurts-only-while-it-moves.md) | The plough hurts only while it moves; standing still it is in his way; running into him shows the round's hint | planner (order 13) | holds |
-| [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds |
+| [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds; adjusted by 0039 (every enemy's eyes, platforms' tops keep light) |
 | [0024](0024-the-shield-is-a-held-stance.md) | The shield: held down on the ground it comes up in six steps and stops throws and charges from in front; a held stance, not a parry | planner (order 14) | holds; adjusted by 0032 |
 | [0025](0025-line-2-viking.md) | Line 2: six more levels spelling VIKING, orange, leaving at Stortinget, opened by Nabolaget; stations not built are under construction | planner (plan for line 2, shown to Lars; order 14) | holds; extends 0006; completed by 0030 |
 | [0026](0026-the-sledge-he-cannot-stop.md) | Korketrekkeren: on the sledge he cannot stop; the speed is the level's by stretch, the run a stair of narrow ledges; jump or duck | planner (order 15) | holds |
@@ -46,6 +46,9 @@ Lars before reversing one of his.
 | [0034](0034-the-sloppy-player-made-honest.md) | The review's sloppy player made honest: four artefacts gone, fresh seeds, every move measured; what that did to line 2's targets | planner (order 17) | holds |
 | [0035](0035-the-budget-enforced.md) | The build fails if the first script is over 60 kB gzipped | planner (order 17) | holds; enforces 0011 |
 | [0036](0036-drawn-once-and-copied.md) | Stonework and other unchanging drawing is drawn once and copied; `?debug&perf` measures a frame | planner | holds |
+| [0037](0037-out-to-the-map-after-a-level.md) | After a level the card has one action, to the map, at the station just cleared; any key, a tap, or six seconds | planner (order 18) | holds |
+| [0038](0038-valerenga.md) | The tenth station is shown as Vålerenga; its id stays `nabolaget` | planner (order 18) | holds |
+| [0039](0039-colour-says-what-a-thing-is.md) | Colour says what a thing is: roles and their palettes (enemies outlined and a quarter larger, platforms' standing tops, pickups, him, the bosses' "now"), held by a test | planner, Lars (order 18) | holds; adjusts 0023 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

@@ -587,14 +587,11 @@ function gustLeaves(z: Zone, t: number) {
   }
 }
 
-/**
- * A magpie hopping: plum with a pale-green flash on its side and a poison sheen on its long tail. 13 x 11.
- * One that keeps its old box (`small`) sits two pixels lower, on shorter legs, so its head is the box's top.
- */
+/** A magpie hopping: plum with a pale-green flash on its side and a poison sheen on its long tail. 13 x 11. */
 function magpie(e: Enemy, t: number) {
   const hop = view.reduced ? 0 : Math.floor(t / 9 + e.x / 7) % 2;
   const r = parts(e, 13);
-  const d = (e.def.small ? 2 : 0) - hop;
+  const d = -hop;
   r(2, -9 + d, 7, 5, ENEMY.plum);
   r(3, -7 + d, 5, 2, ENEMY.poisonLight);
   r(8, -11 + d, 4, 4, ENEMY.plum);
@@ -602,8 +599,8 @@ function magpie(e: Enemy, t: number) {
   r(12, -9 + d, 2, 1, ENEMY.plumLight);
   r(-3, -8 + d, 6, 1, ENEMY.poison);
   r(-4, -9 + d, 4, 1, ENEMY.plum);
-  r(4, -4 + d, 1, 4 - (e.def.small ? 2 : 0), ENEMY.red);
-  r(6, -4 + d, 1, 4 - (e.def.small ? 2 : 0), ENEMY.red);
+  r(4, -4 + d, 1, 4, ENEMY.red);
+  r(6, -4 + d, 1, 4, ENEMY.red);
 }
 
 /** Grass on the hill: a top of evening grass with tufts, soil under. Rock: grey with lichen, in courses. */

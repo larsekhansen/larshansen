@@ -8,7 +8,7 @@ import { ENEMY, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixe
 import { panelDoor } from "@larshansen/pixelkit/props";
 import * as METRO from "@larshansen/pixelkit/swatches/metro";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
-import { leap, type Enemy, type EnemyDef } from "../game/enemies";
+import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { parts } from "../render/pickups";
@@ -894,7 +894,8 @@ export const STORTINGET: LevelDef = {
   carriers: CARRIERS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   hazards: HAZARDS,
   surfaceAt,
   haze: [0, 0, 0],

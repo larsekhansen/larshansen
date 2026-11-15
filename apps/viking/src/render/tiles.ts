@@ -26,7 +26,9 @@ const hash = (c: number, r: number, k: number) => {
 };
 
 /** The water near the bottom, and the weed in it. */
-const DEEPER = mix(P.waterDeep, INK, 0.14);
+/** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */
+const DEEP = "#2b6a8e";
+const DEEPER = "#2a6384";
 const WEED = mix(P.grassDark, P.waterDeep, 0.45);
 const WEED_LIGHT = mix(P.grass, P.waterDeep, 0.5);
 
@@ -40,7 +42,7 @@ export function drawWater(map: TileMap, t: number) {
       const x = c * TILE;
       const y = r * TILE;
       if (map.tileAt(c, r - 1) === "~") {
-        R(x, y, TILE, TILE, P.waterDeep);
+        R(x, y, TILE, TILE, DEEP);
         // Over the bed the water is deeper still, and weed grows up out of it, swaying.
         if (map.tileAt(c, r + 1) !== "~") {
           R(x, y + 9, TILE, 7, DEEPER);
@@ -57,7 +59,7 @@ export function drawWater(map: TileMap, t: number) {
         continue;
       }
       R(x, y, TILE, 8, P.water);
-      R(x, y + 8, TILE, 8, mix(P.water, P.waterDeep, 0.5));
+      R(x, y + 8, TILE, 8, mix(P.water, DEEP, 0.5));
       R(x + ((c * 5 + Math.floor(tt / 40)) % 9), y, 4, 1, P.foam);
       R(x + ((c * 7 + Math.floor(tt / 14)) % TILE), y + 3 + (c % 3) * 3, 2, 1, mix(P.water, P.foam, 0.6));
     }
@@ -143,7 +145,8 @@ function underWater(map: TileMap, c: number, r: number) {
 
 /** The bed under the water: dark, with sand at the top, stones and weed in it. */
 function bed(c: number, r: number, x: number, y: number, map: TileMap) {
-  const deep = mix(P.waterDeep, INK, 0.25);
+  // A little greener than the water's deep blue, so it is not his tunic's blue (order 18).
+  const deep = "#195672";
   R(x, y, TILE, TILE, deep);
   if (map.tileAt(c, r - 1) === "~") {
     R(x, y, TILE, 3, mix(P.sandDark, P.waterDeep, 0.45));
@@ -191,8 +194,26 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
   else if (art.ledges[t]) ledge(x, y, STAND_LEDGE, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
 }
 
+/** Where he falls (order 18): the lip of a drop into deep water or a pit with no floor, a dark band down the bank's face. */
+const LIP = "#0b0d14";
+
+/** Below (c, r): is it a drop he does not come back from (water, or nothing down to the map's foot)? */
+function fatal(map: TileMap, c: number, r: number) {
+  if (c < 0 || c >= map.cols) return false;
+  for (let rr = r; rr < map.rows; rr++) {
+    if (map.tileAt(c, rr) === "~") return true;
+    if (map.isSolid(c, rr) || map.isOneWay(c, rr)) return false;
+  }
+  return true;
+}
+
 export function drawTiles(map: TileMap, art: Art, sky: Sky, underground = false) {
-  forVisibleTiles(map, (t, c, r, x, y) => drawTile(t, c, r, x, y, map, art, sky));
+  forVisibleTiles(map, (t, c, r, x, y) => {
+    drawTile(t, c, r, x, y, map, art, sky);
+    // The lip of a fatal drop: the same dark band wherever ground stops over water or a pit.
+    if (map.isSolid(c, r) && !map.isSolid(c, r - 1) && t !== "~")
+      for (const side of [-1, 1]) if (!map.isSolid(c + side, r) && !map.isOneWay(c + side, r) && fatal(map, c + side, r)) R(side > 0 ? x + TILE - 2 : x, y + 2, 2, TILE - 2, LIP);
+  });
   drawBelow(map, art, sky);
   if (underground) drawAbove(map, art, sky);
 }

@@ -6,7 +6,7 @@ import { ENEMY, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIV
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import { leap, type Enemy, type EnemyDef } from "../game/enemies";
+import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { parts } from "../render/pickups";
@@ -248,7 +248,9 @@ const SALMON = ["...bb...", "..bbbb..", ".bbbbbb.", ".bbebbs.", "bbbbbsss", "bbb
 function drawSalmon(e: Enemy, t: number, water = Infinity) {
   const l = leap(e, t);
   const x = Math.round(e.x - 4);
-  const y = Math.round(e.y) - 15;
+  // Drawn fifteen rows tall, to its box's height (it keeps the box it had before order 18).
+  const y = Math.round(e.y) - e.h;
+  const rowAt = (r: number) => Math.round((r * e.h) / 15);
   if (l.ripple && !view.reduced && Math.floor(t / 6) % 2)
     plain(() => {
       R(Math.round(e.x - 6), Math.min(water, Math.round(e.y)) - 1, 12, 1, P.foam);
@@ -261,7 +263,7 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
   SALMON.forEach((row, r) =>
     [...row].forEach((ch, c) => {
       if (ch === ".") return;
-      const yy = y + (falling ? 14 - r : r);
+      const yy = y + rowAt(falling ? 14 - r : r);
       if (yy >= water) return;
       R(x + (e.dir > 0 ? c : 7 - c), yy, 1, 1, colors[ch]);
     })
@@ -941,7 +943,8 @@ export const AKERSELVA: LevelDef = {
   carriers: CARRIERS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   zones: ZONES,
   flourish: 120,
   // The view goes four rows under the ground, and six by the cave behind the curtain.

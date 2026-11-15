@@ -127,3 +127,4 @@ export * as RIVER from "./swatches/river";
 export * as FOREST from "./swatches/forest";
 export * as ENEMY from "./swatches/enemy";
 export * as STAND from "./swatches/stand";
+export * as ROLES from "./swatches/roles";

@@ -4,7 +4,7 @@ import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { CREATURE, DOORWAY, ENEMY, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Enemy, EnemyDef } from "../game/enemies";
@@ -492,6 +492,11 @@ function dawnShaft(v: View) {
   R(d[0], G * TILE - 1, d[1] - d[0], 3, `rgba(255, 225, 160, ${(0.45 + pulse * 0.4).toFixed(3)})`);
   for (const ex of [d[0], d[1] - 1]) R(ex, G * TILE - 10, 1, 10, `rgba(255, 220, 150, ${(0.2 + pulse * 0.3).toFixed(3)})`);
   g.globalCompositeOperation = "source-over";
+  // While its club is stuck, where it has to stand is marked in the bosses' "now" colour (order 18).
+  if (stuck && (view.reduced || pulse > 0.3)) {
+    R(d[0], G * TILE - 1, d[1] - d[0], 1, ROLES.now);
+    for (const ex of [d[0], d[1] - 1]) R(ex, G * TILE - 8, 1, 7, ROLES.now);
+  }
   if (!view.reduced)
     for (let i = 0; i < 12; i++) {
       const k = ((v.t * 0.25 + i * 37) % 160) / 160;
@@ -645,8 +650,9 @@ function trollBody(t: Troll, v: View) {
   if (t.phase === "windup") {
     const lift = Math.min(1, age / 14);
     box(6, 22, 4, 6 + Math.round(12 * lift), FOREST.troll);
-    for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - lift)) : x - 10 - Math.round(k * (1 - lift)), fl - 34 - Math.round(lift * 10) - Math.round(k * lift), 4, 2, FOREST.club);
-    R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(lift * 2), 6, 6, mix(FOREST.club, INK, 0.2));
+    // The club raised, its tell, in the bosses' "now" colour (order 18).
+    for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - lift)) : x - 10 - Math.round(k * (1 - lift)), fl - 34 - Math.round(lift * 10) - Math.round(k * lift), 4, 2, ROLES.now);
+    R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(lift * 2), 6, 6, ROLES.now);
   } else if (t.phase === "stuck") {
     box(9, 10, 4, 12, FOREST.troll);
     for (let k = 0; k < 14; k++) R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 2, FOREST.club);

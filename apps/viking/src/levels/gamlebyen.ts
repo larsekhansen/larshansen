@@ -2,12 +2,12 @@ import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, PALETTE, ROLES, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
+import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
 import { drawRune } from "../render/actors";
@@ -254,9 +254,9 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 9, r: STREET - 1, range: 2 },
   // The owl over the street past the dig (order 17: it hung over the dig's landing).
   { kind: "flyer", look: "owl", c: 31, r: STREET - 4, range: 1, rise: 6, period: 180 },
-  { kind: "walker", look: "guard", c: 70, r: WALL - 1, range: 2, speed: 0.5, w: 10, h: 14 },
-  { kind: "walker", look: "guard", c: 78, r: WALL - 1, range: 2, speed: 0.5, dir: -1, w: 10, h: 14 },
-  { kind: "walker", look: "guard", c: 86, r: WALL - 1, range: 2, speed: 0.5, w: 10, h: 14 },
+  { kind: "walker", look: "guard", c: 70, r: WALL - 1, range: 2, speed: 0.5 },
+  { kind: "walker", look: "guard", c: 78, r: WALL - 1, range: 2, speed: 0.5, dir: -1 },
+  { kind: "walker", look: "guard", c: 86, r: WALL - 1, range: 2, speed: 0.5 },
   { kind: "walker", look: "rat", c: 57, r: STREET + 1, range: 1 },
   { kind: "thrower", look: "archer", c: 150, r: TOWN - 4, period: 100, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
   { kind: "thrower", look: "archer", c: 162, r: TOWN - 4, period: 100, offset: 50, straight: true, lead: true, faces: -1, reach: 10, blind: 4 },
@@ -867,8 +867,9 @@ function serpentArt(s: Serpent, v: View) {
     R(x - r + 3, floor + WATERLINE - 1, 2 * r - 6, 3, mix(PALETTE.waterDeep, INK, 0.4));
     for (let k = -r; k <= r; k++) {
       const dy = Math.round(Math.sqrt(Math.max(0, r * r - k * k)) * 0.35);
-      light(x + k, floor + WATERLINE + dy, 1, 1, "soft", G.foam);
-      light(x + k, floor + WATERLINE - dy, 1, 1, "soft", G.foam);
+      // Where it will rise, its tell: the ring in the bosses' "now" colour (order 18).
+      light(x + k, floor + WATERLINE + dy, 1, 1, "soft", ROLES.now);
+      light(x + k, floor + WATERLINE - dy, 1, 1, "soft", ROLES.now);
     }
     return;
   }
@@ -886,8 +887,8 @@ function serpentArt(s: Serpent, v: View) {
       serpentNeck(x, headY + 6, base, s.dir, lean, sway);
       serpentHead(x + lean + sway, headY, s.dir, open);
       // Its tell, plain to see: the throat swells pale as it gathers the brine.
-      if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, G.brine);
-      if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, G.brine);
+      if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
+      if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
     });
     if (s.phase === "rise" || (s.phase === "rear" && age < 40)) streaming(x, headY, base, age + (s.phase === "rear" ? SERPENT_STEPS.rise : 0), 10);
     return;
@@ -910,7 +911,8 @@ function serpentArt(s: Serpent, v: View) {
     });
     if (s.phase === "dazed") for (let k = 0; k < 3; k++) {
       const a = view.reduced ? k * 2.1 : t * 0.1 + k * 2.1;
-      R(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, G.brine);
+      // Its dazed head is where to hit it: the stars over it in the bosses' "now" colour (order 18).
+      R(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, ROLES.now);
       light(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, "soft", "rgba(220, 240, 255, 0.6)");
     }
     return;
@@ -948,7 +950,7 @@ function ballArt(s: Serpent, t: number) {
 
 /**
  * The bishop's guard: while he is a statue, grey stone and not outlined (stone does not bite); woken, a
- * plum coat over red mail, a halberd. 13 x 18.
+ * plum coat over red mail, a halberd held out beside him. Squat, his head where his box's top is. 13 x 10.
  */
 function guardArt(e: Enemy) {
   const stone = !e.n;
@@ -957,14 +959,14 @@ function guardArt(e: Enemy) {
     const coat = stone ? G.statue : ENEMY.plum;
     const mail = stone ? mix(G.statue, INK, 0.15) : ENEMY.red;
     const step = stone || view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-    r(3, -5, 3, 5 - step, mail);
-    r(7, -5, 3, 5 - (1 - step), mail);
-    r(2, -12, 9, 7, coat);
-    r(3, -16, 7, 4, mail);
-    r(3, -17, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.redLight);
-    r(8, -14, 1, 1, stone ? mix(G.statue, INK, 0.4) : ENEMY.eye);
-    r(12, -18, 1, 15, stone ? G.statue : ENEMY.orange);
-    r(11, -20, 3, 2, stone ? G.statue : ENEMY.pale);
+    r(3, -3, 3, 3 - step, mail);
+    r(7, -3, 3, 3 - (1 - step), mail);
+    r(2, -7, 9, 4, coat);
+    r(3, -10, 7, 3, mail);
+    r(3, -10, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.redLight);
+    r(8, -9, 1, 1, stone ? mix(G.statue, INK, 0.4) : ENEMY.eye);
+    r(12, -13, 1, 12, stone ? G.statue : ENEMY.orange);
+    r(12, -15, 2, 2, stone ? G.statue : ENEMY.pale);
   };
   if (stone) plain(draw);
   else draw();
@@ -1039,7 +1041,13 @@ export const GAMLEBYEN: LevelDef = {
   carriers: LONGSHIPS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // The card's last line: line 2's runes, and with all six, what is left to find.
+  cardLine: {
+    nb: (n, left) => (n === 6 ? `Seks av seks runer: VIKING. Igjen å finne: ${left === 0 ? "bedre tider." : `${left === 1 ? "én brakteat" : `${left} brakteater`} og bedre tider.`}` : `${["Null", "Én", "To", "Tre", "Fire", "Fem"][n] ?? n} av seks runer på linje 2. Resten ligger langs linja.`),
+    en: (n, left) => (n === 6 ? `Six of six runes: VIKING. Still to find: ${left === 0 ? "better times." : `${left === 1 ? "one bracteate" : `${left} bracteates`}, and better times.`}` : `${["None", "One", "Two", "Three", "Four", "Five"][n] ?? n} of six runes on line 2. The rest are along the line.`)
+  },
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   grounds: GROUNDS,
   rules: RULES,
   boss: serpentBoss(SERPENT_DEF),

@@ -8,7 +8,7 @@ import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
+import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
 import { mapBuilder } from "./build";
@@ -651,7 +651,8 @@ export const BJORVIKA: LevelDef = {
   carriers: CARRIERS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   zones: GUSTS,
   hazards: HAZARDS,
   floor: (x) => (x < 36 * TILE ? (G + 3) * TILE : (DOCK + 2) * TILE),

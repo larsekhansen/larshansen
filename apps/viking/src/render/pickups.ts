@@ -1,6 +1,6 @@
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { COIN, CREATURE, ENEMY, FOOD, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
-import { KIND, SHOT, type Enemy, type Shot } from "../game/enemies";
+import { KIND, SHOT, sizeOf, type Enemy, type Shot } from "../game/enemies";
 
 // The small things of a level: skilling, the brown cheese, park benches, and the enemies every level
 // may meet (the first level's) and the snowball. Enemies are drawn a quarter larger than before order
@@ -86,7 +86,13 @@ export function parts(e: Enemy, W: number) {
   const x = Math.round(e.x - W / 2);
   const y = Math.round(e.y);
   const right = e.dir > 0;
-  return (dx: number, dy: number, w: number, h: number, c: string) => R(right ? x + dx : x + W - dx - w, y + dy, w, h, c);
+  // One that keeps its old box (`small`) is drawn as wide, but to the box's height: each row moved down
+  // in proportion, none lost, so its head is where he lands on it.
+  const k = e.def.small ? e.h / sizeOf({ ...e.def, small: false }).h : 1;
+  return (dx: number, dy: number, w: number, h: number, c: string) => {
+    const top = Math.round(dy * k);
+    R(right ? x + dx : x + W - dx - w, y + top, w, Math.max(1, Math.round((dy + h) * k) - top), c);
+  };
 }
 
 const E = ENEMY;

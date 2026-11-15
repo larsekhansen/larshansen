@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, and by order 17's the next day. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, and by order 18's after that. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -37,11 +37,12 @@ page is published as a private artifact on Lars's claude.ai account.
   viking game; it is deliberately not in the header.
 - **Vikingfjorden** (`apps/viking`, served at `/viking/`): a T-bane line map with two lines.
   Line 1 has ten levels, one per rune of LARS HANSEN: Langkaia, Akershus festning, Rådhuset,
-  Slottet, Holmenkollen, Akerselva, Nordmarka, Stortinget, Ekeberg, Nabolaget. Each is 220 to 280
+  Slottet, Holmenkollen, Akerselva, Nordmarka, Stortinget, Ekeberg, Vålerenga (shown so since order 18;
+  its id is still `nabolaget`, ADR 0038). Each is 220 to 280
   columns with enemies, three hearts, lives, pits, benches, skilling, secrets and a gold bracteate.
-  Two bosses: the troll in Nordmarka and the snow plough in Nabolaget. Clearing Holmenkollen gives
+  Two bosses: the troll in Nordmarka and the snow plough in Vålerenga. Clearing Holmenkollen gives
   the ski pole (a dash). With all ten runes the helmet turns gold. Line 2 (orange, VIKING, ADR 0025)
-  leaves at Stortinget and opens when Nabolaget is cleared: Bygdøy (order 14) gives the shield (ADR
+  leaves at Stortinget and opens when Vålerenga is cleared: Bygdøy (order 14) gives the shield (ADR
   0024); Vigelandsparken, Korketrekkeren (the sledge he cannot stop, ADR 0026) and Østensjøvannet came
   with order 15, Bjørvika (crane hooks) and Gamlebyen (the ruins that rise as he passes, ADR 0028; the sea
   serpent, ADR 0027) with order 16. All sixteen are built; with all six of line 2 the header's VIKING is gold,
@@ -69,6 +70,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-14 to 15 | Order 15: Bygdøy's gull and the passage under the loft; Vigelandsparken (statues), Korketrekkeren (the sledge), Østensjøvannet (swans and lily pads); a level's own rules (`LevelDef.rules`) | `orders/15-three-stations.md`, PR #60 |
 | 2026-11-15 | Order 16: the sledge's help line, the lake's sunrise, a hesitating player (and the lake eased for it); Bjørvika (hooks), Gamlebyen (rising ruins), the sea serpent; the end of line 2 | `orders/16-the-last-two.md`, branch `the-last-two` |
 | 2026-11-15 | An adversarial review of line 2 (`reviews/2026-11-15-line-2.md`); order 17 makes it good: the serpent's fight and ending, a lost life at a boss, what line 2 teaches and gives made visible, each level asking more of its idea, the review's tools made honest, the first script's budget enforced | `orders/17-line-2-made-good.md`, branch `line-2-made-good` |
+| 2026-11-15 | Lars plays on his phone after the speed fix (PR #63): the card takes him out to the map (ADR 0037); Nabolaget is shown as Vålerenga (ADR 0038); runes that read at a glance; enemies a quarter larger, outlined, in a palette of their own; platforms with a standing top; every role's colours named and held apart (ADR 0039) | `orders/18-seen-at-a-glance.md`, branch `seen-at-a-glance` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
 rebuild, music and all, kept so it is not lost; the archived repository `larsekhansen/iron-maze`

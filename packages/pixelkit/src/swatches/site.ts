@@ -36,7 +36,7 @@ export const graniteLight = "#aaa9a4";
 export const graniteDark = "#6c6b67";
 export const fence = "#d9dcd2";
 // The finished floors' glass at dusk, and a lit window.
-export const glass = "#3f5272";
+export const glass = "#4b526a";
 export const glassLight = "#6a7fa8";
 export const glassDark = "#2c3a54";
 // The welder's sparks, the riveters' bolts and vests.
@@ -51,9 +51,9 @@ export const overalls = "#2f4f7a";
 // Below and beyond: the fjord at dusk, the far shore, the new town by the water.
 export const fjord = "#56709b";
 export const fjordLight = "#93a9cf";
-export const fjordDeep = "#3f5680";
-export const shore = "#4a5574";
-export const shoreDark = "#3a4460";
+export const fjordDeep = "#535e78";
+export const shore = "#4e5570";
+export const shoreDark = "#3e4460";
 export const town = "#5f6884";
 export const townLight = "#7c86a2";
 export const opera = "#e6e3da";

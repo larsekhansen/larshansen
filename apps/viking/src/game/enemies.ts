@@ -47,9 +47,10 @@ export interface EnemyDef {
   /** For one that faces one way: how near in front of it, in tiles, it does not throw at him, when not one and a half. */
   blind?: number;
   /**
-   * Keeps the box it had before enemies were drawn a quarter larger (order 18): a bigger one would break
-   * the level (its scripted clear, its searches, a jump's landing). Its picture grows around the box,
-   * not above it, so he still lands on its head where the head is drawn.
+   * Keeps the box it had before enemies were drawn a quarter larger (order 18): a bigger one broke the
+   * level (its scripted clear, its searches, a jump's landing) or cost the sloppy player more than 0.3
+   * hearts a run. Its picture keeps its new width and is drawn to the box's height (`parts`), so he still
+   * lands on its head where the head is drawn.
    */
   small?: boolean;
 }
@@ -122,6 +123,9 @@ export function sizeOf(def: EnemyDef): { w: number; h: number } {
   const grow = def.small ? 1 : GROW;
   return { w: Math.round((def.w ?? k.w) * grow), h: Math.round((def.h ?? k.h) * grow) };
 }
+
+/** A level's enemies, all keeping the boxes they had before order 18 (`small`). */
+export const keepBoxes = (defs: EnemyDef[]): EnemyDef[] => defs.map((d) => ({ ...d, small: true }));
 
 export function createEnemies(defs: readonly EnemyDef[], map: TileMap): Enemy[] {
   return defs.map((def) => {

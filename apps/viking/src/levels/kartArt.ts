@@ -6,6 +6,7 @@ import { BRICK, DOORWAY, FACADE, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
+import { drawTick } from "../render/actors";
 import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import { isOpen, type Progress } from "../game/progress";
 import { LINE, ORDER } from "./index";
@@ -270,14 +271,7 @@ function runeStone(x: number, y: number, char: RuneChar, cleared: boolean) {
   R(x + 1, y + 1, 1, 14, METAL.goldLight);
   cells.forEach((row, ry) => row.forEach((on, rx) => on && R(x + 4 + rx, y + 3 + ry, 1, 1, INK)));
   // The tick: a dark disc over the top right corner with a pale check in it.
-  const tx = x + 11;
-  const ty = y - 3;
-  R(tx + 1, ty, 5, 7, INK);
-  R(tx, ty + 1, 7, 5, INK);
-  for (const [dx, dy] of [[1, 3], [2, 4], [3, 3], [4, 2], [5, 1]]) {
-    R(tx + dx, ty + dy, 1, 1, WHITE);
-    light(tx + dx, ty + dy, 1, 1, "window", WHITE);
-  }
+  drawTick(x + 11, y - 3);
   // After dark its frame glows; the rune and the tick stay dark on it.
   for (const [lx, ly, lw, lh] of [[x + 1, y, 14, 1], [x + 1, y + 15, 14, 1], [x, y + 1, 1, 14], [x + 15, y + 1, 1, 14]]) light(lx, ly, lw, lh, "soft");
 }
@@ -395,3 +389,24 @@ export function kartArt(progress: Progress, open: boolean): Art {
     ledges: {}
   };
 }
+
+/** The line map's words, in both languages: they come with its look, so the first script does not carry them (order 18). */
+export const KART_WORDS = {
+  nb: {
+    lineSub: "Linje 1, ti stopp",
+    lineSubBoth: "Linje 1 og 2, seksten stopp",
+    /** The line map's board at the end of a line all cleared: its best times added up. */
+    lineTime: (n: number, time: string) => `Linje ${n} ${time}`,
+    closed: (before: string) => `Stengt til du har klart ${before}.`,
+    moundNoFeather: ["Det sies at haugbonden har en ravnefjær.", "Gullet henger høyt uten den."],
+    featherLine: "Haugbonden gir seg. Ravnefjæra er din: hopp en gang til i lufta."
+  },
+  en: {
+    lineSub: "Line 1, ten stops",
+    lineSubBoth: "Lines 1 and 2, sixteen stops",
+    lineTime: (n: number, time: string) => `Line ${n} ${time}`,
+    closed: (before: string) => `Closed until ${before} is done.`,
+    moundNoFeather: ["They say the mound-dweller keeps a raven's feather.", "The gold hangs high without it."],
+    featherLine: "The mound-dweller yields. The raven's feather is yours: jump once more in mid-air."
+  }
+};

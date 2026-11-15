@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { target, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, STAND } from "@larshansen/pixelkit/palette";
+import { ENEMY, ROLES, STAND } from "@larshansen/pixelkit/palette";
 import { TINT } from "@larshansen/pixelkit/paint";
 import type { Phase } from "@larshansen/pixelkit/oslo";
 import { skyFor } from "@larshansen/pixelkit/oslo";
@@ -12,7 +12,7 @@ import { SHIELD_RULES } from "../game/shield";
 import { BUILT, loadLevel } from "../levels/index";
 import * as ROUTES from "../levels/routes";
 import type { LevelDef, View } from "../levels/types";
-import { areaRecorder, deltaE, levelFields, mixRgb, parseColour, tinted, type Rgb } from "./fields";
+import { areaRecorder, colourBlind, deltaE, levelFields, mixRgb, parseColour, tinted, type Rgb } from "./fields";
 import { drawEnemy, drawShot } from "./pickups";
 import { eyes, outlined } from "./sprite";
 
@@ -234,5 +234,99 @@ describe("what can hurt him stands off every level's fields", () => {
     const near: string[] = [];
     for (const a of [...TOPS, ...BODIES]) for (const b of BODY) if (deltaE(rgb(a), rgb(b)) < MIN_DELTA) near.push(`${a} near ${b}: ${deltaE(rgb(a), rgb(b)).toFixed(1)}`);
     expect(near).toEqual([]);
+  });
+
+});
+
+// Every role has its colours (order 18, section 6): him, what hurts, what he stands on, what he takes, and
+// what a boss shows before it acts (`swatches/roles.ts`).
+describe("every role has its colours", () => {
+  /** How each role is seen under a tint: him dimmed as the kit dims him; what he takes nearly as by day (it shines after dark); a boss's tell tinted, with a quarter of its own light. */
+  const DIM: Record<Phase, number> = { day: 0, evening: 0.12, twilight: 0.18, night: 0.25 };
+  const shown = (role: string, c: string, phase: Phase): Rgb => {
+    if (phase === "day") return rgb(c);
+    if (role === "him") return mixRgb(rgb(c), rgb("#141c46"), DIM[phase]);
+    return mixRgb(tinted(rgb(c), phase), rgb(c), role === "take" ? 0.8 : 0.25);
+  };
+
+  /**
+   * His blue is his alone: the tunic is held to the distance by day. Under the tints it is not (the game's
+   * water is blue, and the tint brings it nearer him than the day does: the hand-back of order 18 has the
+   * numbers), and his helmet's iron and his skin are held only against the other roles: a stone city has
+   * greys, and a palace has his skin's cream.
+   */
+  const FIELDS_OF: Record<string, { colours: readonly string[]; phases: Phase[] }> = {
+    him: { colours: [ROLES.him.tunic], phases: ["day"] },
+    // The copper of a coin and the gold of a bracteate; their rims and glints are details on them, as an enemy's eyes are.
+    take: { colours: [ROLES.take.copper, ROLES.take.gold, ROLES.take.goldDark], phases: ["day", "evening", "twilight", "night"] },
+    now: { colours: ROLES.COLOURS.now, phases: ["day", "evening", "twilight", "night"] }
+  };
+
+  test(`his blue by day, what he takes and a boss's "now" under every sky, stand ${MIN_DELTA} or more off every level's fields`, () => {
+    const near: string[] = [];
+    for (const role of ["him", "take", "now"])
+      for (const phase of FIELDS_OF[role].phases)
+        for (const [id, f] of fields)
+          for (const field of [...f.keys(), ...(SKY_FIELDS.get(phase) ?? [])])
+            for (const c of FIELDS_OF[role].colours) {
+              const d = deltaE(shown(role, c, phase), tinted(rgb(field), phase));
+              if (d < MIN_DELTA) near.push(`${role} ${c} near ${field} in ${id} (${phase}): ${d.toFixed(1)}`);
+            }
+    expect([...new Set(near)]).toEqual([]);
+  });
+
+  /** Where two roles may be near, by name, and why: none. */
+  const NEAR_BY_DESIGN: string[] = [];
+
+  test(`every role's colours stand ${MIN_DELTA} or more from every other role's`, () => {
+    const roles = Object.keys(ROLES.COLOURS);
+    const near: string[] = [];
+    const smallest: string[] = [];
+    for (let i = 0; i < roles.length; i++)
+      for (let j = i + 1; j < roles.length; j++) {
+        let worst = { d: Infinity, a: "", b: "" };
+        for (const a of ROLES.COLOURS[roles[i]]) for (const b of ROLES.COLOURS[roles[j]]) {
+          const d = deltaE(rgb(a), rgb(b));
+          if (d < worst.d) worst = { d, a, b };
+        }
+        smallest.push(`${roles[i]} / ${roles[j]}: ${worst.d.toFixed(1)} (${worst.a}, ${worst.b})`);
+        if (worst.d < MIN_DELTA && !NEAR_BY_DESIGN.includes(`${roles[i]}/${roles[j]}`)) near.push(smallest.at(-1)!);
+      }
+    console.log(`The roles' smallest distances (CIEDE2000):\n  ${smallest.join("\n  ")}`);
+    expect(near).toEqual([]);
+  });
+
+  /**
+   * Seen with deuteranopia or protanopia, colour alone cannot keep every role apart (red and gold, teal and
+   * grey come together). Where it does not, each role carries a shape of its own, named here: the test holds
+   * that every pair that comes nearer than the set distance has one on both sides.
+   */
+  const SHAPE: Record<string, string> = {
+    enemy: "a dark outline round its whole shape",
+    stand: "a top edge two pixels thick (striped when it moves, broken when it gives way)",
+    take: "small, round, turning, with a glint",
+    him: "the one person: helmet, cape, the waffle hearts in the header",
+    now: "it comes on and goes with the boss's tell"
+  };
+
+  test("seen without telling red from green, the roles that come near each other differ by a shape the test names", () => {
+    const roles = ["enemy", "stand", "take", "him", "now"];
+    const table: string[] = [];
+    const unnamed: string[] = [];
+    for (const kind of ["deutan", "protan"] as const)
+      for (let i = 0; i < roles.length; i++)
+        for (let j = i + 1; j < roles.length; j++) {
+          let worst = Infinity;
+          for (const a of ROLES.COLOURS[roles[i]]) for (const b of ROLES.COLOURS[roles[j]]) worst = Math.min(worst, deltaE(colourBlind(rgb(a), kind), colourBlind(rgb(b), kind)));
+          table.push(`${kind} ${roles[i]} / ${roles[j]}: ${worst.toFixed(1)}${worst < MIN_DELTA ? ` (apart by shape: ${SHAPE[roles[i]]}; ${SHAPE[roles[j]]})` : ""}`);
+          if (worst < MIN_DELTA && (!SHAPE[roles[i]] || !SHAPE[roles[j]])) unnamed.push(`${kind} ${roles[i]}/${roles[j]}`);
+        }
+    console.log(`Colour-blind distances:\n  ${table.join("\n  ")}`);
+    expect(unnamed).toEqual([]);
+  });
+
+  test("the role index agrees with what draws him: his colours are the person's", async () => {
+    const src = await Bun.file(new URL("../../../../packages/pixelkit/src/person.ts", import.meta.url)).text();
+    for (const c of [ROLES.him.tunic, ROLES.him.skin]) expect(src).toContain(c);
   });
 });

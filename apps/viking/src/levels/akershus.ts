@@ -3,7 +3,7 @@ import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, flagCloth, type LedgeLook } from "@larshansen/pixelkit/props";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { parts } from "../render/pickups";
 import { tbaneDoor } from "../render/furniture";
@@ -512,7 +512,8 @@ export const AKERSHUS: LevelDef = {
   carriers: [HOIST],
   timed: [],
   cannons: CANNONS,
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   flourish: 140,
   flourishLook: 30,
   signs: [

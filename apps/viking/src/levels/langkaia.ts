@@ -7,7 +7,7 @@ import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { DOORWAY, FACADE, GLASS, INK, LAMP, LAND, METAL, PAINT, PALETTE, ROOF as ROOFS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, WOOD_LEDGE, ledge, pane, plankDoor, smoke, type LedgeLook } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
-import type { EnemyDef } from "../game/enemies";
+import { keepBoxes, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { drawLongship } from "../render/ship";
 import { tbaneDoor, walls } from "../render/furniture";
@@ -524,7 +524,8 @@ export const LANGKAIA: LevelDef = {
   carriers: CARRIERS,
   timed: [],
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   flourish: 150,
   flourishLook: 30,
   signs: [

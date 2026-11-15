@@ -2,7 +2,7 @@ import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
 import { aim, follow } from "@larshansen/pixelkit/camera";
 import { carrierDrawn, carrierShown, drawCarrier, rideShown } from "@larshansen/pixelkit/carrier";
-import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
+import { HOIST_STEPS, POLE, drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { wireMute } from "@larshansen/pixelkit/chrome";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door, type DoorSpot } from "@larshansen/pixelkit/doors";
@@ -65,7 +65,7 @@ import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes
 import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
 import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
-import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
+import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { eyes, outlined } from "./render/sprite";
 import { STAND_LEDGE, standTop } from "./render/stand";
@@ -261,7 +261,7 @@ function layoutBoards(s: Scene): Board[] {
     [LINE_1, LINE_2].forEach((ids, n) => {
       const end = s.doors.find((d) => d.id === ids[ids.length - 1]);
       if (!end || ids.some((id) => progress.best[id] === undefined)) return;
-      const text = t.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0)));
+      const text = kartWords?.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0))) ?? "";
       boards.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
     });
   s.signs.forEach((sg) => {
@@ -286,10 +286,15 @@ const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
  * soon, so it is asked for as the page starts. Until it is here (or if it never comes) the map is bare.
  */
 let kartArt: KartArt | null = null;
+/** The map's words, which come with its look. */
+let kartWords: (typeof import("./levels/kartArt").KART_WORDS)["en"] | null = null;
 let kartLoading: Promise<void> | null = null;
 const loadKart = () =>
   (kartLoading ??= import("./levels/kartArt").then(
-    (m) => void (kartArt = m.kartArt),
+    (m) => {
+      kartArt = m.kartArt;
+      kartWords = m.KART_WORDS[lang];
+    },
     (e) => {
       kartLoading = null;
       throw e;
@@ -318,7 +323,7 @@ function openScene(id: string, at?: string) {
   const skies = skyControl(params.get("sky") ?? def.sky, now);
   scene = { def, play, doors, boards: [], signs, map: def.id === "kart", skies };
   Object.assign(state, sceneState<Door>({ name: def.name, landmark: def.landmark, from: 0 }, lang), extraState());
-  if (scene.map) state.banner = { title: def.name, sub: lineTwoOpen(progress) ? t.lineSubBoth : t.lineSub, since: 0 };
+  if (scene.map) state.banner = { title: def.name, sub: (lineTwoOpen(progress) ? kartWords?.lineSubBoth : kartWords?.lineSub) ?? "", since: 0 };
   shown = { ...play.body };
   before.x = play.body.x;
   before.y = play.body.y;
@@ -831,7 +836,7 @@ function showCard(r: CardResult) {
     for (const line of [t.homeLine, other.homeLine, ...(r.opened ? [t.lineTwoOpened] : [])]) more.appendChild(document.createElement("span")).textContent = line;
   } else if (r.opened) more.textContent = t.lineTwoOpened;
   else if (scene.def.id === "nabolaget") more.textContent = t.runesLeft(of(LINE_1));
-  else more.textContent = of(LINE_2) === 6 ? t.vikingLine(ORDER.length - progress.bracteates.length) : t.runesTwoLeft(of(LINE_2));
+  else more.textContent = scene.def.cardLine?.[lang](of(LINE_2), ORDER.length - progress.bracteates.length) ?? "";
   finishEl.hidden = false;
   say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""} ${t.toMap}.`);
   sfx.play("clear");
@@ -933,7 +938,7 @@ function tryEnter(d: Door) {
     // A station: open, or not open yet.
     if (!levelOpen(d.id)) {
       d.shake = view.reduced ? 0 : 14;
-      const text = t.closed(LINE[i - 1].name);
+      const text = kartWords?.closed(LINE[i - 1].name) ?? "";
       state.bubble = { text, until: state.steps + 180, door: d };
       say(text);
       return;
@@ -1316,7 +1321,12 @@ function drawThings(v: View) {
     }
   });
   p.drums.forEach((l, i) => (art.drum ? art.drum(i, l, p.drummedAt[i], v) : drawDrum(l, p.t, p.drummedAt[i])));
-  p.flags.forEach((f, i) => art.flag?.(i, f, p.raisedAt[i], v) || drawCheckpoint(f, p.raisedAt[i], p.t));
+  p.flags.forEach((f, i) => {
+    if (!art.flag?.(i, f, p.raisedAt[i], v)) drawCheckpoint(f, p.raisedAt[i], p.t);
+    // Raised, it says so as an earned rune does: a tick at the top of its pole (order 18).
+    const up = p.raisedAt[i];
+    if (up !== null && (view.reduced || p.t - up >= HOIST_STEPS)) drawTick(f.x + 2, f.bottom - POLE.h - 9);
+  });
   p.benches.forEach((s, i) => drawBench(s.x, s.bottom, p.sitting?.i === i));
   for (const s of p.sheep) drawSheep(s);
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
@@ -1506,7 +1516,7 @@ function render(alpha: number) {
     }
     const mound = scene.map ? doorsById.get("maze") : undefined;
     if (!bubble && mound && !abilities.doubleJump && Math.abs(cx - (mound.x + mound.w / 2)) < 3 * TILE && p.body.onGround && Math.abs(shown.y + PLAYER.h - mound.bottom) < 8)
-      bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h - 14, lines: t.moundNoFeather };
+      bubble = { x: mound.x + mound.w / 2, y: mound.bottom - mound.h - 14, lines: kartWords?.moundNoFeather ?? [] };
   }
   if (state.bubble) bubble = { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] };
   // A boss's line or hint, beside it, while nothing else is speaking.
@@ -1514,7 +1524,7 @@ function render(alpha: number) {
   if (!bubble && boss && state.bossLine) bubble = { x: boss.x, y: boss.y, lines: state.bossLine.lines };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
-  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [t.featherLine] };
+  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [kartWords?.featherLine ?? ""] };
   // Where the level teaches the shield (Bygdøy's passage), its key over him while he has it there.
   const at = scene.def.shieldLesson;
   const lesson = at && p.shield?.has && cx > at[0] && cx < at[1];

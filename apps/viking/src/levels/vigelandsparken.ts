@@ -314,7 +314,7 @@ function bridge() {
   const x1 = 83 * TILE;
   // The pond, from bank to bank, under the bridge: the same water as in the broken span.
   R(x0 - 16, FLOOR + 6, x1 - x0 + 32, 80, P.water);
-  R(x0 - 16, FLOOR + 40, x1 - x0 + 32, 46, P.waterDeep);
+  R(x0 - 16, FLOOR + 40, x1 - x0 + 32, 46, "#2b6a8e"); // deep water, not his tunic's blue (order 18)
   for (let x = x0 - 16; x < x1 + 16; x += 7) R(x, FLOOR + 10 + ((x * 3) % 9), 4, 1, mix(P.water, WHITE, 0.25));
   // The far parapet behind the deck: a low granite wall, posts with figures, a lamp every few posts.
   R(x0, FLOOR - 14, x1 - x0, 14, V.graniteShade);

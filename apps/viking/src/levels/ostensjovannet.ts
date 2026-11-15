@@ -473,16 +473,15 @@ function duckArt(e: Enemy) {
   r(8 - bob, -2, 2, 2, ENEMY.red);
 }
 
-/** A coot: plum, a pale shield on its brow, poison-green feet. One that keeps its old box (`small`) sits lower. 13 x 10. */
+/** A coot: plum, a pale shield on its brow, poison-green feet. 13 x 10. */
 function cootArt(e: Enemy) {
   const r = parts(e, 13);
   const peck = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
-  const d = e.def.small ? 2 : 0;
-  r(1, -8 + d, 10, 6 - d, ENEMY.plum);
-  r(3, -7 + d, 5, 1, ENEMY.plumLight);
-  r(9, -10 + d + peck, 4, 4, ENEMY.plum);
-  r(12, -9 + d + peck, 2, 2, ENEMY.pale);
-  r(11, -9 + d + peck, 1, 1, ENEMY.eye);
+  r(1, -8, 10, 6, ENEMY.plum);
+  r(3, -7, 5, 1, ENEMY.plumLight);
+  r(9, -10 + peck, 4, 4, ENEMY.plum);
+  r(12, -9 + peck, 2, 2, ENEMY.pale);
+  r(11, -9 + peck, 1, 1, ENEMY.eye);
   r(4, -2, 2, 2, ENEMY.poison);
   r(8, -2, 2, 2, ENEMY.poison);
 }

@@ -7,7 +7,7 @@ import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
@@ -244,7 +244,8 @@ function balloons(i: number, t: number) {
  */
 function hotdogCart(e: Enemy, t: number) {
   if (!e.alive) return;
-  const r = parts(e, 22);
+  // Drawn for the box it keeps already: not squeezed again.
+  const r = parts({ ...e, def: { ...e.def, small: false } }, 22);
   r(0, -11, 22, 8, ENEMY.red);
   r(0, -11, 22, 1, ENEMY.redLight);
   r(3, -9, 9, 3, ENEMY.orange);
@@ -830,7 +831,8 @@ export const SLOTTET: LevelDef = {
   carriers: CARRIERS,
   timed: BALLOONS,
   cannons: [],
-  enemies: ENEMIES,
+  // Every enemy here keeps the box it had before order 18: growing them cost the sloppy player more than 0.3 hearts a run.
+  enemies: keepBoxes(ENEMIES),
   drum: 7,
   flourish: 150,
   flourishLook: 80,

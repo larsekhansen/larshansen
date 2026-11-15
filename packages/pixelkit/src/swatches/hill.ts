@@ -8,14 +8,14 @@
  * toward a dusk grey-violet, so the warning red and orange of what can hurt him stand off them.
  */
 export const bands = ["#9d4c4b", "#ad5954", "#b68870", "#bea571", "#ad5954"];
-export const fjord = "#2d4a80"; // the fjord below in the evening, deep blue
+export const fjord = "#3d4260"; // the fjord below in the evening, a dusk grey-blue (not his tunic's blue: order 18)
 export const fjordLight = "#6a8ac0";
-export const city = "#3a4468"; // the city below: the nearest roofs, then lighter rows further off
-export const cityLight = "#4f5a80";
+export const city = "#3e4460"; // the city below: the nearest roofs, then lighter rows further off
+export const cityLight = "#575e80";
 export const cityFar = "#6a7398";
 export const roofRed = "#7a4a4a"; // a roof here and there catching the last light
 export const roofTeal = "#4a6a70";
-export const ridge = "#3a4a6e"; // the far hills, Holmenkollen and Nordmarka
+export const ridge = "#3e465e"; // the far hills, Holmenkollen and Nordmarka
 export const grass = "#5a8a3a";
 export const grassDark = "#3f6a2c";
 export const soil = "#5a4030";

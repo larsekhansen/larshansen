@@ -10,7 +10,7 @@ export const red = "#e8262e";
 export const redLight = "#ff7b70";
 /** Orange: breasts, foxes, sparks of a brazier. */
 export const orange = "#ff7a1a";
-export const orangeLight = "#ffb35c";
+export const orangeLight = "#ff9a30";
 /** Magenta-plum: rats, cats, dogs, the wasp's sting. */
 export const plum = "#c23a8f";
 export const plumLight = "#f07ccb";

@@ -4,7 +4,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, gable, layerX, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
-import { BRICK, ENEMY, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
 import { ICE } from "@larshansen/pixelkit/surface";
 import * as WINTER from "@larshansen/pixelkit/swatches/winter";
@@ -934,7 +934,8 @@ function ploughBody(p: Plough, v: View) {
   for (let k = 0; k < 20; k++) {
     const yy = g - 20 + k - raised;
     const out = Math.round(k * 0.4) + 2;
-    R(f > 0 ? bx : bx - out - 4, yy, out + 4, 1, ((k + Math.floor((bx + k) / 4)) >> 2) % 2 ? WINTER.blade : INK);
+    // Raised while it revs, its tell: then in the bosses' "now" colour (order 18).
+    R(f > 0 ? bx : bx - out - 4, yy, out + 4, 1, ((k + Math.floor((bx + k) / 4)) >> 2) % 2 ? (raised ? ROLES.now : WINTER.blade) : INK);
   }
   // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when
   // beaten. With reduced motion they do not flash: one is lit while it drives, both (with their glow)
@@ -943,7 +944,7 @@ function ploughBody(p: Plough, v: View) {
   const beat = view.reduced ? 1 : Math.floor(v.t / (fast ? 4 : 12)) % 2;
   for (const [k, dx] of [[0, -28], [1, -10]] as const) {
     const hot = !beaten && ((fast && view.reduced) || (beat + k) % 2 === 0);
-    span(dx, dx + 6, y0 - 4, 4, hot ? WINTER.beacon : mix(WINTER.beacon, INK, 0.55));
+    span(dx, dx + 6, y0 - 4, 4, hot ? (fast ? ROLES.now : WINTER.beacon) : mix(WINTER.beacon, INK, 0.55));
     if (hot) {
       light(Math.min(at(dx), at(dx + 6)), y0 - 4, 6, 4, "lamp");
       if (fast) plain(() => span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)"));

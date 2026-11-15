@@ -95,3 +95,16 @@ export function drawBracteate(x: number, y: number, steps: number) {
   if (!view.reduced && g >= 0 && g < w) R(left + g, y + 2 + bob, 1, 8, mix(METAL.goldLight, WHITE, 0.6));
   light(left, y + bob, w, 12, "soft");
 }
+
+/**
+ * A tick, 7 x 7 from (x, y): a dark disc with a pale check in it, kept light after dark. What he has done
+ * says so the same way everywhere (order 18): an earned rune's stone on the line map, a raised flag.
+ */
+export function drawTick(x: number, y: number) {
+  R(x + 1, y, 5, 7, INK);
+  R(x, y + 1, 7, 5, INK);
+  for (const [dx, dy] of [[1, 3], [2, 4], [3, 3], [4, 2], [5, 1]]) {
+    R(x + dx, y + dy, 1, 1, WHITE);
+    light(x + dx, y + dy, 1, 1, "window", WHITE);
+  }
+}
