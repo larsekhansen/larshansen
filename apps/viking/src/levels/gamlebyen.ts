@@ -2,13 +2,15 @@ import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, WHITE } from "@larshansen/pixelkit/palette";
+import { INK, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
-import { SERPENT_STEPS, bodyBox, headBox, neckX, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
+import { RUNE_CHARS } from "../game/runes";
+import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
+import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
@@ -80,7 +82,7 @@ b.run(268, 271, QUAY - 2, "=");
 // Marks: the start, the door, signs, flags, benches, the rune, the bracteate, the cheese.
 b.put(2, STREET - 1, "t").put(4, STREET - 1, "S");
 b.put(7, STREET - 1, "i").put(30, STREET - 1, "i").put(95, BANK - 1, "i").put(239, QUAY - 1, "i");
-b.put(16, STREET - 1, "f").put(52, STREET - 1, "f").put(96, BANK - 1, "f").put(139, TOWN - 1, "f").put(182, MARKET - 1, "f").put(216, QUAY - 1, "f");
+b.put(16, STREET - 1, "f").put(52, STREET - 1, "f").put(96, BANK - 1, "f").put(139, TOWN - 1, "f").put(182, MARKET - 1, "f").put(216, QUAY - 1, "f").put(244, QUAY - 1, "f");
 b.put(205, MARKET - 1, "b").put(243, QUAY - 1, "b");
 b.put(270, QUAY - 3, "r").put(195, 3, "o").put(CRYPT + 3, STREET + 1, "&");
 
@@ -186,13 +188,16 @@ export const RULES: LevelRules = {
   }
 };
 
-/** The serpent's quay, its three places, where he wakes it. */
+/**
+ * The serpent's quay (the whole of it, from the planks' first board at the basin to the prow), its three
+ * places, where he wakes it (past its bench and its flag).
+ */
 export const SERPENT_DEF: SerpentDef = {
   floor: QUAY * TILE,
-  x0: 246 * TILE,
+  x0: 236 * TILE,
   x1: COLS * TILE,
-  points: [252 * TILE + 8, 259 * TILE + 8, 266 * TILE + 8],
-  wakeAt: 247 * TILE
+  points: [251 * TILE + 8, 258 * TILE + 8, 265 * TILE + 8],
+  wakeAt: 246 * TILE
 };
 
 /** The two longships he crosses the basin on: their decks, rocking a little on the water. */
@@ -228,6 +233,19 @@ export const GAMLEBYEN_RULES = { COLS, ROWS };
 /** The stones' state as this frame draws it (set in `back`, read by `tile`, which has no view of its own). */
 let shown: Ruins | null = null;
 let shownT = 0;
+/** How far the dawn has come this frame (set in `back`, read by `tile`): the harbour's water stills with it. */
+let calm = 0;
+/** Where the rune stands on the last longship's prow. */
+const RUNE_AT = { x: 270 * TILE, y: (QUAY - 3) * TILE };
+
+/** The harbour's water once the dawn is coming: its surface still, no foam moving on it, a sheen of the sky. */
+function calmWater(c: number, r: number, x: number, y: number, map: TileMap): boolean {
+  if (calm < 0.3 || c < 213 || map.tileAt(c, r - 1) === "~") return false;
+  R(x, y, TILE, 8, PALETTE.water);
+  R(x, y + 8, TILE, 8, mix(PALETTE.water, PALETTE.waterDeep, 0.5));
+  R(x + ((c * 5) % 9), y, 5, 1, mix(PALETTE.water, PALETTE.foam, 0.45));
+  return true;
+}
 
 /** How far up a stone has come (0: not at all, 1: risen). */
 function risenBy(c: number, r: number): number {
@@ -238,13 +256,33 @@ function risenBy(c: number, r: number): number {
   return at === null ? 0 : Math.min(0.95, (shownT - at) / RISE.steps);
 }
 
-/** The serpent has gone under for good: the water goes still and the dawn comes. */
+/** Steps since the serpent went under for good (the dawn coming, the rune rising), or null. */
+const endOf = (v: View) => (v.boss ? endingAge(v.boss as Serpent, v.t) : null);
+/** How far the dawn has come, 0 to 1. */
 const dawnOf = (v: View) => {
-  const s = v.boss as Serpent | null;
-  return s && s.phase === "beaten" ? Math.min(1, (v.t - s.since) / 240) : 0;
+  const a = endOf(v);
+  return a === null ? 0 : Math.min(1, a / SERPENT_STEPS.dawn);
 };
+/** The dawn sky's colour at a height over the horizon. */
+function dawnColor(h: number): string {
+  const stops = G.dawnSky;
+  let i = 0;
+  while (i < stops.length - 2 && h > stops[i + 1][0]) i++;
+  const [h0, c0] = stops[i];
+  const [h1, c1] = stops[i + 1];
+  const k = Math.max(0, Math.min(1, (h - h0) / (h1 - h0)));
+  const a = c0.split(",").map(Number);
+  const b = c1.split(",").map(Number);
+  return a.map((x, j) => Math.round(x + (b[j] - x) * k)).join(", ");
+}
 
-/** The far shore, the fjord in the dark, and (once the serpent is beaten) the dawn coming up over it. */
+/**
+ * The far shore, the fjord in the dark, and (once the serpent is beaten) a real dawn over it: the whole sky
+ * turns over five seconds from the night to a dawn's colours (the stars, the moon and the aurora go under
+ * it), the sun comes up behind the hills, and the hills stand dark against it with a lit rim. It is drawn
+ * after the night's tint, as its own light. With reduced motion the sun is where it ends, and only the
+ * colours come.
+ */
 function far(v: View) {
   const horizon = (QUAY + 1) * TILE - 6;
   const dawn = dawnOf(v);
@@ -255,25 +293,25 @@ function far(v: View) {
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
     column(x, top(x), horizon + 200, mix(G.stoneDark, INK, 0.45));
-    if (Math.floor(wx) % 29 === 0) light(x + view.camX, top(x) + 5, 1, 1);
+    if (Math.floor(wx) % 29 === 0 && dawn < 0.6) light(x + view.camX, top(x) + 5, 1, 1);
   }
   if (dawn <= 0) return;
-  // The dawn, after the night's tint (its own light): a warm band over the far shore, strongest where the
-  // sun is coming up, and the sun's rim over the hills.
-  const sx = Math.round(view.w * 0.7);
-  for (let x = 0; x < view.w; x++) {
-    const near = dawn * (0.35 + 0.65 * Math.max(0, 1 - Math.abs(x - sx) / 240));
-    for (let i = 0; i < 6; i++) {
-      const y0 = horizon - 90 + i * 12;
-      const y1 = Math.min(y0 + 12, top(x));
-      if (y1 > y0) light(x + view.camX, y0, 1, y1 - y0, "soft", `rgba(${G.dawn}, ${(0.05 * (i + 1) * near).toFixed(3)})`);
+  const a = dawn.toFixed(3);
+  for (let y = Math.min(view.camY, horizon - 240); y < horizon; y += 3) light(view.camX, y, view.w, 3, "soft", `rgba(${dawnColor(horizon - y)}, ${a})`);
+  // The sun, rising behind the hills: its glow, then its disc.
+  const sx = Math.round(view.w * 0.72);
+  const rise = view.reduced ? 1 : dawn * dawn * (3 - 2 * dawn);
+  const sy = Math.round(horizon - 2 - 30 * rise);
+  for (const [r, al] of [[30, 0.16], [20, 0.3], [9, 1]] as const)
+    for (let dy = -r; dy <= r; dy++) {
+      const w = Math.round(Math.sqrt(r * r - dy * dy));
+      light(sx - w + view.camX, sy + dy, 2 * w + 1, 1, "soft", r === 9 ? G.sun : `rgba(${G.sunGlow}, ${(al * dawn).toFixed(3)})`);
     }
-  }
-  for (let k = -9; k <= 9; k++) {
-    const h = Math.round(Math.sqrt(81 - k * k) * dawn);
-    const y0 = horizon - 22 - h;
-    const y1 = Math.min(horizon - 22 + h, top(sx + k));
-    if (y1 > y0) light(sx + k + view.camX, y0, 1, y1 - y0, "soft", G.dawnSky);
+  // The hills against it, and their lit rim.
+  for (let x = 0; x < view.w; x++) {
+    light(x + view.camX, top(x), 1, horizon + 40 - top(x), "soft", `rgba(58, 53, 82, ${a})`);
+    const near = Math.max(0, 1 - Math.abs(x - sx) / 160);
+    light(x + view.camX, top(x), 1, 1, "soft", `rgba(${G.dawnRim}, ${(dawn * (0.3 + 0.7 * near)).toFixed(3)})`);
   }
 }
 
@@ -301,10 +339,22 @@ function streetLamp(x: number, ground: number) {
   light(x - 14, ground - 1, 30, 4, "pool");
 }
 
-/** A torch on a post, its flame flickering (still, with reduced motion), its light on the ground. */
-function torch(x: number, ground: number, t: number) {
+/** The torches by the harbour, in the order they go out at dawn, and the step of the dawn each goes out at. */
+const QUAY_TORCHES = [264, 256, 246, 238, 214];
+const torchOut = (c: number) => 40 + Math.max(0, QUAY_TORCHES.indexOf(c)) * 45;
+/** True once the torch at column c has gone out (the dawn has come to it). */
+let endAge: number | null = null;
+const isOut = (c: number) => endAge !== null && endAge >= (QUAY_TORCHES.includes(c) ? torchOut(c) : 60 + (c % 7) * 30);
+
+/** A torch on a post, its flame flickering (still, with reduced motion), its light on the ground; at dawn, out, a thread of smoke. */
+function torch(x: number, ground: number, t: number, out = false) {
   R(x, ground - 22, 2, 22, G.torch);
   R(x - 1, ground - 24, 4, 3, G.timberDark);
+  if (out) {
+    R(x, ground - 25, 2, 1, INK);
+    for (let k = 0; k < 4; k++) R(x + (view.reduced ? 0 : Math.round(Math.sin(t * 0.06 + k) * 1.2)) + (k % 2), ground - 27 - k * 3, 1, 2, G.smoke);
+    return;
+  }
   const flick = view.reduced ? 0 : Math.floor((t + x) / 5) % 3;
   light(x - 1, ground - 30 + flick, 4, 6 - flick, "lamp", G.flame);
   light(x, ground - 28 + flick, 2, 3, "lamp", G.flameHot);
@@ -390,32 +440,124 @@ function market(t: number) {
  * water in broken streaks, moving a little (still, with reduced motion); the pool takes the street lamps'.
  */
 function reflections(v: View) {
+  const dawn = dawnOf(v);
+  // The water stills as the dawn comes.
   const tt = view.reduced ? 0 : v.t;
-  const streak = (x: number, y0: number, n: number, rgb: string) => {
+  const still = 1 - dawn;
+  const streak = (x: number, y0: number, n: number, rgb: string, a = 0.5) => {
     for (let k = 0; k < n; k++) {
       const w = 6 - Math.min(4, k);
-      light(Math.round(x - w / 2 + Math.sin(tt * 0.05 + k) * 2), y0 + 3 + k * 4, w, 1, "soft", `rgba(${rgb}, ${(0.5 - k * 0.07).toFixed(2)})`);
+      light(Math.round(x - w / 2 + Math.sin(tt * 0.05 + k) * 2 * still), y0 + 3 + k * 4, w, 1, "soft", `rgba(${rgb}, ${((a - k * 0.07) * (a / 0.5)).toFixed(2)})`);
     }
   };
-  for (const c of [214, 238, 246, 256, 264]) streak(c * TILE + 7, (QUAY + 1) * TILE, 6, "255, 190, 110");
+  const water = (QUAY + 1) * TILE;
+  for (const c of QUAY_TORCHES) if (!isOut(c)) streak(c * TILE + 7, water, 6, "255, 190, 110");
   streak(117 * TILE, BANK * TILE, 4, "200, 220, 255");
-  for (let x = Math.max(213 * TILE, view.camX); x < view.camX + view.w; x += 37) light(x, (QUAY + 1) * TILE + 6 + ((x * 7) % 9), 3, 1, "soft", "rgba(170, 200, 255, 0.25)");
+  if (dawn < 1) for (let x = Math.max(213 * TILE, view.camX); x < view.camX + view.w; x += 37) light(x, water + 6 + ((x * 7) % 9), 3, 1, "soft", `rgba(170, 200, 255, ${(0.25 * still).toFixed(3)})`);
+  if (dawn <= 0) return;
+  // The dawn on the still water: the sky's colour along it, and the sun's path under the sun.
+  const sun = view.camX + Math.round(view.w * 0.72);
+  light(Math.max(213 * TILE, view.camX), water, view.w, 2, "soft", `rgba(${G.sunGlow}, ${(0.35 * dawn).toFixed(3)})`);
+  for (let k = 0; k < 9; k++) {
+    const w = 18 - k * 2;
+    light(sun - w / 2, water + 3 + k * 3, w, 1, "soft", `rgba(${G.sunGlow}, ${((0.7 - k * 0.06) * dawn).toFixed(3)})`);
+  }
+  // And a little of its warmth on the street, over the night.
+  light(view.camX, view.camY, view.w, water - view.camY, "soft", `rgba(255, 176, 128, ${(0.1 * dawn).toFixed(3)})`);
 }
 
-/** A longship moored at the quay's end: its hull, the shields along its side, the prow with its dragon. */
+/**
+ * The last longship, moored at the quay's end: its hull rising out of the water along the quay to the
+ * raised deck at its prow, strakes of tarred planking following its sheer, round shields along its side,
+ * and the stem rising from the prow and curling over into a carved dragon's head.
+ */
 function lastLongship(t: number) {
   const g = QUAY * TILE;
-  const x0 = 262 * TILE;
+  const deck = (QUAY - 2) * TILE;
+  const x0 = 261 * TILE;
   const x1 = COLS * TILE;
   const bob = view.reduced ? 0 : Math.round(Math.sin(t * 0.03));
-  for (let x = x0; x < x1; x++) R(x, g + 4 + bob, 1, 8 + Math.round(((x - x0) / (x1 - x0)) * 4), G.hull);
-  for (let x = x0 + 6; x < x1 - 8; x += 10) {
-    R(x, g + 2 + bob, 7, 7, x % 20 ? G.cloth : G.sail);
-    R(x + 3, g + 5 + bob, 1, 1, INK);
+  const keel = g + TILE + 8;
+  /** The top of its side at x: level with the quay amidships, sweeping up to the prow's deck. */
+  const sheer = (x: number) => {
+    const k = Math.max(0, Math.min(1, (x - 264 * TILE) / (4 * TILE)));
+    return Math.round(g + 2 - (g + 2 - deck) * k * k * (3 - 2 * k));
+  };
+  for (let x = x0; x < x1; x++) {
+    const top = sheer(x) + bob;
+    // The hull's run in from the stern end, rounded under the water.
+    const bottom = keel - Math.round(Math.max(0, 1 - (x - x0) / 24) * 10);
+    R(x, top, 1, bottom - top, G.hull);
+    R(x, top, 1, 1, mix(G.hull, WHITE, 0.25));
+    for (let k = 1; k < 6; k++) {
+      const y = top + Math.round(((bottom - top) * k) / 6);
+      R(x, y, 1, 1, mix(G.hull, INK, 0.4));
+    }
   }
-  // The prow rising to the raised deck at the end, the dragon's neck over it.
-  R(268 * TILE, (QUAY - 2) * TILE + 4, 4 * TILE, 2 * TILE - 4, G.hull);
-  for (let k = 0; k < 18; k++) R(COLS * TILE - 6 + Math.round(Math.sin(k * 0.25) * 2), (QUAY - 2) * TILE - k, 3, 1, G.dragon);
+  // Its shields along the side, overlapping, red and cream, under the sheer.
+  for (let x = x0 + 4; x < 268 * TILE; x += 9) {
+    const y = sheer(x + 4) + bob + 2;
+    const c = x % 18 < 9 ? G.sailStripe : G.sail;
+    for (const [dy, w] of [[0, 4], [1, 6], [2, 8], [3, 8], [4, 8], [5, 8], [6, 6], [7, 4]]) R(x + (8 - w) / 2, y + dy, w, 1, dy < 2 ? mix(c, WHITE, 0.3) : c);
+    R(x + 3, y + 3, 2, 2, PALETTE.ironDark);
+  }
+  // The prow's raised deck: its planks, the rail.
+  R(268 * TILE, deck, 4 * TILE, 3, G.plank);
+  R(268 * TILE, deck, 4 * TILE, 1, G.plankLight);
+  dragonHead(COLS * TILE - 6, deck);
+}
+
+/**
+ * The carved dragon on the last longship's stem: the stem rising from the prow and curling over, a long
+ * head on it looking back along the quay with its jaws open, carved scales picked out in red and gold, an
+ * eye, horns, a mane of curls down its neck.
+ */
+function dragonHead(x: number, deck: number) {
+  const wood = G.dragon;
+  const dark = mix(G.dragon, INK, 0.45);
+  const lit = mix(G.dragon, WHITE, 0.3);
+  const gold = PALETTE.runeGlow;
+  // The stem: up from the prow, curving back over the deck.
+  for (let k = 0; k < 40; k++) {
+    const f = k / 40;
+    const cx = x - Math.round(Math.sin(f * Math.PI * 0.6) * 8);
+    const w = 6 - Math.round(f * 2);
+    R(cx - w, deck - k, w, 1, k % 4 === 0 ? dark : wood);
+    R(cx - w, deck - k, 1, 1, lit);
+    if (k % 6 === 3) R(cx - w + 2, deck - k, 2, 1, G.sailStripe);
+  }
+  // The mane: carved curls down the back of its neck.
+  for (let k = 0; k < 5; k++) {
+    const y = deck - 14 - k * 5;
+    const cx = x - Math.round(Math.sin(((14 + k * 5) / 40) * Math.PI * 0.6) * 8);
+    R(cx, y, 3, 3, G.sailStripe);
+    R(cx + 1, y + 1, 1, 1, gold);
+  }
+  // The head, looking back along the quay: skull, horns, a long snout with flared nostrils, open jaws, teeth.
+  const hx = x - 14;
+  const hy = deck - 50;
+  R(hx, hy, 12, 9, wood);
+  R(hx, hy, 12, 1, lit);
+  R(hx + 9, hy - 5, 2, 5, wood);
+  R(hx + 6, hy - 7, 2, 7, wood);
+  R(hx + 6, hy - 8, 2, 1, gold);
+  R(hx - 11, hy + 2, 12, 5, wood);
+  R(hx - 11, hy + 2, 12, 1, lit);
+  R(hx - 13, hy + 1, 3, 4, wood);
+  R(hx - 13, hy + 1, 1, 1, dark);
+  // The lower jaw, dropped open, its tongue curling out.
+  R(hx - 9, hy + 10, 14, 3, wood);
+  R(hx - 9, hy + 7, 14, 3, mix(G.cloth, INK, 0.4));
+  for (let k = 0; k < 4; k++) {
+    R(hx - 9 + k * 3, hy + 7, 1, 2, G.tooth);
+    R(hx - 8 + k * 3, hy + 9, 1, 1, G.tooth);
+  }
+  R(hx - 14, hy + 11, 5, 1, G.sailStripe);
+  R(hx - 15, hy + 10, 1, 1, G.sailStripe);
+  // The carved eye, red-rimmed with a gold pupil, and carved scales along its jaw.
+  R(hx + 1, hy + 2, 4, 3, G.sailStripe);
+  R(hx + 2, hy + 3, 2, 1, gold);
+  for (let k = 0; k < 3; k++) R(hx - 6 + k * 4, hy + 4, 2, 1, dark);
 }
 
 /** A longship in the basin: hull, shields, a furled sail on its yard; its deck the carrier. */
@@ -471,17 +613,208 @@ function quayPlank(c: number, x: number, y: number) {
 
 /** The water under the quay's deck, below its top: where the ring of foam shows, and the tail's tip breaks it. */
 const WATERLINE = TILE + 6;
-/** The moonlit rim on the serpent after dark, as an enemy's (ADR 0023). */
-const RIM = "rgba(201, 216, 255, 0.55)";
+/** The moonlit rim on the serpent after dark, as an enemy's (ADR 0023), and the torches' warm light on it. */
+const RIM = "rgba(214, 228, 255, 0.7)";
+const BELLY = "rgba(220, 230, 180, 0.4)";
 
-/** The serpent: its ring of foam, rising, rearing, spitting, dazed on the quay, diving, its tail along the quay. */
+/** How near the nearest burning torch on the quay is (0: none within five tiles, 1: right beside it), and which side. */
+function torchlit(x: number): { k: number; side: 1 | -1 } {
+  let best = { k: 0, side: 1 as 1 | -1 };
+  for (const c of QUAY_TORCHES) {
+    if (isOut(c)) continue;
+    const d = c * TILE + 7 - x;
+    const k = Math.max(0, 1 - Math.abs(d) / (5 * TILE));
+    if (k > best.k) best = { k, side: d < 0 ? -1 : 1 };
+  }
+  return best;
+}
+
+/**
+ * One row of its body, `w` wide round cx, its belly on the side `dir`: a dark outline along its back, a
+ * moonlit ridge, scales in rows, and the pale plates of its belly. `n` is the row's number along the body.
+ */
+function bodyRow(cx: number, y: number, w: number, dir: 1 | -1, n: number) {
+  const x0 = cx - Math.floor(w / 2);
+  R(x0, y, w, 1, G.serpent);
+  for (let b = 0; b < w; b++) {
+    const x = dir > 0 ? x0 + b : x0 + w - 1 - b;
+    let c: string | null = null;
+    if (b === 0) c = G.serpentDark;
+    else if (b <= 2) c = (n + b) % 3 === 0 ? G.serpent : G.serpentLight;
+    else if (b >= w - 4) c = b === w - 1 || n % 3 === 0 ? G.serpentBellyDark : G.serpentBelly;
+    else if ((n + (b >> 1)) % 3 === 0) c = G.serpentDark;
+    if (c) R(x, y, 1, 1, c);
+  }
+  // After the night's tint: a little of its own colour back, a moonlit back, its pale belly.
+  light(x0 + 1, y, w - 2, 1, "soft", "rgba(96, 160, 128, 0.16)");
+  if (n % 2 === 0) light(dir > 0 ? x0 : x0 + w - 1, y, 1, 2, "soft", RIM);
+  if (n % 3 === 1) light(dir > 0 ? x0 + w - 4 : x0, y, 3, 1, "soft", BELLY);
+}
+
+/** A spine of its crest from (x, y), `h` long, leaning back from the way it faces. */
+function spine(x: number, y: number, h: number, dir: 1 | -1) {
+  for (let i = 0; i < h; i++) R(x - dir * Math.round(i * 0.5), y - i, i === h - 1 ? 1 : 2, 1, i === h - 1 ? G.crestLight : G.crest);
+}
+
+/**
+ * Its head, `dir` the way it faces, (x, y) the top of its skull's middle: a long skull with a fan of
+ * spines behind it, a brow, a yellow eye with a slit, a long snout with a nostril, a jaw that drops open to
+ * spit with its teeth and the pale inside showing; after the night's tint, eye-shine and a moonlit rim.
+ * Shut-eyed and slack-jawed (`dazed`), the same head lies on the quay.
+ */
+function serpentHead(x: number, y: number, dir: 1 | -1, open: number, dazed = false) {
+  // In the head's own pixels, facing right from its back end (-12): mirrored when it faces left.
+  const r = (dx: number, dy: number, w: number, h: number, c: string) => R(dir > 0 ? x + dx : x - dx - w, y + dy, w, h, c);
+  const lt = (dx: number, dy: number, w: number, h: number, c: string) => light(dir > 0 ? x + dx : x - dx - w, y + dy, w, h, "soft", c);
+  // The fan of spines behind the skull (flat back along it when dazed).
+  if (dazed) for (let k = 0; k < 4; k++) r(-14 - k * 3, 2 + (k % 2), 4, 1, G.crest);
+  else for (const [dx, h] of [[-10, 7], [-7, 10], [-4, 8], [-1, 5]] as const) spine(dir > 0 ? x + dx : x - dx, y + 1, h, dir);
+  // Skull and cheek.
+  r(-11, 1, 13, 8, G.serpent);
+  r(-10, 0, 11, 1, G.serpent);
+  r(-11, 1, 13, 1, G.serpentLight);
+  r(-12, 2, 1, 6, G.serpentDark);
+  r(-8, 5, 6, 3, G.serpentLight);
+  // Brow, and the eye under it (shut: a dark curve).
+  r(-2, 1, 6, 2, G.serpentDark);
+  if (dazed) {
+    r(-1, 4, 4, 1, INK);
+    r(-2, 3, 1, 1, INK);
+  } else {
+    r(-1, 3, 4, 3, G.eye);
+    r(0, 3, 1, 3, INK);
+    lt(-1, 3, 4, 3, G.eye);
+  }
+  // The snout, tapering to its tip; a nostril.
+  r(2, 3, 9, 5, G.serpent);
+  r(11, 4, 3, 4, G.serpent);
+  r(2, 3, 9, 1, G.serpentLight);
+  r(12, 4, 1, 1, INK);
+  r(14, 5, 1, 3, G.serpentDark);
+  // The jaw: shut under the snout, or dropped open with the teeth and the pale inside showing.
+  const jy = 8 + open;
+  r(-9, jy, 22, 3, G.serpentBelly);
+  r(-9, jy + 2, 22, 1, G.serpentBellyDark);
+  r(12, jy, 2, 2, G.serpentBelly);
+  if (open > 0) {
+    r(-2, 8, 15, open, mix(G.cloth, INK, 0.45));
+    for (let k = 0; k < 4; k++) {
+      r(1 + k * 3, 8, 1, 2, G.tooth);
+      r(2 + k * 3, jy - 1, 1, 1, G.tooth);
+    }
+  } else for (let k = 0; k < 3; k++) r(4 + k * 3, 8, 1, 1, G.tooth);
+  if (dazed) r(13, jy + 1, 3, 1, mix(G.cloth, WHITE, 0.2));
+  // Its rim in the dark: along the skull and the snout.
+  lt(-10, -1, 11, 1, RIM);
+  lt(1, 2, 13, 1, RIM);
+}
+
+/**
+ * Its neck from the water up to its head at (x + lean, top): broad at the waterline, narrower under the
+ * head, in an S as a serpent holds itself, scaled, its pale belly on the side it faces, a crest of spines
+ * down its back; lit by the moon along its back and by a torch on the side it stands.
+ */
+function serpentNeck(x: number, top: number, base: number, dir: 1 | -1, lean: number, sway: number) {
+  const lit = torchlit(x);
+  const n = base - top;
+  for (let y = top; y < base; y++) {
+    const f = (y - top) / n;
+    const w = Math.round(12 + 8 * f);
+    const cx = x + Math.round(lean * (1 - f) ** 1.5 + 6 * Math.sin(f * Math.PI * 1.5 + 0.3) * (1 - 0.5 * f) + sway * (1 - f));
+    bodyRow(cx, y, w, dir, y - top);
+    if ((y - top) % 6 === 3 && f > 0.06 && f < 0.85) spine(dir > 0 ? cx - Math.floor(w / 2) - 1 : cx + Math.ceil(w / 2), y, 4, dir);
+    if (lit.k > 0.05 && y % 2 === 0) light(lit.side > 0 ? cx + Math.ceil(w / 2) - 1 : cx - Math.floor(w / 2), y, 1, 2, "soft", `rgba(255, 190, 120, ${(0.6 * lit.k).toFixed(2)})`);
+  }
+}
+
+/** Water off its body as it comes up: drops falling from its jaw and down its neck, and the splash at the waterline. */
+function streaming(x: number, top: number, base: number, age: number, n: number) {
+  if (view.reduced) return;
+  for (let k = 0; k < n; k++) {
+    const fall = (age * 3 + k * 17) % (base - top + 10);
+    R(x - 8 + ((k * 7) % 17), top + 6 + fall, 1, 2, G.foam);
+  }
+  for (let k = 0; k < 5; k++) R(x - 12 + k * 6, base - 3 - ((age + k * 2) % 4), 2, 2, G.foam);
+}
+
+/** Its coils between rises: humps of its back arching out of the water under the quay, moving on to where it will come up. */
+function coils(s: Serpent, v: View) {
+  const floor = s.def.floor;
+  const water = floor + TILE;
+  const go = view.reduced ? 0 : v.t * 0.35;
+  for (let k = 0; k < 2; k++) {
+    const x = Math.round(neckX(s) - (k + 1) * 34 * (s.dir || 1) + Math.sin(go * 0.05 + k) * 6);
+    const h = 5 + k;
+    for (let i = -11; i <= 11; i++) {
+      const y = water - Math.round(h * Math.sqrt(1 - (i / 12) ** 2));
+      R(x + i, y, 1, water - y + 2, i % 4 === 0 ? G.serpentDark : G.serpent);
+      if (i % 2 === 0) light(x + i, y - 1, 1, 1, "soft", RIM);
+    }
+    for (let i = -2; i <= 2; i += 2) R(x + i, water - h - 2, 1, 2, G.crest);
+    R(x - 14, water, 4, 1, G.foam);
+    R(x + 11, water, 4, 1, G.foam);
+  }
+}
+
+/** Its tail's fin: a fan, ribbed, broad at the top, leaning back from the way it sweeps; `h` tall from (x, y). */
+function fin(x: number, y: number, h: number, d: 1 | -1) {
+  for (let i = 0; i < h; i++) {
+    const w = 2 + Math.round(i * 0.7);
+    const x0 = x - d * Math.round(i * 0.45) - (d > 0 ? w : 0);
+    R(x0, y - i, w, 1, G.crest);
+    for (let k = 1; k < w; k += 2) R(x0 + k, y - i, 1, 1, mix(G.crest, INK, 0.3));
+  }
+  const tw = 2 + Math.round((h - 1) * 0.7);
+  R(x - d * Math.round((h - 1) * 0.45) - (d > 0 ? tw : 0), y - h, tw, 1, G.crestLight);
+  light(x - d * Math.round((h - 1) * 0.45) - (d > 0 ? tw : 0), y - h - 1, tw, 1, "soft", RIM);
+}
+
+/** Its tail along the quay: a hump of its body out of the water over the planks, the fin leading, spray. */
+function tailArt(s: Serpent, v: View) {
+  const t = s.tail!;
+  const floor = s.def.floor;
+  const water = floor + TILE;
+  const tb = tailBox(s, v.t);
+  const d = t.dir;
+  if (!tb) {
+    // The warning: its fin breaks the water at the quay, growing for a second, with spray round it.
+    const k = Math.min(1, (v.t - t.at) / SERPENT_STEPS.tailWarn);
+    const x = Math.round(t.x);
+    fin(x, water + 2, Math.round(4 + 12 * k), d);
+    R(x - 12, water, 24, 2, G.foam);
+    if (!view.reduced) for (let i = 0; i < 8; i++) R(x - 14 + i * 4, water - 2 - ((v.t + i * 5) % 7), 2, 2, G.foam);
+    else for (let i = 0; i < 4; i++) R(x - 12 + i * 8, water - 4, 2, 2, G.foam);
+    return;
+  }
+  const x = Math.round(tb.x + tb.w / 2);
+  // The body behind the fin: low over the planks, then down into the water behind it.
+  for (let i = 0; i < 30; i++) {
+    const xx = x - d * (4 + i);
+    const top = floor - 7 + Math.round(Math.max(0, i - 10) ** 2 / 14);
+    for (let y = top; y < Math.min(water + 4, top + 8); y++) R(xx, y, 1, 1, y === top ? G.serpentLight : y >= top + 6 ? G.serpentBelly : (y + i) % 3 === 0 ? G.serpentDark : G.serpent);
+    if (i % 2 === 0) light(xx, top - 1, 1, 1, "soft", RIM);
+    if (i % 5 === 2 && top < water - 4) spine(xx, top, 3, d);
+  }
+  fin(x + d * 3, floor - 4, 14, d);
+  R(x - 3, floor - 7, 7, 7, G.serpent);
+  if (!view.reduced) for (let k = 0; k < 6; k++) R(x + d * 6 - d * k * 5, floor - 3 - ((v.t + k * 2) % 6), 2, 2, G.foam);
+}
+
+/** The serpent: its ring of foam, rising, rearing, spitting, ducking its own ball, dazed on the quay, its tail, its coils. */
 function serpentArt(s: Serpent, v: View) {
   const t = v.t;
   const floor = s.def.floor;
   const age = t - s.since;
   const x = neckX(s);
+  const base = floor + WATERLINE - 2;
+  const sway = view.reduced ? 0 : Math.round(Math.sin(t * 0.07) * 2);
+  if (s.phase === "beaten" || s.phase === "asleep") return;
+  if (s.tail) tailArt(s, v);
+  if (s.phase === "ring" || s.phase === "rest" || s.phase === "dive" || s.phase === "duck") coils(s, v);
   if (s.phase === "ring") {
+    // A dark shape under the water, and a ring of foam over it.
     const r = ringRadius(age, view.reduced);
+    R(x - r + 3, floor + WATERLINE - 1, 2 * r - 6, 3, mix(PALETTE.waterDeep, INK, 0.4));
     for (let k = -r; k <= r; k++) {
       const dy = Math.round(Math.sqrt(Math.max(0, r * r - k * k)) * 0.35);
       light(x + k, floor + WATERLINE + dy, 1, 1, "soft", G.foam);
@@ -489,63 +822,59 @@ function serpentArt(s: Serpent, v: View) {
     }
     return;
   }
-  if (s.phase === "rise" || s.phase === "rear" || s.phase === "spit") {
-    const box = bodyBox(s, t);
-    const sway = view.reduced ? 0 : Math.round(Math.sin(t * 0.08) * 1.5);
-    for (let y = box.y + 8; y < floor + 10; y++) {
-      const curve = Math.round(Math.sin((y - box.y) * 0.12) * 2) + sway;
-      R(x - 5 + curve, y, 10, 1, y % 4 ? G.serpent : G.serpentDark);
-      R(x - 5 + curve + (s.dir > 0 ? 7 : 0), y, 3, 1, G.serpentBelly);
-    }
-    // The head: reared high with its mouth shut through the tell; lowered with its mouth open to spit.
-    const low = s.phase === "spit";
-    const hy = low ? floor - 16 : box.y;
-    const hx = x + s.dir * 4 + sway;
-    R(hx - 8, hy, 16, 9, G.serpent);
-    R(hx - 8, hy, 16, 1, G.serpentLight);
-    R(hx + s.dir * 7, hy + 2, 6, 5, G.serpent);
-    R(hx + s.dir * 3, hy + 2, 2, 2, "#ffe066");
-    // After the night's tint: eye-shine, and a pale rim along its neck and head, so it reads in the dark.
-    light(hx + s.dir * 3, hy + 2, 2, 2, "lamp", "#ffe066");
-    light(hx - 8, hy - 1, 16, 1, "soft", RIM);
-    for (let y = box.y + 9; y < floor; y += 3) light(x - 6 + Math.round(Math.sin((y - box.y) * 0.12) * 2) + sway, y, 1, 2, "soft", RIM);
-    for (let k = 0; k < 4; k++) R(hx - s.dir * (4 + k * 3), hy - 3 + (k % 2), 2, 3, G.serpentDark);
-    if (low || (s.phase === "rear" && age > SERPENT_STEPS.tell[2] / 2)) {
-      R(hx + s.dir * 9, hy + 6, 6, 3, mix(G.cloth, INK, 0.3));
-      R(hx + s.dir * 9, hy + 6, 6, 1, G.brine);
-    }
+  if (neckUp(s)) {
+    const rising = s.phase === "rise" ? Math.min(1, age / SERPENT_STEPS.rise) : 1;
+    const spit = s.phase === "spit";
+    // Reared high through its tell; lowered and leaning out at him to spit; leaning his way, watching, after
+    // its ball has hit him and while its tail lashes.
+    const low = s.phase === "lash" || s.phase === "watch";
+    const headY = spit ? mouth(s).y - 8 : low ? floor - SERPENT.rear + 10 : floor - Math.round((SERPENT.rear + 4) * rising);
+    const lean = spit ? s.dir * 12 : low ? s.dir * 6 : -s.dir * 3;
+    serpentNeck(x, headY + 6, base, s.dir, lean, sway);
+    const tellK = s.phase === "rear" ? age / Math.max(1, SERPENT_STEPS.tell[Math.min(s.hits, 2)]) : 0;
+    const open = spit ? 4 : s.phase === "rear" && tellK > 0.5 ? (tellK > 0.8 ? 3 : 1) : 0;
+    serpentHead(x + lean + sway, headY, s.dir, open);
+    // Its tell, plain to see: the throat swells pale as it gathers the brine.
+    if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, G.brine);
+    if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, G.brine);
+    if (s.phase === "rise" || (s.phase === "rear" && age < 40)) streaming(x, headY, base, age + (s.phase === "rear" ? SERPENT_STEPS.rise : 0), 10);
     return;
   }
   if (s.phase === "dazed" || s.phase === "reel") {
-    // Its head on the quay's edge, eyes shut; little stars of brine turning over it while it is dazed.
+    // Its head on the quay, its jaw on the planks, the snout towards him, the eye shut, the tongue out, the
+    // spines flat; its neck arching up out of the water behind it and over the quay's edge; little stars
+    // of brine turning over it while it is dazed.
     const h = headBox(s);
-    for (let y = h.y + h.h; y < floor + 10; y++) R(x - 4, y, 8, 1, G.serpentDark);
-    R(h.x, h.y + 2, h.w, h.h - 2, G.serpent);
-    R(h.x, h.y + 2, h.w, 1, G.serpentLight);
-    R(h.x + (s.dir > 0 ? h.w - 7 : 3), h.y + 5, 4, 1, INK);
-    light(h.x, h.y + 1, h.w, 1, "soft", RIM);
-    if (s.phase === "dazed" && !view.reduced) for (let k = 0; k < 3; k++) R(h.x + h.w / 2 + Math.round(Math.cos(t * 0.1 + k * 2.1) * 9), h.y - 4 + Math.round(Math.sin(t * 0.1 + k * 2.1) * 2), 2, 2, G.brine);
+    const d = s.dir;
+    const hx = h.x + h.w / 2 - d * 2;
+    const bx = hx - d * 18;
+    for (let y = floor - 9; y < base; y++) {
+      const f = (y - floor + 9) / (base - floor + 9);
+      bodyRow(bx + Math.round(d * 6 * (1 - f) ** 2), y, Math.round(12 + 6 * f), d, y);
+    }
+    for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3), 9, d, i);
+    serpentHead(hx, h.y - 1, d, s.phase === "reel" ? 2 : 1, true);
+    if (s.phase === "dazed") for (let k = 0; k < 3; k++) {
+      const a = view.reduced ? k * 2.1 : t * 0.1 + k * 2.1;
+      R(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, G.brine);
+      light(hx + Math.round(Math.cos(a) * 11), h.y - 8 + Math.round(Math.sin(a) * 2), 2, 2, "soft", "rgba(220, 240, 255, 0.6)");
+    }
     return;
   }
-  if (s.phase === "dive" && !view.reduced) for (let k = 0; k < 6; k++) R(x - 10 + k * 4, floor + WATERLINE - ((age + k * 3) % 8), 2, 2, G.foam);
-  if (s.phase === "tail") {
-    const tb = tailBox(s, t);
-    if (!tb && s.tail) {
-      // The tip breaking the water at the quay's end: the warning.
-      const wx = s.tail.x - s.tail.dir * 6;
-      R(wx - 3, floor + WATERLINE - 6, 6, 6, G.serpentDark);
-      light(wx - 3, floor + WATERLINE - 7, 6, 1, "soft", RIM);
-      R(wx - 6, floor + WATERLINE, 12, 2, G.foam);
-      return;
-    }
-    if (tb) {
-      light(tb.x, tb.y + 1, tb.w, 1, "soft", RIM);
-      R(tb.x, tb.y + 2, tb.w, tb.h - 2, G.serpent);
-      R(tb.x, tb.y + 2, tb.w, 1, G.serpentLight);
-      for (let k = 0; k < 3; k++) R(tb.x + 3 + k * 5, tb.y - 1, 2, 3, G.serpentDark);
-      if (!view.reduced) for (let k = 0; k < 4; k++) R(tb.x - (s.tail?.dir ?? 1) * (4 + k * 4), floor - 2 - (k % 2), 2, 2, G.foam);
-    }
-  }
+  if ((s.phase === "dive" || s.phase === "duck") && !view.reduced) for (let k = 0; k < 8; k++) R(x - 14 + k * 4, floor + WATERLINE - ((age + k * 3) % 10), 2, 2, G.foam);
+}
+
+/** The rune coming up out of the water at the prow's foot and rising to its place, once the dawn has come (still, with reduced motion). */
+function runeRising(s: Serpent, v: View, rune: { x: number; y: number }) {
+  const age = endingAge(s, v.t);
+  if (age === null || s.free || age < SERPENT_STEPS.dawn) return;
+  const k = Math.min(1, (age - SERPENT_STEPS.dawn) / SERPENT_STEPS.rune);
+  const e = view.reduced ? 1 : k * k * (3 - 2 * k);
+  const from = s.def.floor + WATERLINE;
+  const y = Math.round(from + (rune.y - from) * e);
+  drawRune(rune.x, y, RUNE_CHARS[15], "lit", v.t, 15);
+  light(rune.x - 4, y - 4, 24, 24, "soft", `rgba(255, 224, 140, ${(0.25 * (view.reduced ? 1 : k)).toFixed(2)})`);
+  if (!view.reduced) for (let i = 0; i < 4; i++) R(rune.x + 3 + i * 3, y + 16 + ((v.t + i * 4) % 10), 1, 2, G.foam);
 }
 
 /** The ball of brine, flying at him; sent back by the shield, going home. */
@@ -656,12 +985,16 @@ export const GAMLEBYEN: LevelDef = {
   rules: RULES,
   boss: serpentBoss(SERPENT_DEF),
   bossWords: {
-    wake: { nb: "Vannet ved kaia rører seg.\nNoe stort er under.", en: "The water by the quay stirs.\nSomething large is under it." },
+    wake: { nb: "Vannet ved kaia rører seg.\nDet er noe stort der nede.", en: "The water by the quay stirs.\nSomething large is down there." },
     hit: { nb: "Rett i hodet.", en: "Right on the head." },
     beaten: { nb: "Ormen synker. Vannet blir stille.", en: "The serpent sinks. The water goes still." },
-    // Shown beside it: a round with no dazing, a dazing with no stomp; again after ten seconds of nothing.
-    miss: { nb: "Hold skjoldet opp når den spytter.\nKula går tilbake dit den kom fra.", en: "Hold the shield up as it spits.\nThe ball goes back where it came from." },
-    missHead: { nb: "Den ligger svimeslått på kaia.\nHopp på hodet.", en: "It lies stunned on the quay.\nJump on its head." }
+    // Shown beside it, each only when it is true; again after ten seconds of nothing, unless he has done it since.
+    // Its ball hit him facing it, or went past him: the shield was not up.
+    miss: { nb: "Løft skjoldet mens den reiser seg.\nDa går kula tilbake dit den kom fra.", en: "Raise the shield while it rears.\nThe ball goes back where it came from." },
+    // Its ball hit his back.
+    missTurn: { nb: "Snu deg mot den med skjoldet.\nDet tar bare det som kommer forfra.", en: "Face it with the shield.\nIt only stops what comes from in front." },
+    missHead: { nb: "Den ligger svimeslått på kaia.\nHopp opp på hodet dens.", en: "It lies stunned on the quay.\nJump on its head." },
+    missTail: { nb: "Halen kommer langs kaia.\nHopp over den.", en: "Its tail comes along the quay.\nJump it." }
   },
   floor: (x) => {
     const c = Math.floor(x / TILE);
@@ -670,7 +1003,7 @@ export const GAMLEBYEN: LevelDef = {
   signs: [
     {
       label: { nb: "Gamlebyen", en: "Gamlebyen" },
-      lines: { nb: ["Her lå Oslo i fem hundre år.", "Så brant det, og byen flyttet."], en: ["Oslo stood here for five hundred years.", "Then it burned, and the town moved."] }
+      lines: { nb: ["Her lå Oslo i seks hundre år.", "Så brant det, og byen flyttet."], en: ["Oslo stood here for six hundred years.", "Then it burned, and the town moved."] }
     },
     {
       label: { nb: "Ruinene", en: "The ruins" },
@@ -692,15 +1025,17 @@ export const GAMLEBYEN: LevelDef = {
     back(v) {
       shown = v.grounds as Ruins | null;
       shownT = v.t;
+      endAge = endOf(v);
+      calm = dawnOf(v);
       tbaneDoor(v.doors.get("tbane"));
       // The modern street's lamps; the medieval town's torches from the town wall on.
       for (const c of [10, 22, 31]) streetLamp(c * TILE + 8, STREET * TILE);
       church();
       bishop();
       townWall();
-      for (const c of [140, 158, 170]) torch(c * TILE + 6, TOWN * TILE, v.t);
-      for (const c of [179, 185, 203, 210]) torch(c * TILE + 6, MARKET * TILE, v.t);
-      for (const c of [214, 238, 246, 256, 264]) torch(c * TILE + 6, QUAY * TILE, v.t);
+      for (const c of [140, 158, 170]) torch(c * TILE + 6, TOWN * TILE, v.t, isOut(c));
+      for (const c of [179, 185, 203, 210]) torch(c * TILE + 6, MARKET * TILE, v.t, isOut(c));
+      for (const c of QUAY_TORCHES) torch(c * TILE + 6, QUAY * TILE, v.t, isOut(c));
       market(v.t);
       // The dig in the park: a rope round it on stakes.
       for (const x of [23 * TILE + 12, 26 * TILE + 2]) R(x, STREET * TILE - 10, 2, 10, G.timber);
@@ -718,13 +1053,17 @@ export const GAMLEBYEN: LevelDef = {
         R(TOWER.x, s.y, TOWER.w, 1, G.risenLight);
       }
       const sp = v.boss as Serpent | null;
-      if (sp) ballArt(sp, v.t);
+      if (sp) {
+        ballArt(sp, v.t);
+        runeRising(sp, v, RUNE_AT);
+      }
     },
     carrier(i, at) {
       longship(at.x, at.y, LONGSHIPS[i].w);
     },
     ground: (c) => (c < 99 ? { top: G.grass, dot: G.grassDark, fill: G.earth } : { top: G.cobble, dot: G.cobbleDark, fill: G.earth }),
     tile(t, c, r, x, y, map) {
+      if (t === "~") return calmWater(c, r, x, y, map);
       if (t === "Z" || t === "z") stoneTile(c, r, x, y, t === "Z");
       else if (t === "R") oldStone(c, r, x, y, map);
       else if (t === "J") quayPlank(c, x, y);

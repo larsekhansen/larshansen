@@ -16,6 +16,7 @@ const bench = P.benchesOf(map).at(-1);
 const cx = (p: any) => p.body.x + 5;
 const S = (p: any) => p.boss.state;
 const neck = (p: any) => S(p).def.points[S(p).at];
+// Up and about to spit (order 17: its neck also stays up while it lashes its tail; that is no time for the shield).
 const up = (p: any) => ["rise", "rear", "spit"].includes(S(p).phase);
 const T = 16;
 
@@ -32,20 +33,20 @@ function run(name: string, strat: Strat): Result {
   let n = 0;
   for (; n < SECONDS * 60; n++) {
     const k = strat(p, n, s);
-    const phase = S(p).phase;
-    const tail = S(p).tail;
     const ev = P.stepPlay(p, k);
     if (!k.left && !k.right && !k.jumpHeld && p.body.onGround && Math.abs(p.body.vx) < 0.05) r.still++;
     if (ev.hurt) {
       r.hearts++;
-      if (phase === "tail" || tail) r.byTail++;
-      else r.byBall++;
-      s.hurtBy = phase === "tail" || tail ? "tail" : "ball";
+      // The ball bursts on him (it is gone after the step), or the tail touched him.
+      const byBall = S(p).touched === "ball";
+      if (byBall) r.byBall++;
+      else r.byTail++;
+      s.hurtBy = byBall ? "ball" : "tail";
     }
     if (args.trace && n < Number(args.trace) * 60 && (ev.hurt || ev.boss || ev.blocked)) console.log(`  ${(n / 60).toFixed(2)} ${S(p).phase} neck ${(neck(p) / T).toFixed(1)} him ${(cx(p) / T).toFixed(1)} feet ${((p.body.y + 14) / T).toFixed(2)} ${ev.hurt ? "HURT" : ""} ${ev.boss ?? ""} ${ev.blocked ? "blocked" : ""}`);
     if (ev.lifeLost) r.lives++;
     if (ev.boss === "hit") { r.hits++; r.hitTimes.push(n / 60); }
-    if (ev.boss && /^(miss|missHead|wake)$/.test(ev.boss)) {
+    if (ev.boss && /^(miss|missTurn|missHead|missTail|wake)$/.test(ev.boss)) {
       r.hints.push(`${(n / 60).toFixed(0)}:${ev.boss}`);
       s.hints.push(ev.boss);
       if (r.firstHint < 0 && ev.boss !== "wake") r.firstHint = n / 60;
@@ -80,12 +81,17 @@ const shieldTo = (p: any, x: number) => ({ ...NONE, left: x < cx(p) && p.body.fa
 /** The tail is within reach and coming at him. */
 const tailNear = (p: any, d = 30) => {
   const st = S(p);
-  if (st.phase !== "tail" || !st.tail || p.t - st.since < 60) return false;
+  if (!st.tail || p.t - st.tail.at < 60) return false;
   const dx = st.tail.x - cx(p);
   return Math.abs(dx) < d && dx * st.tail.dir < 0;
 };
 const jump = { jumpHeld: true, jumpPressed: true };
-const IN = 248 * T + 8;
+/** It is asleep and he is short of where it wakes (at the start, or put back after a lost life): walk in. */
+const sleeps = (p: any, s: any) => {
+  if (S(p).phase === "asleep" && cx(p) < IN) s.in = false;
+  return !s.in && cx(p) < IN;
+};
+const IN = 247 * T + 8;
 const MID = 259 * T;
 /** Down onto the dazed head. */
 const stompHead = (p: any) => {
@@ -101,10 +107,11 @@ const stompHead = (p: any) => {
 };
 
 const strategies: [string, Strat][] = [
-  ["walk in, stand facing it", (p, n, s) => (!s.in && cx(p) < IN ? toward(p, IN) : ((s.in = true), faceTo(p, neck(p))))],
+  // (Put back behind its wake mark after a lost life, with it asleep again, a person walks in again: so do these.)
+  ["walk in, stand facing it", (p, n, s) => (sleeps(p, s) ? toward(p, IN) : ((s.in = true), faceTo(p, neck(p))))],
   ["hold right (hops when blocked)", (p) => toward(p, 99999)],
   ["hold right, jump whenever down", (p) => ({ ...NONE, right: true, ...(p.body.onGround ? jump : { jumpHeld: true }) })],
-  ["walk in, jump in place", (p, n, s) => (!s.in && cx(p) < IN ? toward(p, IN) : ((s.in = true), { ...faceTo(p, neck(p)), jumpHeld: true, jumpPressed: p.body.onGround }))],
+  ["walk in, jump in place", (p, n, s) => (sleeps(p, s) ? toward(p, IN) : ((s.in = true), { ...faceTo(p, neck(p)), jumpHeld: true, jumpPressed: p.body.onGround }))],
   ["middle, stand facing it", (p) => (Math.abs(cx(p) - MID) > 3 ? toward(p, MID) : faceTo(p, neck(p)))],
   ["middle, jump constantly", (p) => (Math.abs(cx(p) - MID) > 3 ? toward(p, MID) : { ...faceTo(p, neck(p)), jumpHeld: true, jumpPressed: p.body.onGround })],
   ["far right end of the quay (on the quay)", (p) => (Math.abs(cx(p) - 267 * T) > 3 ? toward(p, 267 * T) : faceTo(p, neck(p)))],
@@ -117,11 +124,11 @@ const strategies: [string, Strat][] = [
   ["shield facing right only (never turns)", (p) => (cx(p) < IN ? toward(p, IN + 8) : { ...NONE, shield: true })],
   // The learner: plain at first; after "the shield" hint, the shield as it rises; after "jump on its head", the stomp; after the tail has hurt it once, jumps the tail.
   ["learner: does what each hint says, once seen", (p, n, s) => {
-    if (cx(p) < IN && !s.in) return toward(p, IN + 32);
+    if (sleeps(p, s)) return toward(p, IN + 32);
     s.in = true;
-    const knowsShield = s.hints.includes("miss");
+    const knowsShield = s.hints.includes("miss") || s.hints.includes("missTurn");
     const knowsStomp = s.hints.includes("missHead");
-    s.knowsTail ||= s.hurtBy === "tail";
+    s.knowsTail ||= s.hints.includes("missTail");
     if (s.knowsTail && tailNear(p)) return { ...NONE, ...jump };
     if (knowsStomp && (S(p).phase === "dazed" || (!p.body.onGround && S(p).phase === "reel"))) return stompHead(p);
     if (!p.body.onGround) return { ...NONE, jumpHeld: true };
@@ -129,21 +136,21 @@ const strategies: [string, Strat][] = [
     return faceTo(p, neck(p));
   }],
   ["learner who also keeps 5 tiles from the neck", (p, n, s) => {
-    if (cx(p) < IN && !s.in) return toward(p, IN + 32);
+    if (sleeps(p, s)) return toward(p, IN + 32);
     s.in = true;
-    const knowsShield = s.hints.includes("miss");
+    const knowsShield = s.hints.includes("miss") || s.hints.includes("missTurn");
     const knowsStomp = s.hints.includes("missHead");
-    s.knowsTail ||= s.hurtBy === "tail";
+    s.knowsTail ||= s.hints.includes("missTail");
     if (s.knowsTail && tailNear(p)) return { ...NONE, ...jump };
     if (knowsStomp && (S(p).phase === "dazed" || (!p.body.onGround && S(p).phase === "reel"))) return stompHead(p);
     if (!p.body.onGround) return { ...NONE, jumpHeld: true };
     if (knowsShield && up(p)) return shieldTo(p, neck(p));
     const d = neck(p) - cx(p);
-    if (Math.abs(d) < 5 * T) { const away = d > 0 ? -1 : 1; const room = away < 0 ? cx(p) - 247 * T > 32 : 271 * T - cx(p) > 32; const go = room ? away : -away; return { ...NONE, left: go < 0, right: go > 0 }; }
+    if (Math.abs(d) < 5 * T) { const away = d > 0 ? -1 : 1; const room = away < 0 ? cx(p) - 237 * T > 32 : 271 * T - cx(p) > 32; const go = room ? away : -away; return { ...NONE, left: go < 0, right: go > 0 }; }
     return faceTo(p, neck(p));
   }],
   ["knows everything (shield, stomp, tail)", (p, n, s) => {
-    if (cx(p) < IN && !s.in) return toward(p, IN + 32);
+    if (sleeps(p, s)) return toward(p, IN + 32);
     s.in = true;
     if (tailNear(p)) return { ...NONE, ...jump };
     if (S(p).phase === "dazed" || (!p.body.onGround && S(p).phase === "reel")) return stompHead(p);
@@ -153,7 +160,9 @@ const strategies: [string, Strat][] = [
   }],
   // Parked.
   ["wake it, then up on the prow", (p) => (cx(p) < 268 * T ? toward(p, 269 * T + 8) : NONE)],
-  ["wake it, then back to the bench", (p, n, s) => { if (S(p).phase !== "asleep") s.woke = true; return s.woke ? toward(p, bench.x) : toward(p, IN + 16); }]
+  ["wake it, up on the prow, the shield up facing it", (p) => (cx(p) < 268 * T ? toward(p, 269 * T + 8) : p.body.onGround ? shieldTo(p, neck(p)) : { ...NONE, right: true })],
+  ["wake it, then back to the bench", (p, n, s) => { if (S(p).phase !== "asleep") s.woke = true; return s.woke ? toward(p, bench.x) : toward(p, IN + 16); }],
+  ["wake it, back to the bench, the shield up facing it", (p, n, s) => { if (S(p).phase !== "asleep") s.woke = true; return !s.woke ? toward(p, IN + 16) : Math.abs(cx(p) - bench.x) > 3 ? toward(p, bench.x) : shieldTo(p, neck(p)); }]
 ];
 
 const only = args.only;

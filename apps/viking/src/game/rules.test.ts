@@ -12,7 +12,7 @@ import { TROLL, TROLL_RULES, TROLL_STEPS, WAVE, trollHurts, type TrollDef } from
 import { RULES as STATUE_RULES } from "../levels/vigelandsparken";
 import { RULES as SWAN_RULES, SWAN, telling as swanTelling } from "../levels/ostensjovannet";
 import { everywhere } from "./reach";
-import { SERPENT_STEPS, headBox, neckX, ringRadius, serpentBoss, tailBox, tellSteps, type Serpent } from "./serpent";
+import { NEAR, SERPENT, SERPENT_STEPS, headBox, neckX, ringRadius, serpentBoss, tailBox, tellSteps, type Serpent } from "./serpent";
 
 // The rules every level shares from level 4 on: hearts, lives, pits, benches, skilling, the brown
 // cheese, the five kinds of enemy, the bass drum and the ski pole's dash. Each on a small made-up
@@ -1004,6 +1004,36 @@ describe("the shield (ADR 0024)", () => {
     expect(p.hearts).toBe(HEARTS);
   });
 
+  test("the troll is not frozen by it: walking into the shield it raises its club there and slams it, through the shield; up on a rock out of the club's reach, the round ends with its hint", () => {
+    const ARENA: TrollDef = { floor: 8 * TILE, x0: 10 * TILE, x1: 34 * TILE, x: 30 * TILE, wakeAt: 14 * TILE, dawn: [[18 * TILE, 22 * TILE], [22 * TILE, 26 * TILE], [26 * TILE, 30 * TILE]] };
+    const floor = ["....................................", "....................................", "....................................", "....................................", "....................................", "....................................", "....................................", "S............................r......", "####################################"];
+    // On the floor at the clearing's mouth, the shield up facing it: the club comes down on him all the same.
+    const p = newPlay(level(floor, { troll: ARENA }), { start: { x: 15 * TILE, bottom: 8 * TILE }, shield: SHIELD_RULES, hasShield: true });
+    const ev = steps(p, 1200, down);
+    expect(ev.some((e) => e.troll === "slam")).toBe(true);
+    expect(ev.some((e) => e.hurt)).toBe(true);
+    // On a rock (two rows up) at the mouth, the shield up: it walks into the shield, raises its club, slams
+    // short of him, and the round ends with its hint and it backs off; it does not stand there for ever.
+    const rock = floor.map((r, i) => (i === 6 || i === 7 ? r.slice(0, 15) + "#" + r.slice(16) : r));
+    const q = newPlay(level(rock, { troll: ARENA }), { start: { x: 15 * TILE + 8, bottom: 6 * TILE }, shield: SHIELD_RULES, hasShield: true });
+    q.body.facing = 1;
+    const ev2 = steps(q, 1500, down);
+    expect(ev2.some((e) => e.troll === "slam")).toBe(true);
+    expect(ev2.some((e) => e.troll === "miss" || e.troll === "rest")).toBe(true);
+    expect(ev2.filter((e) => e.blocked).length).toBeLessThan(20);
+  });
+
+  test("the plough is not frozen by it either: with the shield held it comes again after every rest", () => {
+    const row = (ch: string) => ch.repeat(60);
+    const street = [row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), "..S" + ".".repeat(57), row("#"), row("#")];
+    const DEF = { floor: 10 * TILE, x: 50 * TILE, wakeAt: 10 * TILE, rounds: [{ x0: 20 * TILE, x1: 50 * TILE, sticks: true }], line: { x0: 14 * TILE, x1: 17 * TILE, y: 10 * TILE - 28, speed: 7 }, backOff: 6 * TILE };
+    const p = newPlay(level(street, { boss: ploughBoss(DEF) }), { start: { x: 30 * TILE, bottom: 10 * TILE }, shield: SHIELD_RULES, hasShield: true });
+    p.body.facing = 1;
+    const evs = steps(p, 60 * 40, down);
+    expect(evs.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(3);
+    expect(evs.filter((e) => e.boss === "miss1").length).toBeGreaterThanOrEqual(3);
+  });
+
   test("a jumper leaping up beside him is not held: it comes from below", () => {
     const def = level([".".repeat(30), ".".repeat(30), ".".repeat(30), ".".repeat(30), "S" + ".".repeat(29), "###########~~###############", "###########~~###############"], { enemies: [{ kind: "jumper", look: "salmon", c: 11, r: 6, rise: 40, period: 200 }] });
     const p = newPlay(def, { start: { x: 11 * TILE, bottom: 5 * TILE }, shield: SHIELD_RULES, hasShield: true });
@@ -1158,13 +1188,14 @@ describe("swans (Østensjøvannet): they mind their water", () => {
 });
 
 describe("the sea serpent (Gamlebyen)", () => {
-  // A quay at row 10, forty tiles long; a bench at its left end; the serpent's three places along it.
+  // A quay at row 10, forty tiles long; a bench at its left end; the serpent's three places along it; a
+  // higher deck (row 8) at its right end, as the last longship's prow.
   const row = (ch: string) => ch.repeat(40);
-  const quay = [row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), ".S.b" + ".".repeat(36), row("#"), row("#")];
-  const DEF = { floor: 10 * TILE, x0: 6 * TILE, x1: 36 * TILE, points: [10 * TILE + 8, 20 * TILE + 8, 30 * TILE + 8] as [number, number, number], wakeAt: 7 * TILE };
+  const quay = [row("."), row("."), row("."), row("."), row("."), row("."), row("."), row("."), ".".repeat(37) + "___", ".S.b" + ".".repeat(36), row("#"), row("#")];
+  const DEF = { floor: 10 * TILE, x0: 2 * TILE, x1: 40 * TILE, points: [12 * TILE + 8, 20 * TILE + 8, 28 * TILE + 8] as [number, number, number], wakeAt: 7 * TILE };
   const QUAY = level(quay, { boss: serpentBoss(DEF) });
   const serpent = (p: Play) => p.boss!.state as Serpent;
-  const at = (x: number, opts: { shield?: boolean } = {}) => newPlay(QUAY, { start: { x, bottom: 10 * TILE }, shield: SHIELD_RULES, hasShield: !!opts.shield });
+  const at = (x: number, opts: { shield?: boolean; bottom?: number } = {}) => newPlay(QUAY, { start: { x, bottom: opts.bottom ?? 10 * TILE }, shield: SHIELD_RULES, hasShield: !!opts.shield });
   /** Steps until an event, playing `intent`; the events on the way. */
   const until = (p: Play, name: string, intent: PlayIntent | ((p: Play) => PlayIntent) = idle, max = 2000) => {
     const names: (string | null)[] = [];
@@ -1180,6 +1211,14 @@ describe("the sea serpent (Gamlebyen)", () => {
     const toward = neckX(serpent(p)) > cx(p) ? 1 : -1;
     return { ...idle, shield: true, left: toward < 0 && p.body.facing > 0, right: toward > 0 && p.body.facing < 0 };
   };
+  /** Wakes it from where he stands (it wakes as he comes past its mark): he is put there, and then back. */
+  const woken = (p: Play) => {
+    const was = { x: cx(p), bottom: feet(p) };
+    placeBody(p.body, DEF.wakeAt + 8, 10 * TILE);
+    stepPlay(p, idle);
+    placeBody(p.body, was.x, was.bottom);
+    return p;
+  };
 
   test("asleep until he comes onto its quay; a ring of foam a second and a half before it rises, then its tell before it spits", () => {
     const p = at(3 * TILE);
@@ -1193,17 +1232,18 @@ describe("the sea serpent (Gamlebyen)", () => {
     expect(names.length - 1 - windup).toBeGreaterThanOrEqual(60);
   });
 
-  test("its ball costs a heart without the shield, and with his back to it; with the shield up facing it, it goes back and dazes it", () => {
+  test("its ball costs a heart without the shield, and with his back to it, and the hint says which; with the shield up facing it, it goes back and dazes it", () => {
     const p = at(14 * TILE);
-    until(p, "spit");
-    for (let i = 0; i < 200 && !p.hurt; i++) stepPlay(p, idle);
+    p.body.facing = 1;
+    const said = until(p, "miss", idle, 1000);
     expect(p.hurt).toBe(true);
-    // His back to it, the shield up: still hit.
+    expect(said.at(-1)).toBe("miss");
+    // His back to it, the shield up: still hit, and told to face it.
     const q = at(14 * TILE, { shield: true });
     q.body.facing = -1;
-    until(q, "spit", { ...idle, shield: true });
-    for (let i = 0; i < 200 && !q.hurt; i++) stepPlay(q, { ...idle, shield: true });
+    const back = until(q, "missTurn", { ...idle, shield: true }, 1000);
     expect(q.hurt).toBe(true);
+    expect(back.at(-1)).toBe("missTurn");
     // Facing it, the shield up: it goes back and dazes it.
     const r = at(14 * TILE, { shield: true });
     r.body.facing = 1;
@@ -1231,15 +1271,18 @@ describe("the sea serpent (Gamlebyen)", () => {
     const names = until(p, "hit", idle, 60);
     expect(names.at(-1)).toBe("hit");
     expect(s.hits).toBe(1);
-    // Left alone, a daze lasts four seconds and then it says to jump on its head.
+    // Left alone, two seconds into the daze it says to jump on its head (while it still lies there), and after four it lifts it.
     const q = at(14 * TILE, { shield: true });
     q.body.facing = 1;
     until(q, "dazed", shielded, 1000);
     const left = until(q, "missHead", idle, SERPENT_STEPS.daze + 5);
-    expect(left.length).toBe(SERPENT_STEPS.daze);
+    expect(left.length).toBe(SERPENT_STEPS.dazeHint);
+    expect(serpent(q).phase).toBe("dazed");
+    steps(q, SERPENT_STEPS.daze - SERPENT_STEPS.dazeHint);
+    expect(serpent(q).phase).toBe("lash");
   });
 
-  test("after each hit its tell is a quarter shorter, never under a second; three hits, and it sinks for good, and only then the rune", () => {
+  test("after each hit its tell is a quarter shorter, never under a second; three hits, and it sinks for good; the rune only once the dawn has come and the rune has risen", () => {
     const p = at(14 * TILE);
     const s = serpent(p);
     const tells: number[] = [];
@@ -1250,38 +1293,68 @@ describe("the sea serpent (Gamlebyen)", () => {
     expect(tells).toEqual([90, 75, 60]);
     expect(Math.min(...tells)).toBeGreaterThanOrEqual(60);
     for (let k = 0; k < 3; k++) {
-      Object.assign(s, { phase: "dazed", since: p.t, hits: k, at: 1 });
+      Object.assign(s, { phase: "dazed", since: p.t, hits: k, at: 1, tail: null });
       const h = headBox(s);
       placeBody(p.body, h.x + h.w / 2, h.y - 20);
       p.body.onGround = false;
-      p.safeUntil = p.t + 999;
+      p.safeUntil = p.t + 9999;
       until(p, "hit", idle, 60);
-      steps(p, SERPENT_STEPS.reel + 2);
+      if (k < 2) Object.assign(s, { phase: "dazed", since: p.t });
     }
+    steps(p, SERPENT_STEPS.reel + 2);
     expect(s.hits).toBe(3);
     expect(s.phase).toBe("beaten");
+    expect(runeFree(p)).toBe(false);
+    steps(p, SERPENT_STEPS.dawn + SERPENT_STEPS.rune - 4);
+    expect(runeFree(p)).toBe(false);
+    steps(p, 6);
     expect(runeFree(p)).toBe(true);
   });
 
-  test("after a round its tail sweeps the quay, its tip in the water a second before; it hurts from below, so the shield does not stop it, and a jump clears it", () => {
-    const p = at(34 * TILE, { shield: true });
-    // A round whose ball misses him (he is past it): it dives and the tail comes.
-    Object.assign(serpent(p), { phase: "spit", since: p.t, at: 1, dir: -1, ball: { x: 19 * TILE, y: DEF.floor - 7, vx: -2, back: false } });
-    const names = until(p, "tail", idle, 400);
-    expect(names.at(-1)).toBe("tail");
-    expect(tailBox(serpent(p), p.t)).toBeNull();
+  test("after its first hit it rises twice in a round: the first ball sent back it ducks, and comes up elsewhere with a ring and a full tell; the second dazes it", () => {
+    const p = at(14 * TILE, { shield: true });
+    p.body.facing = 1;
+    serpent(p).hits = 1;
+    const names = until(p, "dazed", shielded, 2000);
+    expect(names.at(-1)).toBe("dazed");
+    const duck = names.indexOf("duck");
+    expect(duck).toBeGreaterThan(0);
+    const first = names.indexOf("spit");
+    const second = names.lastIndexOf("spit");
+    expect(second).toBeGreaterThan(duck);
+    // A ring of at least a second and the round's own tell between the duck and the second ball.
+    const windup = names.lastIndexOf("windup");
+    expect(windup - duck).toBeGreaterThanOrEqual(SERPENT_STEPS.duck + SERPENT_STEPS.ring2 + SERPENT_STEPS.rise - 1);
+    expect(second - windup).toBeGreaterThanOrEqual(tellSteps(serpent(p)) - 1);
+    expect(first).toBeLessThan(duck);
+    expect(p.hurt).toBe(false);
+  });
+
+  test("after a round its tail lashes along the quay towards him, its fin breaking the water a second before; it hurts from below, so the shield does not stop it, a jump clears it, and a hit by it says so", () => {
+    // A round whose ball goes past him (he jumps it): it lashes its tail.
+    const p = at(26 * TILE, { shield: true });
+    woken(p);
+    Object.assign(serpent(p), { phase: "spit", since: p.t, at: 0, dir: 1, ball: { x: 40 * TILE + 4, y: DEF.floor - 7, vx: 2, back: false } });
+    steps(p, 3);
+    const s = serpent(p);
+    expect(s.phase).toBe("lash");
+    expect(s.tail).not.toBeNull();
+    expect(tailBox(s, p.t)).toBeNull();
     steps(p, SERPENT_STEPS.tailWarn - 1);
-    expect(tailBox(serpent(p), p.t)).toBeNull();
-    steps(p, 2);
-    expect(tailBox(serpent(p), p.t)).not.toBeNull();
-    // Shield up, it still hurts.
-    for (let i = 0; i < 600 && !p.hurt; i++) stepPlay(p, { ...idle, shield: true, right: p.body.facing < 0 });
+    expect(tailBox(s, p.t)).toBeNull();
+    steps(p, 1);
+    expect(tailBox(s, p.t)).not.toBeNull();
+    // Shield up, it still hurts; and when it has gone it says to jump it.
+    const said: (string | null)[] = [];
+    for (let i = 0; i < 600 && serpent(p).tail; i++) said.push(stepPlay(p, { ...idle, shield: true, left: p.body.facing > 0 }).boss);
     expect(p.hurt).toBe(true);
+    expect(said).toContain("missTail");
     // Jumping as it comes, it passes under him.
-    const q = at(34 * TILE);
-    Object.assign(serpent(q), { phase: "spit", since: q.t, at: 1, dir: -1, ball: { x: 19 * TILE, y: DEF.floor - 7, vx: -2, back: false } });
-    until(q, "tail", idle, 400);
-    for (let i = 0; i < 600 && serpent(q).phase === "tail"; i++) {
+    const q = at(26 * TILE);
+    woken(q);
+    Object.assign(serpent(q), { phase: "spit", since: q.t, at: 0, dir: 1, ball: { x: 40 * TILE + 4, y: DEF.floor - 7, vx: 2, back: false } });
+    steps(q, 3);
+    for (let i = 0; i < 600 && serpent(q).tail; i++) {
       const t = tailBox(serpent(q), q.t);
       const near = t && Math.abs(t.x + t.w / 2 - cx(q)) < 26 && q.body.onGround;
       stepPlay(q, { ...idle, jumpHeld: true, jumpPressed: !!near });
@@ -1289,17 +1362,61 @@ describe("the sea serpent (Gamlebyen)", () => {
     expect(q.hurt).toBe(false);
   });
 
-  test("hints: a round with no dazing says the shield sends the ball back; ten seconds of nothing says it again", () => {
+  test("after its second hit its tail follows each ball along the quay", () => {
+    const p = at(14 * TILE, { shield: true });
+    p.body.facing = 1;
+    serpent(p).hits = 2;
+    until(p, "spit", shielded, 1000);
+    expect(serpent(p).tail).not.toBeNull();
+    expect(serpent(p).tail!.dir).toBe(-1);
+  });
+
+  test("hints: said only when true; ten seconds of nothing says the round's again, unless he has done it since", () => {
     const p = at(14 * TILE);
+    p.body.facing = 1;
     const names = until(p, "miss", idle, 1200);
     expect(names.at(-1)).toBe("miss");
-    // Up on a rock out of its reach (here: put out of reach of everything), ten seconds on it says it again.
+    // Out of reach of everything, ten seconds on: it says it again.
     p.safeUntil = p.t + 99999;
     const again = until(p, "miss", idle, SERPENT_STEPS.stale + 400);
     expect(again.at(-1)).toBe("miss");
+    // Once he has sent a ball back, "raise the shield" is never said to him again for nothing.
+    const q = at(14 * TILE, { shield: true });
+    q.body.facing = 1;
+    until(q, "miss", idle, 1200);
+    until(q, "dazed", shielded, 2000);
+    expect(serpent(q).hint).toBeNull();
   });
 
-  test("Game over in its fight: on again from the bench before it, the serpent under the water with no hits; a lost life sends it under, its hits kept", () => {
+  test("its ball flies at the height he stands at: on a higher deck the shield sends it back too", () => {
+    const p = at(38 * TILE + 8, { shield: true, bottom: 8 * TILE });
+    woken(p);
+    p.body.facing = -1;
+    const names = until(p, "dazed", shielded, 1500);
+    expect(names.at(-1)).toBe("dazed");
+    expect(p.hurt).toBe(false);
+    // Without the shield it reaches him there.
+    const q = at(38 * TILE + 8, { bottom: 8 * TILE });
+    woken(q);
+    q.body.facing = -1;
+    until(q, "miss", idle, 1500);
+    expect(q.hurt).toBe(true);
+  });
+
+  test("it never comes up within four tiles of him: walking up to its ring, it moves once to another place, with a fresh ring", () => {
+    const p = at(8 * TILE);
+    stepPlay(p, idle);
+    const s = serpent(p);
+    const first = neckX(s);
+    // He walks right up to the ring as it shows.
+    placeBody(p.body, first - 2 * TILE, 10 * TILE);
+    const names = until(p, "windup", idle, 400);
+    expect(names.at(-1)).toBe("windup");
+    expect(Math.abs(neckX(s) - cx(p))).toBeGreaterThanOrEqual(NEAR);
+    expect(neckX(s)).not.toBe(first);
+  });
+
+  test("Game over in its fight: on again from the bench before it, the serpent under the water with no hits; a lost life sends it under, its hits kept, and him no further back than the bench", () => {
     const p = newPlay(QUAY, { start: { x: 14 * TILE, bottom: 10 * TILE }, lives: 1 });
     const s = serpent(p);
     s.hits = 2;
@@ -1319,14 +1436,27 @@ describe("the sea serpent (Gamlebyen)", () => {
     for (let i = 0; i < 2000 && !lost; i++) lost = stepPlay(q, idle).lifeLost;
     expect(lost).toBe(true);
     expect([serpent(q).phase, serpent(q).hits]).toEqual(["asleep", 1]);
+    // He never sat on the bench and no flag was raised: still he is put back at the bench, as a Game over would.
+    expect(Math.abs(cx(q) - (3 * TILE + 8))).toBeLessThan(1);
   });
 
-  test("up out of the water its neck stands in his way: walking at it he stops against it, unharmed", () => {
+  test("off its quay it sinks and waits for him, its hits kept", () => {
+    const p = at(14 * TILE);
+    stepPlay(p, idle);
+    serpent(p).hits = 1;
+    expect(serpent(p).phase).toBe("ring");
+    placeBody(p.body, 0.5 * TILE, 10 * TILE);
+    stepPlay(p, idle);
+    expect([serpent(p).phase, serpent(p).hits]).toEqual(["asleep", 1]);
+  });
+
+  test("up out of the water its neck stands in his way, too high to jump: walking at it he stops against it, unharmed", () => {
+    expect(SERPENT.rear).toBeGreaterThanOrEqual(3 * PLAYER.h);
     const p = at(14 * TILE);
     until(p, "windup");
     const x = neckX(serpent(p));
     for (let i = 0; i < 60; i++) stepPlay(p, { ...idle, right: true });
-    expect(p.body.x + PLAYER.w).toBeLessThanOrEqual(x - 4);
+    expect(p.body.x + PLAYER.w).toBeLessThanOrEqual(x - SERPENT.neck / 2 + 1);
     expect(p.hurt).toBe(false);
   });
 

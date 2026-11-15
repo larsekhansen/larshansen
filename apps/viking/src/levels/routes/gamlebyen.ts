@@ -1,8 +1,8 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { cx, jumpTo, mid, sit, stomp, tile, wait, walk, type Move } from "../../game/bot";
 import { THROW_REACH, untilThrow } from "../../game/enemies";
-import type { Play, PlayIntent } from "../../game/play";
-import { headBox, neckX, tailBox, type Serpent } from "../../game/serpent";
+import { runeFree, type Play, type PlayIntent } from "../../game/play";
+import { headBox, neckUp, neckX, tailBox, type Serpent } from "../../game/serpent";
 import { shieldedWalk } from "./common";
 import { STEPS, STONES, TOWER, type Ruins } from "../gamlebyen";
 
@@ -54,7 +54,8 @@ const arrows = (q: Play): 1 | null => {
 
 /**
  * The fight: keeps clear of its neck, faces it with the shield up from its tell until the ball is back,
- * runs to its dazed head and comes down on it, and jumps its tail as it comes along the quay.
+ * runs to its dazed head and comes down on it, and jumps its tail as it comes along the quay (after a
+ * round, and from its second hit on right behind each ball).
  */
 const serpentFight: Move = {
   name: "the serpent: the shield as it spits, a stomp on its head, a jump over its tail",
@@ -71,7 +72,7 @@ const serpentFight: Move = {
       }
       return { ...NONE, jumpHeld: (m.i as number) - ((m.jumpAt as number) ?? 0) < 30 };
     }
-    // The tail coming at him along the quay: jump it.
+    // The tail coming at him along the quay: jump it (the shield, if it is up, comes down for it).
     const tb = tailBox(s, q.t);
     if (tb && s.tail) {
       const d = tb.x + tb.w / 2 - hx;
@@ -89,14 +90,15 @@ const serpentFight: Move = {
       return { ...NONE, left: d < -2, right: d > 2, jumpHeld: true, jumpPressed: true };
     }
     const nx = neckX(s);
-    // Up and about to spit, or the ball on its way: face it, shield up.
-    if (s.phase === "rear" || (s.phase === "spit" && s.ball && !s.ball.back) || s.phase === "rise") {
+    // Up and about to spit, or the ball on its way (and until it is well on its way back): face it, shield up.
+    const ball = s.ball && (!s.ball.back || Math.abs(s.ball.x - hx) < 3 * TILE);
+    if (s.phase === "rear" || (s.phase === "spit" && ball) || s.phase === "rise") {
       if (Math.abs(nx - hx) < 3 * TILE) return { ...NONE, left: hx < nx, right: hx >= nx };
       const toward = nx > hx ? 1 : -1;
       return { ...NONE, left: toward < 0 && q.body.facing > 0, right: toward > 0 && q.body.facing < 0, shield: true };
     }
-    // Otherwise keep five tiles or so from where it is or will be, on the quay.
-    if (Math.abs(nx - hx) < 5 * TILE) {
+    // Otherwise keep five tiles or so from where it is or will be, on the quay (and off its neck while it is up).
+    if (Math.abs(nx - hx) < (neckUp(s) ? 3 : 5) * TILE) {
       const away = hx < nx ? -1 : 1;
       const room = away < 0 ? hx - s.def.x0 > 2 * TILE : s.def.x1 - hx > 2 * TILE;
       const go = room ? away : -away;
@@ -166,7 +168,8 @@ export const GAMLEBYEN_ROUTE: Move[] = [
   sit(),
   walk(mid(248)),
   serpentFight,
-  // Onto the last longship's prow, the rune.
+  // The dawn comes, the torches go out, and the rune rises to the last longship's prow; onto it, the rune.
+  wait("the dawn, and the rune risen to the prow", runeFree),
   walk(tile(267)),
   jumpTo(mid(269)),
   walk(mid(270))

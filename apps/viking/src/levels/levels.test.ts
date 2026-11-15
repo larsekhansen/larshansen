@@ -6,7 +6,8 @@ import { cannonRide, carrier, cx, feet, jump, jumpTo, leap, mid, playMoves, tile
 import { KIND, THROW_REACH, leap as leapOf } from "../game/enemies";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
-import { benchesOf, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play } from "../game/play";
+import { benchesOf, bossAwake, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play, type PlayIntent } from "../game/play";
+import { neckX, type Serpent } from "../game/serpent";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
 import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
@@ -1420,13 +1421,17 @@ describe("Gamlebyen: the ruins rebuild as he passes", () => {
     expect(shielded).toBe(0);
   });
 
-  test("the serpent's quay: its bench right before it, its three places along it, and the rune on the last longship only once it is beaten", () => {
+  test("the serpent's quay: the whole of its planks is the fight, its bench and a flag on them before where it wakes; its three places along it; the rune on the last longship only once it is beaten", () => {
     const map = levelMap(GAMLEBYEN);
     const bench = benchesOf(map).at(-1)!;
-    expect(SERPENT_DEF.x0 - bench.x).toBeLessThan(4 * TILE);
+    const flag = flagsOf(map).at(-1)!;
+    // The fight's end is the planks' first board: no plank of its quay lies outside it.
+    const c0 = Math.floor(SERPENT_DEF.x0 / TILE);
+    expect(map.isSolid(c0 - 1, GQ)).toBe(false);
+    for (let c = c0; c < Math.floor(SERPENT_DEF.x1 / TILE); c++) expect(map.isSolid(c, GQ)).toBe(true);
+    for (const s of [bench, flag]) expect(s.x > SERPENT_DEF.x0 && s.x < SERPENT_DEF.wakeAt).toBe(true);
     expect(SERPENT_DEF.x1 - SERPENT_DEF.x0).toBeGreaterThanOrEqual(24 * TILE);
-    for (const x of SERPENT_DEF.points) expect(x > SERPENT_DEF.x0 && x < SERPENT_DEF.x1).toBe(true);
-    for (let c = Math.floor(SERPENT_DEF.x0 / TILE); c < Math.floor(SERPENT_DEF.x1 / TILE); c++) expect(map.isSolid(c, GQ)).toBe(true);
+    for (const x of SERPENT_DEF.points) expect(x > SERPENT_DEF.wakeAt && x < SERPENT_DEF.x1).toBe(true);
     // The route's fight: three hits, and only then the rune.
     const p = P();
     const r = playMoves(p, GAMLEBYEN_ROUTE, { max: 60 * 300 });
@@ -1436,7 +1441,72 @@ describe("Gamlebyen: the ruins rebuild as he passes", () => {
     const beaten = r.events.findIndex((e) => e.boss === "beaten");
     expect(beaten).toBeGreaterThan(0);
     expect(r.events.findIndex((e) => e.rune)).toBeGreaterThan(beaten);
-    expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(3);
+    expect(r.events.filter((e) => e.blocked).length).toBeGreaterThanOrEqual(5);
+  });
+
+  test("from the quay's first board to the prow, wherever he stands, a shield held facing it sends its ball back", () => {
+    const map = levelMap(GAMLEBYEN);
+    const spots: { c: number; bottom: number }[] = [];
+    for (let c = Math.floor(SERPENT_DEF.x0 / TILE); c < Math.floor(SERPENT_DEF.x1 / TILE); c++)
+      for (let r = GQ - 3; r <= GQ; r++) if ((map.isSolid(c, r) || map.isOneWay(c, r)) && !map.isSolid(c, r - 1)) spots.push({ c, bottom: r * TILE });
+    expect(spots.length).toBeGreaterThanOrEqual(36);
+    const failed: string[] = [];
+    for (const at of spots) {
+      const p = P();
+      // Wakes it, then stands at the spot.
+      p.body.x = SERPENT_DEF.wakeAt + 4;
+      p.body.y = SERPENT_DEF.floor - PLAYER.h;
+      stepPlay(p, { left: false, right: false, jumpHeld: false, jumpPressed: false });
+      p.body.x = at.c * TILE + 8 - PLAYER.w / 2;
+      p.body.y = at.bottom - PLAYER.h;
+      p.body.vx = p.body.vy = 0;
+      let outcome = "nothing";
+      for (let i = 0; i < 60 * 20 && outcome === "nothing"; i++) {
+        const s = p.boss!.state as Serpent;
+        const toward = neckX(s) > cx(p) ? 1 : -1;
+        const k: PlayIntent = { left: toward < 0 && p.body.facing > 0, right: toward > 0 && p.body.facing < 0, jumpHeld: false, jumpPressed: false, shield: true };
+        const ev = stepPlay(p, k);
+        if (ev.boss === "dazed" || ev.boss === "duck") outcome = "back";
+        else if (ev.hurt) outcome = "hurt";
+      }
+      if (outcome !== "back") failed.push(`col ${at.c} row ${at.bottom / TILE}: ${outcome}`);
+    }
+    expect(failed).toEqual([]);
+  });
+
+  test("in a boss's fight a lost life never puts him further back than losing all three: the bench before it, or a flag past it", () => {
+    for (const def of [NORDMARKA, NABOLAGET, GAMLEBYEN]) {
+      const map = levelMap(def);
+      const flags = flagsOf(map);
+      const bench = benchesOf(map).at(-1)!;
+      const p = newPlay(def, opts(def));
+      // He raised every flag up to the bench and walked past it without sitting.
+      const before = flags.filter((f) => f.x < bench.x).length - 1;
+      p.checkpoints = { reached: before };
+      p.save = { ...flags[before] };
+      p.body.x = bench.x - PLAYER.w / 2 + TILE;
+      p.body.y = bench.bottom - PLAYER.h;
+      const still: PlayIntent = { left: false, right: false, jumpHeld: false, jumpPressed: false };
+      // On to the right until it wakes, hopping what stops him (Nordmarka's rocks).
+      for (let i = 0; i < 60 * 10 && !bossAwake(p); i++) {
+        const stopped = p.body.onGround && Math.abs(p.body.vx) < 0.05 && i > 2;
+        stepPlay(p, { ...still, right: true, jumpHeld: stopped || !p.body.onGround, jumpPressed: stopped });
+      }
+      expect({ level: def.id, awake: bossAwake(p) }).toEqual({ level: def.id, awake: true });
+      // Into its path on its floor (the troll's clearing, the plough's street); the serpent's ball reaches him anywhere on its quay.
+      const boss = (p.troll ?? ((p.boss!.state as { x?: number }).x !== undefined ? p.boss!.state : null)) as { x: number; def: { floor: number } } | null;
+      if (boss) {
+        p.body.x = boss.x - 4 * TILE * (boss.x > p.body.x ? 1 : -1);
+        p.body.y = boss.def.floor - PLAYER.h;
+        p.body.vx = 0;
+      }
+      p.hearts = 1;
+      p.safeUntil = 0;
+      let lost = false;
+      for (let i = 0; i < 60 * 60 && !lost; i++) lost = stepPlay(p, still).lifeLost;
+      expect(lost).toBe(true);
+      expect({ level: def.id, putBack: Math.round(cx(p)) >= Math.round(bench.x) }).toEqual({ level: def.id, putBack: true });
+    }
   });
 });
 

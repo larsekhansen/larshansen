@@ -383,6 +383,9 @@ function loseLife(p: Play, ev: Events) {
     return;
   }
   p.hearts = HEARTS;
+  // In a boss's fight a lost life never puts him further back than losing all three would: the bench before it.
+  const bench = bossAwake(p) && bossBench(p);
+  if (bench && (!p.save || p.save.x < bench.x)) p.save = { ...bench };
   putBack(p, p.save ?? p.start);
   p.safeUntil = p.t + SAFE_STEPS;
   if (p.troll) p.def.trollRules?.reset(p.troll, p.t);
