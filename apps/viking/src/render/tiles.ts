@@ -5,6 +5,7 @@ import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STONE, WHITE } fro
 import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Art } from "../levels/types";
+import { STAND_LEDGE, tileTop } from "./stand";
 
 // Every tile a level is built of, drawn from its map one tile at a time, so each thing is exactly
 // where the map puts it. What you can stand on has a bright top edge and a dark outline.
@@ -163,7 +164,12 @@ function line(x: number, y: number) {
 
 /** One tile of the map, drawn with its top left at (x, y): the level's own look for it, or the shared one. */
 function drawTile(t: string, c: number, r: number, x: number, y: number, map: TileMap, art: Art, sky: Sky) {
-  if (t === "." || art.tile?.(t, c, r, x, y, map, sky)) return;
+  if (t === ".") return;
+  if (art.tile?.(t, c, r, x, y, map, sky)) {
+    // A one-way tile the level draws its own way is still something he stands on: its standing top (order 18).
+    if (map.isOneWay(c, r) && map.tileAt(c, r - 1) !== t) tileTop(x, y);
+    return;
+  }
   if (t === "#") {
     // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
     if (underWater(map, c, r)) return bed(c, r, x, y, map);
@@ -176,9 +182,13 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
   else if (t === "X") brick(c, r, x, y, map, sky);
   else if (t === "P") plank(c, r, x, y, map, sky);
   else if (t === "K") rock(c, r, x, y, map, sky);
-  else if (t === "B") crate(x, y, edgesOf(map.tileAt, c, r), !map.isSolid(c, r - 1), sky.snow);
+  else if (t === "B") {
+    crate(x, y, edgesOf(map.tileAt, c, r), !map.isSolid(c, r - 1), sky.snow);
+    if (!map.isSolid(c, r - 1)) tileTop(x, y);
+  }
   else if (t === "L") line(x, y);
-  else if (art.ledges[t]) ledge(x, y, art.ledges[t], map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
+  // Every one-way ledge in the platform palette (order 18): the level's own look gives only its letter.
+  else if (art.ledges[t]) ledge(x, y, STAND_LEDGE, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
 }
 
 export function drawTiles(map: TileMap, art: Art, sky: Sky, underground = false) {
@@ -225,4 +235,11 @@ function drawBelow(map: TileMap, art: Art, sky: Sky) {
       else drawTile(t, c, rr, c * TILE, y, map, art, sky);
     }
   }
+}
+
+/** After dark: the standing tops of the one-way ledges and crates in view again, so they keep their light (order 18). */
+export function standTops(map: TileMap, art: Art) {
+  forVisibleTiles(map, (t, c, r, x, y) => {
+    if ((map.isOneWay(c, r) || t === "B") && map.tileAt(c, r - 1) !== t && (art.ledges[t] || t === "B" || map.isOneWay(c, r))) tileTop(x, y);
+  });
 }

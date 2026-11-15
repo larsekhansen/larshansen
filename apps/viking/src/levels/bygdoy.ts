@@ -5,13 +5,14 @@ import { TILE } from "@larshansen/pixelkit/config";
 import { deckEverywhere, deckGround, deckTops, type Deck } from "@larshansen/pixelkit/deck";
 import { drawOar, oarBank, type Oar } from "@larshansen/pixelkit/oars";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { CREATURE, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
+import { parts } from "../render/pickups";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, View } from "./types";
 
@@ -177,7 +178,9 @@ export const GROUNDS: Grounds<Ground> = {
   create: () => ({ pads: PADS.map(padState) }),
   carriers: (s, t, him) => [...DECKS.flatMap((d) => deckGround(d, t, him)), ...padsGround(PADS, s.pads, t)],
   after: (s, t, him) => stepPads(PADS, s.pads, t, him),
-  everywhere: () => [...DECKS.flatMap(deckEverywhere), ...padsEverywhere(PADS)]
+  everywhere: () => [...DECKS.flatMap(deckEverywhere), ...padsEverywhere(PADS)],
+  // The decks rock (they move); the bundles of balsa give way.
+  stands: (s, t) => [...DECKS.flatMap((d) => deckTops(d, t).map((y, i) => ({ x: d.x + i * d.seg, y, w: d.seg, how: "moves" as const }))), ...PADS.map((p, i) => ({ x: p.x, y: padY(p, s.pads[i], t), w: p.w, how: "gives" as const }))]
 };
 
 /** The longship's oars, a stair from the hall's floor to its deck, each a stroke behind the one below. */
@@ -742,71 +745,65 @@ function gableEnd() {
 
 // --- The creatures: the crab, the penguin, the slingers ------------------------------------------------
 
-/** A crab walking sideways along the sand: a red shell, its claws up, its legs going. */
+/** A shore crab sidling: a red shell, claws up, eyes on stalks. 15 x 12. */
 function crab(e: Enemy) {
-  const x = Math.round(e.x - 6);
-  const y = Math.round(e.y);
+  const r = parts(e, 15);
   const step = view.reduced ? 0 : Math.floor(e.x / 2) % 2;
-  R(x + 2, y - 6, 8, 4, M.crab);
-  R(x + 3, y - 7, 6, 1, M.crab);
-  R(x + 3, y - 5, 6, 1, mix(M.crab, WHITE, 0.25));
-  for (const dx of [0, 10]) {
-    R(x + dx, y - 9, 2, 3, M.crabDark);
-    R(x + dx + (dx ? 1 : -1), y - 10, 2, 1, M.crab);
+  r(2, -8, 11, 5, ENEMY.red);
+  r(3, -9, 9, 1, ENEMY.red);
+  r(3, -7, 9, 1, ENEMY.redLight);
+  for (const dx of [0, 12]) {
+    r(dx, -11, 3, 4, ENEMY.red);
+    r(dx + (dx ? 1 : -1), -12, 3, 1, ENEMY.redLight);
   }
   for (let k = 0; k < 3; k++) {
-    R(x + 1 + k * 2, y - 2, 1, 2 - ((k + step) % 2), M.crabDark);
-    R(x + 7 + k * 2, y - 2, 1, 2 - ((k + step + 1) % 2), M.crabDark);
+    r(2 + k * 2, -3, 1, 3 - ((k + step) % 2), ENEMY.plum);
+    r(8 + k * 2, -3, 1, 3 - ((k + step + 1) % 2), ENEMY.plum);
   }
-  R(x + 4, y - 8, 1, 1, INK);
-  R(x + 7, y - 8, 1, 1, INK);
+  r(5, -10, 1, 1, ENEMY.eye);
+  r(9, -10, 1, 1, ENEMY.eye);
 }
 
-/** A penguin, far from home: black back, white front, an orange beak, waddling. */
+/** A penguin from the aquarium, waddling: a plum back, an orange front, a red beak and feet. 11 x 12. */
 function penguin(e: Enemy) {
-  const x = Math.round(e.x - 4);
-  const y = Math.round(e.y);
+  const r = parts(e, 11);
   const w = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  const f = e.dir > 0;
-  R(x + 1, y - 11 + w, 7, 10, M.penguin);
-  R(x + (f ? 4 : 1), y - 9 + w, 4, 7, M.penguinBelly);
-  R(x + 2, y - 13 + w, 5, 3, M.penguin);
-  R(f ? x + 7 : x - 1, y - 12 + w, 2, 1, M.penguinBeak);
-  R(f ? x + 5 : x + 3, y - 12 + w, 1, 1, WHITE);
-  R(x + 2, y - 1, 2, 1, M.penguinBeak);
-  R(x + 5, y - 1, 2, 1, M.penguinBeak);
+  r(1, -10 + w, 9, 9, ENEMY.plum);
+  r(5, -8 + w, 4, 7, ENEMY.orangeLight);
+  r(2, -12 + w, 7, 3, ENEMY.plum);
+  r(9, -11 + w, 3, 1, ENEMY.red);
+  r(7, -11 + w, 1, 1, ENEMY.eye);
+  r(0, -7 + w, 2, 4, ENEMY.plumLight);
+  r(2, -1, 3, 1, ENEMY.red);
+  r(6, -1, 3, 1, ENEMY.red);
 }
 
-/** A slinger on a storehouse roof: a boy in a tunic and a helmet of leather, the sling whirling over his head as he winds up. */
+/** A slinger on a storehouse ridge: a tunic, a cap, the sling going round over his head as the throw comes. 11 x 16. */
 function slinger(e: Enemy, t: number) {
-  const x = Math.round(e.x - 4);
-  const y = Math.round(e.y);
-  const f = e.dir > 0;
-  const coat = e.def.c % 2 ? M.tunic : M.tunicAlt;
-  R(x + 2, y - 4, 2, 4, M.oakDark);
-  R(x + 5, y - 4, 2, 4, M.oakDark);
-  R(x + 1, y - 10, 7, 6, coat);
-  R(x + 1, y - 6, 7, 1, mix(coat, INK, 0.3));
-  R(x + 2, y - 13, 5, 3, CREATURE.foxLight);
-  R(x + 1, y - 14, 7, 2, P.woodDark);
-  R(f ? x + 5 : x + 3, y - 12, 1, 1, INK);
+  const r = parts(e, 11);
+  const coat = e.def.c % 2 ? ENEMY.red : ENEMY.plum;
+  r(3, -5, 2, 5, ENEMY.plum);
+  r(6, -5, 2, 5, ENEMY.plum);
+  r(1, -12, 9, 7, coat);
+  r(1, -7, 9, 1, ENEMY.orange);
+  r(3, -15, 6, 3, ENEMY.orangeLight);
+  r(2, -16, 8, 2, ENEMY.orange);
+  r(7, -14, 1, 1, ENEMY.eye);
   if (windingUp(e, t)) {
     // The sling goes round over his head, faster as the throw comes.
     const a = view.reduced ? 0 : t * 0.4;
-    const hx = f ? x + 7 : x + 1;
-    R(hx, y - 16, 1, 4, CREATURE.foxLight);
-    R(hx + Math.round(Math.cos(a) * 5), y - 18 + Math.round(Math.sin(a) * 2), 2, 2, M.stone);
-  } else R(f ? x + 7 : x, y - 9, 2, 1, CREATURE.foxLight);
+    r(9, -20, 1, 5, ENEMY.orangeLight);
+    r(9 + Math.round(Math.cos(a) * 6), -22 + Math.round(Math.sin(a) * 2), 3, 3, ENEMY.plum);
+  } else r(9, -11, 3, 1, ENEMY.orangeLight);
 }
 
-/** A stone from a sling: grey, a lighter top. A stopped one tumbles. */
+/** A slinger's stone in flight. */
 function stone(s: Shot) {
-  const x = Math.round(s.x - 2);
-  const y = Math.round(s.y - 2);
-  R(x, y + 1, 5, 3, M.stone);
-  R(x + 1, y, 3, 5, M.stone);
-  R(x + 1, y + 1, 2, 1, mix(M.stone, WHITE, 0.4));
-  R(x + 3, y + 3, 1, 1, mix(M.stone, INK, 0.3));
+  const x = Math.round(s.x - 3);
+  const y = Math.round(s.y - 3);
+  R(x + 1, y, 4, 6, ENEMY.plum);
+  R(x, y + 1, 6, 4, ENEMY.plum);
+  R(x + 1, y + 1, 2, 1, ENEMY.plumLight);
 }
 
 const GALLERY: LedgeLook = { body: mix(M.hallBeam, WHITE, 0.35), top: mix(M.hallBeam, WHITE, 0.6), edge: M.hallBeam, joint: M.hallBeam };

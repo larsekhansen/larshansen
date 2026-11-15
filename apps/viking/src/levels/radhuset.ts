@@ -9,6 +9,7 @@ import { timedPhase } from "@larshansen/pixelkit/timed";
 import type { EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, View } from "./types";
 
@@ -586,6 +587,8 @@ export const RADHUSET: LevelDef = {
       lantern(c, r, x, y, sky.snow);
       return true;
     },
+    enemy: (e, v) => e.alive && drawLook(e, v.t),
+    shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     ledges: { "=": BRICK_LEDGE, _: WOOD_LEDGE },
     carrier(i, at, v) {
       if (i === 0) ferry(at);

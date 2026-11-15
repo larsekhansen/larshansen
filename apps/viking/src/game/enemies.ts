@@ -46,9 +46,21 @@ export interface EnemyDef {
   reach?: number;
   /** For one that faces one way: how near in front of it, in tiles, it does not throw at him, when not one and a half. */
   blind?: number;
+  /**
+   * Keeps the box it had before enemies were drawn a quarter larger (order 18): a bigger one would break
+   * the level (its scripted clear, its searches, a jump's landing). Its picture grows around the box,
+   * not above it, so he still lands on its head where the head is drawn.
+   */
+  small?: boolean;
 }
 
-/** Sizes, speeds and beats by kind, when the level does not say. */
+/**
+ * Every enemy is drawn a quarter larger than it was before order 18, and its box (the kind's, or the
+ * level's `w` and `h`) grows with it, unless the level says it keeps it (`small`).
+ */
+export const GROW = 1.25;
+
+/** Sizes, speeds and beats by kind, when the level does not say: before `GROW`. */
 export const KIND: Record<EnemyKind, { w: number; h: number; speed: number; period: number; stomp: boolean }> = {
   walker: { w: 10, h: 8, speed: 0.35, period: 0, stomp: true },
   spiky: { w: 12, h: 8, speed: 0.25, period: 0, stomp: false },
@@ -104,14 +116,20 @@ export interface Shot {
   flat?: boolean;
 }
 
+/** An enemy's box: its kind's size or the level's, a quarter larger unless it keeps its old one (`small`). */
+export function sizeOf(def: EnemyDef): { w: number; h: number } {
+  const k = KIND[def.kind];
+  const grow = def.small ? 1 : GROW;
+  return { w: Math.round((def.w ?? k.w) * grow), h: Math.round((def.h ?? k.h) * grow) };
+}
+
 export function createEnemies(defs: readonly EnemyDef[], map: TileMap): Enemy[] {
   return defs.map((def) => {
-    const k = KIND[def.kind];
     const x = def.c * TILE + TILE / 2;
     const floor = (def.r + 1) * TILE;
     const ramp = map.rampAt(x);
     const y = def.kind !== "flyer" && ramp !== null && Math.abs(ramp - floor) < TILE ? ramp : floor;
-    return { def, home: x, x, y, prevY: y, dir: def.dir ?? 1, w: def.w ?? k.w, h: def.h ?? k.h, alive: true, beatenAt: null, thrownAt: -999 };
+    return { def, home: x, x, y, prevY: y, dir: def.dir ?? 1, ...sizeOf(def), alive: true, beatenAt: null, thrownAt: -999 };
   });
 }
 

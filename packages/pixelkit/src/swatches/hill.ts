@@ -3,8 +3,11 @@
 // Part of the palette, but imported by its one level directly (not through palette.ts), so it comes
 // with that level and not with the page.
 
-/** The Scream's sky, top band to bottom. */
-export const bands = ["#c8402b", "#e2553a", "#f2a46a", "#ffd36b", "#e2553a"];
+/**
+ * The Scream's sky, top band to bottom. Toned down by order 18 (ADR 0039): Munch's bands mixed four tenths
+ * toward a dusk grey-violet, so the warning red and orange of what can hurt him stand off them.
+ */
+export const bands = ["#9d4c4b", "#ad5954", "#b68870", "#bea571", "#ad5954"];
 export const fjord = "#2d4a80"; // the fjord below in the evening, deep blue
 export const fjordLight = "#6a8ac0";
 export const city = "#3a4468"; // the city below: the nearest roofs, then lighter rows further off

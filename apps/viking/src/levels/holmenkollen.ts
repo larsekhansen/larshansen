@@ -9,6 +9,7 @@ import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook } from "../render/looks";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -612,6 +613,7 @@ export const HOLMENKOLLEN: LevelDef = {
       }
       return false;
     },
+    enemy: (e, v) => e.alive && drawLook(e, v.t),
     ledges: {
       "=": { body: P.wood, top: SNOW.lying, edge: P.woodDark, joint: P.woodDark },
       _: { body: PLANTS.spruce, top: SNOW.lying, edge: mix(PLANTS.spruce, INK, 0.3), joint: SNOW.shade },

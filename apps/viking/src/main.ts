@@ -1,7 +1,7 @@
 import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
 import { aim, follow } from "@larshansen/pixelkit/camera";
-import { carrierDrawn, drawCarrier, rideShown } from "@larshansen/pixelkit/carrier";
+import { carrierDrawn, carrierShown, drawCarrier, rideShown } from "@larshansen/pixelkit/carrier";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { wireMute } from "@larshansen/pixelkit/chrome";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
@@ -11,7 +11,7 @@ import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, TINT, ctx, lights, mix, target, view } from "@larshansen/pixelkit/paint";
-import { COIN, DUST, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { COIN, DUST, ENEMY, FEATHER, FOOD, INK, METAL, PAINT, PALETTE, SHIMMER, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -49,7 +49,8 @@ import {
 } from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks, fireworks } from "@larshansen/pixelkit/sparks";
-import { drawTimed } from "@larshansen/pixelkit/timed";
+import { drawTimed, pulsePhase, timedPhase } from "@larshansen/pixelkit/timed";
+import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { boardWidth, doorBoard, drawOverlay, fontPx, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
@@ -65,8 +66,11 @@ import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./le
 import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep } from "./render/actors";
-import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling, enemyEyes } from "./render/pickups";
-import { drawTiles, drawWater } from "./render/tiles";
+import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
+import { eyes, outlined } from "./render/sprite";
+import { STAND_LEDGE, standTop } from "./render/stand";
+import type { Enemy, Shot } from "./game/enemies";
+import { drawTiles, drawWater, standTops } from "./render/tiles";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
 // a time, the line map (#kart) or a level (#langkaia ...), and the maze in the burial mound
@@ -162,6 +166,8 @@ const loadShield = () =>
       throw e;
     }
   ));
+/** His words as the shield is given. */
+const shieldWords = () => (shieldKit ? shieldKit.SHIELD_WORDS[lang][touch ? "givenTouch" : "given"] : []);
 /** The levels from Bygdøy on, where the shield is given (Bygdøy) or always his (after it). */
 const shieldFrom = () => ORDER.indexOf("bygdoy");
 const wantsShield = (id: string) => abilities.shield || (id !== "kart" && ORDER.indexOf(id) >= shieldFrom());
@@ -637,13 +643,14 @@ let keysSaid = "";
  */
 function keysLine(p: Play) {
   keysRiding = p.riding;
-  const text = p.riding ? t.helpSledge : t.helpLevel(p.pole, !!p.shield?.has);
+  const sw = shieldKit?.SHIELD_WORDS[lang];
+  const text = p.riding && sw ? sw.helpSledge : t.helpLevel(p.pole, p.shield?.has && sw ? sw.help : "");
   if (keysSaid && text !== keysSaid && !touch) {
     help.hidden = false;
     state.helpUntil = state.steps + 300;
   }
   help.textContent = keysSaid = text;
-  const word = p.riding ? t.duck : t.shield;
+  const word = (p.riding ? sw?.duck : sw?.shield) ?? "";
   shieldButton.textContent = word;
   shieldButton.setAttribute("aria-label", word);
 }
@@ -935,7 +942,7 @@ function tryEnter(d: Door) {
   // A door to something still to come (Quintle's kiosk): the front page's padlock and its words.
   if (!scene.map && d.soon) {
     d.shake = view.reduced ? 0 : 14;
-    const text = d.id === "quintle" ? t.quintleSoon : t.locked;
+    const text = scene.def.soon?.[lang] ?? t.locked;
     state.bubble = { text, until: state.steps + 180, door: d };
     say(text);
     return;
@@ -1056,28 +1063,19 @@ function react(ev: Events) {
   if (ev.gift) {
     sfx.play("fanfare");
     state.gift = { since: state.steps };
-    say((touch ? t.shieldGivenTouch : t.shieldGiven).join(" "));
+    say(shieldWords().join(" "));
     sparksAt(b.x + PLAYER.w / 2, b.y + 4, 10, METAL.goldLight, 0.8);
     showShieldButton(true);
     keysLine(p);
   }
-  if (ev.troll === "wake") {
-    sfx.play("gate");
-    bossSays([t.trollWakes]);
-  }
-  if (ev.troll === "slam") {
-    sfx.play("cannon");
-    jolt(0, 3);
-  }
-  if (ev.troll === "hit") {
-    sfx.play("stone");
-    jolt(2, 0);
-    bossSays([t.trollHit(p.troll?.hits ?? 0)]);
-  }
-  if (ev.troll === "miss" || ev.troll === "rest") bossSays(t.trollHint, BOSS_HINT_STEPS);
-  if (ev.troll === "stone") {
-    sfx.play("fanfare");
-    bossSays([t.trollStone]);
+  if (ev.troll) {
+    // The troll's sounds; its words are its level's, as the other bosses' are.
+    const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", slam: "cannon", hit: "stone", stone: "fanfare" };
+    if (sound[ev.troll]) sfx.play(sound[ev.troll]);
+    if (ev.troll === "slam") jolt(0, 3);
+    if (ev.troll === "hit") jolt(2, 0);
+    const words = p.def.bossWords?.[ev.troll === "hit" ? `hit${Math.min(3, p.troll?.hits ?? 1)}` : ev.troll === "rest" ? "miss" : ev.troll];
+    if (words) bossSays(words[lang].split("\n"), ev.troll === "miss" || ev.troll === "rest" ? BOSS_HINT_STEPS : BOSS_LINE_STEPS);
   }
   if (ev.boss) {
     const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", windup: "hiss", slam: "cannon", hit: "stone", line: "stomp", beaten: "fanfare" };
@@ -1302,9 +1300,9 @@ function drawThings(v: View) {
   p.def.carriers.forEach((d, i) => {
     const at = carrierDrawn(d, p.t, v.alpha);
     if (art.carrier) art.carrier(i, at, v);
-    else drawCarrier(d, p.t, v.alpha, v.sky.snow);
+    else drawCarrier(d, p.t, v.alpha, v.sky.snow, STAND_LEDGE);
   });
-  p.def.timed.forEach((l, i) => (art.timed ? art.timed(i, v) : drawTimed(l, p.t, v.sky.snow)));
+  p.def.timed.forEach((l, i) => (art.timed ? art.timed(i, v) : drawTimed(l, p.t, v.sky.snow, STAND_LEDGE)));
   p.cannons.forEach((l, i) => {
     const loadedAt = p.loaded?.i === i ? p.loaded.at : -999;
     if (art.cannon) art.cannon(i, l, loadedAt, p.firedAt[i], v);
@@ -1323,8 +1321,9 @@ function drawThings(v: View) {
   for (const s of p.sheep) drawSheep(s);
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
-  for (const e of p.enemies) if (!art.enemy?.(e, v)) drawEnemy(e, p.t);
-  for (const s of p.shots) art.shot?.(s, v) || drawShot(s, p.enemies[s.by]?.def.look);
+  for (const e of p.enemies) foe(e, v);
+  for (const s of p.shots) thrown(s, v);
+  for (const h of p.def.hazards ?? []) hazardEdge(h, p.t);
   if (p.troll) art.troll?.(p.troll, v);
   if (p.boss) art.boss?.(p.boss.state, v);
   if (p.bracteate && p.bracteateAt === null) {
@@ -1340,6 +1339,46 @@ function drawThings(v: View) {
     if (p.shield?.has && !p.loaded && !p.ducking) shieldKit.drawShieldOn(shown, p.shield.raise > 0 ? p.shield.facing : p.body.facing, shieldKit.shieldDrawn(p.shield.raise, view.reduced), !!p.sitting || p.riding);
   }
 }
+
+/**
+ * The tops of what he can stand on that the level draws its own way (order 18): rafts, lifts, logs, hooks
+ * and the like move; ledges on a beat, sinking pads and the like give way; a statue he watches holds. Drawn
+ * over the level's own drawing of each.
+ */
+function standing(v: View) {
+  const p = scene.play;
+  p.def.carriers.forEach((d) => {
+    if (!carrierShown(d, p.t)) return;
+    const at = carrierDrawn(d, p.t, v.alpha);
+    standTop(at.x, at.y, d.w, "moves");
+  });
+  for (const l of p.def.timed) if (timedPhase(p.t, l) !== "off") standTop(l.x, l.y, l.w, "gives");
+  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x, s.y, s.w, s.how);
+  for (const c of p.def.rules?.ground?.(p) ?? []) standTop(c.x, c.y, c.w, "holds");
+}
+
+/** An enemy in its look (the level's own, or one every level may meet), outlined; once beaten, the squares it puffs into. */
+function foe(e: Enemy, v: View) {
+  if (!e.alive) return drawEnemy(e, v.t);
+  outlined(() => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)), e);
+}
+/**
+ * What hurts and is not an enemy (rebar, the third rail, a branch, the barrier, sparks): the enemy
+ * palette's warning colour on its dangerous edge, the same stripe everywhere, while it hurts (blinking
+ * through its warning, steady with reduced motion). Drawn over the level's own drawing of it.
+ */
+function hazardEdge(h: Hazard, t: number) {
+  const phase = h.beat ? pulsePhase(t, h.beat) : "live";
+  if (phase === "rest" || (phase === "warn" && !view.reduced && Math.floor(t / 8) % 2)) return;
+  const x0 = Math.max(h.x, view.camX - 4);
+  const x1 = Math.min(h.x + h.w, view.camX + view.w + 4);
+  if (x1 <= x0) return;
+  R(x0, h.y, x1 - x0, 1, ENEMY.warning);
+  for (let x = h.x + 2; x < x1; x += 4) if (x + 2 > x0) R(x, h.y, 2, 1, ENEMY.outline);
+}
+
+/** Something thrown, outlined as its thrower is. */
+const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)));
 
 /** Eye-shine: the one bright pixel that answers a light in the dark; and the moonlit rim round what can hurt him. */
 const EYE_SHINE = "#fff1c2";
@@ -1357,11 +1396,10 @@ const rimG = rimCanvas.getContext("2d")!;
  */
 function afterDark(v: View) {
   const p = scene.play;
-  const art = scene.def.art;
   const street = ctx();
   const enemies = () => {
-    for (const e of p.enemies) if (e.alive && !art.enemy?.(e, v)) drawEnemy(e, p.t);
-    for (const s of p.shots) art.shot?.(s, v) || drawShot(s, p.enemies[s.by]?.def.look);
+    for (const e of p.enemies) if (e.alive) foe(e, v);
+    for (const s of p.shots) thrown(s, v);
   };
   if (rimCanvas.width !== view.w || rimCanvas.height !== view.h) {
     rimCanvas.width = view.w;
@@ -1394,10 +1432,13 @@ function afterDark(v: View) {
   street.globalAlpha = 0.8;
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
-  street.globalAlpha = 0.7;
-  for (const h of p.def.hazards ?? []) R(h.x, h.y, h.w, 1, PAINT.warning);
+  street.globalAlpha = 0.85;
+  for (const h of p.def.hazards ?? []) hazardEdge(h, p.t);
+  // What he can stand on keeps the light of its top edge.
+  standing(v);
+  standTops(p.map, scene.def.art);
   street.globalAlpha = 1;
-  for (const e of p.enemies) for (const [x, y] of enemyEyes(e, p.t)) R(x, y, 1, 1, EYE_SHINE);
+  for (const e of p.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, EYE_SHINE);
   // What these drew of their own lights (a brazier's glow) has had its turn: it is not drawn twice.
   lights.length = 0;
 }
@@ -1436,6 +1477,7 @@ function render(alpha: number) {
   pass(street, () => {
     drawThings(v);
     art.front?.(v);
+    if (!scene.map) standing(v);
   });
   target(street);
   if (sky.phase !== "day") afterDark(v);
@@ -1478,7 +1520,7 @@ function render(alpha: number) {
   const lesson = at && p.shield?.has && cx > at[0] && cx < at[1];
   // The shield given: his own bubble for five seconds, or until the passage, where the key shows.
   if (state.gift && (state.steps - state.gift.since > 300 || lesson)) state.gift = null;
-  if (state.gift && state.mode === "play") bubble = { x: cx, y: shown.y - 4, lines: touch ? t.shieldGivenTouch : t.shieldGiven };
+  if (state.gift && state.mode === "play") bubble = { x: cx, y: shown.y - 4, lines: shieldWords() };
   const nearKey = bubble ? bubble.lines[0] : null;
   if (nearKey !== state.nearSign) {
     state.nearSign = nearKey;
@@ -1502,7 +1544,7 @@ function render(alpha: number) {
         : bench !== null && !touch && !bubble
           ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↑  ${t.sit}` }
           : lesson && !touch && !bubble
-            ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${t.shield}` }
+            ? { x: shown.x + PLAYER.w / 2, y: shown.y, text: `↓  ${shieldKit?.SHIELD_WORDS[lang].shield}` }
             : null,
     bubble: door && !speaking && !state.bubble ? null : bubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
@@ -1718,8 +1760,8 @@ async function start() {
   }
 
   launch({ stage, layout, still, loop, harness, input, step: () => (mode === "maze" && maze ? maze.step() : stepOnce()) });
-  // `?debug&perf`: how much one frame draws and how long it takes, on the help line.
-  if (debugging && params.has("perf")) void debugging.then((d) => d.perf(still, help));
+  // `?debug&perf` (how much one frame draws) and `?debug&where` (where a world point is on the screen), once drawn.
+  if (debugging) void debugging.then((d) => d.afterStart(params, still, help));
   if (location.hash === MAZE_HASH) sync();
 }
 void start();

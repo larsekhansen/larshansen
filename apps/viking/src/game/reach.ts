@@ -5,7 +5,7 @@ import { fire, launcherHit } from "@larshansen/pixelkit/launcher";
 import { bounce, createBody, dashStep, stepBody, type Body, type Carrier, type World } from "@larshansen/pixelkit/physics";
 import { zonePush } from "@larshansen/pixelkit/zone";
 import { MARKS, type LevelDef } from "../levels/types";
-import { KIND } from "./enemies";
+import { KIND, sizeOf } from "./enemies";
 import { STOMP, cannonsOf, drumsOf, levelMap, type Box } from "./play";
 import { SHEEP } from "./sheep";
 
@@ -90,8 +90,7 @@ export function pads(def: LevelDef): Pad[] {
   for (const e of def.enemies ?? []) {
     const k = KIND[e.kind];
     if (!k.stomp) continue;
-    const w = e.w ?? k.w;
-    const h = e.h ?? k.h;
+    const { w, h } = sizeOf(e);
     const range = (e.range ?? 0) * TILE;
     const x = e.c * TILE + TILE / 2;
     const base = (e.r + 1) * TILE;

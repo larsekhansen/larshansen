@@ -125,3 +125,5 @@ export * as PARADE from "./swatches/parade";
 export * as ICY from "./swatches/ice";
 export * as RIVER from "./swatches/river";
 export * as FOREST from "./swatches/forest";
+export * as ENEMY from "./swatches/enemy";
+export * as STAND from "./swatches/stand";

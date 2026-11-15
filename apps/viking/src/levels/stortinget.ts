@@ -4,12 +4,15 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { kept } from "@larshansen/pixelkit/kept";
 import { R, layerOrigin, layerX, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
-import { INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
 import * as METRO from "@larshansen/pixelkit/swatches/metro";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook } from "../render/looks";
+import { parts } from "../render/pickups";
+import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -237,7 +240,7 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "jumper", look: "trackrat", c: 80, r: P, rise: 30, period: 200 },
   { kind: "walker", look: "rat", c: 92, r: P - 1, range: 2 },
   { kind: "walker", look: "scooter", c: 139, r: P - 1, range: 2, w: 14, h: 12 },
-  { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9, speed: 0.25 },
+  { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9, speed: 0.25, small: true },
   { kind: "jumper", look: "trackrat", c: 155, r: P, rise: 36, period: 180, offset: 90 },
   { kind: "walker", look: "rat", c: 244, r: U - 1, range: 1 },
   { kind: "jumper", look: "trackrat", c: 259, r: P, rise: 28, period: 190, offset: 40 }
@@ -793,71 +796,70 @@ function train(at: { x: number; y: number }, line: number, clip: { x0: number; x
   if (lit) light(Math.max(x, clip.x0), y + 8, Math.max(0, Math.min(x + CAR, clip.x1) - Math.max(x, clip.x0)), 7, "soft");
 }
 
-/** A rat leaping out of the track: up from between the rails after the gravel twitches, and down again. */
 function trackRat(e: Enemy, t: number) {
   const l = leap(e, t);
   const floor = (P + 1) * TILE;
-  if (l.ripple && !view.reduced && Math.floor(t / 5) % 2) for (const dx of [-4, 0, 4]) R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast);
+  if (l.ripple && !view.reduced && Math.floor(t / 5) % 2) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast)));
   if (l.up <= 0) return;
-  const x = Math.round(e.x - 5);
-  const y = Math.round(e.y);
+  // A rat out of the pit between the rails, leaping: nose up on the way out, down on the way back. 12 x 15.
+  const r = parts(e, 12);
   const falling = leap(e, t + 1).up < l.up;
-  R(x + 2, y - 9, 6, 8, PALETTE.rockDark);
-  R(x + 3, y - 10, 4, 1, PALETTE.rockDark);
-  R(x + 3, y - (falling ? 1 : 12), 4, 2, PALETTE.rockDark);
-  R(x + 4, y - (falling ? 0 : 12), 1, 1, INK);
-  R(x + 7, y - 6, 3, 1, mix(PALETTE.rockDark, WHITE, 0.3));
-  R(x + 1, y - (falling ? 11 : 2), 1, 4, mix(METRO.kioskLight, WHITE, 0.5));
+  r(2, -12, 8, 11, ENEMY.plum);
+  r(3, -13, 6, 1, ENEMY.plum);
+  r(4, -11, 3, 7, ENEMY.plumLight);
+  r(3, falling ? -2 : -15, 6, 3, ENEMY.plum);
+  r(5, falling ? 0 : -15, 1, 1, ENEMY.eye);
+  r(9, -8, 3, 1, ENEMY.red);
+  r(1, falling ? -14 : -3, 1, 5, ENEMY.red);
 }
 
-/** A shopping trolley rolling by itself: a wire basket, a red handle, four small wheels. */
+/** A luggage trolley that rolls by itself: a red cage, its handle up, two wheels. 15 x 14. */
 function trolley(e: Enemy) {
-  const x = Math.round(e.x - 6);
-  const y = Math.round(e.y);
-  const at = (dx: number) => (e.dir > 0 ? x + dx : x + 11 - dx);
-  R(x + 1, y - 9, 10, 1, METRO.trolley);
-  R(x + 1, y - 4, 10, 1, METRO.trolley);
-  for (let k = 1; k < 11; k += 3) R(x + k, y - 9, 1, 6, METRO.trolley);
-  R(at(0), y - 11, 1, 3, METRO.trolley);
-  R(at(-1), y - 12, 2, 1, METRO.kiosk);
+  const r = parts(e, 15);
+  r(1, -12, 13, 1, ENEMY.red);
+  r(1, -5, 13, 1, ENEMY.red);
+  for (let k = 1; k < 14; k += 4) r(k, -12, 1, 8, ENEMY.red);
+  r(2, -11, 11, 6, ENEMY.redLight);
+  r(0, -14, 1, 3, ENEMY.red);
+  r(-1, -15, 3, 1, ENEMY.orange);
   const roll = view.reduced ? 0 : Math.floor(e.x / 2) % 2;
-  for (const wx of [x + 2, x + 9]) R(wx, y - 2, 2, 2, roll ? INK : METRO.steelDark);
+  for (const wx of [2, 11]) r(wx, -3, 3, 3, roll ? ENEMY.plum : ENEMY.plumLight);
 }
 
-/** An umbrella blown inside out, tumbling along in the draught from the tunnels, its ribs out: it hurts to land on. Red, or blue. */
+/** An umbrella blown along the platform: spinning, or inside out with its ribs up like spikes. It hurts from above. 15 x 12. */
 function umbrella(e: Enemy, t: number) {
-  const x = Math.round(e.x - 6);
-  const y = Math.round(e.y);
-  const cloth = e.def.c % 2 ? METRO.kiosk : PAINT.tbane;
-  const light = mix(cloth, WHITE, 0.35);
+  const r = parts(e, 15);
+  const cloth = e.def.c % 2 ? ENEMY.red : ENEMY.plum;
+  const shine = e.def.c % 2 ? ENEMY.redLight : ENEMY.plumLight;
   const spin = view.reduced ? 0 : Math.floor(t / 8 + e.x / 6) % 2;
   if (spin) {
     // Canopy up, ribs sticking out of its edge.
-    for (let k = 0; k < 5; k++) R(x + 6 - Math.round(k * 1.2), y - 8 + k, 1 + Math.round(k * 2.4), 1, k === 0 ? light : cloth);
-    for (const dx of [-1, 3, 8, 12]) R(x + dx, y - 5, 1, 3, WHITE);
-    R(x + 6, y - 3, 1, 3, METRO.steelDark);
-    R(x + 5, y - 1, 3, 1, METRO.steelDark);
+    for (let k = 0; k < 6; k++) r(7 - Math.round(k * 1.2), -10 + k, 1 + Math.round(k * 2.4), 1, k === 0 ? shine : cloth);
+    for (const dx of [0, 4, 10, 14]) r(dx, -5, 1, 3, ENEMY.pale);
+    r(7, -4, 1, 4, ENEMY.orange);
+    r(6, -1, 3, 1, ENEMY.orange);
   } else {
     // Inside out: the cloth a cup, the ribs up like spikes, the handle on the ground.
-    R(x + 1, y - 6, 10, 4, cloth);
-    R(x + 2, y - 6, 4, 1, light);
-    for (const dx of [0, 3, 7, 10]) R(x + dx + 1, y - 10, 1, 4, WHITE);
-    R(x + 6, y - 2, 1, 2, METRO.steelDark);
-    R(x + 7, y - 1, 3, 1, METRO.steelDark);
+    r(1, -7, 13, 5, cloth);
+    r(2, -7, 5, 1, shine);
+    for (const dx of [1, 5, 9, 13]) r(dx, -12, 1, 5, ENEMY.pale);
+    r(7, -2, 1, 2, ENEMY.orange);
+    r(8, -1, 4, 1, ENEMY.orange);
   }
 }
 
-/** A pigeon on the wing under the vault. */
+/** A pigeon flying through the hall: plum, an orange breast, wings up or down. 17 x 9. */
 function pigeonFlying(e: Enemy, t: number) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y) - 4;
+  const r = parts(e, 17);
   const flap = view.reduced ? 0 : Math.floor(t / 6) % 2;
-  R(x - 3, y - 1, 7, 3, PALETTE.iron);
-  R(x + e.dir * 4 - (e.dir < 0 ? 1 : 0), y - 2, 2, 2, mix(PALETTE.iron, INK, 0.2));
-  R(x + e.dir * 6 - (e.dir < 0 ? 0 : 1), y - 1, 1, 1, PALETTE.sailStripe);
-  R(x - 6, y + (flap ? -3 : 1), 5, 2, mix(PALETTE.iron, INK, 0.25));
-  R(x + 1, y + (flap ? -3 : 1), 5, 2, mix(PALETTE.iron, INK, 0.25));
-  R(x - e.dir * 4 - 1, y, 2, 1, mix(PALETTE.iron, INK, 0.3));
+  r(4, -6, 9, 4, ENEMY.plum);
+  r(9, -5, 3, 3, ENEMY.orange);
+  r(12, -7, 3, 3, ENEMY.plum);
+  r(13, -6, 1, 1, ENEMY.eye);
+  r(15, -6, 1, 1, ENEMY.orange);
+  r(1, -5, 3, 2, ENEMY.plum);
+  r(2, flap ? -9 : -3, 6, 2, ENEMY.plumLight);
+  r(9, flap ? -9 : -3, 5, 2, ENEMY.plumLight);
 }
 
 /** The flourish: the lamps along platform 3 come on bright one after another, the cabinet's lamps all go green, and the board over the end spells the rune. */
@@ -920,6 +922,7 @@ export const STORTINGET: LevelDef = {
     { id: "tbane", tile: "t", sign: "T-banen", href: "#kart" },
     { id: "quintle", tile: "k", sign: "Quintle", href: "" }
   ],
+  soon: { nb: "Quintle flytter inn når det er ute på Google Play", en: "Quintle moves in once it is out on Google Play" },
   art: {
     far: () => farDark(),
     mid: () => farPlatforms(),
@@ -1011,7 +1014,7 @@ export const STORTINGET: LevelDef = {
       else if (e.def.look === "trolley") trolley(e);
       else if (e.def.look === "umbrella") umbrella(e, v.t);
       else if (e.def.look === "pigeonfly") pigeonFlying(e, v.t);
-      else return false;
+      else return drawLook(e, v.t);
       return true;
     },
     flourish: (age) => flourish(age)

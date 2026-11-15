@@ -73,6 +73,8 @@ export interface LedgeLook {
   edge: string;
   /** The joints every six pixels. */
   joint: string;
+  /** The top edge's thickness, when not one pixel; and it stays its own colour under snow (a standing edge, the viking game's). */
+  topH?: number;
 }
 /** A stone lintel left from an arch: the front page's ledges. */
 export const STONE_LEDGE: LedgeLook = { body: MASONRY.lintel, top: MASONRY.worn, edge: MASONRY.edge, joint: STONE.mortar };
@@ -82,7 +84,7 @@ export const WOOD_LEDGE: LedgeLook = { body: PALETTE.wood, top: mix(PALETTE.wood
 /** One tile of a one-way ledge, four pixels thick. `first` and `last`: the ledge ends at this tile's left or right. */
 export function ledge(x: number, y: number, look: LedgeLook, first: boolean, last: boolean, snow: boolean) {
   R(x, y, TILE, 4, look.body);
-  R(x, y, TILE, 1, snow ? SNOW.lying : look.top);
+  R(x, y, TILE, look.topH ?? 1, snow && !look.topH ? SNOW.lying : look.top);
   R(x, y + 4, TILE, 1, look.edge);
   for (let i = 3; i < TILE; i += 6) R(x + i, y + 1, 1, 3, look.joint);
   if (first) R(x, y, 1, 5, look.edge);

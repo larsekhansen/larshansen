@@ -11,9 +11,8 @@ const STRINGS = {
     ...SCENE_WORDS.nb,
     help: "Piltastene for å gå, mellomrom for å hoppe, pil opp ved en dør for å gå inn. Eller klikk dit du vil.",
     /** The help line in a level: no clicking there (a click never walks him off an edge, but it is not how to play). */
-    helpLevel: (pole: boolean, shield: boolean) => `Piltastene for å gå, mellomrom eller pil opp for å hoppe, pil opp ved en dør for å gå inn.${pole ? " Shift eller X for et rykk." : ""}${shield ? " Hold pil ned for skjoldet." : ""} R starter banen på nytt.`,
-    /** On the sledge he cannot walk or dash, and down ducks. */
-    helpSledge: "På kjelken: mellomrom eller pil opp for å hoppe, pil ned for å dukke. R starter banen på nytt.",
+    /** The help line in a level; `shield`, the shield's words for it (they come with the shield). */
+    helpLevel: (pole: boolean, shield = "") => `Piltastene for å gå, mellomrom eller pil opp for å hoppe, pil opp ved en dør for å gå inn.${pole ? " Shift eller X for et rykk." : ""}${shield} R starter banen på nytt.`,
     blurb: "Du fant den hemmelige døra. Ta T-banen gjennom Oslo og finn de ti runene i navnet.",
     lineSub: "Linje 1, ti stopp",
     lineSubBoth: "Linje 1 og 2, seksten stopp",
@@ -48,12 +47,6 @@ const STRINGS = {
     finishPoleTouch: "Du har fått skistaven: Rykk-knappen gir et kort rykk, også i lufta.",
     /** The touch pad's button at a bench. */
     sitButton: "Sett deg",
-    /** The touch pad's shield button, and the moment he is given the shield. */
-    shield: "Skjold",
-    /** The same button on the sledge, where down ducks. */
-    duck: "Dukk",
-    shieldGiven: ["Skjoldet er ditt.", "Hold pil ned for å løfte det."],
-    shieldGivenTouch: ["Skjoldet er ditt.", "Hold Skjold-knappen for å løfte det."],
     hurt: (n: number) => (n === 1 ? "Au. Ett hjerte igjen." : `Au. ${n} hjerter igjen.`),
     lifeLost: (n: number) => (n === 1 ? "Et liv mindre. Ett igjen." : `Et liv mindre. ${n} igjen.`),
     lifeWon: "Et liv til.",
@@ -69,21 +62,14 @@ const STRINGS = {
     sit: "sett deg",
     benchSat: "Du hviler. Hjertene er fulle, og benken husker deg.",
     dash: "Rykk",
-    trollWakes: "Steinen reiser seg. Det er et troll.",
-    trollHit: (n: number): string => (n >= 3 ? "Trollet blir til stein." : n === 2 ? "To tredjedeler stein." : "En tredjedel av trollet er stein."),
-    trollStone: "Trollet er stein. Sola er oppe.",
-    /** Over the troll after a round with no hit, or when it gives up waiting under him. */
-    trollHint: ["Det må stå i lyset når kølla sitter fast.", "Se det i øynene da."],
     locked: "kommer snart",
-    quintleSoon: "Quintle flytter inn når det er ute på Google Play",
     runesLeft: (n: number) => (n >= 10 ? "Ti av ti runer." : `${NB_COUNT[n] ?? n} av ti runer. Resten ligger langs linja.`),
     homeLine: "Ti av ti runer: LARS HANSEN. Velkommen hjem."
   },
   en: {
     ...SCENE_WORDS.en,
     help: "Arrow keys to walk, Space to jump, up at a door to go in. Or click where you want to go.",
-    helpLevel: (pole: boolean, shield: boolean) => `Arrow keys to walk, Space or up to jump, up at a door to go in.${pole ? " Shift or X to dash." : ""}${shield ? " Hold down for the shield." : ""} R starts the level again.`,
-    helpSledge: "On the sledge: Space or up to jump, down to duck. R starts the level again.",
+    helpLevel: (pole: boolean, shield = "") => `Arrow keys to walk, Space or up to jump, up at a door to go in.${pole ? " Shift or X to dash." : ""}${shield} R starts the level again.`,
     blurb: "You found the secret door. Take the T-bane through Oslo and find the ten runes of the name.",
     lineSub: "Line 1, ten stops",
     lineSubBoth: "Lines 1 and 2, sixteen stops",
@@ -115,10 +101,6 @@ const STRINGS = {
     finishPole: "You have the ski pole: Shift or X for a short dash, in the air too.",
     finishPoleTouch: "You have the ski pole: the Dash button for a short dash, in the air too.",
     sitButton: "Sit",
-    shield: "Shield",
-    duck: "Duck",
-    shieldGiven: ["The shield is yours.", "Hold down to raise it."],
-    shieldGivenTouch: ["The shield is yours.", "Hold the Shield button to raise it."],
     hurt: (n: number) => (n === 1 ? "Ouch. One heart left." : `Ouch. ${n} hearts left.`),
     lifeLost: (n: number) => (n === 1 ? "A life lost. One left." : `A life lost. ${n} left.`),
     lifeWon: "One more life.",
@@ -133,12 +115,7 @@ const STRINGS = {
     sit: "sit down",
     benchSat: "You rest. The hearts are full, and the bench will remember you.",
     dash: "Dash",
-    trollWakes: "The boulder stands up. It is a troll.",
-    trollHit: (n: number): string => (n >= 3 ? "The troll turns to stone." : n === 2 ? "Two thirds stone." : "A third of the troll is stone."),
-    trollStone: "The troll is stone. The sun is up.",
-    trollHint: ["It must stand in the light when its club sticks.", "Then look it in the eye."],
     locked: "coming soon",
-    quintleSoon: "Quintle moves in once it is out on Google Play",
     runesLeft: (n: number) => (n >= 10 ? "Ten of ten runes." : `${EN_COUNT[n] ?? n} of ten runes. The rest are along the line.`),
     homeLine: "Ten of ten runes: LARS HANSEN. Welcome home."
   }

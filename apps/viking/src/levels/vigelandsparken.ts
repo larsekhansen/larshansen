@@ -2,7 +2,7 @@ import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Lift } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, LAND, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, LAND, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as V from "@larshansen/pixelkit/swatches/park";
@@ -11,6 +11,9 @@ import { leap, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/e
 import type { Play } from "../game/play";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
+import { drawLook } from "../render/looks";
+import { parts } from "../render/pickups";
+import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
 
@@ -160,14 +163,14 @@ const statueSpans = (defs: readonly EnemyDef[]): Carrier[] =>
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 16, r: W - 8, range: 3, rise: 5, period: 180 },
-  { kind: "spiky", look: "statue", c: 23, r: W - 1, range: 6, speed: 0.8, w: 10, h: 16 },
-  { kind: "spiky", look: "bronze", c: 44, r: W - 1, range: 4, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 23, r: W - 1, range: 6, speed: 0.8, w: 10, h: 16, small: true },
+  { kind: "spiky", look: "bronze", c: 44, r: W - 1, range: 4, speed: 0.8, w: 10, h: 16, small: true },
   // The Angry Boy, high on his post at the far side of the broken span: he stamps, jumps and lands.
   { kind: "jumper", look: "boy", c: BOY.c, r: W - 4, rise: 18, period: BOY.period, w: 8, h: 12 },
-  { kind: "spiky", look: "bronze", c: 71, r: W - 1, range: 4, speed: 0.8, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 124, r: W - 1, range: 3, speed: 0.8, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 133, r: W - 1, range: 1, speed: 0.8, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 146, r: W - 1, range: 7, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "bronze", c: 71, r: W - 1, range: 4, speed: 0.8, w: 10, h: 16, small: true },
+  { kind: "spiky", look: "statue", c: 124, r: W - 1, range: 3, speed: 0.8, w: 10, h: 16, small: true },
+  { kind: "spiky", look: "statue", c: 133, r: W - 1, range: 1, speed: 0.8, w: 10, h: 16, small: true },
+  { kind: "spiky", look: "statue", c: 146, r: W - 1, range: 7, speed: 0.8, w: 10, h: 16, small: true },
   { kind: "walker", look: "pigeon", c: 161, r: W - 1, range: 2 },
   { kind: "flyer", look: "crow", c: 165, r: W - 6, range: 2, rise: 6, period: 170 },
   { kind: "flyer", look: "crow", c: 187, r: W - 13, range: 3, rise: 5, period: 190 },
@@ -176,8 +179,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "thrower", look: "ringer", c: 196, r: W - 12, period: 130, lead: true, faces: -1 },
   { kind: "thrower", look: "ringer", c: 205, r: W - 12, period: 130, offset: 100, lead: true, faces: -1 },
   // The way to the Wheel of Life: one on the path behind him as he waits for the step, one on the plinth ahead.
-  { kind: "spiky", look: "statue", c: 227, r: W - 1, range: 5, speed: 0.8, w: 10, h: 16 },
-  { kind: "spiky", look: "statue", c: 239, r: W - 4, range: 3, speed: 0.8, w: 10, h: 16 },
+  { kind: "spiky", look: "statue", c: 227, r: W - 1, range: 5, speed: 0.8, w: 10, h: 16, small: true },
+  { kind: "spiky", look: "statue", c: 239, r: W - 4, range: 3, speed: 0.8, w: 10, h: 16, small: true },
   { kind: "flyer", look: "crow", c: 229, r: W - 7, range: 3, rise: 6, period: 150 }
 ];
 
@@ -273,6 +276,9 @@ function figure(x: number, y: number, pose: number, face: 1 | -1, stone: { base:
 
 const GRANITE = { base: V.granite, light: V.graniteLight, shade: V.graniteShade };
 const BRONZE = { base: V.bronze, light: V.bronzeLight, shade: V.bronzeDark };
+/** A statue walking, in the enemy's colours (order 18): granite plum, bronze orange. */
+const WOKEN_GRANITE = { base: ENEMY.plum, light: ENEMY.plumLight, shade: ENEMY.plum };
+const WOKEN_BRONZE = { base: ENEMY.orange, light: ENEMY.orangeLight, shade: ENEMY.orange };
 
 /** Kirkeveien and the main gate: granite pillars, the wrought-iron gates folded open, lanterns on top. */
 function gate(v: View) {
@@ -415,31 +421,32 @@ function slab(t: number) {
   }
 }
 
-/** The Angry Boy: a small bronze boy, fists clenched; he stamps before he jumps, and comes down hard. */
+/** The Angry Boy on his post, in the enemy's red: stamping, fists up, then the leap. 10 x 15. */
 function angryBoy(e: Enemy, t: number) {
-  const x = Math.round(e.x - 4);
-  const y = Math.round(e.y);
+  const r = parts(e, 10);
   const { up, ripple } = leap(e, t);
   // Stamping: one foot up, then the other, faster as the jump comes.
   const stamp = ripple && !view.reduced ? Math.floor(t / 5) % 2 : 0;
-  R(x + 1, y - 4 + (stamp ? -2 : 0), 2, 4, V.bronzeDark);
-  R(x + 5, y - 4 + (stamp ? 0 : ripple ? -2 : 0), 2, 4, V.bronzeDark);
-  R(x + 1, y - 9, 6, 5, V.bronze);
-  R(x + 1, y - 9, 1, 5, V.bronzeLight);
-  R(x + 2, y - 12, 4, 3, V.bronze);
-  R(x + 2, y - 12, 4, 1, V.patina);
+  r(1, -5 + (stamp ? -2 : 0), 3, 5, ENEMY.red);
+  r(6, -5 + (stamp ? 0 : ripple ? -2 : 0), 3, 5, ENEMY.red);
+  r(1, -11, 8, 6, ENEMY.red);
+  r(1, -11, 1, 6, ENEMY.redLight);
+  r(2, -15, 6, 4, ENEMY.red);
+  r(2, -15, 6, 1, ENEMY.redLight);
   // Fists: down at his sides, up and shaking while he stamps, over his head in the air.
-  const fy = up > 0 ? y - 14 : ripple ? y - 10 : y - 7;
-  R(x - 1, fy, 2, 2, V.bronzeDark);
-  R(x + 7, fy, 2, 2, V.bronzeDark);
-  // His face screwed up: two dark marks.
-  R(x + 2, y - 11, 1, 1, INK);
-  R(x + 5, y - 11, 1, 1, INK);
+  const fy = up > 0 ? -17 : ripple ? -13 : -9;
+  r(-2, fy, 3, 3, ENEMY.orange);
+  r(9, fy, 3, 3, ENEMY.orange);
+  // His face screwed up.
+  r(3, -13, 1, 1, ENEMY.eye);
+  r(6, -13, 1, 1, ENEMY.eye);
   // Landed: dust off the post.
   if (!view.reduced && up === 0 && !ripple) {
     const since = ((t % BOY.period) + BOY.period) % BOY.period;
     const air = Math.round(2 * Math.sqrt((2 * 18) / 0.16));
-    if (since >= air && since < air + 12) for (let k = 0; k < 3; k++) R(x - 3 + k * 6, y - 1 - (since - air) / 3, 1, 1, V.graniteLight);
+    const x = Math.round(e.x - 5);
+    const y = Math.round(e.y);
+    if (since >= air && since < air + 12) plain(() => [0, 1, 2].forEach((k) => R(x - 3 + k * 7, y - 1 - (since - air) / 3, 1, 1, V.graniteLight)));
   }
 }
 
@@ -585,45 +592,50 @@ function wheel(t: number) {
   void t;
 }
 
-/** A statue enemy: granite, or bronze on the bridge; walking while his back is turned, still when watched. */
+/**
+ * A statue on the path. Watched, it is stone: not an enemy for now, so drawn plain (not outlined), with an
+ * edge a shade darker than it so it reads against the paths and the sky. Walking, it is in the enemy's
+ * colours (granite plum, bronze orange) with its eyes open and dust at its feet. Its box is the one it
+ * had (its head is a step he stands on), and so is its size.
+ */
 function statueArt(e: Enemy, v: View) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
-  const stone = e.def.look === "bronze" ? BRONZE : GRANITE;
-  const moving = !e.calm;
-  // An outline a shade darker than it, so it reads against the pale paths and the sky.
-  const edge = e.def.look === "bronze" ? mix(V.bronzeDark, INK, 0.3) : V.graniteDark;
-  const walk = moving && !view.reduced ? Math.round(e.x * 2) : 0;
-  for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1]] as const) figure(x + dx, y + dy, e.def.c, e.dir, { base: edge, light: edge, shade: edge }, walk);
-  figure(x, y, e.def.c, e.dir, stone, walk);
-  // The tell: while it walks, the dust at its feet and its eyes open.
-  if (moving) {
-    R(e.dir > 0 ? x + 6 : x + 3, y - 14, 1, 1, INK);
-    if (!view.reduced) R(x + (Math.floor(v.t / 4) % 2 ? 1 : 7), y - 1, 2, 1, V.gravelDark);
+  const bronze = e.def.look === "bronze";
+  if (e.calm) {
+    const stone = bronze ? BRONZE : GRANITE;
+    const edge = bronze ? mix(V.bronzeDark, INK, 0.3) : V.graniteDark;
+    return plain(() => {
+      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1]] as const) figure(x + dx, y + dy, e.def.c, e.dir, { base: edge, light: edge, shade: edge });
+      figure(x, y, e.def.c, e.dir, stone);
+    });
   }
+  figure(x, y, e.def.c, e.dir, bronze ? WOKEN_BRONZE : WOKEN_GRANITE, view.reduced ? 0 : Math.round(e.x * 2));
+  R(e.dir > 0 ? x + 6 : x + 3, y - 14, 1, 1, ENEMY.eye);
+  if (!view.reduced) plain(() => R(x + (Math.floor(v.t / 4) % 2 ? 1 : 7), y - 1, 2, 1, V.gravelDark));
 }
 
-/** A granite group that throws rings: a figure on a tall pedestal, a ring raised over its head as it winds up. */
+/** A ring-thrower: a woken figure on its pedestal (the pedestal is stone, not outlined), a ring raised. */
 function ringer(e: Enemy, t: number) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
   // The pedestal, down to the plateau behind the path.
-  R(x - 1, y, 12, FLOOR - 8 * TILE - y, V.graniteShade);
-  R(x - 1, y, 1, FLOOR - 8 * TILE - y, V.graniteLight);
-  for (let yy = y + 8; yy < FLOOR - 8 * TILE; yy += 12) R(x - 1, yy, 12, 1, V.graniteDark);
-  R(x - 2, y - 2, 14, 2, V.graniteShade);
-  figure(x, y - 2, 3, e.dir, GRANITE);
-  if (windingUp(e, t)) {
-    ring(x + 2, y - 24);
-  }
+  plain(() => {
+    R(x - 1, y, 12, FLOOR - 8 * TILE - y, V.graniteShade);
+    R(x - 1, y, 1, FLOOR - 8 * TILE - y, V.graniteLight);
+    for (let yy = y + 8; yy < FLOOR - 8 * TILE; yy += 12) R(x - 1, yy, 12, 1, V.graniteDark);
+    R(x - 2, y - 2, 14, 2, V.graniteShade);
+  });
+  figure(x, y - 2, 3, e.dir, WOKEN_GRANITE);
+  R(e.dir > 0 ? x + 6 : x + 3, y - 16, 1, 1, ENEMY.eye);
+  if (windingUp(e, t)) ring(x + 2, y - 24);
 }
 
-/** A granite ring: a hoop of stone, five across. */
 function ring(x: number, y: number) {
-  R(x + 1, y, 3, 1, V.graniteLight);
-  R(x, y + 1, 1, 3, V.granite);
-  R(x + 4, y + 1, 1, 3, V.graniteShade);
-  R(x + 1, y + 4, 3, 1, V.graniteShade);
+  R(x + 1, y, 4, 1, ENEMY.poisonLight);
+  R(x, y + 1, 1, 4, ENEMY.poison);
+  R(x + 5, y + 1, 1, 4, ENEMY.poison);
+  R(x + 1, y + 5, 4, 1, ENEMY.poison);
 }
 
 const LIMBS: LedgeLook = { body: V.granite, top: V.graniteLight, edge: V.graniteShade, joint: V.graniteShade };
@@ -696,11 +708,11 @@ export const VIGELANDSPARKEN: LevelDef = {
       if (isStatue(e)) statueArt(e, v);
       else if (e.def.look === "boy") angryBoy(e, v.t);
       else if (e.def.look === "ringer") ringer(e, v.t);
-      else return false;
+      else return drawLook(e, v.t);
       return true;
     },
     shot: (s: Shot) => {
-      ring(Math.round(s.x - 2), Math.round(s.y - 2));
+      ring(Math.round(s.x - 3), Math.round(s.y - 3));
       return true;
     }
   }

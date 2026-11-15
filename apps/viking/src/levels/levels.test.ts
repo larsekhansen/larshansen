@@ -3,7 +3,7 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { createBody, placeBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, jumpTo, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
-import { KIND, THROW_REACH, leap as leapOf } from "../game/enemies";
+import { KIND, THROW_REACH, leap as leapOf, sizeOf } from "../game/enemies";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
 import { benchesOf, bossAwake, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play, type PlayIntent } from "../game/play";
@@ -355,7 +355,7 @@ for (const def of LEVELS) {
             const rise = e.rise ?? 10;
             const [x0, x1] = [Math.min(j.from.x, j.to.x) - 3 * TILE, Math.max(j.from.x, j.to.x) + 3 * TILE];
             const [top, bottom] = [Math.min(j.from.bottom, j.to.bottom) - 46 - PLAYER.h, Math.max(j.from.bottom, j.to.bottom)];
-            const over = x + span >= x0 && x - span <= x1 && base + rise >= top && base - rise - KIND.flyer.h <= bottom;
+            const over = x + span >= x0 && x - span <= x1 && base + rise >= top && base - rise - sizeOf(e).h <= bottom;
             return over ? [`${name} over "${j.move}" (columns ${Math.floor(j.from.x / TILE)} to ${Math.floor(j.to.x / TILE)})`] : [];
           }
           return [j.from, j.to].flatMap((s) => (Math.max(0, Math.abs(s.x - x) - span) <= 3 * TILE && Math.abs(s.bottom - (e.r + 1) * TILE) <= 2 * TILE ? [`${name} by "${j.move}" at column ${Math.floor(s.x / TILE)}`] : []));
