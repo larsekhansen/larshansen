@@ -64,9 +64,16 @@ export const CLOSERS = [93, 176];
 b.fill(93, 93, BANK - 4, BANK - 1, "Z");
 // --- The water mirror where the shore was: the banks, the pool, its stepping stones ---------------------------
 b.ground(93, 98, BANK).fill(99, 126, BANK, BANK + 1, "~").ground(99, 126, BANK + 2).ground(127, 137, BANK);
-/** The stepping stones, a row over the water: they rise as he comes. */
-export const STEPS = [[101, 102], [106, 107], [111, 112], [116, 117], [121, 122], [125, 125]];
+/**
+ * The stepping stones, a row over the water: they rise as he comes. Not all alike: two short hops, a wide
+ * stone, one that rises late (only once he is at the edge of the one before) across the widest gap onto a
+ * wide landing, and a pair whose first sinks back under him a second after he lands on it.
+ */
+export const STEPS = [[101, 102], [105, 107], [111, 113], [116, 117], [120, 121], [124, 125]];
 for (const [c0, c1] of STEPS) b.run(c0, c1, BANK - 1, "z");
+/** The stone that rises late, and the one that sinks under him, by their first column. */
+export const LATE = 111;
+export const SINKS = 116;
 // --- The town wall and its walk, the arches the archers stand on ---------------------------------------------
 b.ground(138, 175, TOWN, "R");
 b.run(150, 152, TOWN - 3, "R").run(162, 164, TOWN - 3, "R");
@@ -106,11 +113,20 @@ export const MAP = b.rows_();
 
 // --- The stones that rise ----------------------------------------------------------------------------------
 
-/** Every stone of the map that rises: where it is, whether it is a wall (solid) or a ledge, and whether it waits for him to pass. */
-export const STONES = MAP.flatMap((row, r) => [...row].flatMap((ch, c) => (ch === "Z" || ch === "z" ? [{ c, r, wall: ch === "Z", behind: CLOSERS.includes(c) }] : [])));
+/** The stepping stone a column belongs to (its first column), or null. */
+const stepOf = (c: number) => STEPS.find(([c0, c1]) => c >= c0 && c <= c1)?.[0] ?? null;
+/**
+ * Every stone of the map that rises: where it is, whether it is a wall (solid) or a ledge, whether it waits for
+ * him to pass, how near he must come (tiles across), and whether it sinks under him.
+ */
+export const STONES = MAP.flatMap((row, r) =>
+  [...row].flatMap((ch, c) => (ch === "Z" || ch === "z" ? [{ c, r, wall: ch === "Z", behind: CLOSERS.includes(c), near: stepOf(c) === LATE ? 4.5 : 6, sinks: stepOf(c) === SINKS }] : []))
+);
 const STONE_AT = new Map(STONES.map((s, i) => [s.r * COLS + s.c, i]));
-/** Steps a stone takes to rise; how near he must come (tiles across, and up or down). */
-export const RISE = { steps: 20, near: 6, up: 7, behind: 3 };
+/** Steps a stone takes to rise; how near he must come up or down (tiles); how far past a wall behind him. */
+export const RISE = { steps: 20, up: 7, behind: 3 };
+/** The stone that sinks: steps he can stand on it, steps it takes to go under, steps after he has left it before it rises again. */
+export const SINK = { firm: 60, down: 20, back: 120 };
 
 /** The tower that builds itself under his feet: where it stands, how low and how high it goes, how fast, how long it waits for him before it sinks back. */
 export const TOWER = { x: 136 * TILE, w: 2 * TILE, low: BANK * TILE, high: TOWN * TILE, up: 1, down: 1, wait: 180 };
@@ -119,6 +135,9 @@ export interface Ruins {
   /** The step each stone began to rise, or null; whether it has risen (and is ground). */
   at: (number | null)[];
   up: boolean[];
+  /** A stone that sinks: the step he stood on it from, and the step it went under, or null. */
+  on: (number | null)[];
+  down: (number | null)[];
   /** The tower's top now and a step ago, and the last step he stood on it. */
   y: number;
   prevY: number;
@@ -131,14 +150,28 @@ const onTower = (s: Ruins, him: Body) => him.onGround && Math.abs(him.y + PLAYER
 const inStone = (st: (typeof STONES)[number], him: Body) => him.x < (st.c + 1) * TILE && him.x + PLAYER.w > st.c * TILE && him.y < (st.r + 1) * TILE && him.y + PLAYER.h > st.r * TILE;
 
 export const GROUNDS: Grounds<Ruins> = {
-  create: () => ({ at: STONES.map(() => null), up: STONES.map(() => false), y: TOWER.low, prevY: TOWER.low, stood: -999 }),
+  create: () => ({ at: STONES.map(() => null), up: STONES.map(() => false), on: STONES.map(() => null), down: STONES.map(() => null), y: TOWER.low, prevY: TOWER.low, stood: -999 }),
   carriers: (s) => [{ x: TOWER.x, y: s.y, w: TOWER.w, dx: 0, dy: s.y - s.prevY }],
   after(s, t, him) {
     const hx = him.x + PLAYER.w / 2;
     const feet = him.y + PLAYER.h;
+    // The stone that sinks, as a pair: standing on either of its tiles counts for both.
+    const onSinking = him.onGround && Math.abs(feet - (BANK - 1) * TILE) < 0.01 && stepOf(Math.floor(hx / TILE)) === SINKS;
     STONES.forEach((st, i) => {
+      if (st.sinks && s.up[i]) {
+        s.on[i] = onSinking ? s.on[i] ?? t : null;
+        if (s.on[i] !== null && t - (s.on[i] as number) >= SINK.firm) {
+          s.up[i] = false;
+          s.at[i] = null;
+          s.on[i] = null;
+          s.down[i] = t;
+        }
+        return;
+      }
       if (s.at[i] === null) {
-        const near = st.behind ? hx > (st.c + RISE.behind) * TILE : Math.abs(hx - (st.c * TILE + TILE / 2)) < RISE.near * TILE && Math.abs(feet - st.r * TILE) < RISE.up * TILE;
+        // Gone under, it comes up again once he has been off it a while.
+        if (s.down[i] !== null && (t - (s.down[i] as number) < SINK.back || onSinking)) return;
+        const near = st.behind ? hx > (st.c + RISE.behind) * TILE : Math.abs(hx - (st.c * TILE + TILE / 2)) < st.near * TILE && Math.abs(feet - st.r * TILE) < RISE.up * TILE;
         if (near) s.at[i] = t;
       } else if (!s.up[i] && t - (s.at[i] as number) >= RISE.steps && !inStone(st, him)) s.up[i] = true;
     });
@@ -207,14 +240,15 @@ export const LONGSHIPS: CarrierDef[] = [
 ];
 
 /**
- * A rat by the park's walls, an owl over the dig; three guards on the bishop's wall, stone until he comes
+ * A rat by the park's walls, an owl over the street past the dig; three guards on the bishop's wall, stone until he comes
  * near; a rat in the crypt by the cheese; the two archers on the wall walk's arches, who shoot straight down
  * the walk at where a man coming will be (and not at one within four tiles of them, or past them); two
  * geese and a dog in the market.
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 9, r: STREET - 1, range: 2 },
-  { kind: "flyer", look: "owl", c: 27, r: STREET - 4, range: 2, rise: 6, period: 180 },
+  // The owl over the street past the dig (order 17: it hung over the dig's landing).
+  { kind: "flyer", look: "owl", c: 31, r: STREET - 4, range: 1, rise: 6, period: 180 },
   { kind: "walker", look: "guard", c: 70, r: WALL - 1, range: 2, speed: 0.5 },
   { kind: "walker", look: "guard", c: 78, r: WALL - 1, range: 2, speed: 0.5, dir: -1 },
   { kind: "walker", look: "guard", c: 86, r: WALL - 1, range: 2, speed: 0.5 },
@@ -247,13 +281,16 @@ function calmWater(c: number, r: number, x: number, y: number, map: TileMap): bo
   return true;
 }
 
-/** How far up a stone has come (0: not at all, 1: risen). */
+/** How far up a stone has come (0: not at all, 1: risen); one that sinks under him trembles, then goes down. */
 function risenBy(c: number, r: number): number {
   const i = STONE_AT.get(r * COLS + c);
   if (i === undefined || !shown) return 0;
-  if (shown.up[i]) return 1;
+  const on = shown.on[i];
+  if (shown.up[i]) return on !== null && shownT - on > SINK.firm / 2 && !view.reduced ? 1 - ((shownT >> 2) % 2) * 0.12 : 1;
+  const down = shown.down[i];
   const at = shown.at[i];
-  return at === null ? 0 : Math.min(0.95, (shownT - at) / RISE.steps);
+  if (at === null) return down !== null && shownT - down < SINK.down ? 1 - (shownT - down) / SINK.down : 0;
+  return Math.min(0.95, (shownT - at) / RISE.steps);
 }
 
 /** Steps since the serpent went under for good (the dawn coming, the rune rising), or null. */

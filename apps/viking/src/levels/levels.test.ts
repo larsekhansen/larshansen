@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { createBody, stepBody } from "@larshansen/pixelkit/physics";
+import { createBody, placeBody, stepBody } from "@larshansen/pixelkit/physics";
 import { fire } from "@larshansen/pixelkit/launcher";
 import { cannonRide, carrier, cx, feet, jump, jumpTo, leap, mid, playMoves, tile, wait, walk, type Move } from "../game/bot";
 import { KIND, THROW_REACH, leap as leapOf } from "../game/enemies";
@@ -20,7 +20,7 @@ import { follow } from "@larshansen/pixelkit/camera";
 import { HERON, OSTENSJOVANNET, PADS as LILY_PADS, SWAN, W as LW, inStretch } from "./ostensjovannet";
 import { BAY, BJORVIKA, F1 as BF1, F2 as BF2, GUSTS as BJ_GUSTS, HOIST as BJ_HOIST, HOOKS, SHAFTS, SHEETS, SPARKS } from "./bjorvika";
 import type { Travel } from "@larshansen/pixelkit/carrier";
-import { CLOSERS, GAMLEBYEN, GROUNDS as RUIN_GROUNDS, QUAY as GQ, SERPENT_DEF, STONES, STREET, TOWER, TOWN, WAKE, type Ruins } from "./gamlebyen";
+import { BANK as GBANK, CLOSERS, GAMLEBYEN, GROUNDS as RUIN_GROUNDS, LATE, QUAY as GQ, SERPENT_DEF, SINK as RUIN_SINK, SINKS, STEPS as RUIN_STEPS, STONES, STREET, TOWER, TOWN, WAKE, type Ruins } from "./gamlebyen";
 import { BOY, ENEMIES as VIGELAND_ENEMIES, JET_IN, JET_OUT, SLAB, VIGELANDSPARKEN, W as VW } from "./vigelandsparken";
 import { BYGDOY, FERRY, FRAM_DECK, GJOA_DECK, LOFT, OARS, PADS, RAFT as BALSA, REED, W } from "./bygdoy";
 import { SHIELD_RULES } from "../game/shield";
@@ -163,32 +163,44 @@ const LONGEST: Record<string, number> = { nabolaget: 80 };
  *   The street there is four tiles; a cat sitting still a tile further back was hit twice as often by
  *   the sloppy player coming down the drift (order 13), so it walks where it did.
  * - Østensjøvannet's three swans: see below.
+ * - Flyers whose wave crosses a jump's arc (tested since order 17), measured on their own by the sloppy
+ *   player (`tools/review/obstacles.ts`, ±4, 40 tries on fresh seeds) and left where they are: Holmenkollen's
+ *   crow over the chair's hop (0.00 hearts a try), Akerselva's gull over the last logs (at most 0.20 a try,
+ *   most of it falls), Nordmarka's owl over the first bog (0.15), Nabolaget's two crows (under 0.05).
  */
 const JUMP_EXCEPTIONS: Record<string, string[]> = {
-  nabolaget: ["thrower:kid@52", "walker:cat@153"],
+  holmenkollen: ["flyer:crow@145"],
+  akerselva: ["flyer:gull@222"],
+  nordmarka: ["flyer:owl@56"],
+  nabolaget: ["thrower:kid@52", "walker:cat@153", "flyer:crow@35", "flyer:crow@72"],
   // Østensjøvannet's swans swim the water the pads lie on: that is the level. Each lets him be (it cannot
   // be touched) until he has been in its stretch four seconds, and the stretches are crossed in three.
   ostensjovannet: ["spiky:swan@70.5", "spiky:swan@149.5", "spiky:swan@166.5"]
 };
 
 /**
- * The route's jumps (its "jump" and "leap" moves) that go over a pit or water: where he left the ground
- * and where he landed, played through the real rules. A gap is a column between the two with water
- * under them, or nothing at all.
+ * The route's jumps over a pit or water, whatever the move is called (order 17: its stepping stones were
+ * named "onto the stepping stone"): where he left the ground and where he landed, played through the
+ * real rules. A gap is a column between the two with water under them, or nothing at all.
  */
 function jumpsOverGaps(def: LevelDef, moves: Move[]) {
   const map = levelMap(def);
   const out: { move: string; from: { x: number; bottom: number }; to: { x: number; bottom: number } }[] = [];
   const watched = moves.map((m): Move =>
-    /^(jump|leap)/.test(m.name)
+    !/^(walk to|sit|wait)/.test(m.name)
       ? {
           name: m.name,
           keys(q, s) {
+            // Each time in the air, from the ground he left to the ground he came down on.
             const rec = (s.rec ??= { from: null, last: null }) as { from: { x: number; bottom: number } | null; last: { x: number; bottom: number } | null };
-            if (!rec.from && !q.body.onGround && rec.last) rec.from = rec.last;
-            if (q.body.onGround) rec.last = { x: cx(q), bottom: feet(q) };
+            const here = { x: cx(q), bottom: feet(q) };
+            if (q.body.onGround) {
+              if (rec.from) out.push({ move: m.name, from: rec.from, to: here });
+              rec.from = null;
+              rec.last = here;
+            } else if (!rec.from && rec.last && !q.riding) rec.from = rec.last;
             const k = m.keys(q, s);
-            if (k === "done" && rec.from) out.push({ move: m.name, from: rec.from, to: { x: cx(q), bottom: feet(q) } });
+            if (k === "done" && rec.from) out.push({ move: m.name, from: rec.from, to: here });
             return k;
           }
         }
@@ -329,13 +341,23 @@ for (const def of LEVELS) {
       expect(r.onlyByFalling).toEqual([]);
     });
 
-    test("no enemy's patrol comes within three tiles of where a route's jump over a pit or water takes off or lands", () => {
+    test("no enemy's patrol comes within three tiles of where a route's jump over a pit or water takes off or lands, and no flyer's wave crosses its arc", () => {
       const near = jumpsOverGaps(def, ROUTE[def.id]).flatMap((j) =>
         (def.enemies ?? []).flatMap((e) => {
           const name = `${e.kind}:${e.look}@${e.c}`;
           if (JUMP_EXCEPTIONS[def.id]?.includes(name)) return [];
           const x = e.c * TILE + TILE / 2;
           const span = (e.range ?? 0) * TILE;
+          // A flyer anywhere over the jump, from three tiles before it to three after, whose wave (its body
+          // at the top and the bottom of it) comes into the height his body has on the way (a jump is 46 px).
+          if (e.kind === "flyer") {
+            const base = (e.r + 1) * TILE;
+            const rise = e.rise ?? 10;
+            const [x0, x1] = [Math.min(j.from.x, j.to.x) - 3 * TILE, Math.max(j.from.x, j.to.x) + 3 * TILE];
+            const [top, bottom] = [Math.min(j.from.bottom, j.to.bottom) - 46 - PLAYER.h, Math.max(j.from.bottom, j.to.bottom)];
+            const over = x + span >= x0 && x - span <= x1 && base + rise >= top && base - rise - KIND.flyer.h <= bottom;
+            return over ? [`${name} over "${j.move}" (columns ${Math.floor(j.from.x / TILE)} to ${Math.floor(j.to.x / TILE)})`] : [];
+          }
           return [j.from, j.to].flatMap((s) => (Math.max(0, Math.abs(s.x - x) - span) <= 3 * TILE && Math.abs(s.bottom - (e.r + 1) * TILE) <= 2 * TILE ? [`${name} by "${j.move}" at column ${Math.floor(s.x / TILE)}`] : []));
         })
       );
@@ -1316,6 +1338,37 @@ describe("Gamlebyen: the ruins rebuild as he passes", () => {
     // Walking away, it stays.
     for (let k = 0; k < 200; k++) stepPlay(p, { ...IDLE, left: true });
     expect(p.map.isOneWay(37, STREET - 4)).toBe(true);
+  });
+
+  test("the stepping stones are not all alike: no gap wider than three tiles, one stone rises only from the edge of the one before, and one sinks under him a second after he lands, and comes up again once he has left it", () => {
+    const gaps = RUIN_STEPS.slice(1).map(([c0], i) => c0 - RUIN_STEPS[i][1] - 1);
+    expect(Math.max(...gaps)).toBeLessThanOrEqual(3);
+    expect(new Set(gaps).size).toBeGreaterThan(1);
+    expect(new Set(RUIN_STEPS.map(([c0, c1]) => c1 - c0)).size).toBeGreaterThan(1);
+    // The late one: from the middle of the stone before it does not rise; from its edge it does.
+    const late = STONES.findIndex((s) => s.c === LATE);
+    const before = RUIN_STEPS[RUIN_STEPS.findIndex(([c0]) => c0 === LATE) - 1];
+    const mid = P({ x: tile(before[0]) + 4, bottom: tile(GBANK - 1) });
+    for (let k = 0; k < 30; k++) stepPlay(mid, IDLE);
+    expect(ruins(mid).at[late]).toBeNull();
+    const edge = P({ x: tile(before[1] + 1) - 6, bottom: tile(GBANK - 1) });
+    for (let k = 0; k < 30; k++) stepPlay(edge, IDLE);
+    expect(ruins(edge).up[late]).toBe(true);
+    // The one that sinks: he stands on it a second, then it goes from under him.
+    const sinks = STONES.findIndex((s) => s.c === SINKS);
+    const p = P({ x: tile(SINKS) + 8, bottom: tile(GBANK - 1) });
+    // (Put down on it as if he had leapt onto it: it has risen.)
+    STONES.forEach((s, i) => s.sinks && (ruins(p).up[i] = true));
+    for (let k = 0; k < 25; k++) stepPlay(p, IDLE);
+    expect(ruins(p).up[sinks]).toBe(true);
+    let under = -1;
+    for (let k = 0; k < 120 && under < 0; k++) if (stepPlay(p, IDLE).splash) under = k;
+    expect(under).toBeGreaterThanOrEqual(RUIN_SINK.firm - 30);
+    // Put back on the bank behind, it comes up again a while later.
+    for (let k = 0; k < RUIN_SINK.back + 60; k++) stepPlay(p, IDLE);
+    placeBody(p.body, tile(SINKS - 3), tile(GBANK - 1));
+    for (let k = 0; k < 40; k++) stepPlay(p, IDLE);
+    expect(ruins(p).up[sinks]).toBe(true);
   });
 
   test("a stone that would rise where he stands waits until he has moved off", () => {

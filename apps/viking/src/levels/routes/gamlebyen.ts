@@ -4,7 +4,7 @@ import { THROW_REACH, untilThrow } from "../../game/enemies";
 import { runeFree, type Play, type PlayIntent } from "../../game/play";
 import { headBox, neckUp, neckX, tailBox, type Serpent } from "../../game/serpent";
 import { shieldedWalk } from "./common";
-import { STEPS, STONES, TOWER, type Ruins } from "../gamlebyen";
+import { LATE, SINKS, STEPS, STONES, TOWER, type Ruins } from "../gamlebyen";
 
 // Gamlebyen's scripted route, played by the tests (and by the page under `?debug&auto`) with the real
 // rules, the single jump, the ski pole and the shield: through the park and over the dig, up St.
@@ -139,11 +139,16 @@ export const GAMLEBYEN_ROUTE: Move[] = [
   stomp(4),
   // Down off its end; the wall rises behind him.
   walk(mid(96)),
-  // The water mirror's stepping stones as they rise.
+  // The water mirror's stepping stones as they rise: the one that rises late is waited for at the edge of
+  // the one before; the one that sinks is left at once.
   walk(tile(97)),
   risen(101, 16),
   leapTo(tile(99) - 2, tile(102), "onto the first stepping stone"),
-  ...STEPS.slice(1).flatMap(([c0, c1], i) => [risen(c0, 16), leapTo(tile(STEPS[i][1] + 1) - 2, tile(c0) + ((c1 - c0 + 1) * TILE) / 2, `onto the stepping stone at ${c0}`)]),
+  ...STEPS.slice(1).flatMap(([c0, c1], i) => [
+    ...(c0 === LATE ? [walk(tile(STEPS[i][1] + 1) - PLAYER.w / 2 - 2)] : []),
+    risen(c0, 16),
+    leapTo(tile(STEPS[i][1] + 1) - 2, c0 === SINKS ? tile(c1) + 2 : tile(c0) + ((c1 - c0 + 1) * TILE) / 2, `onto the stepping stone at ${c0}`)
+  ]),
   leapTo(tile(126) - 2, mid(128), "onto the far bank"),
   // The tower that builds itself, up the town wall.
   walk(mid(134)),

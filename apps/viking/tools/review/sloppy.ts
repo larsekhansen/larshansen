@@ -114,17 +114,19 @@ const ridingCarrier = (p: any) =>
 /**
  * A walk as a person ends it (order 17, the review's A5): the route's walk is done only within 2 px of
  * its mark and at rest, so a direction held a little too long overshoots, turns, overshoots again, for
- * ever (the "mistakes" profile timed out at walks with no heart lost). A person who has turned back once
- * is done within 4 px; and a walk that has carried him onto the sledge, which he cannot steer, is over.
+ * ever (the "mistakes" profile timed out at walks with no heart lost). A person who has gone past and back
+ * and past again is done within 4 px (one turn back is the usual correction, and a walk up to a jump's edge
+ * must still end where the route ends it); and a walk that has carried him onto the sledge, which he
+ * cannot steer, is over.
  */
 function personWalk(move: any, p: any, mem: any, k: any): any {
   const at = /^walk to (-?[\d.]+)$/.exec(move.name);
   if (!at || k === "done") return k;
   if (p.riding) return "done";
   const d = k.left ? -1 : k.right ? 1 : 0;
-  if (d && mem.wd && d !== mem.wd) mem.turned = true;
+  if (d && mem.wd && d !== mem.wd) mem.turns = (mem.turns ?? 0) + 1;
   if (d) mem.wd = d;
-  return mem.turned && p.body.onGround && Math.abs(Number(at[1]) - cx(p)) <= 4 ? "done" : k;
+  return (mem.turns ?? 0) >= 2 && p.body.onGround && Math.abs(Number(at[1]) - cx(p)) <= 4 ? "done" : k;
 }
 
 function botKeys(moves: any[], p: any, A: Auto, hes?: Hesitate): Intent {
@@ -239,7 +241,7 @@ function nearestRef(ref: Ref, x: number, f: number, maxM: number, map?: any): nu
         const r = ref.rec[s];
         if (!r.ground || r.m > maxM !== !behind || Math.abs(r.feet - f) >= 4) continue;
         const dx = Math.abs(r.x - x);
-        if (dx >= 64 && !floorBetween(map, x, r.x, f)) continue;
+        if (dx >= 64 ? !floorBetween(map, x, r.x, f) : wallBetween(map, x, r.x, f)) continue;
         ok.push(s);
         bestDx = Math.min(bestDx, dx);
       }
@@ -274,6 +276,13 @@ function floorBetween(map: any, x0: number, x1: number, f: number): boolean {
   return true;
 }
 
+/** A wall at his height between x0 and x1 (order 17: a short walk through St. Clement's gable was taken as walkable). */
+function wallBetween(map: any, x0: number, x1: number, f: number): boolean {
+  const r = Math.round(f / 16);
+  for (let c = Math.floor(Math.min(x0, x1) / 16); c <= Math.floor(Math.max(x0, x1) / 16); c++) if (map.isSolid(c, r - 1)) return true;
+  return false;
+}
+
 function resumeAt(ref: Ref, moves: any[], s: number, p?: any): Auto {
   // Put back where the perfect run was walking on after a wait (onto the ferry once it stood at the quay),
   // a person waits again first: resume at the latest wait before the place, if it was at the same place
@@ -287,7 +296,7 @@ function resumeAt(ref: Ref, moves: any[], s: number, p?: any): Auto {
   }
   const r = ref.rec[s];
   let m = r.m;
-  const pre = p && Math.abs(cx(p) - r.x) > 3 && Math.abs(feet(p) - r.feet) < 4 && (Math.abs(cx(p) - r.x) < 64 || floorBetween(p.map, cx(p), r.x, feet(p))) ? { move: BOT.walk(r.x), mem: { i: 0, air: false } } : undefined;
+  const pre = p && Math.abs(cx(p) - r.x) > 3 && Math.abs(feet(p) - r.feet) < 4 && ((Math.abs(cx(p) - r.x) < 64 && !wallBetween(p.map, cx(p), r.x, feet(p))) || floorBetween(p.map, cx(p), r.x, feet(p))) ? { move: BOT.walk(r.x), mem: { i: 0, air: false } } : undefined;
   // A jump already in the air at that place is over by the time he is put back there: the next move.
   if (!r.ground && r.i > 0 && m < moves.length && timedMove(moves[m].name)) m++;
   return { m, mem: { i: 0, air: false }, pre };
@@ -471,7 +480,7 @@ function run(id: string, def: any, moves: any[], ref: Ref, cfg: Cfg): RunResult 
       tried.set(k, c);
       const s = nearestRef(ref, cx(p), feet(p), Math.min(A.m, moves.length - 1), p.map);
       const r = ref.rec[s];
-      const walkable = Math.abs(cx(p) - r.x) <= 3 || (Math.abs(feet(p) - r.feet) < 4 && (Math.abs(cx(p) - r.x) < 64 || floorBetween(p.map, cx(p), r.x, feet(p))));
+      const walkable = Math.abs(cx(p) - r.x) <= 3 || (Math.abs(feet(p) - r.feet) < 4 && ((Math.abs(cx(p) - r.x) < 64 && !wallBetween(p.map, cx(p), r.x, feet(p))) || floorBetween(p.map, cx(p), r.x, feet(p))));
       if (c > RETRIES) {
         res.outcome = "gaveup";
         break;

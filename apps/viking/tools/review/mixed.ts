@@ -13,7 +13,7 @@ import { LEVELS, POLE, play as P } from "./common.ts";
 const W = await import("../../src/game/reach.ts");
 const G = await import("../../src/levels/gamlebyen.ts");
 const def0 = G.GAMLEBYEN as any;
-const STONES = G.STONES as { c: number; r: number; wall: boolean; behind: boolean }[];
+const STONES = G.STONES as { c: number; r: number; wall: boolean; behind: boolean; near: number }[];
 const RISE = G.RISE;
 
 /** Each stone's group: a wall behind him (by column) or a run of ledge stones (by row and first column). */
@@ -43,7 +43,7 @@ const boxes = [P.runeOf(map0)!];
 /** Could an unrisen ledge stone still rise with him at this spot? */
 const couldRise = (up: Set<number>, s: { x: number; feet: number }) => {
   const hx = s.x + PLAYER.w / 2;
-  return STONES.some((st, i) => !st.wall && !up.has(i) && Math.abs(hx - (st.c * TILE + TILE / 2)) < RISE.near * TILE && Math.abs(s.feet - st.r * TILE) < RISE.up * TILE);
+  return STONES.some((st, i) => !st.wall && !up.has(i) && Math.abs(hx - (st.c * TILE + TILE / 2)) < st.near * TILE && Math.abs(s.feet - st.r * TILE) < RISE.up * TILE);
 };
 
 function check(name: string, up: Set<number>) {
