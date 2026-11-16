@@ -10,7 +10,7 @@ import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 

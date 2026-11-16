@@ -11,7 +11,7 @@ import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
@@ -613,11 +613,13 @@ function trollBody(t: Troll, v: View) {
   const age = step - t.since;
   const f = t.dir;
   if (t.phase === "asleep" || (t.phase === "waking" && age < TROLL_STEPS.waking / 2)) {
-    // A mossy boulder, its nose a bump on one side; waking, it shakes.
+    // A mossy boulder, its nose a bump on one side; asleep it breathes (its back up a pixel every other second, order
+    // 23); waking, it shakes.
     const shake = t.phase === "waking" && !view.reduced ? (age % 4 < 2 ? 1 : -1) : 0;
-    for (let k = 0; k < 24; k++) {
-      const half = Math.round(17 * Math.sqrt(1 - ((k - 2) / 23) ** 2));
-      R(x - half + shake, fl - k - 1, half * 2, 1, k > 18 ? FOREST.moss : k % 5 === 0 ? FOREST.stoneDark : FOREST.stone);
+    const breath = t.phase === "asleep" ? Math.floor(step / 60) % 2 : 0;
+    for (let k = 0; k < 24 + breath; k++) {
+      const half = Math.round(17 * Math.sqrt(Math.max(0, 1 - ((k - 2) / (23 + breath)) ** 2)));
+      R(x - half + shake, fl - k - 1, half * 2, 1, k > 18 + breath ? FOREST.moss : k % 5 === 0 ? FOREST.stoneDark : FOREST.stone);
     }
     R(x - 13 + shake, fl - 12, 5, 5, FOREST.stone);
     R(x - 14 + shake, fl - 11, 2, 3, FOREST.stoneDark);
@@ -643,8 +645,11 @@ function trollBody(t: Troll, v: View) {
       R(f > 0 ? x + cx : x - cx - w, y, w, 1, paint(y, c));
     }
   };
-  const bend = t.phase === "stuck" ? 4 : 0;
-  const stride = (t.phase === "walk" || t.phase === "retreat") && !view.reduced ? Math.floor(step / 10) % 2 : 0;
+  // Its club stuck, it heaves (a pixel, every other second); walking, a cycle of four by the distance it covers (order 23).
+  const bend = t.phase === "stuck" ? 4 + (Math.floor(step / 30) % 2) : 0;
+  const walking = t.phase === "walk" || t.phase === "retreat";
+  const stride = walking ? [1, 0, -1, 0][((Math.floor((f > 0 ? t.x : -t.x) / 4) % 4) + 4) % 4] : 0;
+  const lift = walking && stride === 0 ? 1 : 0;
   // The tail, behind, with its tuft.
   for (let k = 0; k < 8; k++) box(-14 - k, 12 - Math.floor(k * 0.8), 1, 1, FOREST.trollDark);
   blob(-22, 4, 2, 2, FOREST.trollHair);
@@ -654,13 +659,13 @@ function trollBody(t: Troll, v: View) {
   box(-8 + stride, 3, 6, 7, FOREST.troll);
   box(3 - stride, 3, 6, 7, FOREST.troll);
   // The body: a hunched back, a round belly.
-  blob(-5, 25 - bend, 9, 7, FOREST.trollDark);
-  blob(0, 18 - bend / 2, 13, 11, FOREST.troll);
-  blob(4, 16 - bend / 2, 7, 7, FOREST.trollLight);
-  blob(-6, 26 - bend, 7, 5, FOREST.troll);
+  blob(-5, 25 - bend + lift, 9, 7, FOREST.trollDark);
+  blob(0, 18 - bend / 2 + lift, 13, 11, FOREST.troll);
+  blob(4, 16 - bend / 2 + lift, 7, 7, FOREST.trollLight);
+  blob(-6, 26 - bend + lift, 7, 5, FOREST.troll);
   // The head, forward and low; its ear, nose, mouth and hair.
   const hx = 7 + bend;
-  const hy = 31 - bend * 2;
+  const hy = 31 - bend * 2 + lift;
   blob(hx, hy, 7, 6, FOREST.troll);
   blob(hx - 6, hy + 1, 2, 3, FOREST.trollDark);
   blob(hx + 7, hy - 1, 4, 4, FOREST.trollNose);

@@ -9,7 +9,7 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts, stride } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -222,9 +222,6 @@ export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
 
 // --- The river's own creatures: the salmon and the duck (drawn here, as no other level has them) -------------
 
-/** Two frames of walking, by its place. */
-const stride = (e: Enemy) => (view.reduced ? 0 : Math.floor(e.x / 3) % 2);
-
 function duck(e: Enemy) {
   const r = parts(e, 13);
   const bob = stride(e);
@@ -257,9 +254,17 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
       R(Math.round(e.x - 4), Math.min(water, Math.round(e.y)) - 2, 8, 1, mix(P.foam, P.water, 0.4));
     });
   if (l.up <= 0) return;
-  // Past the top of its leap it turns over.
+  // Past the top of its leap it turns over; at the top it lies level a moment, its nose the way it faces (order 23).
   const falling = leap(e, t + 1).up < l.up;
   const colors: Record<string, string> = { b: ENEMY.pink, s: ENEMY.white, e: ENEMY.eye };
+  if (Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 1)
+    return SALMON.forEach((row, r) =>
+      [...row].forEach((ch, c) => {
+        if (ch === ".") return;
+        const yy = Math.round(e.y) - 4 - c + rowAt(4);
+        if (yy < water) R(Math.round(e.x) + (e.dir > 0 ? 7 - r : r - 7), yy, 1, 1, colors[ch]);
+      })
+    );
   SALMON.forEach((row, r) =>
     [...row].forEach((ch, c) => {
       if (ch === ".") return;

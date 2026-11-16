@@ -30,7 +30,7 @@ const viewOf = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day
 
 /** The enemy palette's colours, and the ones a body is drawn in (not the outline's red, the near-black, the eyes, or the pale of teeth and claws). */
 const PALETTE_COLOURS = new Set<string>(Object.values(ENEMY));
-const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white])];
+const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade])];
 
 /**
  * The smallest difference (CIEDE2000) allowed between an enemy's body colour and a level's field, as each
@@ -281,7 +281,7 @@ describe("every role has its colours", () => {
    * greys, and a palace has his skin's cream.
    */
   const FIELDS_OF: Record<string, { colours: readonly string[]; phases: Phase[] }> = {
-    him: { colours: [ROLES.him.tunic], phases: ["day"] },
+    him: { colours: [ROLES.him.tunic, ROLES.him.tunicLit, ROLES.him.tunicShade], phases: ["day"] },
     // The copper of a coin and the gold of a bracteate; their rims and glints are details on them, as an enemy's eyes are.
     take: { colours: [ROLES.take.copper, ROLES.take.gold, ROLES.take.goldDark], phases: ["day", "evening", "twilight", "night"] },
     now: { colours: ROLES.COLOURS.now, phases: ["day", "evening", "twilight", "night"] },

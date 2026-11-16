@@ -12,7 +12,7 @@ import type { Enemy, EnemyDef } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 

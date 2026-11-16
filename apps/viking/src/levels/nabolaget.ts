@@ -14,7 +14,7 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
@@ -938,6 +938,8 @@ function ploughBody(p: Plough, v: View) {
     span(0, 32, y0 + 20, 3, SNOW.lying);
     span(32, 40, g - 18, 18, mix(WINTER.blade, INK, 0.5));
     for (const wx of [-22, 18]) wdisc(at(wx), g - 6, 6, WINTER.tyre);
+    // Parked, its engine ticks over: a wisp from the stack every other second (order 23).
+    if (Math.floor(v.t / 60) % 2) plain(() => R(at(-34) - 1, y0 - 4, 3, 2, "rgba(70, 66, 62, 0.35)"));
     return;
   }
   const beaten = p.phase === "beaten";
@@ -952,11 +954,13 @@ function ploughBody(p: Plough, v: View) {
   span(-32, 32, y0 + 42, 2, WINTER.ploughDark);
   for (let k = -28; k < 30; k += 10) span(k, k + 5, y0 + 33, 2, WINTER.ploughDark);
   // The wheels, big, with chains.
-  const roll = view.reduced ? 0 : Math.floor(p.x / 3) % 2;
+  // Its wheels turn as it goes, a nut on each going round in four frames by the distance it covers (order 23).
+  const roll = ((Math.floor((f > 0 ? p.x : -p.x) / 3) % 4) + 4) % 4;
+  const [nx, ny] = [[0, -5], [4, -1], [0, 3], [-4, -1]][roll];
   for (const wx of [-22, 18]) {
     wdisc(at(wx), g - 7, 7, WINTER.tyre);
     wdisc(at(wx), g - 7, 3, P.iron);
-    R(at(wx) - 1 + roll, g - 13, 2, 2, P.iron);
+    R(at(wx) - 1 + f * nx, g - 8 + ny, 2, 2, P.iron);
   }
   // The blade: yellow, black stripes, angled out in front; raised off the snow while it revs, a sign
   // that holds still (for reduced motion too).

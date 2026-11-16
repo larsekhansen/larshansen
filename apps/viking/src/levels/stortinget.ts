@@ -11,7 +11,7 @@ import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";

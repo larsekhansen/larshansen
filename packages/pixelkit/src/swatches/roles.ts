@@ -19,8 +19,11 @@ import * as COIN from "./coin";
 import * as ENEMY from "./enemy";
 import * as STAND from "./stand";
 
-/** Him, as `person.ts` draws him: the tunic, the skin, the iron helmet. */
-export const him = { tunic: "#2b4c8c", skin: "#f1c27d", helmet: "#6b7480" };
+/**
+ * Him, as `person.ts` draws him: the tunic, the skin, the iron helmet; and the viking game's ramps of his frames
+ * (order 23): the tunic lit at the front and shaded at the back, the skin lit and shaded.
+ */
+export const him = { tunic: "#2b4c8c", skin: "#f1c27d", helmet: "#6b7480", tunicLit: "#2850c8", tunicShade: "#24448f", skinLit: "#fbd0a8", skinShade: "#d29a70" };
 /** What he picks up: the skilling's copper, the bracteate's gold, and the glint on both. */
 export const take = { copper: COIN.face, copperDark: COIN.rim, glint: COIN.shine, gold: COIN.gold, goldDark: COIN.goldDark };
 /** What can hurt him: the outline round every enemy, and the stripe along the dangerous edge of what is not one, broken by the near-black. */
@@ -37,7 +40,7 @@ export const use = "#1ad9ff";
 /** Every role's colours that must stand apart, by role (eyes, the near-black of lines and the line under a platform are contrast, not role, colours). */
 export const COLOURS: Record<string, readonly string[]> = {
   him: Object.values(him),
-  enemy: [ENEMY.red, ENEMY.plum, ENEMY.plumLight, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white],
+  enemy: [ENEMY.red, ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade],
   calm: [calm],
   stand: [STAND.top, STAND.body, STAND.bodyLight, STAND.bodyDark],
   take: Object.values(take),

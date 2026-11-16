@@ -10,7 +10,7 @@ import * as L from "@larshansen/pixelkit/swatches/lake";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { outlined, plain } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";

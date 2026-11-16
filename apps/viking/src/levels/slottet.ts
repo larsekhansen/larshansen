@@ -11,7 +11,7 @@ import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";

@@ -12,7 +12,16 @@ import type { Enemy } from "../game/enemies";
 import { HEARTS, type Events, type Play } from "../game/play";
 import { LINE_Y, stationX } from "../levels/kart";
 import { drawBracteate } from "./actors";
-import { drawCheese, drawSkilling } from "./pickups";
+import { LOOKS, drawCheese, drawSkilling } from "./pickups";
+import { DEEP_FALL, MARGIN, dressed, himFrame } from "../alive/him";
+import { pixels, type Frame } from "../alive/frames";
+import { shadows } from "../alive/shadows";
+import { DEATH, deathFrame, drawDeath } from "../alive/death";
+import { drawFoeLook } from "../alive/foes";
+import { cheese, skilling } from "../alive/things";
+
+// The frames (order 23): the shared enemies and the small things are drawn from them once this file is here.
+Object.assign(LOOKS, { enemy: drawFoeLook, skilling, cheese });
 
 // Felt at a glance (order 19, ADR 0040): every event answers at once, where it happened, in its role's
 // colour (ADR 0039), with a sound, and with a still answer under reduced motion. This file is the answers:
@@ -287,6 +296,12 @@ export function createFeel(host: Host) {
   const pop = { hearts: -99, coins: -99, lives: -99, gold: -99, broke: -99, broken: -1, livesDown: false };
   /** Things that rise where they were taken: the cheese, the bracteate. */
   const risen = { cheese: { x: 0, y: 0, at: -99 }, bract: { x: 0, y: 0, at: -99 }, pole: { at: -99 } };
+  /**
+   * What picks his frame (order 23), all of it state the game keeps: when he last landed and from how high, when he
+   * was last hit, the last step the rules stepped (walking into a door they do not), and how the ground under him has
+   * sloped of late (on the sledge).
+   */
+  const his = { landAt: -99, deep: false, hurtAt: -999, ruled: -1, ruledT: -1, x: 0, y: 0, moved: false, slope: 0 };
 
   /** The hearts the header shows: while they fill one by one, fewer than he has. */
   function heartsShown(p: Play): number {
@@ -346,6 +361,8 @@ export function createFeel(host: Host) {
       was.apex = Infinity;
       was.hearts = p.hearts;
       was.lives = p.lives;
+      his.landAt = his.hurtAt = -999;
+      his.slope = 0;
     },
 
     /** Before the rules' step: where he is, what he has. */
@@ -391,6 +408,8 @@ export function createFeel(host: Host) {
       else if (ev.step.landed > 0 && !ev.splash) {
         const fell = b.y - was.apex;
         was.apex = Infinity;
+        his.landAt = t;
+        his.deep = fell > DEEP_FALL;
         if (fell > 3 * TILE) {
           voice("thud");
           jolt(0, 1);
@@ -424,6 +443,7 @@ export function createFeel(host: Host) {
         ring(cx, b.y + PLAYER.h, 2, 7, 6, WHITE, t);
       }
       if (ev.hurt) {
+        his.hurtAt = t;
         const fell = ev.splash;
         voice("hurt");
         flashUntil = t + 3;
@@ -543,6 +563,17 @@ export function createFeel(host: Host) {
     /** Every step, held or not: what is in the air moves on, what waits to be heard is heard; and what the clock alone brings on. */
     step(p: Play, steps: number) {
       now = steps;
+      // Whether the rules stepped (walking into a door they do not, and he moves), and the slope under him of late.
+      const bd = p.body;
+      if (p.t !== his.ruledT) {
+        his.ruledT = p.t;
+        his.ruled = steps;
+      }
+      his.moved = Math.abs(bd.x - his.x) > 0.05;
+      const dx = Math.abs(bd.x - his.x);
+      if (dx > 0.2) his.slope = his.slope * 0.8 + 0.2 * ((bd.y - his.y) / dx);
+      his.x = bd.x;
+      his.y = bd.y;
       for (let i = 0; i < PARTICLES; i++)
         if (plife[i] > 0) {
           px[i] += pvx[i];
@@ -657,6 +688,9 @@ export function createFeel(host: Host) {
       }
     },
 
+    /** A shadow under everything that moves (order 23), drawn on the street under it: `body` is where he is drawn. */
+    shadows,
+
     /** The page's step count, for a frame drawn without a step (a stepped page's still frame). */
     at(steps: number) {
       now = steps;
@@ -685,27 +719,18 @@ export function createFeel(host: Host) {
         shapes.set(e, s);
       }
       const feet = Math.round(e.y);
-      if (age < 8 || (view.reduced && age < 14)) {
-        // Squashed: as wide again by a third, a third as tall, its outline under it.
-        const k = view.reduced ? 0.35 : age < 2 ? 0.55 : 0.35;
-        const wide = 1 + (1 - k) * 0.5;
+      // Its death in three frames (order 23): hit, fold, gone; the puff of its own colours as it goes.
+      const k = deathFrame(age, view.reduced);
+      if (k >= 0) drawDeath(s, feet, k, view.reduced);
+      if (age === DEATH.gone && !view.reduced) {
         let x0 = 1e9;
         let x1 = -1e9;
-        let y0 = 1e9;
         for (let i = 0; i < s.r.length; i += 4) {
           x0 = Math.min(x0, s.r[i]);
           x1 = Math.max(x1, s.r[i] + s.r[i + 2]);
-          y0 = Math.min(y0, s.r[i + 1]);
         }
         const cxe = (x0 + x1) / 2;
-        const h = Math.max(2, Math.round((feet - y0) * k));
-        R(Math.round(cxe - ((x1 - x0) * wide) / 2) - 1, feet - h - 1, Math.round((x1 - x0) * wide) + 2, h + 1, ENEMY.line);
-        for (let i = 0; i < s.r.length; i += 4) {
-          const ry0 = feet - Math.round((feet - s.r[i + 1]) * k);
-          const ry1 = feet - Math.round((feet - s.r[i + 1] - s.r[i + 3]) * k);
-          R(Math.round(cxe + (s.r[i] - cxe) * wide), ry0, Math.max(1, Math.round(s.r[i + 2] * wide)), Math.max(1, ry1 - ry0), s.c[i / 4]);
-        }
-        if (age === 2 && !view.reduced) for (let k2 = 0; k2 < 8; k2++) spark(cxe + (k2 - 3.5) * 1.5, feet - 3, (k2 - 3.5) * 0.25, -0.6 - (k2 % 3) * 0.2, 22, k2 % 2 ? s.a : s.b, 2, 0.04);
+        for (let k2 = 0; k2 < 8; k2++) spark(cxe + (k2 - 3.5) * 1.5, feet - 3, (k2 - 3.5) * 0.25, -0.6 - (k2 % 3) * 0.2, 22, k2 % 2 ? s.a : s.b, 2, 0.04);
       }
       // The skilling it gave goes up and is gone.
       if (age < 24 && !view.reduced) drawSkilling(Math.round(e.x - 2), Math.round(e.y - e.h - 4 - age * 0.8), t, 0);
@@ -828,9 +853,36 @@ export function createFeel(host: Host) {
       if (alpha <= 0) return;
       const g = textCtx();
       const n = unit();
+      const seated = !!p.sitting || p.riding;
+      // Seated the page lowers him three pixels, as the front page's person sits; his frames sit by themselves.
       const ox = snap(sx(body.x));
-      const oy = snap(sy(body.y));
-      fillGrid(body, walk, phase, look);
+      const oy = snap(sy(body.y - (seated ? 3 : 0)));
+      // His frame (order 23): picked from what the rules keep. While the helmet comes down onto him at a door the
+      // front page's person is drawn, helmet and cape as they come.
+      const arriving = look.helmetOffset !== undefined || look.capeRows !== undefined;
+      const b = p.body;
+      const f = arriving
+        ? null
+        : dressed(
+            himFrame(body, {
+              t: p.t,
+              walking: walk > 0,
+              landed: now - his.landAt,
+              deep: his.deep,
+              dashing: !!p.dash,
+              shield: (p.shield?.raise ?? 0) > 0 && b.onGround,
+              seated,
+              slope: his.slope,
+              thrown: !b.onGround && now - his.hurtAt < 60 && !!b.launched,
+              entering: now - his.ruled > 1 && his.moved,
+              reduced: view.reduced
+            }),
+            phase,
+            !!look.gold,
+            look.pompom
+          );
+      drawHim(g, f, body, walk, phase, look, ox, oy, n, alpha * (blink(p) && !view.reduced && Math.floor(p.t / 5) % 2 ? 0.35 : 1));
+      fillGrid(f, body, walk, phase, look);
       const blinking = blink(p);
       if (phase !== "day" || (blinking && view.reduced)) {
         g.globalAlpha = alpha * (phase === "day" ? 0.75 : RIM_ALPHA[phase]);
@@ -838,7 +890,7 @@ export function createFeel(host: Host) {
         for (let r = 0; r < GH; r++)
           for (let c = 0; c < GW; c++) {
             if (grid[r * GW + c]) continue;
-            if (grid[r * GW + c - 1] || grid[r * GW + c + 1] || grid[(r - 1) * GW + c] || grid[(r + 1) * GW + c]) g.fillRect(ox + (c - 1) * n, oy + (r - 1) * n, n, n);
+            if (grid[r * GW + c - 1] || grid[r * GW + c + 1] || grid[(r - 1) * GW + c] || grid[(r + 1) * GW + c]) g.fillRect(ox + (c - GM) * n, oy + (r - GM) * n, n, n);
           }
       }
       const flash = now < flashUntil && !view.reduced;
@@ -846,7 +898,7 @@ export function createFeel(host: Host) {
       if (flash || pale) {
         g.globalAlpha = flash ? 0.85 : 0.7 * alpha;
         g.fillStyle = flash ? ENEMY.warning : PALE;
-        for (let r = 0; r < GH; r++) for (let c = 0; c < GW; c++) if (grid[r * GW + c]) g.fillRect(ox + (c - 1) * n, oy + (r - 1) * n, n, n);
+        for (let r = 0; r < GH; r++) for (let c = 0; c < GW; c++) if (grid[r * GW + c]) g.fillRect(ox + (c - GM) * n, oy + (r - GM) * n, n, n);
       }
       g.globalAlpha = 1;
     },
@@ -963,17 +1015,48 @@ const STONY = new Set(["statue", "bronze", "guard"]);
 /** True while he blinks after a hit. */
 const blink = (p: Play) => p.t < p.safeUntil && p.run.state === "running";
 
-/** His pixels this frame, on a grid a pixel bigger all round, made once. */
-const GW = PLAYER.w + 2;
-const GH = PLAYER.h + 4;
+/** His pixels this frame, on a grid a pixel bigger all round than his frames reach, made once. */
+const GM = MARGIN + 1;
+const GW = PLAYER.w + 2 * GM;
+const GH = PLAYER.h + 2 * GM;
 const grid = new Uint8Array(GW * GH);
-function fillGrid(body: Body, walk: number, phase: "day" | "evening" | "twilight" | "night", look: Look) {
+function fillGrid(f: Frame | null, body: Body, walk: number, phase: "day" | "evening" | "twilight" | "night", look: Look) {
   grid.fill(0);
-  playerPixels(body, walk, phase, setCell, look);
+  if (f) pixels(f, body.facing, PLAYER.w, setCell);
+  else playerPixels(body, walk, phase, setCell, look);
 }
 const setCell = (c: number, r: number) => {
-  if (c + 1 >= 0 && c + 1 < GW && r + 1 >= 0 && r + 1 < GH) grid[(r + 1) * GW + c + 1] = 1;
+  if (c + GM >= 0 && c + GM < GW && r + GM >= 0 && r + GM < GH) grid[(r + GM) * GW + c + GM] = 1;
 };
+
+/**
+ * Him, on the text canvas over everything: a faint glow behind him (as the front page's person has), then his frame,
+ * a rectangle a run; while the helmet comes down onto him, the front page's person.
+ */
+function drawHim(g: CanvasRenderingContext2D, f: Frame | null, body: Body, walk: number, phase: string, look: Look, ox: number, oy: number, n: number, alpha: number) {
+  const cx = ox + (PLAYER.w / 2) * n;
+  const cy = oy + (PLAYER.h / 2) * n;
+  g.globalAlpha = alpha;
+  const glow = g.createRadialGradient(cx, cy, 0, cx, cy, 11 * n);
+  const tone = phase === "day" ? "255, 255, 255" : "255, 232, 190";
+  glow.addColorStop(0, `rgba(${tone}, ${phase === "day" ? 0.09 : 0.11})`);
+  glow.addColorStop(1, `rgba(${tone}, 0)`);
+  g.fillStyle = glow;
+  g.fillRect(cx - 11 * n, cy - 11 * n, 22 * n, 22 * n);
+  if (f) {
+    const r = f.runs;
+    for (let i = 0; i < r.length; i += 4) {
+      g.fillStyle = f.ink[r[i + 3]];
+      const x = body.facing > 0 ? r[i] : PLAYER.w - r[i] - r[i + 2];
+      g.fillRect(ox + x * n, oy + r[i + 1] * n, r[i + 2] * n, n);
+    }
+  } else
+    playerPixels(body, walk, phase as "day", (c, r, colour) => {
+      g.fillStyle = colour;
+      g.fillRect(ox + c * n, oy + r * n, n, n);
+    }, look);
+  g.globalAlpha = 1;
+}
 
 /** Records a beaten enemy's look as it was alive: its rectangles and colours, and its two commonest colours. */
 function record(e: Enemy, look: () => void): Shape {

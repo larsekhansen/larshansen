@@ -10,7 +10,7 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 

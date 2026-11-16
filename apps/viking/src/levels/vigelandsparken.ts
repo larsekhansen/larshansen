@@ -12,7 +12,7 @@ import type { Play } from "../game/play";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { clock, parts } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
@@ -244,7 +244,7 @@ function parkTrees(factor: number, foot: number, n: number, fade: number) {
 function figure(x: number, y: number, pose: number, face: 1 | -1, stone: { base: string; light: string; shade: string }, walk = 0) {
   const f = face > 0;
   // Legs: apart and still, or a stride while it walks.
-  const stride = walk ? (Math.floor(walk / 6) % 2 ? 1 : -1) : 0;
+  const stride = walk ? [1, 0, -1, 0][Math.floor(walk / 6) % 4] : 0;
   R(x + 2 + stride, y - 6, 2, 6, stone.shade);
   R(x + 6 - stride, y - 6, 2, 6, stone.base);
   // The body, a little turned, lit from the left.
@@ -619,8 +619,10 @@ function ringer(e: Enemy, t: number) {
     for (let yy = y + 8; yy < FLOOR - 8 * TILE; yy += 12) R(x - 1, yy, 12, 1, V.graniteDark);
     R(x - 2, y - 2, 14, 2, V.graniteShade);
   });
-  figure(x, y - 2, 3, e.dir, WOKEN_GRANITE);
-  R(e.dir > 0 ? x + 6 : x + 3, y - 16, 1, 1, ENEMY.eye);
+  // Its breath between throws (order 23): down a pixel every other second, on its own clock.
+  const b = windingUp(e, t) ? 0 : Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2;
+  figure(x, y - 2 + b, 3, e.dir, WOKEN_GRANITE);
+  R(e.dir > 0 ? x + 6 : x + 3, y - 16 + b, 1, 1, ENEMY.eye);
   // Winding up, its arm goes up with the ring over its head (order 19: a change of outline).
   if (windingUp(e, t)) {
     R(e.dir > 0 ? x + 7 : x + 2, y - 22, 1, 6, WOKEN_GRANITE.base);
