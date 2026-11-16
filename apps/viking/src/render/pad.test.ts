@@ -39,11 +39,18 @@ describe("buttons fit thumbs", () => {
           // Below the bar (on its side one thin row, 40 px; upright at most two rows, 90 px).
           expect(b.y, c).toBeGreaterThanOrEqual(safe.top + (h > w ? 90 : 40));
         }
-        // 8 px or more between any two.
-        for (let i = 0; i < all.length; i++) for (let j = i + 1; j < all.length; j++) expect(gap(all[i][1], all[j][1]), `${all[i][0]} / ${all[j][0]}`).toBeGreaterThanOrEqual(8);
+        // The way in and the shield share a slot (one of them is shown at a time); 8 px or more between any two others.
+        expect(r.enter).toEqual(r.shield);
+        for (let i = 0; i < all.length; i++)
+          for (let j = i + 1; j < all.length; j++) if (all[i][0] !== "enter" || all[j][0] !== "shield") expect(gap(all[i][1], all[j][1]), `${all[i][0]} / ${all[j][0]}`).toBeGreaterThanOrEqual(8);
         // Jump is the biggest, and the lowest on the right; left and right are one pad, wider than tall.
         const area = (b: Rect) => b.w * b.h;
         for (const c of ["dash", "shield", "enter"] as const) expect(area(r.jump)).toBeGreaterThan(area(r[c]));
+        // The right thumb jumps and dashes; the slot the way in and the shield share is over the move pad upright (the
+        // left thumb walks, or does up and down where he cannot walk) and over the jump on its side.
+        for (const c of ["dash", "jump"] as const) expect(r[c].x).toBeGreaterThan(w / 2);
+        if (h > w) expect(r.shield.x + r.shield.w).toBeLessThanOrEqual(r.move.x + r.move.w);
+        else expect(r.shield.x).toBeGreaterThan(w / 2);
         for (const c of ["dash", "shield"] as const) expect(r.jump.y + r.jump.h).toBeGreaterThan(r[c].y + r[c].h);
         expect(r.jump.x).toBeGreaterThan(w / 2);
         expect(r.move.x + r.move.w).toBeLessThan(w / 2);
@@ -51,11 +58,14 @@ describe("buttons fit thumbs", () => {
       });
 });
 
-/** A pad with every control, its fingers wired to synthetic pointer events, and what it held. */
-function rig(w = 390, h = 844) {
+/** A pad with every control (the shield in the slot it shares with the way in, unless `door`), its fingers wired to synthetic pointer events, and what it held. */
+function rig(w = 390, h = 844, door = false) {
   const slots = padLayout(w, h, NONE);
   const log: [Action, boolean][] = [];
-  const thumbs = createThumbs(() => slots, (a, on) => log.push([a, on]));
+  const thumbs = createThumbs(() => {
+    const { enter, shield, ...rest } = slots;
+    return door ? { ...rest, enter } : { ...rest, shield };
+  }, (a, on) => log.push([a, on]));
   const root = new EventTarget();
   const win = Object.assign(new EventTarget(), { innerWidth: w, innerHeight: h });
   const doc = Object.assign(new EventTarget(), { hidden: false });
@@ -195,7 +205,7 @@ describe("a button answers the thumb", () => {
     r.doc.dispatchEvent(new Event("visibilitychange"));
     expect(r.thumbs.held.right).toBe(false);
     r.doc.hidden = false;
-    r.fire("pointerdown", 3, r.mid("enter"));
+    r.fire("pointerdown", 3, r.mid("shield"));
     r.win.dispatchEvent(new Event("pagehide"));
     expect(Object.values(r.thumbs.held).some(Boolean)).toBe(false);
   });
@@ -205,6 +215,17 @@ describe("a button answers the thumb", () => {
     const e = r.fire("pointerdown", 1, { x: 195, y: 300 });
     expect(e.defaultPrevented).toBe(false);
     expect(Object.values(r.thumbs.held).some(Boolean)).toBe(false);
+  });
+
+  test("the slot above the jump is the way in at a door: it holds enter there, down elsewhere", () => {
+    const at = rig(390, 844, true);
+    at.fire("pointerdown", 1, at.mid("enter"));
+    expect(at.thumbs.held.enter).toBe(true);
+    expect(at.thumbs.held.down).toBe(false);
+    const away = rig(390, 844, false);
+    away.fire("pointerdown", 1, away.mid("shield"));
+    expect(away.thumbs.held.down).toBe(true);
+    expect(away.thumbs.held.enter).toBe(false);
   });
 
   test("a control taken away under a finger lets go of it", () => {

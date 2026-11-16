@@ -1272,7 +1272,7 @@ function camera(elapsedMs: number, snap: boolean) {
   const cam = { x: view.camXf - shake.x, y: view.camYf - shake.y };
   const bounds = { width: scene.play.map.width, bottom, top: bar };
   let at = follow(cam, focus, bounds, view, elapsedMs, snap);
-  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing);
+  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing, p.body.vy);
   const nudge = feel?.nudge(state.steps);
   shake.x = nudge?.x ?? 0;
   shake.y = nudge?.y ?? 0;

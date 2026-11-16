@@ -9,8 +9,10 @@ import { DASH_REST, type Play } from "../game/play";
 // The touch pad, in the hand (order 21, ADR 0043). A chunk of its own, fetched on a touch screen only.
 //
 // The buttons lie over the picture, see-through, in the corners a thumb reaches: left and right one wide pad
-// on the left that a thumb slides across without lifting, the way in (or the bench) above it; jump the
-// biggest and lowest on the right, the dash to its left and the shield (Duck on the sledge) above it. Every
+// on the left that a thumb slides across without lifting; jump the biggest and lowest on the right, the dash to
+// its left; and one slot that says what up or down does here (Go in at a door, Sit at a bench, Shield where he
+// has it, Duck on the sledge; Go in, dimmed, where there is nothing to do), over the move pad upright and over
+// the jump on its side. Every
 // one is at least 56 x 56 CSS pixels with 8 or more between, inside the safe areas. The camera keeps him, the
 // two tiles under him and six ahead out from under them (`roomFor` in `game/frame.ts`).
 //
@@ -33,28 +35,30 @@ export interface Insets {
   left: number;
 }
 
-/** Sizes in CSS pixels: none under 56, the jump the biggest. */
-export const SIZE = { move: { w: 156, h: 72 }, enter: { w: 76, h: 60 }, dash: { w: 66, h: 66 }, shield: { w: 66, h: 66 }, jump: { w: 88, h: 88 } } as const;
+/** Sizes in CSS pixels: none under 56, the jump the biggest. The way in and the shield share a slot. */
+export const SIZE = { move: { w: 156, h: 72 }, enter: { w: 70, h: 66 }, dash: { w: 66, h: 66 }, shield: { w: 70, h: 66 }, jump: { w: 88, h: 88 } } as const;
 /** From the safe area's edge, and between two controls. */
 export const EDGE = 12;
 export const GAP = 10;
 
 /**
  * Where each control goes on a screen `w` x `h` (CSS pixels) with these safe-area insets. The same slots
- * whatever is shown, so a thumb finds a button where it was: the move pad in the bottom left corner and the
- * way in above it; the jump in the bottom right corner, the dash to its left a little higher (the jump is the
- * lowest), the shield above the jump.
+ * whatever is shown, so a thumb finds a button where it was: the move pad alone in the bottom left corner; the
+ * jump in the bottom right corner, the dash to its left a little higher (the jump is the lowest), and the slot
+ * above the jump, which the way in and the shield share (one of them shown at a time).
  */
 export function padLayout(w: number, h: number, safe: Insets): Record<Control, Rect> {
   const left = safe.left + EDGE;
   const right = w - safe.right - EDGE;
   const bottom = h - safe.bottom - EDGE;
-  const move = { x: left, y: bottom - SIZE.move.h, ...SIZE.move };
-  const enter = { x: left, y: move.y - GAP - SIZE.enter.h, ...SIZE.enter };
+  // On its side a little narrower: there his six tiles ahead, the way he faces, come nearer the screen's sides.
+  const move = { x: left, y: bottom - SIZE.move.h, ...SIZE.move, w: h > w ? SIZE.move.w : SIZE.move.w - 20 };
   const jump = { x: right - SIZE.jump.w, y: bottom - SIZE.jump.h, ...SIZE.jump };
   const dash = { x: jump.x - GAP - SIZE.dash.w, y: bottom - 24 - SIZE.dash.h, ...SIZE.dash };
-  const shield = { x: jump.x + (SIZE.jump.w - SIZE.shield.w) / 2, y: jump.y - GAP - SIZE.shield.h, ...SIZE.shield };
-  return { move, enter, dash, shield, jump };
+  // Upright, over the move pad: the left thumb walks, or (where he cannot walk: the shield up, the sledge, a door)
+  // does up and down. On its side, over the jump: there a slot over the move pad stands where he starts a level.
+  const up = h > w ? { x: left, y: move.y - GAP - SIZE.shield.h, ...SIZE.shield } : { x: jump.x + (SIZE.jump.w - SIZE.shield.w) / 2, y: jump.y - GAP - SIZE.shield.h, ...SIZE.shield };
+  return { move, enter: up, dash, shield: { ...up }, jump };
 }
 
 /** What each control holds. The move pad is two: left over its left half, right over its right. */
@@ -243,7 +247,7 @@ export interface Pad {
   /** Where each shown control is, in CSS pixels of the window. */
   rects(): Rect[];
   /** Where the camera goes with room left for the buttons (`roomy` in `game/frame.ts`), from where `follow` put it. */
-  room(at: { x: number; y: number }, cam: { x: number; y: number }, focus: Focus, bounds: Bounds, elapsedMs: number, snap: boolean, him: { x: number; y: number }, facing: number): { x: number; y: number };
+  room(at: { x: number; y: number }, cam: { x: number; y: number }, focus: Focus, bounds: Bounds, elapsedMs: number, snap: boolean, him: { x: number; y: number }, facing: number, vy: number): { x: number; y: number };
   /** Puts each control where it goes: after a resize. */
   layout(): void;
   show(s: PadState): void;
@@ -258,13 +262,15 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
   controls.shield = el.querySelector<HTMLElement>('[data-action="down"]')!;
   controls.jump = el.querySelector<HTMLElement>('[data-action="jump"]')!;
   controls.move.setAttribute("aria-label", PAD_WORDS[lang].move);
-  // The safe areas, read from CSS (`env(safe-area-inset-*)`) through an element that has them as its padding.
   // Off until the page's first frame says it is up (while the first level's file comes, it is not).
   el.classList.add("off");
+  // The safe areas, read from CSS (`env(safe-area-inset-*)`) through an element that has them as its padding.
   const probe = el.appendChild(document.createElement("i"));
   probe.className = "safe";
   let slots = padLayout(innerWidth, innerHeight, { top: 0, right: 0, bottom: 0, left: 0 });
-  const isShown = (c: Control) => !controls[c].hidden;
+  // Shown: not hidden by the page (the dash and the shield until he has them) and not set aside for the other one
+  // of the slot the way in and the shield share.
+  const isShown = (c: Control) => !controls[c].hidden && !controls[c].classList.contains("aside");
   const shownRects = () => {
     const r: Partial<Record<Control, Rect>> = {};
     for (const c of Object.keys(slots) as Control[]) if (isShown(c)) r[c] = slots[c];
@@ -310,6 +316,14 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
       // Where the bar ends, for the cards, which keep below it.
       const bar = Math.round(page.header.getBoundingClientRect().bottom);
       if (bar !== barAt) document.body.style.setProperty("--bar", `${(barAt = bar)}px`);
+      // The slot above the jump: the way in at a door or a bench (the page has just said so, `show`); elsewhere the
+      // shield, or Duck on the sledge, once he has it; with neither, the way in, dimmed.
+      const door = controls.enter.classList.contains("show");
+      const shield = !controls.shield.hidden && !door;
+      if (controls.shield.classList.contains("aside") === shield) {
+        controls.shield.classList.toggle("aside", !shield);
+        controls.enter.classList.toggle("aside", shield);
+      }
       pad.show({
         on: h.on,
         dash: !h.still && p.pole && !p.dash && !p.dashSpent && !p.sitting && p.t - p.dashEnded >= DASH_REST,
@@ -337,10 +351,10 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
       help.style.visibility = "hidden";
     },
     rects: () => Object.values(shownRects()),
-    room: (at, cam, focus, bounds, elapsedMs, snap, him, facing) => (el.classList.contains("off") ? at : roomy(at, cam, focus, bounds, view, elapsedMs, snap, { buttons: pad.rects(), unit: view.k / view.dpr, him, facing })),
+    room: (at, cam, focus, bounds, elapsedMs, snap, him, facing, vy) => (el.classList.contains("off") ? at : roomy(at, cam, focus, bounds, view, elapsedMs, snap, { buttons: pad.rects(), unit: view.k / view.dpr, him, facing, vy })),
     layout,
     show(s) {
-      const key = `${+s.on}${+s.dash}${+s.shield}${+controls.dash.hidden}${+controls.shield.hidden}`;
+      const key = `${+s.on}${+s.dash}${+s.shield}${+controls.dash.hidden}${+controls.shield.hidden}${+controls.shield.classList.contains("aside")}`;
       if (key === said) return;
       said = key;
       el.classList.toggle("off", !s.on);

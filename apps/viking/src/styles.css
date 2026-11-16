@@ -621,7 +621,8 @@ body.touch {
   -webkit-tap-highlight-color: transparent;
 }
 
-.pad [hidden] {
+.pad [hidden],
+.pad .aside {
   display: none;
 }
 
@@ -677,7 +678,8 @@ body.touch {
   background: rgba(255, 255, 255, 0.45);
 }
 
-/* The way in is always there, in its place: lit where there is a door or a bench, dimmed where there is none. */
+/* The way in shares its slot with the shield: shown where there is a door or a bench, or where he has no shield;
+   lit at a door or a bench, dimmed where there is none. */
 .pad .enter {
   visibility: visible;
   background: rgba(24, 24, 30, 0.36);

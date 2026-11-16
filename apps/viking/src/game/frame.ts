@@ -1,4 +1,4 @@
-import { follow, type Bounds, type Focus } from "@larshansen/pixelkit/camera";
+import { EASE_MS, follow, type Bounds, type Focus } from "@larshansen/pixelkit/camera";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 
 // Where the camera goes (order 21, ADR 0043): the kit's `follow`, and on a touch screen room under him for the
@@ -27,16 +27,23 @@ export function aheadOf(him: { x: number; y: number }, facing: number, more = 0)
 }
 
 /**
- * The least camera y (the top of the view, world pixels) at which `r` (world pixels) is clear above every
- * button it is over, with the camera's left at `camX`; -Infinity when none is in its way. `buttons` are in CSS
- * pixels of the screen, `unit` CSS pixels to an art pixel.
+ * The least camera y (the top of the view, world pixels), from `camY` up, at which `r` (world pixels) is under no
+ * button, with the camera's left at `camX`: wherever it is under one, he is lifted until it is just above it, and
+ * looked at again (it may then meet one higher up). A button wholly above him or beside him asks nothing. `buttons`
+ * are in CSS pixels of the screen, `unit` CSS pixels to an art pixel.
  */
-export function roomFor(r: Rect, camX: number, unit: number, buttons: readonly Rect[], gap = 4): number {
+export function roomFor(r: Rect, camX: number, camY: number, unit: number, buttons: readonly Rect[], gap = 4): number {
   const x0 = (r.x - camX) * unit;
   const x1 = (r.x + r.w - camX) * unit;
-  let need = -Infinity;
-  for (const b of buttons) if (x1 > b.x - gap && x0 < b.x + b.w + gap) need = Math.max(need, r.y + r.h - (b.y - gap) / unit);
-  return need;
+  let y = camY;
+  for (let tries = 0; tries <= buttons.length; tries++) {
+    const top = (r.y - y) * unit;
+    const bottom = (r.y + r.h - y) * unit;
+    const under = buttons.find((b) => x1 > b.x - gap && x0 < b.x + b.w + gap && bottom > b.y - gap + 0.01 && top < b.y + b.h + gap);
+    if (!under) break;
+    y = r.y + r.h - (under.y - gap) / unit;
+  }
+  return y;
 }
 
 /** The buttons over the picture, and how to see him against them. */
@@ -46,10 +53,12 @@ export interface Room {
   /** His top left as drawn. */
   him: { x: number; y: number };
   facing: number;
+  /** How fast he falls (world pixels a step): the camera, easing, lags that times its time constant behind him. */
+  vy?: number;
 }
 
-/** Three tiles more each way: the camera starts to make room before a button is in the way, so it eases there. */
-const EARLY = 3 * TILE;
+/** A tile and a half more each way: the camera starts to make room before a button is in the way, so it eases there. */
+const EARLY = Number(process.env.EARLY ?? 1.5) * TILE;
 
 /**
  * Where the camera is after `elapsedMs` (the kit's `follow`), with room made under him for the buttons: as he
@@ -64,12 +73,29 @@ export function frame(cam: { x: number; y: number }, focus: Focus, bounds: Bound
 /** `at`, where `follow` put the camera, moved so the buttons leave him room (see `frame`). */
 export function roomy(at: { x: number; y: number }, cam: { x: number; y: number }, focus: Focus, bounds: Bounds, size: { w: number; h: number }, elapsedMs: number, snap: boolean, room: Room): { x: number; y: number } {
   if (room.buttons.length === 0) return at;
-  const early = roomFor(aheadOf(room.him, room.facing, EARLY), at.x, room.unit, room.buttons);
-  if (early > -Infinity) {
-    // The kit's camera rises no higher than `-top` and goes no lower than `bottom`: ask it for at least `early`.
-    const top = Math.min(bounds.top ?? 0, -early);
-    at.y = follow(cam, focus, { ...bounds, top, bottom: Math.max(bounds.bottom, early + size.h) }, size, elapsedMs, snap).y;
+  // He stands at most two thirds of the way down the screen above the pad (ADR 0021's two thirds, counted from the
+  // top of its bottom row), upright and on its side, so the pad lies over ground he has passed, not over him; the bottom row
+  // of the map goes on down under him where the view looks below it.
+  {
+    // The pad's bottom row (the move pad, the dash, the jump): a button raised above it in a corner is left to the lift.
+    const low = Math.max(...room.buttons.map((b) => b.y + b.h));
+    const pad = size.h - Math.min(...room.buttons.filter((b) => b.y + b.h >= low - 30).map((b) => b.y)) / room.unit;
+    const bottom = Math.max(bounds.bottom, Math.round(focus.y + size.h / 3 + (2 * pad) / 3));
+    if (bottom > bounds.bottom) {
+      bounds = { ...bounds, bottom };
+      at = follow(cam, focus, bounds, size, elapsedMs, snap);
+    }
   }
-  at.y = Math.max(at.y, roomFor(aheadOf(room.him, room.facing), at.x, room.unit, room.buttons));
+  // The camera eases, so a falling man is a step's fall times its time constant below where it means him to be: it
+  // looks that much further down, and is there when he is.
+  const early = aheadOf(room.him, room.facing, EARLY);
+  early.h += Math.max(0, room.vy ?? 0) * (EASE_MS / (1000 / 60));
+  const lifted = roomFor(early, at.x, at.y, room.unit, room.buttons);
+  if (lifted > at.y) {
+    // The kit's camera rises no higher than `-top` and goes no lower than `bottom`: ask it for at least `lifted`.
+    const top = Math.min(bounds.top ?? 0, -lifted);
+    at.y = follow(cam, focus, { ...bounds, top, bottom: Math.max(bounds.bottom, lifted + size.h) }, size, elapsedMs, snap).y;
+  }
+  at.y = roomFor(aheadOf(room.him, room.facing), at.x, at.y, room.unit, room.buttons);
   return at;
 }
