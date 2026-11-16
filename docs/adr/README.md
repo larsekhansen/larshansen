@@ -58,6 +58,7 @@ Lars before reversing one of his.
 | [0046](0046-frames-and-shadows.md) | Everything that moves has frames picked from what the rules keep (his breath, a run timed to distance, rising and falling, landing, the dash, the shield, sitting, a hit; every enemy an idle, a cycle, a wind-up pose, a three-frame death) and a shadow on the ground under it; the alert mark swells twice | planner (order 23) | holds |
 | [0047](0047-depth.md) | A receding plane of strips for water and snow, pieces of a far layer at speeds of their own (five or more between sky and lane), a boat that drifts, something in front of him only where nothing he must read is ahead | planner (order 23) | holds; within 0036 |
 | [0048](0048-the-edge.md) | The jump still works 10 steps after walking off an edge (6 before); measured with the reach search and the sloppy player | planner (order 23) | holds; the one change to 0003's `JUMP` |
+| [0050](0050-the-glamour.md) | The glamour: neon is a spell the Neon Invaders put on Oslo; natural is Oslo; a stomp breaks it and the creature goes home; a neon spectrum; the story a joke told as one | Lars with the planner (before order 27) | holds; 0049 is order 26's |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".
