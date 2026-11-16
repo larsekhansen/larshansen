@@ -3,7 +3,7 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, LAND, METAL, PALETTE, PLANTS, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, LAND, METAL, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as K from "@larshansen/pixelkit/swatches/sledge";
@@ -12,7 +12,10 @@ import type { Enemy, EnemyDef } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../alive/parts";
+import { clock, forced, moving, step4 } from "../alive/parts";
+import { FOE_INK, drawFoe } from "../alive/foes";
+import { frame, paint, type Piece } from "../alive/frames";
+import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
@@ -520,22 +523,24 @@ function midtstuen(v: View) {
   void v;
 }
 
-/** The sledge: a wooden kick-sledge with dark runners curling up at the front. */
-function sledgeAt(x: number, y: number, color: string = K.sledgeWood) {
-  R(x - 7, y - 4, 14, 3, color);
-  R(x - 7, y - 4, 14, 1, mix(color, WHITE, 0.3));
-  R(x - 8, y - 1, 17, 1, K.sledgeRunner);
-  R(x + 8, y - 4, 1, 3, K.sledgeRunner);
-  R(x + 9, y - 5, 1, 2, K.sledgeRunner);
+/**
+ * The sledge, drawn as a frame (order 25; way 3, ADR 0045), 18 x 5 from its runner's back end: a wooden seat lit along
+ * its top with the gaps between its slats, its struts, dark runners with a glint, curling up at the front.
+ */
+const SLEDGE_INK: Record<string, string> = { H: mix(K.sledgeWood, WHITE, 0.3), w: K.sledgeWood, g: mix(K.sledgeWood, INK, 0.35), s: mix(K.sledgeWood, INK, 0.2), r: K.sledgeRunner, R: mix(K.sledgeRunner, WHITE, 0.35) };
+const SLEDGE_FRAME = frame("the sledge", SLEDGE_INK, [[".................R", ".HHHHHHHHHHHHHH.Rr", ".wwgwwwwgwwwwgw.r.", "..s..s....s..s.r..", "rrRrrrrrRrrrrrrr.."]]);
+function sledgeAt(x: number, y: number) {
+  paint(SLEDGE_FRAME, x - 8, y - 5, 1, 18);
 }
 
-/** Lying back on the sledge to duck: helmet at the back, legs out along it. */
+/**
+ * Lying back on the sledge to duck, drawn as a frame in his own colours (order 25; until then this was the one picture
+ * of him still in rectangles): his helmet and pompom at the back, his face turned up, the cape under him, the tunic and
+ * belt, his legs out along the sledge to his boots at its front. 18 x 5.
+ */
+const LYING = frame("lying back on the sledge", HIM_INK, [["..Ww..............", ".jiIIR............", "rrrRRrS...........", ".zsSeScCbBbynDDDKL", "..zssScxbbbyydddkk"]]);
 function lyingBack(x: number, y: number) {
-  R(x - 8, y - 9, 5, 4, P.ironDark);
-  R(x - 8, y - 9, 5, 1, mix(P.ironDark, WHITE, 0.3));
-  R(x - 4, y - 8, 3, 3, mix(P.sail, P.sailStripe, 0.2));
-  R(x - 2, y - 8, 7, 4, SWEATER);
-  R(x + 4, y - 7, 6, 2, P.ironDark);
+  paint(LYING, x - 9, y - 10, 1, 18);
 }
 
 /**
@@ -548,34 +553,67 @@ export function sledgerReady(e: Enemy, him: number, t: number) {
 }
 
 /**
- * A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, up on the bank,
- * it is out of the way and harmless, outlined in the calm pale (order 22: the page outlines it so while it is
- * calm). About to set off, it leans forward over the sledge's nose and digs its mittens into the snow either
- * side to push (order 20). 19 x 15.
+ * A sledger, drawn as frames (order 25; way 3, ADR 0045), 20 x 15 from its runners: a kid in a bobble hat (poison green,
+ * lit at the top left), a face with an eye, a puffy jacket (pink, or plum every other one) lit across the shoulders and
+ * shaded to its back, legs out along an orange sledge lit along its top, plum runners curling up at its nose. Sitting it
+ * breathes; riding, its scarf streams back and the bumps jolt it (four frames by the distance it goes). About
+ * to set off it leans forward over the nose and digs its mittens into the snow either side to push (order 20). Pulled off
+ * at the end of its stretch, up on the bank, it is out of the way and harmless, outlined in the calm pale (order 22: the
+ * page outlines it so while it is calm).
  */
+const SLEDGE = [
+  "OOOOOOOOOOOOOOOOOd..",
+  "ooooooooooooooooodd.",
+  ".l...l......l...l.d.",
+  "dMddddddMdddddddMdd."
+];
+const SLEDGER_KID = [
+  ".....GgG............",
+  "....GGGgg...........",
+  "....gggggg..........",
+  "....OOOOeOa.........",
+  "....OOOOOO..........",
+  "...JJJJJJJ..........",
+  "...JjjjjjjjJa.......",
+  "...jjjjjjjk.........",
+  "...jjjjjjjkkkk......",
+  "...kkkkkkkkkkklll..."
+];
+const SLEDGER_LEAN = [
+  "........GgG.........",
+  ".......GGGgg........",
+  ".......gggggg.......",
+  ".......OOOOOeOa.....",
+  "......JJOOOOOO......",
+  ".....JJjjjjjjjJJ....",
+  "....JjjjjjjjjjjjJ...",
+  "....jjjjjjjjjkkkJ...",
+  "...jjjjjjjjkkk..ja..",
+  "...kkkkkkkkkklll.aa."
+];
+const SCARF = [["Gg..", ".gg."], ["....", "Ggg."], ["G...", ".gg."], ["....", ".Ggg"]];
+const SLEDGER_INK = [{ J: ENEMY.pink, j: ENEMY.pink, k: ENEMY.plum }, { J: ENEMY.plumLight, j: ENEMY.plum, k: ENEMY.plumDark }];
+const sledgerLooks = (coat: Record<string, string>) => {
+  const ink = { ...FOE_INK, ...coat };
+  const f = (label: string, kid: readonly string[], dy: number, scarf?: number) =>
+    frame(`sledger, ${label}`, ink, [SLEDGE, 0, 10], [kid, 0, dy], ...(scarf === undefined ? [] : [[SCARF[scarf], 0, 5 + dy] as Piece]));
+  return {
+    sit: [f("sitting", SLEDGER_KID, 0), f("sitting, breathing", SLEDGER_KID, 1)],
+    // Riding: the kid jolted down a pixel on every other bump of the snow, the scarf streaming.
+    ride: [0, 1, 2, 3].map((k) => f(`riding ${k + 1}`, SLEDGER_KID, k % 2 ? 0 : 1, k)),
+    lean: f("leaning in to push off", SLEDGER_LEAN, 0)
+  };
+};
+const SLEDGERS = SLEDGER_INK.map(sledgerLooks);
 function sledgerArt(e: Enemy, v: View) {
-  const r = parts(e.calm ? { ...e, x: e.x + 18, y: e.y - 7 } : e, 18);
-  const coat = e.def.c % 2 ? ENEMY.plum : ENEMY.pink;
-  r(0, -5, 17, 4, ENEMY.orange);
-  r(0, -5, 17, 1, ENEMY.orangeLight);
-  r(-1, -1, 20, 1, ENEMY.plum);
-  r(17, -5, 1, 4, ENEMY.plum);
-  r(18, -6, 1, 2, ENEMY.plum);
-  if (sledgerReady(e, v.him.x, v.t)) {
-    // Leaning forward, arms down past the sledge's nose, mittens in the snow.
-    r(7, -10, 8, 5, coat);
-    r(13, -9, 4, 2, coat);
-    r(17, -8, 2, 6, coat);
-    r(19, -3, 2, 3, ENEMY.orangeLight);
-    r(9, -13, 6, 3, ENEMY.orangeLight);
-    r(8, -15, 8, 2, ENEMY.poison);
-    r(13, -12, 1, 1, ENEMY.eye);
-    return;
-  }
-  r(5, -10, 8, 5, coat);
-  r(6, -13, 6, 3, ENEMY.orangeLight);
-  r(5, -15, 8, 2, ENEMY.poison);
-  r(10, -12, 1, 1, ENEMY.eye);
+  const l = SLEDGERS[e.def.c % 2];
+  const at = e.calm ? { ...e, x: e.x + 18, y: e.y - 7 } : e;
+  const ready = !e.calm && sledgerReady(e, v.him.x, v.t);
+  const own = clock.t + (e.def.offset ?? 0);
+  // Riding once it has set off (for the census, whenever it is drawn moving).
+  const riding = !e.calm && (forced.state ? moving(e) : e.n !== undefined);
+  const f = ready ? l.lean : riding ? l.ride[view.reduced ? 0 : step4(e)] : l.sit[Math.floor(own / 60) % 2];
+  drawFoe(at, f, 18, 15);
 }
 
 const PORCH: LedgeLook = { body: K.logs, top: mix(K.carved, WHITE, 0.2), edge: mix(K.logs, INK, 0.3), joint: K.logs };

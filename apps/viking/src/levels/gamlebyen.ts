@@ -8,13 +8,15 @@ import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
+import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
 import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../alive/parts";
+import { clock, moving, step4 } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, paint, stamp as stampFrame, type Frame, type Piece } from "../alive/frames";
 import { calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
@@ -754,81 +756,168 @@ function torchlit(x: number): { k: number; side: 1 | -1 } {
   return best;
 }
 
+// The serpent's pixels (order 25; way 3, ADR 0045): five tones of scale from a moonlit ridge to the shadow, its belly's
+// plates in three, its crest's spines in three, an eye with its slit; shaded pixel by pixel, lit from above and from the
+// side its back is on. Every tell is where it was: the ring of foam and the swelling throat in the "now" violet, the fin
+// breaking the water before its tail, the stars over its dazed head.
+const SCALE: Record<string, string> = {
+  R: mix(G.serpentLight, WHITE, 0.3),
+  L: G.serpentLight,
+  M: mix(G.serpent, G.serpentLight, 0.45),
+  B: G.serpent,
+  S: G.serpentDark,
+  D: mix(G.serpentDark, INK, 0.4),
+  P: mix(G.serpentBelly, WHITE, 0.3),
+  Q: G.serpentBelly,
+  q: G.serpentBellyDark,
+  C: G.crestLight,
+  c: G.crest,
+  k: mix(G.crest, INK, 0.3),
+  Y: G.eye,
+  y: mix(G.eye, G.crest, 0.45),
+  n: INK,
+  T: G.tooth,
+  m: mix(G.cloth, INK, 0.45),
+  t: mix(G.cloth, WHITE, 0.2)
+};
+
+/** A row's runs: `tone(b)` for b from 0 to w - 1, joined where they agree, drawn from x0 left to right or mirrored. */
+function runs(x0: number, y: number, w: number, dir: 1 | -1, tone: (b: number) => string) {
+  let start = 0;
+  let c = tone(0);
+  for (let b = 1; b <= w; b++) {
+    const k = b < w ? tone(b) : "";
+    if (k === c) continue;
+    const n = b - start;
+    R(dir > 0 ? x0 + start : x0 + w - start - n, y, n, 1, SCALE[c]);
+    start = b;
+    c = k;
+  }
+}
+
 /**
- * One row of its body, `w` wide round cx, its belly on the side `dir`: a dark outline along its back, a
- * moonlit ridge, scales in rows, and the pale plates of its belly. `n` is the row's number along the body.
+ * The tone of a scale at `b` across a body from its back (0) and `n` along it: the back's edge in shadow, a moonlit
+ * ridge two pixels wide, then scales four wide and three long (each lit at its crown, shaded at its edges, its lower
+ * rim in shadow; every other row of them two pixels on), a tone darker toward the belly.
+ */
+const SCALE_ROWS = ["SMLM", "SBMB", "BSSS"];
+const DEEPER: Record<string, string> = { L: "M", M: "B", B: "S", S: "D" };
+function scaleTone(b: number, w: number, n: number): string {
+  if (b === 0) return "S";
+  if (b <= 2) return (n + b) % 3 === 0 ? "M" : b === 1 ? "R" : "L";
+  const ch = SCALE_ROWS[n % 3][(b + (Math.floor(n / 3) % 2 ? 2 : 0)) % 4];
+  return (b - 3) / Math.max(1, w - 7) > 0.55 ? DEEPER[ch] : ch;
+}
+
+/**
+ * One row of its body, `w` wide round cx, its belly on the side `dir`: a dark edge along its back, a moonlit ridge,
+ * scales in rows, and the pale plates of its belly (lit, then shaded, a line between plates). `n` is the row's number
+ * along the body.
  */
 function bodyRow(cx: number, y: number, w: number, dir: 1 | -1, n: number) {
   const x0 = cx - Math.floor(w / 2);
-  R(x0, y, w, 1, G.serpent);
-  for (let b = 0; b < w; b++) {
-    const x = dir > 0 ? x0 + b : x0 + w - 1 - b;
-    let c: string | null = null;
-    if (b === 0) c = G.serpentDark;
-    else if (b <= 2) c = (n + b) % 3 === 0 ? G.serpent : G.serpentLight;
-    else if (b >= w - 4) c = b === w - 1 || n % 3 === 0 ? G.serpentBellyDark : G.serpentBelly;
-    else if ((n + (b >> 1)) % 3 === 0) c = G.serpentDark;
-    if (c) R(x, y, 1, 1, c);
-  }
+  runs(x0, y, w, dir, (b) => (b >= w - 4 ? (b === w - 1 || n % 3 === 0 ? "q" : b === w - 4 ? "Q" : "P") : scaleTone(b, w, n)));
   // After the night's tint: a little of its own colour back, a moonlit back, its pale belly.
   light(x0 + 1, y, w - 2, 1, "soft", "rgba(96, 160, 128, 0.16)");
   if (n % 2 === 0) light(dir > 0 ? x0 : x0 + w - 1, y, 1, 2, "soft", RIM);
   if (n % 3 === 1) light(dir > 0 ? x0 + w - 4 : x0, y, 3, 1, "soft", BELLY);
 }
 
-/** A spine of its crest from (x, y), `h` long, leaning back from the way it faces. */
+/** A spine of its crest from (x, y), `h` long, leaning back from the way it faces: lit on its leading edge, its tip pale. */
 function spine(x: number, y: number, h: number, dir: 1 | -1) {
-  for (let i = 0; i < h; i++) R(x - dir * Math.round(i * 0.5), y - i, i === h - 1 ? 1 : 2, 1, i === h - 1 ? G.crestLight : G.crest);
+  for (let i = 0; i < h; i++) {
+    const sx = x - dir * Math.round(i * 0.5);
+    if (i === h - 1) R(sx, y - i, 1, 1, SCALE.C);
+    else {
+      R(sx, y - i, 2, 1, SCALE.c);
+      R(dir > 0 ? sx + 1 : sx, y - i, 1, 1, i % 2 ? SCALE.k : SCALE.C);
+    }
+  }
+}
+
+/** Its head's frames, made once: the jaw shut or dropped open (1 to 4), the eye open or shut (dazed), the spines up or flat. */
+const HEADS = new Map<string, Frame>();
+/** Its head as a map 40 wide and 26 tall, facing right: column 24 is the head's x, row 10 its skull's top. */
+function headFrame(open: number, dazed: boolean): Frame {
+  const key = `${open} ${dazed}`;
+  const had = HEADS.get(key);
+  if (had) return had;
+  const g = Array.from({ length: 26 }, () => Array<string>(40).fill("."));
+  const put = (dx: number, dy: number, ch: string) => {
+    const r = dy + 10;
+    const c = dx + 24;
+    if (r >= 0 && r < 26 && c >= 0 && c < 40) g[r][c] = ch;
+  };
+  // The fan of spines behind the skull (flat back along it when dazed).
+  if (dazed) for (let k = 0; k < 4; k++) for (let i = 0; i < 4; i++) put(-14 - k * 3 + i, 2 + (k % 2), i === 0 ? "C" : i === 3 ? "k" : "c");
+  else
+    for (const [dx, h] of [[-10, 7], [-7, 10], [-4, 8], [-1, 5]] as const)
+      for (let i = 0; i < h; i++) {
+        const sx = dx - Math.round(i * 0.5);
+        if (i === h - 1) put(sx, 1 - i, "C");
+        else {
+          put(sx, 1 - i, "c");
+          put(sx + 1, 1 - i, i % 2 ? "k" : "C");
+        }
+      }
+  // Skull and cheek: its ridge lit, the back of its skull in shadow, scales, a lit cheek over the jaw.
+  for (let dy = 0; dy < 8; dy++)
+    for (let dx = -12; dx <= 1; dx++) {
+      if (dy === 0 && (dx < -10 || dx > 0)) continue;
+      let ch = dy === 0 ? "R" : dy === 1 ? "L" : dy === 2 ? (dx < -5 ? "M" : "B") : "B";
+      if (dx === -12) ch = dy < 2 ? "." : "S";
+      else if (dx === -11 && dy > 1) ch = "M";
+      else if (dy >= 5 && dx >= -8 && dx <= -3) ch = dy === 5 ? "L" : "M";
+      else if (ch === "B" && (dx * 3 + dy * 5 + 70) % 7 === 0) ch = "S";
+      else if (dy === 7 && ch === "B") ch = "S";
+      if (ch !== ".") put(dx, dy, ch);
+    }
+  // Brow, and the eye under it (shut: a dark curve).
+  for (let dx = -2; dx <= 3; dx++) for (let dy = 1; dy <= 2; dy++) put(dx, dy, dy === 1 && dx < 1 ? "B" : "S");
+  if (dazed) {
+    for (let dx = -1; dx <= 2; dx++) put(dx, 4, "n");
+    put(-2, 3, "n");
+  } else for (let dx = -1; dx <= 2; dx++) for (let dy = 3; dy <= 5; dy++) put(dx, dy, dx === 0 ? "n" : dx === 2 || dy === 5 ? "y" : "Y");
+  // The snout, tapering to its tip, lit along its top; a nostril.
+  for (let dx = 2; dx <= 13; dx++) {
+    const top = dx > 10 ? 4 : 3;
+    for (let dy = top; dy <= 7; dy++) put(dx, dy, dy === top ? "L" : dy === 4 ? "M" : dy === 7 ? "S" : (dx * 5 + dy * 3) % 9 === 0 ? "S" : "B");
+  }
+  for (let dy = 5; dy <= 7; dy++) put(14, dy, "D");
+  put(12, 4, "n");
+  // The jaw: shut under the snout, or dropped open with the teeth and the pale inside showing.
+  const jy = 8 + open;
+  for (let dx = -9; dx <= 12; dx++) {
+    put(dx, jy, dx < 2 ? "P" : "Q");
+    put(dx, jy + 1, "Q");
+    put(dx, jy + 2, "q");
+  }
+  put(13, jy, "Q");
+  put(13, jy + 1, "q");
+  if (open > 0) {
+    for (let dx = -2; dx <= 12; dx++) for (let dy = 8; dy < 8 + open; dy++) put(dx, dy, "m");
+    for (let k = 0; k < 4; k++) {
+      put(1 + k * 3, 8, "T");
+      if (open > 1) put(1 + k * 3, 9, "T");
+      put(2 + k * 3, jy - 1, "T");
+    }
+  } else for (let k = 0; k < 3; k++) put(4 + k * 3, 8, "T");
+  if (dazed) for (let dx = 13; dx <= 15; dx++) put(dx, jy + 1, "t");
+  const f = frame(`serpent's head${dazed ? ", dazed" : ""}${open ? `, jaw open ${open}` : ""}`, SCALE, [g.map((r) => r.join(""))]);
+  HEADS.set(key, f);
+  return f;
 }
 
 /**
- * Its head, `dir` the way it faces, (x, y) the top of its skull's middle: a long skull with a fan of
- * spines behind it, a brow, a yellow eye with a slit, a long snout with a nostril, a jaw that drops open to
- * spit with its teeth and the pale inside showing; after the night's tint, eye-shine and a moonlit rim.
- * Shut-eyed and slack-jawed (`dazed`), the same head lies on the quay.
+ * Its head, `dir` the way it faces, (x, y) the top of its skull's middle: a long skull with a fan of spines behind it, a
+ * brow, a yellow eye with a slit, a long snout with a nostril, a jaw that drops open to spit with its teeth and the pale
+ * inside showing; after the night's tint, eye-shine and a moonlit rim. Shut-eyed and slack-jawed (`dazed`), the same head
+ * lies on the quay.
  */
 function serpentHead(x: number, y: number, dir: 1 | -1, open: number, dazed = false) {
-  // In the head's own pixels, facing right from its back end (-12): mirrored when it faces left.
-  const r = (dx: number, dy: number, w: number, h: number, c: string) => R(dir > 0 ? x + dx : x - dx - w, y + dy, w, h, c);
+  paint(headFrame(open, dazed), dir > 0 ? x - 24 : x - 16, y - 10, dir, 40);
   const lt = (dx: number, dy: number, w: number, h: number, c: string) => light(dir > 0 ? x + dx : x - dx - w, y + dy, w, h, "soft", c);
-  // The fan of spines behind the skull (flat back along it when dazed).
-  if (dazed) for (let k = 0; k < 4; k++) r(-14 - k * 3, 2 + (k % 2), 4, 1, G.crest);
-  else for (const [dx, h] of [[-10, 7], [-7, 10], [-4, 8], [-1, 5]] as const) spine(dir > 0 ? x + dx : x - dx, y + 1, h, dir);
-  // Skull and cheek.
-  r(-11, 1, 13, 8, G.serpent);
-  r(-10, 0, 11, 1, G.serpent);
-  r(-11, 1, 13, 1, G.serpentLight);
-  r(-12, 2, 1, 6, G.serpentDark);
-  r(-8, 5, 6, 3, G.serpentLight);
-  // Brow, and the eye under it (shut: a dark curve).
-  r(-2, 1, 6, 2, G.serpentDark);
-  if (dazed) {
-    r(-1, 4, 4, 1, INK);
-    r(-2, 3, 1, 1, INK);
-  } else {
-    r(-1, 3, 4, 3, G.eye);
-    r(0, 3, 1, 3, INK);
-    lt(-1, 3, 4, 3, G.eye);
-  }
-  // The snout, tapering to its tip; a nostril.
-  r(2, 3, 9, 5, G.serpent);
-  r(11, 4, 3, 4, G.serpent);
-  r(2, 3, 9, 1, G.serpentLight);
-  r(12, 4, 1, 1, INK);
-  r(14, 5, 1, 3, G.serpentDark);
-  // The jaw: shut under the snout, or dropped open with the teeth and the pale inside showing.
-  const jy = 8 + open;
-  r(-9, jy, 22, 3, G.serpentBelly);
-  r(-9, jy + 2, 22, 1, G.serpentBellyDark);
-  r(12, jy, 2, 2, G.serpentBelly);
-  if (open > 0) {
-    r(-2, 8, 15, open, mix(G.cloth, INK, 0.45));
-    for (let k = 0; k < 4; k++) {
-      r(1 + k * 3, 8, 1, 2, G.tooth);
-      r(2 + k * 3, jy - 1, 1, 1, G.tooth);
-    }
-  } else for (let k = 0; k < 3; k++) r(4 + k * 3, 8, 1, 1, G.tooth);
-  if (dazed) r(13, jy + 1, 3, 1, mix(G.cloth, WHITE, 0.2));
+  if (!dazed) lt(-1, 3, 4, 3, G.eye);
   // Its rim in the dark: along the skull and the snout.
   lt(-10, -1, 11, 1, RIM);
   lt(1, 2, 13, 1, RIM);
@@ -862,6 +951,25 @@ function streaming(x: number, top: number, base: number, age: number, n: number)
   for (let k = 0; k < 5; k++) R(x - 12 + k * 6, base - 3 - ((age + k * 2) % 4), 2, 2, G.foam);
 }
 
+/** A hump of its coils, 23 wide, `h` high out of the water and a pixel under it: lit on its crown, scaled, three spines. */
+function coilFrame(h: number): Frame {
+  const g = Array.from({ length: h + 4 }, () => Array<string>(23).fill("."));
+  const base = h + 2;
+  for (let i = -11; i <= 11; i++) {
+    const top = base - Math.round(h * Math.sqrt(1 - (i / 12) ** 2));
+    for (let y = top; y <= base + 1; y++) {
+      const k = y - top;
+      g[y][i + 11] = k === 0 ? (i < 3 ? "R" : "L") : k === 1 ? (i < 0 ? "L" : "M") : y >= base ? "S" : scaleTone(k + 1, 9, i + 11);
+    }
+  }
+  for (const i of [-2, 0, 2]) {
+    g[base - h - 2][i + 11] = "C";
+    g[base - h - 1][i + 11] = "c";
+  }
+  return frame(`serpent's coil, ${h} high`, SCALE, [g.map((r) => r.join(""))]);
+}
+const COILS = [coilFrame(5), coilFrame(6)];
+
 /** Its coils between rises: humps of its back arching out of the water under the quay, moving on to where it will come up. */
 function coils(s: Serpent, v: View) {
   const floor = s.def.floor;
@@ -870,29 +978,43 @@ function coils(s: Serpent, v: View) {
   for (let k = 0; k < 2; k++) {
     const x = Math.round(neckX(s) - (k + 1) * 34 * (s.dir || 1) + Math.sin(go * 0.05 + k) * 6);
     const h = 5 + k;
-    for (let i = -11; i <= 11; i++) {
-      const y = water - Math.round(h * Math.sqrt(1 - (i / 12) ** 2));
-      R(x + i, y, 1, water - y + 2, i % 4 === 0 ? G.serpentDark : G.serpent);
-      if (i % 2 === 0) light(x + i, y - 1, 1, 1, "soft", RIM);
-    }
-    for (let i = -2; i <= 2; i += 2) R(x + i, water - h - 2, 1, 2, G.crest);
+    stampFrame(COILS[k], x - 11, water - h - 2);
+    for (let i = -11; i <= 11; i += 2) light(x + i, water - Math.round(h * Math.sqrt(1 - (i / 12) ** 2)) - 1, 1, 1, "soft", RIM);
     R(x - 14, water, 4, 1, G.foam);
     R(x + 11, water, 4, 1, G.foam);
   }
 }
 
-/** Its tail's fin: a fan, ribbed, broad at the top, leaning back from the way it sweeps; `h` tall from (x, y). */
+/** Its tail's fin: a fan, ribbed, broad at the top, leaning back from the way it sweeps, lit along its leading edge; `h` tall from (x, y). */
 function fin(x: number, y: number, h: number, d: 1 | -1) {
   for (let i = 0; i < h; i++) {
     const w = 2 + Math.round(i * 0.7);
     const x0 = x - d * Math.round(i * 0.45) - (d > 0 ? w : 0);
-    R(x0, y - i, w, 1, G.crest);
-    for (let k = 1; k < w; k += 2) R(x0 + k, y - i, 1, 1, mix(G.crest, INK, 0.3));
+    R(x0, y - i, w, 1, SCALE.c);
+    for (let k = 1; k < w; k += 2) R(x0 + k, y - i, 1, 1, SCALE.k);
+    R(d > 0 ? x0 + w - 1 : x0, y - i, 1, 1, SCALE.C);
   }
   const tw = 2 + Math.round((h - 1) * 0.7);
-  R(x - d * Math.round((h - 1) * 0.45) - (d > 0 ? tw : 0), y - h, tw, 1, G.crestLight);
+  R(x - d * Math.round((h - 1) * 0.45) - (d > 0 ? tw : 0), y - h, tw, 1, SCALE.C);
   light(x - d * Math.round((h - 1) * 0.45) - (d > 0 ? tw : 0), y - h - 1, tw, 1, "soft", RIM);
 }
+
+/**
+ * Its tail's body behind the fin, sweeping right: thirty columns low over the planks and down into the water behind,
+ * its back lit, scaled, its belly pale; and the fin's root. Column 36 is the fin's x, row 8 the quay's top.
+ */
+const TAIL_BODY = (() => {
+  const g = Array.from({ length: 29 }, () => Array<string>(40).fill("."));
+  for (let i = 0; i < 30; i++) {
+    const top = -7 + Math.round(Math.max(0, i - 10) ** 2 / 14);
+    for (let y = top; y < Math.min(TILE + 4, top + 8); y++) {
+      const k = y - top;
+      g[y + 8][36 - 4 - i] = k <= 1 ? "RL"[k] : k >= 6 ? "Qq"[k - 6] : scaleTone(k + 1, 10, i);
+    }
+  }
+  for (let y = -7; y < 0; y++) for (let dx = -3; dx <= 3; dx++) g[y + 8][36 + dx] = y === -7 ? "R" : y === -1 ? "S" : dx === 3 ? "S" : dx === -3 ? "L" : (dx + y) % 3 === 0 ? "M" : "B";
+  return frame("serpent's tail", SCALE, [g.map((r) => r.join(""))]);
+})();
 
 /** Its tail along the quay: a hump of its body out of the water over the planks, the fin leading, spray. */
 function tailArt(s: Serpent, v: View) {
@@ -912,16 +1034,13 @@ function tailArt(s: Serpent, v: View) {
     return;
   }
   const x = Math.round(tb.x + tb.w / 2);
-  // The body behind the fin: low over the planks, then down into the water behind it.
-  for (let i = 0; i < 30; i++) {
-    const xx = x - d * (4 + i);
+  paint(TAIL_BODY, d > 0 ? x - 36 : x - 3, floor - 8, d, 40);
+  for (let i = 0; i < 30; i += 2) light(x - d * (4 + i), floor - 8 + Math.round(Math.max(0, i - 10) ** 2 / 14), 1, 1, "soft", RIM);
+  for (let i = 2; i < 30; i += 5) {
     const top = floor - 7 + Math.round(Math.max(0, i - 10) ** 2 / 14);
-    for (let y = top; y < Math.min(water + 4, top + 8); y++) R(xx, y, 1, 1, y === top ? G.serpentLight : y >= top + 6 ? G.serpentBelly : (y + i) % 3 === 0 ? G.serpentDark : G.serpent);
-    if (i % 2 === 0) light(xx, top - 1, 1, 1, "soft", RIM);
-    if (i % 5 === 2 && top < water - 4) spine(xx, top, 3, d);
+    if (top < water - 4) spine(x - d * (4 + i), top, 3, d);
   }
   fin(x + d * 3, floor - 4, 14, d);
-  R(x - 3, floor - 7, 7, 7, G.serpent);
   if (!view.reduced) for (let k = 0; k < 6; k++) R(x + d * 6 - d * k * 5, floor - 3 - ((v.t + k * 2) % 6), 2, 2, G.foam);
 }
 
@@ -1020,111 +1139,149 @@ function runeRising(s: Serpent, v: View, rune: { x: number; y: number }) {
   if (!view.reduced) for (let i = 0; i < 4; i++) R(rune.x + 3 + i * 3, y + 16 + ((v.t + i * 4) % 10), 1, 2, G.foam);
 }
 
+/** The ball of brine, 8 x 8, in the poison green, lit at its top left with a pale glint and foam on it, sloshing in two frames. */
+const BALL = [
+  frame("ball of brine", FOE_INK, [["..GGgg..", ".GaGggg.", "GGGggWgg", "GGgggggg", "gggggggl", "gWggggl.", ".gggggl.", "..ggll.."]]),
+  frame("ball of brine, sloshing", FOE_INK, [["..GGgg..", ".GGaggg.", "GGGggggg", "GGggWggg", "gggggggl", "ggggggl.", ".gWgggl.", "..ggll.."]])
+];
 /** The ball of brine, flying at him (what it throws, in the enemy's colours, outlined); sent back by the shield, going home. */
-function ballArt(s: Serpent, t: number) {
+export function ballArt(s: Serpent, t: number) {
   const b = s.ball;
   if (!b) return;
   const x = Math.round(b.x);
   const y = Math.round(b.y);
   if (!view.reduced) for (let k = 1; k < 4; k++) R(x - Math.sign(b.vx) * k * 4, y - 1 + ((t + k) % 2), 2, 1, G.foam);
-  outlined(() => {
-    R(x - 3, y - 4, 6, 8, ENEMY.poison);
-    R(x - 4, y - 3, 8, 6, ENEMY.poison);
-    R(x - 2, y - 2, 3, 2, ENEMY.poisonLight);
-  });
+  outlined(() => paint(BALL[view.reduced ? 0 : Math.floor(t / 4) % 2], x - 4, y - 4, 1, 8));
   light(x - 4, y - 4, 8, 8, "soft", "rgba(190, 240, 120, 0.5)");
 }
 
+// --- The town's own, drawn as frames (order 25; way 3, ADR 0045) ----------------------------------------------------
+// Every enemy here keeps the box it had before order 18, so each is drawn pixel by pixel for that box (`fit`), not
+// squashed to it: a pixel or two of head over the box at most, as before.
+
 /**
- * The bishop's guard: while he is a statue, grey stone outlined in the calm pale (stone does not bite); woken, a
- * plum coat over pink mail, his halberd levelled at him, outlined in the warning red. Squat, his head where his
- * box's top is. 13 x 10.
+ * The bishop's guard, 13 x 9 with his halberd: a mail hood with an eye, a tabard with a pale cross lit across the
+ * shoulders, mail on his legs. While he is a statue: grey stone with moss in its folds, his halberd upright beside him,
+ * outlined in the calm pale (stone does not bite). Woken: a plum tabard over pink mail, walking in four frames by the
+ * distance he covers, his halberd levelled at him (order 19: a change of outline), outlined in the warning red.
  */
+const GUARD_BODY = [
+  "....QPPQ....",
+  "...QPPPPQ...",
+  "...PPPPEP...",
+  "...QPPPPQ...",
+  "..HLLXLLBS..",
+  "..LBXXXBBS..",
+  "..LBBXBBBS..."
+].map((r) => r.slice(0, 12));
+const GUARD_LEGS = [["...QP..QP...", "..llQ..llQ.."], ["....QPQP....", "...llQlQ...."], ["..QP....QP..", ".llQ...llQ.."], ["....QPQP....", "...llQlQ...."]];
+const HALBERD = { upright: [".bc", "bbc", ".b.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F."], level: [".......bb", "FFFFFFFbc", ".......b."] };
+const STONE_GUARD = { H: mix(G.statue, WHITE, 0.3), L: mix(G.statue, WHITE, 0.12), B: G.statue, S: mix(G.statue, INK, 0.25), P: mix(G.statue, WHITE, 0.08), Q: mix(G.statue, INK, 0.15), X: G.moss, E: mix(G.statue, INK, 0.45), l: mix(G.statue, INK, 0.4), F: mix(G.statue, INK, 0.1), b: mix(G.statue, WHITE, 0.2), c: mix(G.statue, INK, 0.3) };
+const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade };
+const guardFrame = (name: string, ink: Record<string, string>, legs: number, halberd: Piece, dy = 0) => frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 7], halberd);
+const GUARD_FRAMES = {
+  stone: guardFrame("the bishop's guard as stone", STONE_GUARD, 0, [HALBERD.upright, 10, -4]),
+  walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 8, 3 + (k % 2)], k % 2 ? 0 : 1)),
+  still: [guardFrame("the bishop's guard, woken", WOKEN_GUARD, 0, [HALBERD.level, 8, 3]), guardFrame("the bishop's guard, woken, breathing", WOKEN_GUARD, 0, [HALBERD.level, 8, 4], 1)]
+};
 function guardArt(e: Enemy) {
-  const stone = !e.n;
-  const draw = () => {
-    const r = parts(e, 13);
-    const coat = stone ? G.statue : ENEMY.plum;
-    const mail = stone ? mix(G.statue, INK, 0.15) : ENEMY.pink;
-    const step = stone || view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-    r(3, -3, 3, 3 - step, mail);
-    r(7, -3, 3, 3 - (1 - step), mail);
-    r(2, -7, 9, 4, coat);
-    r(3, -10, 7, 3, mail);
-    r(3, -10, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.pink);
-    r(8, -9, 1, 1, stone ? mix(G.statue, INK, 0.4) : ENEMY.eye);
-    // The halberd: upright beside the statue; woken (order 19: a change of outline), levelled at him.
-    if (stone) {
-      r(12, -13, 1, 12, G.statue);
-      r(12, -15, 2, 2, G.statue);
-    } else {
-      r(9, -6, 8, 1, ENEMY.orange);
-      r(17, -7, 2, 3, ENEMY.pale);
-    }
-  };
-  // Stone, it is calm: outlined in the calm pale (from the first frame, before the rules have said so); woken, in
-  // the warning red (order 22).
-  if (stone) calmOutline();
-  draw();
-}
-
-/** An archer on the wall walk: a red coat, a hood, a bow drawn as the shot comes. 11 x 16. */
-function archerArt(e: Enemy, t: number) {
-  const r = parts(e, 11);
-  const up = windingUp(e, t);
-  r(2, -5, 3, 5, ENEMY.plum);
-  r(6, -5, 3, 5, ENEMY.plum);
-  r(1, -12, 9, 7, ENEMY.pink);
-  r(3, -15, 6, 3, ENEMY.orangeLight);
-  r(2, -16, 8, 2, ENEMY.plum);
-  r(7, -14, 1, 1, ENEMY.eye);
-  // Drawing (order 19), the bow comes up two and bends further, the arrow on the string and his arm back.
-  const lift = up ? 2 : 0;
-  for (let k = -6; k <= 6; k++) r(11 + Math.round((1 - (k / 6) ** 2) * (up ? 3 : 2)), -10 - lift + k, 1, 1, ENEMY.orange);
-  if (up) {
-    r(5, -12, 8, 1, ENEMY.pale);
-    r(3, -13, 3, 2, ENEMY.pink);
+  // Stone, it is calm: outlined in the calm pale (from the first frame, before the rules have said so); woken, in the
+  // warning red (order 22).
+  if (!e.n) {
+    calmOutline();
+    return drawFoe(e, GUARD_FRAMES.stone, 13, 9, true);
   }
+  const f = moving(e) ? GUARD_FRAMES.walk[step4(e)] : GUARD_FRAMES.still[Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2];
+  drawFoe(e, f, 13, 9, true);
 }
 
-/** A goose of the market: white, its neck up, an orange beak and feet. 14 x 13. */
-function gooseArt(e: Enemy) {
-  const r = parts(e, 14);
-  r(1, -8, 11, 6, ENEMY.white);
-  r(2, -6, 6, 1, ENEMY.plumLight);
-  r(9, -12, 3, 6, ENEMY.white);
-  r(10, -12, 3, 2, ENEMY.white);
-  r(13, -11, 2, 1, ENEMY.orange);
-  r(11, -11, 1, 1, ENEMY.eye);
-  r(12, -11, 1, 1, ENEMY.line);
-  r(4, -2, 2, 2, ENEMY.orange);
-  r(8, -2, 2, 2, ENEMY.orange);
-}
-/** A market dog: a plum coat, ears up, a wagging tail. 16 x 12. */
-function dogArt(e: Enemy) {
-  const r = parts(e, 16);
-  const leg = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  r(1, -9, 13, 5, ENEMY.plum);
-  r(11, -11, 5, 5, ENEMY.plum);
-  r(15, -9, 2, 2, ENEMY.plumLight);
-  r(13, -10, 1, 1, ENEMY.eye);
-  r(11, -12, 1, 1, ENEMY.plum);
-  r(0, -12, 1, 5, ENEMY.plum);
-  r(12, -7, 2, 1, ENEMY.pink);
-  for (const dx of [2, 5, 9, 12]) r(dx, -4, 2, 4 - ((dx > 7 ? leg : 1 - leg) ? 1 : 0), ENEMY.plum);
+/**
+ * An archer on the wall walk, 11 x 14: a plum hood lit at its crown, a face with an eye, a pink coat shaded to its back
+ * with a belt, a quiver over his shoulder, a bow at his side. Drawing (order 19), the bow comes up and bends, the arrow on
+ * the string and his arm back.
+ */
+const ARCHER_BODY = [
+  "...dMMd....",
+  "..dMmmmd...",
+  "..dOOOeO...",
+  "..dOOOOO...",
+  "...dOOO....",
+  "..ppppppp..",
+  ".pppppppmm.",
+  ".pppppppmm.",
+  ".ooooOoooo.",
+  ".pppppppmm.",
+  "..ppppppm..",
+  "..dd..dd...",
+  "..dd..dd...",
+  ".lll..lll.."
+];
+const QUIVER = ["MlM", ".dd", ".dm", ".dd", "..d"];
+const BOW = { rest: [".O.", "..o", "..o", "..o", "..o", "..o", "..o", "..o", ".o.", "o.."], drawn: ["O.....", ".o....", "..o...", "..a.o.", "..a..o", "..a..o", "..a..o", "..a.o.", "..ao..", "Wao...", "o....."] };
+const ARCHER: Looks = {
+  w: 11,
+  h: 14,
+  idle: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4]), frame("archer, breathing", FOE_INK, [QUIVER, 0, 5], [ARCHER_BODY, 0, 1], [BOW.rest, 8, 5])],
+  move: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4])],
+  windup: frame("archer, drawing", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [["ppp.", "app."], -1, 4], [["aaaaaaaaaaaW"], 0, 3], [["ppp"], 7, 4], [BOW.drawn, 9, -2])
+};
+function archerArt(e: Enemy, t: number) {
+  drawFoe(e, foeFrame(e, t, ARCHER), ARCHER.w, ARCHER.h, true);
 }
 
+/** A market goose, 14 x 10: white, lit along its back and shaded under its wing, its neck up, an eye, an orange bill and feet; its head bobs as it walks. */
+const GOOSE_BODY = [
+  "....WWWWWW..",
+  "wWWWWwwWWWW.",
+  ".wwWWWwwWWWw",
+  "..wwwwwwwww."
+];
+const GOOSE_NECK = [".WWW..", ".WelOo", ".wWW..", ".WW...", "WWw...", "WWw..."];
+const GOOSE_FEET = [["...o...o......"], ["....o.o......."], ["..oo...oo....."], ["....o.o......."]];
+const gooseFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [GOOSE_BODY, 0, 5 + dy], [GOOSE_NECK, 8 + nod, nod + dy], [GOOSE_FEET[feet], 0, 9]);
+const GOOSE: Looks = {
+  w: 14,
+  h: 10,
+  idle: [gooseFrame("goose", 1, 0), gooseFrame("goose, looking down", 1, 1)],
+  move: [gooseFrame("goose, walking 1", 0, 1, 1), gooseFrame("goose, walking 2", 1, 0), gooseFrame("goose, walking 3", 2, 1, 1), gooseFrame("goose, walking 4", 3, 0)]
+};
+
+/** A market dog, 17 x 10: a plum coat lit along its back, ears up, an eye, a pink tongue, a tail that wags; it trots in four frames. */
+const DOG_BODY = [
+  "...........d.d...",
+  "...........dmd...",
+  "..........mmmeMM.",
+  "..........mmmmMMl",
+  "..mMMMMMMMMmmmp..",
+  "..mmmmmmmmmmm....",
+  "..dmmmmmmmmmd...."
+];
+const DOG_TAIL = [["l.", "m.", ".m"], [".l", ".m", ".m"]];
+const DOG_LEGS = [["..dd.d....d.dd..", ".dd...d..d...dd.", "ll....ll.ll...ll"], ["...ddd....ddd...", "...d.d....d.d...", "..ll.ll..ll.ll.."], ["..d.dd....dd.d..", "..d..dd..dd..d..", ".ll...ll.ll..ll."], ["...ddd....ddd...", "...d.d....d.d...", "..ll.ll..ll.ll.."]];
+const dogFrame = (name: string, legs: number, tail: number, dy = 0) => frame(name, FOE_INK, [DOG_BODY, 0, dy], [DOG_TAIL[tail], 0, 1 + dy], [DOG_LEGS[legs].map((r) => r.padEnd(17, ".")), 0, 7]);
+const DOG: Looks = {
+  w: 16,
+  h: 10,
+  idle: [dogFrame("dog", 1, 0), dogFrame("dog, wagging", 1, 1)],
+  move: [dogFrame("dog, trotting 1", 0, 0, 1), dogFrame("dog, trotting 2", 1, 1), dogFrame("dog, trotting 3", 2, 0, 1), dogFrame("dog, trotting 4", 3, 1)]
+};
+
+/** An arrow in flight, along its way: a pale head, a shaft lit on its upper side, fletching; stopped by the shield, it tumbles. */
+const TUMBLE = [frame("arrow, tumbling", FOE_INK, [["Ma....", ".Oo...", "..oO..", "...oO.", "....oM"]]), frame("arrow, tumbling over", FOE_INK, [["....aM", "...Oo.", "..oO..", ".oO...", "Mo...."]])];
 function arrowArt(s: Shot, t: number) {
   const x = Math.round(s.x);
   const y = Math.round(s.y);
-  if (s.spent !== undefined) {
-    const k = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    R(x - 3 + k, y - k * 2, 6 - k * 4, 1 + k * 3, ENEMY.orange);
-    return;
-  }
+  if (s.spent !== undefined) return paint(TUMBLE[view.reduced ? 0 : Math.floor(t / 3) % 2], x - 3, y - 2, 1, 6);
   const d = Math.hypot(s.vx, s.vy) || 1;
-  for (let k = 0; k < 9; k++) R(x - Math.round((s.vx / d) * k), y - Math.round((s.vy / d) * k), 1, 1, k < 2 ? ENEMY.pale : ENEMY.orange);
-  R(x - Math.round((s.vx / d) * 9), y - Math.round((s.vy / d) * 9) - 1, 1, 3, ENEMY.plumLight);
+  const ux = s.vx / d;
+  const uy = s.vy / d;
+  for (let k = 0; k < 10; k++) R(x - Math.round(ux * k), y - Math.round(uy * k), 1, 1, k === 0 ? ENEMY.pale : k === 1 ? ENEMY.white : k % 2 ? ENEMY.orangeLight : ENEMY.orange);
+  // The fletching: a feather either side of its end.
+  const fx = x - Math.round(ux * 9);
+  const fy = y - Math.round(uy * 9);
+  R(fx - Math.round(uy), fy + Math.round(ux) - 1, 1, 1, ENEMY.plumLight);
+  R(fx + Math.round(uy), fy - Math.round(ux) + 1, 1, 1, ENEMY.plum);
+  R(fx - Math.round(ux), fy - Math.round(uy), 1, 1, ENEMY.plumLight);
 }
 
 const BOARDS: LedgeLook = { body: G.timber, top: G.timberLight, edge: G.timberDark, joint: G.timberDark };
@@ -1245,8 +1402,8 @@ export const GAMLEBYEN: LevelDef = {
       if (!e.alive) return false;
       if (e.def.look === "guard") guardArt(e);
       else if (e.def.look === "archer") archerArt(e, v.t);
-      else if (e.def.look === "goose") gooseArt(e);
-      else if (e.def.look === "dog") dogArt(e);
+      else if (e.def.look === "goose") drawFoe(e, foeFrame(e, v.t, GOOSE), GOOSE.w, GOOSE.h, true);
+      else if (e.def.look === "dog") drawFoe(e, foeFrame(e, v.t, DOG), DOG.w, DOG.h, true);
       else return drawLook(e, v.t);
       return true;
     },

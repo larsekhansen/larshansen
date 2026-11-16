@@ -55,15 +55,16 @@ export function leanOf(e: Enemy): number {
 /**
  * A look's own rectangles, `W` pixels wide: `dx` from its back (its left while it faces right), mirrored
  * when it faces left; `dy` from its feet (up is negative). Every look is drawn this way (order 18), with the
- * frame it shows now (order 23); `still` draws it with no bob (a look that has frames of its own).
+ * frame it shows now (order 23); `still` draws it with no bob (a look that has frames of its own); `fit`: drawn at the
+ * height it was drawn to, never squashed (order 25: a look drawn pixel by pixel for the box its level keeps).
  */
-export function parts(e: Enemy, W: number, still = false) {
+export function parts(e: Enemy, W: number, still = false, fit = false) {
   const x = Math.round(e.x - W / 2);
   const y = Math.round(e.y);
   const right = e.dir > 0;
   // One that keeps its old box (`small`) is drawn as wide, but to the box's height: each row moved down
   // in proportion, none lost, so its head is where he lands on it.
-  const k = e.def.small ? e.h / sizeOf({ ...e.def, small: false }).h : 1;
+  const k = e.def.small && !fit ? e.h / sizeOf({ ...e.def, small: false }).h : 1;
   const bob = still || !e.alive ? 0 : bobOf(e);
   const lean = still || !e.alive ? 0 : leanOf(e);
   const flyer = e.def.kind === "flyer";

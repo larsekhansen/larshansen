@@ -3,14 +3,15 @@ import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
+import { INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
+import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, paint, type Piece } from "../alive/frames";
 import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -501,14 +502,32 @@ function sheetArt(x: number, y: number, w: number) {
 }
 
 /** The welder on his beam: kneeling, his mask down, his torch at the steel; sparks falling below on the beat. */
+/**
+ * The welder on the next floor's beam, crouched at his work (order 25: drawn as a frame, as people are): a hard hat lit at
+ * its crown, his mask down with the light on its glass, overalls lit across the shoulders and shaded down his back, the
+ * torch in his glove; the sparks fall from it on their beat (a hazard, with a second's warning).
+ */
+const WELDER = frame("the welder", { H: mix(S.hardhat, WHITE, 0.35), h: S.hardhat, k: INK, K: "#9fd0ff", O: mix(S.overalls, WHITE, 0.2), o: S.overalls, d: mix(S.overalls, INK, 0.3), g: "#c9b79a", t: "#8a8f96", l: INK }, [
+  [
+    "..HHh......",
+    ".HHHhh.....",
+    ".hkKkk.....",
+    "..kkkk.....",
+    ".OOoooo....",
+    "OOooooogttt",
+    "Oooooodd...",
+    ".ooooddd...",
+    ".Oooodd....",
+    "OOoooooo...",
+    "Ooodddoo...",
+    ".ll...ll...",
+    "lll...lll.."
+  ]
+]);
 function welder(t: number) {
   const x = 54 * TILE + 6;
   const y = F2 * TILE;
-  R(x, y - 9, 6, 6, S.overalls);
-  R(x + 1, y - 13, 5, 4, S.hardhat);
-  R(x + 5, y - 11, 3, 3, INK);
-  R(x - 1, y - 3, 8, 3, S.overalls);
-  R(x + 6, y - 6, 4, 2, S.overalls);
+  paint(WELDER, x - 1, y - 13, 1, 11);
   const phase = pulsePhase(t, SPARKS.beat!);
   const { age } = pulseAge(t, SPARKS.beat!);
   const flick = view.reduced ? 1 : Math.floor(t / 3) % 2;
@@ -607,29 +626,47 @@ function gust(z: Zone, t: number) {
   }
 }
 
-/** A riveter on the girder: an orange vest with a hi-vis stripe, a white hard hat, a bolt raised to throw. 11 x 18. */
+// The riveters and their bolts, drawn as frames (order 25; way 3, ADR 0045). Every enemy here keeps the box it had before
+// order 18, so a riveter is drawn pixel by pixel for that box (`fit`), not squashed to it.
+/**
+ * A riveter on the girder, 11 x 14: a white hard hat lit at its crown with its brim, a face with an eye, an orange vest
+ * lit across the shoulders with its hi-vis stripes, a bolt in his fist at his side, plum trousers and black boots; he
+ * breathes between throws. Winding up, his arm goes up with the bolt over his head (order 19: a change of outline).
+ */
+const RIVETER_BODY = [
+  "...WWWW....",
+  "..WWWWWw...",
+  ".wwwwwwww..",
+  "...OOOel...",
+  "...OOOOO...",
+  "..OOoooo...",
+  ".OoGGGGGo..",
+  ".oooooooo..",
+  ".ooGGGGGo..",
+  "..ddddddd..",
+  "..dm..dm...",
+  "..dm..dm...",
+  "..dm..dm...",
+  ".lll.lll..."
+];
+const RIVETER_ARM = { down: ["Oo.", "oo.", "oo.", "aMm", ".d."], up: ["MMm", "dd.", ".a.", ".o.", ".o.", ".o.", "Oo.", "oo."] };
+const riveterFrame = (name: string, arm: Piece, dy = 0) => frame(name, FOE_INK, [RIVETER_BODY, 0, dy], arm);
+const RIVETER: Looks = {
+  w: 11,
+  h: 14,
+  idle: [riveterFrame("riveter", [RIVETER_ARM.down, 8, 5]), riveterFrame("riveter, breathing", [RIVETER_ARM.down, 8, 6], 1)],
+  move: [riveterFrame("riveter", [RIVETER_ARM.down, 8, 5])],
+  windup: riveterFrame("riveter, a bolt raised", [RIVETER_ARM.up, -1, -3])
+};
 function riveter(e: Enemy, t: number) {
-  const r = parts(e, 11);
-  const up = windingUp(e, t);
-  r(2, -5, 3, 5, ENEMY.plum);
-  r(6, -5, 3, 5, ENEMY.plum);
-  r(1, -11, 9, 6, ENEMY.orange);
-  r(1, -8, 9, 1, ENEMY.poisonLight);
-  r(3, -15, 6, 4, ENEMY.orangeLight);
-  r(2, -17, 8, 2, ENEMY.white);
-  r(3, -18, 6, 1, ENEMY.white);
-  r(7, -14, 1, 1, ENEMY.eye);
-  if (up) {
-    r(-1, -19, 2, 8, ENEMY.orange);
-    r(-2, -21, 4, 2, ENEMY.white);
-  } else r(10, -10, 2, 5, ENEMY.orange);
+  drawFoe(e, foeFrame(e, t, RIVETER), RIVETER.w, RIVETER.h, true);
 }
+
+/** A bolt in flight, 6 x 4: its hex head lit at the top, its thread; turning end over end in two frames. */
+const BOLT = [frame("bolt", FOE_INK, [["MMm...", "MmdMmM", "mmdmdm", "dd...."]]), frame("bolt, turning", FOE_INK, [["Mm..", "md..", "Mm..", "md..", "Mmd.", "mdd."]])];
 function boltArt(s: Shot, t: number) {
-  const x = Math.round(s.x);
-  const y = Math.round(s.y);
-  const turn = view.reduced ? 0 : Math.floor(t / 4) % 2;
-  R(x - 3, y - 1 + turn, 6, 2, ENEMY.plumLight);
-  R(x - 1, y - 2, 3, 4, ENEMY.plum);
+  const k = view.reduced ? 0 : Math.floor(t / 4) % 2;
+  paint(BOLT[k], Math.round(s.x) - (k ? 1 : 3), Math.round(s.y) - (k ? 3 : 2), s.vx < 0 ? -1 : 1, k ? 2 : 6);
 }
 
 const BOARDS: LedgeLook = { body: S.formwork, top: mix(S.formwork, WHITE, 0.3), edge: S.formworkDark, joint: S.formworkDark };

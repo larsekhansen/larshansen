@@ -1,4 +1,4 @@
-import { COIN, FEATHER, FIRE, FLAG, FOOD, GHOST, INK, METAL, PALETTE, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
+import { COIN, FEATHER, FIRE, FLAG, FOOD, GHOST, INK, METAL, PALETTE, PARADE, SKIN, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { POLE, HOIST_STEPS, type Flag } from "@larshansen/pixelkit/checkpoint";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { runeCells, type RuneChar } from "../game/runes";
@@ -114,7 +114,11 @@ export function bracteate(x: number, y: number, steps: number) {
   // A glint crosses it now and then.
   const g = (steps % 150) - 20;
   if (!view.reduced && g >= 0 && g < w) R(left + g, y + 2 + bob, 1, 8, mix(COIN.goldLight, WHITE, 0.6));
-  light(left, y + bob, w, 12, "soft");
+  // Its own light after dusk on the disc alone, row by row (order 25: a square of light round it read as a tile at night).
+  for (let r = 0; r < 12; r++) {
+    const half = Math.round(Math.sqrt(Math.max(0, 36 - (r + 0.5 - 6) ** 2)) * (w / 12));
+    if (half > 0) light(left + Math.round(w / 2) - half, y + r + bob, half * 2, 1, "soft");
+  }
 }
 
 /** A bracteate found on an earlier visit: its ring as a pale outline, still, where it hangs. */
@@ -325,4 +329,52 @@ export function lampFlicker(t: number, seed = 0): number {
   if (view.reduced) return 1;
   const k = (t + seed * 13) % 97;
   return k < 4 ? 0 : k < 40 ? 1 : k < 46 ? 2 : 1;
+}
+
+// --- People in a crowd (order 25) -------------------------------------------------------------------------------------
+// The crowds along Karl Johan and under the ski jump were the last people drawn in rectangles. A person, 6 x 14 from the
+// top of its hair, seen from the front: hair (or a knitted hat with its bobble) in its colour and shaded down its right
+// (a blond lit toward white would come near the paint), a face lit and shaded, a coat lit down its left and across its
+// shoulders and shaded down its right, its arms at its sides. Each made once for its colours and copied (a crowd is many
+// of them); the flag some wave, in two frames.
+const PERSON = [
+  "..HHh.",
+  ".HHhhh",
+  ".hSsz.",
+  ".hssz.",
+  "..sz..",
+  "CCCcck",
+  "CCccck",
+  "Ckccck",
+  "Ckcckk",
+  "Skcckz",
+  ".Cccck",
+  ".Ccckk",
+  ".Cc.ck",
+  ".cc.kk"
+];
+/** A knitted hat: the hair's rows in its colour, and a bobble on top. */
+const PERSON_HAT = ["...H.."];
+const people = new Map<string, Frame>();
+/**
+ * A person in a crowd at (x, y), the top of its hair: its coat's colour, its hair's or hat's, and whether that is a hat.
+ * `dark`: its coat is lit in its own colour and shaded below it (a yellow coat lit toward white comes near the paint).
+ */
+export function person(x: number, y: number, coat: string, hair: string, hat = false, dark = false) {
+  const key = `${coat}${hair}${hat}`;
+  let f = people.get(key);
+  if (!f) {
+    const ink = { H: hair, h: shade(hair, 0.22), S: lit(SKIN, 0.2), s: SKIN, z: shade(SKIN, 0.18), C: dark ? coat : lit(coat, 0.18), c: dark ? shade(coat, 0.12) : coat, k: shade(coat, dark ? 0.34 : 0.3) };
+    people.set(key, (f = frame(`a person in a crowd`, ink, [PERSON], ...(hat ? [[PERSON_HAT, 0, -1] as [string[], number, number]] : []))));
+  }
+  stamp(f, x, y);
+}
+const CROWD_FLAG_INK: Record<string, string> = { p: PARADE.pole, R: lit(FLAG.red, 0.2), r: FLAG.red, W: FLAG.white, b: FLAG.blue };
+/** A small flag on its stick, waved: the cloth out (and up a pixel) or dipping, 6 x 8 from the stick's top. */
+const CROWD_FLAGS = [
+  frame("a waved flag", CROWD_FLAG_INK, [["pRWrr.", "pWbWW.", "prWrr.", "p.....", "p.....", "p.....", "p.....", "p....."]]),
+  frame("a waved flag, dipping", CROWD_FLAG_INK, [["p.....", "pRW...", "pWbWr.", "prWbWr", "p..Wrr", "p.....", "p.....", "p....."]])
+];
+export function crowdFlag(x: number, y: number, k: number) {
+  stamp(CROWD_FLAGS[k], x, y);
 }

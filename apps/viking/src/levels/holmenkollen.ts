@@ -3,7 +3,7 @@ import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { LOAD_STEPS, type Launcher } from "@larshansen/pixelkit/launcher";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, CREATURE, FACADE, FLAG, GLASS, ICY, INK, LAND, LAMP, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, CREATURE, FACADE, FLAG, GLASS, ICY, INK, LAND, LAMP, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { ICE, type Surface } from "@larshansen/pixelkit/surface";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
@@ -12,6 +12,7 @@ import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
+import { crowdFlag, person } from "../alive/things";
 import type { LevelDef, View } from "./types";
 
 // Level 5, rune H: Holmenkollen. Winter, snowing. Off the train at the top, along a path where the
@@ -519,15 +520,11 @@ function outrunCrowd(t: number, cheering: boolean) {
     const g = 35 * TILE + 8;
     const k = Math.floor(x / 7);
     const head = g - 7 - ((k * 37) % 3);
-    R(x, head + 4, 6, 9, [PARADE.bunadBlue, CREATURE.kidJacket, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5]);
-    R(x + 1, head, 4, 4, SKIN);
-    R(x + 1, head - 1, 4, 2, [FLAG.red, PARADE.russ, PARADE.silkBlue, WHITE][k % 4]);
+    // Drawn as frames since order 25 (`person` in alive/things.ts): knitted hats, each copied.
+    person(x, head - 1, [PARADE.bunadBlue, CREATURE.kidJacket, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5], [FLAG.red, PARADE.russ, PARADE.silkBlue, WHITE][k % 4], true);
     if (k % 3 === 0) {
       const wave = cheering && !view.reduced ? Math.floor((t + k * 7) / 6) % 2 : 0;
-      R(x + 5, head - 9 - wave * 2, 1, 8, PARADE.pole);
-      R(x + 6, head - 9 - wave * 2, 5, 4, FLAG.red);
-      R(x + 7, head - 9 - wave * 2, 1, 4, FLAG.white);
-      R(x + 6, head - 7 - wave * 2, 5, 1, FLAG.blue);
+      crowdFlag(x + 5, head - 9 - wave * 2, wave);
     }
   }
 }

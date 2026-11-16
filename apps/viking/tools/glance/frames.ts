@@ -78,6 +78,26 @@ const asFigure = (label: string, ds: ReturnType<typeof recorded>[]) => {
   asFigure("shield", [recorded("face", () => drawShieldFace(10, 10)), recorded("on his back", () => drawShieldOn({ x: 20, y: 10 }, 1, 0, false)), recorded("coming up", () => drawShieldOn({ x: 20, y: 10 }, 1, 0.5, false)), recorded("up", () => drawShieldOn({ x: 20, y: 10 }, 1, 1, false))]);
 }
 
+// What line 2's throwers throw and the serpent spits (order 25), each in flight in its two frames and, where the shield
+// stops it, spent; and the heron, standing, making ready to fly and flying off.
+{
+  const { BUILT, loadLevel } = await import("../../src/levels/index");
+  const shot = (x: number, y: number, vx: number, spent?: number) => ({ x, y, vx, vy: 0.3, born: 0, by: 0, spent }) as never;
+  const shots: ReturnType<typeof recorded>[] = [];
+  for (const st of BUILT) {
+    const def = await loadLevel(st.id);
+    if (def.rune < 11 || !def.art.shot) continue;
+    const v = { t: 0, enemies: [] } as never;
+    for (const [label, s] of [[`${st.id}, in flight`, shot(20, 20, -2)], [`${st.id}, turning`, shot(23, 20, -2)], [`${st.id}, stopped`, shot(20, 20, -2, 0)]] as const) shots.push(recorded(label, () => def.art.shot!(s, v)));
+  }
+  const { ballArt } = await import("../../src/levels/gamlebyen");
+  for (const t of [0, 4]) shots.push(recorded(`the serpent's ball ${t / 4 + 1}`, () => ballArt({ ball: { x: 20, y: 20, vx: -2, back: false } } as never, t)));
+  asFigure("line 2's shots", shots);
+  const { heronArt, HERON } = await import("../../src/levels/ostensjovannet");
+  const lake = (landed: number | null, gone: number | null) => ({ pads: [], landed, gone }) as never;
+  asFigure("heron", [recorded("heron", () => heronArt(lake(null, null), 0)), recorded("heron, looking back", () => heronArt(lake(null, null), 400)), ...[15, 30, 45].map((k) => recorded(`heron, making ready ${k / 15}`, () => heronArt(lake(0, null), k))), ...[0, 5].map((k) => recorded(`heron, flying off ${k / 5 + 1}`, () => heronArt(lake(null, 0), k + 10)))].map((d) => ({ ...d, rects: d.rects.filter((r) => r.y < HERON.y + 14) })));
+}
+
 // The enemies: each look's frames as the page draws them (through `outlined`'s recorder), still, moving, winding up, beaten.
 Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 4000, h: 4000, reduced: false });
 for (const [look, frames] of Object.entries(await lookFrames())) {

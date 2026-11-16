@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, and by order 24's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, and by order 25's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -76,6 +76,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-16 | Lars, after orders 18 to 20 live: "red for enemies that can hurt you, in terms of the outline", "the light blu you had for rats can be for moving npcs that don't hurt", "yellow paint ... for 'you can go here'", and "i just fear i made a blunder with the pixel design ... the pixels are too big. they need more detail". Order 22: part A (built) the red outline, the calm pale, the yellow paint, every other yellow reconsidered, the haze behind the lane (ADR 0044); part B (a study, not live) three ways to a finer look, for Lars to choose (`GRAIN.md`) | `orders/22-paint-and-grain.md`, branch `paint-and-grain` |
 | 2026-11-16 | Lars, in a conversation he saved: the game is "not that engaging"; the research record (`research/2026-11-16-reference-games.md`) on three open-source games. He chooses the grain: way 3, "do way 3 like you suggested. for the pixels" (ADR 0045). Order 23: frames for him and every enemy (him, the first three levels' enemies, the skilling and the cheese drawn pixel by pixel; order 24 the rest of line 1), a shadow under everything that moves, a receding plane on the water and snow, more speeds, something in front of him now and then, the edge's forgiveness from 6 to 10 steps, the alert mark (ADR 0046 to 0048) | `orders/23-alive.md`, branch `alive` |
 | 2026-11-16 | Order 24: line 1 redrawn (way 3, ADR 0045): every enemy of line 1, both its bosses, the sheep, the moose, the parade, what is thrown and the small things every level has drawn as per-pixel frames; water lapping at quays, flames that flicker, the serpent's breath and daze, things in front a person knows at a glance, far birds and smoke; three things moved a tile where the edge's longer forgiveness made a late jump fire in the air (ADR 0048 kept, its cost put to Lars) | `orders/24-line-one-redrawn.md`, branch `line-one-redrawn` |
+| 2026-11-16 | Order 25: line 2 redrawn (way 3): line 2's own kinds, the sea serpent in every state, the heron, line 2's shots, and what a walk through all sixteen levels and the map still found in rectangles (him lying back on the sledge, the sledge, the crowds at Slottet and Holmenkollen, Bjørvika's welder); one more pass on the wasp, the flying pigeon, the track rat and the kid's hat; the troll's lit side after dusk | `orders/25-line-two-redrawn.md`, branch `line-two-redrawn` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -248,7 +249,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 58.86 kB gzipped after order 24 (the small things' drawings to `feel`'s file). 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
+- **First script**: 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
+  and the sledge's in `feel`'s). 58.86 kB gzipped after order 24 (the small things' drawings to `feel`'s file). 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
   worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
   with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
   it export more: the study's sheet of subjects is made outside the page for that). Before: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
@@ -381,8 +383,8 @@ Order 22 (`orders/22-paint-and-grain.md`, ADR 0044, `GRAIN.md`). What to know:
 Order 23 (`orders/23-alive.md`, ADR 0045 to 0048, DESIGN's "Frames, shadows and depth"). What to know:
 - **The grain is decided** (ADR 0045): the same grid, better drawn. New drawings are per-pixel frames with a ramp of tones
   and a lit side (`apps/viking/src/alive/frames.ts`). Drawn so far: him (every frame), Langkaia's pigeon, gull and rat,
-  Akershus's crow, guard and brazier, Rådhuset's standing gull and the scooter, the skilling and the cheese. Order 24 drew the
-  rest of line 1 (see "Order 24"); what is left is listed in `apps/viking/tools/review/o24/old-style.md`.
+  Akershus's crow, guard and brazier, Rådhuset's standing gull and the scooter, the skilling and the cheese. Orders 24 and 25
+  drew the rest (see "Order 24" and "Order 25"); what is left is scenery, listed in `apps/viking/tools/review/o25/old-style.md`.
 - **Frames come from what the rules keep** (ADR 0046): him in `alive/him.ts` (picked by `render/feel.ts`, which now draws
   him: the page gives the kit's overlay an alpha of nought once feel's file is here); the looks drawn as frames in
   `alive/foes.ts`; every other look's cycle, breath and bob from `parts` (`alive/parts.ts`, out of the first script); a
@@ -425,6 +427,32 @@ Order 24 (`orders/24-line-one-redrawn.md`; DESIGN's "Frames, shadows and depth";
   still do at ±4 (see `o24/sloppy-edge.md`). Ekeberg's and Stortinget's runs that left the route are the sloppy player's (the
   sheep crossing; the last stairs), not a person's. Going back to 6 or to 8, or a rule that keeps such a press for the landing,
   is for Lars to choose.
+- **Unplayed**: none of it has been seen at speed or on a phone.
+
+## Order 25: line 2 redrawn
+
+Order 25 (`orders/25-line-two-redrawn.md`; DESIGN's "Frames, shadows and depth"; numbers in `apps/viking/tools/review/o25/`). What to know:
+- **Everything that moves or is picked up is drawn as frames** (ADR 0045, carried through): line 2's own kinds in their levels'
+  files, the sea serpent (its head a map, its body, coils and tail in five tones of scale, every tell where it was), the heron,
+  line 2's shots; and what a walk through all sixteen levels and the map found still in rectangles: him lying back on the sledge
+  and the sledge (`levels/korketrekkeren.ts`), the crowds at Slottet and Holmenkollen (`person`, `crowdFlag` in
+  `alive/things.ts`, each copied), Bjørvika's welder. What is not drawn so is scenery, listed with its reason in
+  `tools/review/o25/old-style.md`. The mallard is shared by the river and the lake (`render/looks.ts`).
+- **A kept box**: a look drawn for the box its level keeps passes `fit` to `drawFoe` and is not squashed to it (Bjørvika's,
+  Gamlebyen's, the lake's coot, Stortinget's flying pigeon and track rat). `frames.test.ts` now also holds that every look
+  of every level is drawn pixel by pixel (its body in runs one pixel high).
+- **Vigelandsparken's statues** are one figure in four poses: watched, granite with lichen or bronze with verdigris in the
+  park's own tones; walking, the enemy's colours, eyes open, a stiff stride whose legs never meet. The moment one turns is
+  as before: colour, outline, the "!".
+- **The troll after dusk**: its two lightest tones are noted as it is drawn and drawn again, faint, over the forest's dark
+  (`overDark`), where the night's lights would not show (drawing only).
+- **Looking at things**: `tools/glance/serpent.ts` (the serpent in every state), `states.ts` (a look in chosen states: a
+  watched statue, a calm swan, a guard as stone), `line2shots.ts` (the addresses for the pictures in place, the serpent's
+  states along the route among them), `frames.ts` (line 2's shots and the heron too); `?debug&fall=<steps>[&gold]` shows the
+  maze's feather falling onto him.
+- **First script** unchanged, 58.86 kB gzipped. **Speed**: against order 23's table no place rose more than 10 rectangles a
+  frame (Nordmarka's dark) and none draws over 11,466; the crowds draw 150 to 270 fewer (each person copied); the troll's fight
+  after dusk +78, the serpent's +11 to +19 (`tools/review/o25/perf.md`).
 - **Unplayed**: none of it has been seen at speed or on a phone.
 
 ## Known weak spots, as of order 16
@@ -528,7 +556,7 @@ reorder this list.
   level in `rules.test.ts`.
 - Words: Norwegian and English, both, in the dry voice ([ADR 0016](../adr/0016-two-languages-dry-voice.md)).
 - Drawing anything new: draw it as per-pixel frames with a ramp of tones and a lit side, with the frames DESIGN's "Frames,
-  shadows and depth" asks of it (ADR 0045, 0046). Its colours come from its role (an enemy from `ENEMY`, never in its red, outlined by the page;
+  shadows and depth" asks of it (ADR 0045, 0046); for a level that keeps its boxes, draw it for the kept box and pass `fit`. Its colours come from its role (an enemy from `ENEMY`, never in its red, outlined by the page;
   what moves and does not hurt outlined in `ROLES.calm`; what he stands on with the yellow paint, and nothing else in
   that yellow; DESIGN's "Colour says what a thing is", [ADR 0039](../adr/0039-colour-says-what-a-thing-is.md),
   [ADR 0044](../adr/0044-paint-says-where-to-go.md)).
