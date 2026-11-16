@@ -305,7 +305,7 @@ function midSpruces() {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 31 + ((i * 17) % 23);
-    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -12 || x > view.w + 12) continue;
     const h = 26 + ((i * 29) % 26);
     const colour = mix(LAND.headland, LAND.farHills, 0.15 + (i % 3) * 0.05);
@@ -326,7 +326,7 @@ function nearTrunks() {
     const wx = i * 58 + ((i * 37) % 30);
     const c = Math.floor(wx / TILE);
     if ((c > 0 && c < 16) || (c > 87 && c < 104) || (c > 119 && c < 140)) continue;
-    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const foot = G * TILE;
     const h = 90 + ((i * 23) % 40);

@@ -231,7 +231,7 @@ function parkTrees(factor: number, foot: number, n: number, fade: number) {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 44 + ((i * 29) % 21);
-    const x = spedX(wx, far ? (factor * 0.75) : factor, factor);
+    const x = spedX(far ? (wx * factor) / (factor * 0.75) : wx, far ? (factor * 0.75) : factor, factor);
     if (x < -30 || x > view.w + 30) continue;
     const h = 22 + ((i * 13) % 14);
     const r = 11 + ((i * 7) % 5);

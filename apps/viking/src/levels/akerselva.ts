@@ -321,7 +321,7 @@ function midTown(t: number) {
     // Sparser than a street: groups of two with sky and trees between.
     if (i % 3 === 2) continue;
     const wx = i * 104 + ((i * 41) % 48);
-    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -50 || x > view.w + 10) continue;
     const w = 26 + ((i * 29) % 22);
     const h = 18 + ((i * 53) % 24);
@@ -355,7 +355,7 @@ function nearTrees() {
     // Clumps of two or three, with clear gaps between them.
     if (i % 5 === 3 || i % 7 === 5) continue;
     const wx = i * 46 + ((i * 23) % 30) + (Math.floor(i / 5) % 2) * 20;
-    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -24 || x > view.w + 24) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor(wx / TILE)));
     const foot = terrace(c) * TILE - 2;

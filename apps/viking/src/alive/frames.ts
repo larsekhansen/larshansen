@@ -1,4 +1,4 @@
-import { R, mix } from "@larshansen/pixelkit/paint";
+import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
 
 // Frames as data (order 23): a drawing is rows of letters, one letter a pixel, each letter a colour from a named ramp
 // of three to five tones per material (a shade, a middle, a light, a highlight). This is way 3 of `docs/games/GRAIN.md`:
@@ -82,6 +82,29 @@ export function inked(f: Frame, recolour: (c: string) => string): Frame {
 export function paint(f: Frame, x: number, y: number, facing: number, w: number) {
   const r = f.runs;
   for (let i = 0; i < r.length; i += 4) R(facing > 0 ? x + r[i] : x + w - r[i] - r[i + 2], y + r[i + 1], r[i + 2], 1, f.ink[r[i + 3]]);
+}
+
+const stamps = new Map<Frame, HTMLCanvasElement>();
+/**
+ * Draws a frame facing right at world (x, y) as one copy of a canvas it is painted onto once (a skilling, the cheese):
+ * a copy a frame instead of a rectangle a run. Where there is no page (the tests, which read the colours), as runs.
+ */
+export function stamp(f: Frame, x: number, y: number) {
+  if (typeof document === "undefined") return paint(f, x, y, 1, f.x1);
+  let c = stamps.get(f);
+  if (!c) {
+    c = document.createElement("canvas");
+    c.width = f.x1;
+    c.height = f.y1;
+    const g = c.getContext("2d")!;
+    const r = f.runs;
+    for (let i = 0; i < r.length; i += 4) {
+      g.fillStyle = f.ink[r[i + 3]];
+      g.fillRect(r[i], r[i + 1], r[i + 2], 1);
+    }
+    stamps.set(f, c);
+  }
+  ctx().drawImage(c, Math.round(x) - view.camX, Math.round(y) - view.camY);
 }
 
 /** Every pixel of a frame, as column and row from its origin (mirrored about `w` when it faces left), with its colour. */

@@ -273,7 +273,7 @@ function midRoofs(t: number) {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 46 + ((i * 31) % 20);
-    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -30 || x > view.w + 10) continue;
     const w = 20 + ((i * 7) % 10);
     const h = 14 + ((i * 11) % 10);
@@ -303,7 +303,7 @@ function nearTrees() {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 157 + ((i * 53) % 70);
-    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor((view.camX + x) / TILE)));
     const foot = Math.min(S, surfaceRow(c) + 2) * TILE;

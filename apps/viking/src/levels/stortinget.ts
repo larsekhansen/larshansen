@@ -343,7 +343,7 @@ function nearColumns() {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 190 + ((i * 53) % 40);
-    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -16 || x > view.w + 16) continue;
     const c = Math.floor((view.camX + x) / TILE);
     if ((c > 100 && c < 128) || c > 250) continue;

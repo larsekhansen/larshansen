@@ -808,7 +808,7 @@ function cityRoofs(t: number, him: number) {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 110 + ((i * 37) % 50);
-    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -40 || x > view.w + 10) continue;
     const h = 24 + ((i * 53) % 26);
     const w = 22 + ((i * 29) % 18);
@@ -836,7 +836,7 @@ function nearTrees() {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 70 + 20;
-    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const g = streetY(wx) - 6;
     box(x, g - 30, 2, 30, PLANTS.bark);
