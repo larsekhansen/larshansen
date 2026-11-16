@@ -278,9 +278,12 @@ function spruces(factor: number, n: number, fade: number) {
     const halfOf = (k: number) => Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
     let most = 1;
     for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
-    stamp(`kt ${fade} ${h} ${dusk}`, x - most, foot - h - view.camY, most * 2 + 1, h + 4, () => {
-      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
-      R(most, h, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+    // Its spire over the top tier (order 26, section 3c): a pixel of snow, a pixel of green; the piece two rows taller for it.
+    stamp(`kt ${fade} ${h} ${dusk}`, x - most, foot - h - 2 - view.camY, most * 2 + 1, h + 6, () => {
+      R(most, 0, 1, 1, mix(K.bank, green, 0.3 + dusk));
+      R(most, 1, 1, 1, green);
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k + 2, halfOf(k) * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
+      R(most, h + 2, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
     });
   }
 }

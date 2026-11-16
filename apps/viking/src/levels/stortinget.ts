@@ -12,7 +12,7 @@ import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { FOE_INK, RAT, drawFoe, foeFrame, type Looks } from "../alive/foes";
-import { frame, turned } from "../alive/frames";
+import { frame } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -828,43 +828,54 @@ function train(at: { x: number; y: number }, line: number, clip: { x0: number; x
  * real size): rising, stretched out nose first, its forepaws reaching up either side of its head, its hind legs and tail
  * trailing; at the top of its leap Langkaia's rat level in the air; falling, turned over, nose down, its legs kicking.
  */
-const RAT_RISING = frame("track rat, rising", FOE_INK, [
+const RISING_BODY = [
+  "....p.....",
+  "...pmp....",
+  "...emM....",
+  "..pmmMp...",
+  "p.dmmMM..p",
+  "pp.dmmM.pp",
+  "...dmmmM..",
+  "...dmmmM..",
+  "...dmmmm..",
+  "...ddmmd..",
+  "..p.dd.p..",
+  ".pp..p.pp.",
+  ".....p....",
+  "......p..."
+];
+/** Its tail streaming behind it as it rises (order 26, section 3d: two pixels were a stub): eight more, curving, as long as its body. */
+const RISING_TAIL = ["......p...", ".......p..", ".......p..", "......p...", ".....p....", ".....p....", "....p.....", "....p....."];
+const RAT_RISING = frame("track rat, rising", FOE_INK, [RISING_BODY], [RISING_TAIL, 0, 14]);
+/**
+ * Falling, turned over, nose down: its tail flies out to the side from its rump, not over its head (where he lands on it
+ * is its body's top, as the palette test holds).
+ */
+const FALLING_TAIL = [".pp.......", "...ppp....", "......pp..", "........pp"];
+const RAT_FALLING = frame("track rat, falling", FOE_INK, [[...RISING_BODY].reverse()], [FALLING_TAIL, 6, 0]);
+const RAT_KICKING = frame(
+  "track rat, falling, kicking",
+  FOE_INK,
   [
-    "....p.....",
-    "...pmp....",
-    "...emM....",
-    "..pmmMp...",
-    "p.dmmMM..p",
-    "pp.dmmM.pp",
-    "...dmmmM..",
-    "...dmmmM..",
-    "...dmmmm..",
-    "...ddmmd..",
-    "..p.dd.p..",
-    ".pp..p.pp.",
-    ".....p....",
-    "......p..."
-  ]
-]);
-const RAT_FALLING = turned(RAT_RISING, "track rat, falling", "over");
-const RAT_KICKING = frame("track rat, falling, kicking", FOE_INK, [
-  [
-    "......p...",
-    ".....p....",
-    "pp..p..pp.",
-    ".p.dd.p...",
-    "...dmmd...",
-    "...dmmmm..",
-    "...dmmmM..",
-    "...dmmmM..",
-    "p.dmmM..p.",
-    "pp.dmmMMpp",
-    "..pmmMp...",
-    "...emM....",
-    "...pmp....",
-    "....p....."
-  ]
-]);
+    [
+      "......p...",
+      ".....p....",
+      "pp..p..pp.",
+      ".p.dd.p...",
+      "...dmmd...",
+      "...dmmmm..",
+      "...dmmmM..",
+      "...dmmmM..",
+      "p.dmmM..p.",
+      "pp.dmmMMpp",
+      "..pmmMp...",
+      "...emM....",
+      "...pmp....",
+      "....p....."
+    ]
+  ],
+  [[".p..pp...", "..pp..pp.", "........p"], 6, 0]
+);
 const TRACK_RAT = { rising: RAT_RISING, top: RAT.move[2], falling: RAT_FALLING, kicking: RAT_KICKING };
 function trackRat(e: Enemy, t: number) {
   const l = leap(e, t);

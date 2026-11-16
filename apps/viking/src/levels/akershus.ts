@@ -2,12 +2,12 @@ import { TILE } from "@larshansen/pixelkit/config";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
 import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
-import { STONE_LEDGE, flagCloth, type LedgeLook } from "@larshansen/pixelkit/props";
+import { STONE_LEDGE, type LedgeLook } from "@larshansen/pixelkit/props";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
-import { flame } from "../alive/things";
+import { flagFlying, flame } from "../alive/things";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -513,7 +513,7 @@ function flourish(age: number) {
   R(px, TOP * TILE - 54, 1, 54, METAL.flagpole);
   R(px - 1, TOP * TILE - 56, 3, 2, METAL.brass);
   const k = Math.min(1, age / 60);
-  flagCloth(px + 1, Math.round(TOP * TILE - 12 - 40 * k));
+  flagFlying(px + 1, Math.round(TOP * TILE - 12 - 40 * k) - 1, age, 8);
   if (view.reduced) return;
   // The salute: three bangs, a ball of square smoke each over the battlements, swelling and thinning.
   for (let shot = 0; shot < 3; shot++) {

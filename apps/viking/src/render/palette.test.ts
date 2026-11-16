@@ -30,7 +30,7 @@ const viewOf = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day
 
 /** The enemy palette's colours, and the ones a body is drawn in (not the outline's red, the near-black, the eyes, or the pale of teeth and claws). */
 const PALETTE_COLOURS = new Set<string>(Object.values(ENEMY));
-const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade])];
+const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade])];
 
 /**
  * The smallest difference (CIEDE2000) allowed between an enemy's body colour and a level's field, as each

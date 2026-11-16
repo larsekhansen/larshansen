@@ -40,7 +40,7 @@ export const use = "#1ad9ff";
 /** Every role's colours that must stand apart, by role (eyes, the near-black of lines and the line under a platform are contrast, not role, colours). */
 export const COLOURS: Record<string, readonly string[]> = {
   him: Object.values(him),
-  enemy: [ENEMY.red, ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade],
+  enemy: [ENEMY.red, ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade],
   calm: [calm],
   stand: [STAND.top, STAND.body, STAND.bodyLight, STAND.bodyDark],
   take: Object.values(take),

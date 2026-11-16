@@ -323,8 +323,10 @@ function midSpruces() {
     const halfOf = (k: number) => Math.floor(1 + (k % 6) * 0.7 + k * 0.2);
     let most = 0;
     for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
-    stamp(`nm-mid ${h} ${i % 3}`, x - most, Math.round(base) - h - view.camY, most * 2 + 1, h, () => {
-      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, colour);
+    // Its spire over the top tier (order 26, section 3c): two pixels, one wide; the piece two rows taller for it.
+    stamp(`nm-mid ${h} ${i % 3}`, x - most, Math.round(base) - h - 2 - view.camY, most * 2 + 1, h + 2, () => {
+      R(most, 0, 1, 2, colour);
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k + 2, halfOf(k) * 2 + 1, 1, colour);
     });
   }
 }
@@ -354,7 +356,7 @@ function nearTrunks() {
   }
 }
 
-/** A spruce in the street layer: a trunk, tiers of needles, lighter at each tier's top edge. */
+/** A spruce in the street layer: a trunk, tiers of needles, lighter at each tier's top edge, a spire over the top tier (order 26, section 3c). */
 function spruce(x: number, foot: number, h: number, seed: number) {
   const tiers = 5 + (seed % 3);
   const step = Math.floor((h - 12) / tiers);
@@ -364,16 +366,20 @@ function spruce(x: number, foot: number, h: number, seed: number) {
   // Its left edge, one more than its widest row for the dark tip at each tier's foot.
   const left = x - most - 1;
   if (!seen(left, x + most)) return;
-  stamp(`nm-spruce ${h} ${tiers}`, left - view.camX, foot - h - view.camY, most * 2 + 1, h, () => {
+  // The spire: a pixel, a pixel, two, over the top tier's four; the piece three rows taller for it.
+  const S = 3;
+  stamp(`nm-spruce ${h} ${tiers}`, left - view.camX, foot - h - S - view.camY, most * 2 + 1, h + S, () => {
     const cx = most + 1;
-    R(cx - 2, 10, 4, h - 10, FOREST.trunk);
-    R(cx - 2, 10, 1, h - 10, FOREST.trunkDark);
+    R(cx - 1, 0, 1, 2, FOREST.needlesLight);
+    R(cx - 1, 2, 2, 1, FOREST.needles);
+    R(cx - 2, S + 10, 4, h - 10, FOREST.trunk);
+    R(cx - 2, S + 10, 1, h - 10, FOREST.trunkDark);
     for (let k = 0; k < h - 12; k++) {
       const inTier = k % step;
       const half = halfOf(k);
       const col = inTier === 0 ? FOREST.needlesLight : inTier > step - 3 ? FOREST.needlesDark : FOREST.needles;
-      R(cx - half, k, half * 2, 1, col);
-      if (inTier === step - 1) R(cx - half - 1, k, 2, 1, FOREST.needlesDark);
+      R(cx - half, S + k, half * 2, 1, col);
+      if (inTier === step - 1) R(cx - half - 1, S + k, 2, 1, FOREST.needlesDark);
     }
   });
 }

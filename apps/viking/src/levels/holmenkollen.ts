@@ -12,7 +12,7 @@ import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
-import { crowdFlag, person } from "../alive/things";
+import { crowdFlag, flagFlying, person } from "../alive/things";
 import { tile as textured, type Grain } from "../alive/ground";
 import type { LevelDef, View } from "./types";
 
@@ -256,18 +256,33 @@ function bigSpruce() {
   const x = 82 * TILE + 8;
   const top = 3 * TILE;
   const foot = 13 * TILE;
+  const needles = mix(PLANTS.spruce, ICY.steelDark, 0.15);
+  spire(x, top, needles);
   for (let y = top; y < foot - 8; y++) {
     const k = y - top;
     const half = Math.min(26, Math.floor(2 + (k % 22) * 0.9 + k * 0.08));
-    const color = k % 22 === 0 ? SNOW.lying : k % 22 === 1 ? SNOW.shade : mix(PLANTS.spruce, ICY.steelDark, 0.15);
+    const color = k % 22 === 0 ? SNOW.lying : k % 22 === 1 ? SNOW.shade : needles;
     R(x - half, y, half * 2 + 1, 1, color);
   }
   R(x - 2, top + 8, 5, foot - top - 8, PLANTS.spruceTrunk);
   R(x - 2, top + 8, 1, foot - top - 8, mix(PLANTS.spruceTrunk, WHITE, 0.15));
 }
 
+/**
+ * A spruce's spire over its top tier (order 26, section 3c: its top was a flat tier five wide): a single pixel, a pixel,
+ * then three, snow lying on the tip; the tier under it, five wide, starts with its snow as before.
+ */
+function spire(x: number, top: number, green: string, snow: string = SNOW.lying, put = R) {
+  put(x, top - 4, 1, 1, snow);
+  put(x, top - 3, 1, 1, green);
+  put(x - 1, top - 2, 3, 1, green);
+  put(x - 1, top - 1, 3, 1, green);
+  put(x, top - 2, 1, 1, snow);
+}
+
 /** A spruce weighed down with snow, from its foot. */
 function spruce(x: number, foot: number, h: number) {
+  spire(x, foot - h, PLANTS.spruce);
   R(x - 1, foot - 4, 3, 4, PLANTS.spruceTrunk);
   for (let i = 0; i < h - 4; i++) {
     const half = Math.floor(2 + (i % 7) * 0.8 + i * 0.22);
@@ -302,11 +317,8 @@ function jump(v: View) {
   for (let x = tx + 6; x < tx + 6 * TILE - 6; x += 6) R(x, 5 * TILE + 3, 1, 7, ICY.steelShade);
   R(tx + 4, 5 * TILE + 3, 6 * TILE - 8, 1, ICY.steelShade);
   R(tx + 6 * TILE / 2, 2 * TILE, 1, 3 * TILE + 3, METAL.flagpole);
-  R(tx + 6 * TILE / 2 + 1, 2 * TILE, 13, 9, FLAG.red);
-  R(tx + 6 * TILE / 2 + 4, 2 * TILE, 3, 9, FLAG.white);
-  R(tx + 6 * TILE / 2 + 1, 2 * TILE + 3, 13, 3, FLAG.white);
-  R(tx + 6 * TILE / 2 + 5, 2 * TILE, 1, 9, FLAG.blue);
-  R(tx + 6 * TILE / 2 + 1, 2 * TILE + 4, 13, 1, FLAG.blue);
+  // The flag on the tower: the game's own, in the mountain's wind (order 26, section 3b).
+  flagFlying(tx + 6 * TILE / 2 + 1, 2 * TILE - 1, v.t, 5);
   // The hut: red planks, a lit window, the start gate.
   R(tx, 14 * TILE + 5, 6 * TILE, 2 * TILE - 5, PAINT.red);
   for (let x = tx + 3; x < tx + 6 * TILE; x += 4) R(x, 14 * TILE + 5, 1, 2 * TILE - 5, PAINT.redLine);
@@ -498,6 +510,7 @@ function nearSpruces() {
     const c = Math.floor(wx / TILE);
     const foot = surfaceRow(Math.min(COLS - 1, c)) * TILE + 6;
     const h = 30 + ((i * 17) % 22);
+    spire(x, foot - h, mix(PLANTS.spruce, LAND.headland, 0.3), SNOW.far, box);
     box(x - 1, foot - 4, 3, 4, PLANTS.spruceTrunk);
     for (let k = 0; k < h - 4; k++) {
       const half = Math.floor(2 + (k % 7) * 0.8 + k * 0.22);
