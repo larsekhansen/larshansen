@@ -11,7 +11,7 @@ export interface Stage {
   depth(factor: number): CanvasRenderingContext2D;
   /** The sizing part of the page's layout: art pixel scale, canvas sizes. */
   resize(): void;
-  /** `air` (the viking game's, opt-in): the haze goes toward it, and after dusk is folded with the tint into one fill. */
+  /** `air` (the viking game's, opt-in): the colour the haze goes toward, in place of the horizon's. */
   pass(onto: CanvasRenderingContext2D, draw: () => void, phase: Phase, haze?: number, air?: string): void;
   nudge(canvas: HTMLCanvasElement, fracX: number): void;
 }
@@ -86,21 +86,11 @@ export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; u
     lights.length = 0;
     draw();
     const tint = TINT[phase];
-    if (air && haze > 0) {
-      // The viking game's haze (`air`, opt-in): toward the level's own air, and after dusk folded with the night's
-      // tint into one fill (the haze, then the tint, as one colour at one alpha).
-      sg.globalCompositeOperation = "source-atop";
-      sg.fillStyle = folded(air, haze, tint);
-      sg.fillRect(0, 0, view.w, view.h);
-      sg.globalCompositeOperation = "source-over";
-      if (tint) drawLights();
-      onto.drawImage(scratch, 0, 0);
-      return;
-    }
     if (haze > 0) {
       sg.globalCompositeOperation = "source-atop";
       sg.globalAlpha = haze;
-      sg.fillStyle = horizonColor(phase);
+      // The viking game's haze goes toward the level's own air (`air`, opt-in); the front page's toward the horizon.
+      sg.fillStyle = air ?? horizonColor(phase);
       sg.fillRect(0, 0, view.w, view.h);
       sg.globalAlpha = 1;
     }
@@ -112,24 +102,6 @@ export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; u
       drawLights();
     }
     onto.drawImage(scratch, 0, 0);
-  }
-
-  /** A haze toward `air` at `haze`, then a tint (an rgba or nothing) over it, as one rgba: the same as the two fills one after the other over an opaque pixel. */
-  const foldedCache = new Map<string, string>();
-  function folded(air: string, haze: number, tint: string | null): string {
-    const key = `${air}|${haze}|${tint}`;
-    let out = foldedCache.get(key);
-    if (out) return out;
-    const hex = (s: string, i: number) => parseInt(s.slice(1 + i * 2, 3 + i * 2), 16);
-    const h = [0, 1, 2].map((i) => hex(air, i));
-    const m = tint ? /rgba?\(([^)]+)\)/.exec(tint) : null;
-    const tp = m ? m[1].split(",").map((x) => Number(x)) : [0, 0, 0, 0];
-    const b = tp[3] ?? 1;
-    const a = 1 - (1 - haze) * (1 - b);
-    const c = [0, 1, 2].map((i) => Math.round((h[i] * haze * (1 - b) + tp[i] * b) / a));
-    out = `rgba(${c[0]}, ${c[1]}, ${c[2]}, ${a.toFixed(3)})`;
-    foldedCache.set(key, out);
-    return out;
   }
 
   /** Moves a canvas by what is left after drawing at whole art pixels, rounded to device pixels. */

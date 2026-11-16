@@ -244,9 +244,10 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: FIRST_SCRIPT kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
-  worn ends, the lips, the haze's air; the grain study is a chunk of its own, and anything a level chunk imports from the
-  first script makes it export more: the study's sheet had to be made outside the page for that). Before: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
+- **First script**: 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
+  worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
+  with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
+  it export more: the study's sheet of subjects is made outside the page for that). Before: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
   the camera's room for it, `render/pad.ts` and `game/frame.ts`, 3.1 kB, are a chunk fetched on a touch screen only). Before: 59.00 kB gzipped after order 20 (`kept.ts` and the kit's `dark.ts` are chunks of their own now;
   the far layers' `climbed` and `lift` came in). Before: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
   with the first scene, which took the old sparks, the beaten enemies' puff and the page's freeze with it). Before: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
@@ -358,8 +359,8 @@ Order 22 (`orders/22-paint-and-grain.md`, ADR 0044, `GRAIN.md`). What to know:
   The gold of what he takes is a deep amber (`COIN.gold`); the third rail's cover is red. `tools/glance/yellows.ts`
   lists every yellow a level paints; the palette test holds that only the paint, Rådhuset's bells and lamps' light are
   near the paint's yellow.
-- **The haze (A6).** The far layers fade toward the level's air (0.5, 0.4, 0.3), the street's backdrop 0.08, folded
-  with the night's tint into one fill; `tools/glance/haze.ts` prints each level's band, and the palette test holds it.
+- **The haze (A6).** The far layers fade toward the level's air (0.5, 0.4, 0.3), the street's backdrop 0.08, on the
+  fill each pass already made (the street's backdrop gains one fill a frame); `tools/glance/haze.ts` prints each level's band, and the palette test holds it.
   Every level has three far canvases at 0.12, 0.2 and 0.4 of the camera (Gamlebyen and the map two): the canvases are
   the kit's, shared by all levels, so a level's speeds are not data to change in one line.
 - **The grain study (part B, not live).** `?debug&grain=0|1|2|3|depth` on Langkaia's quay and Stortinget's platform

@@ -1,4 +1,4 @@
-// What can hurt him (order 18, ADR 0039; order 22, ADR 0043). Every enemy, what it throws and a boss while it
+// What can hurt him (order 18, ADR 0039; order 22, ADR 0044). Every enemy, what it throws and a boss while it
 // can hurt is outlined in one warning red (`red`), by day and after dark; that red is the warning and nothing
 // else is drawn in it, so no enemy's body is red. The bodies come from the colours below, held off every
 // level's fields and off the outline: plum, orange, poison green, pink and a white, each kind as near what the

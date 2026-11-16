@@ -5,8 +5,9 @@ import type { LevelDef } from "../levels/types";
 
 // The haze behind the play lane (order 22, A6; it was there since the far layers were, toward the horizon's colour):
 // each far layer is washed toward the level's air, more the further it is, so what he plays with stands forward.
-// The wash rides on the fill each far pass already makes (`stage.ts`'s haze; after dusk folded with the night's
-// tint into one fill), so it costs no rectangle and no canvas of its own.
+// The wash is the fill each far pass already made toward the horizon (`stage.ts`'s haze), now toward the level's air:
+// no rectangle and no canvas of its own. The street's backdrop pass gains that one fill. (Folding the haze and the
+// night's tint into one fill was tried; it cost a quarter of a kilobyte of the first script, which order 21 had used.)
 
 /** The far, mid and near layers' haze, unless a level says otherwise: the farthest most. */
 export const HAZE: readonly [number, number, number] = [0.5, 0.4, 0.3];

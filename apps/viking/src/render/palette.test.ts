@@ -15,10 +15,10 @@ import type { LevelDef, View } from "../levels/types";
 import { FIELD_SHARE, areaRecorder, backdropBand, colourBlind, deltaE, levelFields, levelPaint, mixRgb, parseColour, percentile, satVal, shares, tinted, type Painted, type Rgb } from "./fields";
 import { airOf, hazeOf } from "./haze";
 import { drawEnemy, drawShot } from "./pickups";
-import { eyes, outlined, testing } from "./sprite";
+import { eyes, lastShape, outlined } from "./sprite";
 import { RIM as HIM_RIM, RIM_ALPHA } from "./feel";
 
-// Order 18 (ADR 0039), order 22 (ADR 0043): colour says what a thing is. What can hurt him is drawn from the enemy
+// Order 18 (ADR 0039), order 22 (ADR 0044): colour says what a thing is. What can hurt him is drawn from the enemy
 // palette (`packages/pixelkit/src/swatches/enemy.ts`) and nothing else, outlined in its warning red, a quarter larger,
 // its head where he lands on it; what moves and cannot hurt him just now is outlined in the calm pale; and no
 // colour of the enemy palette is near a colour any level paints as a field.
@@ -54,9 +54,10 @@ interface Shape {
 /** Draws one enemy (or a shot) through `outlined`, as the page does (with the outline the page gives it), and returns the shape it made. */
 function drawn(draw: () => void, who?: object, rim?: string): Shape | null {
   target(fakeCtx() as unknown as CanvasRenderingContext2D);
-  testing.last = null;
   outlined(draw, who, rim);
-  return testing.last;
+  const s = lastShape();
+  if (!s.colours.length) return null;
+  return { rim: s.rim, rects: s.colours.map((c, i) => ({ x: s.rects[i * 4] + view.camX, y: s.rects[i * 4 + 1] + view.camY, w: s.rects[i * 4 + 2], h: s.rects[i * 4 + 3], c })) };
 }
 
 describe("what can hurt him: the enemy palette", () => {
@@ -75,7 +76,6 @@ describe("what can hurt him: the enemy palette", () => {
         return c;
       }
     };
-    testing.on = true;
     Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 4000, h: 4000, reduced: false });
     for (const st of BUILT) {
       const def = await loadLevel(st.id);
@@ -125,7 +125,6 @@ describe("what can hurt him: the enemy palette", () => {
   }, 120_000);
 
   afterAll(() => {
-    testing.on = false;
     delete (globalThis as Record<string, unknown>).document;
   });
 
@@ -384,7 +383,7 @@ describe("every role has its colours", () => {
   });
 });
 
-// Order 22 (ADR 0043, A4): flat saturated yellow on a top edge means "stand here", and nothing else in the game is
+// Order 22 (ADR 0044, A4): flat saturated yellow on a top edge means "stand here", and nothing else in the game is
 // that yellow. Every colour every level paints, whatever its share (its far layers, street, water, tiles, what
 // moves and is used, and what it draws in front, by day), is held 10 or more from the paint, but by name.
 describe("the paint is the only yellow of its kind", () => {

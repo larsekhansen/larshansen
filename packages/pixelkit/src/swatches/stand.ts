@@ -1,4 +1,4 @@
-// What he can stand on (order 18, section 5, ADR 0039; order 22, ADR 0043): everything he can stand on that is not
+// What he can stand on (order 18, section 5, ADR 0039; order 22, ADR 0044): everything he can stand on that is not
 // a level's main ground or wall (ledges, one-way platforms, rafts, lifts, ferries, bells, hooks, sheets, logs, lily
 // pads, decks, oars, rising stones, crates, a statue's head) has its top edge painted from here, and its body where
 // the level draws it from here. Yellow paint means "you can go here", as players know it from other games: a flat,

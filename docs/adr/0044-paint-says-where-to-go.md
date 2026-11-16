@@ -44,8 +44,9 @@ nothing else) stands; the colours of three roles change, and one role is added.
 - **The haze behind the lane** (A6): the far, mid and near layers wash toward the level's air (the sky's at the
   horizon; a grey-white in snow and mist: Holmenkollen, Korketrekkeren, Vålerenga, Østensjøvannet) at 0.5, 0.4 and
   0.3 (it was 0.35, 0.3 and 0.2 toward the horizon), and the street's own backdrop at 0.08; none under the ground or
-  on the line map; Ekeberg keeps its own. The wash is the fill each far pass already made; after dusk it is folded
-  with the night's tint into one fill (`pass(…, air)` in the kit, opt-in). The palette test holds what is behind the
+  on the line map; Ekeberg keeps its own. The wash is the fill each far pass already made, now toward the air
+  (`pass(…, air)` in the kit, opt-in); the street's backdrop pass gains one fill a frame. Folding the haze and the
+  night's tint into one fill was built and taken out again for the first script's budget. The palette test holds what is behind the
   lane quieter than what he plays with: by day, nine tenths of its area at most 0.5 saturated and its middle at most
   0.3 (the figures' middle is 0.69), the middle eight tenths of its value within 0.5.
 
@@ -54,8 +55,9 @@ nothing else) stands; the colours of three roles change, and one role is added.
   red against every body, the outline each thing has against its state, the yellow paint's uniqueness and the
   backdrop's band. The colour-blind table names the shapes that tell red outline from yellow paint, calm from use.
 - An enemy is a pixel larger all round than before (the dark line); its box is unchanged.
-- First script 59.00 to 59.85 kB gzipped (the outline's second ring and the rings after dark, the paint's marks and
-  worn ends, the lips, the haze's air).
+- First script 59.47 (after order 21) to 59.85 kB gzipped (the outline's second ring and the rings after dark, the
+  paint's marks and worn ends, the lips, the haze's air), with the careful walk to a clicked spot moved to a small
+  file fetched with the first click (0.57 kB) to make room.
 
 ## Not chosen
 - A red outline with no dark line inside: tried; it read worse at phone size.

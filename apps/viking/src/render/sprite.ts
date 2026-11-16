@@ -1,7 +1,7 @@
 import { ctx, target, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
 
-// What moves is drawn with an outline as part of its look (order 18, ADR 0039; order 22, ADR 0043): what can hurt
+// What moves is drawn with an outline as part of its look (order 18, ADR 0039; order 22, ADR 0044): what can hurt
 // him in the warning red, what cannot in the pale blue-white of `ROLES.calm`, a pixel all round its shape. A look
 // is drawn as before, with `R`, but into a recorder: the rectangles it would paint are noted, not painted. The
 // first time a shape is seen it is painted once onto a small canvas of its own with its outline round it; from
@@ -36,14 +36,9 @@ const eyesOf = new WeakMap<object, [number, number][]>();
 /** The outlines copied this frame, in screen pixels, for `rings` (a pool, reused frame to frame). */
 const drawnRings: { ring: HTMLCanvasElement; x: number; y: number }[] = [];
 let drawnCount = 0;
-/** For the tests: with `on`, the last outlined shape's rectangles (world pixels) and its outline's colour. */
-export const testing: { on: boolean; last: { rim: string; rects: { x: number; y: number; w: number; h: number; c: string }[] } | null } = { on: false, last: null };
+/** For the tests: the last outlined shape as it was recorded (its rectangles, x, y, w, h in turn, as drawn; its colours; its outline's). */
+export const lastShape = () => ({ rects, colours, rim: rimNow });
 
-/**
- * A dark line between the body and its outline (order 22): "none", or "out" (a near-black ring between the
- * body and the outline, so the outline is two pixels), chosen by looking at phone size.
- */
-export const INNER: "none" | "out" = "out";
 
 /** Inside an outlined drawing: draws `draw` straight onto the screen, with no outline (a ripple, a splash, a nest). */
 export function plain(draw: () => void) {
@@ -98,7 +93,8 @@ export function outlined(draw: () => void, who?: object, rim: string = ENEMY.war
     if (colours[i] === ENEMY.eye) eyes.push([rects[k] + view.camX, rects[k + 1] + view.camY]);
   }
   if (who) eyesOf.set(who, eyes);
-  const m = INNER === "out" ? 2 : 1;
+  // Two pixels all round: a near-black line inside the outline (order 22, chosen by looking at phone size).
+  const m = 2;
   let sprite = kept.get(key);
   if (!sprite) {
     if (kept.size >= KEPT_MOST) kept.clear();
@@ -116,45 +112,31 @@ export function outlined(draw: () => void, who?: object, rim: string = ENEMY.war
       s.fillStyle = colours[i];
       s.fillRect(rects[i * 4] - x0 + m, rects[i * 4 + 1] - y0 + m, rects[i * 4 + 2], rects[i * 4 + 3]);
     }
-    // The outline: the shape grown by a pixel (two, with the dark line inside it), in the rim's colour.
-    const ring = canvas();
-    const o = ring.getContext("2d")!;
-    const grow = (by: number) => {
-      for (let dx = -by; dx <= by; dx++) for (let dy = -by; dy <= by; dy++) if (Math.abs(dx) + Math.abs(dy) === by || (by === 1 && Math.abs(dx) + Math.abs(dy) === 1)) o.drawImage(shape, dx, dy);
+    // The outline: the shape grown by two pixels in the rim's colour; inside it, grown by one, the near-black line.
+    const grown = (by: number, colour: string) => {
+      const c = canvas();
+      const g2 = c.getContext("2d")!;
+      for (let dx = -by; dx <= by; dx++) for (let dy = -by; dy <= by; dy++) if (Math.abs(dx) + Math.abs(dy) <= by) g2.drawImage(shape, dx, dy);
+      g2.globalCompositeOperation = "source-in";
+      g2.fillStyle = colour;
+      g2.fillRect(0, 0, w, h);
+      return c;
     };
-    grow(1);
-    if (m === 2) grow(2);
-    o.globalCompositeOperation = "source-in";
-    o.fillStyle = rim;
-    o.fillRect(0, 0, w, h);
-    o.globalCompositeOperation = "source-over";
+    const ring = grown(2, rim);
+    const line = grown(1, ENEMY.line);
     const whole = canvas();
     const wg = whole.getContext("2d")!;
     wg.drawImage(ring, 0, 0);
-    if (m === 2) {
-      // The dark line: the shape grown by one, near-black, between the body and the outline.
-      const line = canvas();
-      const lg = line.getContext("2d")!;
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) lg.drawImage(shape, dx, dy);
-      lg.globalCompositeOperation = "source-in";
-      lg.fillStyle = ENEMY.line;
-      lg.fillRect(0, 0, w, h);
-      wg.drawImage(line, 0, 0);
-      // The ring alone is the red outside the dark line.
-      o.globalCompositeOperation = "destination-out";
-      o.drawImage(line, 0, 0);
-      o.globalCompositeOperation = "source-over";
-    } else {
-      o.globalCompositeOperation = "destination-out";
-      o.drawImage(shape, 0, 0);
-      o.globalCompositeOperation = "source-over";
-    }
+    wg.drawImage(line, 0, 0);
     wg.drawImage(shape, 0, 0);
+    // The ring alone is the red outside the line.
+    const rg = ring.getContext("2d")!;
+    rg.globalCompositeOperation = "destination-out";
+    rg.drawImage(line, 0, 0);
     sprite = { whole, ring };
     kept.set(key, sprite);
   }
   g.drawImage(sprite.whole, x0 - m, y0 - m);
-  if (testing.on) testing.last = { rim, rects: colours.map((c, i) => ({ x: rects[i * 4] + view.camX, y: rects[i * 4 + 1] + view.camY, w: rects[i * 4 + 2], h: rects[i * 4 + 3], c })) };
   const at = drawnRings[drawnCount] ?? (drawnRings[drawnCount] = { ring: sprite.ring, x: 0, y: 0 });
   at.ring = sprite.ring;
   at.x = x0 - m;

@@ -1,4 +1,4 @@
-// Colour says what a thing is (order 18, ADR 0039; order 22, ADR 0043). This file names the roles and owns their
+// Colour says what a thing is (order 18, ADR 0039; order 22, ADR 0044). This file names the roles and owns their
 // colours, so a level cannot quietly use a role's colour for something else: the viking game's palette test holds
 // every role's colours apart from every other role's and from every field any level paints, by day and under the
 // evening, twilight and night tints. Each role's own file holds its colours; this is the index over them.

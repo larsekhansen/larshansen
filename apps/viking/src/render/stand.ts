@@ -3,7 +3,7 @@ import { R, view } from "@larshansen/pixelkit/paint";
 import { STAND } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 
-// What he stands on reads at a glance (order 18, section 5, ADR 0039; order 22, ADR 0043): its top edge is painted
+// What he stands on reads at a glance (order 18, section 5, ADR 0039; order 22, ADR 0044): its top edge is painted
 // yellow, two pixels thick and a little worn at the ends, the same on every ledge, raft, lift, deck and stone: the
 // paint players know means "you can go here". What moves has black diagonal marks in the paint (a chevron wants
 // three rows; in two they are the stripes of moving machinery); what gives way (sinks, falls, goes on a beat) has

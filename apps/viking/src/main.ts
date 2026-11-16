@@ -56,7 +56,6 @@ import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
 import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
-import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, againAtBoss, benchAt, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import type { Rect } from "./game/frame";
 import type { Pad } from "./render/pad";
@@ -160,6 +159,8 @@ function readFeather() {
  * goes to Bygdøy or beyond, where it is given and then always his (ADR 0024).
  */
 let shieldKit: typeof import("./game/shield") | null = null;
+/** Walking carefully to a clicked spot in a level: fetched with the first click. */
+let careful: typeof import("./game/careful") | null = null;
 let shieldLoading: Promise<void> | null = null;
 const loadShield = () =>
   (shieldLoading ??= import("./game/shield").then(
@@ -1195,7 +1196,9 @@ function play() {
 
 /** Walking to a clicked spot in a level: the walk's keys without its hops; at an edge or before an enemy, no keys, and the walk ends. */
 function carefully(p: Play, k: Intent): Intent {
-  const walk = carefulStep(p, k);
+  // Until its file has come he waits, the walk kept.
+  if (!careful) return STILL;
+  const walk = careful.carefulStep(p, k);
   if (walk) return walk;
   state.goal = null;
   return STILL;
@@ -1718,6 +1721,8 @@ wirePointer(stage, () => scene?.doors ?? [], state, {
   walk: (at, door) => {
     if (frozen() || state.finished || state.flight) return;
     state.goal = walkTo(at, door, scene.play.map.width, state.steps);
+    // Walking carefully in a level is a small file of its own, fetched with the first click (order 22, for the budget).
+    if (!careful) void import("./game/careful").then((m) => (careful = m));
     state.moved = true;
   }
 });
