@@ -40,14 +40,14 @@ export const STORY: Record<"nb" | "en", StoryWords> = {
     onward: "To the line",
     mapSub: "The glamour is on Oslo",
     signLabel: "The news",
-    sign: ["No Peace Prize for Donald Trump. He sulked, and paid Loki.", "Loki glammed Oslo up instead. Stomp it off; the runes lift it."],
+    sign: ["No Peace Prize for Donald Trump.", "He sulked, and paid Loki.", "Loki glammed Oslo up instead.", "Stomp it off; the runes lift it."],
     arrival: {
       langkaia: "The glamour starts at the quay",
       radhuset: "Where the Peace Prize lives"
     },
     boss: {
       troll: "Loki gave it a mullet. It is not happy either.",
-      plough: "On tour tonight: the snow plough. Loki's headliner.",
+      plough: "On tour: the snow plough. Loki's headliner.",
       serpent: "Neon crest. Shades on. It still bites."
     },
     endOne: "Line 1 is plain Oslo again. A beer still costs what it costs.",
@@ -64,14 +64,14 @@ export const STORY: Record<"nb" | "en", StoryWords> = {
     onward: "Til linja",
     mapSub: "Synkvervingen ligger over Oslo",
     signLabel: "Siste nytt",
-    sign: ["Ingen fredspris til Donald Trump. Han surmulte, og betalte Loke.", "Loke glammet opp Oslo i stedet. Tramp det av; runene løfter det."],
+    sign: ["Ingen fredspris til Donald Trump.", "Han surmulte, og betalte Loke.", "Loke glammet opp Oslo i stedet.", "Tramp det av; runene løfter det."],
     arrival: {
       langkaia: "Synkvervingen begynner på kaia",
       radhuset: "Her bor fredsprisen"
     },
     boss: {
-      troll: "Loke ga det hockeysveis. Det er ikke fornøyd det heller.",
-      plough: "På turné i kveld: brøytebilen. Lokes hovedattraksjon.",
+      troll: "Loke ga det hockeysveis. Det er ikke fornøyd.",
+      plough: "På turné: brøytebilen. Lokes hovednummer.",
       serpent: "Neonkam. Solbriller. Det biter likevel."
     },
     endOne: "Linje 1 er vanlige Oslo igjen. En pils koster fortsatt det den koster.",
