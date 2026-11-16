@@ -18,6 +18,6 @@
 15-bjorvika	/viking/?debug&steps=2&level=bjorvika&x=382#bjorvika
 16-gamlebyen	/viking/?debug&steps=2&level=gamlebyen&x=1070#gamlebyen
 16-gamlebyen-dawn	/viking/?debug&auto&steps=6126&level=gamlebyen#gamlebyen	wait
-kart	/viking/?debug&steps=30&sky=day&cleared=langkaia,akershus,radhuset&x=392#kart
-kart-line2	/viking/?debug&steps=30&sky=day&cleared=langkaia,akershus,radhuset,slottet,holmenkollen,akerselva,nordmarka,stortinget,ekeberg,nabolaget&x=792#kart
-kart-end	/viking/?debug&steps=30&sky=day&cleared=all&x=1528#kart
+kart	/viking/?debug&told&steps=30&sky=day&cleared=langkaia,akershus,radhuset&x=392#kart
+kart-line2	/viking/?debug&told&steps=30&sky=day&cleared=langkaia,akershus,radhuset,slottet,holmenkollen,akerselva,nordmarka,stortinget,ekeberg,nabolaget&x=792#kart
+kart-end	/viking/?debug&told&steps=30&sky=day&cleared=all&x=1528#kart
