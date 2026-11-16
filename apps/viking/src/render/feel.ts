@@ -9,7 +9,7 @@ import type { Sfx, Voice } from "@larshansen/pixelkit/sfx";
 import { FONT, fontPx, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { WINDUP, untilThrow, type Enemy } from "../game/enemies";
-import { HEARTS, type Events, type Play } from "../game/play";
+import { HEARTS, runeFree, type Events, type Play } from "../game/play";
 import { LINE_Y, stationX } from "../levels/kart";
 import { drawBracteate } from "./actors";
 import { LOOKS, drawCheese, drawSkilling } from "./pickups";
@@ -829,6 +829,11 @@ export function createFeel(host: Host) {
           if (off > closing * 60 || off > 6 * TILE) continue;
           arrow(dir > 0 ? view.camX + view.w - 3 : view.camX + 2, Math.round(e.y - e.h / 2), dir);
         }
+      // The rune stone glows when he is near it (order 23): a ring of its light, breathing, within four tiles.
+      if (p.rune && runeFree(p) && p.runeAt === null && near(p, p.rune.x + 8, 4) && Math.abs(p.rune.y - p.body.y) < 4 * TILE) {
+        const r = 11 + (view.reduced ? 0 : Math.sin(now * 0.08) * 1.5);
+        for (let j = 0; j < 12; j++) R(p.rune.x + 8 + COS[j] * r, p.rune.y + 8 + SIN[j] * r, 1, 1, PALETTE.runeGlow);
+      }
       // Benches he has sat on keep a tick at the end of their back.
       for (let i = 0; i < p.benches.length; i++) {
         const s = p.benches[i];

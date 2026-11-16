@@ -44,7 +44,8 @@ export function drawDeath(s: Shape, feet: number, k: number, reduced: boolean) {
   const g = ctx();
   if (k === 2) g.globalAlpha *= 0.5;
   const h = Math.max(2, Math.round((feet - y0) * tall));
-  R(Math.round(cx - ((x1 - x0) * wide) / 2) - 1, feet - h - 1 - lift, Math.round((x1 - x0) * wide) + 2, h + 1, ENEMY.line);
+  // Folded and gone, a dark line round it as its outline was (the hit is its own shape, flashed).
+  if (k > 0 && !reduced) R(Math.round(cx - ((x1 - x0) * wide) / 2) - 1, feet - h - 1 - lift, Math.round((x1 - x0) * wide) + 2, h + 1, ENEMY.line);
   for (let i = 0; i < s.r.length; i += 4) {
     const ry0 = feet - Math.round((feet - s.r[i + 1]) * tall) - lift;
     const ry1 = feet - Math.round((feet - s.r[i + 1] - s.r[i + 3]) * tall) - lift;
