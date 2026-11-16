@@ -429,6 +429,32 @@ Order 24 (`orders/24-line-one-redrawn.md`; DESIGN's "Frames, shadows and depth";
   is for Lars to choose.
 - **Unplayed**: none of it has been seen at speed or on a phone.
 
+## Order 25: line 2 redrawn
+
+Order 25 (`orders/25-line-two-redrawn.md`; DESIGN's "Frames, shadows and depth"; numbers in `apps/viking/tools/review/o25/`). What to know:
+- **Everything that moves or is picked up is drawn as frames** (ADR 0045, carried through): line 2's own kinds in their levels'
+  files, the sea serpent (its head a map, its body, coils and tail in five tones of scale, every tell where it was), the heron,
+  line 2's shots; and what a walk through all sixteen levels and the map found still in rectangles: him lying back on the sledge
+  and the sledge (`levels/korketrekkeren.ts`), the crowds at Slottet and Holmenkollen (`person`, `crowdFlag` in
+  `alive/things.ts`, each copied), Bjørvika's welder. What is not drawn so is scenery, listed with its reason in
+  `tools/review/o25/old-style.md`. The mallard is shared by the river and the lake (`render/looks.ts`).
+- **A kept box**: a look drawn for the box its level keeps passes `fit` to `drawFoe` and is not squashed to it (Bjørvika's,
+  Gamlebyen's, the lake's coot, Stortinget's flying pigeon and track rat). `frames.test.ts` now also holds that every look
+  of every level is drawn pixel by pixel (its body in runs one pixel high).
+- **Vigelandsparken's statues** are one figure in four poses: watched, granite with lichen or bronze with verdigris in the
+  park's own tones; walking, the enemy's colours, eyes open, a stiff stride whose legs never meet. The moment one turns is
+  as before: colour, outline, the "!".
+- **The troll after dusk**: its two lightest tones are noted as it is drawn and drawn again, faint, over the forest's dark
+  (`overDark`), where the night's lights would not show (drawing only).
+- **Looking at things**: `tools/glance/serpent.ts` (the serpent in every state), `states.ts` (a look in chosen states: a
+  watched statue, a calm swan, a guard as stone), `line2shots.ts` (the addresses for the pictures in place, the serpent's
+  states along the route among them), `frames.ts` (line 2's shots and the heron too); `?debug&fall=<steps>[&gold]` shows the
+  maze's feather falling onto him.
+- **First script** unchanged, 58.86 kB gzipped. **Speed**: against order 23's table no place rose more than 10 rectangles a
+  frame (Nordmarka's dark) and none draws over 11,466; the crowds draw 150 to 270 fewer (each person copied); the troll's fight
+  after dusk +78, the serpent's +11 to +19 (`tools/review/o25/perf.md`).
+- **Unplayed**: none of it has been seen at speed or on a phone.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
