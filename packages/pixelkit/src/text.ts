@@ -119,21 +119,28 @@ export function drawBanner(b: { title: string; sub: string; alpha: number; plate
   u.globalAlpha = 1;
 }
 
-function drawPlatedBanner(b: { title: string; sub: string; alpha: number }, top: number) {
-  const titleFont = `700 ${Math.round(fontPx() * 1.7)}px ${FONT}`;
-  const subFont = `500 ${Math.round(fontPx() * 1.05)}px ${FONT}`;
-  u.font = titleFont;
+/**
+ * Where the plated banner stands with its title's middle at `top` (CSS pixels of the text canvas): the plate's
+ * rectangle. A page that keeps the banner off what it must not cover asks this first (the viking game, order 21).
+ */
+export function platedRect(b: { title: string; sub: string }, top: number): { x: number; y: number; w: number; h: number } {
+  u.font = `700 ${Math.round(fontPx() * 1.7)}px ${FONT}`;
   let w = u.measureText(b.title).width;
   if (b.sub) {
-    u.font = subFont;
+    u.font = `500 ${Math.round(fontPx() * 1.05)}px ${FONT}`;
     w = Math.max(w, u.measureText(b.sub).width);
   }
   const padX = Math.round(fontPx() * 1.1);
   const half = Math.round(fontPx() * 1.25);
   const h = half * 2 + (b.sub ? fontPx() * 1.6 : 0);
   const plateW = Math.min(view.cssW - 12, w + padX * 2);
-  const x = view.cssW / 2 - plateW / 2;
-  const y = top - half;
+  return { x: view.cssW / 2 - plateW / 2, y: top - half, w: plateW, h };
+}
+
+function drawPlatedBanner(b: { title: string; sub: string; alpha: number }, top: number) {
+  const titleFont = `700 ${Math.round(fontPx() * 1.7)}px ${FONT}`;
+  const subFont = `500 ${Math.round(fontPx() * 1.05)}px ${FONT}`;
+  const { x, y, w: plateW, h } = platedRect(b, top);
   u.globalAlpha = b.alpha;
   u.fillStyle = "rgba(20, 22, 34, 0.74)";
   u.beginPath();

@@ -535,20 +535,6 @@ body {
   box-sizing: border-box;
 }
 
-/* With the shield's button as well as the dash, the touch pad has five buttons on its right: smaller, so
-   all of them fit an upright phone. */
-@media (max-width: 480px) {
-  .pad.armed div {
-    gap: 6px;
-  }
-
-  .pad.armed button {
-    min-width: 50px;
-    padding: 0 8px;
-    font-size: 14px;
-  }
-}
-
 /* The card after a rune has one way on, to the map, and goes there by itself after six seconds: a thin
    line under the button fills meanwhile (not under reduced motion, where the card waits). Starting the
    level again is not offered here; the map is where a level is played again. */
@@ -580,4 +566,321 @@ body {
 
 .cleared #restart {
   display: none;
+}
+
+/*
+ * The touch pad (order 21, ADR 0043): over the picture, not under it. The pad covers the screen and lets every
+ * touch through to the game; only its controls take them. `render/pad.ts` places them in the corners a thumb
+ * reaches, inside the safe areas; they are see-through, neutral (furniture, not things in the world: none of
+ * the roles' colours, ADR 0039), and look pressed in the frame they are pressed, with no transition.
+ */
+body.touch {
+  --pad: 0px;
+}
+
+.pad {
+  inset: 0;
+  z-index: 1;
+  display: block;
+  height: auto;
+  padding: 0;
+  background: none;
+  pointer-events: none;
+}
+
+.pad.off {
+  display: none;
+}
+
+/* The safe areas, read by the pad through this hidden element's padding. */
+.pad .safe {
+  position: absolute;
+  visibility: hidden;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+.pad .move,
+.pad button {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: 0;
+  border: 1.5px solid rgba(255, 255, 255, 0.6);
+  border-radius: 22px;
+  background: rgba(24, 24, 30, 0.36);
+  color: #fff;
+  font: 700 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  pointer-events: auto;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.pad [hidden] {
+  display: none;
+}
+
+.pad .jump,
+.pad .dash,
+.pad .shield {
+  border-radius: 50%;
+}
+
+.pad .jump {
+  font-size: 17px;
+}
+
+/* Left and right: one pad, its halves parted by a line. */
+.pad .move {
+  justify-content: space-around;
+}
+
+.pad .move::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  bottom: 14px;
+  border-left: 1.5px solid rgba(255, 255, 255, 0.4);
+}
+
+.pad .move svg {
+  width: 30px;
+  height: 30px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
+}
+
+.pad [data-pressed="down"] {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.45);
+}
+
+.pad .move[data-pressed="left"] {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.45) 50%, rgba(24, 24, 30, 0.36) 50%);
+}
+
+.pad .move[data-pressed="right"] {
+  background: linear-gradient(90deg, rgba(24, 24, 30, 0.36) 50%, rgba(255, 255, 255, 0.45) 50%);
+}
+
+.pad .move[data-pressed="both"] {
+  background: rgba(255, 255, 255, 0.45);
+}
+
+/* The way in is always there, in its place: lit where there is a door or a bench, dimmed where there is none. */
+.pad .enter {
+  visibility: visible;
+  background: rgba(24, 24, 30, 0.36);
+}
+
+/* A button with nothing to do now: the dash resting or spent, the shield in the air, the way in with nowhere to go. */
+.pad .dim,
+.pad .enter:not(.show) {
+  opacity: 0.4;
+}
+
+/* The help line on a touch screen is a note of what just changed, placed by the page clear of him. */
+body.touch .help {
+  top: 0;
+  bottom: auto;
+}
+
+/* A card's buttons are targets a thumb finds: 56 tall, 8 apart. */
+body.touch .card .actions button {
+  min-width: 56px;
+  min-height: 56px;
+  padding: 6px 20px;
+}
+
+/* A card never goes under the bar, and scrolls when a short screen cannot hold it. */
+body.touch .card {
+  top: max(22%, calc(var(--bar, 0px) + 10px));
+  max-height: calc(100% - max(22%, calc(var(--bar, 0px) + 10px)) - 10px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+/* While a level is on, nothing else moves the page: no panning, zooming or double-tap zoom on the game, no
+   selecting or callout on a long press. (No 300 ms delay anywhere.) */
+html {
+  touch-action: manipulation;
+}
+
+body.touch.playing {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+body.touch.playing .stage {
+  touch-action: none;
+}
+
+/*
+ * The bar on a phone (a touch screen under 1024 x 600; order 21, ADR 0043). While a level is on it is the run
+ * alone, the runes, the clock, the hearts, the lives, the skilling and the sound: the name, the site's links,
+ * the gold count and the restart fold away (the Game over card starts a level again). On the map and on a card
+ * the links are whole again. Upright it is two rows in a level (the runes, then the rest); on its side one
+ * thin row. Every button in it is a 56 x 56 target whose look (a disc, a pill) is at its top, and what of it
+ * reaches below the bar lies over the picture, see-through.
+ */
+@media (max-width: 1023px), (max-height: 599px) {
+  body.touch .bar {
+    gap: 4px 8px;
+    padding: calc(4px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) 4px max(10px, env(safe-area-inset-left));
+  }
+
+  body.touch #restart,
+  body.touch.playing .me,
+  body.touch.playing .apps,
+  body.touch.playing .goldcount {
+    display: none;
+  }
+
+  body.touch .tool {
+    width: 56px;
+    height: 56px;
+    margin: -4px 0 -22px;
+    padding-top: 10px;
+    align-content: start;
+    border: 0;
+    background: radial-gradient(circle at 50% 19px, #fff 0 14px, rgba(31, 26, 23, 0.16) 14.5px 15.5px, transparent 16px);
+  }
+
+  body.touch .tool:hover,
+  body.touch .tool:focus-visible {
+    background: radial-gradient(circle at 50% 19px, #fff 0 14px, #541321 14.5px 15.5px, transparent 16px);
+  }
+
+  body.touch .run {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+
+  body.touch #mute {
+    margin-left: auto;
+  }
+
+  body.touch .run.sixteen .runes li {
+    width: 18px;
+  }
+
+  /* The site's links: each a target 56 tall, its pill in the middle; a second row of them keeps its targets 8 px
+     from the first's. */
+  body.touch .apps ul {
+    flex-wrap: wrap;
+    gap: 36px 8px;
+  }
+
+  body.touch .apps a {
+    position: relative;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 56px;
+    height: 56px;
+    margin: -14px 0;
+    padding: 0 8px;
+    border: 0;
+    background: none;
+    font-size: 11px;
+  }
+
+  body.touch .apps a::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    left: 0;
+    right: 0;
+    top: 14px;
+    bottom: 14px;
+    border: 1px solid rgba(31, 26, 23, 0.14);
+    border-radius: 99px;
+    background: #fff;
+  }
+
+  body.touch .apps a.here::before,
+  body.touch .apps a:focus-visible::before {
+    border-color: #541321;
+  }
+}
+
+/* On its side: one thin row. In a level: the runes, the clock, the hearts, the lives, the skilling, the sound. On
+   the map and on a card: the links, the runes (smaller), the lives and the gold, the sound. */
+@media (orientation: landscape) and (max-height: 599px) {
+  body.touch .bar {
+    flex-wrap: nowrap;
+  }
+
+  body.touch .me {
+    display: none;
+  }
+
+  body.touch .run {
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    gap: 4px 10px;
+  }
+
+  body.touch .run::before {
+    display: none;
+  }
+
+  body.touch .runes li {
+    width: 22px;
+    height: 28px;
+  }
+
+  body.touch .runes svg {
+    width: 11px;
+    height: 16px;
+  }
+
+  body.touch .run.sixteen .runes li {
+    width: 17px;
+    height: 26px;
+  }
+
+  body.touch .run.sixteen .runes svg {
+    width: 9px;
+    height: 14px;
+  }
+
+  body.touch .apps a {
+    margin: -4px 0 -26px;
+    padding: 0 8px 26px;
+  }
+
+  body.touch .apps a::before {
+    top: 4px;
+    bottom: 26px;
+  }
+
+  body.touch:not(.playing) .clock,
+  body.touch:not(.playing) .hearts,
+  body.touch:not(.playing) .coins {
+    display: none;
+  }
+
+  body.touch:not(.playing) .run.sixteen .runes li {
+    width: 14px;
+    height: 22px;
+  }
+
+  body.touch:not(.playing) .run.sixteen .runes svg {
+    width: 8px;
+    height: 12px;
+  }
 }
