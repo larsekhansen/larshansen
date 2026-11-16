@@ -1,14 +1,23 @@
 # Roadmap
 
-As of the evening of 16 November 2026. Change this file in the same change that makes it wrong.
+As of the night of 17 November 2026. Change this file in the same change that makes it wrong.
+
+## Status
+
+| | |
+|---|---|
+| Date | 17 November 2026, about 00:30 |
+| Last live | Order 27, the neon invaders (the glamour, ADR 0050) |
+| Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
+| Weekly allowance | 68 % used when order 27 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Paused? | No. One round at a time |
 
 ## In flight
 
-**Order 27, the neon invaders** (branch `the-neon-invaders`), handed back on the night of 16 November with
-every part built: (a) the neon system and the palette test, (b) glam marks and a natural self for every figure and the four redraws,
-(c) the stomp that breaks the glamour and the rune's ring, (d) the bosses, (e) the story, (f) the map's mirror balls, the scenery and
-the stings, (g) the docs. Waiting for the planner's review, then Lars's list of lines to reword (`apps/viking/src/game/story.ts`) and the
-page of figures republished ([`resources.md`](resources.md)) from `/tmp/shots-neon/sheets/`.
+Nothing. Order 27 is live. What it left: what enemies throw is not glammed; the lean is per level, not per kind; a kind met in
+several levels was looked at in place only in its first; line 2's ending card was checked in code only; the four stings are unheard;
+a worktree under `~/.cache` measures the first script 2 kB larger than the main checkout does and nobody knows why
+(`apps/viking/tools/review/o27/`).
 
 Order 26 (the ground, small flags, spruce spires, rat tails, amber wasps; ADR 0049) is live.
 What it left: lamp posts, railings, panel doors, the sauna rafts, sheds' plank walls, the
@@ -19,10 +28,9 @@ stand out there on a phone.
 
 ## Next
 
-Review order 27 ([`../orders/27-the-neon-invaders.md`](../orders/27-the-neon-invaders.md),
-[ADR 0050](../../adr/0050-the-glamour.md), its hand-back). Then: Lars gets the list of every line of text to reword, and the page of
-figures is republished ([`resources.md`](resources.md)). What it left: shots are not glammed; a kind met in several levels was looked at
-in place only in its first; the stings are unheard.
+**Order 28, the last flat things**: a sweep of everything in the lane still drawn as plain rectangles (order 26's list above, the line
+map, anything else a look finds), each judged against the whole game: what he does with it, whether it fits its level, and whether
+the glamour should touch it. Then the ground joins order 22's band test.
 
 ## After that: ideas in rough order of value
 
