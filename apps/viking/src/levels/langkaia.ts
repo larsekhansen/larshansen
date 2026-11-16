@@ -196,7 +196,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 150, r: 15, range: 2 },
   { kind: "flyer", look: "gull", c: 153, r: 11, range: 1, rise: 8, period: 170, offset: 40 },
   { kind: "walker", look: "pigeon", c: 224, r: 14, range: 2 },
-  { kind: "walker", look: "pigeon", c: 205, r: 14, range: 2 },
+  // A tile on from the crates he drops off onto the deck (order 24): a jump for it pressed as he drops comes after he lands.
+  { kind: "walker", look: "pigeon", c: 206, r: 14, range: 2 },
   { kind: "flyer", look: "gull", c: 182, r: 12, range: 1, rise: 4, period: 140 }
 ];
 

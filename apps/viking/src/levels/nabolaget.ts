@@ -220,7 +220,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "thrower", look: "kid", c: 52, r: 7, period: 210 },
   { kind: "flyer", look: "crow", c: 72, r: 6, range: 3, rise: 6, period: 170, offset: 60 },
   { kind: "walker", look: "cat", c: 153, r: S - 1, range: 1, w: 12 },
-  { kind: "walker", look: "fox", c: 90, r: S - 1, range: 2, w: 12 },
+  // A tile on from the crate he drops off (order 24): a jump for it pressed as he drops comes after he lands.
+  { kind: "walker", look: "fox", c: 91, r: S - 1, range: 2, w: 12 },
   { kind: "flyer", look: "owl", c: 96, r: 13, range: 2, rise: 6, period: 170 },
   { kind: "flyer", look: "crow", c: 141, r: 8, range: 2, rise: 8, period: 150 },
   { kind: "walker", look: "cat", c: 104, r: S - 1, range: 1, w: 12 }

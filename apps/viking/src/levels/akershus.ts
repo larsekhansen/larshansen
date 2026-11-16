@@ -129,7 +129,7 @@ const LOW: [number, number][] = [
   [127, 8], [129, 7], [131, 7],
   [167, 10], [169, 10], [176, 10], [178, 10], [185, 9], [187, 9],
   [196, 15], [197, 15], [203, 14], [204, 14],
-  [212, 14], [213, 13], [214, 14]
+  [213, 14], [214, 13], [215, 14]
 ];
 const COINS: [number, number][] = [
   ...LOW.map(([c, r]): [number, number] => [c, r + D]),
@@ -188,7 +188,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 128, r: G - 1, range: 2 },
   // He stands his post between the flag and the end of the wall, clear of both: the leap over the water is its own problem.
   { kind: "walker", look: "guard", c: 198, r: WALL - 1, range: 0, speed: 0, w: 10, h: 14 },
-  { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
+  // A tile on from the ledge he drops off (order 24): a jump for it pressed as he drops now comes after he lands.
+  { kind: "spiky", look: "brazier", c: 214, r: WALL - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 223, r: KEEP_FLOOR - 1, range: 2, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 229, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "flyer", look: "crow", c: 233, r: TOP - 2, range: 1, rise: 5, period: 140 },
