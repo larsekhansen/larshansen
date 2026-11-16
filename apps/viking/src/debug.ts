@@ -128,6 +128,9 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
     sent(params, help);
   }
   if (params.has("where")) where(params.get("where") ?? "");
+  // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
+  if (params.has("grain"))
+    void import("./grain/study").then((m) => m.study(params.get("grain") || "3", (window as unknown as { __game: Parameters<typeof m.study>[1] }).__game, params.has("count") ? help : undefined)).catch((e) => (help.textContent = `grain: ${e}`));
 }
 
 /** The page as `window.__game` has it, for the strip. */

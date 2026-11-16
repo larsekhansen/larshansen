@@ -51,6 +51,8 @@ export default defineConfig({
           if (route) return route[1] === "common" ? "routes" : `${route[1]}-route`;
           if (/\/src\/game\/bot\.ts$/.test(id)) return "routes";
           if (/\/src\/debug\.ts$/.test(id)) return "debug";
+          // The grain study (order 22, part B): only under `?debug&grain`.
+          if (/\/src\/grain\//.test(id)) return "grain";
           // How the line map looks: fetched on its own as the page starts.
           if (/\/src\/levels\/kartArt\.ts$/.test(id)) return "kart";
           // The enemy looks several levels share but the first does not: fetched with the first level that has one.
