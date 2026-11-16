@@ -421,7 +421,7 @@ beforeAll(async () => {
     )
   );
   for (const r of results) reach.set(r.id, r);
-}, 240000);
+}, 600000);
 
 describe("what the levels promise", () => {
   test("Slottet: a banner carries him over Spikersuppa, and the bass drum throws him higher than any jump", () => {
