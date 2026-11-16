@@ -45,9 +45,8 @@ describe("every invader has a natural self (order 27)", () => {
   test("its natural self is the same map: still and in its cycle it covers the same pixels as its glammed self without its marks", () => {
     const off: string[] = [];
     for (const [name, l] of Object.entries(looks)) {
-      if (!l.natural.length || !l.idle.length) continue;
       const area = (rs: { w: number; h: number }[]) => rs.reduce((a, r) => a + r.w * r.h, 0);
-      const glammed = area(l.idle[0].rects) - (l.marks ? 0 : 0);
+      const glammed = area(l.glammed.rects);
       const natural = area(l.natural[0].rects);
       // The marks may add pixels over its outline (a crest, shoulder pads) or cover its own (shades): never more than a third of it.
       if (natural < glammed * 0.66 || natural > glammed * 1.05) off.push(`${name}: ${natural} natural pixels to ${glammed} glammed`);
@@ -61,6 +60,24 @@ describe("every invader has a natural self (order 27)", () => {
       .map(([name]) => name);
     // A jumper is drawn under the water while it waits (its marks show as it leaps); fire is its glam (the brazier, the grill).
     expect(bare.filter((n) => !["salmon", "trackrat", "brazier", "grill", "statue", "bronze"].includes(n))).toEqual([]);
+  });
+});
+
+describe("a stomp knocks the glam off (order 27, section 2)", () => {
+  test("every look's ending is its glamour breaking: hit in its glammed colours, then its natural self, then leaving its way (a statue or a fire stays)", () => {
+    const wrong: string[] = [];
+    for (const [name, l] of Object.entries(looks)) {
+      const [hit, turned, going] = l.death;
+      const neonIn = (d: { rects: { c: string }[] }) => d.rects.some((r) => !CONTRAST.has(r.c) && NEON.some((n) => deltaE(rgb(r.c), rgb(n)) < OFF_NEON));
+      if (!hit.rects.length || !turned.rects.length || !going.rects.length) wrong.push(`${name}: a frame of its ending is empty`);
+      else {
+        // Leaving (its marks have flown and fallen by then), nothing of it is neon.
+        if (neonIn(going)) wrong.push(`${name}: its natural self in its ending is neon`);
+        const left = (d: { rects: { x: number; y: number }[] }) => Math.min(...d.rects.map((r) => r.x)) + Math.min(...d.rects.map((r) => r.y)) * 1000;
+        if (NATURAL[name].leave !== "stay" && left(turned) === left(going)) wrong.push(`${name}: it does not leave`);
+      }
+    }
+    expect(wrong).toEqual([]);
   });
 });
 

@@ -19,8 +19,11 @@ import { LOOKS, drawCheese, drawSkilling } from "./pickups";
 import { DEEP_FALL, MARGIN, dressed, himFrame } from "../alive/him";
 import { pixels, type Frame } from "../alive/frames";
 import { shadows } from "../alive/shadows";
-import { DEATH, deathFrame, drawDeath } from "../alive/death";
-import { glows, leanFor } from "../alive/glamour";
+import { BREAK, drawBreak, type Broken } from "../alive/death";
+import { glam, glows, leanFor } from "../alive/glamour";
+import { NATURAL, naturalName } from "../alive/natural";
+import { forced } from "../alive/parts";
+import { lean, outlined } from "./sprite";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
 import { bench, bracteate, bracteateOutline, cheese, feather, flag, runeStone, sheep, skiPole, skilling } from "../alive/things";
@@ -317,8 +320,11 @@ export function createFeel(host: Host) {
   const nudge = { x: 0, y: 0, until: -1 };
   /** Benches he has sat on in this scene. */
   const sat = new Uint8Array(8);
-  /** Beaten enemies' shapes, and enemies' calm a step ago (statues, guards). */
-  const shapes = new Map<Enemy, Shape>();
+  /** Beaten enemies' broken glamours (order 27), and enemies' calm a step ago (statues, guards). */
+  const shapes = new Map<Enemy, Broken>();
+  /** The level's id (the names its looks go by), and the rune's ring of daylight (order 27): the step it set off, where from, and what it has lifted. */
+  let level = "";
+  const lift = { at: -1, x: 0, y: 0, done: new Set<Enemy>() };
   let calm: boolean[] = [];
   /** A step has been taken in this scene: what is stone from the start is not heard turning to stone. */
   let primed = false;
@@ -378,6 +384,9 @@ export function createFeel(host: Host) {
     /** A new scene: nothing in the air, nothing held, nothing remembered. */
     reset(p: Play) {
       leanFor(p.def.id);
+      level = p.def.id;
+      lift.at = -1;
+      lift.done.clear();
       plife.fill(0);
       rt.fill(-9999);
       alertAt.fill(-9999);
@@ -465,6 +474,8 @@ export function createFeel(host: Host) {
       if (ev.stomp !== null) {
         const e = p.enemies[ev.stomp];
         voice("stomp");
+        // The glamour breaks (order 27): a burst of glitter in its level's neons, a sting gliding down.
+        if (!view.reduced) burst(e.x, e.y - e.h / 2, 12, 1.3, 20, lean[ENEMY.hotPink] ?? ENEMY.hotPink, lean[ENEMY.blue] ?? ENEMY.blue, 0.04);
         jolt(0, 2);
         // His bounce: a little dust kicked off its back.
         if (!view.reduced) for (const dx of [-3, 3]) spark(cx + dx, b.y + PLAYER.h, dx * 0.2, 0.3, 10, WHITE, 1, 0);
@@ -537,6 +548,10 @@ export function createFeel(host: Host) {
       }
       if (ev.rune && p.rune) {
         ring(p.rune.x + 8, p.rune.y + 8, 4, 20, 18, COIN.gold, t);
+        // The glamour lifts (order 27): a ring of plain daylight runs out from the stone, and every invader it passes is itself again.
+        lift.at = t;
+        lift.x = p.rune.x + 8;
+        lift.y = p.rune.y + 8;
         if (poleNew) {
           risen.pole.at = t;
           voice("pole");
@@ -769,37 +784,44 @@ export function createFeel(host: Host) {
       return steps < nudge.until ? nudge : null;
     },
 
-    /** A beaten enemy: squashed flat in its own shape, then a puff of its own colours and the skilling it gave rising. True when drawn. */
+    /**
+     * A beaten enemy (order 27): its glamour breaks. Its glammed self flashed as the stomp lands, its marks flying off, then
+     * its natural self in the calm outline, leaving its own way, away from him (`alive/death.ts`); the skilling it gave
+     * rising. True while drawn.
+     */
     beaten(e: Enemy, t: number, look: () => void): boolean {
       const age = t - (e.beatenAt ?? t);
-      if (age < 0 || age > 30) return true;
+      if (age < 0 || age >= BREAK.end) return true;
       let s = shapes.get(e);
       if (!s) {
-        s = record(e, look);
+        s = broken(e, look, level, Math.sign(e.x - (was.x + PLAYER.w / 2)) || 1);
         shapes.set(e, s);
       }
-      const feet = Math.round(e.y);
-      // Its death in three frames (order 23): hit, fold, gone; the puff of its own colours as it goes.
-      const k = deathFrame(age, view.reduced);
-      if (k >= 0) drawDeath(s, feet, k, view.reduced);
-      if (age === DEATH.gone && !view.reduced) {
-        let x0 = 1e9;
-        let x1 = -1e9;
-        for (let i = 0; i < s.r.length; i += 4) {
-          x0 = Math.min(x0, s.r[i]);
-          x1 = Math.max(x1, s.r[i] + s.r[i + 2]);
-        }
-        const cxe = (x0 + x1) / 2;
-        for (let k2 = 0; k2 < 8; k2++) spark(cxe + (k2 - 3.5) * 1.5, feet - 3, (k2 - 3.5) * 0.25, -0.6 - (k2 % 3) * 0.2, 22, k2 % 2 ? s.a : s.b, 2, 0.04);
-      }
+      drawBreak(s, age, view.reduced);
       // The skilling it gave goes up and is gone.
       if (age < 24 && !view.reduced) drawSkilling(Math.round(e.x - 2), Math.round(e.y - e.h - 4 - age * 0.8), t, 0);
+      return true;
+    },
+
+    /**
+     * After the rune (order 27): an invader the ring of daylight has passed is itself again, drawn in its natural self and
+     * the calm outline wherever the rules have it (drawing only: the level is won). True when drawn so.
+     */
+    lifted(e: Enemy, look: () => void): boolean {
+      if (lift.at < 0) return false;
+      if (!lift.done.has(e)) {
+        if (Math.hypot(e.x - lift.x, e.y - e.h / 2 - lift.y) > liftRadius(now - lift.at)) return false;
+        lift.done.add(e);
+      }
+      natural(e, look, level);
       return true;
     },
 
     /** What is in the air and on the ground of a scene: particles, rings, things rising, marks of things done. Over the street, after the night's tint. */
     world(p: Play, t: number) {
       for (let i = 0; i < PARTICLES; i++) if (plife[i] > 0) R(px[i], py[i], psize[i], psize[i], pcol[i]);
+      // The rune's ring of daylight (order 27): plain light running out from the stone, the width of the screen and more.
+      if (lift.at >= 0 && now - lift.at < LIFT_STEPS) daylight(lift.x, lift.y, now - lift.at);
       for (let k = 0; k < RINGS; k++) {
         const age = now - rt[k];
         if (age < 0 || age >= rdur[k]) continue;
@@ -1156,8 +1178,8 @@ function drawHim(g: CanvasRenderingContext2D, f: Frame | null, body: Body, walk:
   g.globalAlpha = 1;
 }
 
-/** Records a beaten enemy's look as it was alive: its rectangles and colours, and its two commonest colours. */
-function record(e: Enemy, look: () => void): Shape {
+/** Records a beaten enemy's look as it was alive: its rectangles and colours (each through `ink`), and its two commonest colours. */
+function record(e: Enemy, look: () => void, ink: (c: string) => string = (c) => c): Shape {
   const r: number[] = [];
   const c: string[] = [];
   const g = ctx();
@@ -1165,7 +1187,7 @@ function record(e: Enemy, look: () => void): Shape {
     fillStyle: "",
     fillRect(x: number, y: number, w: number, h: number) {
       r.push(x + view.camX, y + view.camY, w, h);
-      c.push(rec.fillStyle);
+      c.push(ink(rec.fillStyle));
     }
   } as unknown as CanvasRenderingContext2D & { fillStyle: string };
   // The look is drawn as it was a step before it was beaten, into the recorder only.
@@ -1184,6 +1206,71 @@ function record(e: Enemy, look: () => void): Shape {
   return { r, c, a: by[0]?.[0] ?? ENEMY.plum, b: by[1]?.[0] ?? by[0]?.[0] ?? ENEMY.pink };
 }
 
+
+/** How long the rune's ring of daylight runs, in steps, and how far it has gone (world pixels). */
+const LIFT_STEPS = 50;
+const liftRadius = (age: number) => 8 + Math.max(0, age) * (view.reduced ? 99 : 9);
+const DAYLIGHT = "#fff6e0";
+
+/** The ring of daylight at `age` steps: two pixels thick, fading as it goes (with reduced motion, nothing moves: it is not drawn, and every invader in view is itself at once). */
+function daylight(x: number, y: number, age: number) {
+  if (view.reduced) return;
+  const r = liftRadius(age);
+  const g = ctx();
+  const a = g.globalAlpha;
+  g.globalAlpha = a * (1 - age / LIFT_STEPS) * 0.8;
+  const n = Math.min(160, Math.round(r / 2));
+  for (let j = 0; j < n; j++) {
+    const k = (j / n) * Math.PI * 2;
+    R(Math.round(x + Math.cos(k) * r), Math.round(y + Math.sin(k) * r), 2, 2, DAYLIGHT);
+  }
+  g.globalAlpha = a;
+}
+
+/**
+ * An invader's broken glamour (order 27): its look drawn a step before, glammed (in its level's lean), its natural self
+ * (bare of its marks, in its natural ramp) still and a step on in its cycle, and its marks alone.
+ */
+function broken(e: Enemy, look: () => void, level: string, away: number): Broken {
+  const nat = NATURAL[naturalName(e.def.look, e.def.kind, level)];
+  const leaned = (c: string) => lean[c] ?? c;
+  const ink = (c: string) => nat?.ink[c] ?? c;
+  const glammed = record(e, look, leaned);
+  glam.mode = "bare";
+  const x = e.x;
+  const was = forced.state;
+  try {
+    forced.state = nat?.leave === "stay" ? "idle" : "move";
+    const n0 = record(e, look, ink);
+    e.x += 3 * e.dir;
+    const n1 = nat?.leave === "stay" ? n0 : record(e, look, ink);
+    e.x = x;
+    forced.state = was;
+    glam.mode = "marks";
+    const marks = record(e, look, leaned);
+    return { glammed, natural: [n0, n1], marks: marks.r.length ? marks : null, leave: nat?.leave ?? "run", away };
+  } finally {
+    e.x = x;
+    forced.state = was;
+    glam.mode = "glam";
+  }
+}
+
+/** An invader drawn as its natural self (bare of its marks, in its natural ramp), outlined in the calm pale. */
+function natural(e: Enemy, look: () => void, level: string) {
+  const ink = NATURAL[naturalName(e.def.look, e.def.kind, level)]?.ink ?? {};
+  const kept = { ...lean };
+  for (const k of Object.keys(lean)) delete lean[k];
+  Object.assign(lean, ink);
+  glam.mode = "bare";
+  try {
+    outlined(look, e, ROLES.calm);
+  } finally {
+    glam.mode = "glam";
+    for (const k of Object.keys(lean)) delete lean[k];
+    Object.assign(lean, kept);
+  }
+}
 
 /** A count in the header that has just changed: it swells and shrinks back (with reduced motion it only takes a colour a moment). */
 function ticked(el: HTMLElement | undefined, age: number, colour: string) {

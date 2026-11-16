@@ -1417,9 +1417,11 @@ function standing(v: View) {
  * order 22); once beaten, the squares it puffs into.
  */
 function foe(e: Enemy, v: View) {
-  // Beaten: squashed in its own shape, then a puff of its own colours (`render/feel.ts`).
-  if (!e.alive) return void feel?.beaten(e, v.t, () => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)));
-  outlined(() => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning);
+  const look = () => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t));
+  // Beaten, its glamour breaks and it leaves; after the rune, itself again (order 27: `render/feel.ts`).
+  if (!e.alive) return void feel?.beaten(e, v.t, look);
+  if (feel?.lifted(e, look)) return;
+  outlined(look, e, e.calm ? ROLES.calm : ENEMY.warning);
 }
 /**
  * What hurts and is not an enemy (rebar, the third rail, a branch, the barrier, sparks): the enemy

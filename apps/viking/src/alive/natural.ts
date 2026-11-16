@@ -78,3 +78,6 @@ export const NATURAL: Record<string, Natural> = {
 
 /** A look's natural colour for one it is drawn in: its ramp's, or the colour itself (the near-black, its eyes, what is already natural). */
 export const naturalOf = (look: string, c: string): string => NATURAL[look]?.ink[c] ?? c;
+
+/** The name a look goes by (as the census has it): Rådhuset's gull throws standing; Gamlebyen's guards are the bishop's. */
+export const naturalName = (look: string, kind: string, level: string) => `${look}${kind === "thrower" && look === "gull" ? " (thrower)" : ""}${level === "gamlebyen" && look === "guard" ? " (the bishop's)" : ""}`;
