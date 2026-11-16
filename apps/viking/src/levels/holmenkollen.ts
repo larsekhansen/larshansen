@@ -589,7 +589,7 @@ export const HOLMENKOLLEN: LevelDef = {
     front(v) {
       outrunCrowd(v.t, v.flourish !== null);
     },
-    ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: SNOW.shade }),
+    ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: SNOW.shade, kind: "snow" }),
     tile(t, c, r, x, y, m: TileMap) {
       if (t === "#") {
         snowTile(c, r, x, y, m);

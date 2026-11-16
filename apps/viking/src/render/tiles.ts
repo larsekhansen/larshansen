@@ -5,6 +5,8 @@ import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STAND, STONE, WHIT
 import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Art } from "../levels/types";
+import type { Board } from "@larshansen/pixelkit/text";
+import type { Door } from "@larshansen/pixelkit/doors";
 import { STAND_LEDGE, tileTop } from "./stand";
 
 // Every tile a level is built of, drawn from its map one tile at a time, so each thing is exactly
@@ -32,6 +34,11 @@ const hash = (c: number, r: number, k: number) => {
 export const TEXTURED: {
   tile?(t: string, c: number, r: number, x: number, y: number, map: TileMap, art: Art, sky: Sky): boolean;
   ledge?(x: number, y: number, c: number, first: boolean, last: boolean): void;
+  /** The level's earth going on down under the map, on a tall screen. */
+  deep?(c: number, r: number, x: number, y: number, map: TileMap, art: Art): void;
+  /** Props at arm's length: the sign boards on their posts, the T-bane's entrance (says whether it drew it). */
+  boards?(boards: Board[]): void;
+  tbane?(d: Door): boolean;
 } = {};
 
 /** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */
@@ -294,7 +301,7 @@ function drawBelow(map: TileMap, art: Art, sky: Sky) {
     // ground as its earth only, with no grass on top.
     const rr = map.tileAt(c, r - 1) === t ? r - 1 : r;
     for (let y = map.height; y < bottom; y += TILE) {
-      if (t === "#" && !underWater(map, c, r)) groundFill(c * TILE, y, c, rr, art.ground(c).fill);
+      if (t === "#" && !underWater(map, c, r)) TEXTURED.deep ? TEXTURED.deep(c, rr, c * TILE, y, map, art) : groundFill(c * TILE, y, c, rr, art.ground(c).fill);
       else drawTile(t, c, rr, c * TILE, y, map, art, sky);
     }
   }

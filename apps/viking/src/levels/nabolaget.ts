@@ -358,19 +358,36 @@ function houses() {
 }
 const BLOCK = "#9a9488";
 
-/** A roof over a house, along its ramp: slate, its edge, and snow lying on it. */
+/** A roof over a house, along its ramp: slate in courses under snow lying on it, a sparkle in the snow (order 26: drawn once and copied, in strips). */
+const SLATE = [mix(ROOF.slate, INK, 0.4), mix(ROOF.slate, INK, 0.2), ROOF.slate, mix(ROOF.slate, WHITE, 0.1)];
 function roofOf(c0: number, c1: number, eave: number, rise: number) {
   const x0 = c0 * TILE - 3;
   const x1 = (c1 + 1) * TILE + 3;
   const ey = eave * TILE;
   const mid = (c0 * TILE + (c1 + 1) * TILE) / 2;
   const half = mid - c0 * TILE;
-  for (let x = x0; x < x1; x++) {
-    const y = Math.round(ey - rise * TILE * Math.max(0, 1 - Math.abs(x - mid) / half));
-    R(x, y + 3, 1, ey - y + 1, ROOF.slate);
-    R(x, y, 1, 3, SNOW.lying);
-    R(x, y + 3, 1, 1, SNOW.shade);
-  }
+  const top = ey - rise * TILE;
+  keptStrips(`roof ${c0}`, x0, top, x1 - x0, ey - top + 1, () => {
+    for (let x = x0; x < x1; x++) {
+      const y = Math.round(ey - rise * TILE * Math.max(0, 1 - Math.abs(x - mid) / half));
+      R(x, y, 1, 3, (x * 7 + y * 3) % 23 === 0 ? WHITE : SNOW.lying);
+      R(x, y + 3, 1, 1, SNOW.shade);
+      for (let yy = y + 4; yy <= ey; yy++) {
+        // Courses of slates three rows high from the eave up, each slate six wide, every other course moved by three:
+        // the lower edge of a course in shade, a joint between slates, a slate a shade lighter or darker here and there.
+        const up = ey - yy;
+        const course = Math.floor(up / 3);
+        const within = up % 3;
+        const sx = (x + (course % 2) * 3 + 600) % 6;
+        const n = Math.sin(Math.floor((x + (course % 2) * 3) / 6) * 12.9898 + course * 78.233) * 43758.5453;
+        const shade = n - Math.floor(n);
+        const tone = within === 0 ? 1 : sx === 0 ? 0 : shade < 0.2 ? 1 : shade > 0.85 ? 3 : within === 2 ? 3 : 2;
+        R(x, yy, 1, 1, SLATE[tone]);
+      }
+      // Snow caught on a course's edge now and then.
+      if ((x * 13 + eave) % 41 === 0) R(x, y + 4 + ((x * 5) % 3) * 3, 2, 1, SNOW.shade);
+    }
+  });
 }
 
 /** A chimney: brick with a cap, snow on it; its smoke rises, and over the fourth house's it rises fast and thick (the warm air). */

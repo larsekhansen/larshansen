@@ -690,7 +690,7 @@ export const KORKETREKKEREN: LevelDef = {
         if (!view.reduced && speedAt(hx) >= 1.5) for (let k = 0; k < 3; k++) R(Math.round(hx) - 16 - k * 7 - ((v.t * 3) % 7), feet - 4 - k * 4, 6, 1, mix(K.bank, WHITE, 0.5));
       }
     },
-    ground: () => ({ top: K.bank, dot: K.runGroove, fill: K.slope }),
+    ground: () => ({ top: K.bank, dot: K.runGroove, fill: K.slope, kind: "snow" }),
     tile(t, c, r, x, y, map) {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.

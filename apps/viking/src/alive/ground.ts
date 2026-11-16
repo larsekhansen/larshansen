@@ -1,7 +1,10 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, FACADE, INK, MASONRY, PALETTE, SNOW, STAND, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, DOORWAY, FACADE, INK, MASONRY, PAINT, PALETTE, SNOW, STAND, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import type { Door } from "@larshansen/pixelkit/doors";
+import type { Board } from "@larshansen/pixelkit/text";
+import { wdisc } from "@larshansen/pixelkit/paint";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Art, Surface } from "../levels/types";
 import { TEXTURED } from "../render/tiles";
@@ -52,6 +55,8 @@ export interface Grain {
   under?: "setts" | "lawn";
   /** Only these columns of the tile are painted (a ticket gate's post). */
   cols?: readonly [number, number];
+  /** No speckle, crack or vein (glass). */
+  smooth?: boolean;
 }
 
 // Edges, as bits of a piece's key.
@@ -146,34 +151,35 @@ function blocks(k: Work, c: number) {
         if (g.accent?.moss && wy === h - 1 && y >= k.rows / 2 && hash(v, x, y, 1) < 0.14) put(k, x, y, g.accent.moss);
         continue;
       }
+      // Each block its own shade now and then (marble's slabs barely: a big wall of them would read as a board).
       const hb = hash(v, course, bx, 2);
-      let t = hb < 0.2 ? 1 : hb > 0.85 ? L(k) : F(k);
+      let t = hb < (g.fine ? 0 : 0.15) ? 1 : hb > (g.fine ? 0.93 : 0.88) ? L(k) : F(k);
       if (!g.flat && h >= 6) {
         if (wy === 0) t++;
         else if (wy === h - 2) t--;
       }
       if (g.round && (wy === 0 || wy === h - 2) && (wx === 1 || wx === w - 1)) t = 1;
       const hp = hash(v, x, y, 3);
-      const speck = g.fine ? 0.015 : 0.05;
+      const speck = g.smooth ? 0 : g.fine ? 0.015 : 0.05;
       if (hp < speck) t--;
       else if (hp > 1 - speck * 0.6) t++;
       if (wy === 0 && wx === 1 && hash(v, course, bx, 4) < 0.3) t = 0;
       set(k, x, y, Math.max(1, t));
     }
   // A vein across the marble's slabs.
-  if (g.fine && v % 2) {
-    let cy = 2 + Math.floor(hash(v, c, 0, 5) * 10);
+  if (g.fine && !g.smooth && v % 2) {
+    let cy = 2 + Math.floor(hash(v, 0, 0, 5) * 10);
     for (let x = 0; x < W && cy < k.rows - 1; x++) {
       if (toneAt(k, x, cy) > 1) set(k, x, cy, 1);
       if (hash(v, x, cy, 6) < 0.35) cy++;
     }
   }
   // A crack across one variant's face.
-  if (v === 3 && !g.fine) {
-    let cx = 3 + Math.floor(hash(v, c, 0, 5) * 9);
-    let cy = 1 + Math.floor(hash(v, c, 0, 6) * Math.max(1, k.rows - 6));
-    for (let i = 0; i < 4; i++) {
-      if (toneAt(k, cx, cy) > 0) set(k, cx, cy, 0);
+  if (v === 3 && !g.fine && !g.smooth) {
+    let cx = 3 + Math.floor(hash(v, 0, 0, 5) * 9);
+    let cy = 1 + Math.floor(hash(v, 0, 0, 6) * Math.max(1, k.rows - 6));
+    for (let i = 0; i < 3; i++) {
+      if (toneAt(k, cx, cy) > 1) set(k, cx, cy, 1);
       cx += hash(v, i, 1, 7) < 0.5 ? 1 : 0;
       cy++;
     }
@@ -462,9 +468,10 @@ function concrete(k: Work) {
   for (let y = 0; y < k.rows; y++)
     for (let x = 0; x < W; x++) {
       let t = F(k);
+      // The formwork's joint every eight rows, a board's mark faint now and then, pits.
       if (y % 8 === 7) t = 1;
-      else if (hash(v, x >> 3, y, 81) < 0.12) t = Math.max(1, F(k) - 1);
-      if (hash(v, x, y, 82) < 0.04) t = 1;
+      else if (y % 8 === 0 && hash(v, x >> 2, y, 81) < 0.3) t = Math.max(1, F(k) - 1);
+      if (hash(v, x, y, 82) < 0.03) t = 1;
       if (hash(v, x, y, 83) > 0.985) t = L(k);
       set(k, x, y, t);
     }
@@ -650,7 +657,7 @@ function draw(p: Piece, x: number, y: number) {
 /** The piece of `g` for a tile with edges `m` (bits), a variant from its place, at a depth (0 to 3) under its top. */
 export function piece(g: Grain, c: number, r: number, m: number, depth = 0): Piece {
   const v = Math.floor(hash(c, r, 7) * 4);
-  const phase = (g.w ?? 0) > W ? ((c * W) % g.w!) / W : 0;
+  const phase = (g.w ?? 0) > W ? ((c * W) % g.w!) / W : g.kind === "girder" ? c % 2 : 0;
   const key = `${g.name}|${v}|${m}|${depth}|${phase}`;
   let p = pieces.get(key);
   if (!p) pieces.set(key, (p = work(g, v, m, depth, c)));
@@ -732,6 +739,15 @@ export function earthOf(s: Surface): Grain {
     const band = s.kind === "snow" ? [SNOW.shade, mix(SNOW.shade, SNOW.lying, 0.5), SNOW.lying] : [s.dot, mix(s.top, s.dot, 0.5), s.top, mix(s.top, WHITE, 0.18)];
     earths.set(key, (g = { name: `earth ${key}`, kind: "earth", ramp: body, band, top: s.kind ?? "grass" }));
   }
+  return g;
+}
+
+/** The earth going on down under the map on a tall screen: the earth's body, or snow's in layers where the ground is snow. */
+const deeps = new Map<string, Grain>();
+function deepOf(s: Surface): Grain {
+  if (s.kind !== "snow") return earthOf(s);
+  let g = deeps.get(s.fill);
+  if (!g) deeps.set(s.fill, (g = { name: `deep snow ${s.fill}`, kind: "snow", ramp: [mix(s.fill, INK, 0.12), mix(s.fill, INK, 0.06), s.fill, s.top] }));
   return g;
 }
 
@@ -829,6 +845,109 @@ function bollard(x: number, y: number) {
   draw(bollardPiece, x, y - 3);
 }
 
+/** A piece of any size from a function of its pixels (a colour, or null for nothing), kept by its key. */
+function custom(key: string, w: number, h: number, at: (x: number, y: number) => string | null): Piece {
+  let p = props.get(key);
+  if (p) return p;
+  const ink: string[] = [];
+  const runs: number[] = [];
+  for (let y = 0; y < h; y++)
+    for (let x = 0; x < w; ) {
+      const col = at(x, y);
+      if (!col) {
+        x++;
+        continue;
+      }
+      let n = 1;
+      while (x + n < w && at(x + n, y) === col) n++;
+      if (!ink.includes(col)) ink.push(col);
+      runs.push(x, y, n, ink.indexOf(col));
+      x += n;
+    }
+  props.set(key, (p = { runs: Int16Array.from(runs), ink, h }));
+  return p;
+}
+const props = new Map<string, Piece>();
+const propCanvas = new Map<Piece, HTMLCanvasElement>();
+/** A prop's piece at world (x, y), its top left: one copy (runs where there is no page). */
+function drawProp(p: Piece, x: number, y: number, w: number) {
+  const r = p.runs;
+  if (typeof document === "undefined") {
+    for (let i = 0; i < r.length; i += 4) R(x + r[i], y + r[i + 1], r[i + 2], 1, p.ink[r[i + 3]]);
+    return;
+  }
+  let c = propCanvas.get(p);
+  if (!c) {
+    c = document.createElement("canvas");
+    c.width = w;
+    c.height = p.h;
+    const g = c.getContext("2d")!;
+    for (let i = 0; i < r.length; i += 4) {
+      g.fillStyle = p.ink[r[i + 3]];
+      g.fillRect(r[i], r[i + 1], r[i + 2], 1);
+    }
+    propCanvas.set(p, c);
+  }
+  ctx().drawImage(c, Math.round(x) - view.camX, Math.round(y) - view.camY);
+}
+
+/** A sign board's wood (the words are the text layer's): two boards lit on their tops, the joint between them, grain, a nail at each end of each, the edge under; its post lit on the left. */
+const BOARD = [P.boardEdge, mix(P.board, P.boardEdge, 0.45), P.board, mix(P.board, WHITE, 0.12)];
+function boards(list: Board[]) {
+  for (const b of list) {
+    const x = Math.round(b.cx - b.w / 2);
+    if (b.post !== undefined) {
+      const top = b.y + 10;
+      R(b.cx - 1, top, 1, b.post - top, mix(P.woodDark, P.wood, 0.3));
+      R(b.cx, top, 1, b.post - top, P.woodDark);
+    }
+    const w = Math.round(b.w);
+    const p = custom(`board ${w}`, w, 11, (px, py) => {
+      if (py === 10) return P.boardEdge;
+      const plank = py < 5 ? 0 : 1;
+      const wy = py % 5;
+      if (wy === 4 && plank === 0) return BOARD[1];
+      if (px === 0 || px === w - 1) return BOARD[1];
+      if (wy === 2 && (px === 2 || px === w - 3)) return BOARD[0];
+      if (wy === 0) return BOARD[3];
+      if (hash(w, plank, px >> 2, wy) < 0.18) return BOARD[1];
+      return BOARD[2];
+    });
+    drawProp(p, x, b.y, w);
+  }
+}
+
+/** The T-bane's entrance: steps going down between two cheeks of granite in courses, their tops lit, the steps' nosings lit; the round blue sign with its white T beside it. */
+const CHEEK = [mix(FACADE.libraryFrame, INK, 0.3), mix(FACADE.libraryFrame, INK, 0.12), FACADE.libraryFrame, mix(FACADE.libraryFrame, WHITE, 0.4)];
+function tbane(d: Door): boolean {
+  const top = d.bottom - d.h;
+  const w = d.w + 6;
+  const h = d.h - 8;
+  const hole = d.open ? DOORWAY.stage : mix(DOORWAY.stage, PAINT.tbane, 0.25);
+  const p = custom(`tbane ${w} ${h} ${d.open ? 1 : 0}`, w, h, (px, py) => {
+    const inner = px >= 3 && px < w - 3 && py >= 2;
+    if (inner) {
+      // The steps down: each a lit nosing over its dark riser.
+      const k = h - 1 - py;
+      if (k % 4 === 2 && k < 16 && px > 3 && px < w - 4) return mix(FACADE.libraryFrame, INK, 0.3);
+      return hole;
+    }
+    if (py === 0) return CHEEK[3];
+    if (py % 6 === 5) return CHEEK[0];
+    const block = Math.floor(py / 6);
+    if ((px + (block % 2) * 2) % 5 === 0 && px !== 0 && px !== w - 1) return CHEEK[1];
+    if (px === 0 || px === w - 1) return CHEEK[1];
+    return hash(w, block, px, 3) < 0.1 ? CHEEK[1] : CHEEK[2];
+  });
+  drawProp(p, d.x - 3, top + 8, w);
+  const px = d.x - 8;
+  const py = top + 16;
+  wdisc(px, py, 5, PAINT.tbane);
+  R(px - 3, py - 3, 7, 2, WHITE);
+  R(px, py - 1, 1, 5, WHITE);
+  return true;
+}
+
 // --- One-way ledges: the platform's teal body under its paint ---------------------------------------------------
 
 /** Under the paint (its two rows, as the kit draws them), the body's two rows and the line under: lit under the paint, a rivet each side of every joint, a scuff now and then. */
@@ -857,3 +976,6 @@ function ledgeBody(x: number, y: number, c: number, first: boolean, last: boolea
 
 TEXTURED.tile = shared;
 TEXTURED.ledge = ledgeBody;
+TEXTURED.boards = boards;
+TEXTURED.tbane = tbane;
+TEXTURED.deep = (c, r, x, y, map, art) => void tile(deepOf(art.ground(c)), c, r + (y >> 4), x, y, map, null, 0, 2);

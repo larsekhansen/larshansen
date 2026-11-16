@@ -348,7 +348,7 @@ function facade(c: number, r: number, x: number, y: number, top: number, map: Ti
 
 /** Concrete (order 26): a slab's top at an open edge, the formwork's boards in its face, tie holes; rebar sticking out where the next floor will join. */
 const CONCRETE: Grain = { name: "bj-concrete", kind: "concrete", ramp: [S.concreteDeep, S.concreteDark, S.concrete, S.concreteLight], kerb: [S.concreteLight, S.concreteLight, mix(S.concrete, WHITE, 0.15)] };
-const GLAZED: Grain = { name: "bj-glass", kind: "blocks", ramp: [S.glassDark, S.glassDark, S.glass, mix(S.glass, S.glassLight, 0.4)], h: 16, w: 8, off: 0, flat: true };
+const GLAZED: Grain = { name: "bj-glass", kind: "blocks", ramp: [S.glassDark, S.glassDark, S.glass, mix(S.glass, S.glassLight, 0.4)], h: 16, w: 8, off: 0, flat: true, smooth: true };
 function concrete(c: number, r: number, x: number, y: number, map: TileMap) {
   const top = !map.isSolid(c, r - 1);
   if (!top) {
