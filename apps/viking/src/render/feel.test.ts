@@ -82,7 +82,9 @@ describe("the answers are pictures and sounds only", () => {
       expect(runs[0].runeAt, st.id).not.toBeNull();
       expect(state(runs[1]), st.id).toBe(state(runs[0]));
     }
-  });
+    // Sixteen routes twice over: 5 to 7 s alone on the Pi, more with the reach searches' workers busy on every core
+    // (the whole suite), where the default 5 s timed out (order 21).
+  }, 60_000);
 
   test(`at most ${PARTICLES} particles are alive, from pools made once`, async () => {
     const def = await loadLevel("slottet");
