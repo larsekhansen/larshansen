@@ -664,6 +664,12 @@ const NOSE = [mix(FOREST.trollNose, INK, 0.3), FOREST.trollNose, mix(FOREST.trol
 const HAIR = [mix(FOREST.trollHair, INK, 0.3), FOREST.trollHair, FOREST.trollDark];
 const MOSS = [mix(FOREST.moss, INK, 0.25), FOREST.moss, FOREST.mossLight];
 const CLUB = [mix(FOREST.club, INK, 0.3), FOREST.club, mix(FOREST.club, WHITE, 0.18)];
+/**
+ * Its glam (order 27, ADR 0050), as big as it is: its moss gone magenta and grown into a mullet down its back, and a spiked
+ * wristband on its club arm. It is gone as the dawn turns it (stone takes the hair as moss again) and at the end.
+ */
+const GLAM_HAIR = [ENEMY.plumDark, ENEMY.magenta, ENEMY.plumLight];
+const BAND = [ENEMY.line, mix(ENEMY.line, WHITE, 0.2), mix(ENEMY.line, WHITE, 0.35)];
 /** Where its head is, in its own frame (forward, up from the floor), as its body is drawn: what its eyes in the dark follow. */
 function trollHead(t: Troll, step: number) {
   const bend = t.phase === "stuck" ? 4 + (Math.floor(step / 30) % 2) : 0;
@@ -728,7 +734,7 @@ function trollBody(t: Troll, v: View) {
   const stoneBelow = t.phase === "stone" ? -Infinity : t.hits === 0 ? Infinity : fl - Math.round((TROLL.h * t.hits) / 3);
   const flash = t.phase === "hit" && !view.reduced && Math.floor(age / 4) % 2 === 0;
   /** The ramp a part is drawn in at a row: its own, or stone where the dawn has turned it. */
-  const rampAt = (y: number, ramp: readonly string[]) => (y < stoneBelow ? ramp : ramp === HIDE ? STONE_TONES : ramp === HAIR ? MOSS : ramp === NOSE ? STONE_TONES : ramp);
+  const rampAt = (y: number, ramp: readonly string[]) => (y < stoneBelow ? ramp : ramp === HIDE ? STONE_TONES : ramp === HAIR || ramp === GLAM_HAIR ? MOSS : ramp === NOSE || ramp === BAND ? STONE_TONES : ramp);
   const baseAt = (y: number, ramp: readonly string[], base: number) => (y < stoneBelow || ramp === HIDE ? base : ramp === NOSE ? 3 : base);
   /** A filled ellipse round (cx, cy), in the troll's own frame (cx forward, cy up from the floor), lit from the top left. */
   const blob = (cx: number, cy: number, rx: number, ry: number, ramp: readonly string[], base: number) => {
@@ -774,16 +780,31 @@ function trollBody(t: Troll, v: View) {
     R(f > 0 ? x + hx - 1 : x - hx - 1, fl - hy - 5, 2, 1, INK);
     R(f > 0 ? x + hx + 2 : x - hx - 3, fl - hy - 5, 1, 1, INK);
   }
-  for (const [dx, dy, w] of [[-5, 6, 4], [-2, 7, 5], [3, 6, 3], [-8, 3, 3]] as const) box(hx + dx, hy + dy, w, 2, HAIR, 1);
+  // Its hair: under the glamour magenta, and long down its back in a mullet (order 27); stone at the end.
+  const hair = t.phase === "stone" ? HAIR : GLAM_HAIR;
+  for (const [dx, dy, w] of [[-5, 6, 4], [-2, 7, 5], [3, 6, 3], [-8, 3, 3]] as const) box(hx + dx, hy + dy, w, 2, hair, 1);
+  if (hair === GLAM_HAIR) {
+    box(hx - 10, hy - 4, 3, 8, hair, 1);
+    box(hx - 12, hy - 6, 2, 6, hair, 0);
+    box(hx - 9, hy - 6, 2, 2, hair, 2);
+  }
+  /** Its spiked wristband at (cx, cy) on its arm, in its own frame: a black band, its spikes out either side. */
+  const wristband = (cx: number, cy: number) => {
+    if (t.phase === "stone") return;
+    box(cx, cy, 4, 2, BAND, 1);
+    for (const [sx, sy] of [[-1, 0], [4, 0], [-1, 1], [4, 1]] as const) if (fl - cy - sy - 1 < stoneBelow) R(f > 0 ? x + cx + sx : x - cx - sx - 1, fl - cy - sy - 1, 1, 1, ENEMY.pale);
+  };
   // The arm and the club: hanging, raised (the telegraph), or stuck in the ground.
   if (t.phase === "windup") {
     const raise = Math.min(1, age / 14);
     box(6, 22, 4, 6 + Math.round(12 * raise), HIDE, 2);
+    wristband(6, 22 + 4 + Math.round(12 * raise) - 2);
     // The club raised, its tell, in the bosses' "now" colour (order 18).
     for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - raise)) : x - 10 - Math.round(k * (1 - raise)), fl - 34 - Math.round(raise * 10) - Math.round(k * raise), 4, 2, ROLES.now);
     R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(raise * 2), 6, 6, ROLES.now);
   } else if (t.phase === "stuck") {
     box(9, 10, 4, 12, HIDE, 2);
+    wristband(9, 11);
     for (let k = 0; k < 14; k++) {
       R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 2, FOREST.club);
       R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 1, CLUB[2]);
@@ -793,6 +814,7 @@ function trollBody(t: Troll, v: View) {
   } else {
     box(9, 8, 4, 16 - stride, HIDE, 2);
     blob(11, 7 + stride, 2, 2, HIDE, 1);
+    wristband(9, 10);
     if (t.phase !== "stone") {
       for (let k = 0; k < 16; k++) {
         const y = fl - 12 + k - stride;

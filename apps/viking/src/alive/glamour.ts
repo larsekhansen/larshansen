@@ -47,7 +47,7 @@ export const LEANS: Record<string, Record<string, string>> = {
   korketrekkeren: {},
   ostensjovannet: { [NEON_A]: ENEMY.poison },
   bjorvika: { [NEON_A]: ENEMY.blue, [NEON_B]: ENEMY.hotPink, [ENEMY.plum]: ENEMY.hotPink },
-  gamlebyen: { [NEON_A]: ENEMY.purple, [NEON_B]: ENEMY.orange }
+  gamlebyen: { [NEON_B]: ENEMY.orange }
 };
 
 /** A scene's lean, for the page to record its shapes in (`lean` in `render/sprite.ts`): none on the map. */

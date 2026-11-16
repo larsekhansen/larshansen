@@ -1219,10 +1219,11 @@ function daylight(x: number, y: number, age: number) {
   const g = ctx();
   const a = g.globalAlpha;
   g.globalAlpha = a * (1 - age / LIFT_STEPS) * 0.8;
-  const n = Math.min(160, Math.round(r / 2));
+  // A dot every four pixels or so round it (at most 200: the ring is drawn for under a second, after the level is won).
+  const n = Math.min(200, Math.round(r * 1.6));
   for (let j = 0; j < n; j++) {
     const k = (j / n) * Math.PI * 2;
-    R(Math.round(x + Math.cos(k) * r), Math.round(y + Math.sin(k) * r), 2, 2, DAYLIGHT);
+    R(Math.round(x + Math.cos(k) * r), Math.round(y + Math.sin(k) * r), 3, 2, DAYLIGHT);
   }
   g.globalAlpha = a;
 }

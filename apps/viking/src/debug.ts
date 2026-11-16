@@ -134,6 +134,12 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
     perf(frame, help);
     sent(params, help);
   }
+  // `?debug&steps=0&on=<event>[&skip=N]` alone (order 27): a picture of the moment, stepped to the event and N steps on.
+  if (params.has("on") && !params.has("perf"))
+    return void reach(params, (window as unknown as { __game: Game }).__game).then(
+      () => frame(),
+      (e) => (help.textContent = `on: ${e}`)
+    );
   if (params.has("where")) where(params.get("where") ?? "");
   // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
   if (params.has("grain"))

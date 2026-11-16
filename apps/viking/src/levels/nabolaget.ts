@@ -953,6 +953,8 @@ const ORANGE = [mix(WINTER.ploughDark, INK, 0.25), WINTER.ploughDark, WINTER.plo
 const PARKED = ORANGE.map((c) => mix(c, INK, 0.45));
 const GLASS_TONES = [WINTER.cab, mix(WINTER.cab, WHITE, 0.12), mix(WINTER.cab, WHITE, 0.3)];
 const SNOW_TONES = [SNOW.shade, SNOW.lying, mix(SNOW.lying, WHITE, 0.4)];
+/** Its stage lights under the glamour (order 27): the glamour's neons, never the "now" violet its tell is in. */
+const STAGE = [ENEMY.hotPink, ENEMY.lime, ENEMY.magenta, ENEMY.white];
 
 /** The plough: orange, its cab high and dark-windowed, beacons on the roof, the blade in front; snow thrown up as it charges; reeling when hit; its beacon out when beaten. */
 function ploughBody(p: Plough, v: View) {
@@ -1067,6 +1069,18 @@ function ploughBody(p: Plough, v: View) {
       if (!fast) span(dx + 1, dx + 3, y0 - 4, 1, WINTER.beaconHot);
       light(Math.min(at(dx), at(dx + 6)), y0 - 4, 6, 4, "lamp");
       if (fast) plain(() => span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)"));
+    }
+  }
+  // Its glam (order 27, ADR 0050): done up as a tour bus, a two-neon stripe along its side and a row of stage lights along
+  // its bonnet, chasing (all on with reduced motion); gone when it is beaten, and it is its orange again.
+  if (!beaten) {
+    span(-32, 25, y0 + 25, 1, ENEMY.hotPink);
+    span(-32, 25, y0 + 26, 1, ENEMY.lime);
+    const chase = view.reduced ? -1 : Math.floor(v.t / 6) % 4;
+    for (let k = 0; k < 6; k++) {
+      const c = STAGE[k % STAGE.length];
+      span(3 + k * 5, 6 + k * 5, y0 + 19, 1, INK);
+      span(4 + k * 5, 6 + k * 5, y0 + 20, 2, chase < 0 || (k + chase) % 4 !== 0 ? c : mix(c, INK, 0.5));
     }
   }
   // Headlights: lit, and a pool of light on the snow ahead of the blade.
