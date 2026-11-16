@@ -478,6 +478,15 @@ Order 26 (`orders/26-the-ground.md`, ADR 0049, DESIGN's "The ground under him"; 
   their stones, roots, shells), named in the test.
 - **Looking at it**: `tools/glance/groundsheet.ts` and `groundsheet.py` (every surface, outside the page, before and after);
   `tools/glance/ground.ts` (each level's ground against the roles and the figures).
+- **Added the same evening (sections 3b to 3d, Lars's words in the order):** every small Norwegian flag is Norway's at a glance
+  (the hand flags of the parade's children and of the crowds at Slottet and Holmenkollen 7 x 5 in two or three waves, `handFlag`
+  and `HAND_WAVES` in `alive/things.ts`; the far blocks' roof flags and the map's palace flag 7 x 5; the wall flags, Stortinget's,
+  the palace's, Holmenkollen's tower's and Akershus's the game's own rippling cloth, `flagFlying`); every spruce ends in a spire
+  (Holmenkollen's path, near row and old spruce had a flat top tier five wide, the tip never drawn; Nordmarka's street and middle
+  rows, Korketrekkeren's, the far shore's over the fjord; the map's already had tips); the rat's tail is as long as its body,
+  trailing and swinging (the track rat's streams behind rising and flies out to the side falling, so its head stays where he lands);
+  the wasp is amber and black (`ENEMY.amber`, a body colour added to the enemy palette, passing the palette test as every body does:
+  no exception named), its wings the palette's white (a grey-white came within 2 of the snow).
 - **The risk the order named** (textured ground hides figures): the surfaces' local contrast rose from 2.4 to 3.6 (mean L*
   difference between neighbouring pixels), the figures' dark line against the ground is 30 to 85; where it rose most is in
   `o26/after.md`. Unplayed: none of it has been seen at speed or on a phone.

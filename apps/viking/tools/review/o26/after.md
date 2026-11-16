@@ -92,3 +92,31 @@ Under each level's own sky (the night's tint over it): 0.6 → 0.9 on average.
 Akershus's rock (4.0 → 6.5). Each stays well under a figure's own edge; the enemies keep their red and dark outline and the
 paint is unchanged, so what tells a figure from the ground at a glance is as before. Whether the busier ground tires the eye at
 speed on a phone is for a person to judge.
+
+## Sections 3b to 3d (added the same evening)
+
+- **Flags (3b).** Found: the hand flags of Slottet's parade children (the banner bearers are the same children) and of the
+  crowds at Slottet and Holmenkollen's outrun (4 x 3 and 5 x 4: a red patch with a white mark, or stripes); the far blocks'
+  roof flags on Karl Johan (6 x 4: no white either side of the blue); the map's flag on the palace (6 x 4, plain red); the
+  wall flags on Karl Johan, Stortinget's flag, the palace's (and the one run up in its flourish), Holmenkollen's on the tower
+  and Akershus's in its flourish (the kit's 13 x 9: already a whole cross, but flat). No stalls or bunting carry flags. Now:
+  the hand flags 7 x 5 in two waves (the crowds) or three (the children), the roof flags and the map's 7 x 5, the 13 x 9 ones
+  the game's own rippling cloth. The kit's flag is untouched (the front page 28 of 28). The flag's red was already held by the
+  palette test where it is (it is not a field and no role is near it); nothing was named. Before and after, by day and at
+  night, at real size and at 3x: `/tmp/shots-ground/flags/` (the map's and the palace's whole pictures in `flags/full/`).
+- **Spruces (3c).** Why they had no top: the tip was never drawn. Holmenkollen's path spruces, its near row and the old spruce
+  start their top tier five wide (a half of two at its first row) under a row of snow, so the top is flat. Not clipped, not
+  under the header. Given a spire of a pixel of snow, a pixel, then three (snow on the middle), over the top tier's snowy row:
+  Holmenkollen's path, near row (one row: order 23 split no row of Holmenkollen's) and the old spruce. The same lack and the same fix (in their own greens, a pixel or two): Nordmarka's street spruces
+  and middle rows (kept pieces three and two rows taller), Korketrekkeren's behind the run (two rows taller), the far shore's
+  spruces over the fjord (`render/backdrop.ts`, Langkaia, Akershus, Rådhuset, Bygdøy and the map). The map's own spruces
+  already ended in a pixel. Before and after at both sizes: `/tmp/shots-ground/spruces/`.
+- **Rats and wasps (3d).** The rat (Langkaia, Akershus, Akerselva, Stortinget, Bjørvika, all one drawing) has a tail as long as
+  its body, one pixel, pink, from its rump down to the ground, trailing and lifting at its tip, in three swings over the run;
+  the track rat's streams eight pixels further behind it as it rises, and flies out to the side as it falls (over its head it
+  would be drawn where he lands: the palette test holds the head there). The boxes are as they were; the outline goes round
+  the tail. The wasp's bands are amber (`ENEMY.amber`, `#ffb020`) between black ones, shaded orange beneath, its thorax black
+  with an amber mark, its face amber: `tools/glance/tones.ts` passes `#ffb020` (nearest him at 10.3, `#ffaa00` the coin's gold
+  at 11.3; the paint's yellow and the outline further), so it joined the palette and the test holds it as every body: nothing
+  was named. The wings are the palette's white: grey-whites came within 0.8 to 2.2 of the snow. No poison green is left in it.
+  Before and after at 4x and in place: `/tmp/shots-ground/rats-wasps/`.

@@ -57,6 +57,15 @@ on `d4ccf99` by `tools/glance/ground.ts`); and everything it held before, unchan
 - A level author adds a surface by naming a material in the level's file and drawing its tiles with `tile` (DESIGN's
   "The ground under him").
 
+## Also in order 26 (sections 3b to 3d, Lars's words the same evening)
+- **A small flag is Norway's at a glance**: 7 x 5 at the least (from the pole red, white, the blue upright, white, three red;
+  red, white, the blue arm, white, red from the top), the game's own 13 x 9 rippling cloth where there is room; the kit's flag
+  (the front page's) is untouched. Every hand flag, roof flag and wall flag in the game, and the map's.
+- **A spruce ends in a spire**: a pixel, a pixel, then wider, over its top tier, in every level and layer that draws one.
+- **An amber joins the enemy palette** (`ENEMY.amber`, `#ffb020`), for a wasp's bands between its black ones: the nearest to a
+  wasp's yellow that stands off every field, the red outline, the paint's yellow and every other role, as every body must
+  (amends [0044](0044-paint-says-where-to-go.md)'s list of bodies; no exception named). The rat's tail is as long as its body.
+
 ## Not chosen
 - **Textures drawn per frame in rectangles**: a textured tile is 30 to 90 runs; a phone's view holds a thousand tiles.
 - **One texture per level, no variants**: repeats show at once on a long wall.

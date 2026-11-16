@@ -87,6 +87,22 @@ else it is used (Nordmarka, Korketrekkeren, the map): fix them all, and say wher
 hold the tip. Scenery rule and haze of ADR 0044 hold; perf budget as in the order. Hand back before and after pictures of
 each layer at both sizes.
 
+## 3d. Rats' tails, wasps' colours (added the same evening)
+
+Lars: "rats should have longer tails. wasps currently look too green."
+
+1. Rats: Langkaia's rat and Stortinget's track rat (and any other rat) get a clearly longer tail: at least as long as the
+   body, thin (one pixel), pink, curving, trailing behind on the ground when it walks and swinging a little over the cycle;
+   in the rising frame it streams behind. Drawing only: the box does not change, the tail may hang outside it as the
+   outline already does (grow the kept sprite's canvas as needed). It keeps the red outline like the rest of the animal.
+2. Wasps: they read as green. A wasp is yellow and black. The paint yellow of ADR 0044 is reserved for standing tops, so
+   find the nearest thing that reads as a wasp and still passes the palette test: black bands with a warm amber or
+   orange-yellow between them (use `tools/glance/tones.ts`), pale grey-white wings, no poison green left in it. If no amber
+   passes against the yellow paint as a field, it may be named in the test as kept by shape (a small flying striped body
+   under a red outline cannot be mistaken for a painted top edge): say which you did.
+
+Hand back before and after of each at 4x and in place at 390 x 844, day and its level's own sky.
+
 ## 4. Docs
 
 DESIGN (a rule for level authors: surfaces come from the textured set, how to add one),
