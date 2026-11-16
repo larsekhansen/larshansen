@@ -272,7 +272,8 @@ never wait for them. For anyone adding an event or a level:
    nothing new while the rules step on, and the tests hold the two the same); the lost heart breaks in two in the
    header and the rest swell once; while he cannot be hurt he blinks a pale figure that reads after dark; at one
    heart left the last keeps a slow pulse (with reduced motion a still red ring).
-3. **A stomp pays.** The enemy is squashed flat in its own shape, puffs in its own two colours, and its skilling
+3. **A stomp pays.** The enemy's glamour breaks (order 27): its glammed self flashes, its marks fly off in a burst of
+   glitter in its level's neons, and it turns to its natural self in the calm outline and leaves; its skilling
    rises; his bounce kicks up a little dust. A stomp that does not kill says so: a hard white spark and two dry
    ticks, never a squash (a boss hit: a violet spark, the boss's sound, the hold).
 4. **What he takes goes somewhere.** A skilling pops in a copper ring and the header's count swells; the cheese
