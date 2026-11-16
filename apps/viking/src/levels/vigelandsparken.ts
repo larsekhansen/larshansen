@@ -12,7 +12,9 @@ import type { Play } from "../game/play";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { clock, parts } from "../alive/parts";
+import { clock } from "../alive/parts";
+import { FOE_INK, drawFoe } from "../alive/foes";
+import { frame, paint, type Frame, type Piece } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
@@ -279,9 +281,6 @@ function figure(x: number, y: number, pose: number, face: 1 | -1, stone: { base:
 
 const GRANITE = { base: V.granite, light: V.graniteLight, shade: V.graniteShade };
 const BRONZE = { base: V.bronze, light: V.bronzeLight, shade: V.bronzeDark };
-/** A statue walking, in the enemy's colours (order 18): granite plum, bronze orange. */
-const WOKEN_GRANITE = { base: ENEMY.plum, light: ENEMY.plumLight, shade: ENEMY.plum };
-const WOKEN_BRONZE = { base: ENEMY.orange, light: ENEMY.orangeLight, shade: ENEMY.orange };
 
 /** Kirkeveien and the main gate: granite pillars, the wrought-iron gates folded open, lanterns on top. */
 function gate(v: View) {
@@ -424,25 +423,44 @@ function slab(t: number) {
   }
 }
 
-/** The Angry Boy on his post, in the enemy's red: stamping, fists up, then the leap. 10 x 15. */
+/**
+ * The Angry Boy on his post, drawn as frames (order 25; way 3, ADR 0045), seen from the front, 10 x 15: bronze in the
+ * enemy's orange, lit at the top left, shaded in the plum's darkest, a fleck of verdigris (the poison green) in its folds;
+ * brows down, eyes, his mouth open in a howl. Standing his fists hang clenched at his sides; stamping (his water's ripple:
+ * his beat's last second) one foot is up and then the other, fists shaking up by his head; in the air both fists are over
+ * his head and his legs tuck.
+ */
+const make = (name: string, ...pieces: Piece[]) => frame(name, FOE_INK, ...pieces);
+const at = (rows: readonly string[], dx = 0, dy = 0): Piece => [rows, dx, dy];
+const BOY_HEAD = ["...OOoo...", "..OlooolO.", "..Oeooeod.", "..Oollod..", "...oddg..."];
+const BOY_BODY = ["...Oood...", "..OOoood..", "..OOooodd.", "..Oooooog.", "..Ooooodd."];
+const BOY_LEGS = {
+  stand: ["..Ood.od..", "..Ood.od..", "..Oo..og..", "..Oo..od..", ".lll..lll."],
+  left: ["..Ood.od..", ".OOd..od..", ".lll..og..", "......od..", "......lll."],
+  right: ["..Ood.od..", "..Oo..Ood.", "..Oo..lll.", "..Og......", ".lll......"],
+  tuck: ["..Ood.od..", ".OOd..Ood.", ".lll..lll.", "..........", ".........."]
+};
+const BOY_ARMS = {
+  down: [at(["O..", "O..", "Oo.", ".Od", ".ll"], 0, 6), at([".d.", ".d.", "od.", "Od.", "ll."], 8, 6)],
+  shake: [at(["OO.", "Ood", ".O.", ".O."], -1, 2), at([".Od", "odd", ".d.", ".d."], 8, 2)],
+  over: [at(["OO", "Od", ".O", ".O", ".g", ".O"], 1, -2), at(["Od", "dd", "d.", "d.", "g.", "d."], 7, -2)]
+};
+const boyFrame = (name: string, legs: readonly string[], arms: Piece[], dy = 0) => make(name, at(BOY_BODY, 0, 5 + dy), ...arms, at(BOY_HEAD, 0, dy), at(legs, 0, 10));
+const BOY_FRAMES = {
+  stand: boyFrame("the Angry Boy, standing", BOY_LEGS.stand, BOY_ARMS.down),
+  breath: boyFrame("the Angry Boy, standing, breathing", BOY_LEGS.stand, BOY_ARMS.down, 1),
+  stamp: [boyFrame("the Angry Boy, stamping 1", BOY_LEGS.left, BOY_ARMS.shake), boyFrame("the Angry Boy, stamping 2", BOY_LEGS.right, BOY_ARMS.shake, 1)],
+  rising: boyFrame("the Angry Boy, leaping", BOY_LEGS.tuck, BOY_ARMS.over),
+  falling: boyFrame("the Angry Boy, coming down", BOY_LEGS.stand, BOY_ARMS.over)
+};
+
 function angryBoy(e: Enemy, t: number) {
-  const r = parts(e, 10);
   const { up, ripple } = leap(e, t);
-  // Stamping: one foot up, then the other, faster as the jump comes.
-  const stamp = ripple && !view.reduced ? Math.floor(t / 5) % 2 : 0;
-  r(1, -5 + (stamp ? -2 : 0), 3, 5, ENEMY.orange);
-  r(6, -5 + (stamp ? 0 : ripple ? -2 : 0), 3, 5, ENEMY.orange);
-  r(1, -11, 8, 6, ENEMY.orange);
-  r(1, -11, 1, 6, ENEMY.orangeLight);
-  r(2, -15, 6, 4, ENEMY.orange);
-  r(2, -15, 6, 1, ENEMY.orangeLight);
-  // Fists: down at his sides, up and shaking while he stamps, over his head in the air.
-  const fy = up > 0 ? -17 : ripple ? -13 : -9;
-  r(-2, fy, 3, 3, ENEMY.orange);
-  r(9, fy, 3, 3, ENEMY.orange);
-  // His face screwed up.
-  r(3, -13, 1, 1, ENEMY.eye);
-  r(6, -13, 1, 1, ENEMY.eye);
+  // In the air: tucked going up, legs down coming down; on his post: stamping through the ripple (one frame with
+  // reduced motion), or standing with a breath on his own clock.
+  const F = BOY_FRAMES;
+  const f = up > 0 ? (leap(e, t + 1).up >= up ? F.rising : F.falling) : ripple ? F.stamp[view.reduced ? 0 : Math.floor(t / 5) % 2] : Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2 ? F.breath : F.stand;
+  drawFoe(e, f, 10, 15);
   // Landed: dust off the post.
   if (!view.reduced && up === 0 && !ripple) {
     const since = ((t % BOY.period) + BOY.period) % BOY.period;
@@ -595,23 +613,80 @@ function wheel(t: number) {
   void t;
 }
 
+// --- The statues, the ring-throwers and their rings, drawn as frames (order 25; way 3, ADR 0045) -----------------
+//
+// A figure, 10 x 16 from its feet, facing right: a head lit at the top left, a body lit down its left and shaded down its
+// right, in one of four poses by where it stands (arms raised, crossed, one reaching out, hanging). Watched, it is stone:
+// granite with lichen on it, or bronze with verdigris in its shadows, in the park's own tones (it cannot hurt him, and
+// the page outlines it in the calm pale). Walking, the same figure in the enemy's colours: granite plum with the poison
+// green of lichen, bronze orange shaded in the plum's darkest with verdigris green in its folds; its eyes open, it leans
+// into a stiff stride whose legs are never together (four frames, by the distance it covers), and dust rises at its feet.
+// The moment it turns is the change of colour and outline, and the "!" over it, as before.
+
+/** Letters: H highlight, L light, B base, S shade, D dark, X lichen or verdigris, E the eye (a dark socket in stone). */
+const FIG_HEAD = ["...HLB....", "..HLBBS...", "..LBBES...", "..LBBBS...", "...LBS...."];
+const FIG_BODY = ["..HLBBBS..", "..LBBBBS..", "..LBBXBS..", "..LBBBSS..", "...LBBS...", "..LBBBBS.."];
+const FIG_LEG = { near: ["LB.", "LB.", "LB.", "LB.", "LBB"], far: ["BS.", "BS.", "BS.", "XS.", "BSD"] };
+/** Its arms by pose: raised over its head, crossed, one reaching out in front (the other hanging), hanging at its sides. */
+const FIG_ARMS: Piece[][] = [
+  [at(["H.", "L.", "LB", "LB", "LB", "LB", "LB"], 0, -2), at([".S", ".S", "BS", "BS", "BS", "BS", "BS"], 8, -2)],
+  [at(["HLLLLLLB", "LBBBBBSS"], 1, 7)],
+  [at(["HLLB", "BBSS"], 8, 5), at(["HL", "LB", "LB", "LB", "LB"], 0, 5)],
+  [at(["HL", "LB", "LB", "LB", "LB", "LB"], 0, 5), at(["BS", "BS", "SX", "BS", "BS", "SD"], 8, 5)],
+  // A ring-thrower winding up: one arm hanging, the other raised over its head with the ring.
+  [at(["HL", "LB", "LB", "LB", "LB", "LB"], 0, 5), at(["HL", "LB", "LB", "LB", "BS", "BS"], 7, -1)]
+];
+/** Its legs walking: never together (stone walks stiffly), the near leg moved by the stride, the far the other way. */
+const STRIDE = [1, 2, -1, -2];
+const LICHEN = mix(V.granite, "#8f9a3a", 0.45);
+const MATERIAL = {
+  granite: { H: mix(V.graniteLight, WHITE, 0.3), L: V.graniteLight, B: V.granite, S: V.graniteShade, D: V.graniteDark, X: LICHEN, E: V.graniteDark },
+  bronze: { H: mix(V.bronzeLight, WHITE, 0.25), L: V.bronzeLight, B: V.bronze, S: V.bronzeDark, D: mix(V.bronzeDark, INK, 0.3), X: V.patina, E: mix(V.bronzeDark, INK, 0.3) },
+  wokenGranite: { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, D: ENEMY.line, X: ENEMY.poison, E: ENEMY.eye },
+  wokenBronze: { H: ENEMY.orangeLight, L: ENEMY.orangeLight, B: ENEMY.orange, S: ENEMY.plumDark, D: ENEMY.line, X: ENEMY.poison, E: ENEMY.eye }
+};
+type Material = keyof typeof MATERIAL;
+/** A figure's frame: its material, its pose, its stride (0 standing), how far it leans forward, a breath down. */
+function figureFrame(m: Material, pose: number, stride: number, lean = 0, dy = 0): Frame {
+  const legs = stride === 0 ? [at(FIG_LEG.near, 2, 11), at(FIG_LEG.far, 6, 11)] : [at(FIG_LEG.far, 6 - stride, 11), at(FIG_LEG.near, 2 + stride, 11)];
+  return frame(`${m} figure, pose ${pose}${stride ? `, striding ${stride}` : ""}${dy ? ", breathing" : ""}`, MATERIAL[m], ...legs, at(FIG_BODY, lean, 5 + dy), ...FIG_ARMS[pose].map(([rows, x = 0, y = 0]) => at(rows, x + lean, y + dy)), at(FIG_HEAD, lean, dy));
+}
+/** Every figure the statues and ring-throwers show, made once: by material, pose, and stride (standing, or each step of four). */
+const FIGURES = new Map<string, Frame>();
+const figureOf = (m: Material, pose: number, stride: number, lean = 0, dy = 0) => {
+  const k = `${m} ${pose} ${stride} ${lean} ${dy}`;
+  let f = FIGURES.get(k);
+  if (!f) FIGURES.set(k, (f = figureFrame(m, pose, stride, lean, dy)));
+  return f;
+};
+
 /**
- * A statue on the path. Watched, it is stone: harmless for now, outlined in the calm pale (order 22; the page
- * outlines it so while it is calm). Walking, it is in the enemy's colours (granite plum, bronze orange) with its
- * eyes open and dust at its feet, outlined in the warning red: the change of outline is its tell. Its box is the
- * one it had (its head is a step he stands on), and so is its size.
+ * A statue on the path. Watched, it is stone in its own tones, outlined in the calm pale (order 22; the page outlines it
+ * so while it is calm). Walking, it is in the enemy's colours with its eyes open and dust at its feet, outlined in the
+ * warning red: the change of outline is its tell. Its box is the one it had (its head is a step he stands on).
  */
 function statueArt(e: Enemy, v: View) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
   const bronze = e.def.look === "bronze";
-  if (e.calm) return figure(x, y, e.def.c, e.dir, bronze ? BRONZE : GRANITE);
-  figure(x, y, e.def.c, e.dir, bronze ? WOKEN_BRONZE : WOKEN_GRANITE, view.reduced ? 0 : Math.round(e.x * 2));
-  R(e.dir > 0 ? x + 6 : x + 3, y - 14, 1, 1, ENEMY.eye);
+  const pose = e.def.c % 4;
+  if (e.calm) return paint(figureOf(bronze ? "bronze" : "granite", pose, 0), x, y - 16, e.dir, 10);
+  // Walking: four frames by the distance it covers (one, with reduced motion), leaning a pixel into the stride.
+  const k = view.reduced ? 0 : ((Math.floor((e.dir > 0 ? e.x : -e.x) / 3) % 4) + 4) % 4;
+  paint(figureOf(bronze ? "wokenBronze" : "wokenGranite", pose, STRIDE[k], 1), x, y - 16, e.dir, 10);
   if (!view.reduced) plain(() => R(x + (Math.floor(v.t / 4) % 2 ? 1 : 7), y - 1, 2, 1, V.gravelDark));
 }
 
-/** A ring-thrower: a woken figure on its pedestal (the pedestal is stone, not outlined), a ring raised. */
+/** A ring, 6 x 6, in the poison green, lit at its top left: seen flat, and turning edge on (its two frames in flight). */
+const RING = [make("ring", at([".GGg..", "Gg..gg", "G....g", "g....l", "gg..ll", "..gll."])), make("ring, turning", at(["......", ".GGgg.", "Gg..gl", ".ggll.", "......", "......"]))];
+function ring(x: number, y: number, k = 0) {
+  paint(RING[k], x, y, 1, 6);
+}
+
+/**
+ * A ring-thrower: a woken granite figure (its arms hanging) on its pedestal (the pedestal is stone, not outlined),
+ * breathing between throws; winding up, its arm goes up with the ring over its head (order 19: a change of outline).
+ */
 function ringer(e: Enemy, t: number) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
@@ -622,22 +697,11 @@ function ringer(e: Enemy, t: number) {
     for (let yy = y + 8; yy < FLOOR - 8 * TILE; yy += 12) R(x - 1, yy, 12, 1, V.graniteDark);
     R(x - 2, y - 2, 14, 2, V.graniteShade);
   });
+  const up = windingUp(e, t);
   // Its breath between throws (order 23): down a pixel every other second, on its own clock.
-  const b = windingUp(e, t) ? 0 : Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2;
-  figure(x, y - 2 + b, 3, e.dir, WOKEN_GRANITE);
-  R(e.dir > 0 ? x + 6 : x + 3, y - 16 + b, 1, 1, ENEMY.eye);
-  // Winding up, its arm goes up with the ring over its head (order 19: a change of outline).
-  if (windingUp(e, t)) {
-    R(e.dir > 0 ? x + 7 : x + 2, y - 22, 1, 6, WOKEN_GRANITE.base);
-    ring(x + 2, y - 24);
-  }
-}
-
-function ring(x: number, y: number) {
-  R(x + 1, y, 4, 1, ENEMY.poisonLight);
-  R(x, y + 1, 1, 4, ENEMY.poison);
-  R(x + 5, y + 1, 1, 4, ENEMY.poison);
-  R(x + 1, y + 5, 4, 1, ENEMY.poison);
+  const b = up ? 0 : Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2;
+  paint(figureOf("wokenGranite", up ? 4 : 3, 0, 0, b), x, y - 18, e.dir, 10);
+  if (up) ring(e.dir > 0 ? x + 5 : x - 1, y - 24);
 }
 
 const LIMBS: LedgeLook = { body: V.granite, top: V.graniteLight, edge: V.graniteShade, joint: V.graniteShade };
@@ -714,7 +778,7 @@ export const VIGELANDSPARKEN: LevelDef = {
       return true;
     },
     shot: (s: Shot) => {
-      ring(Math.round(s.x - 3), Math.round(s.y - 3));
+      ring(Math.round(s.x - 3), Math.round(s.y - 3), view.reduced ? 0 : Math.floor((s.x + s.y) / 6) & 1);
       return true;
     }
   }

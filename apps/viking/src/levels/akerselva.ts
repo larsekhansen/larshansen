@@ -10,8 +10,6 @@ import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { drawGulls } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
-import { frame } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -223,31 +221,8 @@ export const ENEMIES: EnemyDef[] = [
 
 export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
 
-// --- The river's own creatures: the salmon and the duck (drawn here, as no other level has them) -------------
-
-// The duck and the salmon, drawn as frames (order 24; way 3, ADR 0045).
-// A mallard drake waddling, 13 x 10, its bill on the right: a green head lit at its crown, a white ring, a plum breast,
-// a pale grey-white body shaded under its wing, a black tail with its curl, orange feet that go by turns.
-const DUCK_HEAD = ["..GG..", ".gGGG.", ".gGeGOO", ".ggGgOa"].map((r) => r.padEnd(7, "."));
-const DUCK_BODY = [
-  "l.......WW...",
-  "l.WWWWWWmMM..",
-  "lWWWwWWWmmM..",
-  ".lwwwwwwmm...",
-  "..wwwwwwww..."
-];
-const DUCK_FEET = [["...oo...oo...."], ["....oo..oo...."], [".....oooo....."], ["..oo....oo...."]];
-const duckFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [DUCK_BODY, 0, 4 + dy], [DUCK_HEAD, 7, nod + dy], [DUCK_FEET[feet], 0, 9]);
-const DUCK: Looks = {
-  w: 13,
-  h: 10,
-  idle: [duckFrame("duck, still", 1, 0), duckFrame("duck, dabbing its head", 1, 1)],
-  // Waddling: the head forward and down a pixel as each foot lands.
-  move: [duckFrame("duck, waddling 1", 0, 1, 1), duckFrame("duck, waddling 2", 2, 0), duckFrame("duck, waddling 3", 3, 1, 1), duckFrame("duck, waddling 4", 2, 0)]
-};
-function duck(e: Enemy, t: number) {
-  drawFoe(e, foeFrame(e, t, DUCK), DUCK.w, DUCK.h);
-}
+// --- The river's own creature: the salmon (drawn here, as no other level has it; the duck, which the lake has too, is in
+// `render/looks.ts` since order 25) ---------------------------------------------------------------------------------
 
 /**
  * The salmon, nose up (it turns as it leaps): a plum back lit along its ridge, pink flanks, a white belly shaded under,
@@ -1070,7 +1045,6 @@ export const AKERSELVA: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look === "salmon") drawSalmon(e, v.t, waterTop(e.x));
-      else if (e.def.look === "duck") duck(e, v.t);
       else return drawLook(e, v.t);
       return true;
     },

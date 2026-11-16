@@ -13,7 +13,8 @@ import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
-import { parts, stride } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, paint, turned, type Piece } from "../alive/frames";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, View } from "./types";
@@ -784,68 +785,139 @@ function halls() {
 
 // --- The creatures: the crab, the penguin, the slingers ------------------------------------------------
 
-/** A shore crab sidling: an orange shell, claws up, eyes on stalks. 15 x 12. */
-function crab(e: Enemy) {
-  const r = parts(e, 15);
-  const step = view.reduced ? 0 : Math.floor(e.x / 2) % 2;
-  r(2, -8, 11, 5, ENEMY.orange);
-  r(3, -9, 9, 1, ENEMY.orange);
-  r(3, -7, 9, 1, ENEMY.orangeLight);
-  for (const dx of [0, 12]) {
-    r(dx, -11, 3, 4, ENEMY.orange);
-    r(dx + (dx ? 1 : -1), -12, 3, 1, ENEMY.orangeLight);
-  }
-  for (let k = 0; k < 3; k++) {
-    r(2 + k * 2, -3, 1, 3 - ((k + step) % 2), ENEMY.plum);
-    r(8 + k * 2, -3, 1, 3 - ((k + step + 1) % 2), ENEMY.plum);
-  }
-  r(5, -10, 1, 1, ENEMY.eye);
-  r(9, -10, 1, 1, ENEMY.eye);
-}
+// Drawn as frames (order 25; way 3, ADR 0045): a ramp to each material lit from the top left, an idle of two frames, a
+// cycle of four by the distance it covers, the slinger's wind-up as poses; each the size it was, so its head is where he
+// lands on it.
+const make = (name: string, ...pieces: Piece[]) => frame(name, FOE_INK, ...pieces);
+const at = (rows: readonly string[], dx = 0, dy = 0): Piece => [rows, dx, dy];
 
-/** A penguin from the aquarium, waddling: a plum back, an orange front, an orange beak and feet. 11 x 12. */
-function penguin(e: Enemy) {
-  const r = parts(e, 11);
-  // Its waddle is the frames' bob (order 23); its feet go by turns.
-  const s = stride(e);
-  r(1, -10, 9, 9, ENEMY.plum);
-  r(5, -8, 4, 7, ENEMY.orangeLight);
-  r(2, -12, 7, 3, ENEMY.plum);
-  r(9, -11, 3, 1, ENEMY.orange);
-  r(7, -11, 1, 1, ENEMY.eye);
-  r(0, -7, 2, 4, ENEMY.plumLight);
-  r(2 + s, -1, 3, 1, ENEMY.orange);
-  r(6 - s, -1, 3, 1, ENEMY.orange);
-}
+/**
+ * A shore crab sidling, 15 x 12: its shell lit at the top left and darker down its right, a pale fleck, the rim's points,
+ * claws held up with pale pincers that snap, eyes on stalks, pink legs that go by turns (in fours, by the distance).
+ */
+const CRAB_TOP = [
+  ".aO.........Oa.",
+  "aOoa.......aoOa",
+  ".OoO.e...e.Ooo.",
+  "..oO.l...l.Oo.."
+];
+const CRAB_SNAP = [
+  ".Oa.........aO.",
+  "OOoa.......aooO",
+  ".OoO.e...e.Ooo.",
+  "..oO.l...l.Oo.."
+];
+const CRAB_SHELL = [
+  "...OOOOOOOOOo..",
+  "..OOaOOOOOOOoo.",
+  ".oOOOOOOOOOOooo",
+  "..oOoooooooooo.",
+  "...ooooooooool."
+];
+const CRAB_LEGS = [
+  ["..pp.lll.l.pp..", ".p.p.......p.p.", "p..p.......p..p"],
+  ["...pplllllpp...", "..p.p.....p.p..", "..p..p...p..p.."],
+  [".pp..lll.l..pp.", "p..p.......p..p", "...p.......p..."],
+  ["...pplllllpp...", "..p.p.....p.p..", "..p..p...p..p.."]
+];
+const crabFrame = (name: string, top: readonly string[], legs: number, dy = 0) => make(name, at(top, 0, dy), at(CRAB_SHELL, 0, 4 + dy), at(CRAB_LEGS[legs], 0, 9));
+const CRAB: Looks = {
+  w: 15,
+  h: 12,
+  idle: [crabFrame("crab, still", CRAB_TOP, 1), crabFrame("crab, snapping", CRAB_SNAP, 1)],
+  move: [0, 1, 2, 3].map((k) => crabFrame(`crab, sidling ${k + 1}`, k % 2 ? CRAB_TOP : CRAB_SNAP, k, k % 2 ? 0 : 1))
+};
 
-/** A slinger on a storehouse ridge: a tunic, a cap, the sling going round over his head as the throw comes. 11 x 16. */
+/**
+ * A penguin from the aquarium, waddling, 11 x 12, its beak on the right: a black back (the plum's darkest) lit at its
+ * crown and its flipper, a white front shaded under, a pale eye, an orange beak and feet; it rocks from foot to foot.
+ */
+const PENGUIN_BODY = [
+  "....dddd...",
+  "...dMMddd..",
+  "...dMddedOO",
+  "...dddddWo.",
+  "..ddddWWWW.",
+  "..dmddWWWWw",
+  ".dmMmdWWWWw",
+  ".dmMmdWWWWw",
+  ".ddmmdWWWww",
+  "..ddddwWwww",
+  "...ddwwwww."
+];
+const PENGUIN_FEET = [["...oo...oo."], ["..oo....oo."], ["...oo..oo.."], ["...oo....oo"]];
+/** The body rocked a pixel to one side above its middle (the waddle), or not. */
+const rocked = (lean: number) => PENGUIN_BODY.map((r, i) => (i < 6 && lean ? (lean > 0 ? "." + r.slice(0, -1) : r.slice(1) + ".") : r));
+const penguinFrame = (name: string, lean: number, feet: number, dy = 0) => make(name, at(rocked(lean), 0, dy), at(PENGUIN_FEET[feet], 0, 11));
+const PENGUIN: Looks = {
+  w: 11,
+  h: 12,
+  idle: [penguinFrame("penguin, still", 0, 0), penguinFrame("penguin, breathing", 0, 0, 1)],
+  move: [penguinFrame("penguin, waddling 1", 1, 1, 1), penguinFrame("penguin, waddling 2", 0, 0), penguinFrame("penguin, waddling 3", -1, 3, 1), penguinFrame("penguin, waddling 4", 0, 2)]
+};
+
+/**
+ * A slinger on a storehouse ridge, 11 x 16: a woollen cap lit at the top, a face with a brow, an eye and an orange beard, a
+ * tunic (plum, or pink every other one) lit across the shoulders and shaded down its back, a belt, wrapped legs; the sling
+ * hangs from his fist. Winding up, his arm goes up and the sling goes round over his head in four frames (one with
+ * reduced motion), the stone at the end of its cord.
+ */
+const SLINGER_TOP = [
+  "...MMmd....",
+  "..Mmmmmd...",
+  "..OOOOleO..",
+  "..OOOOOOO..",
+  "..ooOOOoo..",
+  "...ooooo..."
+];
+const SLINGER_BODY = [
+  ".JJJJJJJJ..",
+  "JJjjjjjjjk.",
+  "Jjjjjjjjjk.",
+  ".jjjjjjjjk.",
+  ".ooooOoooo.",
+  ".jjjjjjjjk.",
+  "..jjk.jjk..",
+  "..dd..dd...",
+  "..dd..dd...",
+  ".lll..lll.."
+];
+const SLING_DOWN = [".Jj", ".jj", ".jk", ".a.", "..l", "..l", ".dm"];
+const SLING_UP = [".a.", "Jj.", "Jj.", "jk.", "jk.", "jk."];
+/** Where the stone is (its top left) as the sling goes round over his fist (column 9, row -1): right, far, left, near. */
+const WHIRL: [number, number][] = [[11, -5], [7, -6], [3, -5], [7, -3]];
+const STONE_ROWS = [".Mm.", "Mmmd", "mmdl", ".dl."];
+const SLINGER_INK = [{ J: ENEMY.plumLight, j: ENEMY.plum, k: ENEMY.plumDark }, { J: ENEMY.pink, j: ENEMY.pink, k: ENEMY.plum }];
+const slingerLooks = (coat: Record<string, string>, name: string) => {
+  const ink = { ...FOE_INK, ...coat };
+  const f = (label: string, dy: number, ...more: Piece[]) => frame(`${name}, ${label}`, ink, at(SLINGER_BODY, 0, 6 + dy), at(SLINGER_TOP, 0, dy), ...more);
+  // Winding up: the arm raised, the cord from his fist to the stone, which goes round.
+  const whirl = (k: number) => {
+    const [sx, sy] = WHIRL[k];
+    const cord: Piece[] = [];
+    for (let i = 1; i < 3; i++) cord.push([["l"], Math.round(9 + ((sx + 1.5 - 9) * i) / 3), Math.round(-2 + ((sy + 1.5 + 2) * i) / 3)]);
+    return f(`the sling going round ${k + 1}`, 0, at(SLING_UP, 8, -1), ...cord, at(STONE_ROWS, sx, sy));
+  };
+  return {
+    w: 11,
+    h: 16,
+    idle: [f("still", 0, at(SLING_DOWN, 8, 7)), f("still, breathing", 1, at(SLING_DOWN, 8, 7))],
+    move: [f("still", 0, at(SLING_DOWN, 8, 7))],
+    windup: whirl(0),
+    whirl: [0, 1, 2, 3].map(whirl)
+  };
+};
+const SLINGERS = SLINGER_INK.map((ink) => slingerLooks(ink, "slinger"));
 function slinger(e: Enemy, t: number) {
-  const r = parts(e, 11);
-  const coat = e.def.c % 2 ? ENEMY.pink : ENEMY.plum;
-  r(3, -5, 2, 5, ENEMY.plum);
-  r(6, -5, 2, 5, ENEMY.plum);
-  r(1, -12, 9, 7, coat);
-  r(1, -7, 9, 1, ENEMY.orange);
-  r(3, -15, 6, 3, ENEMY.orangeLight);
-  r(2, -16, 8, 2, ENEMY.orange);
-  r(7, -14, 1, 1, ENEMY.eye);
-  if (windingUp(e, t)) {
-    // The sling goes round over his head, faster as the throw comes.
-    const a = view.reduced ? 0 : t * 0.4;
-    // His arm up, the sling's cord from his fist (order 19: the pose differs in outline from his rest).
-    r(8, -18, 2, 6, coat);
-    r(9, -20, 1, 5, ENEMY.orangeLight);
-    r(9 + Math.round(Math.cos(a) * 6), -22 + Math.round(Math.sin(a) * 2), 3, 3, ENEMY.plum);
-  } else r(9, -11, 3, 1, ENEMY.orangeLight);
+  const l = SLINGERS[e.def.c % 2];
+  drawFoe(e, windingUp(e, t) ? l.whirl[view.reduced ? 0 : Math.floor(t / 4) % 4] : foeFrame(e, t, l), l.w, l.h);
 }
 
-/** A slinger's stone in flight. */
+/** A slinger's stone in flight, 6 x 6: plum, lit at the top left, turning over in two frames. */
+const STONE_FLIGHT = make("stone", at(["..MMm.", ".MMmmd", "MMmmmd", "mmmmdd", "mmmddl", ".dddl."]));
+const STONES = [STONE_FLIGHT, turned(STONE_FLIGHT, "stone, turning", "up")];
 function stone(s: Shot) {
-  const x = Math.round(s.x - 3);
-  const y = Math.round(s.y - 3);
-  R(x + 1, y, 4, 6, ENEMY.plum);
-  R(x, y + 1, 6, 4, ENEMY.plum);
-  R(x + 1, y + 1, 2, 1, ENEMY.plumLight);
+  paint(STONES[view.reduced ? 0 : Math.floor((s.x + s.y) / 6) & 1], Math.round(s.x - 3), Math.round(s.y - 3), 1, 6);
 }
 
 const GALLERY: LedgeLook = { body: mix(M.hallBeam, WHITE, 0.35), top: mix(M.hallBeam, WHITE, 0.6), edge: M.hallBeam, joint: M.hallBeam };
@@ -937,8 +1009,8 @@ export const BYGDOY: LevelDef = {
     timed: (i, v) => drawOar(OARS[i], v.t, M.oakLight),
     enemy(e, v) {
       if (!e.alive) return false;
-      if (e.def.look === "crab") crab(e);
-      else if (e.def.look === "penguin") penguin(e);
+      if (e.def.look === "crab") drawFoe(e, foeFrame(e, v.t, CRAB), CRAB.w, CRAB.h);
+      else if (e.def.look === "penguin") drawFoe(e, foeFrame(e, v.t, PENGUIN), PENGUIN.w, PENGUIN.h);
       else if (e.def.look === "slinger") slinger(e, v.t);
       else return false;
       return true;

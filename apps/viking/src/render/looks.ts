@@ -264,7 +264,28 @@ const GRILL: Looks = {
   rate: 5
 };
 
-foeLooks({ hedgehog: HEDGEHOG, fox: FOX, owl: OWL, wasp: WASP, squirrel: SQUIRREL_LOOKS, grill: GRILL, kid: KID });
+// --- The duck: a mallard drake waddling (order 24's, drawn for Akerselva; the lake's since order 25), 13 x 10, its bill on
+// the right: a green head lit at its crown, a white ring, a plum breast, a pale grey-white body shaded under its wing, a
+// black tail with its curl, orange feet that go by turns ------------------------------------------------------------------
+const DUCK_HEAD = ["..GG..", ".gGGG.", ".gGeGOO", ".ggGgOa"].map((r) => r.padEnd(7, "."));
+const DUCK_BODY = [
+  "l.......WW...",
+  "l.WWWWWWmMM..",
+  "lWWWwWWWmmM..",
+  ".lwwwwwwmm...",
+  "..wwwwwwww..."
+];
+const DUCK_FEET = [["...oo...oo...."], ["....oo..oo...."], [".....oooo....."], ["..oo....oo...."]];
+const duckFrame = (name: string, feet: number, nod: number, dy = 0) => make(name, at(DUCK_BODY, 0, 4 + dy), at(DUCK_HEAD, 7, nod + dy), at(DUCK_FEET[feet], 0, 9));
+const DUCK: Looks = {
+  w: 13,
+  h: 10,
+  idle: [duckFrame("duck, still", 1, 0), duckFrame("duck, dabbing its head", 1, 1)],
+  // Waddling: the head forward and down a pixel as each foot lands.
+  move: [duckFrame("duck, waddling 1", 0, 1, 1), duckFrame("duck, waddling 2", 2, 0), duckFrame("duck, waddling 3", 3, 1, 1), duckFrame("duck, waddling 4", 2, 0)]
+};
+
+foeLooks({ hedgehog: HEDGEHOG, fox: FOX, owl: OWL, wasp: WASP, squirrel: SQUIRREL_LOOKS, grill: GRILL, kid: KID, duck: DUCK });
 
 /** The kid's frame: its jacket by which kid it is, its arm forward just after it threw. */
 function kid(e: Enemy, t: number) {

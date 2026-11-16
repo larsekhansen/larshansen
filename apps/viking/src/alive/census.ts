@@ -31,8 +31,11 @@ export interface Census {
 
 const at = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day"), t: p.t, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: -999, y: -999 }, flourish: null, facing: 1, troll: p.troll, flags: [], enemies: p.enemies, boss: p.boss?.state ?? null, cleared: [], runeAt: p.runeAt, grounds: p.grounds?.state ?? null });
 
-/** The name a look goes by: Rådhuset's gull throws standing, so it is a look of its own. */
-export const lookName = (e: Enemy) => `${e.def.look}${e.def.kind === "thrower" && e.def.look === "gull" ? " (thrower)" : ""}`;
+/**
+ * The name a look goes by: Rådhuset's gull throws standing, so it is a look of its own; and Gamlebyen's guards are the
+ * bishop's, not the fortress's.
+ */
+export const lookName = (e: Enemy, level = "") => `${e.def.look}${e.def.kind === "thrower" && e.def.look === "gull" ? " (thrower)" : ""}${level === "gamlebyen" && e.def.look === "guard" ? " (the bishop's)" : ""}`;
 
 /** Every look in every built level, each in every state (the first enemy of each look, in the first level it is met). */
 export async function census(): Promise<Record<string, Census>> {
@@ -44,10 +47,10 @@ export async function census(): Promise<Record<string, Census>> {
       const def = await loadLevel(st.id);
       const p = newPlay(def, { shield: SHIELD_RULES, hasShield: def.rune > 10 });
       for (const e0 of p.enemies) {
-        const name = lookName(e0);
+        const name = lookName(e0, def.id);
         if (out[name]) continue;
         // Where it starts in its level (a jumper's water, a thrower's perch), facing right, not calm.
-        const e: Enemy = { ...e0, def: { ...e0.def }, prevY: e0.y, dir: 1, calm: undefined, n: e0.def.look === "swan" ? 0 : e0.n };
+        const e: Enemy = { ...e0, def: { ...e0.def }, prevY: e0.y, dir: 1, calm: undefined, n: e0.def.look === "swan" ? 0 : e0.def.look === "guard" ? 1 : e0.n };
         const home = { x: e.x, y: e.y };
         const draw = (label: string, t: number, own = t): Drawn => {
           const rects: Drawn["rects"] = [];

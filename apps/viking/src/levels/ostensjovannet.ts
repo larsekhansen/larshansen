@@ -2,7 +2,7 @@ import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { stamp } from "@larshansen/pixelkit/kept";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, LAND, PALETTE, ROLES, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { INK, LAND, PALETTE, ROLES, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
@@ -10,7 +10,10 @@ import * as L from "@larshansen/pixelkit/swatches/lake";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../alive/parts";
+import { clock, forced, step4 } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, paint, type Piece } from "../alive/frames";
+import { drawLook } from "../render/looks";
 import { plane } from "../alive/depth";
 import { outlined, plain } from "../render/sprite";
 import { shiver } from "../render/stand";
@@ -425,127 +428,158 @@ function lilyPad(p: SinkPad, s: PadState, t: number, i: number) {
   if (s.sinkAt !== null && !view.reduced) for (let k = 0; k < 3; k++) R(x + 4 + k * 7, FLOOR - 2 - ((t + k * 5) % 6), 1, 1, L.glint);
 }
 
-/** The heron: grey, long legs in the water, its neck folded; gone, a feather turning on the water. */
-function heronArt(s: Lake | null, t: number) {
+// --- What moves at the lake, drawn as frames (order 25; way 3, ADR 0045) -------------------------------------------
+
+/**
+ * The heron, standing in the shallows, in its own greys (it moves and cannot hurt him, so the page outlines it in the calm
+ * pale): its back, which he stands on, lit along its top and shaded down its folded wings, a pale neck with its dark
+ * stripe folded up in front, a white head with its black crest, a dark eye, the long bill; its legs down into the water.
+ * Still it turns its head now and then; once he is on it, it shifts and raises its neck over three quarters of a second
+ * (four frames) before it flies; flying off it beats its wings in two frames, its neck drawn in and its legs trailing.
+ */
+const HERON_INK: Record<string, string> = { H: mix(L.heron, WHITE, 0.45), L: mix(L.heron, WHITE, 0.2), B: L.heron, S: L.heronDark, D: mix(L.heronDark, INK, 0.35), N: mix(L.heron, WHITE, 0.7), n: mix(L.heron, WHITE, 0.45), W: WHITE, k: INK, y: L.swanBeak, Y: mix(L.swanBeak, WHITE, 0.3) };
+const HERON_BODY = [
+  "HHHHLLLLLLLL",
+  "LLBBBBBBBBBS",
+  "LBBBSBBBBBSS",
+  "BBSSBSSBBSSD",
+  "BSSDSSDSSSDD",
+  ".SDDSDDSSDD.",
+  "..DSD..DDD..",
+  "...D....D..."
+];
+/** Its neck folded up over the front of its back, `lift` pixels higher, and its head (looking ahead, or back over its back). */
+const HERON_NECK = ["nN.", "nNk", ".nN", ".nN", "nNk", "nN.", ".nN", ".nN"];
+const heronNeck = (lift: number, back: boolean): Piece[] => [
+  [[...Array<string>(lift).fill("nN."), ...HERON_NECK], 11, -6 - lift],
+  back ? [["...kkkk", "..WWWW.", "yYWkWW.", "....WN."], 7, -10 - lift] : [["kkkk....", ".WWWW...", ".WWkWYyy", "..WWN..."], 10, -10 - lift]
+];
+const heronStill = (name: string, lift: number, back = false) => frame(name, HERON_INK, [HERON_BODY, 0, 0], ...heronNeck(lift, back));
+const HERON_FRAMES = {
+  still: [heronStill("heron", 0), heronStill("heron, looking back", 0, true)],
+  ready: [1, 2, 3].map((k) => heronStill(`heron, making ready ${k}`, k)),
+  // Flying (to the right as drawn; mirrored as it goes): its neck drawn in, its head close to its body, its legs trailing.
+  fly: [
+    frame("heron, flying, wings up", HERON_INK, [["......HL.........", ".....HLBS........", "....LBBS.........", "...LBSD.....nNWk.", "..LBBBBBBBBnNWWyy", "SSSSSDDDDDn......"]]),
+    frame("heron, flying, wings down", HERON_INK, [["............nNWk.", "...LBBBBBBBBnNWWy", "SSSSLBBBBSSn.....", ".....LBBSDD......", "......LBSD.......", ".......SD........"]])
+  ]
+};
+
+export function heronArt(s: Lake | null, t: number) {
   const x = HERON.x;
   const y = HERON.y;
   if (s?.gone !== null && s?.gone !== undefined) {
     // Flying off, up and away to the left, for a second; then gone.
     const k = t - s.gone;
-    if (k < 60) {
-      const fx = x - k * 2;
-      const fy = y - 6 - k;
-      const flap = view.reduced ? 0 : Math.floor(k / 5) % 2;
-      R(fx, fy, 12, 3, L.heron);
-      R(fx - 3, fy - 2 + flap * 4, 18, 1, L.heronDark);
-    }
+    if (k < 60) paint(HERON_FRAMES.fly[view.reduced ? 0 : Math.floor(k / 5) % 2], x - k * 2 - 3, y - 10 - k, -1, 12);
     return;
   }
   const ready = s?.landed !== null && s?.landed !== undefined;
-  // Legs down into the water.
+  // Legs down into the water, lit down their left.
   R(x + 3, y + 8, 1, FLOOR - y - 8, L.heronDark);
-  R(x + 8, y + 8, 1, FLOOR - y - 8, L.heronDark);
-  // The body he stands on: a broad grey back, darker wings.
-  R(x, y, HERON.w, 8, L.heron);
-  R(x, y, HERON.w, 1, mix(L.heron, WHITE, 0.4));
-  R(x + 1, y + 5, HERON.w - 2, 3, L.heronDark);
-  // The neck folded up in front, the head with its black crest, the long bill; shifting as it makes ready.
+  R(x + 8, y + 8, 1, FLOOR - y - 8, HERON_INK.D);
   const lift = ready && !view.reduced ? Math.min(3, Math.floor((t - (s!.landed as number)) / 15)) : 0;
-  R(x + HERON.w, y - 6 - lift, 3, 8, mix(L.heron, WHITE, 0.3));
-  R(x + HERON.w, y - 9 - lift, 4, 3, WHITE);
-  R(x + HERON.w + 1, y - 10 - lift, 3, 1, INK);
-  R(x + HERON.w + 4, y - 8 - lift, 5, 1, L.swanBeak);
+  // Still, it looks back over its shoulder for a second in every seven (on its own clock; held still with reduced motion).
+  const f = lift > 0 ? HERON_FRAMES.ready[lift - 1] : HERON_FRAMES.still[!view.reduced && t % 420 > 360 ? 1 : 0];
+  paint(f, x, y, 1, HERON.w);
 }
+
+/**
+ * A swan on its stretch, its feet at the water: white, lit along its back and shaded to the water, its wings folded on
+ * its back; at peace its neck up in an S, the head high, a dark eye and the black knob at its orange bill; it glides with a
+ * slow nod of its head (four frames by the distance it covers). Telling him (order 19: a change of outline) its wings
+ * half rise, its neck goes down low over the water and it hisses, its head shaking (still with reduced motion); coming
+ * at him, its neck stretched out forward, its bill open, its wings raised. 20 wide, its head and bill past that.
+ */
+const SWAN_BODY = [
+  "......WWWWWWW.....",
+  "....WWWWWWWWWWW...",
+  "..wWWWWwwWWWWWWW..",
+  "wwWWWWwwWWWWWWWWW.",
+  ".wwwwWWWWWWWWWWWw.",
+  "..wwwwwwwwwwwwwww.",
+  "....wwwwwwwwwww..."
+];
+const SWAN_WINGS = [".....WWWWWW......", "...WWWWWWWWWW....", "..wWWWWWWWWWWW...", "...wwwwwwwwwww...", "......wwwww......"];
+const SWAN_NECK = ["..WWW...", ".WWWelOo", ".WWWw...", "..WWw...", ".WWw....", ".WWw....", ".WWw....", ".WWWw...", "..WWWw..", "..WWWWw.", "...WWWw."];
+const SWAN_HISS = ["WW.......", ".WW......", "..WW.....", "...WW.WW.", "....WWelo", "....wWWol"];
+const SWAN_COME = ["......WWW..", ".....WWWel.", "WWWWWWWw.oo", ".wwwwww....", "........oo."];
+const SWAN_RAISED = ["..W......W.......", ".WWW....WWW......", "..WWWWWWWWWWW....", "..wWWWWWWWWWWW...", "...wwwwwwwwwww...", "......wwwww......"];
+const swanFrame = (name: string, neck: Piece, wings = false, dy = 0) => frame(name, FOE_INK, [SWAN_BODY, 0, 12 + dy], ...(wings ? [[SWAN_WINGS, 1, 9 + dy] as Piece] : []), neck);
+const SWAN_FRAMES = {
+  glide: [0, 1, 0, -1].map((k, i) => swanFrame(`swan, gliding ${i + 1}`, [SWAN_NECK, 13 + k, 1 + Math.abs(k)])),
+  still: [swanFrame("swan, still", [SWAN_NECK, 13, 1]), swanFrame("swan, still, its head low", [SWAN_NECK, 13, 2], false)],
+  tell: [swanFrame("swan, hissing", [SWAN_HISS, 15, 9], true), swanFrame("swan, hissing, its head shaking", [SWAN_HISS, 16, 9], true)],
+  come: swanFrame("swan, coming", [SWAN_COME, 16, 7], true, 0),
+  // Coming at him: its wings beating high and half up, its neck out, churning along the water (four frames by the distance).
+  charge: [0, 1, 2, 3].map((k) => frame(`swan, coming ${k + 1}`, FOE_INK, [SWAN_BODY, 0, 12 + (k % 2)], k % 2 ? [SWAN_WINGS, 1, 9 + (k % 2)] : [SWAN_RAISED, 0, 6], [SWAN_COME, 16 + (k === 1 ? 1 : 0), 7 + (k % 2)])),
+  wait: [swanFrame("swan, coming, waiting", [SWAN_COME, 16, 7], true), frame("swan, coming, its wings up", FOE_INK, [SWAN_BODY, 0, 12], [SWAN_RAISED, 0, 6], [SWAN_COME, 16, 7])]
+};
 
 function swanArt(e: Enemy, t: number) {
-  const r = parts({ ...e, y: waterOf(e) }, 20);
-  const tell = telling(e);
-  const coming = !e.calm;
-  // The body on the water: a white swan (order 22), its outline pale while it is calm and red once it comes.
-  r(0, -7, 18, 7, ENEMY.white);
-  r(0, -2, 18, 2, ENEMY.plumLight);
-  r(-2, -6, 2, 3, ENEMY.white);
-  if (tell || coming) {
-    // Wings half raised.
-    r(2, -11, 12, 4, ENEMY.white);
-    r(3, -8, 10, 1, ENEMY.plumLight);
-  }
-  if (coming) {
-    // Neck stretched low and forward, the beak open.
-    for (let k = 0; k < 7; k++) r(16 + k, -7 - Math.floor(k / 3), 2, 2, ENEMY.white);
-    r(22, -11, 4, 4, ENEMY.white);
-    r(24, -10, 1, 1, ENEMY.eye);
-    r(25, -10, 1, 1, ENEMY.line);
-    r(26, -10, 3, 1, ENEMY.orange);
-    r(26, -8, 3, 1, ENEMY.orange);
-  } else if (tell) {
-    // Neck down, head low over the water, hissing: the tell (still with reduced motion).
-    const shake = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    for (let k = 0; k < 5; k++) r(16 + k, -8 + k, 2, 2, ENEMY.white);
-    r(20 + shake, -5, 4, 3, ENEMY.white);
-    r(24 + shake, -4, 3, 1, ENEMY.orange);
-    r(21 + shake, -5, 1, 1, ENEMY.eye);
-    r(22 + shake, -5, 1, 1, ENEMY.line);
-  } else {
-    // At peace: the neck up, the head high.
-    r(15, -17, 2, 11, ENEMY.white);
-    r(15, -19, 4, 3, ENEMY.white);
-    r(19, -18, 2, 1, ENEMY.orange);
-    r(17, -18, 1, 1, ENEMY.eye);
-    r(18, -18, 1, 1, ENEMY.line);
-  }
+  const at = { ...e, y: waterOf(e) };
+  const F = SWAN_FRAMES;
+  // At peace it is always gliding (its still frames are for the census, which draws every look standing).
+  const f = !e.calm ? (forced.state === "idle" ? F.wait[Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2] : F.charge[step4(e)]) : telling(e) ? F.tell[view.reduced ? 0 : Math.floor(t / 3) % 2] : forced.state !== "idle" ? F.glide[step4(e)] : F.still[Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2];
+  drawFoe(at, f, 20, 19);
 }
 
-function duckArt(e: Enemy) {
-  const r = parts(e, 13);
-  const bob = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  r(1, -7, 10, 5, ENEMY.orange);
-  r(0, -6, 2, 3, ENEMY.orange);
-  r(3, -6, 5, 1, ENEMY.orangeLight);
-  r(9, -10 + bob, 4, 4, ENEMY.poison);
-  r(13, -9 + bob, 2, 1, ENEMY.orangeLight);
-  r(11, -9 + bob, 1, 1, ENEMY.eye);
-  r(4 + bob, -2, 2, 2, ENEMY.orange);
-  r(8 - bob, -2, 2, 2, ENEMY.orange);
-}
+/** A coot, 13 x 10 on its long legs: black (the plum's darkest) lit at its back, a white shield and bill, an eye, green legs with lobed toes; it bobs its head as it goes. Drawn for its box, not squashed to it (one coot keeps the box it had before order 18). */
+const COOT_BODY = [
+  "...........",
+  ".dmMmmddd..",
+  "dmmddddddd.",
+  "ddddddddddl",
+  "lddddddddl.",
+  ".llllllll.."
+];
+const COOT_HEAD = [".dd..", "dmdaa", "dedWa", ".ld.."];
+const COOT_LEGS = [["...g...g.....", "..gg..gg....."], ["....g.g......", "...ggggg....."], ["..g....g.....", ".gg....gg...."], ["....g.g......", "...ggggg....."]];
+const cootFrame = (name: string, legs: number, nod: number, dy = 0) => frame(name, FOE_INK, [COOT_BODY, 0, 2 + dy], [COOT_HEAD, 8 + nod, nod + dy], [COOT_LEGS[legs], 0, 8]);
+const COOT: Looks = {
+  w: 13,
+  h: 10,
+  idle: [cootFrame("coot, still", 0, 0), cootFrame("coot, pecking", 0, 1)],
+  move: [cootFrame("coot, walking 1", 3, 1, 1), cootFrame("coot, walking 2", 1, 0), cootFrame("coot, walking 3", 2, 1, 1), cootFrame("coot, walking 4", 1, 0)]
+};
 
-/** A coot: plum, a pale shield on its brow, poison-green feet. 13 x 10. */
-function cootArt(e: Enemy) {
-  const r = parts(e, 13);
-  const peck = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
-  r(1, -8, 10, 6, ENEMY.plum);
-  r(3, -7, 5, 1, ENEMY.plumLight);
-  r(9, -10 + peck, 4, 4, ENEMY.plum);
-  r(12, -9 + peck, 2, 2, ENEMY.pale);
-  r(11, -9 + peck, 1, 1, ENEMY.eye);
-  r(4, -2, 2, 2, ENEMY.poison);
-  r(8, -2, 2, 2, ENEMY.poison);
-}
-
-/** A gull on its nest in the reeds (the nest is not outlined: it does not bite), rising to dive. 11 x 16. */
+/**
+ * A gull on its nest in the reeds (the nest is not outlined: it does not bite), 11 x 16: white, its folded wings grey-white
+ * with black tips, a dark eye, an orange bill; it breathes on the nest. Winding up to dive it rises off the nest, its
+ * wings beating over its back in two frames (one with reduced motion), its bill open.
+ */
+const NESTER_SIT = [
+  ".......WWW..",
+  "......WWWelO",
+  "......wWWW..",
+  ".......WW...",
+  "......WWW...",
+  "..wwwwWWWW..",
+  ".lwWWWWWWWW.",
+  "llwwWWWWWWw.",
+  ".lwwwwwwwww.",
+  "..wwwwwwwww.",
+  "...wwwwwww..",
+  "....wwwww..."
+];
+const NESTER_UP = [
+  [".l..........", "lww......ww.", ".wWw....wWWl", "..wWw..wWWl.", "...wWWWWwl..", "....wWWw....", "....WWWW.WWW", "...WWWWWWWelO", "...wWWWWWwW..", "....wwwwww...", ".....pp.pp..."],
+  ["............", "............", "............", "............", "............", "..wwWWWWww..", "lwWWWWWWWWwl", "l..WWWWWWWelO", "...wWWWWWwW..", "....wwwwww...", ".....pp.pp..."]
+];
+const NESTER = {
+  sit: [frame("gull on its nest", FOE_INK, [NESTER_SIT, 0, 1]), frame("gull on its nest, breathing", FOE_INK, [NESTER_SIT, 0, 2])],
+  up: NESTER_UP.map((rows, k) => frame(`gull rising to dive ${k + 1}`, FOE_INK, [rows.map((r) => r.padEnd(13, ".")), -1, 1]))
+};
 function nesterArt(e: Enemy, t: number) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
-  plain(() => R(x - 3, y - 2, 16, 3, L.reedHead));
-  const r = parts(e, 11);
-  if (windingUp(e, t)) {
-    const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
-    r(1, -12, 9, 7, ENEMY.white);
-    r(-4, -13 - flap * 2, 6, 2, ENEMY.plum);
-    r(9, -13 - flap * 2, 6, 2, ENEMY.plum);
-    r(8, -16, 4, 4, ENEMY.white);
-    r(12, -15, 2, 1, ENEMY.orange);
-    r(10, -15, 1, 1, ENEMY.eye);
-    r(11, -15, 1, 1, ENEMY.line);
-  } else {
-    r(1, -9, 9, 6, ENEMY.white);
-    r(1, -9, 9, 1, ENEMY.plum);
-    r(8, -13, 2, 4, ENEMY.white);
-    r(7, -16, 4, 4, ENEMY.white);
-    r(11, -15, 2, 1, ENEMY.orange);
-    r(9, -15, 1, 1, ENEMY.eye);
-    r(10, -15, 1, 1, ENEMY.line);
-  }
+  plain(() => {
+    R(x - 3, y - 2, 16, 3, L.reedHead);
+    R(x - 3, y - 2, 16, 1, mix(L.reedHead, WHITE, 0.2));
+    for (let k = 0; k < 5; k++) R(x - 2 + k * 3, y - 3 - (k % 2), 2, 1, mix(L.reedHead, INK, 0.15));
+  });
+  const f = windingUp(e, t) ? NESTER.up[view.reduced ? 0 : Math.floor(t / 4) % 2] : NESTER.sit[Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2];
+  drawFoe(e, f, 11, 16);
 }
 
 /** The rocks the gulls nest on, behind the island's path: broad at the foot, lumpy, lit on top. */
@@ -562,21 +596,20 @@ function nestRocks() {
   }
 }
 
+/** A nesting gull's dive, 15 x 7 from its middle: its wings swept back, its bill out; stopped by the shield, it beats away. */
+const DIVE = [
+  frame("gull diving", FOE_INK, [["ll.............", ".lwwW..........", "...wwWWWWWWe...", "....WWWWWWWWlOo", "...wwwwWWWw....", ".lww...........", "l.............."]]),
+  frame("gull diving, its wings tucked", FOE_INK, [["...............", ".llwwW.........", "...wwWWWWWWe...", "....WWWWWWWWlOo", "...wwwwWWWw....", ".llww..........", "..............."]])
+];
+const BEATEN_OFF = [
+  frame("gull beating away, wings up", FOE_INK, [["l...............l", "lw.............wl", ".ww...........ww.", "..wwW.WWWW.Www...", "....WWWWWWWWe....", ".....wwwwwwWlO...", "........pp......."]]),
+  frame("gull beating away, wings down", FOE_INK, [[".................", ".................", ".................", "....WWWWWWWWe....", "..wwWWWWWWWWlO...", ".wwww.wwww.www...", "l...........ll..."]])
+];
 function diveArt(s: Shot, t: number) {
-  const x = Math.round(s.x);
-  const y = Math.round(s.y);
   const d = s.vx < 0 ? -1 : 1;
-  if (s.spent !== undefined) {
-    const flap = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    R(x - 5, y - 2, 10, 4, ENEMY.white);
-    R(x - 9, y - 3 - flap * 2, 18, 2, ENEMY.plum);
-    return;
-  }
-  R(x - 4, y - 1, 9, 4, ENEMY.white);
-  R(x - d * 8 - (d < 0 ? 7 : 0), y - 3, 8, 2, ENEMY.plum);
-  R(x - d * 8 - (d < 0 ? 7 : 0), y + 3, 8, 2, ENEMY.plum);
-  R(x + d * 5 - (d < 0 ? 2 : 0), y, 3, 1, ENEMY.orange);
-  R(x + d * 3, y - 1, 1, 1, ENEMY.eye);
+  const k = view.reduced ? 0 : Math.floor(t / 3) % 2;
+  if (s.spent !== undefined) return paint(BEATEN_OFF[k], Math.round(s.x) - 8, Math.round(s.y) - 4, d, 17);
+  paint(DIVE[k], Math.round(s.x) - 8, Math.round(s.y) - 3, d, 15);
 }
 
 /** The mist over the water past the first swan: it hides the far bank, but never what is close to him. */
@@ -684,8 +717,8 @@ export const OSTENSJOVANNET: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look === "swan") swanArt(e, v.t);
-      else if (e.def.look === "duck") duckArt(e);
-      else if (e.def.look === "coot") cootArt(e);
+      else if (e.def.look === "duck") return drawLook(e, v.t);
+      else if (e.def.look === "coot") drawFoe(e, foeFrame(e, v.t, COOT), COOT.w, COOT.h, true);
       else if (e.def.look === "nester") nesterArt(e, v.t);
       else return false;
       return true;

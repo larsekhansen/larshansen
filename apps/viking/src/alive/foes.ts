@@ -156,9 +156,12 @@ export function foeFrame(e: Enemy, t: number, l: Looks): Frame {
   return l.idle[Math.floor(own / (l.rate ?? 60)) % l.idle.length];
 }
 
-/** Draws a frame as a look: through `parts`, its foot at the enemy's feet. */
-export function drawFoe(e: Enemy, f: Frame, w: number, h: number) {
-  const r = parts(e, w, true);
+/**
+ * Draws a frame as a look: through `parts`, its foot at the enemy's feet. `fit`: the frame was drawn for the box its
+ * level keeps (order 25), so it is not squashed to it.
+ */
+export function drawFoe(e: Enemy, f: Frame, w: number, h: number, fit = false) {
+  const r = parts(e, w, true, fit);
   const runs = f.runs;
   for (let i = 0; i < runs.length; i += 4) r(runs[i], runs[i + 1] - h, runs[i + 2], 1, f.ink[runs[i + 3]]);
 }
