@@ -25,7 +25,15 @@ const hash = (c: number, r: number, k: number) => {
   return n - Math.floor(n);
 };
 
-/** The water near the bottom, and the weed in it. */
+/**
+ * The textured set (order 26): `alive/ground.ts`, which comes with `render/feel.ts`, draws the shared letters' tiles
+ * (and says so) and the one-way ledges' bodies under their paint. A level fetched later draws its own surfaces with it.
+ */
+export const TEXTURED: {
+  tile?(t: string, c: number, r: number, x: number, y: number, map: TileMap, art: Art, sky: Sky): boolean;
+  ledge?(x: number, y: number, c: number, first: boolean, last: boolean): void;
+} = {};
+
 /** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */
 const DEEP = "#2b6a8e";
 const DEEPER = "#2a6384";
@@ -178,9 +186,13 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
     if (map.isOneWay(c, r) && map.tileAt(c, r - 1) !== t) tileTop(x, y, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t);
     return;
   }
-  if (t === "#") {
-    // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
-    if (underWater(map, c, r)) return bed(c, r, x, y, map);
+  if (TEXTURED.tile?.(t, c, r, x, y, map, art, sky)) {
+    if (t === "B" && !map.isSolid(c, r - 1)) tileTop(x, y, map.tileAt(c - 1, r) !== "B" || map.isSolid(c - 1, r - 1), map.tileAt(c + 1, r) !== "B" || map.isSolid(c + 1, r - 1));
+    return;
+  }
+  // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
+  if (t === "#" && underWater(map, c, r)) bed(c, r, x, y, map);
+  else if (t === "#") {
     const s = art.ground(c);
     groundFill(x, y, c, r, s.fill);
     if (!map.isSolid(c, r - 1)) groundTop(x, y, c, s.top, s.dot, sky.snow);
@@ -196,7 +208,12 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
   }
   else if (t === "L") line(x, y);
   // Every one-way ledge in the platform palette (order 18): the level's own look gives only its letter.
-  else if (art.ledges[t]) ledge(x, y, STAND_LEDGE, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
+  else if (art.ledges[t]) {
+    const first = map.tileAt(c - 1, r) !== t;
+    const last = map.tileAt(c + 1, r) !== t;
+    ledge(x, y, STAND_LEDGE, first, last, sky.snow);
+    TEXTURED.ledge?.(x, y, c, first, last);
+  }
 }
 
 /** Where he falls (order 18): the lip of a drop into deep water or a pit with no floor, a dark band down the bank's face. */

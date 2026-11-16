@@ -13,6 +13,7 @@ import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
 import { crowdFlag, person } from "../alive/things";
+import { tile as textured, type Grain } from "../alive/ground";
 import type { LevelDef, View } from "./types";
 
 // Level 5, rune H: Holmenkollen. Winter, snowing. Off the train at the top, along a path where the
@@ -209,35 +210,26 @@ export const ENEMIES: EnemyDef[] = [
 const P = PALETTE;
 /** Snow under the landing hill's slope: one even colour, so the tiles under it do not show as steps. */
 const UNDER_SLOPE = mix(SNOW.lying, ICY.groove, 0.4);
+/** Under the inrun's slope: packed snow, in layers (order 26). */
+const UNDER_SLOPES: Grain = { name: "hk-under", kind: "snow", ramp: [mix(UNDER_SLOPE, ICY.steelShade, 0.45), mix(UNDER_SLOPE, ICY.steelShade, 0.3), UNDER_SLOPE] };
 
-/** Snow: a white top, blue shadow bands, and the odd stone showing through, deeper down. */
-function snowTile(c: number, r: number, x: number, y: number, top: boolean) {
-  const depth = Math.min(1, (r - surfaceRow(c)) / 6);
-  const base = mix(SNOW.lying, ICY.groove, 0.35 + depth * 0.45);
-  R(x, y, TILE, TILE, base);
-  if (top) {
-    R(x, y, TILE, 3, WHITE);
-    R(x, y + 3, TILE, 1, SNOW.shade);
-    R(x + ((c * 5) % 11), y + 1, 3, 1, ICY.iceLight);
-  }
-  for (let yy = 6; yy < TILE; yy += 6) R(x, y + yy, TILE, 1, mix(base, ICY.steelShade, 0.25));
-  if ((c * 7 + r * 3) % 5 === 0) R(x + ((c * 3 + r) % 10) + 2, y + 8, 4, 3, mix(STONE.base, base, 0.4));
+/** Snow (order 26, from the textured set): wind-packed layers, a white crust with sparkles on top, its blue shadow side, darker deeper down in four steps. */
+const SNOWS: Grain[] = [0, 1, 2, 3].map((d) => {
+  const base = mix(SNOW.lying, ICY.groove, 0.35 + (d / 3) * 0.45);
+  return { name: `hk-snow ${d}`, kind: "snow", ramp: [mix(base, ICY.steelShade, 0.45), mix(base, ICY.steelShade, 0.25), base, WHITE], accent: { sparkle: ICY.iceLight } };
+});
+function snowTile(c: number, r: number, x: number, y: number, m: TileMap) {
+  const d = Math.min(3, Math.max(0, Math.round(((r - surfaceRow(c)) / 6) * 3)));
+  textured(SNOWS[d], c, r, x, y, m, null, undefined, d);
+  if ((c * 7 + r * 3) % 5 === 0 && d > 0) R(x + ((c * 3 + r) % 10) + 2, y + 8, 4, 3, mix(STONE.base, SNOWS[d].ramp[2], 0.4));
 }
 function surfaceRow(c: number) {
   for (let r = 0; r < ROWS; r++) if (at(c, r) === "#" || at(c, r) === "I") return r;
   return ROWS;
 }
 
-/** Ice: a glassy blue sheet with bright streaks on top, over snow. */
-function iceTile(c: number, x: number, y: number) {
-  R(x, y, TILE, TILE, mix(SNOW.lying, ICY.groove, 0.4));
-  R(x, y, TILE, 8, ICY.ice);
-  R(x, y, TILE, 1, ICY.iceLight);
-  R(x + ((c * 7) % 9), y + 2, 6, 1, ICY.iceLight);
-  R(x + ((c * 5 + 4) % 11), y + 5, 3, 1, ICY.iceLight);
-  R(x, y + 8, TILE, 1, ICY.iceDark);
-  R(x + ((c * 3) % 13), y + 3, 1, 4, ICY.iceDark);
-}
+/** Ice: a glassy blue sheet with streaks of light and a crack, over snow (order 26). */
+const ICE_SHEET: Grain = { name: "hk-ice", kind: "ice", ramp: [ICY.iceDark, mix(ICY.ice, ICY.iceDark, 0.4), ICY.ice, ICY.iceLight], accent: { snow: mix(SNOW.lying, ICY.groove, 0.4), snowShade: ICY.groove } };
 
 /** A red rail: the padded fence of a ski course, as high as a tile, that stops a slide. */
 function railTile(x: number, y: number) {
@@ -600,18 +592,11 @@ export const HOLMENKOLLEN: LevelDef = {
     ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: SNOW.shade }),
     tile(t, c, r, x, y, m: TileMap) {
       if (t === "#") {
-        snowTile(c, r, x, y, !m.isSolid(c, r - 1));
+        snowTile(c, r, x, y, m);
         return true;
       }
-      if (t === "I") {
-        iceTile(c, x, y);
-        return true;
-      }
-      if (t === "V") {
-        R(x, y, TILE, TILE, UNDER_SLOPE);
-        if ((c * 7 + r * 3) % 4 === 0) R(x + ((c * 5 + r) % 11), y + ((c + r * 7) % 12), 3, 1, mix(UNDER_SLOPE, ICY.steelShade, 0.3));
-        return true;
-      }
+      if (t === "I") return textured(ICE_SHEET, c, r, x, y, m, null);
+      if (t === "V") return textured(UNDER_SLOPES, c, r, x, y, m, null, 0, 2);
       if (t === "H") {
         railTile(x, y);
         return true;

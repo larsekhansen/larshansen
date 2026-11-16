@@ -20,6 +20,7 @@ import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { tile as textured, type Grain } from "../alive/ground";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -843,35 +844,16 @@ function overDark(v: View) {
 
 /** The forest's soil, darker than the city's earth: humus under the needles. */
 const SOIL = mix(P.earth, INK, 0.45);
-/** The forest floor: moss and needles on the top, roots, earth below. */
+/** The forest floor (order 26, from the textured set): moss and needles on its top, roots under it, earth with stones below. */
+const FLOOR: Grain = { name: "nm-floor", kind: "earth", ramp: [FOREST.trunkDark, FOREST.pathDark, SOIL, mix(SOIL, FOREST.path, 0.5)], band: [FOREST.pathDark, FOREST.path, FOREST.moss, FOREST.mossLight], top: "moss" };
 function floorTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  R(x, y, TILE, TILE, SOIL);
-  R(x + ((c * 7 + r * 3) % 12) + 1, y + ((c * 5 + r * 11) % 9) + 5, 2, 1, FOREST.pathDark);
-  if (m.isSolid(c, r - 1) || m.tileAt(c, r - 1) === "w") return;
-  R(x, y, TILE, 3, FOREST.moss);
-  R(x, y + 3, TILE, 1, FOREST.pathDark);
-  for (let i = 1; i < TILE; i += 3) R(x + i, y + ((i + c) % 3), 1, 1, (i + c) % 2 ? FOREST.mossLight : FOREST.path);
-  if ((c * 13) % 7 === 0) R(x + 2, y + 5, 10, 1, FOREST.trunkDark);
+  textured(FLOOR, c, r, x, y, m, null);
 }
 
-/** Granite: grey with lichen, moss on its top; a boulder's top corners rounded. */
+/** Granite (order 26): grey facets with lichen, moss on its top, a boulder's top corners rounded. */
+const GRANITE: Grain = { name: "nm-granite", kind: "rock", ramp: [STONE.mortar, STONE.dark, STONE.base, STONE.light], band: [FOREST.pathDark, FOREST.moss, FOREST.mossLight], accent: { moss: FOREST.lichen } };
 function graniteTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  const open = !m.isSolid(c, r - 1);
-  const l = open && m.tileAt(c - 1, r) !== "K" && !m.isSolid(c - 1, r) ? 1 : 0;
-  const rr = open && m.tileAt(c + 1, r) !== "K" && !m.isSolid(c + 1, r) ? 1 : 0;
-  if (l || rr) {
-    R(x + l * 3, y, TILE - l * 3 - rr * 3, 1, STONE.base);
-    R(x + l, y + 1, TILE - l - rr, 2, STONE.base);
-    R(x, y + 3, TILE, TILE - 3, STONE.base);
-  } else R(x, y, TILE, TILE, STONE.base);
-  R(x + ((c * 5) % 9), y + 4 + ((r * 3) % 7), 6, 3, STONE.light);
-  R(x + ((c * 3 + r) % 10), y + 2 + ((c + r * 5) % 10), 3, 2, FOREST.lichen);
-  if (m.tileAt(c - 1, r) !== "K") R(x, y, 1, TILE, STONE.dark);
-  if (m.tileAt(c + 1, r) !== "K") R(x + TILE - 1, y, 1, TILE, STONE.dark);
-  if (!m.isSolid(c, r - 1)) {
-    R(x + 1, y, TILE - 2, 3, FOREST.moss);
-    R(x + 3, y + 3, 5, 1, FOREST.moss);
-  }
+  textured(GRANITE, c, r, x, y, m, null);
 }
 
 /** The bog: dark water under sedge, a tuft of bog cotton now and then. */

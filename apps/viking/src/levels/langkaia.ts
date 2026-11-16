@@ -11,6 +11,7 @@ import { keepBoxes, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { drawLongship } from "../render/ship";
 import { tbaneDoor, walls } from "../render/furniture";
+import { TEXTURED } from "../render/tiles";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -582,10 +583,11 @@ export const LANGKAIA: LevelDef = {
       perchedGull(v, Math.abs(v.him.x - PERCH.x) < 56 && Math.abs(v.him.y - PERCH.y) < 40);
     },
     front: (v) => mooring(v.t),
-    ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth }),
+    ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth, kind: "sand" }),
     // The stern, solid under its deck: drawn as the deck, the hull behind it.
     tile(t, _c, _r, x, y, _map, sky) {
-      if (t !== "H") return false;
+      // With the textured set here (order 26) the stern is its deck's planks, drawn with the shared letters.
+      if (t !== "H" || TEXTURED.tile) return false;
       ledge(x, y, WOOD_LEDGE, false, false, sky.snow);
       return true;
     },

@@ -1,7 +1,6 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
-import { kept } from "@larshansen/pixelkit/kept";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
@@ -13,6 +12,7 @@ import { climbed, drawGulls, drawOsloHills } from "../render/backdrop";
 /** Birds far off over the city: small, dark, as quiet as the far layer they fly in (scenery, ADR 0039). */
 const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
+import { tile as textured, type Grain } from "../alive/ground";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
 import { crowdFlag, person } from "../alive/things";
@@ -498,12 +498,6 @@ function palace(v: View) {
   if (v.flourish === null) flagCloth(229 * TILE + 9, 2 * TILE);
 }
 
-/** The terrace's stone, in courses, under the palace. */
-function terraceStone(x: number, y: number) {
-  R(x, y, TILE, TILE, STONE.light);
-  for (let yy = y + 3; yy < y + TILE; yy += 5) R(x, yy, TILE, 1, STONE.base);
-  for (let yy = y; yy < y + TILE; yy += 5) R(x + ((yy / 5) % 2 ? 4 : 11), yy, 1, 3, STONE.base);
-}
 
 // The parade's children, the banners' bearers and the King's Guard, drawn as frames (order 24; way 3, ADR 0045): a ramp
 // to each material, lit from the top left; they walk in four frames by the distance they go, so their feet hold, and
@@ -785,21 +779,18 @@ function slopes() {
 }
 const UNDER = mix(GROUND.pavingFill, INK, 0.1);
 
-/** Ground under the street, and under slopes: setts in courses, darker the deeper. Drawn once a tile and copied (order 21). */
-function under(c: number, r: number, x: number, y: number) {
-  kept(`under ${c} ${r} ${y}`, x, y, TILE, TILE, () => underPixels(c, r, x, y));
-}
-
-function underPixels(c: number, r: number, x: number, y: number) {
+/** Ground under the street, and under slopes: setts in courses, darker the deeper (four steps of it), from the textured set (order 26). */
+const UNDERS: Grain[] = [0, 1, 2, 3].map((d) => {
+  const base = mix(UNDER, INK, d * 0.14);
+  return { name: `sl-under ${d}`, kind: "blocks", ramp: [mix(base, INK, 0.3), mix(base, INK, 0.2), base, mix(base, WHITE, 0.1)], h: 4, w: 6, off: 3, round: true, flat: true };
+});
+function under(c: number, r: number, x: number, y: number, map: TileMap) {
   const depth = Math.max(0, r * TILE - streetY(x + 8));
-  const base = mix(UNDER, INK, Math.min(0.5, depth / 120));
-  R(x, y, TILE, TILE, base);
-  for (let yy = 0; yy < TILE; yy += 4) {
-    R(x, y + yy + 3, TILE, 1, mix(base, INK, 0.25));
-    for (let xx = ((yy / 4 + r) % 2) * 3; xx < TILE; xx += 6) R(x + xx, y + yy, 1, 3, mix(base, INK, 0.2));
-  }
-  R(x + ((c * 7 + r * 5) % 11), y + ((c * 3 + r * 7) % 3) * 4 + 1, 4, 2, mix(base, WHITE, 0.1));
+  textured(UNDERS[Math.min(3, Math.round(depth / 40))], c, r, x, y, map, null);
 }
+/** The terrace's stone under the palace: dressed blocks in courses (order 26). */
+const TERRACE: Grain = { name: "sl-terrace", kind: "blocks", ramp: [STONE.dark, STONE.base, STONE.light, mix(STONE.light, WHITE, 0.15)], h: 8, w: 8, off: 4 };
+
 
 /** The flourish after the rune: the royal family steps out on the balcony and waves, and the flag runs up the palace's pole. */
 function flourish(age: number) {
@@ -971,20 +962,17 @@ export const SLOTTET: LevelDef = {
       barriers(DIG2[0], DIG2[1]);
       crowd(v.t);
     },
-    ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: UNDER }),
+    ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: UNDER, kind: "paving" }),
     tile(t, c, r, x, y, map: TileMap) {
       if (t === "U") {
-        under(c, r, x, y);
+        under(c, r, x, y, map);
         return true;
       }
       if (t === "#" && map.tileAt(c, r - 1) !== "." && map.tileAt(c, r - 1) !== "~") {
-        under(c, r, x, y);
+        under(c, r, x, y, map);
         return true;
       }
-      if (t === "P") {
-        terraceStone(x, y);
-        return true;
-      }
+      if (t === "P") return textured(TERRACE, c, r, x, y, map, null);
       return false;
     },
     ledges: {

@@ -15,6 +15,8 @@ import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame, paint, turned, type Piece } from "../alive/frames";
+import { tile as textured, type Grain } from "../alive/ground";
+import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, View } from "./types";
@@ -465,29 +467,19 @@ function gjoa() {
   for (let i = 0; i < 30; i++) R(103 * TILE - 2 - i, 4 * TILE + 8 + i * 5, 1, 5, mix(P.woodDark, INK, 0.3));
 }
 
-/** The rock in the fjord between the bundles and the reed boat: wet grey stone, weed at the water line. */
-function rock(c: number, r: number, x: number, y: number) {
-  const base = r === W ? STONE.light : mix(STONE.base, P.waterDeep, 0.4);
-  R(x, y, TILE, TILE, base);
-  R(x + ((c * 5) % 9), y + 4 + ((r * 3) % 7), 5, 2, mix(base, WHITE, 0.2));
-  R(x + ((c * 7) % 11), y + 9, 4, 1, mix(base, INK, 0.25));
-  if (r === W) {
-    R(x, y, TILE, 2, mix(STONE.light, WHITE, 0.3));
-    R(x, y + 2, TILE, 1, STONE.moss);
-    R(c === 138 ? x : x + TILE - 1, y, 1, TILE, mix(base, INK, 0.3));
-  }
+/** The rock in the fjord between the bundles and the reed boat (order 26): wet grey facets, weed at the water line, darker under it. */
+const ROCK_TOP: Grain = { name: "by-rock", kind: "rock", ramp: [STONE.mortar, STONE.dark, STONE.base, STONE.light], band: [STONE.moss, STONE.light, mix(STONE.light, WHITE, 0.3)] };
+const ROCK_SUNK: Grain = { name: "by-rock under", kind: "rock", ramp: [mix(STONE.mortar, P.waterDeep, 0.4), mix(STONE.dark, P.waterDeep, 0.4), mix(STONE.base, P.waterDeep, 0.4), mix(STONE.light, P.waterDeep, 0.4)] };
+function rock(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(r === W ? ROCK_TOP : ROCK_SUNK, c, r, x, y, map, null);
 }
 
-/** A slab of a hall's floor: polished on top, joints, a little darker below. */
-function hallFloor(c: number, r: number, x: number, y: number) {
-  const base = r === W ? mix(M.deck, WHITE, 0.15) : mix(STONE.base, M.deck, 0.3);
-  R(x, y, TILE, TILE, (c + r) % 2 ? base : mix(base, INK, 0.06));
-  R(x, y, TILE, 1, mix(base, INK, 0.25));
-  R(x, y, 1, TILE, mix(base, INK, 0.2));
-  if (r === W) {
-    R(x, y, TILE, 1, mix(base, WHITE, 0.45));
-    R(x + 3 + ((c * 5) % 7), y + 3, 4, 1, mix(base, WHITE, 0.3));
-  }
+/** A slab of a hall's floor (order 26): polished slabs, fine joints, a sheen on the top row, a little darker below. */
+const HALL = (base: string, name: string): Grain => ({ name, kind: "blocks", ramp: [mix(base, INK, 0.25), mix(base, INK, 0.06), base, mix(base, WHITE, 0.3), mix(base, WHITE, 0.45)], h: 16, w: 16, flat: true, fine: true });
+const HALL_TOP = HALL(mix(M.deck, WHITE, 0.15), "by-hall");
+const HALL_UNDER = HALL(mix(STONE.base, M.deck, 0.3), "by-hall under");
+function hallFloor(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(r === W ? HALL_TOP : HALL_UNDER, c, r, x, y, map, null);
 }
 
 /** A rocking deck: its planks as they stand, and the rail. */
@@ -982,20 +974,20 @@ export const BYGDOY: LevelDef = {
       const s = v.grounds as Ground | null;
       if (s) PADS.forEach((p, i) => bundle(p, s.pads[i], v.t));
     },
-    ground: (c) => (c < 69 ? { top: P.sand, dot: P.sandDark, fill: mix(P.sandDark, P.earth, 0.5) } : c < 122 || (c >= 157 && c < 205) ? { top: mix(M.deck, WHITE, 0.2), dot: M.deck, fill: mix(STONE.base, M.deck, 0.3) } : { top: P.grass, dot: P.grassDark, fill: P.earth }),
-    tile(t, c, r, x, y) {
+    ground: (c) => (c < 69 ? { top: P.sand, dot: P.sandDark, fill: mix(P.sandDark, P.earth, 0.5), kind: "sand" } : c < 122 || (c >= 157 && c < 205) ? { top: mix(M.deck, WHITE, 0.2), dot: M.deck, fill: mix(STONE.base, M.deck, 0.3), kind: "paving" } : { top: P.grass, dot: P.grassDark, fill: P.earth }),
+    tile(t, c, r, x, y, map) {
       if (t === "B") {
         rowboat(x, y);
         return true;
       }
       if (t === "H" || t === "L") return true;
       if (t === "K") {
-        rock(c, r, x, y);
+        rock(c, r, x, y, map);
         return true;
       }
       // The halls' floors: polished slabs, their joints.
       if (t === "#" && ((c >= 69 && c < 122) || (c >= 157 && c < 205))) {
-        hallFloor(c, r, x, y);
+        hallFloor(c, r, x, y, map);
         return true;
       }
       return false;

@@ -7,6 +7,8 @@ import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as L from "@larshansen/pixelkit/swatches/lake";
+import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
+import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
@@ -350,25 +352,21 @@ function hide(c0: number, c1: number, deckRow: number, roofRow: number | null) {
   }
 }
 
-/** The boardwalk's planks over the shallows, on posts. */
-function boardwalk(c: number, r: number, x: number, y: number) {
-  R(x, y, TILE, 5, (c % 2 ? L.board : L.boardLight));
-  R(x, y, TILE, 1, mix(L.boardLight, WHITE, 0.2));
-  R(x + 15, y, 1, 5, L.boardDark);
+/** The boardwalk's planks over the shallows, on posts (order 26: planks with their grain and nails). */
+const BOARDS: Grain = { name: "ov-boards", kind: "planks", ramp: [L.boardDark, L.board, L.boardLight, mix(L.boardLight, WHITE, 0.2)], h: 5, rows: 5 };
+function boardwalk(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(BOARDS, c, r, x, y, map, null, (edgesAt(map, c, r, null) & EDGE.TOP) | (map.tileAt(c - 1, r) !== "P" ? EDGE.LEFT : 0) | (map.tileAt(c + 1, r) !== "P" ? EDGE.RIGHT : 0));
   if (c % 3 === 0) R(x + 6, y + 5, 3, 22, L.boardDark);
-  void r;
 }
 
+const BANK_TOP = mix(L.padLight, L.reed, 0.4);
+const BANK: Grain = { name: "ov-bank", kind: "earth", ramp: [mix(L.reedDark, L.mud, 0.4), mix(mix(L.mud, L.reed, 0.35), INK, 0.15), mix(L.mud, L.reed, 0.35), mix(STONE.base, L.mud, 0.3)], band: [L.reedDark, mix(BANK_TOP, L.reedDark, 0.5), BANK_TOP, mix(BANK_TOP, WHITE, 0.15)], top: "reed" };
 /** The banks and the island: grass and reed stubble on top, then mud with roots and pebbles, darker deeper down. */
 function bank(c: number, r: number, x: number, y: number, map: { isSolid(c: number, r: number): boolean }) {
   const depth = r - W;
   if (!map.isSolid(c, r - 1)) {
-    R(x, y, TILE, TILE, mix(L.mud, L.reed, 0.35));
-    R(x, y, TILE, 3, mix(L.padLight, L.reed, 0.4));
-    R(x, y + 3, TILE, 1, L.reedDark);
-    for (let k = 0; k < 4; k++) R(x + ((c * 5 + k * 4) % 15), y - 1 - (k % 2), 1, 2 + (k % 2), k % 2 ? L.reed : L.padDark);
-    R(x + ((c * 3) % 11) + 2, y + 7, 3, 2, mix(STONE.base, L.mud, 0.3));
-    for (let k = 0; k < 3; k++) R(x + ((c * 7 + k * 5) % 14), y + 4 + k * 3, 1, 3, mix(L.reedDark, L.mud, 0.4));
+    // Its top from the textured set (order 26): reed stubble over the edge of grass, mud with roots and a stone under it.
+    textured(BANK, c, r, x, y, map as TileMap, null);
     return;
   }
   // Under the grass: the lake's old bed in layers (order 20), each tile drawn once and copied (ADR 0036, 0041).
@@ -398,16 +396,12 @@ function bank(c: number, r: number, x: number, y: number, map: { isSolid(c: numb
   });
 }
 
-/** A stone in the water: wet and dark, a light edge where the dawn catches it. */
-function stone(c: number, r: number, x: number, y: number) {
-  const base = r === W ? STONE.base : mix(STONE.base, L.stillDeep, 0.5);
-  R(x, y, TILE, TILE, base);
-  if (r === W) {
-    R(x, y, TILE, 2, mix(STONE.light, WHITE, 0.25));
-    R(x + 3, y + 5, 6, 2, mix(STONE.base, WHITE, 0.15));
-    R(x, y + 12, TILE, 2, STONE.moss);
-  }
-  void c;
+/** A stone in the water (order 26): wet facets, a light edge where the dawn catches it, moss at the water line; dark under the water. */
+const STONE_TOP: Grain = { name: "ov-stone", kind: "rock", ramp: [STONE.mortar, STONE.dark, STONE.base, mix(STONE.base, WHITE, 0.15)], band: [STONE.base, mix(STONE.light, WHITE, 0.25)], accent: { moss: STONE.moss } };
+const STONE_SUNK: Grain = { name: "ov-stone under", kind: "rock", ramp: [mix(STONE.mortar, L.stillDeep, 0.5), mix(STONE.dark, L.stillDeep, 0.5), mix(STONE.base, L.stillDeep, 0.5), mix(STONE.light, L.stillDeep, 0.5)] };
+function stone(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(r === W ? STONE_TOP : STONE_SUNK, c, r, x, y, map, null, edgesAt(map, c, r, null) & ~EDGE.WET);
+  if (r === W) R(x, y + 12, TILE, 2, STONE.moss);
 }
 
 /** A lily pad: a green disc with its notch, the flower on some; going under, it darkens and bubbles. */
@@ -707,8 +701,8 @@ export const OSTENSJOVANNET: LevelDef = {
     },
     ground: () => ({ top: mix(L.reed, L.padLight, 0.5), dot: L.reedDark, fill: mix(mix(L.mud, L.reed, 0.25), INK, 0.3) }),
     tile(t, c, r, x, y, map) {
-      if (t === "P") boardwalk(c, r, x, y);
-      else if (t === "K") stone(c, r, x, y);
+      if (t === "P") boardwalk(c, r, x, y, map);
+      else if (t === "K") stone(c, r, x, y, map);
       else if (t === "#" && !map.isWater(c, r - 1) && !map.isWater(c, r - 2)) bank(c, r, x, y, map);
       else return false;
       return true;

@@ -17,6 +17,7 @@ import { FOE_INK, drawFoe } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
+import { tile as textured, type Grain } from "../alive/ground";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -238,6 +239,8 @@ export const KORKETREKKEREN_RULES = { COLS, ROWS };
 
 // --- Art ----------------------------------------------------------------------------------------------
 const P = PALETTE;
+/** The snow's top (order 26). */
+const CRUST: Grain = { name: "kt-crust", kind: "snow", ramp: [mix(K.runGroove, INK, 0.15), mix(K.slopeShade, K.slope, 0.5), K.slope, mix(K.slope, K.bank, 0.5), K.bank], accent: { sparkle: WHITE } };
 
 /** The view's floor follows the run down, a few rows under it. */
 const floorAt = (x: number) => Math.min(ROWS * TILE, (trackY(Math.max(X0, Math.min(RIDE.to - 1, x))) ?? (x < X0 ? TOP_ROW * TILE : END_ROW * TILE)) + 5 * TILE);
@@ -696,13 +699,9 @@ export const KORKETREKKEREN: LevelDef = {
         snowBody(c, r, x, y);
         return true;
       }
-      R(x, y, TILE, TILE, K.slope);
-      if (top) {
-        R(x, y, TILE, 2, K.bank);
-        R(x + ((c * 5) % 11), y + 4, 3, 1, K.runGroove);
-        R(x + ((c * 3) % 9) + 4, y + 8, 2, 1, K.runGroove);
-        if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
-      }
+      // Its top from the textured set (order 26): a bright crust with sparkles, wind-packed layers, a blue shadow side.
+      textured(CRUST, c, r, x, y, map, null);
+      if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
       return true;
     },
     ledges: { "=": PORCH },

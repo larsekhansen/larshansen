@@ -15,6 +15,7 @@ import { frame } from "../alive/frames";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { tile as textured, type Grain } from "../alive/ground";
 
 // Level 9, rune E: Ekeberg. Always evening, under the banded sky of The Scream, which Munch set on
 // this hillside. Up from Gamlebyen on the tram's roof as it climbs its trestle to the top of the
@@ -615,37 +616,22 @@ const MAGPIE: Looks = {
   move: [magpieFrame("magpie, crouched", 1, 1), magpieFrame("magpie, hopping", -1, 2), magpieFrame("magpie, hopping, high", -1, 2), magpieFrame("magpie, landing", 0, 0)]
 };
 
-/** Grass on the hill: a top of evening grass with tufts, soil under. Rock: grey with lichen, in courses. */
-function grassTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  R(x, y, TILE, TILE, HILL.soil);
-  // Strata in the soil, and stones in it.
-  R(x, y + 9, TILE, 2, SOIL_BAND);
-  R(x + ((c * 7 + r * 3) % 12) + 1, y + ((c * 5 + r * 11) % 7) + 2, 3, 2, SOIL_STONE);
-  R(x + ((c * 3 + r * 5) % 10) + 2, y + 13, 2, 1, mix(HILL.soil, INK, 0.3));
-  if (m.isSolid(c, r - 1)) return;
-  R(x, y, TILE, 3, HILL.grass);
-  R(x, y + 3, TILE, 1, HILL.grassDark);
-  if ((c * 7) % 5 === 0) R(x + ((c * 3) % 11) + 2, y - 2, 1, 2, HILL.grassDark);
-  if ((c * 11) % 13 === 0) {
-    R(x + ((c * 5) % 9) + 3, y - 3, 1, 3, HILL.grassDark);
-    R(x + ((c * 5) % 9) + 2, y - 4, 3, 1, c % 2 ? PAINT.trim : HILL.leaf);
-  }
-}
-function rockTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  R(x, y, TILE, TILE, HILL.quarry);
-  R(x, y + 7, TILE, 1, HILL.quarryDark);
-  R(x + ((c * 5 + r) % 8), y + 2, 6, 3, HILL.quarryLight);
-  R(x + ((c * 3 + r * 7) % 10), y + 10, 4, 2, HILL.quarryLight);
-  if (m.tileAt(c - 1, r) !== "K" && !m.isSolid(c - 1, r)) R(x, y, 1, TILE, HILL.quarryDark);
-  if (m.tileAt(c + 1, r) !== "K" && !m.isSolid(c + 1, r)) R(x + TILE - 1, y, 1, TILE, HILL.quarryDark);
-  if (!m.isSolid(c, r - 1) && m.tileAt(c, r - 1) !== "~") {
-    R(x, y, TILE, 2, HILL.grass);
-    R(x + 3, y + 2, 4, 1, STONE.moss);
-  }
-}
-
 const SOIL_BAND = mix(HILL.soil, INK, 0.18);
 const SOIL_STONE = mix(HILL.soil, STONE.base, 0.45);
+/** Grass on the hill (order 26, from the textured set): evening grass with tufts over its edge, soil with stones and strata under. */
+const HILLSIDE: Grain = { name: "ek-grass", kind: "earth", ramp: [mix(HILL.soil, INK, 0.35), SOIL_BAND, HILL.soil, SOIL_STONE], band: [HILL.grassDark, mix(HILL.grass, HILL.grassDark, 0.5), HILL.grass, mix(HILL.grass, WHITE, 0.15)], top: "grass", accent: { flower: PAINT.trim } };
+function grassTile(c: number, r: number, x: number, y: number, m: TileMap) {
+  textured(HILLSIDE, c, r, x, y, m, null);
+}
+/** The quarry's cut faces (order 26): blocks split by the drill, lit on their tops, grass on the top. */
+const QUARRY: Grain = { name: "ek-quarry", kind: "blocks", ramp: [mix(HILL.quarryDark, INK, 0.3), HILL.quarryDark, HILL.quarry, HILL.quarryLight], h: 8, w: 16, off: 6, split: 0.4, kerb: [HILL.grass, HILL.grassDark], accent: { moss: STONE.moss } };
+/** The viewpoint's granite: dressed blocks, and its steps. */
+const GRANITE: Grain = { name: "ek-granite", kind: "blocks", ramp: [mix(HILL.graniteDark, INK, 0.3), HILL.graniteDark, HILL.granite, HILL.graniteLight], h: 8, w: 16, off: 8, kerb: [HILL.graniteLight, HILL.graniteLight] };
+const STEP: Grain = { ...GRANITE, name: "ek-step", h: 8, w: 32, off: 16, rows: 8, kerb: [HILL.graniteLight] };
+function rockTile(c: number, r: number, x: number, y: number, m: TileMap) {
+  textured(QUARRY, c, r, x, y, m, null);
+}
+
 
 /** The flourish: his own light comes on at the end of the railing, and the lights of the places he has been flare one after another, out across the city. */
 function flourish(age: number, v: View) {
@@ -736,20 +722,8 @@ export const EKEBERG: LevelDef = {
         rockTile(c, r, x, y, m);
         return true;
       }
-      if (t === "A") {
-        R(x, y, TILE, TILE, HILL.granite);
-        R(x, y + 7, TILE, 1, HILL.graniteDark);
-        if (m.tileAt(c, r - 1) !== "A") R(x, y, TILE, 2, HILL.graniteLight);
-        if (m.tileAt(c, r + 1) !== "A") R(x, y + TILE - 2, TILE, 2, HILL.graniteDark);
-        return true;
-      }
-      if (t === "D") {
-        R(x, y, TILE, 6, HILL.granite);
-        R(x, y, TILE, 1, HILL.graniteLight);
-        R(x, y + 6, TILE, 2, HILL.graniteDark);
-        if (c % 2) R(x + 15, y, 1, 6, HILL.graniteDark);
-        return true;
-      }
+      if (t === "A") return textured(GRANITE, c, r, x, y, m, null);
+      if (t === "D") return textured(STEP, c, r, x, y, m, null);
       if (t === "v") {
         R(x, y, TILE, TILE, mix(INK, HILL.soil, 0.3));
         if (m.tileAt(c, r - 1) !== "v") for (let k = 0; k < TILE; k += 5) R(x + k, y + 10, 3, 2, HILL.trestle);

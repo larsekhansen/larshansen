@@ -17,6 +17,7 @@ import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
 
 // Level 8, rune S: Stortinget. The T-bane station under the centre, where every line in the city
 // passes through. No sky: tiled walls, the T roundel, lamps, the dark of the tunnels. Down the
@@ -654,20 +655,21 @@ function pastTheEnd(v: View) {
 }
 const P_WOOD = PALETTE.woodDark;
 const UNDER = mix(METRO.steelDark, METRO.concrete, 0.5);
+const CASING: Grain = { name: "st-casing", kind: "steel", ramp: [METRO.concreteDark, mix(UNDER, METRO.concreteDark, 0.5), UNDER], accent: { rivet: METRO.steel } };
 
+/** The platforms' stone, speckled, lit where it is open; concrete under (order 26, from the textured set). */
+const FLOOR: Grain = { name: "st-floor", kind: "blocks", ramp: [METRO.floorDark, mix(METRO.floor, METRO.floorDark, 0.5), METRO.floor, METRO.floorLight], h: 16, w: 32, off: 16, flat: true };
+const CONCRETE: Grain = { name: "st-concrete", kind: "concrete", ramp: [mix(METRO.concreteDark, INK, 0.3), METRO.concreteDark, METRO.concrete, mix(METRO.concrete, METRO.floor, 0.4)] };
 /** Floors: stone with a speckle; where it meets the track, the yellow line and a dark lip; concrete under. */
 function floorTile(c: number, r: number, x: number, y: number, m: TileMap) {
   const open = !m.isSolid(c, r - 1) && !m.isOneWay(c, r - 1);
-  R(x, y, TILE, TILE, open ? METRO.floor : METRO.concrete);
   if (!open) {
-    R(x, y + 7, TILE, 1, METRO.concreteDark);
-    R(x, y + 15, TILE, 1, METRO.concreteDark);
-    if ((c * 3 + r) % 4 === 0) R(x + ((c * 5) % 10) + 2, y + 10, 2, 2, METRO.concreteDark);
+    textured(CONCRETE, c, r, x, y, m, null, edgesAt(m, c, r, null) & ~(EDGE.TOP | EDGE.LEFT | EDGE.RIGHT));
     return;
   }
-  R(x, y, TILE, 1, METRO.floorLight);
-  for (let i = 0; i < 4; i++) R(x + ((c * 5 + i * 7) % 15), y + 3 + ((c + i * 3) % 10), 1, 1, i % 2 ? METRO.floorDark : METRO.floorLight);
+  textured(FLOOR, c, r, x, y, m, null, EDGE.TOP);
   R(x, y + 12, TILE, 4, METRO.concrete);
+  R(x, y + 15, TILE, 1, METRO.concreteDark);
   // The edge to the track: a yellow line a little way in, and the lip.
   const track = (cc: number) => at(cc, r) === "." || at(cc, r) === "v" || at(cc, r) === "-";
   if (track(c + 1)) {
@@ -696,8 +698,8 @@ function bedTile(c: number, x: number, y: number, top: boolean, t: number) {
 }
 
 /** An open crossing's bottom (a floor tile under the trench): the rails and the third rail, live, sparking now and then. */
-function trenchFloor(c: number, x: number, y: number, t: number) {
-  R(x, y, TILE, TILE, METRO.concrete);
+function trenchFloor(c: number, x: number, y: number, t: number, m: TileMap) {
+  textured(CONCRETE, c, P + 1, x, y, m, null, 0);
   R(x, y, TILE, 5, METRO.bed);
   for (let i = 0; i < TILE; i += 4) R(x + i, y + 2, 3, 2, METRO.sleeper);
   R(x, y + 1, TILE, 1, METRO.rail);
@@ -745,37 +747,26 @@ function concreteTile(c: number, r: number, x: number, y: number, m: TileMap) {
   // Over the halls and the tunnels, away from their faces, it is the rock itself.
   const face = !m.isSolid(c, r + 1) || !m.isSolid(c - 1, r) || !m.isSolid(c + 1, r) || !m.isSolid(c, r + 2);
   if (!face && r < P) return shaleTile(c, x, y);
-  R(x, y, TILE, TILE, METRO.concrete);
-  // Formwork: the boards' lines, and a tie hole now and then.
-  R(x, y + 7, TILE, 1, METRO.concreteDark);
-  R(x, y + 15, TILE, 1, METRO.concreteDark);
-  R(x + ((c * 7 + r * 3) % 11) + 2, y + ((c * 3 + r * 5) % 6) + 1, 2, 1, METRO.concreteDark);
-  if ((c * 5 + r * 3) % 7 === 0) R(x + 8, y + 10, 2, 2, METRO.concreteDark);
-  if (!m.isSolid(c, r + 1) && at(c, r + 1) !== "v") {
-    R(x, y + TILE - 2, TILE, 2, METRO.concreteDark);
-    // The low beam where the tunnel opens: the warning stripes on its face.
-    if (c === 129 || c === 130) for (let k = 0; k < TILE; k++) if (((k + (c - 129) * TILE) >> 2) % 2 === 0) R(x + k, y + TILE - 6, 1, 4, METRO.live);
-  }
-  if (!m.isSolid(c - 1, r) && at(c - 1, r) === ".") R(x, y, 1, TILE, METRO.concreteDark);
+  // Formwork, tie holes, a stain, pits: from the textured set (order 26); its underside dark over a hall or a tunnel.
+  textured(CONCRETE, c, r, x, y, m, null, edgesAt(m, c, r, null) & ~EDGE.TOP & (at(c, r + 1) === "v" ? ~EDGE.UNDER : ~0));
+  // The low beam where the tunnel opens: the warning stripes on its face.
+  if ((c === 129 || c === 130) && !m.isSolid(c, r + 1) && at(c, r + 1) !== "v") for (let k = 0; k < TILE; k++) if (((k + (c - 129) * TILE) >> 2) % 2 === 0) R(x + k, y + TILE - 6, 1, 4, METRO.live);
 }
 
-/** A ticket gate: a steel post with a glass flap. */
-function gateTile(x: number, y: number) {
-  R(x + 4, y, 8, TILE, METRO.steel);
-  R(x + 4, y, 8, 1, WHITE);
-  R(x + 11, y, 1, TILE, METRO.steelDark);
+/** A ticket gate (order 26): a steel post, lit on its top, rivets in it, with a glass flap. */
+const GATE: Grain = { name: "st-gate", kind: "steel", ramp: [METRO.steelDark, mix(METRO.steel, METRO.steelDark, 0.5), METRO.steel], cols: [4, 11] };
+function gateTile(c: number, r: number, x: number, y: number, m: TileMap) {
+  textured(GATE, c, r, x, y, m, null, EDGE.TOP);
   R(x + 6, y + 3, 4, 3, METRO.board);
   R(x + 7, y + 4, 2, 1, PLANT_GREEN);
   R(x + 12, y + 4, 4, 7, mix(METRO.spark, WHITE, 0.4));
 }
 
-/** The signal cabinet: grey steel, a door, vents. */
+/** The signal cabinet (order 26): grey steel plates with their rivets, vents in its door. */
+const CABINET: Grain = { name: "st-cabinet", kind: "steel", ramp: [mix(METRO.steelDark, INK, 0.35), mix(METRO.steelDark, INK, 0.2), METRO.steelDark, METRO.steel] };
 function cabinetTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  R(x, y, TILE, TILE, METRO.steelDark);
-  R(x, y, TILE, 1, m.tileAt(c, r - 1) === "Z" ? METRO.steelDark : METRO.steel);
-  if (m.tileAt(c - 1, r) !== "Z") R(x, y, 1, TILE, INK);
-  if (m.tileAt(c + 1, r) !== "Z") R(x + TILE - 1, y, 1, TILE, INK);
-  for (let k = 3; k < TILE - 2; k += 3) R(x + 3, y + k, 10, 1, mix(METRO.steelDark, INK, 0.3));
+  textured(CABINET, c, r, x, y, m, null);
+  for (let k = 5; k < TILE - 4; k += 3) R(x + 4, y + k, 8, 1, mix(METRO.steelDark, INK, 0.3));
 }
 
 /**
@@ -1078,7 +1069,7 @@ export const STORTINGET: LevelDef = {
     ground: () => ({ top: METRO.floor, dot: METRO.floorDark, fill: METRO.concrete }),
     tile(t, c, r, x, y, m) {
       if (t === "#") {
-        if (r === P + 1 && (m.tileAt(c, r - 1) === "-" || m.tileAt(c, r - 1) === ".")) trenchFloor(c, x, y, VIEW_T.t);
+        if (r === P + 1 && (m.tileAt(c, r - 1) === "-" || m.tileAt(c, r - 1) === ".")) trenchFloor(c, x, y, VIEW_T.t, m);
         else floorTile(c, r, x, y, m);
         return true;
       }
@@ -1086,22 +1077,14 @@ export const STORTINGET: LevelDef = {
         concreteTile(c, r, x, y, m);
         return true;
       }
-      if (t === "E") {
-        // Under an escalator: the machinery's steel casing, panelled, with its rivets.
-        R(x, y, TILE, TILE, UNDER);
-        R(x, y + 15, TILE, 1, METRO.concreteDark);
-        R(x + 15, y, 1, TILE, METRO.concreteDark);
-        R(x + 2, y + 2, 1, 1, METRO.steel);
-        R(x + 12, y + 12, 1, 1, METRO.steel);
-        if ((c + r) % 2 === 0) for (let k = 2; k < 14; k++) R(x + k, y + k, 1, 1, METRO.concreteDark);
-        return true;
-      }
+      // Under an escalator: the machinery's steel casing, panelled, with its rivets (order 26).
+      if (t === "E") return textured(CASING, c, r, x, y, m, null, 0);
       if (t === "v") {
         bedTile(c, x, y, m.tileAt(c, r - 1) !== "v", VIEW_T.t);
         return true;
       }
       if (t === "G") {
-        gateTile(x, y);
+        gateTile(c, r, x, y, m);
         return true;
       }
       if (t === "Z") {

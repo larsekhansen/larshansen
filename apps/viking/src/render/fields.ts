@@ -10,6 +10,8 @@ import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { drawTimed } from "@larshansen/pixelkit/timed";
 import { STAND_LEDGE } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
+// The textured set (order 26) draws the tiles, as it does in the page once feel's file has come.
+import "../alive/ground";
 
 // For the tests only (order 18, ADR 0039), never imported by the page: what a level paints as fields,
 // the colours that cover its ground, walls, sky, water and far layers. Each level is drawn (sky, far

@@ -471,3 +471,32 @@ describe("what is behind the play lane is quieter than what he plays with", () =
     expect(loud).toEqual([]);
   }, 60_000);
 });
+
+// Order 26 (ADR 0049): the ground under him is drawn from the textured set, and comes no nearer any role than the ground
+// before it. Every colour the tiles paint as a field (0.4 % or more of what they paint, the paint and the ledges' teal left
+// out) that the level's tiles did not paint before order 26 stands at least as far from each role's colours as that
+// level's nearest ground field did before (`alive/ground-before.json`, measured on d4ccf99 by `tools/glance/ground.ts`).
+describe("the textured ground comes no nearer what he plays with than the ground before it", () => {
+  test("no new tone of a level's ground is nearer any role's colours than that level's ground was before order 26", async () => {
+    const BEFORE = (await import("../alive/ground-before.json")).default as unknown as Record<string, { painted: string[]; least: Record<string, { d: number }> }>;
+    const OWN = [...ROLES.COLOURS.stand, STAND.worn, STAND.under, STAND.mark];
+    const near: string[] = [];
+    const table: string[] = [];
+    for (const st of BUILT) {
+      const before = BEFORE[st.id];
+      const old = new Set(before.painted);
+      const ground = new Map([...(await paintedOf(st.id)).ground].filter(([c]) => !OWN.some((o) => deltaE(rgb(c), rgb(o)) < 1)));
+      const fields = [...shares([ground], FIELD_SHARE).keys()];
+      const fresh = fields.filter((f) => !old.has(f));
+      table.push(`${st.id}: ${fields.length} fields, ${fresh.length} new`);
+      for (const field of fresh)
+        for (const [role, colours] of Object.entries(ROLES.COLOURS)) {
+          if (role === "stand") continue;
+          const d = Math.min(...colours.map((c) => deltaE(rgb(field), rgb(c))));
+          if (d < before.least[role].d) near.push(`${st.id}: ${field} near ${role}, ${d.toFixed(2)} (before, ${before.least[role].d})`);
+        }
+    }
+    console.log(`The ground's fields (order 26):\n  ${table.join("\n  ")}`);
+    expect(near).toEqual([]);
+  }, 60_000);
+});
