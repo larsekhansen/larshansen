@@ -16,7 +16,7 @@ import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { clock, moving, step4 } from "../alive/parts";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { drawFoe, FOE_INK, foeFrame, mark, SHADES, type Looks } from "../alive/foes";
 import { frame, paint, stamp as stampFrame, type Frame, type Piece } from "../alive/frames";
 import { calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
@@ -1171,8 +1171,10 @@ const GUARD_BODY = [
 const GUARD_LEGS = [["...QP..QP...", "..llQ..llQ.."], ["....QPQP....", "...llQlQ...."], ["..QP....QP..", ".llQ...llQ.."], ["....QPQP....", "...llQlQ...."]];
 const HALBERD = { upright: [".bc", "bbc", ".b.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F."], level: [".......bb", "FFFFFFFbc", ".......b."] };
 const STONE_GUARD = { H: mix(G.statue, WHITE, 0.3), L: mix(G.statue, WHITE, 0.12), B: G.statue, S: mix(G.statue, INK, 0.25), P: mix(G.statue, WHITE, 0.08), Q: mix(G.statue, INK, 0.15), X: G.moss, E: mix(G.statue, INK, 0.45), l: mix(G.statue, INK, 0.4), F: mix(G.statue, INK, 0.1), b: mix(G.statue, WHITE, 0.2), c: mix(G.statue, INK, 0.3) };
-const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade };
-const guardFrame = (name: string, ink: Record<string, string>, legs: number, halberd: Piece, dy = 0) => frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 7], halberd);
+const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade, N: FOE_INK.N, n: FOE_INK.n };
+/** Woken, its glam (order 27): shoulder pads squared out past its mail in neon. */
+const guardFrame = (name: string, ink: Record<string, string>, legs: number, halberd: Piece, dy = 0) =>
+  frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 7], halberd, ...(ink === WOKEN_GUARD ? [mark(["NN......NN", "n........n"], 1, 4 + dy)] : []));
 const GUARD_FRAMES = {
   stone: guardFrame("the bishop's guard as stone", STONE_GUARD, 0, [HALBERD.upright, 10, -4]),
   walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 8, 3 + (k % 2)], k % 2 ? 0 : 1)),
@@ -1211,13 +1213,15 @@ const ARCHER_BODY = [
   ".lll..lll.."
 ];
 const QUIVER = ["MlM", ".dd", ".dm", ".dd", "..d"];
+const ARCHER_BAND = (dy: number) => mark(["NNnN"], 3, 1 + dy);
 const BOW = { rest: [".O.", "..o", "..o", "..o", "..o", "..o", "..o", "..o", ".o.", "o.."], drawn: ["O.....", ".o....", "..o...", "..a.o.", "..a..o", "..a..o", "..a..o", "..a.o.", "..ao..", "Wao...", "o....."] };
 const ARCHER: Looks = {
   w: 11,
   h: 14,
-  idle: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4]), frame("archer, breathing", FOE_INK, [QUIVER, 0, 5], [ARCHER_BODY, 0, 1], [BOW.rest, 8, 5])],
-  move: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4])],
-  windup: frame("archer, drawing", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [["ppp.", "app."], -1, 4], [["aaaaaaaaaaaW"], 0, 3], [["ppp"], 7, 4], [BOW.drawn, 9, -2])
+  // Its glam (order 27): a neon headband round its hood.
+  idle: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4], ARCHER_BAND(0)), frame("archer, breathing", FOE_INK, [QUIVER, 0, 5], [ARCHER_BODY, 0, 1], [BOW.rest, 8, 5], ARCHER_BAND(1))],
+  move: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4], ARCHER_BAND(0))],
+  windup: frame("archer, drawing", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [["ppp.", "app."], -1, 4], [["aaaaaaaaaaaW"], 0, 3], [["ppp"], 7, 4], [BOW.drawn, 9, -2], ARCHER_BAND(0))
 };
 function archerArt(e: Enemy, t: number) {
   drawFoe(e, foeFrame(e, t, ARCHER), ARCHER.w, ARCHER.h, true);
@@ -1232,7 +1236,8 @@ const GOOSE_BODY = [
 ];
 const GOOSE_NECK = [".WWW..", ".WelOo", ".wWW..", ".WW...", "WWw...", "WWw..."];
 const GOOSE_FEET = [["...o...o......"], ["....o.o......."], ["..oo...oo....."], ["....o.o......."]];
-const gooseFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [GOOSE_BODY, 0, 5 + dy], [GOOSE_NECK, 8 + nod, nod + dy], [GOOSE_FEET[feet], 0, 9]);
+/** Its glam (order 27): a studded collar round its neck. */
+const gooseFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [GOOSE_BODY, 0, 5 + dy], [GOOSE_NECK, 8 + nod, nod + dy], [GOOSE_FEET[feet], 0, 9], mark(["NaN"], 8 + nod, 3 + nod + dy));
 const GOOSE: Looks = {
   w: 14,
   h: 10,
@@ -1252,7 +1257,9 @@ const DOG_BODY = [
 ];
 const DOG_TAIL = [["l.", "m.", ".m"], [".l", ".m", ".m"]];
 const DOG_LEGS = [["..dd.d....d.dd..", ".dd...d..d...dd.", "ll....ll.ll...ll"], ["...ddd....ddd...", "...d.d....d.d...", "..ll.ll..ll.ll.."], ["..d.dd....dd.d..", "..d..dd..dd..d..", ".ll...ll.ll..ll."], ["...ddd....ddd...", "...d.d....d.d...", "..ll.ll..ll.ll.."]];
-const dogFrame = (name: string, legs: number, tail: number, dy = 0) => frame(name, FOE_INK, [DOG_BODY, 0, dy], [DOG_TAIL[tail], 0, 1 + dy], [DOG_LEGS[legs].map((r) => r.padEnd(17, ".")), 0, 7]);
+/** Its glam (order 27): shades and a studded collar. */
+const dogFrame = (name: string, legs: number, tail: number, dy = 0) =>
+  frame(name, FOE_INK, [DOG_BODY, 0, dy], [DOG_TAIL[tail], 0, 1 + dy], [DOG_LEGS[legs].map((r) => r.padEnd(17, ".")), 0, 7], mark(SHADES, 10, 2 + dy), mark(["N", "a", "N"], 10, 3 + dy));
 const DOG: Looks = {
   w: 16,
   h: 10,

@@ -45,6 +45,20 @@ export const FOE_INK: Record<string, string> = {
 
 const make = (name: string, ...pieces: Piece[]) => frame(name, FOE_INK, ...pieces);
 const at = (rows: readonly string[], dx = 0, dy = 0): Piece => [rows, dx, dy];
+/** A glam mark (order 27): drawn over the figure, gone from its natural self, and what flies off when the glamour breaks. */
+export const mark = (rows: readonly string[], dx = 0, dy = 0): Piece => [rows, dx, dy, true];
+/**
+ * The marks every look picks from, in the level's two neons (N, n) and the near-black. Shades, side on: the arm back to
+ * the ear in the second neon, the lens dark over the eye, its glint at the front (the eye's pixel, so it still shines
+ * after dark).
+ */
+export const SHADES = ["nlle"];
+/**
+ * A fire that hurts, under the glamour (order 27, Lars: "the brazier should now also have magenta / lime green fire"): its
+ * flames (drawn in the orange's light and middle, their tips the pale) burn magenta with lime tongues and tips. Its natural
+ * self burns an ordinary orange (`alive/natural.ts`). Fires and lamps that are only scenery stay warm.
+ */
+export const glamFire = (rows: readonly string[]) => rows.map((r) => r.replace(/O/g, "X").replace(/[oa]/g, "L"));
 
 /** A look's frames: still (two), moving (four), and a wind-up pose for one that throws. */
 export interface Looks {
@@ -72,7 +86,8 @@ const PIGEON_LEGS = {
   b: [".....pp......", ".....ppp....."],
   c: ["....p..p.....", "....pp.pp...."]
 };
-const pigeon = (name: string, head: [number, number], legs: string[]) => make(name, at(PIGEON_BODY, 0, 4), at(PIGEON_HEAD, 7 + head[0], head[1]), at(legs, 0, 9));
+const pigeon = (name: string, head: [number, number], legs: string[]) =>
+  make(name, at(PIGEON_BODY, 0, 4), at(PIGEON_HEAD, 7 + head[0], head[1]), at(legs, 0, 9), mark(SHADES, 8 + head[0], 1 + head[1]), mark(["NN"], 9 + head[0], head[1]));
 export const PIGEON: Looks = {
   w: 13,
   h: 11,
@@ -106,7 +121,8 @@ const RAT_LEGS = {
   b: ["....p..p.....", "...pp.pp....."],
   c: ["...p.....p...", "..pp.....pp.."]
 };
-const rat = (name: string, tail: string[], legs: string[], nose = 0) => make(name, at(RAT_BODY, 0, 1), at(tail, -9, 6), at(legs, 0, 8), ...(nose ? [[["a"], 12, 5] as Piece] : []));
+const rat = (name: string, tail: string[], legs: string[], nose = 0) =>
+  make(name, at(RAT_BODY, 0, 1), at(tail, -9, 6), at(legs, 0, 8), ...(nose ? [[["a"], 12, 5] as Piece] : []), mark(SHADES, 9, 4));
 export const RAT: Looks = {
   w: 13,
   h: 10,
@@ -129,7 +145,9 @@ const GULL_WINGS: Record<string, readonly string[]> = {
 };
 const GULL_DOWN = [".....wwWWWW......", "....wwWWW........", "....lll.........."];
 const gull = (name: string, wing: string, bob = 0) =>
-  make(name, at(GULL_WINGS[wing], 0, bob), at(GULL_BODY, 0, 3 + bob), ...(wing === "down" ? [at(GULL_DOWN, 0, 7 + bob)] : []));
+  make(name, at(GULL_WINGS[wing], 0, bob), at(GULL_BODY, 0, 3 + bob), ...(wing === "down" ? [at(GULL_DOWN, 0, 7 + bob)] : []), mark(GULL_CREST, 10, 1 + bob));
+/** A teased crest (order 27): swept up and back off its crown, in the level's two neons. */
+const GULL_CREST = ["n.N.", ".NNN"];
 export const GULL: Looks = {
   w: 17,
   h: 10,

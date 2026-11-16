@@ -13,7 +13,7 @@ import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, turned, type Piece } from "../alive/frames";
 import { tile as textured, type Grain } from "../alive/ground";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
@@ -812,7 +812,9 @@ const CRAB_LEGS = [
   [".pp..lll.l..pp.", "p..p.......p..p", "...p.......p..."],
   ["...pplllllpp...", "..p.p.....p.p..", "..p..p...p..p.."]
 ];
-const crabFrame = (name: string, top: readonly string[], legs: number, dy = 0) => make(name, at(top, 0, dy), at(CRAB_SHELL, 0, 4 + dy), at(CRAB_LEGS[legs], 0, 9));
+/** Its glam (order 27): a pair of shades on each eye stalk, and a neon stripe along its shell's rim. */
+const crabFrame = (name: string, top: readonly string[], legs: number, dy = 0) =>
+  make(name, at(top, 0, dy), at(CRAB_SHELL, 0, 4 + dy), at(CRAB_LEGS[legs], 0, 9), mark(["lel.lel"], 4, 2 + dy), mark(["NNNNNNNNN"], 3, 4 + dy));
 const CRAB: Looks = {
   w: 15,
   h: 12,
@@ -840,7 +842,9 @@ const PENGUIN_BODY = [
 const PENGUIN_FEET = [["...oo...oo."], ["..oo....oo."], ["...oo..oo.."], ["...oo....oo"]];
 /** The body rocked a pixel to one side above its middle (the waddle), or not. */
 const rocked = (lean: number) => PENGUIN_BODY.map((r, i) => (i < 6 && lean ? (lean > 0 ? "." + r.slice(0, -1) : r.slice(1) + ".") : r));
-const penguinFrame = (name: string, lean: number, feet: number, dy = 0) => make(name, at(rocked(lean), 0, dy), at(PENGUIN_FEET[feet], 0, 11));
+/** Its glam (order 27): shades and a neon bow tie, rocking with it. */
+const penguinFrame = (name: string, lean: number, feet: number, dy = 0) =>
+  make(name, at(rocked(lean), 0, dy), at(PENGUIN_FEET[feet], 0, 11), mark(SHADES, 4 + Math.sign(lean), 2 + dy), mark(["NnN"], 7 + Math.sign(lean), 4 + dy));
 const PENGUIN: Looks = {
   w: 11,
   h: 12,
@@ -882,7 +886,9 @@ const STONE_ROWS = [".Mm.", "Mmmd", "mmdl", ".dl."];
 const SLINGER_INK = [{ J: ENEMY.plumLight, j: ENEMY.plum, k: ENEMY.plumDark }, { J: ENEMY.pink, j: ENEMY.pink, k: ENEMY.plum }];
 const slingerLooks = (coat: Record<string, string>, name: string) => {
   const ink = { ...FOE_INK, ...coat };
-  const f = (label: string, dy: number, ...more: Piece[]) => frame(`${name}, ${label}`, ink, at(SLINGER_BODY, 0, 6 + dy), at(SLINGER_TOP, 0, dy), ...more);
+  // Its glam (order 27): shoulder pads squared out past his tunic, and shades.
+  const f = (label: string, dy: number, ...more: Piece[]) =>
+    frame(`${name}, ${label}`, ink, at(SLINGER_BODY, 0, 6 + dy), at(SLINGER_TOP, 0, dy), mark(["Nn......nN"], 0, 6 + dy), mark(SHADES, 4, 2 + dy), ...more);
   // Winding up: the arm raised, the cord from his fist to the stone, which goes round.
   const whirl = (k: number) => {
     const [sx, sy] = WHIRL[k];

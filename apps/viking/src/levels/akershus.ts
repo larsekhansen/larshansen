@@ -5,7 +5,7 @@ import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STO
 import { STONE_LEDGE, type LedgeLook } from "@larshansen/pixelkit/props";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, foeFrame, glamFire, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { flagFlying, flame } from "../alive/things";
 import { tbaneDoor } from "../render/furniture";
@@ -470,7 +470,9 @@ const GUARD_LEGS = {
   b: ["....llll.....", "....llll.....", "...mmmmm.....", "...ddddd....."],
   c: ["...ll...ll...", "..ll.....ll..", "..mmm....mmm.", "..ddd....ddd."]
 };
-const guardFrame = (name: string, legs: string[], nod = 0) => frame(name, FOE_INK, [GUARD_TOP.slice(0, 9), 0, nod], [GUARD_TOP.slice(9), 0, 9], [legs, 0, 16]);
+/** Its glam (order 27): shoulder pads squared out past its coat in neon, and shades under its cap. */
+const guardFrame = (name: string, legs: string[], nod = 0) =>
+  frame(name, FOE_INK, [GUARD_TOP.slice(0, 9), 0, nod], [GUARD_TOP.slice(9), 0, 9], [legs, 0, 16], mark(["NN......NN", "nN......Nn"], 2, 9), mark(SHADES, 5, 6 + nod));
 const GUARD: Looks = {
   w: 13,
   h: 20,
@@ -498,7 +500,8 @@ const FLAMES = [
   ["........a....", "..a..O.aO....", "..OOOOaOOOO..", ".OOoOOOoOOo.."],
   ["......a......", "....aO.O.....", "..O.OOOOaO...", "..OOoOOoOOO.."]
 ];
-const brazierFrame = (k: number) => frame(`brazier, flames ${k + 1}`, FOE_INK, [FLAMES[k], 0, 0], [BRAZIER_BASE, 0, 4]);
+/** Its fire under the glamour (order 27): magenta with lime tongues and tips, flickering in its frames, its coals' rim magenta. */
+const brazierFrame = (k: number) => frame(`brazier, flames ${k + 1}`, FOE_INK, [glamFire(FLAMES[k]), 0, 0], [BRAZIER_BASE, 0, 4], [["XXXXXXXXXXXXX"], 0, 4]);
 const BRAZIER: Looks = { w: 13, h: 16, idle: [0, 1, 2, 3].map(brazierFrame), move: [0, 1, 2, 3].map(brazierFrame), rate: 5 };
 
 /** A brazier on its stone foot: an iron basket, coals, flames that flicker on its own clock. It hurts from above. 13 x 16. */

@@ -11,7 +11,7 @@ import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { drawLook, drawLookShot } from "../render/looks";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
 import { flame, lampFlicker } from "../alive/things";
 import { eyes, outlined, plain } from "../render/sprite";
@@ -166,7 +166,9 @@ const BAT_WING: Record<string, readonly string[]> = {
   down: ["........", "........", "......mM", "....mMdd", "..mMdd.d", "mMd.d..."]
 };
 const flip = (rows: readonly string[]) => rows.map((r) => [...r].reverse().join(""));
-const batFrame = (name: string, wing: string, dy = 0) => frame(name, FOE_INK, [BAT_WING[wing], 0, 1 + dy], [flip(BAT_WING[wing]), 9, 1 + dy], [BAT_BODY, 6, dy]);
+/** Its glam (order 27): its ears' tips in neon, shades across its face (a glint on each lens). */
+const batFrame = (name: string, wing: string, dy = 0) =>
+  frame(name, FOE_INK, [BAT_WING[wing], 0, 1 + dy], [flip(BAT_WING[wing]), 9, 1 + dy], [BAT_BODY, 6, dy], mark(["N.N"], 7, dy), mark(["lelel"], 6, 2 + dy));
 const BAT: Looks = {
   w: 17,
   h: 10,
@@ -186,7 +188,9 @@ const HEAP = Array.from({ length: 10 }, (_, r) =>
   }).join("")
 );
 const ANTS = [[[3, 7], [6, 3], [12, 4], [15, 8], [9, 1]], [[4, 5], [7, 2], [13, 5], [16, 9], [10, 1]], [[4, 4], [8, 1], [14, 6], [15, 7], [11, 2]], [[5, 3], [9, 1], [14, 7], [14, 6], [12, 3]]];
-const anthillFrame = (k: number) => frame(`anthill, ants ${k + 1}`, FOE_INK, [HEAP], ...ANTS[k].map(([c, r]) => [["l"], c, r] as [string[], number, number]));
+/** Its glam (order 27): a lightning bolt down its side in the level's neons. */
+const ANTHILL_BOLT = ["...N", "..Nn", ".NNN", "..N.", ".n.."];
+const anthillFrame = (k: number) => frame(`anthill, ants ${k + 1}`, FOE_INK, [HEAP], mark(ANTHILL_BOLT, 7, 3), ...ANTS[k].map(([c, r]) => [["l"], c, r] as [string[], number, number]));
 const ANTHILL: Looks = { w: 18, h: 10, idle: [0, 1, 2, 3].map(anthillFrame), move: [0, 1, 2, 3].map(anthillFrame), rate: 6 };
 
 // --- The dark ----------------------------------------------------------------------------------------------------
@@ -608,7 +612,7 @@ const MOOSE_BODY = Array.from({ length: 11 }, (_, r) =>
 const MOOSE_HUMP = ["..llllll", ".lLLllmm", "lLlmmmmm"];
 const MOOSE_HEAD = ["..lllll.....", ".lLmmmmmll..", "lmmemmmmmmml", "mmmmmmmmmmdD", ".mmdmmmmddDD", "..ddd..dDDe.", "...dd.......", "...dd.......", "....d......."];
 const MOOSE_ANTLERS = ["A.A.A.......A.A", "aAaAa.....AaAa.", ".aaab.....baa..", "..bb.......bb..", "...b.......b...", "....b.....b...."];
-const MOOSE_TOP = frame("moose", MOOSE_INK, [MOOSE_ANTLERS, 44, -8], [MOOSE_HUMP, 38, -3], [MOOSE_BODY, 2, 0], [MOOSE_HEAD, 46, 1]);
+export const MOOSE_TOP = frame("moose", MOOSE_INK, [MOOSE_ANTLERS, 44, -8], [MOOSE_HUMP, 38, -3], [MOOSE_BODY, 2, 0], [MOOSE_HEAD, 46, 1]);
 
 /** The moose: a long brown body under its back (what he stands on), a hump, long legs walking, a heavy head and antlers the way it walks. */
 function moose(at: { x: number; y: number }, t: number) {

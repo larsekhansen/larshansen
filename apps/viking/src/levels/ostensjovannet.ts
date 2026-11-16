@@ -13,7 +13,7 @@ import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { clock, forced, step4 } from "../alive/parts";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { drawLook } from "../render/looks";
 import { plane } from "../alive/depth";
@@ -499,15 +499,20 @@ const SWAN_NECK = ["..WWW...", ".WWWelOo", ".WWWw...", "..WWw...", ".WWw....", "
 const SWAN_HISS = ["WW.......", ".WW......", "..WW.....", "...WW.WW.", "....WWelo", "....wWWol"];
 const SWAN_COME = ["......WWW..", ".....WWWel.", "WWWWWWWw.oo", ".wwwwww....", "........oo."];
 const SWAN_RAISED = ["..W......W.......", ".WWW....WWW......", "..WWWWWWWWWWW....", "..wWWWWWWWWWWW...", "...wwwwwwwwwww...", "......wwwww......"];
-const swanFrame = (name: string, neck: Piece, wings = false, dy = 0) => frame(name, FOE_INK, [SWAN_BODY, 0, 12 + dy], ...(wings ? [[SWAN_WINGS, 1, 9 + dy] as Piece] : []), neck);
+/** Its glam (order 27): shades over its eye, wherever its neck puts its head. */
+const swanShades = ([rows, x = 0, y = 0]: Piece): Piece => (rows === SWAN_HISS ? mark(SHADES, x + 3, y + 4) : rows === SWAN_COME ? mark(SHADES, x + 5, y + 1) : mark(SHADES, x + 1, y + 1));
+const swanFrame = (name: string, neck: Piece, wings = false, dy = 0) => frame(name, FOE_INK, [SWAN_BODY, 0, 12 + dy], ...(wings ? [[SWAN_WINGS, 1, 9 + dy] as Piece] : []), neck, swanShades(neck));
 const SWAN_FRAMES = {
   glide: [0, 1, 0, -1].map((k, i) => swanFrame(`swan, gliding ${i + 1}`, [SWAN_NECK, 13 + k, 1 + Math.abs(k)])),
   still: [swanFrame("swan, still", [SWAN_NECK, 13, 1]), swanFrame("swan, still, its head low", [SWAN_NECK, 13, 2], false)],
   tell: [swanFrame("swan, hissing", [SWAN_HISS, 15, 9], true), swanFrame("swan, hissing, its head shaking", [SWAN_HISS, 16, 9], true)],
   come: swanFrame("swan, coming", [SWAN_COME, 16, 7], true, 0),
   // Coming at him: its wings beating high and half up, its neck out, churning along the water (four frames by the distance).
-  charge: [0, 1, 2, 3].map((k) => frame(`swan, coming ${k + 1}`, FOE_INK, [SWAN_BODY, 0, 12 + (k % 2)], k % 2 ? [SWAN_WINGS, 1, 9 + (k % 2)] : [SWAN_RAISED, 0, 6], [SWAN_COME, 16 + (k === 1 ? 1 : 0), 7 + (k % 2)])),
-  wait: [swanFrame("swan, coming, waiting", [SWAN_COME, 16, 7], true), frame("swan, coming, its wings up", FOE_INK, [SWAN_BODY, 0, 12], [SWAN_RAISED, 0, 6], [SWAN_COME, 16, 7])]
+  charge: [0, 1, 2, 3].map((k) => {
+    const neck: Piece = [SWAN_COME, 16 + (k === 1 ? 1 : 0), 7 + (k % 2)];
+    return frame(`swan, coming ${k + 1}`, FOE_INK, [SWAN_BODY, 0, 12 + (k % 2)], k % 2 ? [SWAN_WINGS, 1, 9 + (k % 2)] : [SWAN_RAISED, 0, 6], neck, swanShades(neck));
+  }),
+  wait: [swanFrame("swan, coming, waiting", [SWAN_COME, 16, 7], true), frame("swan, coming, its wings up", FOE_INK, [SWAN_BODY, 0, 12], [SWAN_RAISED, 0, 6], [SWAN_COME, 16, 7], swanShades([SWAN_COME, 16, 7]))]
 };
 
 function swanArt(e: Enemy, t: number) {
@@ -529,7 +534,8 @@ const COOT_BODY = [
 ];
 const COOT_HEAD = [".dd..", "dmdaa", "dedWa", ".ld.."];
 const COOT_LEGS = [["...g...g.....", "..gg..gg....."], ["....g.g......", "...ggggg....."], ["..g....g.....", ".gg....gg...."], ["....g.g......", "...ggggg....."]];
-const cootFrame = (name: string, legs: number, nod: number, dy = 0) => frame(name, FOE_INK, [COOT_BODY, 0, 2 + dy], [COOT_HEAD, 8 + nod, nod + dy], [COOT_LEGS[legs], 0, 8]);
+/** Its glam (order 27): a neon cap of feathers on its crown (shades would not show on its black head). */
+const cootFrame = (name: string, legs: number, nod: number, dy = 0) => frame(name, FOE_INK, [COOT_BODY, 0, 2 + dy], [COOT_HEAD, 8 + nod, nod + dy], [COOT_LEGS[legs], 0, 8], mark(["NN"], 9 + nod, nod + dy));
 const COOT: Looks = {
   w: 13,
   h: 10,
@@ -561,7 +567,8 @@ const NESTER_UP = [
   ["............", "............", "............", "............", "............", "..wwWWWWww..", "lwWWWWWWWWwl", "l..WWWWWWWelO", "...wWWWWWwW..", "....wwwwww...", ".....pp.pp..."]
 ];
 const NESTER = {
-  sit: [frame("gull on its nest", FOE_INK, [NESTER_SIT, 0, 1]), frame("gull on its nest, breathing", FOE_INK, [NESTER_SIT, 0, 2])],
+  // Its glam (order 27): a teased crest swept back off its crown.
+  sit: [frame("gull on its nest", FOE_INK, [NESTER_SIT, 0, 1], mark(["n.N.", ".NNN"], 6, -1)), frame("gull on its nest, breathing", FOE_INK, [NESTER_SIT, 0, 2], mark(["n.N.", ".NNN"], 6, 0))],
   up: NESTER_UP.map((rows, k) => frame(`gull rising to dive ${k + 1}`, FOE_INK, [rows.map((r) => r.padEnd(13, ".")), -1, 1]))
 };
 function nesterArt(e: Enemy, t: number) {

@@ -12,7 +12,7 @@ import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
@@ -633,7 +633,8 @@ const RIVETER_BODY = [
   ".lll.lll..."
 ];
 const RIVETER_ARM = { down: ["Oo.", "oo.", "oo.", "aMm", ".d."], up: ["MMm", "dd.", ".a.", ".o.", ".o.", ".o.", "Oo.", "oo."] };
-const riveterFrame = (name: string, arm: Piece, dy = 0) => frame(name, FOE_INK, [RIVETER_BODY, 0, dy], arm);
+/** Its glam (order 27): shades under the hard hat, and leg warmers over its boots. */
+const riveterFrame = (name: string, arm: Piece, dy = 0) => frame(name, FOE_INK, [RIVETER_BODY, 0, dy], arm, mark(SHADES, 3, 3 + dy), mark(["Nn..Nn", "nN..nN"], 2, 11 + dy));
 const RIVETER: Looks = {
   w: 11,
   h: 14,

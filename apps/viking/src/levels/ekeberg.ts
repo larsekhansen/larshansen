@@ -10,7 +10,7 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -608,7 +608,8 @@ const MAGPIE_BODY = [
   "........wwwww....."
 ];
 const MAGPIE_LEGS = [[".........l.l......", ".........l.l......", "........ll.ll....."], ["..................", ".........l.l......", "........ll.ll....."], ["..................", "..........l.l.....", ".........l.l......"]];
-const magpieFrame = (name: string, dy: number, legs: number) => frame(name, FOE_INK, [MAGPIE_BODY, -4, dy], [MAGPIE_LEGS[legs], -4, 8]);
+/** Its glam (order 27): a neon crest along its crown. */
+const magpieFrame = (name: string, dy: number, legs: number) => frame(name, FOE_INK, [MAGPIE_BODY, -4, dy], [MAGPIE_LEGS[legs], -4, 8], mark(["nNN"], 7, dy));
 const MAGPIE: Looks = {
   w: 13,
   h: 11,

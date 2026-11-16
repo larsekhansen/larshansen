@@ -16,7 +16,7 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook, drawLookShot } from "../render/looks";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
@@ -1126,7 +1126,7 @@ const CAT_LEGS = [
   ["...o.....o.....", "....o...o......", ".....aaaa......"]
 ];
 const catFrame = (name: string, legs: number, dy: number, tail: readonly string[]) =>
-  frame(name, FOE_INK, [tail, 1, dy], [CAT_BODY, 2, 4 + dy], [CAT_HEAD, 11, dy], [CAT_LEGS[legs], 0, 9]);
+  frame(name, FOE_INK, [tail, 1, dy], [CAT_BODY, 2, 4 + dy], [CAT_HEAD, 11, dy], [CAT_LEGS[legs], 0, 9], mark(["lle"], 11, 3 + dy), mark(["N", "a", "N"], 10, 4 + dy));
 const CAT: Looks = {
   w: 15,
   h: 12,

@@ -13,7 +13,7 @@ import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { clock, forced, moving, step4 } from "../alive/parts";
-import { FOE_INK, drawFoe } from "../alive/foes";
+import { FOE_INK, drawFoe, mark } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
@@ -559,61 +559,90 @@ export function sledgerReady(e: Enemy, him: number, t: number) {
 }
 
 /**
- * A sledger, drawn as frames (order 25; way 3, ADR 0045), 20 x 15 from its runners: a kid in a bobble hat (poison green,
- * lit at the top left), a face with an eye, a puffy jacket (pink, or plum every other one) lit across the shoulders and
- * shaded to its back, legs out along an orange sledge lit along its top, plum runners curling up at its nose. Sitting it
- * breathes; riding, its scarf streams back and the bumps jolt it (four frames by the distance it goes). About
- * to set off it leans forward over the nose and digs its mittens into the snow either side to push (order 20). Pulled off
- * at the end of its stretch, up on the bank, it is out of the way and harmless, outlined in the calm pale (order 22: the
- * page outlines it so while it is calm).
+ * A sledger (order 27, redrawn: Lars, "make kid, sledgers more detailed"), 20 x 15 from its runners: a kid you can see
+ * sitting on a sledge you can see. The sledge: a deck of slats (orange wood, lit along its top, the gaps between its slats
+ * dark), struts down to two runners in the plum's dark that curl up at its nose. The kid: a bobble hat (the poison green,
+ * its white bobble, a turned-up cuff), a face with an eye and a red cheek, a scarf wound at its neck and streaming back
+ * (four frames as it rides), a puffy jacket (pink, or plum every other one), its legs out front along the deck to its
+ * boots, its mitten forward on the rope that runs to the nose. Sitting it breathes; riding, the bumps jolt it (four frames
+ * by the distance it goes). About to set off it leans forward over the nose and digs its mittens into the snow either
+ * side to push (order 20). Pulled off at the end of its stretch, up on the bank, it is out of the way and harmless: it
+ * stands beside its empty sledge, outlined in the calm pale (order 22). Under the glamour its bobble is neon and it rides
+ * in shades.
  */
 const SLEDGE = [
-  "OOOOOOOOOOOOOOOOOd..",
-  "ooooooooooooooooodd.",
-  ".l...l......l...l.d.",
-  "dMddddddMdddddddMdd."
+  ".OOoOOOoOOOoOOOoOOl.",
+  ".ooloooloooloooloo.d",
+  "..d...d......d...dd.",
+  ".dddddddddddddddddd."
 ];
 const SLEDGER_KID = [
-  ".....GgG............",
-  "....GGGgg...........",
-  "....gggggg..........",
-  "....OOOOeOa.........",
-  "....OOOOOO..........",
-  "...JJJJJJJ..........",
-  "...JjjjjjjjJa.......",
-  "...jjjjjjjk.........",
-  "...jjjjjjjkkkk......",
-  "...kkkkkkkkkkklll..."
+  ".....WW.............",
+  "....GGGg............",
+  "...GGGGgg...........",
+  "...wwwwwww..........",
+  "...aaaaela..........",
+  "...aapaaa...........",
+  "...SSSSSs...........",
+  "..JJJJJJJ...........",
+  "..JjjjjjjjjjG.......",
+  "..jjjjjjjk...llll...",
+  "..kkkkkkkkkkkkdd.ll."
 ];
 const SLEDGER_LEAN = [
-  "........GgG.........",
-  ".......GGGgg........",
-  ".......gggggg.......",
-  ".......OOOOOeOa.....",
-  "......JJOOOOOO......",
-  ".....JJjjjjjjjJJ....",
-  "....JjjjjjjjjjjjJ...",
-  "....jjjjjjjjjkkkJ...",
-  "...jjjjjjjjkkk..ja..",
-  "...kkkkkkkkkklll.aa."
+  ".......WW...........",
+  "......GGGg..........",
+  ".....GGGGgg.........",
+  ".....wwwwwww........",
+  ".....aaaaaela.......",
+  ".....aaapaaa........",
+  "....JSSSSSs.........",
+  "...JJjjjjjjjJ.......",
+  "...JjjjjjjjjjjJ.....",
+  "...jjjjjjjjkkkjj....",
+  "..kkkkkkkkkkdd..jG.."
 ];
-const SCARF = [["Gg..", ".gg."], ["....", "Ggg."], ["G...", ".gg."], ["....", ".Ggg"]];
-const SLEDGER_INK = [{ J: ENEMY.pink, j: ENEMY.pink, k: ENEMY.plum }, { J: ENEMY.plumLight, j: ENEMY.plum, k: ENEMY.plumDark }];
+/** Pulled off: it stands on the bank beside its sledge (the sledge as it lies, the kid upright at its back end). */
+const SLEDGER_STANDING = [
+  "..WW...",
+  ".GGGg..",
+  "GGGGgg.",
+  "wwwwww.",
+  "aaaela.",
+  "apaaa..",
+  "SSSSs..",
+  "JJJJJJ.",
+  "JjjljjG",
+  "jjjljj.",
+  "kkkkkk.",
+  ".dd.dd.",
+  ".ll.ll."
+];
+/** Its scarf's end, streaming back off its neck as it rides. */
+const SCARF = [["SS..", ".ss."], ["....", "SSs."], ["S...", ".Ss."], ["....", ".SSs"]];
+const SLEDGER_INK = [
+  { J: ENEMY.pink, j: ENEMY.pink, k: ENEMY.plum, S: ENEMY.orangeLight, s: ENEMY.orange },
+  { J: ENEMY.plumLight, j: ENEMY.plum, k: ENEMY.plumDark, S: ENEMY.orangeLight, s: ENEMY.orange }
+];
+/** Its glam (order 27): its bobble in neon, shades over its eye. */
+const SLEDGER_GLAM = (dx: number, dy: number) => [mark(["NN"], 5 + dx, dy), mark(["nlle"], 4 + dx, 4 + dy)];
 const sledgerLooks = (coat: Record<string, string>) => {
   const ink = { ...FOE_INK, ...coat };
-  const f = (label: string, kid: readonly string[], dy: number, scarf?: number) =>
-    frame(`sledger, ${label}`, ink, [SLEDGE, 0, 10], [kid, 0, dy], ...(scarf === undefined ? [] : [[SCARF[scarf], 0, 5 + dy] as Piece]));
+  const f = (label: string, kid: readonly string[], dy: number, scarf?: number, dx = 0) =>
+    frame(`sledger, ${label}`, ink, [SLEDGE, 0, 11], [kid, 0, dy], ...(scarf === undefined ? [] : [[SCARF[scarf], 0, 6 + dy] as Piece]), ...SLEDGER_GLAM(dx, dy));
   return {
     sit: [f("sitting", SLEDGER_KID, 0), f("sitting, breathing", SLEDGER_KID, 1)],
     // Riding: the kid jolted down a pixel on every other bump of the snow, the scarf streaming.
     ride: [0, 1, 2, 3].map((k) => f(`riding ${k + 1}`, SLEDGER_KID, k % 2 ? 0 : 1, k)),
-    lean: f("leaning in to push off", SLEDGER_LEAN, 0)
+    lean: f("leaning in to push off", SLEDGER_LEAN, 0, undefined, 2),
+    off: frame("sledger, pulled off, standing by its sledge", ink, [SLEDGE, 0, 11], [SLEDGER_STANDING, -6, 2], ...SLEDGER_GLAM(-8, 2))
   };
 };
 const SLEDGERS = SLEDGER_INK.map(sledgerLooks);
 function sledgerArt(e: Enemy, v: View) {
   const l = SLEDGERS[e.def.c % 2];
   const at = e.calm ? { ...e, x: e.x + 18, y: e.y - 7 } : e;
+  if (e.calm) return drawFoe(at, l.off, 18, 15);
   const ready = !e.calm && sledgerReady(e, v.him.x, v.t);
   const own = clock.t + (e.def.offset ?? 0);
   // Riding once it has set off (for the census, whenever it is drawn moving).

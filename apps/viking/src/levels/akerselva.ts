@@ -14,6 +14,7 @@ import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { NEON_B, glam } from "../alive/glamour";
 import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
 
 // Level 6, rune A: Akerselva. A summer's day, down the river from Nydalen to Vaterland, the only
@@ -232,7 +233,9 @@ export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
 const SALMON_BODY = ["...pa...", "..mppa..", ".mMppaW.", ".mlepaW.", "mMpppaWw", "mlMppWWw", "mMpppWWw", "mmlpWWww", ".mMpWww.", ".mppWw..", "..mpw...", "..mpp..."];
 const SALMON_TAILS = [["...mp...", ".mpp.pm.", "mp....pm"], ["..mp....", ".mp.pm..", "mp...pm."]];
 const SALMON = SALMON_TAILS.map((tail) => [...SALMON_BODY, ...tail]);
-const SALMON_INK: Record<string, string> = { m: ENEMY.plum, M: ENEMY.plumLight, p: ENEMY.pink, a: ENEMY.pale, W: ENEMY.white, w: ENEMY.whiteShade, l: ENEMY.line, e: ENEMY.eye };
+const SALMON_INK: Record<string, string> = { m: ENEMY.plum, M: ENEMY.plumLight, p: ENEMY.pink, a: ENEMY.pale, W: ENEMY.white, w: ENEMY.whiteShade, l: ENEMY.line, e: ENEMY.eye, n: NEON_B };
+/** Under the glamour (order 27): shades across its face, the arm in the level's second neon, the glint on the lens. */
+const SALMON_GLAM = SALMON.map((rows) => rows.map((row, r) => (r === 3 ? ".nlleaW." : row)));
 
 /**
  * A salmon leaping: nose up on the way out of the water, nose down on the way back, red, a lighter
@@ -252,9 +255,12 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
   if (l.up <= 0) return;
   // Past the top of its leap it turns over; at the top it lies level a moment, its nose the way it faces (order 23).
   const falling = leap(e, t + 1).up < l.up;
+  // Its tail flicks on its own clock (reduced motion keeps it: it is how a leap reads); glammed, bare, or its marks alone.
+  const k = Math.floor(t / 5) % 2;
+  const glammed = SALMON_GLAM[k];
+  const bare = SALMON[k];
+  const map = glam.mode === "bare" ? bare : glam.mode === "glam" ? glammed : glammed.map((row, r) => [...row].map((ch, c) => (ch === bare[r][c] ? "." : ch)).join(""));
   const colors = SALMON_INK;
-  // Its tail flicks on its own clock (reduced motion keeps it: it is how a leap reads).
-  const map = SALMON[Math.floor(t / 5) % 2];
   if (Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 1)
     return map.forEach((row, r) =>
       [...row].forEach((ch, c) => {

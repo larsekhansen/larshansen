@@ -39,7 +39,7 @@ export const LEANS: Record<string, Record<string, string>> = {
   holmenkollen: { [NEON_A]: ENEMY.blue, [NEON_B]: ENEMY.hotPink },
   akerselva: { [NEON_A]: ENEMY.poison, [NEON_B]: ENEMY.magenta },
   nordmarka: { [NEON_A]: ENEMY.poison, [NEON_B]: ENEMY.purple },
-  stortinget: { [NEON_A]: ENEMY.purple, [NEON_B]: ENEMY.poison },
+  stortinget: { [NEON_B]: ENEMY.purple },
   ekeberg: { [NEON_A]: ENEMY.orange, [NEON_B]: ENEMY.purple },
   nabolaget: { [NEON_B]: ENEMY.poison },
   bygdoy: { [NEON_A]: ENEMY.orange },
@@ -62,9 +62,10 @@ const LIT = new Set<string>([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.
 const sheens = new WeakMap<Frame, Frame>();
 
 /**
- * A glammed frame with its sheen: the body's top edge in the front half (where the light falls on it) in the first
- * neon, and its back edge in the upper half in the second: two neons, one treatment for every invader. Its marks as
- * drawn. Worked out once a frame and kept.
+ * A glammed frame with its sheen: the body's top edge, where the light falls on it, in two neons, the first over its
+ * front half and the second over the quarter behind it, as a sign's tubes light what stands under them: one treatment for
+ * every invader. A pixel alone on the edge (a claw, an ear's tip) is left. Its marks as drawn. Worked out once a frame
+ * and kept.
  */
 export function sheened(f: Frame): Frame {
   let s = sheens.get(f);
@@ -74,7 +75,7 @@ export function sheened(f: Frame): Frame {
   const r = f.runs;
   for (let i = 0; i < r.length; i += 4) for (let k = 0; k < r[i + 2]; k++) at.set(key(r[i] + k, r[i + 1]), f.ink[r[i + 3]]);
   const mid = (f.x0 + f.x1) / 2;
-  const upper = f.y0 + (f.y1 - f.y0) * 0.5;
+  const back = f.x0 + (f.x1 - f.x0) * 0.25;
   const out: number[] = [];
   const ink = [...f.ink];
   const inkOf = (c: string) => {
@@ -82,21 +83,15 @@ export function sheened(f: Frame): Frame {
     if (n < 0) n = ink.push(c) - 1;
     return n;
   };
-  // Its top edge where the light falls, its back edge: a body's pixel with nothing over it, or nothing behind it; a
-  // pixel alone on an edge (a claw, a tail's tip) is left as it is.
-  const body = (x: number, y: number) => LIT.has(at.get(key(x, y)) ?? "");
-  const top = (x: number, y: number) => body(x, y) && !at.has(key(x, y - 1));
-  const back = (x: number, y: number) => body(x, y) && !at.has(key(x - 1, y));
+  // Its top edge where the light falls: a body's pixel with nothing over it.
+  const top = (x: number, y: number) => LIT.has(at.get(key(x, y)) ?? "") && !at.has(key(x, y - 1));
   for (let i = 0; i < r.length; i += 4) {
     const c = f.ink[r[i + 3]];
     for (let k = 0; k < r[i + 2]; k++) {
       const x = r[i] + k;
       const y = r[i + 1];
       let col = c;
-      if (LIT.has(c)) {
-        if (top(x, y) && x >= mid && (top(x - 1, y) || top(x + 1, y))) col = NEON_A;
-        else if (back(x, y) && y < upper && x < mid && (back(x, y - 1) || back(x, y + 1))) col = NEON_B;
-      }
+      if (LIT.has(c) && top(x, y) && (top(x - 1, y) || top(x + 1, y))) col = x >= mid ? NEON_A : x >= back ? NEON_B : c;
       out.push(x, y, 1, inkOf(col));
     }
   }
