@@ -114,9 +114,10 @@ export const GULL: Looks = {
   w: 17,
   h: 10,
   // Gliding (a flyer that keeps its place): wings out, rising and falling a pixel on the air.
-  idle: [gull("gull, gliding", "level"), gull("gull, gliding, lower", "level", 1)],
+  idle: [gull("gull, gliding", "level", -1), gull("gull, gliding, lower", "level")],
   // Its wing beat, four frames on its own clock.
-  move: [gull("gull, wings up", "up"), gull("gull, wings half up", "high"), gull("gull, wings out", "level"), gull("gull, wings down", "down")]
+  // (Wings down, its body rises a pixel with the beat: so its back is where he lands on it.)
+  move: [gull("gull, wings up", "up"), gull("gull, wings half up", "high"), gull("gull, wings out", "level", -1), gull("gull, wings down", "down", -1)]
 };
 /** The crow: the gull's frames in plum, its wingtips the near-black, its beak dark. */
 const CROW_INK: Record<string, string> = { ...FOE_INK, W: E.plum, w: E.plumDark, o: E.line, l: E.line };

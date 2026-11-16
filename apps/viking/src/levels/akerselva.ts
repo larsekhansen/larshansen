@@ -262,7 +262,7 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
     return SALMON.forEach((row, r) =>
       [...row].forEach((ch, c) => {
         if (ch === ".") return;
-        const yy = Math.round(e.y) - 4 - c + rowAt(4);
+        const yy = Math.round(e.y) - e.h + 7 - c;
         if (yy < water) R(Math.round(e.x) + (e.dir > 0 ? 7 - r : r - 7), yy, 1, 1, colors[ch]);
       })
     );

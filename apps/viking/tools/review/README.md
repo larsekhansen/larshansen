@@ -25,6 +25,7 @@ Run everything from this folder.
 | `waits.ts`, `worstwait.ts`, `quiet.ts` | the perfect route's standing still; the worst wait on arrival at each wait; quiet stretches | `bun waits.ts` |
 | `standing.ts` | the perfect route's standing still, split into standing on the map's own ground and standing on what is not the map's: moving ground, the bells on their beat ("riding") | `bun standing.ts [level...]` |
 | `mazesloppy.ts`, `mazegeo.ts` | the maze with a sloppy player; stones and arrivals against snakes and sliders | `bun mazesloppy.ts ks=0,2,4 seeds=20` |
+| `edge.ts`, `edgecmp.py` | the edge's forgiveness (order 23, ADR 0048): the reach search with and without a longer forgiveness, and a late jump off an edge as a move of its own (`--where` names the spots only the longer one reaches); the sloppy player's runs with 6 and with 10 steps compared seed by seed | `bun edge.ts [level ...] [--where]`, `python3 edgecmp.py <runs with 6> <runs with 10>` |
 | `urls.ts` | screenshot addresses at six standable spots per level | `bun ../../../../tools/shots.ts <dir> $(bun urls.ts 6)` with `apps/viking` built and served on 5181 |
 
 `bun sloppy.ts ks=0` must print `clear 1/1` for all sixteen levels: at k = 0 the harness reproduces the
@@ -32,7 +33,9 @@ scripted clear exactly. If it does not, a route or the harness has drifted from 
 
 `o18/`, `o19/` and `o20/` hold those orders' numbers (order 20's: every level's rectangles a frame before and after at its
 walk's places, `perf.md`, and the flat places marked by `../glance/flat.py` and what each was given, `flat.md`). `o21/` holds order 21's: every screen state at five phone sizes before and after (`before.md`, `after.md`, made by
-`../glance/hand.ts` and `hand-table.ts`), and the rectangles a frame of every level's walk (`perf.md`). `o22/` holds order 22's:
+`../glance/hand.ts` and `hand-table.ts`), and the rectangles a frame of every level's walk (`perf.md`). `o23/` holds order 23's: the reach search and the sloppy player with the edge's longer forgiveness (`reach-edge.txt`,
+`sloppy-edge.md`), the rectangles a frame against order 22's code (`perf.md`), the identical runs, tests and budget
+(`after.md`), and every drawing still in the old style (`old-style.md`). `o22/` holds order 22's:
 every yellow the game paints and what became of each (`yellows.md`, from `../glance/yellows.ts`), the rectangles a frame
 against order 21's code (`perf.md`), and the identical sloppy runs, tests and budget (`after.md`).
 `line2-after/` holds line 2 after order 17, measured with the tools as order 17 left them (ADR 0034: four artefacts of the sloppy player were found and fixed, so earlier numbers are not comparable with these): the outcome tables and where hearts go for line 1 and line 2 on fresh seeds (`tables.md`), every move on its own (`obstacles.txt`, `obstacles-<level>.json`), the serpent's strategies and fight, Gamlebyen's stones in 52 worlds of risen and unrisen stones, no dead end (`mixed.txt`), and three line 1 levels run on the code before order 17 (the same numbers within a run in a hundred). `line2/` holds line 2's (Bygdøy, order 14; Vigelandsparken, Korketrekkeren and Østensjøvannet, order 15, with Bygdøy again; Bjørvika, Gamlebyen, the serpent and the hesitating player, order 16): the sloppy player at ±2 and ±4, every jump and ride on its own (`obstacles.ts` also tries the sledge's stretches, the statues' steps and the lake's pad-to-pad leaps), the standing and the waits, and a line 1 spot-check; `summary.md` there has the tables. `before/` holds the review's own numbers (the tables, the per-jump results, the dead ends, the boss

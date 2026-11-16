@@ -5,9 +5,9 @@ import { KIND, sizeOf, type Enemy } from "../game/enemies";
 // `parts`, from its feet; this gives every look the frames the order asks of it without each level drawing them again:
 //
 //   moving   a cycle of four by the distance it covers, three pixels a frame (its legs by `stride`: apart, together,
-//            apart the other way, together), its body down a pixel as a foot lands and up a pixel as it passes, its legs
-//            stretched to meet it; a flyer rises and falls a pixel on the air at half its wing beat, so its two wing
-//            poses are four frames; a jumper stretches as it rises and is squashed as it falls
+//            apart the other way, together), its body down a pixel as a foot lands and leaning forward a pixel as the
+//            other passes; a flyer sinks a pixel on the air at half its wing beat, so its two wing poses are four frames;
+//            a jumper leans into its leap rising and is squashed a pixel as it falls
 //   still    a breath: its body down a pixel every other second, on its own clock (stone does not breathe: a statue he
 //            watches, a guard still a statue)
 //
@@ -38,11 +38,19 @@ export const stride = (e: Enemy) => [1, 0, -1, 0][step4(e)];
 export function bobOf(e: Enemy): number {
   const own = clock.t + (e.def.offset ?? 0);
   if (e.def.kind === "flyer" && moving(e)) return Math.floor(own / 14) % 2;
-  if (e.def.kind === "jumper" && moving(e)) return e.y < e.prevY ? -1 : e.y > e.prevY ? 1 : 0;
-  if (moving(e)) return [1, 0, 1, -1][step4(e)];
+  if (e.def.kind === "jumper" && moving(e)) return e.y > e.prevY ? 1 : 0;
+  // Down as a foot lands, level as it passes: never up, so its head stays where he lands on it (the stomp test).
+  if (moving(e)) return [1, 0, 1, 0][step4(e)];
   return e.calm && STONE.has(e.def.look) ? 0 : Math.floor(own / 60) % 2;
 }
 const STONE = new Set(["statue", "bronze", "guard"]);
+
+/** How far its body leans forward in the frame it shows now: as the cycle's last foot passes, or as a jumper rises into its leap. */
+export function leanOf(e: Enemy): number {
+  if (e.def.kind === "flyer" || !moving(e)) return 0;
+  if (e.def.kind === "jumper") return e.y < e.prevY ? 1 : 0;
+  return step4(e) === 3 ? 1 : 0;
+}
 
 /**
  * A look's own rectangles, `W` pixels wide: `dx` from its back (its left while it faces right), mirrored
@@ -57,14 +65,18 @@ export function parts(e: Enemy, W: number, still = false) {
   // in proportion, none lost, so its head is where he lands on it.
   const k = e.def.small ? e.h / sizeOf({ ...e.def, small: false }).h : 1;
   const bob = still || !e.alive ? 0 : bobOf(e);
+  const lean = still || !e.alive ? 0 : leanOf(e);
   const flyer = e.def.kind === "flyer";
   return (dx: number, dy: number, w: number, h: number, c: string) => {
     let top = Math.round(dy * k);
     let bottom = Math.round((dy + h) * k);
-    if (flyer || dy + h < 0) {
+    // What reaches its feet stays on the ground; the rest bobs and leans.
+    const up = flyer || dy + h < 0;
+    if (up) {
       top += bob;
       bottom += bob;
-    } else if (bob < 0) top += bob;
+      dx += lean;
+    }
     R(right ? x + dx : x + W - dx - w, y + top, w, Math.max(1, bottom - top), c);
   };
 }

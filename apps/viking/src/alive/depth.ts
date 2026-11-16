@@ -89,6 +89,19 @@ function texture(p: Plane) {
  * over the rest of the layer). `t`: the level's clock, for the drift (none with reduced motion).
  */
 export function plane(p: Plane, t: number) {
+  // Where there is no page (the tests, which read what each level paints), its strips as plain bands of their tones.
+  if (typeof document === "undefined") {
+    const hs = strips(p);
+    let y = p.top;
+    hs.forEach((h, k) => {
+      const f = hs.length > 1 ? k / (hs.length - 1) : 1;
+      const i = f * (p.tones.length - 1);
+      ctx().fillStyle = mix(p.tones[Math.floor(i)], p.tones[Math.min(p.tones.length - 1, Math.floor(i) + 1)], i - Math.floor(i));
+      ctx().fillRect(0, y - view.camY, view.w, h);
+      y += h;
+    });
+    return;
+  }
   const tex = texture(p);
   const n = tex.heights.length;
   const g = ctx();

@@ -247,7 +247,7 @@ function parkTrees(factor: number, foot: number, n: number, fade: number) {
 function figure(x: number, y: number, pose: number, face: 1 | -1, stone: { base: string; light: string; shade: string }, walk = 0) {
   const f = face > 0;
   // Legs: apart and still, or a stride while it walks.
-  const stride = walk ? [1, 0, -1, 0][Math.floor(walk / 6) % 4] : 0;
+  const stride = walk ? [1, 2, -1, -2][Math.floor(walk / 6) % 4] : 0;
   R(x + 2 + stride, y - 6, 2, 6, stone.shade);
   R(x + 6 - stride, y - 6, 2, 6, stone.base);
   // The body, a little turned, lit from the left.

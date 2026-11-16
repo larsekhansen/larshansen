@@ -254,7 +254,7 @@ function farHills(v: View) {
   }
   // The fjord far down under the hills, and the snow on the slopes before it, as planes running away from him (order
   // 23): strips each a little faster than the one above; the water drifts, the snow lies still.
-  plane({ layer: 0.12, top: base - 12, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.55), mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.35)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
+  plane({ layer: 0.12, top: base - 12, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.38), mix(P.water, WHITE, 0.3)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
   box(0, base + 40, view.w, 360, mix(P.water, WHITE, 0.35));
 }
 
