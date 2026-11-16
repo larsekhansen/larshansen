@@ -1,0 +1,73 @@
+langkaia-c000	6403	6112	341	60.1	B/n.fillRect<u 4182, B/n.fillRect<ie 1286, B/n.fillRect<G 538, B/n.fillRect<zt 313, B/n.fillRect<qr 65, B/n.fillRect<sa 8
+langkaia-c060	7320	7038	382	81.5	B/n.fillRect<u 5080, B/n.fillRect<ie 1320, B/n.fillRect<G 480, B/n.fillRect<zt 280, B/n.fillRect<d 80, B/n.fillRect<qr 80
+langkaia-c120	8579	8293	146	77.4	B/n.fillRect<u 6350, B/n.fillRect<ie 1298, B/n.fillRect<G 539, B/n.fillRect<zt 317, B/n.fillRect<qr 63, B/n.fillRect<sa 7
+langkaia-c180	6743	6452	487	62.8	B/n.fillRect<u 4478, B/n.fillRect<ie 1290, B/n.fillRect<G 528, B/n.fillRect<zt 314, B/n.fillRect<qr 64, B/n.fillRect<W 50
+akershus-c000	6017	5726	535	64.8	B/n.fillRect<u 4139, B/n.fillRect<ie 1285, B/n.fillRect<zt 314, B/n.fillRect<G 195, B/n.fillRect<qr 64, B/n.fillRect<js 7
+akershus-c060	6182	5896	282	55.7	B/n.fillRect<u 4290, B/n.fillRect<ie 1297, B/n.fillRect<zt 319, B/n.fillRect<G 206, B/n.fillRect<qr 64, B/n.fillRect<d 6
+akershus-c120	6288	6002	184	54.9	B/n.fillRect<u 4416, B/n.fillRect<ie 1304, B/n.fillRect<zt 312, B/n.fillRect<G 192, B/n.fillRect<qr 64
+akershus-c180	6197	5906	357	77.7	B/n.fillRect<u 4395, B/n.fillRect<ie 1289, B/n.fillRect<zt 314, B/n.fillRect<G 180, B/n.fillRect<js 8, B/n.fillRect<sa 7
+akershus-c240	5969	5683	936	72.8	B/n.fillRect<u 4114, B/n.fillRect<ie 1289, B/n.fillRect<zt 314, B/n.fillRect<G 175, B/n.fillRect<qr 65, B/n.fillRect<sa 7
+radhuset-c000	3701	3410	583	60.3	B/n.fillRect<u 1862, B/n.fillRect<ie 1286, B/n.fillRect<zt 313, B/n.fillRect<G 157, B/n.fillRect<qr 65, B/n.fillRect<js 6
+radhuset-c060	3734	3450	558	57.9	B/n.fillRect<u 1881, B/n.fillRect<ie 1296, B/n.fillRect<zt 319, B/n.fillRect<G 168, B/n.fillRect<qr 65, B/n.fillRect<d 5
+radhuset-c120	4914	4628	196	62.6	B/n.fillRect<u 3071, B/n.fillRect<ie 1297, B/n.fillRect<zt 321, B/n.fillRect<G 155, B/n.fillRect<qr 63, B/n.fillRect<d 6
+radhuset-c180	11105	10816	135	85.8	B/n.fillRect<u 9276, B/n.fillRect<ie 1290, B/n.fillRect<zt 319, B/n.fillRect<G 140, B/n.fillRect<qr 65, B/n.fillRect<js 10
+slottet-c000	7437	7151	325	88.9	B/n.fillRect<u 5701, B/n.fillRect<ie 845, B/n.fillRect<G 504, B/n.fillRect<zt 313, B/n.fillRect<qr 63, B/n.fillRect<sa 7
+slottet-c060	7571	7285	428	80.0	B/n.fillRect<u 5522, B/n.fillRect<ie 847, B/n.fillRect<G 811, B/n.fillRect<zt 313, B/n.fillRect<qr 64, B/n.fillRect<sa 8
+slottet-c120	7297	7011	349	71.6	B/n.fillRect<u 5074, B/n.fillRect<G 987, B/n.fillRect<ie 849, B/n.fillRect<zt 314, B/n.fillRect<qr 58, B/n.fillRect<sa 7
+slottet-c180	8040	7754	584	94.9	B/n.fillRect<u 5840, B/n.fillRect<G 920, B/n.fillRect<ie 880, B/n.fillRect<zt 280, B/n.fillRect<qr 80, B/n.fillRect<d 40
+holmenkollen-c000	11404	11009	153	136.7	B/n.fillRect<u 7880, B/n.fillRect<ie 2564, B/n.fillRect<G 456, B/n.fillRect<zt 320, B/n.fillRect<df 112, B/n.fillRect<qr 64
+holmenkollen-c060	11580	11185	155	141.6	B/n.fillRect<u 7880, B/n.fillRect<ie 2580, B/n.fillRect<G 620, B/n.fillRect<zt 320, B/n.fillRect<df 100, B/n.fillRect<qr 80
+holmenkollen-c120	10669	10274	153	102.6	B/n.fillRect<u 6947, B/n.fillRect<ie 2589, B/n.fillRect<G 633, B/n.fillRect<zt 314, B/n.fillRect<df 110, B/n.fillRect<qr 64
+holmenkollen-c180	11203	10808	153	132.5	B/n.fillRect<u 7465, B/n.fillRect<ie 2590, B/n.fillRect<G 647, B/n.fillRect<zt 314, B/n.fillRect<df 110, B/n.fillRect<qr 65
+akerselva-c000	10291	10005	99	91.2	B/n.fillRect<u 8390, B/n.fillRect<ie 828, B/n.fillRect<G 683, B/n.fillRect<zt 313, B/n.fillRect<qr 64, B/n.fillRect<sa 8
+akerselva-c060	10839	10553	102	98.0	B/n.fillRect<u 8527, B/n.fillRect<G 1093, B/n.fillRect<ie 830, B/n.fillRect<zt 315, B/n.fillRect<qr 59, B/n.fillRect<sa 7
+akerselva-c120	10860	10574	103	92.4	B/n.fillRect<u 8460, B/n.fillRect<G 1200, B/n.fillRect<ie 820, B/n.fillRect<zt 300, B/n.fillRect<qr 80
+akerselva-c180	11283	10997	99	101.6	B/n.fillRect<u 8820, B/n.fillRect<G 1245, B/n.fillRect<ie 828, B/n.fillRect<zt 313, B/n.fillRect<qr 65, B/n.fillRect<sa 8
+akerselva-c240	11446	11160	100	100.9	B/n.fillRect<u 9036, B/n.fillRect<G 1191, B/n.fillRect<ie 830, B/n.fillRect<zt 321, B/n.fillRect<qr 65, B/n.fillRect<d 3
+nordmarka-c000	3703	3395	204	161.5	B/n.fillRect<u 2454, B/n.fillRect<ie 782, B/n.fillRect<zt 282, B/n.fillRect<qr 64, B/n.fillRect<him 42, B/n.fillRect<sa 34
+nordmarka-c060	4923	4615	239	114.0	B/n.fillRect<u 2490, B/n.fillRect<sa 1234, B/n.fillRect<ie 784, B/n.fillRect<zt 282, B/n.fillRect<qr 66, B/n.fillRect<him 41
+nordmarka-c120	4992	4684	233	164.0	B/n.fillRect<u 2496, B/n.fillRect<sa 1264, B/n.fillRect<ie 784, B/n.fillRect<zt 280, B/n.fillRect<qr 64, B/n.fillRect<him 40
+nordmarka-c180	4960	4652	247	128.2	B/n.fillRect<u 2560, B/n.fillRect<sa 1240, B/n.fillRect<ie 760, B/n.fillRect<zt 240, B/n.fillRect<him 80, B/n.fillRect<d 40
+stortinget-c000	3204	2898	139	49.6	B/n.fillRect<u 2536, B/n.fillRect<zt 344, B/n.fillRect<G 260, B/n.fillRect<qr 64
+stortinget-c060	8855	8463	477	76.6	B/n.fillRect<u 8031, B/n.fillRect<zt 438, B/n.fillRect<G 320, B/n.fillRect<qr 65
+stortinget-c120	4159	3743	958	72.1	B/n.fillRect<u 3372, B/n.fillRect<zt 454, B/n.fillRect<G 270, B/n.fillRect<qr 54, B/n.fillRect<sa 7, B/n.fillRect<Xc 2
+stortinget-c180	4949	4533	826	65.6	B/n.fillRect<u 4017, B/n.fillRect<zt 456, B/n.fillRect<G 411, B/n.fillRect<qr 58, B/n.fillRect<sa 6, B/n.fillRect<Xc 1
+stortinget-c240	4705	4229	839	67.3	B/n.fillRect<u 3670, B/n.fillRect<zt 530, B/n.fillRect<G 440, B/n.fillRect<qr 65
+ekeberg-c000	10815	10477	198	106.5	B/n.fillRect<u 5346, B/n.fillRect<ie 2870, B/n.fillRect<G 1878, B/n.fillRect<zt 325, B/n.fillRect<Dl 266, B/n.fillRect<qr 60
+ekeberg-c060	11375	11037	193	101.8	B/n.fillRect<u 5725, B/n.fillRect<ie 2875, B/n.fillRect<G 2094, B/n.fillRect<zt 321, B/n.fillRect<Dl 235, B/n.fillRect<qr 60
+ekeberg-c120	11350	11012	197	119.0	B/n.fillRect<u 5700, B/n.fillRect<ie 2870, B/n.fillRect<G 2080, B/n.fillRect<zt 330, B/n.fillRect<Dl 230, B/n.fillRect<qr 70
+ekeberg-c180	11421	11083	198	109.5	B/n.fillRect<u 5787, B/n.fillRect<ie 2870, B/n.fillRect<G 2080, B/n.fillRect<zt 327, B/n.fillRect<Dl 230, B/n.fillRect<qr 65
+ekeberg-c240	8653	8315	197	82.8	B/n.fillRect<u 4228, B/n.fillRect<ie 2481, B/n.fillRect<G 1287, B/n.fillRect<zt 326, B/n.fillRect<Dl 206, B/n.fillRect<qr 63
+nabolaget-c000	8582	7548	187	84.7	B/n.fillRect<u 5691, B/n.fillRect<ie 782, B/n.fillRect<Xc/< 588, B/n.fillRect<Dl 552, B/n.fillRect<G 314, B/n.fillRect<zt 310
+nabolaget-c060	8316	7282	188	78.3	B/n.fillRect<u 5240, B/n.fillRect<ie 784, B/n.fillRect<Xc/< 588, B/n.fillRect<Dl 576, B/n.fillRect<G 476, B/n.fillRect<zt 320
+nabolaget-c120	8485	7451	188	79.7	B/n.fillRect<u 5410, B/n.fillRect<ie 779, B/n.fillRect<Xc/< 590, B/n.fillRect<Dl 590, B/n.fillRect<G 474, B/n.fillRect<zt 310
+nabolaget-c180	9145	8115	188	73.8	B/n.fillRect<u 6206, B/n.fillRect<ie 780, B/n.fillRect<Dl 595, B/n.fillRect<Xc/< 590, B/n.fillRect<G 320, B/n.fillRect<zt 314
+bygdoy-c000	5418	5127	361	67.5	B/n.fillRect<u 2762, B/n.fillRect<ie 1878, B/n.fillRect<G 379, B/n.fillRect<zt 322, B/n.fillRect<qr 64, B/n.fillRect<js 8
+bygdoy-c060	5512	5226	146	68.9	B/n.fillRect<u 2792, B/n.fillRect<ie 1808, B/n.fillRect<G 536, B/n.fillRect<zt 312, B/n.fillRect<qr 64
+bygdoy-c120	5840	5558	150	81.9	B/n.fillRect<u 3160, B/n.fillRect<ie 1760, B/n.fillRect<G 560, B/n.fillRect<zt 280, B/n.fillRect<qr 80
+bygdoy-c180	5140	4849	147	68.2	B/n.fillRect<u 2520, B/n.fillRect<ie 1720, B/n.fillRect<G 500, B/n.fillRect<zt 300, B/n.fillRect<qr 80, B/n.fillRect<js 20
+bygdoy-c240	5180	4894	147	58.7	B/n.fillRect<u 2740, B/n.fillRect<ie 1720, B/n.fillRect<zt 320, B/n.fillRect<G 320, B/n.fillRect<qr 80
+vigelandsparken-c000	6238	5952	111	71.4	B/n.fillRect<u 3219, B/n.fillRect<ie 1352, B/n.fillRect<G 1282, B/n.fillRect<zt 321, B/n.fillRect<qr 61, B/n.fillRect<d 3
+vigelandsparken-c060	6523	6237	113	72.5	B/n.fillRect<u 2800, B/n.fillRect<G 2021, B/n.fillRect<ie 1310, B/n.fillRect<zt 314, B/n.fillRect<qr 65, B/n.fillRect<sa 8
+vigelandsparken-c120	7056	6770	110	74.1	B/n.fillRect<u 3232, B/n.fillRect<G 2152, B/n.fillRect<ie 1288, B/n.fillRect<zt 320, B/n.fillRect<qr 64
+vigelandsparken-c180	7084	6798	111	76.5	B/n.fillRect<u 3448, B/n.fillRect<G 1960, B/n.fillRect<ie 1288, B/n.fillRect<zt 320, B/n.fillRect<qr 64, B/n.fillRect<d 4
+korketrekkeren-c000	2115	1781	707	73.1	B/n.fillRect<ie 990, B/n.fillRect<u 646, B/n.fillRect<zt 320, B/n.fillRect<qr 59, B/n.fillRect<him 45, B/n.fillRect<Dl 41
+korketrekkeren-c060	2640	2311	333	69.9	B/n.fillRect<u 1280, B/n.fillRect<ie 880, B/n.fillRect<zt 360, B/n.fillRect<qr 80, B/n.fillRect<him 40
+korketrekkeren-c120	2694	2365	334	60.2	B/n.fillRect<u 1394, B/n.fillRect<ie 843, B/n.fillRect<zt 332, B/n.fillRect<qr 51, B/n.fillRect<him 33, B/n.fillRect<Dl 26
+korketrekkeren-c180	2616	2287	330	60.8	B/n.fillRect<u 1320, B/n.fillRect<ie 840, B/n.fillRect<zt 328, B/n.fillRect<qr 56, B/n.fillRect<him 32, B/n.fillRect<Dl 24
+korketrekkeren-c240	2422	2093	361	55.7	B/n.fillRect<u 1126, B/n.fillRect<ie 844, B/n.fillRect<zt 332, B/n.fillRect<qr 51, B/n.fillRect<him 32, B/n.fillRect<Dl 26
+ostensjovannet-c000	8174	7866	274	66.1	B/n.fillRect<u 7329, B/n.fillRect<ie 414, B/n.fillRect<zt 274, B/n.fillRect<qr 65, B/n.fillRect<him 42, B/n.fillRect<sa 14
+ostensjovannet-c060	9001	8697	249	75.0	B/n.fillRect<u 8162, B/n.fillRect<ie 412, B/n.fillRect<zt 281, B/n.fillRect<qr 67, B/n.fillRect<him 41, B/n.fillRect<Dl 10
+ostensjovannet-c120	8369	8061	295	75.2	B/n.fillRect<u 7523, B/n.fillRect<ie 415, B/n.fillRect<zt 282, B/n.fillRect<qr 65, B/n.fillRect<him 41, B/n.fillRect<Dl 13
+ostensjovannet-c180	8972	8671	224	65.1	B/n.fillRect<u 8140, B/n.fillRect<ie 412, B/n.fillRect<zt 268, B/n.fillRect<qr 56, B/n.fillRect<him 36, B/n.fillRect<sa 24
+ostensjovannet-c240	10270	9962	294	91.0	B/n.fillRect<u 6570, B/n.fillRect<Dl 2450, B/n.fillRect<ie 819, B/n.fillRect<zt 280, B/n.fillRect<qr 60, B/n.fillRect<him 50
+bjorvika-c000	8730	8392	277	60.6	B/n.fillRect<u 5700, B/n.fillRect<ie 2330, B/n.fillRect<zt 330, B/n.fillRect<Dl 259, B/n.fillRect<qr 61, B/n.fillRect<him 50
+bjorvika-c060	9401	9063	280	57.8	B/n.fillRect<u 6042, B/n.fillRect<ie 2508, B/n.fillRect<Dl 402, B/n.fillRect<zt 322, B/n.fillRect<qr 67, B/n.fillRect<him 41
+bjorvika-c120	8897	8566	276	48.9	B/n.fillRect<u 5557, B/n.fillRect<ie 2522, B/n.fillRect<Dl 382, B/n.fillRect<zt 326, B/n.fillRect<qr 58, B/n.fillRect<him 34
+bjorvika-c180	8271	7933	280	47.1	B/n.fillRect<u 5285, B/n.fillRect<ie 2296, B/n.fillRect<zt 328, B/n.fillRect<Dl 239, B/n.fillRect<qr 63, B/n.fillRect<him 41
+bjorvika-c240	7921	7590	275	46.4	B/n.fillRect<u 4985, B/n.fillRect<ie 2286, B/n.fillRect<zt 322, B/n.fillRect<Dl 210, B/n.fillRect<qr 62, B/n.fillRect<him 35
+gamlebyen-c000	3907	3014	178	38.6	B/n.fillRect<u 1426, B/n.fillRect<ie 734, B/n.fillRect<Dl 656, B/n.fillRect<Xc/< 589, B/n.fillRect<zt 280, B/n.fillRect<sa 97
+gamlebyen-c060	4404	3511	179	38.7	B/n.fillRect<u 1912, B/n.fillRect<ie 752, B/n.fillRect<Dl 644, B/n.fillRect<Xc/< 588, B/n.fillRect<zt 284, B/n.fillRect<sa 92
+gamlebyen-c120	4403	3517	175	38.1	B/n.fillRect<u 1938, B/n.fillRect<ie 750, B/n.fillRect<Dl 636, B/n.fillRect<Xc/< 587, B/n.fillRect<zt 282, B/n.fillRect<sa 95
+gamlebyen-c180	4491	3598	176	39.2	B/n.fillRect<u 1923, B/n.fillRect<ie 757, B/n.fillRect<Dl 717, B/n.fillRect<Xc/< 588, B/n.fillRect<zt 283, B/n.fillRect<sa 96
+gamlebyen-c240	3630	2741	177	35.0	B/n.fillRect<u 1140, B/n.fillRect<ie 760, B/n.fillRect<Dl 640, B/n.fillRect<Xc/< 590, B/n.fillRect<zt 258, B/n.fillRect<sa 122

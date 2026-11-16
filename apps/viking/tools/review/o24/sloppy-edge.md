@@ -70,3 +70,57 @@ The mechanism, not the places, is the cause: so the choice is Lars's. Three ways
    ground below is near enough to be reached within the 6 steps a press is kept (so a late jump off an edge still works over
    a gap or a pit, and a press made while dropping onto a floor waits for it). It changes `stepBody` in the kit, which the front
    page shares, and needs its own record.
+
+## All sixteen levels after section 3
+
+Seeds 201 to 260, ±2 and ±4, 6 against 10, seed by seed (`edgecmp.py`); order 23's table is `../o23/sloppy-edge.md` (55 better,
+31 worse). Eleven levels run exactly as in order 23 (nothing in them changed); Akershus, Langkaia and Vålerenga are measured
+with their moves.
+
+| Level | runs | better | worse | same | hearts a run at ±2, 6 → 10 | at ±4, 6 → 10 |
+|---|---|---|---|---|---|---|
+| akerselva | 120 | 0 | 0 | 120 | 0.82 → 0.82 | 2.52 → 2.52 |
+| akershus | 120 | 1 | 0 | 119 | 0.52 → 0.52 | 0.98 → 0.97 |
+| bjorvika | 120 | 0 | 0 | 120 | 0.52 → 0.52 | 1.60 → 1.60 |
+| bygdoy | 120 | 0 | 0 | 120 | 0.40 → 0.40 | 0.80 → 0.80 |
+| ekeberg | 120 | 18 | 8 | 94 | 1.55 → 1.38 | 2.58 → 1.72 |
+| gamlebyen | 120 | 0 | 0 | 120 | 0.47 → 0.47 | 1.07 → 1.07 |
+| holmenkollen | 120 | 0 | 0 | 120 | 0.10 → 0.10 | 0.27 → 0.27 |
+| korketrekkeren | 120 | 0 | 0 | 120 | 0.02 → 0.02 | 0.23 → 0.23 |
+| langkaia | 120 | 1 | 5 | 114 | 0.15 → 0.15 | 0.70 → 0.77 |
+| nabolaget | 120 | 15 | 11 | 94 | 1.20 → 1.07 | 1.37 → 1.63 |
+| nordmarka | 120 | 0 | 0 | 120 | 0.65 → 0.65 | 2.00 → 2.00 |
+| ostensjovannet | 120 | 0 | 0 | 120 | 0.20 → 0.20 | 0.72 → 0.72 |
+| radhuset | 120 | 0 | 0 | 120 | 0.77 → 0.77 | 1.23 → 1.23 |
+| slottet | 120 | 0 | 0 | 120 | 0.05 → 0.05 | 0.32 → 0.32 |
+| stortinget | 120 | 17 | 2 | 101 | 1.28 → 1.28 | 1.80 → 1.78 |
+| vigelandsparken | 120 | 2 | 0 | 118 | 1.90 → 1.90 | 2.38 → 2.32 |
+| all | 1920 | 54 | 26 | 1840 | | |
+
+Worse:
+- ekeberg ±4 seed 213: clear, 4 hearts → offroute, 0 hearts (last move across on the sheep, hurts at [])
+- ekeberg ±4 seed 215: clear, 4 hearts → offroute, 2 hearts (last move across on the sheep, hurts at [1548, 1708])
+- ekeberg ±4 seed 221: clear, 1 hearts → clear, 2 hearts (last move walk to 4024, hurts at [1555, 1665])
+- ekeberg ±4 seed 232: clear, 6 hearts → offroute, 1 hearts (last move across on the sheep, hurts at [1549])
+- ekeberg ±4 seed 233: offroute, 2 hearts → offroute, 3 hearts (last move across on the sheep, hurts at [1505, 1662, 1705])
+- ekeberg ±4 seed 234: clear, 2 hearts → clear, 3 hearts (last move jump 1, hurts at [1684, 1709, 3908])
+- ekeberg ±4 seed 259: clear, 4 hearts → offroute, 1 hearts (last move across on the sheep, hurts at [1548])
+- ekeberg ±4 seed 260: clear, 7 hearts → offroute, 1 hearts (last move across on the sheep, hurts at [1709])
+- langkaia ±4 seed 208: clear, 0 hearts → clear, 1 hearts (last move jump 0, hurts at [3018])
+- langkaia ±4 seed 212: clear, 1 hearts → clear, 2 hearts (last move jump 0, hurts at [759, 3289])
+- langkaia ±4 seed 226: clear, 0 hearts → clear, 1 hearts (last move jump 0, hurts at [1717])
+- langkaia ±4 seed 227: clear, 2 hearts → clear, 3 hearts (last move jump 0, hurts at [1575, 1729, 2473])
+- langkaia ±4 seed 243: clear, 1 hearts → clear, 2 hearts (last move jump 0, hurts at [1593, 2662])
+- nabolaget ±2 seed 201: clear, 2 hearts → offroute, 1 hearts (last move walk to 2108, hurts at [1450])
+- nabolaget ±2 seed 226: clear, 0 hearts → offroute, 0 hearts (last move walk to 2108, hurts at [])
+- nabolaget ±4 seed 201: offroute, 1 hearts → offroute, 2 hearts (last move walk to 2108, hurts at [828, 1454])
+- nabolaget ±4 seed 222: clear, 2 hearts → timeout, 2 hearts (last move the dash: off the terrace's edge, the dash, onto the cab, hurts at [1174, 2867])
+- nabolaget ±4 seed 231: clear, 1 hearts → clear, 3 hearts (last move jump 0, hurts at [812, 3097, 3317])
+- nabolaget ±4 seed 234: offroute, 1 hearts → timeout, 4 hearts (last move the dash: off the terrace's edge, the dash, onto the cab, hurts at [1428, 2279, 2867, 2867])
+- nabolaget ±4 seed 243: offroute, 0 hearts → offroute, 3 hearts (last move walk to 2108, hurts at [2242, 2439, 2502])
+- nabolaget ±4 seed 248: clear, 5 hearts → offroute, 3 hearts (last move walk to 2108, hurts at [833, 828, 1436])
+- nabolaget ±4 seed 253: offroute, 0 hearts → offroute, 1 hearts (last move walk to 1994, hurts at [1449])
+- nabolaget ±4 seed 255: clear, 0 hearts → clear, 1 hearts (last move walk to 3496, hurts at [3321])
+- nabolaget ±4 seed 257: clear, 1 hearts → timeout, 4 hearts (last move the dash: off the terrace's edge, the dash, onto the cab, hurts at [840, 2257, 2867, 2867])
+- stortinget ±2 seed 253: clear, 1 hearts → offroute, 1 hearts (last move jump 1, hurts at [2331])
+- stortinget ±4 seed 240: clear, 1 hearts → offroute, 1 hearts (last move jump 1, hurts at [2207])
