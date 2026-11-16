@@ -49,11 +49,11 @@ on `d4ccf99` by `tools/glance/ground.ts`); and everything it held before, unchan
 
 ## Consequences
 - Rectangles a frame fell at every place of every level against order 23's table (the least fall 75, the most 7,454; the most any
-  place draws 10,063), copies rose (up to 1,361 a frame): `apps/viking/tools/review/o26/perf.md`.
+  place draws 10,141), copies rose (up to 1,361 a frame): `apps/viking/tools/review/o26/perf.md`.
 - The surfaces are busier: the mean difference of lightness between neighbouring pixels of a surface went from 2.4 to
   3.6 (CIE L*); a figure's dark line against the ground is 30 to 85. Where it rose most (Gamlebyen's and Ekeberg's walls,
   Stortinget's cabinet, the river's rock) is listed in `o26/after.md`, with the figures' distances to the ground before and after.
-- `feel`'s file grew from 20.6 to 27.8 kB gzipped (the set); the first script from 58.86 to 59.04 kB (the hooks).
+- `feel`'s file grew from 20.6 to 28.0 kB gzipped (the set, and the evening's flags and tails); the first script from 58.86 to 59.06 kB (the hooks).
 - A level author adds a surface by naming a material in the level's file and drawing its tiles with `tile` (DESIGN's
   "The ground under him").
 

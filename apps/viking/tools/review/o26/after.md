@@ -18,11 +18,23 @@ change and on the branch after the textured set, the props and the deep fill: ev
 
 ## Tests, build, budget, front page
 
-RESULTS
+- `bun test`: pixelkit 153 pass, maze 211 pass, landing 18 pass, viking 411 pass (408 after order 25, and 3 new: every solid
+  tile of every level drawn from the textured set but the named, every material in its band, no new ground tone nearer a role
+  than before), 0 fail anywhere. The viking suite took 194 s on a quiet Pi and 237 s with the perf walk running beside it.
+- `tsc --noEmit` clean; `bun run build` clean.
+- First script 59.06 kB gzipped (58.86 after order 25): the hooks (`TEXTURED` in `render/tiles.ts`, the boards in `main.ts`, the
+  T-bane's entrance in `render/furniture.ts`, the far shore's spruce tips in `render/backdrop.ts`). `feel`'s file, which every
+  scene waits for, 20.6 to 28.0 kB gzipped: the textured set, the hand flags and the flying cloth.
+- The front page: 28 of 28 byte-identical to `/tmp/shots-before-jernhaugen/`, taken twice (after section 2, and at the end on
+  the final code, after the enemy palette gained its amber). In the kit only `swatches/enemy.ts` (the amber) and
+  `swatches/roles.ts` (the amber among the enemy's colours) changed; the front page imports neither.
+- The runs above were taken again on the final code (with sections 3b to 3d): still byte-identical.
 
 ## Rectangles a frame
 
-PERF
+Against order 23's table every place of every level draws fewer rectangles (the least fall 75, at Korketrekkeren's column 180;
+the most 7,454, at Rådhuset's column 180); the most any place draws is 10,141 (Holmenkollen). Copies rose, up to 1,361 a frame
+(Stortinget). The table and why: `perf.md`.
 
 ## Figures against the ground, before and after
 

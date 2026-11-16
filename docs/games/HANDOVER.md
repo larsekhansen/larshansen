@@ -188,7 +188,7 @@ build after (check which build each preview serves) and compare bytes. Every lev
 of its walk, the heaviest Bjørvika (14,600) and Vålerenga (14,300) (`tools/review/o21/perf.md`). Order 23 drew fewer at every
 place (copied coins, the fjords as planes of copied strips, Bjørvika's most 14,391 to 9,497; the heaviest now Holmenkollen,
 11,618: `tools/review/o23/perf.md`). Order 26 drew fewer again at every place (a solid tile is one copy of a textured piece where it
-was two to eighteen rectangles; Rådhuset's most 11,105 to 3,758; the heaviest now Akerselva, 10,063, copies up to 1,361 a frame at
+was two to eighteen rectangles; Rådhuset's most 11,105 to 3,758; the heaviest now Holmenkollen, 10,141, copies up to 1,361 a frame at
 Stortinget: `tools/review/o26/perf.md`). Next in line: the far
 layers' one rectangle per column, colours set on every rectangle, the five stacked canvases, Stortinget's escalator
 shafts (3,600 of its worst place). No one has measured on a real
@@ -253,8 +253,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.04 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
-  `render/furniture.ts`; the set itself is in `feel`'s file, which grew from 20.6 to 27.8 kB gzipped). 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
+- **First script**: 59.06 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
+  `render/furniture.ts`; the set itself is in `feel`'s file, which grew from 20.6 to 28.0 kB gzipped). 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
   and the sledge's in `feel`'s). 58.86 kB gzipped after order 24 (the small things' drawings to `feel`'s file). 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
   worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
   with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
