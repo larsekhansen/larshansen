@@ -75,3 +75,44 @@ like trump paid loki to terrorize oslo because he didnt win the peace prize!' or
 Every enemy has two looks (glamoured and natural) from one map and two ramps. The palette test
 gains the neon family. DESIGN gains a rule for level authors: how to glam a new enemy; harmless
 stays natural. The old question "why is the rat pink" has an answer inside the game.
+
+## What order 27 built (amended by its implementer, 16 November 2026)
+
+- **The neon family** (`swatches/enemy.ts`, `ROLES.glamour`): the enemy palette's warm end (plum, orange, poison) and hot pink,
+  magenta, purple and its dark, electric blue and lime, each held off every field, the red outline and every role as a body
+  colour is (`render/palette.test.ts`). Three sit near a role and are named there with the shape that keeps them apart: the
+  purple (13) and the magenta (12) near the "now" violet, the electric blue (11) near his tunic; the test holds each to an accent
+  (no more than a quarter of any figure). No electric blue lighter than `#2a2aff` passes: every lighter one comes within 10 of
+  Langkaia's or Bygdøy's water and sky under a tint, so the blue is a sheen and a mark only.
+- **One treatment**: a two-neon sheen along every glammed frame's lit top, each level's lean of the two neons (`LEANS`:
+  Nordmarka acid green and purple, Bjørvika electric blue and hot pink with its plum gone hot pink, Gamlebyen hot pink and
+  orange away from the serpent's violet), and a soft glow of each invader's own neon after dark, under its outline, made once a
+  shape and copied (`alive/glamour.ts`).
+- **Glam marks** drawn into every look's maps as glam pieces (the table in the order's hand-back): shades on most animals, crests
+  on the gulls, the nesting gull, the magpie and the coot, shoulder pads on the guards and the slinger, a headband on the
+  squirrel and the archer, leg warmers on the riveter, collars on the cat, the goose and the dog, a mohawk on the Angry Boy, a
+  bolt on the anthill, the kid's jacket and the umbrella, neon tubes on the scooter, the trolley and the hot-dog cart. The wasp
+  keeps its amber and black and wears shades, with the sheen along its back: on its sheet amber and black still say "wasp" at a
+  glance, which Lars asked for in order 26; a fully neon wasp was not drawn.
+- **A natural self for every look** (`alive/natural.ts`): the same map without its marks in a ramp of its real colours, and how
+  it leaves. Held never to be neon (`alive/natural.test.ts`, 8 or more off every colour of the family), as the sheep, the moose,
+  the heron and the parade are (the heron's beak was darkened for it).
+- **A stomp breaks the glamour** in the death's frames and steps (`drawBreak`), drawing only; **a rune's ring of daylight** turns
+  every invader it passes to its natural self. Fire that hurts burns magenta and lime (`glamFire`), orange when lifted.
+- **The four redraws** Lars named: the Angry Boy from the statue's pose (fists down, a scowl, a howl, a foot up, nothing round
+  over his head), the kid in winter clothes, the sledger on a sledge you can see, the hot-dog cart as a pølsebod.
+- **The bosses' glam**: the troll's magenta mullet and spiked wristband, the plough as a tour bus with stage lights, the serpent's
+  neon crest and shades; each gone in its last frames.
+- **The story** in one file (`game/story.ts`, both languages): the opening card, the map's line and sign, the first level's and
+  Rådhuset's lines, a line per boss, the two endings, and alternatives. The man who paid is named twice (the card, the sign).
+- **The map's mirror balls, the scenery** (a flamingo, a neon heart, LOKI's poster, Bjørvika's mirror ball; `alive/invasion.ts`)
+  and **four stings** (`neon`, `unglam`, `headliner`, `lifted` in `render/feel.ts`).
+
+## What it did not do
+
+- **Loki is not met**, as decided: his poster only.
+- **Shots are not glammed**: what the invaders throw keeps its look (the order: "it still throws what it throws").
+- **The lean is per level, not per kind**: a kind met in several levels takes each level's two neons; its body keeps its own colour.
+- **Every enemy in place was looked at once per kind**, in the first level that has it, by day and under its own sky, at both
+  sizes; a kind's other levels (other leans) only in the frame sheets.
+- **Nobody has heard the stings or seen any of it at speed.**

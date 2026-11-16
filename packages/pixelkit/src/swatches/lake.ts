@@ -22,7 +22,7 @@ export const boardDark = "#5f4f3c";
 // The birds.
 export const swan = "#f4f4ef";
 export const swanShade = "#cfd2d2";
-export const swanBeak = "#e07a2f";
+export const swanBeak = "#d8602a";
 export const heron = "#8d97a2";
 export const heronDark = "#56606c";
 export const coot = "#25272c";

@@ -251,7 +251,9 @@ describe("the lines", () => {
     const gate = levelMap(closed);
     expect(gate.isSolid(GATE_COL, 10)).toBe(true);
     expect(gate.isSolid(GATE_COL, 0)).toBe(true);
-    expect(closed.signs[0].lines.en).toEqual(["Opens once Vålerenga is cleared."]);
+    // The first sign, by Langkaia's station, tells the story of the glamour (order 27); line 2's is the second.
+    expect(closed.signs[1].lines.en).toEqual(["Opens once Vålerenga is cleared."]);
+    expect(closed.signs[0].lines.en.join(" ")).toContain("Loki");
     const nine = { ...fresh(), cleared: LINE_1.slice(0, 9) };
     expect(lineTwoOpen(nine)).toBe(false);
     const all = { ...fresh(), cleared: [...LINE_1] };

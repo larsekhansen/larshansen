@@ -3,7 +3,7 @@ import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
@@ -12,7 +12,7 @@ import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
@@ -514,7 +514,8 @@ function welder(t: number) {
   const phase = pulsePhase(t, SPARKS.beat!);
   const { age } = pulseAge(t, SPARKS.beat!);
   const flick = view.reduced ? 1 : Math.floor(t / 3) % 2;
-  if (phase !== "rest" || flick) light(x + 10, y - 6, 2, 2, "lamp", phase === "rest" ? "#9fd0ff" : S.sparkHot);
+  // Its sparks hurt, so under the glamour they are its fire (order 27): magenta and lime, as the brazier's.
+  if (phase !== "rest" || flick) light(x + 10, y - 6, 2, 2, "lamp", phase === "rest" ? "#9fd0ff" : ENEMY.magenta);
   if (phase === "rest") return;
   // The warning: a few sparks dripping off the beam's edge. Live: a curtain of them to the floor below.
   const n = phase === "warn" ? 3 : 12;
@@ -522,7 +523,7 @@ function welder(t: number) {
     const fall = view.reduced ? (i * 11) % 44 : (age * 3 + i * 17) % 44;
     const sx = SPARKS.x + ((i * 5) % SPARKS.w);
     const sy = SPARKS.y + (phase === "warn" ? fall % 12 : fall);
-    light(sx, sy, 1, 2, "lamp", i % 3 ? S.spark : S.sparkHot);
+    light(sx, sy, 1, 2, "lamp", i % 3 ? ENEMY.lime : ENEMY.magenta);
   }
 }
 
@@ -633,7 +634,8 @@ const RIVETER_BODY = [
   ".lll.lll..."
 ];
 const RIVETER_ARM = { down: ["Oo.", "oo.", "oo.", "aMm", ".d."], up: ["MMm", "dd.", ".a.", ".o.", ".o.", ".o.", "Oo.", "oo."] };
-const riveterFrame = (name: string, arm: Piece, dy = 0) => frame(name, FOE_INK, [RIVETER_BODY, 0, dy], arm);
+/** Its glam (order 27): shades under the hard hat, and leg warmers over its boots. */
+const riveterFrame = (name: string, arm: Piece, dy = 0) => frame(name, FOE_INK, [RIVETER_BODY, 0, dy], arm, mark(SHADES, 3, 3 + dy), mark(["Nn..Nn", "nN..nN"], 2, 11 + dy));
 const RIVETER: Looks = {
   w: 11,
   h: 14,

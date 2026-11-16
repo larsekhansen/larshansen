@@ -1,7 +1,7 @@
 import { R as rect, light, view } from "@larshansen/pixelkit/paint";
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { SHOT, windingUp, type Enemy, type Shot } from "../game/enemies";
-import { FOE_INK, drawFoe, drawFoeLook, foeFrame, foeLooks, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, drawFoeLook, foeFrame, foeLooks, glamFire, mark, type Looks } from "../alive/foes";
 import { frame, type Frame, type Piece } from "../alive/frames";
 
 // The enemy looks that several levels share but the first level does not: they come in a small file
@@ -25,15 +25,17 @@ const GULL_STAND = [
   "..wwwwwwww.."
 ];
 const GULL_LEGS = ["...p...p....", "...p...p....", "...p...p....", "...p...p....", "..pp..pp...."];
-const standing = (name: string, ...more: Piece[]) => frame(name, FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, 0], [GULL_LEGS, 0, 11], ...more);
+/** Its glam (order 27): shades over its eye, with its head. */
+const gullShades = (dy: number) => mark(SHADES, 7, 1 + dy);
+const standing = (name: string, ...more: Piece[]) => frame(name, FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, 0], [GULL_LEGS, 0, 11], gullShades(0), ...more);
 /** A gull standing on the bank with a chip in its beak, flicking it at him on its beat. 12 x 16. */
 const GULL_STANDING: Looks = {
   w: 12,
   h: 16,
-  idle: [standing("gull on the bank"), frame("gull on the bank, looking down", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, 1], [GULL_LEGS, 0, 11])],
+  idle: [standing("gull on the bank"), frame("gull on the bank, looking down", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, 1], [GULL_LEGS, 0, 11], gullShades(1))],
   move: [standing("gull on the bank")],
   // Winding up (order 19) it rears: its head up two, its wing over its back, the chip held high.
-  windup: frame("gull on the bank, rearing", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, -2], [["WWW", "WWW"], 7, 2], [["mmmmm", "MmmmM", ".mmm."], 1, 1], [["OO", "OO"], 10, -3], [GULL_LEGS, 0, 11])
+  windup: frame("gull on the bank, rearing", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, -2], [["WWW", "WWW"], 7, 2], [["mmmmm", "MmmmM", ".mmm."], 1, 1], [["OO", "OO"], 10, -3], [GULL_LEGS, 0, 11], gullShades(-2))
 };
 
 const SCOOTER_TOP = [
@@ -51,7 +53,9 @@ const SCOOTER_TOP = [
   "..GGGGGGGGGGGGG..."
 ];
 const WHEEL = [["Mmmm", "mppm", "mmmm"], ["mmmM", "mppm", "mmmm"], ["mmmm", "mppm", "mmmM"], ["mmmm", "mppm", "Mmmm"]];
-const scooterFrame = (name: string, k: number, lamp = true) => frame(name, FOE_INK, [SCOOTER_TOP], [WHEEL[k], 1, 12], [WHEEL[k], 14, 12], ...(lamp ? [] : [[["G"], 16, 3] as Piece]));
+/** Its glam (order 27): a neon strip glowing under its deck, and streamers off its handlebar's ends. */
+const SCOOTER_GLAM = [mark(["NNNNNNNNN"], 5, 12), mark(["n...n", "N...N"], 12, 1)];
+const scooterFrame = (name: string, k: number, lamp = true) => frame(name, FOE_INK, [SCOOTER_TOP], [WHEEL[k], 1, 12], [WHEEL[k], 14, 12], ...(lamp ? [] : [[["G"], 16, 3] as Piece]), ...SCOOTER_GLAM);
 /** A rented e-scooter riding itself: deck, stem, bars, two wheels that turn, a lamp. 18 x 15. */
 const SCOOTER: Looks = {
   w: 18,
@@ -83,11 +87,13 @@ const HEDGEHOG_BODY = [
   "..ddddddoooo..."
 ];
 const HEDGEHOG_LEGS = [["..pp.....pp...."], ["...pp....pp...."], ["....pp..pp....."]];
+/** Its body, with its glam (order 27): its spines' tips teased up in neon, shades over its eye. */
+const hedgehog = (dy: number): Piece[] => [at(HEDGEHOG_BODY, 0, dy), mark(["N.N.N.N"], 3, dy), mark(SHADES, 9, 5 + dy)];
 const HEDGEHOG: Looks = {
   w: 15,
   h: 10,
-  idle: [make("hedgehog, still", at(HEDGEHOG_BODY), at(HEDGEHOG_LEGS[1], 0, 9)), make("hedgehog, breathing", at(HEDGEHOG_BODY, 0, 1), at([".........."], 0, 0), at(HEDGEHOG_LEGS[1], 0, 9))],
-  move: walk("hedgehog", (dy) => [at(HEDGEHOG_BODY, 0, dy)], HEDGEHOG_LEGS, 9)
+  idle: [make("hedgehog, still", ...hedgehog(0), at(HEDGEHOG_LEGS[1], 0, 9)), make("hedgehog, breathing", ...hedgehog(1), at(HEDGEHOG_LEGS[1], 0, 9))],
+  move: walk("hedgehog", hedgehog, HEDGEHOG_LEGS, 9)
 };
 
 // --- The fox: 16 x 12 at a trot, its snout on the right: orange lit along its back, a pale chin, belly and tail tip, black
@@ -106,7 +112,7 @@ const FOX_LEGS = [
   ["....ll....ll....", "....ll....ll....", "....ll....ll...."],
   ["....ll....ll....", ".....ll..ll.....", "......llll......"]
 ];
-const foxBody = (dy: number, tail: readonly string[] = FOX_TAIL.down): Piece[] => [at(tail, 0, 3 + dy), at(FOX_BODY, 3, 4 + dy), at(FOX_HEAD, 10, dy)];
+const foxBody = (dy: number, tail: readonly string[] = FOX_TAIL.down): Piece[] => [at(tail, 0, 3 + dy), at(FOX_BODY, 3, 4 + dy), at(FOX_HEAD, 10, dy), mark(SHADES, 10, 3 + dy)];
 const FOX: Looks = {
   w: 16,
   h: 12,
@@ -135,7 +141,9 @@ const OWL_WING: Record<string, readonly string[]> = {
   down: [".......", ".......", ".......", "....OOo", "..Oooo.", ".lol..."]
 };
 const mirror = (rows: readonly string[]) => rows.map((r) => [...r].reverse().join(""));
-const owl = (name: string, wing: string, dy = 0) => make(name, at(OWL_WING[wing], 0, dy), at(mirror(OWL_WING[wing]), 13, dy), at(OWL_BODY, 7, 1 + dy));
+/** Its glam (order 27): ear tufts in neon at the corners of its head, shades across its face (a glint on each lens). */
+const owl = (name: string, wing: string, dy = 0) =>
+  make(name, at(OWL_WING[wing], 0, dy), at(mirror(OWL_WING[wing]), 13, dy), at(OWL_BODY, 7, 1 + dy), mark(["N....N"], 7, 1 + dy), mark(["lellel"], 7, 4 + dy));
 const OWL: Looks = {
   w: 20,
   h: 11,
@@ -165,7 +173,7 @@ const WASP_WING: Record<string, readonly string[]> = {
 };
 const WASP_DOWN = [".WWWWWWW.", "..WWWW..."];
 const wasp = (name: string, wing: string, dy = 0) =>
-  make(name, at(WASP_BODY, 0, 3 + dy), at(WASP_LEGS, 0, 7 + dy), at(WASP_WING[wing], 3, dy), ...(wing === "down" ? [at(WASP_DOWN, 3, 6 + dy)] : []));
+  make(name, at(WASP_BODY, 0, 3 + dy), at(WASP_LEGS, 0, 7 + dy), at(WASP_WING[wing], 3, dy), ...(wing === "down" ? [at(WASP_DOWN, 3, 6 + dy)] : []), mark(SHADES, 9, 5 + dy));
 const WASP: Looks = {
   w: 14,
   h: 9,
@@ -195,45 +203,54 @@ const SQUIRREL = [
   "....lll.lll.."
 ];
 const CONE = ["dM", "Md", "dm"];
+/** Its glam (order 27): a sweatband round its head, in neon. */
+const SQUIRREL_BAND = (dy: number) => mark(["NNn"], 6, 3 + dy);
 const CONE_UP = [".dd.", "dMdM", "MdMd", ".dm."];
 const SQUIRREL_LOOKS: Looks = {
   w: 11,
   h: 17,
-  idle: [make("squirrel, a cone in its paws", at(SQUIRREL, -2), at(CONE, 9, 9)), make("squirrel, nibbling", at(SQUIRREL, -2), at(["........"], 3, 3), at(SQUIRREL.slice(3, 7), -2, 4), at(CONE, 9, 8))],
-  move: [make("squirrel, a cone in its paws", at(SQUIRREL, -2), at(CONE, 9, 9))],
+  idle: [make("squirrel, a cone in its paws", at(SQUIRREL, -2), at(CONE, 9, 9), SQUIRREL_BAND(0)), make("squirrel, nibbling", at(SQUIRREL, -2), at(["........"], 3, 3), at(SQUIRREL.slice(3, 7), -2, 4), at(CONE, 9, 8), SQUIRREL_BAND(1))],
+  move: [make("squirrel, a cone in its paws", at(SQUIRREL, -2), at(CONE, 9, 9), SQUIRREL_BAND(0))],
   // Winding up (order 19): up on its toes, the cone raised high over its head.
-  windup: make("squirrel, the cone raised", at(SQUIRREL, -2, -1), at(["o", "O"], 11, 1), at(CONE_UP, 8, -2), at([".....ll.ll..."], -2, 15), at(["....lll.lll.."], -2, 16))
+  windup: make("squirrel, the cone raised", at(SQUIRREL, -2, -1), SQUIRREL_BAND(-1), at(["o", "O"], 11, 1), at(CONE_UP, 8, -2), at([".....ll.ll..."], -2, 15), at(["....lll.lll.."], -2, 16))
 };
 
-// --- The kid: 11 x 18 in a bobble hat and a puffy jacket (plum, or orange every other kid); a snowball raised behind
-// while it winds up, the arm forward as it throws. The hat (order 25: it read as hair at real size): a round white bobble
-// on a round knitted crown, lit at the top left, and a turned-up brim in the darker green ------------------------------
+// --- The kid: 11 x 18, a child in winter clothes, facing right (order 27, redrawn: Lars, "make kid, sledgers more detailed
+// ... Just kind of shapes now"): a knitted bobble hat (the poison green, lit at the top left) with its white bobble and a
+// turned-up cuff; a face with an eye, a red cheek and a mouth; a scarf (orange, or the plum's light on the orange kid) wound
+// at the neck, its end hanging; a puffy jacket (plum, or orange every other kid) in quilted bands, a zip down its front, a
+// pocket; dark trousers, boots; mittens in the hat's green. Winding up, the snowball is held up behind its head in a mitten;
+// just after the throw, the arm is out in front. Under the glamour its bobble is neon and a lightning bolt crosses its jacket.
 const KID_TOP = [
   "....WW.....",
-  "...gGGg....",
-  "..gGGGGg...",
-  "..ggggggg..",
-  "...aaaaa...",
-  "...aaaea...",
-  "...aaapa...",
-  "....aaa...."
+  "...GGGg....",
+  "..GGGGgg...",
+  "..wwwwwww..",
+  "..aaaaela..",
+  "..aaapaaa..",
+  "...aaala...",
+  "..SSSSSs..."
 ];
 const KID_JACKET = [
-  "...JJJJJ...",
-  "..JjjjjjJ..",
-  "..jjjjljjj.",
-  ".kjjjjljjj.",
-  ".kjjjjljjj.",
-  "..kjjjljjk.",
+  "..JJJJJJJ..",
+  ".JjjjjljjJ.",
+  ".jJJJJlJJj.",
+  ".jjjjjljjk.",
+  ".jkkJJlJJk.",
+  ".kjjjjljjk.",
   "..kkkkkkk.."
 ];
-const KID_LEGS = ["..dd...dd..", "..ll...ll..", ".lll...lll."];
-const KID_ARM = { down: [["j", "j", "k", "a"], 9, 10], fwd: [["jjjk", "jjja"], 10, 10], back: [[".WW.", "WWw.", "Jww.", "jj..", ".jj.", ".jj.", "..j."], -1, 1] } as const;
+const KID_LEGS = ["..dd..dd...", "..ll..ll...", ".lll..lll.."];
+/** Its scarf's end hanging down its back, and its arm: down at its side (the mitten at its hip), out in front (thrown), or raised behind its head with the snowball in the mitten. */
+const KID_SCARF = ["S", "s"];
+const KID_ARM = { down: [["j", "j", "k", "G"], 9, 9], fwd: [["jjjG", "kkkg"], 9, 9], back: [[".WW", "WWw", "GGw", "Gg.", "j..", "j..", "k.."], -1, 2] } as const;
+/** Its glam (order 27): its bobble in neon, and a lightning bolt across its jacket. */
+const KID_GLAM = (dx: number, dy: number) => [mark(["NN"], 4 + dx, dy), mark(["..N", ".nN", "N.."], 3 + dx, 10 + dy)];
 /** A kid's looks, and its frame just after it threw (leaning in, the arm out in front). */
 const kidLooks = (jacket: Record<string, string>, name: string): Looks & { thrown: Frame } => {
   const ink = { ...FOE_INK, ...jacket };
   const k = (label: string, dy: number, arm: readonly [readonly string[], number, number], lean = 0) =>
-    frame(`${name}, ${label}`, ink, at(KID_JACKET, lean, 8 + dy), at(KID_TOP, lean, dy), at(KID_LEGS, 0, 15), [arm[0], arm[1] + lean, arm[2] + dy]);
+    frame(`${name}, ${label}`, ink, at(KID_JACKET, lean, 8 + dy), at(KID_TOP, lean, dy), at(KID_SCARF, 2 + lean, 8 + dy), at(KID_LEGS, 0, 15), [arm[0], arm[1] + lean, arm[2] + dy], ...KID_GLAM(lean, dy));
   return {
     w: 11,
     h: 18,
@@ -243,8 +260,8 @@ const kidLooks = (jacket: Record<string, string>, name: string): Looks & { throw
     thrown: k("throwing", 0, KID_ARM.fwd, 1)
   };
 };
-const KID = kidLooks({ J: E.plumLight, j: E.plum, k: E.plumDark }, "kid");
-const KID_ORANGE = kidLooks({ J: E.orangeLight, j: E.orange, k: E.line }, "kid");
+const KID = kidLooks({ J: E.plumLight, j: E.plum, k: E.plumDark, S: E.orangeLight, s: E.orange }, "kid");
+const KID_ORANGE = kidLooks({ J: E.orangeLight, j: E.orange, k: E.plumDark, S: E.plumLight, s: E.plum }, "kid");
 
 // --- The grill: 15 x 15, a fire basket on three legs, coals glowing, flames over the rim on its own clock ----------------
 const GRILL_BASE = [
@@ -265,11 +282,13 @@ const GRILL_FLAMES = [
   [".....a.........", "......OaO......", "..O.OOOOOOa.O..", ".OOoOOOoOOOOo.."],
   [".........a.....", "..a.O..O.......", "..OOOOaO.OO....", "..OOoOOoOOOoO.."]
 ];
+/** Under the glamour (order 27) its flames and its coals burn magenta with lime tongues and tips; its natural self an ordinary orange. */
+const grillFrame = (f: readonly string[], k: number) => make(`grill, flames ${k + 1}`, at(glamFire(f)), at(GRILL_BASE, 0, 4), at(glamFire([GRILL_BASE[2]]), 0, 6), ...(k % 2 ? [at(["L"], 4 + k, 6)] : []));
 const GRILL: Looks = {
   w: 15,
   h: 15,
-  idle: GRILL_FLAMES.map((f, k) => make(`grill, flames ${k + 1}`, at(f), at(GRILL_BASE, 0, 4), ...(k % 2 ? [at(["a"], 4 + k, 6)] : []))),
-  move: GRILL_FLAMES.map((f, k) => make(`grill, flames ${k + 1}`, at(f), at(GRILL_BASE, 0, 4), ...(k % 2 ? [at(["a"], 4 + k, 6)] : []))),
+  idle: GRILL_FLAMES.map(grillFrame),
+  move: GRILL_FLAMES.map(grillFrame),
   rate: 5
 };
 
@@ -285,7 +304,7 @@ const DUCK_BODY = [
   "..wwwwwwww..."
 ];
 const DUCK_FEET = [["...oo...oo...."], ["....oo..oo...."], [".....oooo....."], ["..oo....oo...."]];
-const duckFrame = (name: string, feet: number, nod: number, dy = 0) => make(name, at(DUCK_BODY, 0, 4 + dy), at(DUCK_HEAD, 7, nod + dy), at(DUCK_FEET[feet], 0, 9));
+const duckFrame = (name: string, feet: number, nod: number, dy = 0) => make(name, at(DUCK_BODY, 0, 4 + dy), at(DUCK_HEAD, 7, nod + dy), at(DUCK_FEET[feet], 0, 9), mark(SHADES, 8, 2 + nod + dy));
 const DUCK: Looks = {
   w: 13,
   h: 10,

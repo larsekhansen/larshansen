@@ -341,6 +341,10 @@ function openScene(id: string, at?: string) {
     if (!touch) help.textContent = t.help;
   } else keysLine(play);
   feel?.reset(play);
+  // The story (order 27): a line under the place's name where it has one, and the opening card the first time on the map.
+  const line = feel?.arrival(def.id, lang, !progress.cleared.length);
+  if (line && state.banner) state.banner.sub = line;
+  if (scene.map) feel?.opening(lang, stage);
   // On the map after a level cleared for the first time: its stone and the station it opened answer.
   if (scene.map && firstClear) {
     const i = ORDER.indexOf(firstClear);
@@ -898,6 +902,13 @@ function showCard(r: CardResult) {
   } else if (r.opened) more.textContent = t.lineTwoOpened;
   else if (scene.def.id === "nabolaget") more.textContent = t.runesLeft(of(LINE_1));
   else more.textContent = scene.def.cardLine?.[lang](of(LINE_2), ORDER.length - progress.bracteates.length) ?? "";
+  // The story's end (order 27): line 1 is lifted with the tenth rune, all of Oslo with the last of line 2.
+  const end = r.home ? feel?.story(lang).endOne : scene.def.id === lastOfTwo && of(LINE_2) === LINE_2.length ? feel?.story(lang).endTwo : "";
+  if (end) {
+    feel?.lineLifted();
+    more.hidden = false;
+    more.appendChild(document.createElement("span")).textContent = ` ${end}`;
+  }
   finishEl.hidden = false;
   say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""} ${t.toMap}.`);
   sfx.play("clear");
@@ -1417,9 +1428,11 @@ function standing(v: View) {
  * order 22); once beaten, the squares it puffs into.
  */
 function foe(e: Enemy, v: View) {
-  // Beaten: squashed in its own shape, then a puff of its own colours (`render/feel.ts`).
-  if (!e.alive) return void feel?.beaten(e, v.t, () => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)));
-  outlined(() => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning);
+  const look = () => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t));
+  // Beaten, its glamour breaks and it leaves; after the rune, itself again (order 27: `render/feel.ts`).
+  if (!e.alive) return void feel?.beaten(e, v.t, look);
+  if (feel?.lifted(e, look)) return;
+  outlined(look, e, e.calm ? ROLES.calm : ENEMY.warning);
 }
 /**
  * What hurts and is not an enemy (rebar, the third rail, a branch, the barrier, sparks): the enemy
@@ -1469,6 +1482,8 @@ function afterDark(v: View) {
   standTops(p.map, scene.def.art);
   // Every outline drawn on the street this frame, again, alone, over the tint.
   street.globalAlpha = v.sky.phase === "night" ? 0.9 : 0.8;
+  // Each invader's glow of its own neon (order 27), under its outline.
+  feel?.glows(street);
   rings(street);
   street.globalAlpha = 1;
   for (const e of p.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, EYE_SHINE);
@@ -1504,7 +1519,7 @@ function render(alpha: number) {
   if (art.near) farPass(kit.depth(0.4), () => art.near!(v), haze[2]);
   const street = kit.depth(1);
   // The street's own backdrop, behind the lane: the lightest of the haze (order 22).
-  pass(street, () => art.back(v), backHazeOf(scene.def));
+  pass(street, () => (art.back(v), feel?.invasion(scene.def.id, v.t)), backHazeOf(scene.def));
   pass(street, () => {
     TEXTURED.boards ? TEXTURED.boards(scene.boards) : drawBoards(scene.boards);
     drawWater(p.map, p.t);

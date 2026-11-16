@@ -35,6 +35,7 @@ All on `/viking/` with `?debug`. HANDOVER, "Checking", has the full account.
 | `&keys=…` | Hold keys for those steps |
 | `&auto&steps=N` | Play the scripted route in the page |
 | `&perf` (`&on=<event>&skip=6`) | Count rectangles and copies in a frame |
+| `&steps=0&on=<event>&skip=N` | A picture of the moment: stepped to the event (`stomp`, `rune`, `hurt`, `boss:hit` ...) and N steps on (order 27) |
 | `&reduced` | Reduced motion |
 | `&touch` | Show the touch pad without a touch screen (order 21) |
 | `&where=x,y` / `&look=x,y` / `&strip` | Camera and crop helpers |
@@ -57,7 +58,7 @@ against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the fro
 | `apps/viking/tools/facts.ts` | Writes LEVELS.html's FACTS block from the levels |
 | `apps/viking/tools/pictures.ts`, `pictures.tsv` | Retakes LEVELS.html's pictures |
 | `apps/viking/tools/review/` | The sloppy and hesitating players, reach and dead-end checks, boss studies, `edgecmp.py`; one folder of results per order (`o18` … `o25`); a README |
-| `apps/viking/tools/glance/` | Contact sheets (`sheet.py`, `enemyshots.ts`, `platformshots.ts`), the level walk (`walk.ts`, `strips.ts`), `perf.ts`, `flat.py` (flat places), `frames.ts` and `framesheet.py` (frame sheets), `tones.ts` (which tones pass the palette test), `yellows.ts`, `hand.ts` (phone states), `haze.ts`, `fore.ts` |
+| `apps/viking/tools/glance/` | Contact sheets (`sheet.py`, `enemyshots.ts`, `platformshots.ts`), the level walk (`walk.ts`, `strips.ts`), `perf.ts`, `flat.py` (flat places), `frames.ts` and `framesheet.py` (frame sheets: since order 27 each figure glammed, natural and its ending), `stomp.ts` (a stomp's strip of frames), `invasion.ts` (where the invaders' scenery may stand), `tones.ts` (which tones pass the palette test), `yellows.ts`, `hand.ts` (phone states), `haze.ts`, `fore.ts` |
 | `apps/viking/src/render/palette.test.ts` | The colour rules as a test |
 | `apps/viking/src/game/frame.test.ts` | He is never under a touch button, all routes, five sizes |
 | [`scripts/review.sh`](scripts/review.sh), [`frontgate.sh`](scripts/frontgate.sh), [`cmpfront.py`](scripts/cmpfront.py) | The planner's review of a hand-back. They carry one session's scratch path in `S`: change it |

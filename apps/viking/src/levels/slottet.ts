@@ -13,7 +13,7 @@ import { climbed, drawGulls, drawOsloHills } from "../render/backdrop";
 const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
 import { tile as textured, type Grain } from "../alive/ground";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
 import { HAND_WAVES, crowdFlag, flagFlying, handFlag, person } from "../alive/things";
 import { outlined } from "../render/sprite";
@@ -243,24 +243,27 @@ function balloons(i: number, t: number) {
   }
 }
 
-// The hot-dog cart, drawn as frames (order 24; way 3, ADR 0045): a striped canopy lit along its top, a sausage in its
-// bun on the counter, the cart's plum panels lit from the top left, two wheels whose spokes turn by the distance it
-// rolls (four frames, three pixels each), so they never slide. No eyes: it is a cart.
+// The hot-dog cart (order 27, redrawn: Lars, "Hot dog, hich i think must be a hot dog stand, can maybe be given a little
+// more detail to see whats inn there"): a pølsebod on wheels, 22 x 14, its top where it always was. A striped awning (pink
+// and white, lit along its top) with a scalloped hem on two poles; under it the vendor's head and cap behind the counter, a
+// steaming pot, a mustard and a ketchup bottle; on the counter a row of sausages in their buns; on its side panel a sign
+// with a sausage on it; a handle behind (two pixels past its box: drawing only) and two wheels whose spokes turn by the
+// distance it rolls (four frames, three pixels each). Under the glamour its hem is neon tubes and its vendor wears shades.
 const CART_TOP = [
-  ".OOppOOppOOppOOppOOpp.",
-  "OOppOOppOOppOOppOOppOO",
-  "Oo.pp.oO.pp.oO.pp.oO.p",
-  ".l..................l.",
-  ".l..aOOOOOOa..pa....l.",
-  ".l...pppppp..ppp....l."
+  ".WWppWWppWWppWWppWWpp.",
+  "WWppWWppWWppWWppWWppWW",
+  "Wp.Wp.Wp.Wp.Wp.Wp.Wp.W",
+  ".l.ggg...w.w....a.a.l.",
+  ".lggggg.dwwwd...Y.p.l.",
+  ".l.aea..dmmmd...Y.p.l.",
+  ".l.ppp.ppp.ppp.ppp..l."
 ];
 const CART_BODY = [
-  "MMMMMMMMMMMMMMMMMMMMMM",
-  "mMMMMMMMMMmmMMMMMMMMMd",
-  "mMmmmmmmmdmmMmmmmmmmdd",
-  "mMmmmmmmmdmmMmmmmmmmdd",
-  "mmddddddddmmmdddddddmd",
-  "dddddddddddddddddddddd"
+  "MOOOOOOOOOOOOOOOOOOMMM",
+  "mMaaaaaaamMmmmmmmmmmmd",
+  "mMaOppppOamMmmmmmmmmdd",
+  "mmaaaaaaammdddddddddmd",
+  "dd...ddddddddd...ddd.."
 ];
 const CART_WHEEL = [
   ["dmMd", "mlpm", "dmmd"],
@@ -268,8 +271,12 @@ const CART_WHEEL = [
   ["dmmd", "mlmM", "dmpd"],
   ["dmmd", "plmm", "dmMd"]
 ];
+/** Its handle, behind. */
+const CART_HANDLE = ["ll.", "..l"];
+/** Its glam (order 27): neon tubes along the awning's hem, shades on the vendor. */
+const CART_GLAM = (dy: number) => [mark(["Nn.Nn.Nn.Nn.Nn.Nn.Nn.N"], 0, 2 + dy), mark(["lel"], 3, 5 + dy)];
 const cartFrame = (name: string, k: number, dy = 0) =>
-  frame(name, FOE_INK, [CART_TOP, 0, dy], [CART_BODY, 0, 6 + dy], [CART_WHEEL[k], 3, 11], [CART_WHEEL[(k + 2) % 4], 15, 11]);
+  frame(name, FOE_INK, [CART_TOP, 0, dy], [CART_BODY, 0, 7 + dy], [CART_HANDLE, -3, 7], [CART_WHEEL[k], 3, 11], [CART_WHEEL[(k + 2) % 4], 15, 11], ...CART_GLAM(dy));
 const CART: Looks = {
   w: 22,
   h: 14,
@@ -544,7 +551,7 @@ function kidFrame(i: number, step: number, wave: number) {
 function paradeKid(x: number, ground: number, i: number, t: number) {
   outlined(() => paradeKidBody(x, ground, i, t), undefined, ROLES.calm);
 }
-function paradeKidBody(x: number, ground: number, i: number, t: number) {
+export function paradeKidBody(x: number, ground: number, i: number, t: number) {
   // Their feet by the distance they have walked (with reduced motion they stand: the parade does not move).
   const step = ((Math.floor(x / 3) + i) % 4 + 4) % 4;
   const wave = view.reduced ? 0 : Math.floor((t + i * 7) / 9) % 3;

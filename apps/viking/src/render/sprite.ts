@@ -12,11 +12,16 @@ import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
 
 const rects: number[] = [];
 const colours: string[] = [];
+/**
+ * The level's lean (order 27, ADR 0050): the glamour's two neons as this level has them, and its bodies' plum where it
+ * leans another way, colour for colour, applied as a shape is recorded (`alive/glamour.ts` sets it with each scene).
+ */
+export const lean: Record<string, string> = {};
 const recorder = {
   fillStyle: "",
   fillRect(x: number, y: number, w: number, h: number) {
     rects.push(x, y, w, h);
-    colours.push(recorder.fillStyle);
+    colours.push(lean[recorder.fillStyle] ?? recorder.fillStyle);
   }
 };
 const asCtx = recorder as unknown as CanvasRenderingContext2D;
@@ -24,17 +29,21 @@ const asCtx = recorder as unknown as CanvasRenderingContext2D;
 let onto: CanvasRenderingContext2D | null = null;
 /** The outline's colour for the shape being recorded: the caller's, unless the drawing says it is calm. */
 let rimNow = "";
-interface Sprite {
+export interface Sprite {
   /** The shape with its outline. */
   whole: HTMLCanvasElement;
   /** The outline alone, for after dark. */
   ring: HTMLCanvasElement;
+  /** The shape alone and what it was made from (its colours are in it), for the glow after dark (order 27), which is made the first time it is wanted. */
+  shape: HTMLCanvasElement;
+  key: string;
+  glow?: HTMLCanvasElement;
 }
 const kept = new Map<string, Sprite>();
 const KEPT_MOST = 800;
 const eyesOf = new WeakMap<object, [number, number][]>();
-/** The outlines copied this frame, in screen pixels, for `rings` (a pool, reused frame to frame). */
-const drawnRings: { ring: HTMLCanvasElement; x: number; y: number }[] = [];
+/** The outlines copied this frame, in screen pixels, for `rings` and `glows` (a pool, reused frame to frame); `sprite`: an invader's, which glows. */
+const drawnRings: { ring: HTMLCanvasElement; x: number; y: number; sprite: Sprite | null }[] = [];
 let drawnCount = 0;
 /** For the tests: the last outlined shape as it was recorded (its rectangles, x, y, w, h in turn, as drawn; its colours; its outline's). */
 export const lastShape = () => ({ rects, colours, rim: rimNow });
@@ -133,12 +142,13 @@ export function outlined(draw: () => void, who?: object, rim: string = ENEMY.war
     const rg = ring.getContext("2d")!;
     rg.globalCompositeOperation = "destination-out";
     rg.drawImage(line, 0, 0);
-    sprite = { whole, ring };
+    sprite = { whole, ring, shape, key };
     kept.set(key, sprite);
   }
   g.drawImage(sprite.whole, x0 - m, y0 - m);
-  const at = drawnRings[drawnCount] ?? (drawnRings[drawnCount] = { ring: sprite.ring, x: 0, y: 0 });
+  const at = drawnRings[drawnCount] ?? (drawnRings[drawnCount] = { ring: sprite.ring, x: 0, y: 0, sprite: null });
   at.ring = sprite.ring;
+  at.sprite = rim === ENEMY.warning ? sprite : null;
   at.x = x0 - m;
   at.y = y0 - m;
   drawnCount++;
@@ -157,6 +167,11 @@ export function ringsTo(n: number) {
 /** After dark: every outline copied since `freshRings`, copied again alone onto `g` (at the alpha it has), so the outlines keep their light over the night's tint. */
 export function rings(g: CanvasRenderingContext2D) {
   for (let i = 0; i < drawnCount; i++) g.drawImage(drawnRings[i].ring, drawnRings[i].x, drawnRings[i].y);
+}
+
+/** For the glow after dark (order 27, `alive/glamour.ts`): each invader outlined since `freshRings`, its sprite and where it was copied. */
+export function invaders(each: (s: Sprite, x: number, y: number) => void) {
+  for (let i = 0; i < drawnCount; i++) if (drawnRings[i].sprite) each(drawnRings[i].sprite!, drawnRings[i].x, drawnRings[i].y);
 }
 
 /** Where the eyes of an enemy were drawn last (world pixels): they shine in the headlamp and after dusk. */

@@ -10,8 +10,14 @@ import { drawTick } from "../render/actors";
 import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import { isOpen, type Progress } from "../game/progress";
 import { LINE, ORDER } from "./index";
-import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, UP, stationX } from "./kart";
+import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, STORY_SIGN, UP, stationX } from "./kart";
 import type { Art, View } from "./types";
+import { STORY } from "../game/story";
+import { mirrorBall } from "../alive/invasion";
+
+// The map's sign by Langkaia's station tells the story of the glamour again (order 27): its words are the story's.
+STORY_SIGN.label = { nb: STORY.nb.signLabel, en: STORY.en.signLabel };
+STORY_SIGN.lines = { nb: STORY.nb.sign, en: STORY.en.sign };
 
 // How the line map looks, fetched on its own (see kart.ts for what it is): the skyline of each place
 // behind its station, the runes carved over them, the viaduct, the burial mound in its dip, Hjem, and
@@ -284,10 +290,12 @@ function runeStone(x: number, y: number, char: RuneChar, cleared: boolean) {
 }
 
 /** Behind a station: its place's skyline, and its rune stone above it: gold with a tick once the level is cleared. */
-function stationBack(i: number, cleared: boolean, clean: boolean) {
+function stationBack(i: number, cleared: boolean, clean: boolean, t: number) {
   const x = stationX(i);
   skyline(i, x, LINE_Y);
   runeStone(x - 8, LINE_Y - 46, RUNE_CHARS[LINE[i].rune] as RuneChar, cleared);
+  // Still under the glamour (order 27): a mirror ball turning over its stone; a cleared station is plain Oslo again.
+  if (!cleared) mirrorBall(x + 13, LINE_Y - 40, t, 8);
   if (clean) waffle(x + 9, LINE_Y - 37);
 }
 
@@ -375,8 +383,8 @@ export function kartArt(progress: Progress, open: boolean): Art {
       mound(v.doors.get("maze"), v.sky.snow);
       branch();
       LINE.forEach((l, i) => {
-        if (!two(i)) stationBack(i, cleared(i), progress.clean.includes(l.id));
-        else faintly(!open, () => stationBack(i, cleared(i), progress.clean.includes(l.id)));
+        if (!two(i)) stationBack(i, cleared(i), progress.clean.includes(l.id), v.t);
+        else faintly(!open, () => stationBack(i, cleared(i), progress.clean.includes(l.id), v.t));
       });
       if (!open) gate();
     },

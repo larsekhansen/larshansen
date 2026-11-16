@@ -11,7 +11,7 @@ import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { FOE_INK, RAT, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, RAT, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
@@ -906,7 +906,9 @@ const TROLLEY_CAGE = [
   "..d.........d.."
 ];
 const TROLLEY_WHEEL = [["mMm", "mlm", ".m."], ["mmM", "mlm", ".m."], ["mmm", "mlM", ".m."], ["mmm", "Mlm", ".m."]];
-const trolleyFrame = (name: string, k: number, dy = 0) => frame(name, FOE_INK, [TROLLEY_CAGE.slice(0, 3), 0, 0], [TROLLEY_CAGE.slice(3), 0, 3 + dy], [TROLLEY_WHEEL[k], 2, 12], [TROLLEY_WHEEL[k], 10, 12]);
+/** Its glam (order 27): a neon strip glowing under its cage between its wheels, and a neon grip on its handle. */
+const trolleyFrame = (name: string, k: number, dy = 0) =>
+  frame(name, FOE_INK, [TROLLEY_CAGE.slice(0, 3), 0, 0], [TROLLEY_CAGE.slice(3), 0, 3 + dy], [TROLLEY_WHEEL[k], 2, 12], [TROLLEY_WHEEL[k], 10, 12], mark(["NNNNN"], 5, 12), mark(["nnN"], 0, 0));
 const TROLLEY: Looks = {
   w: 15,
   h: 15,
@@ -946,7 +948,8 @@ const UMBRELLA_OUT = [
 ];
 const umbrellaLooks = (ink: Record<string, string>): Looks => {
   const all = { ...FOE_INK, ...ink };
-  const up = (k: number) => frame(`umbrella, spinning ${k + 1}`, all, [canopy(k * 2), 0, 0], [UMBRELLA_HANDLE, 0, 5]);
+  // Its glam (order 27): a lightning bolt across its canopy, spinning with it.
+  const up = (k: number) => frame(`umbrella, spinning ${k + 1}`, all, [canopy(k * 2), 0, 0], [UMBRELLA_HANDLE, 0, 5], mark(["...N", "NNN.", ".n.."], 4 + k * 3, 1));
   const out = (k: number) => frame(`umbrella, inside out${k ? ", flapping" : ""}`, all, [UMBRELLA_OUT, 0, 1 - k], [UMBRELLA_OUT.slice(8), 0, 9]);
   return { w: 15, h: 12, idle: [up(0), up(1)], move: [up(0), up(1), out(0), out(1)] };
 };
@@ -972,7 +975,7 @@ const PIGEON_WING: Record<string, readonly string[]> = {
 };
 const PIGEON_DOWN = ["..mmmmmm...", ".mmmmmM....", ".ddd......."];
 const pigeonFrame = (name: string, wing: string, dy = 0) =>
-  frame(name, FOE_INK, [PIGEON_WING[wing], 2, dy], [PIGEON_BODY, 0, 3 + dy], ...(wing === "down" ? [[PIGEON_DOWN, 3, 6 + dy] as [string[], number, number]] : []));
+  frame(name, FOE_INK, [PIGEON_WING[wing], 2, dy], [PIGEON_BODY, 0, 3 + dy], ...(wing === "down" ? [[PIGEON_DOWN, 3, 6 + dy] as [string[], number, number]] : []), mark(SHADES, 11, 4 + dy));
 const PIGEON_FLYING: Looks = {
   w: 17,
   h: 9,

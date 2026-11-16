@@ -16,12 +16,13 @@ import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { clock, moving, step4 } from "../alive/parts";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { drawFoe, FOE_INK, foeFrame, mark, SHADES, type Looks } from "../alive/foes";
 import { frame, paint, stamp as stampFrame, type Frame, type Piece } from "../alive/frames";
 import { calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
+import { STORY } from "../game/story";
 
 // Level 16, rune G: Gamlebyen, at night, the finale of line 2. Its one idea: the ruins rebuild as he
 // passes. A ruin's missing stones rise out of the ground, as ledges and walls, when he comes within a
@@ -772,7 +773,12 @@ const SCALE: Record<string, string> = {
   n: INK,
   T: G.tooth,
   m: mix(G.cloth, INK, 0.45),
-  t: mix(G.cloth, WHITE, 0.2)
+  t: mix(G.cloth, WHITE, 0.2),
+  // Its glam (order 27): a neon crest in the level's two neons, shades (their lens the near-black, their glint the eye's).
+  Z: ENEMY.hotPink,
+  z: ENEMY.blue,
+  K: ENEMY.line,
+  E: ENEMY.eye
 };
 
 /** A row's runs: `tone(b)` for b from 0 to w - 1, joined where they agree, drawn from x0 left to right or mirrored. */
@@ -832,8 +838,8 @@ function spine(x: number, y: number, h: number, dir: 1 | -1) {
 /** Its head's frames, made once: the jaw shut or dropped open (1 to 4), the eye open or shut (dazed), the spines up or flat. */
 const HEADS = new Map<string, Frame>();
 /** Its head as a map 40 wide and 26 tall, facing right: column 24 is the head's x, row 10 its skull's top. */
-function headFrame(open: number, dazed: boolean): Frame {
-  const key = `${open} ${dazed}`;
+function headFrame(open: number, dazed: boolean, glammed = true): Frame {
+  const key = `${open} ${dazed} ${glammed}`;
   const had = HEADS.get(key);
   if (had) return had;
   const g = Array.from({ length: 26 }, () => Array<string>(40).fill("."));
@@ -848,10 +854,10 @@ function headFrame(open: number, dazed: boolean): Frame {
     for (const [dx, h] of [[-10, 7], [-7, 10], [-4, 8], [-1, 5]] as const)
       for (let i = 0; i < h; i++) {
         const sx = dx - Math.round(i * 0.5);
-        if (i === h - 1) put(sx, 1 - i, "C");
+        if (i === h - 1) put(sx, 1 - i, glammed ? "z" : "C");
         else {
-          put(sx, 1 - i, "c");
-          put(sx + 1, 1 - i, i % 2 ? "k" : "C");
+          put(sx, 1 - i, glammed ? "Z" : "c");
+          put(sx + 1, 1 - i, i % 2 ? "k" : glammed ? "z" : "C");
         }
       }
   // Skull and cheek: its ridge lit, the back of its skull in shadow, scales, a lit cheek over the jaw.
@@ -872,6 +878,11 @@ function headFrame(open: number, dazed: boolean): Frame {
     for (let dx = -1; dx <= 2; dx++) put(dx, 4, "n");
     put(-2, 3, "n");
   } else for (let dx = -1; dx <= 2; dx++) for (let dy = 3; dy <= 5; dy++) put(dx, dy, dx === 0 ? "n" : dx === 2 || dy === 5 ? "y" : "Y");
+  // Under the glamour, awake, it wears shades: a dark lens over its eye, a glint at its front, the arm back along its skull.
+  if (glammed && !dazed) {
+    for (let dx = -2; dx <= 3; dx++) for (let dy = 3; dy <= 4; dy++) put(dx, dy, dx === 2 && dy === 3 ? "E" : "K");
+    for (let dx = -6; dx <= -3; dx++) put(dx, 3, "Z");
+  }
   // The snout, tapering to its tip, lit along its top; a nostril.
   for (let dx = 2; dx <= 13; dx++) {
     const top = dx > 10 ? 4 : 3;
@@ -897,7 +908,7 @@ function headFrame(open: number, dazed: boolean): Frame {
     }
   } else for (let k = 0; k < 3; k++) put(4 + k * 3, 8, "T");
   if (dazed) for (let dx = 13; dx <= 15; dx++) put(dx, jy + 1, "t");
-  const f = frame(`serpent's head${dazed ? ", dazed" : ""}${open ? `, jaw open ${open}` : ""}`, SCALE, [g.map((r) => r.join(""))]);
+  const f = frame(`serpent's head${dazed ? ", dazed" : ""}${open ? `, jaw open ${open}` : ""}${glammed ? "" : ", itself"}`, SCALE, [g.map((r) => r.join(""))]);
   HEADS.set(key, f);
   return f;
 }
@@ -908,8 +919,8 @@ function headFrame(open: number, dazed: boolean): Frame {
  * inside showing; after the night's tint, eye-shine and a moonlit rim. Shut-eyed and slack-jawed (`dazed`), the same head
  * lies on the quay.
  */
-function serpentHead(x: number, y: number, dir: 1 | -1, open: number, dazed = false) {
-  paint(headFrame(open, dazed), dir > 0 ? x - 24 : x - 16, y - 10, dir, 40);
+function serpentHead(x: number, y: number, dir: 1 | -1, open: number, dazed = false, glammed = true) {
+  paint(headFrame(open, dazed, glammed), dir > 0 ? x - 24 : x - 16, y - 10, dir, 40);
   const lt = (dx: number, dy: number, w: number, h: number, c: string) => light(dir > 0 ? x + dx : x - dx - w, y + dy, w, h, "soft", c);
   if (!dazed) lt(-1, 3, 4, 3, G.eye);
   // Its rim in the dark: along the skull and the snout.
@@ -1081,7 +1092,7 @@ function serpentArt(s: Serpent, v: View) {
     const open = spit ? 4 : s.phase === "rear" && tellK > 0.5 ? (tellK > 0.8 ? 3 : 1) : 0;
     outlined(() => {
       serpentNeck(x, headY + 6, base, s.dir, lean, sway);
-      serpentHead(x + lean + sway, headY, s.dir, open);
+      serpentHead(x + lean + sway, headY, s.dir, open, false, s.hits < 3);
       // Its tell, plain to see: the throat swells pale as it gathers the brine.
       if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
       if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
@@ -1106,7 +1117,7 @@ function serpentArt(s: Serpent, v: View) {
         bodyRow(bx + Math.round(d * 6 * (1 - f) ** 2), y, Math.round(12 + 6 * f), d, y);
       }
       for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3) + (i > 6 ? Math.min(0, rock) : 0), 9, d, i);
-      serpentHead(hx, h.y - 1 - Math.max(0, rock) + Math.max(0, -rock), d, s.phase === "reel" ? 2 : rock > 0 ? 2 : 1, true);
+      serpentHead(hx, h.y - 1 - Math.max(0, rock) + Math.max(0, -rock), d, s.phase === "reel" ? 2 : rock > 0 ? 2 : 1, true, s.hits < 3);
       // Dazed it cannot hurt him: the calm pale round it, the "now" violet over it where to hit (order 22).
     }, undefined, ROLES.calm);
     if (s.phase === "dazed") for (let k = 0; k < 3; k++) {
@@ -1171,8 +1182,10 @@ const GUARD_BODY = [
 const GUARD_LEGS = [["...QP..QP...", "..llQ..llQ.."], ["....QPQP....", "...llQlQ...."], ["..QP....QP..", ".llQ...llQ.."], ["....QPQP....", "...llQlQ...."]];
 const HALBERD = { upright: [".bc", "bbc", ".b.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F."], level: [".......bb", "FFFFFFFbc", ".......b."] };
 const STONE_GUARD = { H: mix(G.statue, WHITE, 0.3), L: mix(G.statue, WHITE, 0.12), B: G.statue, S: mix(G.statue, INK, 0.25), P: mix(G.statue, WHITE, 0.08), Q: mix(G.statue, INK, 0.15), X: G.moss, E: mix(G.statue, INK, 0.45), l: mix(G.statue, INK, 0.4), F: mix(G.statue, INK, 0.1), b: mix(G.statue, WHITE, 0.2), c: mix(G.statue, INK, 0.3) };
-const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade };
-const guardFrame = (name: string, ink: Record<string, string>, legs: number, halberd: Piece, dy = 0) => frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 7], halberd);
+const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade, N: FOE_INK.N, n: FOE_INK.n };
+/** Woken, its glam (order 27): shoulder pads squared out past its mail in neon. */
+const guardFrame = (name: string, ink: Record<string, string>, legs: number, halberd: Piece, dy = 0) =>
+  frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 7], halberd, ...(ink === WOKEN_GUARD ? [mark(["NN......NN", "n........n"], 1, 4 + dy)] : []));
 const GUARD_FRAMES = {
   stone: guardFrame("the bishop's guard as stone", STONE_GUARD, 0, [HALBERD.upright, 10, -4]),
   walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 8, 3 + (k % 2)], k % 2 ? 0 : 1)),
@@ -1211,13 +1224,15 @@ const ARCHER_BODY = [
   ".lll..lll.."
 ];
 const QUIVER = ["MlM", ".dd", ".dm", ".dd", "..d"];
+const ARCHER_BAND = (dy: number) => mark(["NNnN"], 3, 1 + dy);
 const BOW = { rest: [".O.", "..o", "..o", "..o", "..o", "..o", "..o", "..o", ".o.", "o.."], drawn: ["O.....", ".o....", "..o...", "..a.o.", "..a..o", "..a..o", "..a..o", "..a.o.", "..ao..", "Wao...", "o....."] };
 const ARCHER: Looks = {
   w: 11,
   h: 14,
-  idle: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4]), frame("archer, breathing", FOE_INK, [QUIVER, 0, 5], [ARCHER_BODY, 0, 1], [BOW.rest, 8, 5])],
-  move: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4])],
-  windup: frame("archer, drawing", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [["ppp.", "app."], -1, 4], [["aaaaaaaaaaaW"], 0, 3], [["ppp"], 7, 4], [BOW.drawn, 9, -2])
+  // Its glam (order 27): a neon headband round its hood.
+  idle: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4], ARCHER_BAND(0)), frame("archer, breathing", FOE_INK, [QUIVER, 0, 5], [ARCHER_BODY, 0, 1], [BOW.rest, 8, 5], ARCHER_BAND(1))],
+  move: [frame("archer", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [BOW.rest, 8, 4], ARCHER_BAND(0))],
+  windup: frame("archer, drawing", FOE_INK, [QUIVER, 0, 4], [ARCHER_BODY], [["ppp.", "app."], -1, 4], [["aaaaaaaaaaaW"], 0, 3], [["ppp"], 7, 4], [BOW.drawn, 9, -2], ARCHER_BAND(0))
 };
 function archerArt(e: Enemy, t: number) {
   drawFoe(e, foeFrame(e, t, ARCHER), ARCHER.w, ARCHER.h, true);
@@ -1232,7 +1247,8 @@ const GOOSE_BODY = [
 ];
 const GOOSE_NECK = [".WWW..", ".WelOo", ".wWW..", ".WW...", "WWw...", "WWw..."];
 const GOOSE_FEET = [["...o...o......"], ["....o.o......."], ["..oo...oo....."], ["....o.o......."]];
-const gooseFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [GOOSE_BODY, 0, 5 + dy], [GOOSE_NECK, 8 + nod, nod + dy], [GOOSE_FEET[feet], 0, 9]);
+/** Its glam (order 27): a studded collar round its neck. */
+const gooseFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [GOOSE_BODY, 0, 5 + dy], [GOOSE_NECK, 8 + nod, nod + dy], [GOOSE_FEET[feet], 0, 9], mark(["NaN"], 8 + nod, 3 + nod + dy));
 const GOOSE: Looks = {
   w: 14,
   h: 10,
@@ -1252,7 +1268,9 @@ const DOG_BODY = [
 ];
 const DOG_TAIL = [["l.", "m.", ".m"], [".l", ".m", ".m"]];
 const DOG_LEGS = [["..dd.d....d.dd..", ".dd...d..d...dd.", "ll....ll.ll...ll"], ["...ddd....ddd...", "...d.d....d.d...", "..ll.ll..ll.ll.."], ["..d.dd....dd.d..", "..d..dd..dd..d..", ".ll...ll.ll..ll."], ["...ddd....ddd...", "...d.d....d.d...", "..ll.ll..ll.ll.."]];
-const dogFrame = (name: string, legs: number, tail: number, dy = 0) => frame(name, FOE_INK, [DOG_BODY, 0, dy], [DOG_TAIL[tail], 0, 1 + dy], [DOG_LEGS[legs].map((r) => r.padEnd(17, ".")), 0, 7]);
+/** Its glam (order 27): shades and a studded collar. */
+const dogFrame = (name: string, legs: number, tail: number, dy = 0) =>
+  frame(name, FOE_INK, [DOG_BODY, 0, dy], [DOG_TAIL[tail], 0, 1 + dy], [DOG_LEGS[legs].map((r) => r.padEnd(17, ".")), 0, 7], mark(SHADES, 10, 2 + dy), mark(["N", "a", "N"], 10, 3 + dy));
 const DOG: Looks = {
   w: 16,
   h: 10,
@@ -1305,7 +1323,8 @@ export const GAMLEBYEN: LevelDef = {
   rules: RULES,
   boss: serpentBoss(SERPENT_DEF),
   bossWords: {
-    wake: { nb: "Vannet ved kaia rører seg.\nDet er noe stort der nede.", en: "The water by the quay stirs.\nSomething large is down there." },
+    // Its arrival (order 27): the story's line for it (`game/story.ts`).
+    wake: { nb: `Vannet ved kaia rører seg.\nDet er noe stort der nede.\n${STORY.nb.boss.serpent}`, en: `The water by the quay stirs.\nSomething large is down there.\n${STORY.en.boss.serpent}` },
     hit: { nb: "Rett i hodet.", en: "Right on the head." },
     beaten: { nb: "Ormen synker. Vannet blir stille.", en: "The serpent sinks. The water goes still." },
     // Shown beside it, each only when it is true; again after ten seconds of nothing, unless he has done it since.

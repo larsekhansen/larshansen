@@ -61,7 +61,8 @@ export default defineConfig({
           if (/\/src\/render\/looks\.ts$/.test(id)) return "looks";
           // What answers events (order 19), and the frames, shadows and depth that keep the picture alive (order 23):
           // fetched as the page starts, alongside the map's look.
-          if (/\/src\/render\/feel\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
+          // The story's words (order 27) come with it.
+          if (/\/src\/(render\/feel|game\/story)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
           // The touch pad and the camera's room for it (order 21): fetched on a touch screen only, with the first scene.
           if (/\/src\/(render\/pad|game\/frame)\.ts$/.test(id)) return "pad";
           // The shield's rules and drawing: fetched when he has it, or goes where it is given.

@@ -13,7 +13,8 @@ import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { clock } from "../alive/parts";
-import { FOE_INK, drawFoe } from "../alive/foes";
+import { FOE_INK, drawFoe, mark } from "../alive/foes";
+import { glam, glamFrame } from "../alive/glamour";
 import { frame, paint, type Frame, type Piece } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
@@ -416,34 +417,41 @@ function slab(t: number) {
 }
 
 /**
- * The Angry Boy on his post, drawn as frames (order 25; way 3, ADR 0045), seen from the front, 10 x 15: bronze in the
- * enemy's orange, lit at the top left, shaded in the plum's darkest, a fleck of verdigris (the poison green) in its folds;
- * brows down, eyes, his mouth open in a howl. Standing his fists hang clenched at his sides; stamping (his water's ripple:
- * his beat's last second) one foot is up and then the other, fists shaking up by his head; in the air both fists are over
- * his head and his legs tuck.
+ * The Angry Boy on his post (order 27, redrawn from the statue's real pose: Lars, "the called boy looks like a teddy? not a
+ * boy at least"; his raised fists read as a bear's round ears). Seen from the front, 10 x 15: a chubby naked toddler in
+ * bronze, in the enemy's orange lit at the top left and shaded in the plum's darkest, a fleck of verdigris (the poison
+ * green) in the folds; a big round bald head with a scowl (heavy brows down to his nose, eyes under them) and his mouth open
+ * in a howl; a short neck, round shoulders, a belly; his fists clenched down at his sides, always; stamping (his water's
+ * ripple: his beat's last second) one foot up and then the other; in the air his knees up and his fists still down. Nothing
+ * round over his head. Under the glamour a neon mohawk stands up off his crown; his natural self is the park's green-brown
+ * bronze (`alive/natural.ts`).
  */
 const make = (name: string, ...pieces: Piece[]) => frame(name, FOE_INK, ...pieces);
 const at = (rows: readonly string[], dx = 0, dy = 0): Piece => [rows, dx, dy];
-const BOY_HEAD = ["...OOoo...", "..OlooolO.", "..Oeooeod.", "..Oollod..", "...oddg..."];
-const BOY_BODY = ["...Oood...", "..OOoood..", "..OOooodd.", "..Oooooog.", "..Ooooodd."];
+const BOY_HEAD = ["...OOoo...", "..OOOOood.", ".OllOolld.", ".OOeOoeod.", ".OOolllod.", "..OolaOd..", "...Oood..."];
+const BOY_BODY = ["..OOOoodd.", "..OOooood.", "..OOoooodd", "..Ooooogd.", "...Oood..."];
 const BOY_LEGS = {
-  stand: ["..Ood.od..", "..Ood.od..", "..Oo..og..", "..Oo..od..", ".lll..lll."],
-  left: ["..Ood.od..", ".OOd..od..", ".lll..og..", "......od..", "......lll."],
-  right: ["..Ood.od..", "..Oo..Ood.", "..Oo..lll.", "..Og......", ".lll......"],
-  tuck: ["..Ood.od..", ".OOd..Ood.", ".lll..lll.", "..........", ".........."]
+  stand: ["...Oo.od..", "...Oo.od..", "...Og.od..", "..lll.lll."],
+  left: ["...Oo.od..", "..OOd.od..", "..ll..od..", "......lll."],
+  right: ["...Oo.od..", "...Oo.Ood.", "...Og..ll.", "..lll....."],
+  tuck: ["...Oo.od..", "..OOd.Ood.", "..ll...ll.", ".........."]
 };
+/** His arms hang at his sides, his fists clenched at the ends of them: down, or (stamping) pumped a pixel out. */
 const BOY_ARMS = {
-  down: [at(["O..", "O..", "Oo.", ".Od", ".ll"], 0, 6), at([".d.", ".d.", "od.", "Od.", "ll."], 8, 6)],
-  shake: [at(["OO.", "Ood", ".O.", ".O."], -1, 2), at([".Od", "odd", ".d.", ".d."], 8, 2)],
-  over: [at(["OO", "Od", ".O", ".O", ".g", ".O"], 1, -2), at(["Od", "dd", "d.", "d.", "g.", "d."], 7, -2)]
+  down: [at([".O", "O.", "O.", "Oo", "od"], 0, 7), at(["d.", ".d", ".d", "od", "dl"], 8, 7)],
+  shake: [at([".O", "O.", "Oo", "od", ".."], 0, 7), at(["d.", ".d", "od", "dl", ".."], 8, 7)],
+  out: [at([".O", "O.", "Oo", "od"], -1, 7), at(["d.", ".d", "od", "dl"], 9, 7)]
 };
-const boyFrame = (name: string, legs: readonly string[], arms: Piece[], dy = 0) => make(name, at(BOY_BODY, 0, 5 + dy), ...arms, at(BOY_HEAD, 0, dy), at(legs, 0, 10));
+/** His glam: a neon mohawk standing up off the middle of his crown, one crest, two pixels high. */
+const BOY_MOHAWK = (dy: number) => mark([".N", "NN", "nN"], 4, dy - 2);
+const boyFrame = (name: string, legs: readonly string[], arms: Piece[], dy = 0) =>
+  make(name, at(BOY_BODY, 0, 6 + dy), ...arms.map(([r, x, y]): Piece => [r, x, (y ?? 0) + dy]), at(BOY_HEAD, 0, dy), at(legs, 0, 11), BOY_MOHAWK(dy));
 const BOY_FRAMES = {
   stand: boyFrame("the Angry Boy, standing", BOY_LEGS.stand, BOY_ARMS.down),
   breath: boyFrame("the Angry Boy, standing, breathing", BOY_LEGS.stand, BOY_ARMS.down, 1),
   stamp: [boyFrame("the Angry Boy, stamping 1", BOY_LEGS.left, BOY_ARMS.shake), boyFrame("the Angry Boy, stamping 2", BOY_LEGS.right, BOY_ARMS.shake, 1)],
-  rising: boyFrame("the Angry Boy, leaping", BOY_LEGS.tuck, BOY_ARMS.over),
-  falling: boyFrame("the Angry Boy, coming down", BOY_LEGS.stand, BOY_ARMS.over)
+  rising: boyFrame("the Angry Boy, leaping", BOY_LEGS.tuck, BOY_ARMS.out),
+  falling: boyFrame("the Angry Boy, coming down", BOY_LEGS.stand, BOY_ARMS.out)
 };
 
 function angryBoy(e: Enemy, t: number) {
@@ -631,17 +639,20 @@ const FIG_ARMS: Piece[][] = [
 /** Its legs walking: never together (stone walks stiffly), the near leg moved by the stride, the far the other way. */
 const STRIDE = [1, 2, -1, -2];
 const LICHEN = mix(V.granite, "#8f9a3a", 0.45);
+/** A woken figure's glam (order 27): shades, the arm in the level's second neon, the lens dark, the glint its open eye. */
+const GLAM_INK = { N: FOE_INK.N, n: FOE_INK.n, l: ENEMY.line, e: ENEMY.eye };
 const MATERIAL = {
   granite: { H: mix(V.graniteLight, WHITE, 0.3), L: V.graniteLight, B: V.granite, S: V.graniteShade, D: V.graniteDark, X: LICHEN, E: V.graniteDark },
   bronze: { H: mix(V.bronzeLight, WHITE, 0.25), L: V.bronzeLight, B: V.bronze, S: V.bronzeDark, D: mix(V.bronzeDark, INK, 0.3), X: V.patina, E: mix(V.bronzeDark, INK, 0.3) },
-  wokenGranite: { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, D: ENEMY.line, X: ENEMY.poison, E: ENEMY.eye },
-  wokenBronze: { H: ENEMY.orangeLight, L: ENEMY.orangeLight, B: ENEMY.orange, S: ENEMY.plumDark, D: ENEMY.line, X: ENEMY.poison, E: ENEMY.eye }
+  wokenGranite: { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, D: ENEMY.line, X: ENEMY.poison, E: ENEMY.eye, ...GLAM_INK },
+  wokenBronze: { H: ENEMY.orangeLight, L: ENEMY.orangeLight, B: ENEMY.orange, S: ENEMY.plumDark, D: ENEMY.line, X: ENEMY.poison, E: ENEMY.eye, ...GLAM_INK }
 };
 type Material = keyof typeof MATERIAL;
 /** A figure's frame: its material, its pose, its stride (0 standing), how far it leans forward, a breath down. */
 function figureFrame(m: Material, pose: number, stride: number, lean = 0, dy = 0): Frame {
   const legs = stride === 0 ? [at(FIG_LEG.near, 2, 11), at(FIG_LEG.far, 6, 11)] : [at(FIG_LEG.far, 6 - stride, 11), at(FIG_LEG.near, 2 + stride, 11)];
-  return frame(`${m} figure, pose ${pose}${stride ? `, striding ${stride}` : ""}${dy ? ", breathing" : ""}`, MATERIAL[m], ...legs, at(FIG_BODY, lean, 5 + dy), ...FIG_ARMS[pose].map(([rows, x = 0, y = 0]) => at(rows, x + lean, y + dy)), at(FIG_HEAD, lean, dy));
+  const glammed = m === "wokenGranite" || m === "wokenBronze" ? [mark(["nlle"], 2 + lean, 2 + dy)] : [];
+  return frame(`${m} figure, pose ${pose}${stride ? `, striding ${stride}` : ""}${dy ? ", breathing" : ""}`, MATERIAL[m], ...legs, at(FIG_BODY, lean, 5 + dy), ...FIG_ARMS[pose].map(([rows, x = 0, y = 0]) => at(rows, x + lean, y + dy)), at(FIG_HEAD, lean, dy), ...glammed);
 }
 /** Every figure the statues and ring-throwers show, made once: by material, pose, and stride (standing, or each step of four). */
 const FIGURES = new Map<string, Frame>();
@@ -662,10 +673,11 @@ function statueArt(e: Enemy, v: View) {
   const y = Math.round(e.y);
   const bronze = e.def.look === "bronze";
   const pose = e.def.c % 4;
-  if (e.calm) return paint(figureOf(bronze ? "bronze" : "granite", pose, 0), x, y - 16, e.dir, 10);
-  // Walking: four frames by the distance it covers (one, with reduced motion), leaning a pixel into the stride.
+  if (e.calm) return glam.mode === "marks" ? undefined : paint(figureOf(bronze ? "bronze" : "granite", pose, 0), x, y - 16, e.dir, 10);
+  // Walking: four frames by the distance it covers (one, with reduced motion), leaning a pixel into the stride; as the glamour stands.
   const k = view.reduced ? 0 : ((Math.floor((e.dir > 0 ? e.x : -e.x) / 3) % 4) + 4) % 4;
-  paint(figureOf(bronze ? "wokenBronze" : "wokenGranite", pose, STRIDE[k], 1), x, y - 16, e.dir, 10);
+  const f = glamFrame(figureOf(bronze ? "wokenBronze" : "wokenGranite", pose, STRIDE[k], 1));
+  if (f) paint(f, x, y - 16, e.dir, 10);
   if (!view.reduced) plain(() => R(x + (Math.floor(v.t / 4) % 2 ? 1 : 7), y - 1, 2, 1, V.gravelDark));
 }
 
@@ -692,7 +704,8 @@ function ringer(e: Enemy, t: number) {
   const up = windingUp(e, t);
   // Its breath between throws (order 23): down a pixel every other second, on its own clock.
   const b = up ? 0 : Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2;
-  paint(figureOf("wokenGranite", up ? 4 : 3, 0, 0, b), x, y - 18, e.dir, 10);
+  const f = glamFrame(figureOf("wokenGranite", up ? 4 : 3, 0, 0, b));
+  if (f) paint(f, x, y - 18, e.dir, 10);
   if (up) ring(e.dir > 0 ? x + 5 : x - 1, y - 24);
 }
 

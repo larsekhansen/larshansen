@@ -169,8 +169,10 @@ describe("every event has a sound, and neighbours are told apart", () => {
     a.calm = false;
     b.calm = true;
     feel.step(p, 2);
-    expect(heard.length).toBe(1);
+    // The grind of the one that wakes, and the glamour's sting as it turns on him (order 27).
+    expect(heard.length).toBe(2);
     expect(heard[0]).toEqual([...VOICES.wake]);
+    expect(heard[1]).toEqual([...VOICES.neon]);
   });
 
   const KIT = ["coin", "life", "gold", "fanfare", "flag", "bench", "pickup", "over", "door", "hiss", "stomp", "hurt"];

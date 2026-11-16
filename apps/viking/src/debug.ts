@@ -23,6 +23,13 @@ export function showErrors(help: HTMLElement) {
 
 /** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it; `all` is every station. */
 export function debugProgress(params: URLSearchParams): Progress | null {
+  // `?debug&told` (order 27): the story's opening card has been read, so the map is seen without it.
+  if (params.has("told"))
+    try {
+      localStorage.setItem("viking.told", "1");
+    } catch {
+      /* Nothing kept: the card shows. */
+    }
   if (!params.has("cleared") && !params.has("gold") && !params.has("clean")) return null;
   const list = (k: string) => (params.get(k) === "all" ? [...ORDER] : (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id)));
   return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
@@ -134,6 +141,12 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
     perf(frame, help);
     sent(params, help);
   }
+  // `?debug&steps=0&on=<event>[&skip=N]` alone (order 27): a picture of the moment, stepped to the event and N steps on.
+  if (params.has("on") && !params.has("perf"))
+    return void reach(params, (window as unknown as { __game: Game }).__game).then(
+      () => frame(),
+      (e) => (help.textContent = `on: ${e}`)
+    );
   if (params.has("where")) where(params.get("where") ?? "");
   // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
   if (params.has("grain"))

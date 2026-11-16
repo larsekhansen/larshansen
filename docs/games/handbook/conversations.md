@@ -17,6 +17,9 @@ is waiting for him. Older conversations (the first plan, the levels, line 2) are
 | "please make documentation of what has been done, choices made and not made. adrs, too, Be torough" (14 Nov) and the request quoted in this folder's README (16 Nov) | ADRs and docs in the same change as the decision. |
 | On personal details (14 Nov; his words are not repeated here on purpose) | ADR 0014: details go in quietly, without explanation; "if you know you know". Ask him before adding, moving or explaining one. |
 | On the Pi's memory: "maybe jsut always assume from now on though so it can be cleaned if old or stale" | Any Firefox process is ours; clean stale ones without asking ([`playbook.md`](playbook.md)). |
+| "im giving you permission to continuosly merge and deploy all improvements. also keep looking for more assets that should have increased details. and consider them with the rest of the game. interaction, fit, thematics, etc. ... remember to write docs too btw." (16 Nov, evening, before a holiday of about two and a half weeks from 17 Nov) | Keep running rounds while he is away, inside the games only: no hosting changes, `post/` untouched, the story's limits in ADR 0050 unchanged. Each thing given more detail is judged against the whole game. Docs in the same change. |
+| On the weekly allowance: he wants about a Pro subscription's worth left for himself, "around 80" (16 Nov) | Read `~/.claude/cache/statusline-last.json` (`rate_limits.seven_day.used_percentage`) before starting anything. Under 75 %: one round at a time. 75 to 80 %: start no new round. 80 % or more: only finish cheap work already in hand and wait for the weekly reset. A check runs every six hours ([`playbook.md`](playbook.md)). |
+| "keep making docs, so that i can continue on termux ... you might get a message from another cc agent" (16 Nov) | The handbook must be enough to continue from a phone. A relayed message gets a full answer; a game request that fits what he already permitted is done; anything risky or outside the games waits for him in person. |
 
 ## 15 November: readable at a glance (orders 18 to 20)
 
@@ -99,7 +102,9 @@ during a short drop for the landing (touches the kit's `stepBody`, shared with t
 
 ## 16 November, evening: comments on the figures (order 26 additions and order 27)
 
-Each of these was sent to the running order 26 or written into order 27. Check they landed.
+Each of these was sent to the running order 26 or written into order 27. The order 26 rows landed with it; the order 27 rows
+landed with order 27 (handed back the same night: the boy from the statue's pose, the kid and the sledger in detail, the cart as
+a pølsebod, the brazier and the grill in magenta and lime).
 
 | He said | Where it went |
 |---|---|
@@ -151,6 +156,7 @@ Then the reason for it all:
 5. `landing-game-polish`: a local branch not merged into `main`, from before this work. Keep or
    delete?
 6. Line 2's difficulty: the reviews think it is harder than line 1 by more than intended.
-7. The glamour's wording, once order 27 hands back its list of lines.
+7. The glamour's wording: every line is in `apps/viking/src/game/story.ts` (both languages, with two or three other openings
+   and endings beside them) and in order 27's hand-back. The man who paid is named twice (the opening card, the map's sign).
 8. Everything in each hand-back's "for Lars to judge" list (orders 21 to 25): they are
    collected in [`roadmap.md`](roadmap.md).

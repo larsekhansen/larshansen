@@ -16,7 +16,7 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook, drawLookShot } from "../render/looks";
-import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
@@ -24,6 +24,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { EDGE, edgesAt, tile as textured, CRATE, type Grain } from "../alive/ground";
+import { STORY } from "../game/story";
 
 // Level 10, rune N: Nabolaget. A winter night over Vålerenga and Kampen, the northern lights up,
 // snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
@@ -953,6 +954,8 @@ const ORANGE = [mix(WINTER.ploughDark, INK, 0.25), WINTER.ploughDark, WINTER.plo
 const PARKED = ORANGE.map((c) => mix(c, INK, 0.45));
 const GLASS_TONES = [WINTER.cab, mix(WINTER.cab, WHITE, 0.12), mix(WINTER.cab, WHITE, 0.3)];
 const SNOW_TONES = [SNOW.shade, SNOW.lying, mix(SNOW.lying, WHITE, 0.4)];
+/** Its stage lights under the glamour (order 27): the glamour's neons, never the "now" violet its tell is in. */
+const STAGE = [ENEMY.hotPink, ENEMY.lime, ENEMY.magenta, ENEMY.white];
 
 /** The plough: orange, its cab high and dark-windowed, beacons on the roof, the blade in front; snow thrown up as it charges; reeling when hit; its beacon out when beaten. */
 function ploughBody(p: Plough, v: View) {
@@ -1069,6 +1072,18 @@ function ploughBody(p: Plough, v: View) {
       if (fast) plain(() => span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)"));
     }
   }
+  // Its glam (order 27, ADR 0050): done up as a tour bus, a two-neon stripe along its side and a row of stage lights along
+  // its bonnet, chasing (all on with reduced motion); gone when it is beaten, and it is its orange again.
+  if (!beaten) {
+    span(-32, 25, y0 + 25, 1, ENEMY.hotPink);
+    span(-32, 25, y0 + 26, 1, ENEMY.lime);
+    const chase = view.reduced ? -1 : Math.floor(v.t / 6) % 4;
+    for (let k = 0; k < 6; k++) {
+      const c = STAGE[k % STAGE.length];
+      span(3 + k * 5, 6 + k * 5, y0 + 19, 1, INK);
+      span(4 + k * 5, 6 + k * 5, y0 + 20, 2, chase < 0 || (k + chase) % 4 !== 0 ? c : mix(c, INK, 0.5));
+    }
+  }
   // Headlights: lit, and a pool of light on the snow ahead of the blade.
   if (!beaten) {
     span(30, 33, y0 + 24, 3, LAMP);
@@ -1126,7 +1141,7 @@ const CAT_LEGS = [
   ["...o.....o.....", "....o...o......", ".....aaaa......"]
 ];
 const catFrame = (name: string, legs: number, dy: number, tail: readonly string[]) =>
-  frame(name, FOE_INK, [tail, 1, dy], [CAT_BODY, 2, 4 + dy], [CAT_HEAD, 11, dy], [CAT_LEGS[legs], 0, 9]);
+  frame(name, FOE_INK, [tail, 1, dy], [CAT_BODY, 2, 4 + dy], [CAT_HEAD, 11, dy], [CAT_LEGS[legs], 0, 9], mark(["lle"], 11, 3 + dy), mark(["N", "a", "N"], 10, 4 + dy));
 const CAT: Looks = {
   w: 15,
   h: 12,
@@ -1163,7 +1178,8 @@ export const NABOLAGET: LevelDef = {
   drum: 7,
   boss: ploughBoss(PLOUGH_DEF),
   bossWords: {
-    wake: { nb: "Brøytebilen våkner.\nDet siste mellom deg og døra hjem.", en: "The snow plough wakes.\nThe last thing between you and the door home." },
+    // Its arrival (order 27): the story's line for it (`game/story.ts`).
+    wake: { nb: `Brøytebilen våkner.\nDet siste mellom deg og døra hjem.\n${STORY.nb.boss.plough}`, en: `The snow plough wakes.\nThe last thing between you and the door home.\n${STORY.en.boss.plough}` },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
     beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
     // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.
