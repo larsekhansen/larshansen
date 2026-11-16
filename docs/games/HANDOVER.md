@@ -20,6 +20,7 @@ change it in the same commit.
 | What each implementer was told to build | [`orders/`](orders/), one file per order |
 | The plan for line 2 (six more levels, VIKING) | [`PLAN-LINE-2.md`](PLAN-LINE-2.md) |
 | The levels as built, with a screenshot of each | [`LEVELS.html`](LEVELS.html) (see the note below) |
+| What the planner knew: what Lars said and chose, what is next, how to run a round, lessons, resources | [`handbook/`](handbook/README.md) |
 | Hosting and deploy | [`../../infra/README.md`](../../infra/README.md), [`../../CLAUDE.md`](../../CLAUDE.md) |
 
 **About `LEVELS.html`.** It began as the plan (13 November) and was rewritten on 14 November to
