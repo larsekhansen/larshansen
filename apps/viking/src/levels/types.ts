@@ -83,6 +83,8 @@ export interface Surface {
   top: string;
   dot: string;
   fill: string;
+  /** How its top is laid in the textured set (order 26): grass (the default), sand, paving, gravel, moss, setts, snow, reed. */
+  kind?: "grass" | "sand" | "paving" | "gravel" | "moss" | "setts" | "snow" | "reed";
 }
 
 /** What the drawing gets to know each frame. */

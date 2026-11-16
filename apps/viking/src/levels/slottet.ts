@@ -1,10 +1,9 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
-import { kept } from "@larshansen/pixelkit/kept";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
-import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
+import { ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
@@ -13,9 +12,10 @@ import { climbed, drawGulls, drawOsloHills } from "../render/backdrop";
 /** Birds far off over the city: small, dark, as quiet as the far layer they fly in (scenery, ADR 0039). */
 const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
+import { tile as textured, type Grain } from "../alive/ground";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
-import { crowdFlag, person } from "../alive/things";
+import { HAND_WAVES, crowdFlag, flagFlying, handFlag, person } from "../alive/things";
 import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -206,11 +206,10 @@ export const ENEMIES: EnemyDef[] = [
 const P = PALETTE;
 const BASE = 26 * TILE;
 
-/** A Norwegian flag hanging from a short pole out from a wall, its top left at (x, y). */
+/** A Norwegian flag hanging from a short pole out from a wall, its top left at (x, y): the game's own, rippling (order 26, section 3b). */
 function wallFlag(x: number, y: number, t: number) {
   R(x - 3, y, 4, 1, METAL.flagpole);
-  flagCloth(x, y + 1);
-  if (!view.reduced && Math.floor(t / 14 + x) % 2) R(x + 12, y + 2, 1, 7, FLAG.red);
+  flagFlying(x, y, t, 14);
 }
 
 /** A bunch of balloons over a crate (the ledge): tugging at their strings as they are about to go, then up and away out of sight; let down again. */
@@ -360,7 +359,7 @@ function storting() {
   for (let x = cx - 100; x < cx + 100; x += 14) windowRow(x, x + 8, base - 56, 12, 14, FACADE.storting);
   // The lion on its plinth, small, and the flag over the hall.
   R(cx - 2, base - 128, 1, 24, METAL.flagpole);
-  flagCloth(cx - 1, base - 128);
+  flagFlying(cx - 1, base - 129, 0);
 }
 
 /** Spikersuppa's fountain in the middle of the pond. */
@@ -495,15 +494,9 @@ function palace(v: View) {
   }
   R(229 * TILE + 8, 2 * TILE, 1, 5 * TILE - 26, METAL.flagpole);
   R(229 * TILE + 7, 2 * TILE - 2, 3, 2, METAL.brass);
-  if (v.flourish === null) flagCloth(229 * TILE + 9, 2 * TILE);
+  if (v.flourish === null) flagFlying(229 * TILE + 9, 2 * TILE - 1, v.t);
 }
 
-/** The terrace's stone, in courses, under the palace. */
-function terraceStone(x: number, y: number) {
-  R(x, y, TILE, TILE, STONE.light);
-  for (let yy = y + 3; yy < y + TILE; yy += 5) R(x, yy, TILE, 1, STONE.base);
-  for (let yy = y; yy < y + TILE; yy += 5) R(x + ((yy / 5) % 2 ? 4 : 11), yy, 1, 3, STONE.base);
-}
 
 // The parade's children, the banners' bearers and the King's Guard, drawn as frames (order 24; way 3, ADR 0045): a ramp
 // to each material, lit from the top left; they walk in four frames by the distance they go, so their feet hold, and
@@ -513,7 +506,8 @@ const KID_DRESS = [PARADE.bunadRed, PARADE.bunadBlue, PARADE.bunadGreen, SWEATER
 /** A child, 11 x 17 from one pixel behind it: hair, a face lit at the front with an eye, the dress or sweater lit at the shoulder with the bunad's blouse, stockings and shoes, a hand on the flag's stick. */
 const KID_TOP = [".hHhh.", ".sSSe.", ".zsSS.", "..zs..", ".dbbDS", "ddDDDd", ".dDDd.", ".dDDd.", ".kddk."];
 const KID_LEGS = [[".k..k.", ".k..k.", "kk.kk."], ["..k.k.", "..k.k.", ".kkkk."], ["..kk..", "..kk..", "..kkk."], [".k...k", ".k...k", "kk..kk"]];
-const KID_FLAG = [["rWrrr", "WWWWW", "vBvvv", "rWrrr"], ["rWrrr.", "WWWWWW", "vBvvvv", "rWrr.r"].map((r) => r.slice(0, 5)), [".rWrr", "rWWWW", "vBvvv", "rWrr."]];
+/** The flag in a child's hand, 7 x 5, in three waves (order 26, section 3b: at 5 x 4 it read as stripes): Norway's, its cross nearer the stick. */
+const KID_FLAG = HAND_WAVES.map((dip) => handFlag(dip).map((row) => row.replace(/b/g, "v").replace(/R/g, "y").replace(/q/g, "Q")));
 const kidFrames = new Map<string, ReturnType<typeof frame>>();
 function kidFrame(i: number, step: number, wave: number) {
   const key = `${i % 5} ${i % 3} ${step} ${wave}`;
@@ -534,6 +528,8 @@ function kidFrame(i: number, step: number, wave: number) {
       k: INK,
       t: PARADE.pole,
       r: FLAG.red,
+      y: mix(FLAG.red, WHITE, 0.2),
+      Q: mix(FLAG.red, INK, 0.25),
       W: FLAG.white,
       v: FLAG.blue,
       B: FLAG.blue
@@ -785,21 +781,18 @@ function slopes() {
 }
 const UNDER = mix(GROUND.pavingFill, INK, 0.1);
 
-/** Ground under the street, and under slopes: setts in courses, darker the deeper. Drawn once a tile and copied (order 21). */
-function under(c: number, r: number, x: number, y: number) {
-  kept(`under ${c} ${r} ${y}`, x, y, TILE, TILE, () => underPixels(c, r, x, y));
-}
-
-function underPixels(c: number, r: number, x: number, y: number) {
+/** Ground under the street, and under slopes: setts in courses, darker the deeper (four steps of it), from the textured set (order 26). */
+const UNDERS: Grain[] = [0, 1, 2, 3].map((d) => {
+  const base = mix(UNDER, INK, d * 0.14);
+  return { name: `sl-under ${d}`, kind: "blocks", ramp: [mix(base, INK, 0.3), mix(base, INK, 0.2), base, mix(base, WHITE, 0.1)], h: 4, w: 6, off: 3, round: true, flat: true };
+});
+function under(c: number, r: number, x: number, y: number, map: TileMap) {
   const depth = Math.max(0, r * TILE - streetY(x + 8));
-  const base = mix(UNDER, INK, Math.min(0.5, depth / 120));
-  R(x, y, TILE, TILE, base);
-  for (let yy = 0; yy < TILE; yy += 4) {
-    R(x, y + yy + 3, TILE, 1, mix(base, INK, 0.25));
-    for (let xx = ((yy / 4 + r) % 2) * 3; xx < TILE; xx += 6) R(x + xx, y + yy, 1, 3, mix(base, INK, 0.2));
-  }
-  R(x + ((c * 7 + r * 5) % 11), y + ((c * 3 + r * 7) % 3) * 4 + 1, 4, 2, mix(base, WHITE, 0.1));
+  textured(UNDERS[Math.min(3, Math.round(depth / 40))], c, r, x, y, map, null);
 }
+/** The terrace's stone under the palace: dressed blocks in courses (order 26). */
+const TERRACE: Grain = { name: "sl-terrace", kind: "blocks", ramp: [STONE.dark, STONE.base, STONE.light, mix(STONE.light, WHITE, 0.15)], h: 8, w: 8, off: 4 };
+
 
 /** The flourish after the rune: the royal family steps out on the balcony and waves, and the flag runs up the palace's pole. */
 function flourish(age: number) {
@@ -821,7 +814,7 @@ function flourish(age: number) {
   });
   // The flag runs up the pole on the roof.
   const k = Math.min(1, age / 60);
-  flagCloth(229 * TILE + 9, Math.round(7 * TILE - 12 - (7 * TILE - 12 - 2 * TILE) * k));
+  flagFlying(229 * TILE + 9, Math.round(7 * TILE - 12 - (7 * TILE - 12 - 2 * TILE) * k) - 1, age);
 }
 
 /** The far hills, with the ski jump on the ridge, small: the next stop. */
@@ -867,9 +860,15 @@ function cityRoofs(t: number, him: number) {
     if (i % 2 === 0) {
       box(x + w / 2, ground - h - 12, 1, 12, METAL.flagpole);
       const wave = view.reduced ? 0 : Math.floor(t / 15 + i) % 2;
-      box(x + w / 2 + 1, ground - h - 12 + wave, 6, 4, FLAG.red);
-      box(x + w / 2 + 3, ground - h - 12 + wave, 1, 4, FLAG.white);
-      box(x + w / 2 + 1, ground - h - 10 + wave, 6, 1, FLAG.blue);
+      // Norway's flag, 7 x 5 (order 26, section 3b: at 6 x 4 it had no white either side of its blue): red, the white
+      // cross, the blue one in it, its upright nearer the pole.
+      const fx = x + w / 2 + 1;
+      const fy = ground - h - 12 + wave;
+      box(fx, fy, 7, 5, FLAG.red);
+      box(fx + 1, fy, 3, 5, FLAG.white);
+      box(fx, fy + 1, 7, 3, FLAG.white);
+      box(fx + 2, fy, 1, 5, FLAG.blue);
+      box(fx, fy + 2, 7, 1, FLAG.blue);
     }
   }
 }
@@ -971,20 +970,17 @@ export const SLOTTET: LevelDef = {
       barriers(DIG2[0], DIG2[1]);
       crowd(v.t);
     },
-    ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: UNDER }),
+    ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: UNDER, kind: "paving" }),
     tile(t, c, r, x, y, map: TileMap) {
       if (t === "U") {
-        under(c, r, x, y);
+        under(c, r, x, y, map);
         return true;
       }
       if (t === "#" && map.tileAt(c, r - 1) !== "." && map.tileAt(c, r - 1) !== "~") {
-        under(c, r, x, y);
+        under(c, r, x, y, map);
         return true;
       }
-      if (t === "P") {
-        terraceStone(x, y);
-        return true;
-      }
+      if (t === "P") return textured(TERRACE, c, r, x, y, map, null);
       return false;
     },
     ledges: {

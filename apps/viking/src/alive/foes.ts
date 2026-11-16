@@ -23,6 +23,7 @@ export const FOE_INK: Record<string, string> = {
   w: E.whiteShade,
   O: E.orangeLight,
   o: E.orange,
+  Y: E.amber,
   G: E.poisonLight,
   g: E.poison,
   p: E.pink,
@@ -79,14 +80,22 @@ const RAT_BODY = [
   "..dddmmmmmdmp",
   "...ddddddd..."
 ];
-const RAT_TAIL = { a: ["p..", ".pp", "..."], b: ["...", "ppp", "..."], c: ["...", ".pp", "p.."] };
+/**
+ * Its tail (order 26, section 3d: three pixels were a stub): one pixel thin, pink, as long as its body, from its rump down to
+ * the ground and trailing along it behind, its tip lifting, swinging a little over the run (11 x 4, from 9 left of its box).
+ */
+const RAT_TAIL = {
+  a: ["..........p", "pp.......p.", "..pp....p..", "....pppp..."],
+  b: ["..........p", ".........p.", "pp.....pp..", "..ppppp...."],
+  c: ["..........p", "........pp.", "p.....pp...", ".ppppp....."]
+};
 const RAT_LEGS = {
   stand: ["...p....p....", "..pp...pp...."],
   a: ["..p......p...", ".pp......pp.."],
   b: ["....p..p.....", "...pp.pp....."],
   c: ["...p.....p...", "..pp.....pp.."]
 };
-const rat = (name: string, tail: string[], legs: string[], nose = 0) => make(name, at(RAT_BODY, 0, 1), at(tail, 0, 4), at(legs, 0, 8), ...(nose ? [[["a"], 12, 5] as Piece] : []));
+const rat = (name: string, tail: string[], legs: string[], nose = 0) => make(name, at(RAT_BODY, 0, 1), at(tail, -9, 6), at(legs, 0, 8), ...(nose ? [[["a"], 12, 5] as Piece] : []));
 export const RAT: Looks = {
   w: 13,
   h: 10,

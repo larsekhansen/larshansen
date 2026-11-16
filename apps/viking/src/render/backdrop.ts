@@ -92,6 +92,8 @@ export function drawFjord(t: number, ground: number, lift = 0) {
 /** A spruce in three tiers, from its foot. */
 function spruce(x: number, foot: number, h: number, snow: boolean) {
   box(x, foot - 2, 1, 2, PLANTS.spruceTrunk);
+  // Its tip, a pixel over the top tier (order 26, section 3c).
+  box(x, foot - 3 - h, 1, 1, PLANTS.spruce);
   for (let i = 0; i < h; i++) {
     const half = Math.min(1 + Math.floor(i / 3), 4);
     box(x - half, foot - 2 - h + i, half * 2 + 1, 1, i % 3 === 0 && snow ? SNOW.lying : PLANTS.spruce);

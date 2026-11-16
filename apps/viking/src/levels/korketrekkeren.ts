@@ -17,6 +17,7 @@ import { FOE_INK, drawFoe } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
+import { tile as textured, type Grain } from "../alive/ground";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -238,6 +239,8 @@ export const KORKETREKKEREN_RULES = { COLS, ROWS };
 
 // --- Art ----------------------------------------------------------------------------------------------
 const P = PALETTE;
+/** The snow's top (order 26). */
+const CRUST: Grain = { name: "kt-crust", kind: "snow", ramp: [mix(K.runGroove, INK, 0.15), mix(K.slopeShade, K.slope, 0.5), K.slope, mix(K.slope, K.bank, 0.5), K.bank], accent: { sparkle: WHITE } };
 
 /** The view's floor follows the run down, a few rows under it. */
 const floorAt = (x: number) => Math.min(ROWS * TILE, (trackY(Math.max(X0, Math.min(RIDE.to - 1, x))) ?? (x < X0 ? TOP_ROW * TILE : END_ROW * TILE)) + 5 * TILE);
@@ -275,9 +278,12 @@ function spruces(factor: number, n: number, fade: number) {
     const halfOf = (k: number) => Math.floor((k / h) * 9) + 1 - (k % 6 === 5 ? 1 : 0);
     let most = 1;
     for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
-    stamp(`kt ${fade} ${h} ${dusk}`, x - most, foot - h - view.camY, most * 2 + 1, h + 4, () => {
-      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
-      R(most, h, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
+    // Its spire over the top tier (order 26, section 3c): a pixel of snow, a pixel of green; the piece two rows taller for it.
+    stamp(`kt ${fade} ${h} ${dusk}`, x - most, foot - h - 2 - view.camY, most * 2 + 1, h + 6, () => {
+      R(most, 0, 1, 1, mix(K.bank, green, 0.3 + dusk));
+      R(most, 1, 1, 1, green);
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k + 2, halfOf(k) * 2 + 1, 1, k % 6 === 0 ? mix(K.bank, green, 0.3 + dusk) : green);
+      R(most, h + 2, 2, 4, mix(PLANTS.spruceTrunk, LAND.farHills, fade));
     });
   }
 }
@@ -687,7 +693,7 @@ export const KORKETREKKEREN: LevelDef = {
         if (!view.reduced && speedAt(hx) >= 1.5) for (let k = 0; k < 3; k++) R(Math.round(hx) - 16 - k * 7 - ((v.t * 3) % 7), feet - 4 - k * 4, 6, 1, mix(K.bank, WHITE, 0.5));
       }
     },
-    ground: () => ({ top: K.bank, dot: K.runGroove, fill: K.slope }),
+    ground: () => ({ top: K.bank, dot: K.runGroove, fill: K.slope, kind: "snow" }),
     tile(t, c, r, x, y, map) {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.
@@ -696,13 +702,9 @@ export const KORKETREKKEREN: LevelDef = {
         snowBody(c, r, x, y);
         return true;
       }
-      R(x, y, TILE, TILE, K.slope);
-      if (top) {
-        R(x, y, TILE, 2, K.bank);
-        R(x + ((c * 5) % 11), y + 4, 3, 1, K.runGroove);
-        R(x + ((c * 3) % 9) + 4, y + 8, 2, 1, K.runGroove);
-        if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
-      }
+      // Its top from the textured set (order 26): a bright crust with sparkles, wind-packed layers, a blue shadow side.
+      textured(CRUST, c, r, x, y, map, null);
+      if (c % 5 === 2) R(x + 2, y - 3, 10, 3, K.bank);
       return true;
     },
     ledges: { "=": PORCH },

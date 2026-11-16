@@ -5,6 +5,8 @@ import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STAND, STONE, WHIT
 import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Art } from "../levels/types";
+import type { Board } from "@larshansen/pixelkit/text";
+import type { Door } from "@larshansen/pixelkit/doors";
 import { STAND_LEDGE, tileTop } from "./stand";
 
 // Every tile a level is built of, drawn from its map one tile at a time, so each thing is exactly
@@ -25,7 +27,21 @@ const hash = (c: number, r: number, k: number) => {
   return n - Math.floor(n);
 };
 
-/** The water near the bottom, and the weed in it. */
+/**
+ * The textured set (order 26): `alive/ground.ts`, which comes with `render/feel.ts`, draws the shared letters' tiles
+ * (and says so) and the one-way ledges' bodies under their paint. A level fetched later draws its own surfaces with it.
+ */
+export const TEXTURED: {
+  tile?(t: string, c: number, r: number, x: number, y: number, map: TileMap, art: Art, sky: Sky): boolean;
+  ledge?(x: number, y: number, c: number, first: boolean, last: boolean): void;
+  /** The level's earth going on down under the map, on a tall screen. */
+  deep?(c: number, r: number, x: number, y: number, map: TileMap, art: Art, sky: Sky): void;
+  /** Props at arm's length: the sign boards on their posts, the T-bane's entrance (says whether it drew it). */
+  boards?(boards: Board[]): void;
+  tbane?(d: Door): boolean;
+  door?(d: Door, frame: string): boolean;
+} = {};
+
 /** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */
 const DEEP = "#2b6a8e";
 const DEEPER = "#2a6384";
@@ -178,9 +194,13 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
     if (map.isOneWay(c, r) && map.tileAt(c, r - 1) !== t) tileTop(x, y, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t);
     return;
   }
-  if (t === "#") {
-    // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
-    if (underWater(map, c, r)) return bed(c, r, x, y, map);
+  if (TEXTURED.tile?.(t, c, r, x, y, map, art, sky)) {
+    if (t === "B" && !map.isSolid(c, r - 1)) tileTop(x, y, map.tileAt(c - 1, r) !== "B" || map.isSolid(c - 1, r - 1), map.tileAt(c + 1, r) !== "B" || map.isSolid(c + 1, r - 1));
+    return;
+  }
+  // Under water the ground is the bed, seen dimly; elsewhere the level's own surface.
+  if (t === "#" && underWater(map, c, r)) bed(c, r, x, y, map);
+  else if (t === "#") {
     const s = art.ground(c);
     groundFill(x, y, c, r, s.fill);
     if (!map.isSolid(c, r - 1)) groundTop(x, y, c, s.top, s.dot, sky.snow);
@@ -196,7 +216,12 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
   }
   else if (t === "L") line(x, y);
   // Every one-way ledge in the platform palette (order 18): the level's own look gives only its letter.
-  else if (art.ledges[t]) ledge(x, y, STAND_LEDGE, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t, sky.snow);
+  else if (art.ledges[t]) {
+    const first = map.tileAt(c - 1, r) !== t;
+    const last = map.tileAt(c + 1, r) !== t;
+    ledge(x, y, STAND_LEDGE, first, last, sky.snow);
+    TEXTURED.ledge?.(x, y, c, first, last);
+  }
 }
 
 /** Where he falls (order 18): the lip of a drop into deep water or a pit with no floor, a dark band down the bank's face. */
@@ -277,7 +302,7 @@ function drawBelow(map: TileMap, art: Art, sky: Sky) {
     // ground as its earth only, with no grass on top.
     const rr = map.tileAt(c, r - 1) === t ? r - 1 : r;
     for (let y = map.height; y < bottom; y += TILE) {
-      if (t === "#" && !underWater(map, c, r)) groundFill(c * TILE, y, c, rr, art.ground(c).fill);
+      if (t === "#" && !underWater(map, c, r)) TEXTURED.deep ? TEXTURED.deep(c, r + 1 + ((y - map.height) >> 4), c * TILE, y, map, art, sky) : groundFill(c * TILE, y, c, rr, art.ground(c).fill);
       else drawTile(t, c, rr, c * TILE, y, map, art, sky);
     }
   }

@@ -70,7 +70,7 @@ import { eyes, freshRings, outlined, ringCount, rings, ringsTo } from "./render/
 import { STAND_LEDGE, shiver, standTop } from "./render/stand";
 import type { Feel } from "./render/feel";
 import type { Enemy, Shot } from "./game/enemies";
-import { drawTiles, drawWater, standTops } from "./render/tiles";
+import { TEXTURED, drawTiles, drawWater, standTops } from "./render/tiles";
 import { airOf, backHazeOf, hazeOf } from "./render/haze";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
@@ -1506,7 +1506,7 @@ function render(alpha: number) {
   // The street's own backdrop, behind the lane: the lightest of the haze (order 22).
   pass(street, () => art.back(v), backHazeOf(scene.def));
   pass(street, () => {
-    drawBoards(scene.boards);
+    TEXTURED.boards ? TEXTURED.boards(scene.boards) : drawBoards(scene.boards);
     drawWater(p.map, p.t);
     drawTiles(p.map, art, sky, scene.def.underground);
   });

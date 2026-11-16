@@ -19,6 +19,8 @@ import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
 import { spedX } from "../alive/depth";
+import { tile as textured, type Grain } from "../alive/ground";
+import type { TileMap } from "@larshansen/pixelkit/tilemap";
 
 // Level 12, rune I: Vigelandsparken, by day, eerie and funny. Its one idea: the statues move only while
 // his back is turned. A statue walks toward him while he faces away from it, and is stone (harmless,
@@ -347,8 +349,12 @@ function bridge() {
   for (let y = FLOOR - 40; y < FLOOR; y += 10) R(bx, y, 12, 1, V.graniteShade);
 }
 
-/** A granite tile: the bridge's deck, the walls, the plateau. Faces in courses, the top lit. */
-function granite(c: number, r: number, x: number, y: number, map: { isSolid(c: number, r: number): boolean }) {
+/** Granite (order 26): the bridge's deck, the walls, the plateau, in courses of dressed blocks lit on their tops; the lower courses of a tall wall in shade, the soil's damp creeping up the last. */
+const GRANITES: Grain[] = [0, 1, 2, 3].map((d) => {
+  const base = mix(V.granite, V.graniteDark, d * 0.16);
+  return { name: `vg-granite ${d}`, kind: "blocks", ramp: [mix(V.graniteDark, INK, d * 0.1), mix(V.graniteShade, V.graniteDark, d * 0.25), base, mix(base, V.graniteLight, 0.6)], h: 16, w: 16, off: 8, kerb: [V.graniteLight, V.graniteLight, V.graniteShade] };
+});
+function granite(c: number, r: number, x: number, y: number, map: TileMap) {
   // Under the bridge's deck nothing is drawn but the pond and the arches.
   if (c >= 35 && c <= 82 && r > W) {
     if (r === W + 1) {
@@ -357,50 +363,36 @@ function granite(c: number, r: number, x: number, y: number, map: { isSolid(c: n
     }
     return;
   }
-  const top = !map.isSolid(c, r - 1);
-  // Lower courses of a tall wall are in shade, the soil's damp creeping up the last.
   let down = 0;
   while (down < 8 && map.isSolid(c, r - down - 1)) down++;
-  const base = mix((c + r) % 2 ? V.granite : mix(V.granite, V.graniteShade, 0.4), V.graniteDark, Math.min(0.5, down * 0.07));
-  R(x, y, TILE, TILE, base);
-  R(x, y + 15, TILE, 1, V.graniteShade);
-  R(x + ((r % 2) * 8), y, 1, TILE, V.graniteShade);
-  if (top) {
-    R(x, y, TILE, 2, V.graniteLight);
-    R(x, y + 2, TILE, 1, V.graniteShade);
-  }
+  const g = GRANITES[Math.min(3, Math.round(down / 2.5))];
+  textured(g, c, r, x, y, map, null);
+  const base = g.ramp[2];
   // The plateau's face: a band of reliefs, figures in a row, a course down from the top.
   if (c >= 182 && c <= 212 && r === W - 6) figure(x + 3, y + 15, c, c % 2 ? 1 : -1, { base: mix(base, V.graniteShade, 0.6), light: base, shade: V.graniteDark });
   if (r === W - 1 && c >= 182) R(x, y + 12, TILE, 4, mix(base, V.limeDark, 0.35));
 }
 
-/** The park's ground: a gravel path on top, lawn under its edge, then soil with stones and roots, darker deeper down. */
-function lawn(c: number, r: number, x: number, y: number, map: { isSolid(c: number, r: number): boolean }) {
+/** The park's ground (order 26, from the textured set): a gravel path on top, the lawn under its edge, then soil with stones and roots, darker deeper down. */
+const PATH: Grain = { name: "vg-path", kind: "earth", ramp: [V.limeDark, mix(V.lime, V.limeDark, 0.5), V.lime, V.limeShine], band: [V.gravelDark, mix(V.gravel, V.gravelDark, 0.5), V.gravel, mix(V.gravel, WHITE, 0.4)], top: "gravel", under: "lawn" };
+const SOILS: Grain[] = [1, 2, 3, 4].map((d) => {
+  const soil = mix(P.earth, INK, Math.min(0.35, d * 0.08));
+  return { name: `vg-soil ${d}`, kind: "earth", ramp: [mix(soil, INK, 0.3), mix(soil, INK, 0.15), soil, mix(soil, WHITE, 0.15)] };
+});
+function lawn(c: number, r: number, x: number, y: number, map: TileMap) {
   const depth = r - W;
   // The path's row is the path, under a wall too (the wall stands on it).
   const top = !map.isSolid(c, r - 1) || depth === 0;
   if (top) {
-    R(x, y, TILE, 4, V.gravel);
-    R(x, y, TILE, 1, mix(V.gravel, WHITE, 0.4));
-    R(x + ((c * 7) % 13), y + 1, 2, 1, V.gravelDark);
-    R(x + ((c * 3) % 11) + 2, y + 3, 1, 1, V.gravelDark);
-    R(x, y + 4, TILE, 12, V.lime);
-    for (let k = 0; k < 4; k++) R(x + ((c * 5 + k * 4) % 15), y + 5 + (k % 2), 1, 2, k % 2 ? V.limeShine : V.limeDark);
+    textured(PATH, c, r, x, y, map, null, 1);
     if (c % 9 === 4) {
       R(x + 6, y + 7, 2, 2, c % 2 ? V.roseLight : WHITE);
       R(x + 7, y + 9, 1, 2, V.roseLeaf);
     }
-    R(x, y + 14, TILE, 2, V.limeDark);
     return;
   }
-  const soil = mix(P.earth, INK, Math.min(0.35, depth * 0.08));
-  R(x, y, TILE, TILE, soil);
+  textured(SOILS[Math.min(4, Math.max(1, depth)) - 1], c, r, x, y, map, null, 0, depth);
   if (depth === 1) for (let k = 0; k < 3; k++) R(x + ((c * 5 + k * 6) % 14), y + k * 4, 1, 3, mix(V.limeDark, P.earth, 0.5));
-  if ((c * 13 + r * 7) % 5 === 0) {
-    R(x + ((c * 3) % 9) + 2, y + 5 + (r % 3) * 2, 4, 3, mix(STONE.base, soil, 0.35));
-    R(x + ((c * 3) % 9) + 2, y + 5 + (r % 3) * 2, 4, 1, mix(STONE.light, soil, 0.25));
-  }
-  if ((c + r) % 4 === 1) R(x + ((c * 11) % 13), y + ((r * 5) % 12), 2, 1, mix(soil, WHITE, 0.15));
 }
 
 /** The loose slab over the broken span, shaking while the boy is in the air; its iron brackets stay. */

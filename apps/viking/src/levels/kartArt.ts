@@ -2,7 +2,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { column } from "@larshansen/pixelkit/backdrop";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, COIN, DOORWAY, FACADE, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, COIN, DOORWAY, FACADE, FLAG, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
@@ -50,7 +50,12 @@ function skyline(i: number, x: number, g: number) {
     case 3: // Slottet: the palace, pale yellow, a flag on top
       s(-20, 40, 18, FACADE.palace);
       s(-2, 1, 28, METAL.flagpole);
-      R(x - 1, g - 28, 6, 4, HAT_RED);
+      // Norway's flag, 7 x 5 (order 26, section 3b: it was a red patch): the white cross, the blue in it, nearer the pole.
+      R(x - 1, g - 28, 7, 5, FLAG.red);
+      R(x, g - 28, 3, 5, FLAG.white);
+      R(x - 1, g - 27, 7, 3, FLAG.white);
+      R(x + 1, g - 28, 1, 5, FLAG.blue);
+      R(x - 1, g - 26, 7, 1, FLAG.blue);
       return;
     case 4: // Holmenkollen: the ski jump
       for (let k = 0; k < 30; k++) s(-14 + k, 1, Math.max(2, 34 - k), k < 3 ? STONE.light : mix(FACADE.stageTower, INK, 0.1));

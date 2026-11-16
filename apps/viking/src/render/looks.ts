@@ -146,21 +146,24 @@ const OWL: Looks = {
 // --- The wasp: 14 x 9, its head on the right (order 25: one more pass, larger and plainer at real size): a banded abdomen
 // pinched at its waist, its sting behind, a thorax lit on its back, a head with an eye and its jaws, legs hanging, wings a
 // pale blur over its back that beat on their own clock --------------------------------------------------------------------
+// Order 26 (section 3d): amber and black, not poison green: its abdomen in amber bands between black ones, shaded orange
+// underneath, the black thorax with an amber mark, an amber face under a black crown.
 const WASP_BODY = [
-  "..GlGl...GG...",
-  ".GGlGlG.GGGgG.",
-  "lGGlGlgggGggea",
-  ".gglglg..gggg.",
-  "..glgl...g.g.."
+  "..YlYl...ll...",
+  ".YYlYlY.lYlY..",
+  "lYYlYlOllOlYea",
+  ".OOlOlO..OllO.",
+  "..olol...o.o.."
 ];
 const WASP_LEGS = ["...l.l...l.l..", "..l...l..l..l."];
+// Its wings in the palette's white alone (order 26: the white's shade is greenish; a grey-white comes within 2 of the snow).
 const WASP_WING: Record<string, readonly string[]> = {
-  up: ["...WWw...", "..WWWWw..", "..wWWWWw.", "...wwWw.."],
-  high: [".........", ".WWWWWw..", "..wWWWWww", "...wwww.."],
-  level: [".........", ".........", "WWWWWWw..", ".wwwwwww."],
+  up: ["...WWW...", "..WWWWW..", "..WWWWWW.", "...WWWW.."],
+  high: [".........", ".WWWWWW..", "..WWWWWWW", "...WWWW.."],
+  level: [".........", ".........", "WWWWWWW..", ".WWWWWWW."],
   down: [".........", ".........", ".........", "........."]
 };
-const WASP_DOWN = [".wwWWWWw.", "..wwww..."];
+const WASP_DOWN = [".WWWWWWW.", "..WWWW..."];
 const wasp = (name: string, wing: string, dy = 0) =>
   make(name, at(WASP_BODY, 0, 3 + dy), at(WASP_LEGS, 0, 7 + dy), at(WASP_WING[wing], 3, dy), ...(wing === "down" ? [at(WASP_DOWN, 3, 6 + dy)] : []));
 const WASP: Looks = {

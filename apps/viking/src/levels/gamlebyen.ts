@@ -8,6 +8,7 @@ import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
+import { EDGE, tile as textured, type Grain } from "../alive/ground";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
@@ -718,23 +719,16 @@ function closing(v: View) {
   }
 }
 
-/** Old stone: courses, mortar, moss on top where it is open to the sky. */
-function oldStone(c: number, r: number, x: number, y: number, map: { isSolid(c: number, r: number): boolean }) {
-  R(x, y, TILE, TILE, (c + r) % 3 ? G.stone : mix(G.stone, G.stoneDark, 0.5));
-  for (let yy = y + ((r % 2) * 3) + 4; yy < y + TILE; yy += 6) R(x, yy, TILE, 1, G.stoneDark);
-  R(x + ((c * 5 + r * 3) % 12) + 1, y + 2, 1, 4, G.stoneDark);
-  if (!map.isSolid(c, r - 1)) {
-    R(x, y, TILE, 2, G.stoneLight);
-    if ((c * 7 + r) % 3 === 0) R(x + 3, y - 1, 5, 1, G.moss);
-  }
+/** Old stone (order 26, from the textured set): rubble in courses, mortar, a block split here and there, moss in the shadowed joints and on top where it is open to the sky. */
+const OLD_STONE: Grain = { name: "gb-stone", kind: "blocks", ramp: [G.stoneDark, mix(G.stone, G.stoneDark, 0.5), G.stone, G.stoneLight], h: 8, w: 16, off: 6, split: 0.45, kerb: [G.stoneLight, G.stoneLight], accent: { moss: G.moss, tuft: G.moss } };
+function oldStone(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(OLD_STONE, c, r, x, y, map, null);
 }
 
-/** The quay's planks on their piles over the dark water. */
-function quayPlank(c: number, x: number, y: number) {
-  R(x, y, TILE, 5, c % 2 ? G.plank : G.plankLight);
-  R(x, y, TILE, 1, mix(G.plankLight, WHITE, 0.2));
-  R(x, y + 5, TILE, 1, G.plankDark);
-  R(x + 15, y, 1, 5, G.plankDark);
+/** The quay's planks on their piles over the dark water (order 26: planks with grain and nails). */
+const QUAY_PLANKS: Grain = { name: "gb-planks", kind: "planks", ramp: [G.plankDark, G.plank, G.plankLight, mix(G.plankLight, WHITE, 0.2)], h: 5, rows: 5 };
+function quayPlank(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(QUAY_PLANKS, c, r, x, y, map, null, (!map.isSolid(c, r - 1) ? EDGE.TOP : 0) | (map.tileAt(c - 1, r) !== "J" ? EDGE.LEFT : 0) | (map.tileAt(c + 1, r) !== "J" ? EDGE.RIGHT : 0));
   if (c % 3 === 0) R(x + 6, y + 6, 4, TILE - 6, G.plankDark);
 }
 
@@ -1388,12 +1382,12 @@ export const GAMLEBYEN: LevelDef = {
     carrier(i, at) {
       longship(at.x, at.y, LONGSHIPS[i].w);
     },
-    ground: (c) => (c < 99 ? { top: G.grass, dot: G.grassDark, fill: G.earth } : { top: G.cobble, dot: G.cobbleDark, fill: G.earth }),
+    ground: (c) => (c < 99 ? { top: G.grass, dot: G.grassDark, fill: G.earth } : { top: G.cobble, dot: G.cobbleDark, fill: G.earth, kind: "setts" }),
     tile(t, c, r, x, y, map) {
       if (t === "~") return calmWater(c, r, x, y, map);
       if (t === "Z" || t === "z") stoneTile(c, r, x, y, t === "Z");
       else if (t === "R") oldStone(c, r, x, y, map);
-      else if (t === "J") quayPlank(c, x, y);
+      else if (t === "J") quayPlank(c, r, x, y, map);
       else return false;
       return true;
     },

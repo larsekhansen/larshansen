@@ -6,7 +6,7 @@ import type { Light } from "@larshansen/pixelkit/dark";
 import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
-import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
+import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
@@ -20,6 +20,7 @@ import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { plankDoor as plankDoor2, tile as textured, type Grain } from "../alive/ground";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -322,8 +323,10 @@ function midSpruces() {
     const halfOf = (k: number) => Math.floor(1 + (k % 6) * 0.7 + k * 0.2);
     let most = 0;
     for (let k = 0; k < h; k++) most = Math.max(most, halfOf(k));
-    stamp(`nm-mid ${h} ${i % 3}`, x - most, Math.round(base) - h - view.camY, most * 2 + 1, h, () => {
-      for (let k = 0; k < h; k++) R(most - halfOf(k), k, halfOf(k) * 2 + 1, 1, colour);
+    // Its spire over the top tier (order 26, section 3c): two pixels, one wide; the piece two rows taller for it.
+    stamp(`nm-mid ${h} ${i % 3}`, x - most, Math.round(base) - h - 2 - view.camY, most * 2 + 1, h + 2, () => {
+      R(most, 0, 1, 2, colour);
+      for (let k = 0; k < h; k++) R(most - halfOf(k), k + 2, halfOf(k) * 2 + 1, 1, colour);
     });
   }
 }
@@ -353,7 +356,7 @@ function nearTrunks() {
   }
 }
 
-/** A spruce in the street layer: a trunk, tiers of needles, lighter at each tier's top edge. */
+/** A spruce in the street layer: a trunk, tiers of needles, lighter at each tier's top edge, a spire over the top tier (order 26, section 3c). */
 function spruce(x: number, foot: number, h: number, seed: number) {
   const tiers = 5 + (seed % 3);
   const step = Math.floor((h - 12) / tiers);
@@ -363,16 +366,20 @@ function spruce(x: number, foot: number, h: number, seed: number) {
   // Its left edge, one more than its widest row for the dark tip at each tier's foot.
   const left = x - most - 1;
   if (!seen(left, x + most)) return;
-  stamp(`nm-spruce ${h} ${tiers}`, left - view.camX, foot - h - view.camY, most * 2 + 1, h, () => {
+  // The spire: a pixel, a pixel, two, over the top tier's four; the piece three rows taller for it.
+  const S = 3;
+  stamp(`nm-spruce ${h} ${tiers}`, left - view.camX, foot - h - S - view.camY, most * 2 + 1, h + S, () => {
     const cx = most + 1;
-    R(cx - 2, 10, 4, h - 10, FOREST.trunk);
-    R(cx - 2, 10, 1, h - 10, FOREST.trunkDark);
+    R(cx - 1, 0, 1, 2, FOREST.needlesLight);
+    R(cx - 1, 2, 2, 1, FOREST.needles);
+    R(cx - 2, S + 10, 4, h - 10, FOREST.trunk);
+    R(cx - 2, S + 10, 1, h - 10, FOREST.trunkDark);
     for (let k = 0; k < h - 12; k++) {
       const inTier = k % step;
       const half = halfOf(k);
       const col = inTier === 0 ? FOREST.needlesLight : inTier > step - 3 ? FOREST.needlesDark : FOREST.needles;
-      R(cx - half, k, half * 2, 1, col);
-      if (inTier === step - 1) R(cx - half - 1, k, 2, 1, FOREST.needlesDark);
+      R(cx - half, S + k, half * 2, 1, col);
+      if (inTier === step - 1) R(cx - half - 1, S + k, 2, 1, FOREST.needlesDark);
     }
   });
 }
@@ -477,7 +484,7 @@ function mound(v: View) {
   R(d.x + d.w + 3, top - 3, 3, d.h + 3, P.rock);
   R(d.x - 9, top - 6, d.w + 18, 6, edge);
   R(d.x - 8, top - 5, d.w + 16, 4, P.rock);
-  plankDoor(d, DOORWAY.wood);
+  plankDoor2(d, DOORWAY.wood);
   // The torch inside, through the door's crack, flickering in three frames (order 24; still with reduced motion).
   if (!d.open) flame(d.x + 7, d.bottom - 11, v.t);
 }
@@ -843,35 +850,16 @@ function overDark(v: View) {
 
 /** The forest's soil, darker than the city's earth: humus under the needles. */
 const SOIL = mix(P.earth, INK, 0.45);
-/** The forest floor: moss and needles on the top, roots, earth below. */
+/** The forest floor (order 26, from the textured set): moss and needles on its top, roots under it, earth with stones below. */
+const FLOOR: Grain = { name: "nm-floor", kind: "earth", ramp: [FOREST.trunkDark, FOREST.pathDark, SOIL, mix(SOIL, FOREST.path, 0.5)], band: [FOREST.pathDark, FOREST.path, FOREST.moss, FOREST.mossLight], top: "moss" };
 function floorTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  R(x, y, TILE, TILE, SOIL);
-  R(x + ((c * 7 + r * 3) % 12) + 1, y + ((c * 5 + r * 11) % 9) + 5, 2, 1, FOREST.pathDark);
-  if (m.isSolid(c, r - 1) || m.tileAt(c, r - 1) === "w") return;
-  R(x, y, TILE, 3, FOREST.moss);
-  R(x, y + 3, TILE, 1, FOREST.pathDark);
-  for (let i = 1; i < TILE; i += 3) R(x + i, y + ((i + c) % 3), 1, 1, (i + c) % 2 ? FOREST.mossLight : FOREST.path);
-  if ((c * 13) % 7 === 0) R(x + 2, y + 5, 10, 1, FOREST.trunkDark);
+  textured(FLOOR, c, r, x, y, m, null);
 }
 
-/** Granite: grey with lichen, moss on its top; a boulder's top corners rounded. */
+/** Granite (order 26): grey facets with lichen, moss on its top, a boulder's top corners rounded. */
+const GRANITE: Grain = { name: "nm-granite", kind: "rock", ramp: [STONE.mortar, STONE.dark, STONE.base, STONE.light], band: [FOREST.pathDark, FOREST.moss, FOREST.mossLight], accent: { moss: FOREST.lichen } };
 function graniteTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  const open = !m.isSolid(c, r - 1);
-  const l = open && m.tileAt(c - 1, r) !== "K" && !m.isSolid(c - 1, r) ? 1 : 0;
-  const rr = open && m.tileAt(c + 1, r) !== "K" && !m.isSolid(c + 1, r) ? 1 : 0;
-  if (l || rr) {
-    R(x + l * 3, y, TILE - l * 3 - rr * 3, 1, STONE.base);
-    R(x + l, y + 1, TILE - l - rr, 2, STONE.base);
-    R(x, y + 3, TILE, TILE - 3, STONE.base);
-  } else R(x, y, TILE, TILE, STONE.base);
-  R(x + ((c * 5) % 9), y + 4 + ((r * 3) % 7), 6, 3, STONE.light);
-  R(x + ((c * 3 + r) % 10), y + 2 + ((c + r * 5) % 10), 3, 2, FOREST.lichen);
-  if (m.tileAt(c - 1, r) !== "K") R(x, y, 1, TILE, STONE.dark);
-  if (m.tileAt(c + 1, r) !== "K") R(x + TILE - 1, y, 1, TILE, STONE.dark);
-  if (!m.isSolid(c, r - 1)) {
-    R(x + 1, y, TILE - 2, 3, FOREST.moss);
-    R(x + 3, y + 3, 5, 1, FOREST.moss);
-  }
+  textured(GRANITE, c, r, x, y, m, null);
 }
 
 /** The bog: dark water under sedge, a tuft of bog cotton now and then. */

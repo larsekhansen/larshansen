@@ -1,6 +1,6 @@
 import { box, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
-import { keptStrips, stamp } from "@larshansen/pixelkit/kept";
+import { keptStrips } from "@larshansen/pixelkit/kept";
 import { osloClock } from "@larshansen/pixelkit/oslo";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
@@ -12,6 +12,7 @@ import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
+import { tile as textured, type Grain } from "../alive/ground";
 import type { BellLedge, LevelDef, View } from "./types";
 
 // Level 3, rune R: Rådhuset, the City Hall's two brick towers. Its idea is the bell on a beat, and
@@ -474,24 +475,15 @@ function lantern(c: number, r: number, x: number, y: number, snow: boolean) {
   }
 }
 
-/** The quay's granite under the paving: blocks in courses eight pixels high, joints offset, a block a shade off here and there. Each tile drawn once and copied. */
-function quayStone(c: number, r: number, x: number, y: number) {
-  const n = Math.sin(c * 12.9898 + r * 78.233) * 43758.5453;
-  const k = Math.floor((n - Math.floor(n)) * 6);
-  const shift = (c + r) % 2;
-  stamp(`rh-quay ${k} ${shift}`, x - view.camX, y - view.camY, TILE, TILE, () => {
-    const face = mix(MASONRY.gatePost, INK, 0.04);
-    const joint = mix(MASONRY.gatePost, INK, 0.2);
-    R(0, 0, TILE, TILE, face);
-    if (k === 0) R(0, 0, TILE, 8, mix(MASONRY.gatePost, WHITE, 0.08));
-    if (k === 1) R(0, 8, TILE, 8, mix(MASONRY.gatePost, INK, 0.1));
-    R(0, 7, TILE, 1, joint);
-    R(0, 15, TILE, 1, joint);
-    R(shift ? 3 : 11, 0, 1, 7, joint);
-    R(shift ? 11 : 3, 8, 1, 7, joint);
-    if (k === 2) R(6, 3, 3, 1, mix(MASONRY.gatePost, WHITE, 0.2));
-  });
-}
+/** The quay's granite under the paving: blocks in courses eight pixels high, joints offset, a block a shade off here and there, each lit on its top (order 26: from the textured set). */
+const QUAY_STONE: Grain = {
+  name: "rh-quay",
+  kind: "blocks",
+  ramp: [mix(MASONRY.gatePost, INK, 0.2), mix(MASONRY.gatePost, INK, 0.1), mix(MASONRY.gatePost, INK, 0.04), mix(MASONRY.gatePost, WHITE, 0.08), mix(MASONRY.gatePost, WHITE, 0.2)],
+  h: 8,
+  w: 16,
+  off: 8
+};
 
 /** The passage through the west tower: dark, with a lamp on its wall. */
 function passage() {
@@ -635,13 +627,10 @@ export const RADHUSET: LevelDef = {
       fountain(v.t);
       for (const x of LAMPS) lampPool(x, SQUARE);
     },
-    ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: MASONRY.gatePost }),
+    ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: MASONRY.gatePost, kind: "paving" }),
     tile(t, c, r, x, y, map, sky) {
       // Under the promenade's paving, the quay's granite in courses (order 20: it was one plain fill).
-      if (t === "#" && map.isSolid(c, r - 1) && map.tileAt(c, r - 1) === "#") {
-        quayStone(c, r, x, y);
-        return true;
-      }
+      if (t === "#" && map.isSolid(c, r - 1) && map.tileAt(c, r - 1) === "#") return textured(QUAY_STONE, c, r, x, y, map, sky);
       if (t !== "N") return false;
       lantern(c, r, x, y, sky.snow);
       return true;

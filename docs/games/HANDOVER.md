@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, and by order 25's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, and by order 26's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -78,6 +78,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-16 | Lars, in a conversation he saved: the game is "not that engaging"; the research record (`research/2026-11-16-reference-games.md`) on three open-source games. He chooses the grain: way 3, "do way 3 like you suggested. for the pixels" (ADR 0045). Order 23: frames for him and every enemy (him, the first three levels' enemies, the skilling and the cheese drawn pixel by pixel; order 24 the rest of line 1), a shadow under everything that moves, a receding plane on the water and snow, more speeds, something in front of him now and then, the edge's forgiveness from 6 to 10 steps, the alert mark (ADR 0046 to 0048) | `orders/23-alive.md`, branch `alive` |
 | 2026-11-16 | Order 24: line 1 redrawn (way 3, ADR 0045): every enemy of line 1, both its bosses, the sheep, the moose, the parade, what is thrown and the small things every level has drawn as per-pixel frames; water lapping at quays, flames that flicker, the serpent's breath and daze, things in front a person knows at a glance, far birds and smoke; three things moved a tile where the edge's longer forgiveness made a late jump fire in the air (ADR 0048 kept, its cost put to Lars) | `orders/24-line-one-redrawn.md`, branch `line-one-redrawn` |
 | 2026-11-16 | Order 25: line 2 redrawn (way 3): line 2's own kinds, the sea serpent in every state, the heron, line 2's shots, and what a walk through all sixteen levels and the map still found in rectangles (him lying back on the sledge, the sledge, the crowds at Slottet and Holmenkollen, Bjørvika's welder); one more pass on the wasp, the flying pigeon, the track rat and the kid's hat; the troll's lit side after dusk | `orders/25-line-two-redrawn.md`, branch `line-two-redrawn` |
+| 2026-11-16 | Order 26: the ground under him (way 3 for what he stands on and walks past). Every surface of the lane drawn from one textured set: three to five tones of one hue a material, four variants by a hash of the place, a lit top, dark ends, a shadowed foot, moss, salt, tufts, rivets, sparkles; drawn once and copied, the paint on top as before; sign boards, the T-bane's entrance, plank doors, bollards, gravestones, Vålerenga's slate roofs (ADR 0049) | `orders/26-the-ground.md`, branch `the-ground` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -186,7 +187,9 @@ build after (check which build each preview serves) and compare bytes. Every lev
 9,800: the ground under the street kept, its slopes only on the screen); every level is now under 15,000 at every place
 of its walk, the heaviest Bjørvika (14,600) and Vålerenga (14,300) (`tools/review/o21/perf.md`). Order 23 drew fewer at every
 place (copied coins, the fjords as planes of copied strips, Bjørvika's most 14,391 to 9,497; the heaviest now Holmenkollen,
-11,618: `tools/review/o23/perf.md`). Next in line: the far
+11,618: `tools/review/o23/perf.md`). Order 26 drew fewer again at every place (a solid tile is one copy of a textured piece where it
+was two to eighteen rectangles; Rådhuset's most 11,105 to 3,758; the heaviest now Holmenkollen, 10,141, copies up to 1,361 a frame at
+Stortinget: `tools/review/o26/perf.md`). Next in line: the far
 layers' one rectangle per column, colours set on every rectangle, the five stacked canvases, Stortinget's escalator
 shafts (3,600 of its worst place). No one has measured on a real
 phone: the numbers are the Pi's software renderer.
@@ -250,7 +253,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
+- **First script**: 59.06 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
+  `render/furniture.ts`; the set itself is in `feel`'s file, which grew from 20.6 to 28.0 kB gzipped). 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
   and the sledge's in `feel`'s). 58.86 kB gzipped after order 24 (the small things' drawings to `feel`'s file). 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
   worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
   with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
@@ -456,6 +460,37 @@ Order 25 (`orders/25-line-two-redrawn.md`; DESIGN's "Frames, shadows and depth";
   after dusk +78, the serpent's +11 to +19 (`tools/review/o25/perf.md`).
 - **Unplayed**: none of it has been seen at speed or on a phone.
 
+## Order 26: the ground under him
+
+Order 26 (`orders/26-the-ground.md`, ADR 0049, DESIGN's "The ground under him"; numbers in `apps/viking/tools/review/o26/`). What to know:
+- **The textured set** is `apps/viking/src/alive/ground.ts` (in `feel`'s file). A level names its materials (`Grain`) in its
+  own file and draws its tiles with `tile`; the shared letters, the bed under water, the one-way ledges' bodies under the
+  paint and the ground under the map on a tall screen (the level's own ground, buried) come through `TEXTURED` in
+  `render/tiles.ts`. Until `feel`'s file has come the shared letters are drawn as before; the levels fetched later import
+  the set with it.
+- **Props at arm's length** drawn as pieces: the sign boards on their posts (every level), the T-bane's entrance (every level),
+  the plank doors (Langkaia's shed, Nordmarka's mound), the bollards on the quays, Vålerenga's gravestones and its slate roofs,
+  the crates, Stortinget's ticket gates and signal cabinet. Not done: lamp posts, railings, ladders, the panel doors (the kiosk,
+  the home), the sauna, the sheds' plank walls, the rowing boat, Holmenkollen's padded rail (`o26/before.md` lists them).
+- **Held by tests**: every solid tile is the set's but the named that are not ground (`alive/ground.test.ts`, with reasons);
+  every material keeps the band; no new tone nearer a role than before (`render/palette.test.ts`, against
+  `alive/ground-before.json`). Korketrekkeren's snow body and Østensjøvannet's bed are still order 20's own pixel drawings (with
+  their stones, roots, shells), named in the test.
+- **Looking at it**: `tools/glance/groundsheet.ts` and `groundsheet.py` (every surface, outside the page, before and after);
+  `tools/glance/ground.ts` (each level's ground against the roles and the figures).
+- **Added the same evening (sections 3b to 3d, Lars's words in the order):** every small Norwegian flag is Norway's at a glance
+  (the hand flags of the parade's children and of the crowds at Slottet and Holmenkollen 7 x 5 in two or three waves, `handFlag`
+  and `HAND_WAVES` in `alive/things.ts`; the far blocks' roof flags and the map's palace flag 7 x 5; the wall flags, Stortinget's,
+  the palace's, Holmenkollen's tower's and Akershus's the game's own rippling cloth, `flagFlying`); every spruce ends in a spire
+  (Holmenkollen's path, near row and old spruce had a flat top tier five wide, the tip never drawn; Nordmarka's street and middle
+  rows, Korketrekkeren's, the far shore's over the fjord; the map's already had tips); the rat's tail is as long as its body,
+  trailing and swinging (the track rat's streams behind rising and flies out to the side falling, so its head stays where he lands);
+  the wasp is amber and black (`ENEMY.amber`, a body colour added to the enemy palette, passing the palette test as every body does:
+  no exception named), its wings the palette's white (a grey-white came within 2 of the snow).
+- **The risk the order named** (textured ground hides figures): the surfaces' local contrast rose from 2.4 to 3.6 (mean L*
+  difference between neighbouring pixels), the figures' dark line against the ground is 30 to 85; where it rose most is in
+  `o26/after.md`. Unplayed: none of it has been seen at speed or on a phone.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -556,6 +591,8 @@ reorder this list.
 - A new rule: pure, in `game/play.ts` or a small module beside it, with a test on a made-up
   level in `rules.test.ts`.
 - Words: Norwegian and English, both, in the dry voice ([ADR 0016](../adr/0016-two-languages-dry-voice.md)).
+- Drawing ground or a wall: from the textured set (DESIGN's "The ground under him", ADR 0049): a material in the level's file,
+  its tiles drawn with `tile`; the test names any solid tile that is not.
 - Drawing anything new: draw it as per-pixel frames with a ramp of tones and a lit side, with the frames DESIGN's "Frames,
   shadows and depth" asks of it (ADR 0045, 0046); for a level that keeps its boxes, draw it for the kept box and pass `fit`. Its colours come from its role (an enemy from `ENEMY`, never in its red, outlined by the page;
   what moves and does not hurt outlined in `ROLES.calm`; what he stands on with the yellow paint, and nothing else in

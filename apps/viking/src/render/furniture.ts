@@ -1,6 +1,7 @@
 import type { Door } from "@larshansen/pixelkit/doors";
 import { R, mix, wdisc } from "@larshansen/pixelkit/paint";
 import { DOORWAY, FACADE, INK, PAINT, WHITE } from "@larshansen/pixelkit/palette";
+import { TEXTURED } from "./tiles";
 
 // Pieces more than one level draws: painted plank walls, and the T-bane entrance at each level's start.
 
@@ -17,7 +18,7 @@ export function walls(x: number, top: number, w: number, color: string, line: st
  * blue sign with its white T on a post beside it. The door back to the line map.
  */
 export function tbaneDoor(d: Door | undefined) {
-  if (!d) return;
+  if (!d || TEXTURED.tbane?.(d)) return;
   const top = d.bottom - d.h;
   R(d.x - 3, top + 8, d.w + 6, d.h - 8, FACADE.libraryFrame);
   R(d.x - 3, top + 8, d.w + 6, 1, mix(FACADE.libraryFrame, WHITE, 0.4));

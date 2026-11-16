@@ -6,6 +6,8 @@ import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
+import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
+import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
@@ -322,14 +324,11 @@ function near() {
 }
 
 /** A tower's face below its open floors: floors of glass at dusk, a slab every three rows, some windows lit. */
-function facade(c: number, r: number, x: number, y: number, top: number) {
+function facade(c: number, r: number, x: number, y: number, top: number, map: TileMap) {
   const depth = r - top;
-  R(x, y, TILE, TILE, depth < 2 ? S.concrete : S.glass);
   if (depth < 2) {
-    // The slab under the open floor and the floor below it, not glazed yet: board-marked concrete, tie holes, formwork left on.
-    R(x, y + 10, TILE, 1, S.concreteDark);
-    R(x + (c % 2) * 8, y + 4, 1, 6, S.concreteDark);
-    for (let k = 3; k < TILE; k += 4) R(x + k, y + 13 + (k % 2), 1, 1, S.concreteDark);
+    // The slab under the open floor and the floor below it, not glazed yet: board-marked concrete, tie holes, formwork left on (order 26: from the textured set).
+    textured(CONCRETE, c, r, x, y, map, null, edgesAt(map, c, r, null) & (EDGE.LEFT | EDGE.RIGHT));
     if (depth === 1) R(x, y, TILE, 1, mix(S.concrete, S.concreteDark, 0.5));
     if ((c + depth) % 3 === 0) {
       R(x + 4, y + 2, 8, 6, S.formwork);
@@ -338,37 +337,32 @@ function facade(c: number, r: number, x: number, y: number, top: number) {
     }
     return;
   }
+  textured(GLAZED, c, r, x, y, map, null, 0);
   if (depth % 3 === 2) {
     R(x, y, TILE, 3, S.concreteDark);
     return;
   }
-  R(x + 7, y, 1, TILE, S.glassDark);
-  R(x, y + 1, TILE, 1, mix(S.glass, S.glassLight, 0.4));
   if ((c * 7 + r * 3) % 5 === 0) light(x + 1, y + 3, 5, 9, "soft");
   if ((c * 3 + r * 5) % 7 === 0) light(x + 9, y + 3, 6, 9, "window");
 }
 
-/** Concrete: a slab's top at an open edge, rebar sticking out where the next floor will join. */
-function concrete(c: number, r: number, x: number, y: number, map: { isSolid(c: number, r: number): boolean; tileAt(c: number, r: number): string }) {
+/** Concrete (order 26): a slab's top at an open edge, the formwork's boards in its face, tie holes; rebar sticking out where the next floor will join. */
+const CONCRETE: Grain = { name: "bj-concrete", kind: "concrete", ramp: [S.concreteDeep, S.concreteDark, S.concrete, S.concreteLight], kerb: [S.concreteLight, S.concreteLight, mix(S.concrete, WHITE, 0.15)] };
+const GLAZED: Grain = { name: "bj-glass", kind: "blocks", ramp: [S.glassDark, S.glassDark, S.glass, mix(S.glass, S.glassLight, 0.4)], h: 16, w: 8, off: 0, flat: true, smooth: true };
+function concrete(c: number, r: number, x: number, y: number, map: TileMap) {
   const top = !map.isSolid(c, r - 1);
   if (!top) {
     // Its body: which tower, and how far down.
     let t = r;
     while (t > 0 && map.tileAt(c, t - 1) === "U") t--;
-    return facade(c, r, x, y, t);
+    return facade(c, r, x, y, t, map);
   }
-  R(x, y, TILE, TILE, S.concrete);
-  R(x, y, TILE, 2, S.concreteLight);
-  R(x, y + 2, TILE, 1, mix(S.concrete, WHITE, 0.15));
-  R(x, y + 12, TILE, 1, S.concreteDark);
-  for (let k = 3; k < TILE; k += 7) R(x + ((c * 5 + k) % 14), y + 6, 2, 1, S.concreteDark);
+  textured(CONCRETE, c, r, x, y, map, null, edgesAt(map, c, r, null) & ~(EDGE.FOOT | EDGE.UNDER));
   if (!map.isSolid(c - 1, r)) {
-    R(x, y, 1, TILE, S.concreteDark);
     R(x - 3, y + 6, 3, 1, S.rebar);
     R(x - 3, y + 10, 3, 1, S.rebar);
   }
   if (!map.isSolid(c + 1, r)) {
-    R(x + TILE - 1, y, 1, TILE, S.concreteDark);
     R(x + TILE, y + 6, 3, 1, S.rebar);
     R(x + TILE, y + 10, 3, 1, S.rebar);
   }
@@ -386,27 +380,16 @@ function interiors() {
   for (const c of SHAFTS) room(c * TILE, (c + 5) * TILE, F2 * TILE, ROWS * TILE + 400);
 }
 
-/** The quay's granite: big slabs, a joint between each, worn lighter on top. */
-function granite(c: number, r: number, x: number, y: number, map: { isSolid(c: number, r: number): boolean }) {
-  R(x, y, TILE, TILE, S.granite);
-  if (!map.isSolid(c, r - 1)) {
-    R(x, y, TILE, 2, S.graniteLight);
-    R(x, y + 2, TILE, 1, mix(S.granite, WHITE, 0.12));
-  }
-  if (c % 2 === 0) R(x, y, 1, TILE, S.graniteDark);
-  R(x, y + 15, TILE, 1, S.graniteDark);
-  R(x + ((c * 7 + r * 3) % 11) + 2, y + 6 + (r % 3) * 2, 3, 1, S.graniteDark);
+/** The quay's granite (order 26, from the textured set): big slabs, a joint between each, worn lighter on top, lit on their tops. */
+const GRANITE: Grain = { name: "bj-granite", kind: "blocks", ramp: [S.graniteDark, mix(S.granite, S.graniteDark, 0.5), S.granite, S.graniteLight], h: 16, w: 32, off: 16, kerb: [S.graniteLight, S.graniteLight, mix(S.granite, WHITE, 0.12)] };
+function granite(c: number, r: number, x: number, y: number, map: TileMap) {
+  textured(GRANITE, c, r, x, y, map, null);
 }
 
-/** A steel girder in red primer: its flanges, its web, the bolts along it. */
-function girder(c: number, x: number, y: number) {
-  R(x, y, TILE, 3, S.steelLight);
-  R(x, y, TILE, 1, mix(S.steelLight, WHITE, 0.3));
-  R(x, y + 3, TILE, 10, S.steelDark);
-  R(x + 2, y + 3, TILE - 4, 10, S.steel);
-  R(x, y + 13, TILE, 3, S.steelLight);
-  R(x, y + 15, TILE, 1, S.steelDark);
-  if (c % 2 === 0) for (const k of [5, 9]) R(x + 1, y + k, 1, 1, S.steelDark);
+/** A steel girder in red primer (order 26): its flanges lit, its web in shade, the bolts along it. */
+const GIRDER: Grain = { name: "bj-girder", kind: "girder", ramp: [S.steelDark, S.steel, S.steelLight] };
+function girder(c: number, x: number, y: number, map: TileMap) {
+  textured(GIRDER, c, Math.floor(y / TILE), x, y, map, null, 0);
 }
 
 /** The safety net under the bay: orange mesh, sagging a little in the middle. */
@@ -737,7 +720,7 @@ export const BJORVIKA: LevelDef = {
     tile(t, c, r, x, y, map) {
       if (t === "#") granite(c, r, x, y, map);
       else if (t === "U") concrete(c, r, x, y, map);
-      else if (t === "I") girder(c, x, y);
+      else if (t === "I") girder(c, x, y, map);
       else if (t === "N") net(c, x, y);
       else return false;
       return true;

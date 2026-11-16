@@ -23,6 +23,7 @@ import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { EDGE, edgesAt, tile as textured, CRATE, type Grain } from "../alive/ground";
 
 // Level 10, rune N: Nabolaget. A winter night over Vålerenga and Kampen, the northern lights up,
 // snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
@@ -357,19 +358,36 @@ function houses() {
 }
 const BLOCK = "#9a9488";
 
-/** A roof over a house, along its ramp: slate, its edge, and snow lying on it. */
+/** A roof over a house, along its ramp: slate in courses under snow lying on it, a sparkle in the snow (order 26: drawn once and copied, in strips). */
+const SLATE = [mix(ROOF.slate, INK, 0.4), mix(ROOF.slate, INK, 0.2), ROOF.slate, mix(ROOF.slate, WHITE, 0.1)];
 function roofOf(c0: number, c1: number, eave: number, rise: number) {
   const x0 = c0 * TILE - 3;
   const x1 = (c1 + 1) * TILE + 3;
   const ey = eave * TILE;
   const mid = (c0 * TILE + (c1 + 1) * TILE) / 2;
   const half = mid - c0 * TILE;
-  for (let x = x0; x < x1; x++) {
-    const y = Math.round(ey - rise * TILE * Math.max(0, 1 - Math.abs(x - mid) / half));
-    R(x, y + 3, 1, ey - y + 1, ROOF.slate);
-    R(x, y, 1, 3, SNOW.lying);
-    R(x, y + 3, 1, 1, SNOW.shade);
-  }
+  const top = ey - rise * TILE;
+  keptStrips(`roof ${c0}`, x0, top, x1 - x0, ey - top + 1, () => {
+    for (let x = x0; x < x1; x++) {
+      const y = Math.round(ey - rise * TILE * Math.max(0, 1 - Math.abs(x - mid) / half));
+      R(x, y, 1, 3, (x * 7 + y * 3) % 23 === 0 ? WHITE : SNOW.lying);
+      R(x, y + 3, 1, 1, SNOW.shade);
+      for (let yy = y + 4; yy <= ey; yy++) {
+        // Courses of slates three rows high from the eave up, each slate six wide, every other course moved by three:
+        // the lower edge of a course in shade, a joint between slates, a slate a shade lighter or darker here and there.
+        const up = ey - yy;
+        const course = Math.floor(up / 3);
+        const within = up % 3;
+        const sx = (x + (course % 2) * 3 + 600) % 6;
+        const n = Math.sin(Math.floor((x + (course % 2) * 3) / 6) * 12.9898 + course * 78.233) * 43758.5453;
+        const shade = n - Math.floor(n);
+        const tone = within === 0 ? 1 : sx === 0 ? 0 : shade < 0.2 ? 1 : shade > 0.85 ? 3 : within === 2 ? 3 : 2;
+        R(x, yy, 1, 1, SLATE[tone]);
+      }
+      // Snow caught on a course's edge now and then.
+      if ((x * 13 + eave) % 41 === 0) R(x, y + 4 + ((x * 5) % 3) * 3, 2, 1, SNOW.shade);
+    }
+  });
 }
 
 /** A chimney: brick with a cap, snow on it; its smoke rises, and over the fourth house's it rises fast and thick (the warm air). */
@@ -912,23 +930,19 @@ const PI_PIN = mix(METAL.brass, INK, 0.2);
 const PI_CHIP = mix(METAL.lampPost, INK, 0.1);
 const PI_PORT = mix(PAINT.trim, INK, 0.3);
 
-/** A snow bank: packed snow, rounded at its ends. */
+/** A snow bank (order 26): packed snow in layers, rounded at its ends, its shadow side blue. */
+const BANK: Grain = { name: "nb-bank", kind: "snow", ramp: [mix(WINTER.bankShade, INK, 0.12), WINTER.bankShade, mix(WINTER.bank, WINTER.bankShade, 0.4), WINTER.bank, SNOW.lying], accent: { sparkle: WHITE } };
 function bankTile(c: number, x: number, y: number, m: TileMap) {
-  const l = m.tileAt(c - 1, Math.floor(y / TILE)) !== "B" ? 3 : 0;
-  const r = m.tileAt(c + 1, Math.floor(y / TILE)) !== "B" ? 3 : 0;
-  R(x + l, y, TILE - l - r, 2, WINTER.bank);
-  R(x, y + 2, TILE, TILE - 2, WINTER.bank);
-  R(x, y + 10, TILE, 6, WINTER.bankShade);
+  const r = Math.floor(y / TILE);
+  textured(BANK, c, r, x, y, m, null, edgesAt(m, c, r, null) & ~(EDGE.UNDER | EDGE.FOOT));
 }
 
-/** The street: cobbles under packed snow, a rut or two. */
+/** The street (order 26, from the textured set): packed snow with sparkles on its top, the cobbles under it in courses. */
+const GRAVESTONE: Grain = { name: "nb-grave", kind: "blocks", ramp: [MASONRY.churchWindow, MASONRY.churchTower, MASONRY.church, mix(MASONRY.church, SNOW.lying, 0.2)], h: 16, w: 16, kerb: [SNOW.lying, SNOW.lying, SNOW.shade], cols: [3, 12] };
+const STREET: Grain = { name: "nb-street", kind: "earth", ramp: [mix(GROUND.cobbleFill, INK, 0.35), mix(GROUND.cobbleFill, INK, 0.15), GROUND.cobbleFill, GROUND.cobble], band: [SNOW.shade, mix(SNOW.shade, SNOW.lying, 0.5), SNOW.lying], top: "snow", under: "setts", accent: { sparkle: WHITE } };
 function streetTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  R(x, y, TILE, TILE, GROUND.cobbleFill);
-  R(x + ((c * 7 + r * 3) % 12) + 1, y + ((c * 5 + r * 11) % 9) + 5, 3, 2, GROUND.cobble);
-  if (m.isSolid(c, r - 1)) return;
-  R(x, y, TILE, 4, SNOW.lying);
-  R(x, y + 4, TILE, 1, SNOW.shade);
-  if ((c * 5) % 7 === 0) R(x + 3, y + 1, 7, 1, SNOW.shade);
+  textured(STREET, c, r, x, y, m, null);
+  if (!m.isSolid(c, r - 1) && (c * 5) % 7 === 0) R(x + 3, y + 1, 7, 1, SNOW.shade);
 }
 
 // The plough's tones (order 24; way 3, ADR 0045): its orange from a deep shade under the chassis to a lit top edge, the
@@ -1227,16 +1241,13 @@ export const NABOLAGET: LevelDef = {
         return true;
       }
       if (t === "W") {
-        if (c === 167 || c === 174) {
-          R(x + 1, y + 2, TILE - 2, TILE - 2, P.crate);
-          R(x + 1, y + 2, TILE - 2, 1, P.crateTop);
-          R(x, y, TILE, 2, SNOW.lying);
-        }
+        // Two crates in the yard, snow on their lids (order 26: the crate's boards); the rest of the wall is the yard's.
+        if (c === 167 || c === 174) textured(CRATE, c, r, x, y, m, { snow: true } as never, edgesAt(m, c, r, { snow: true } as never) & (EDGE.TOP | EDGE.SNOWY));
         return true;
       }
       if (t === "K") {
-        R(x + 3, y + 3, TILE - 6, TILE - 3, MASONRY.church);
-        R(x + 3, y + 1, TILE - 6, 3, SNOW.lying);
+        // A gravestone behind the church (order 26): dressed stone, lit on its left, snow on its top, its cross cut in.
+        textured(GRAVESTONE, c, r, x, y, m, null, EDGE.TOP | EDGE.LEFT | EDGE.RIGHT);
         R(x + 6, y + 7, 4, 1, MASONRY.churchWindow);
         R(x + 7, y + 5, 1, 5, MASONRY.churchWindow);
         return true;

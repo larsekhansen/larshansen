@@ -12,7 +12,8 @@ import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
-import { crowdFlag, person } from "../alive/things";
+import { crowdFlag, flagFlying, person } from "../alive/things";
+import { tile as textured, type Grain } from "../alive/ground";
 import type { LevelDef, View } from "./types";
 
 // Level 5, rune H: Holmenkollen. Winter, snowing. Off the train at the top, along a path where the
@@ -209,35 +210,26 @@ export const ENEMIES: EnemyDef[] = [
 const P = PALETTE;
 /** Snow under the landing hill's slope: one even colour, so the tiles under it do not show as steps. */
 const UNDER_SLOPE = mix(SNOW.lying, ICY.groove, 0.4);
+/** Under the inrun's slope: packed snow, in layers (order 26). */
+const UNDER_SLOPES: Grain = { name: "hk-under", kind: "snow", ramp: [mix(UNDER_SLOPE, ICY.steelShade, 0.45), mix(UNDER_SLOPE, ICY.steelShade, 0.3), UNDER_SLOPE] };
 
-/** Snow: a white top, blue shadow bands, and the odd stone showing through, deeper down. */
-function snowTile(c: number, r: number, x: number, y: number, top: boolean) {
-  const depth = Math.min(1, (r - surfaceRow(c)) / 6);
-  const base = mix(SNOW.lying, ICY.groove, 0.35 + depth * 0.45);
-  R(x, y, TILE, TILE, base);
-  if (top) {
-    R(x, y, TILE, 3, WHITE);
-    R(x, y + 3, TILE, 1, SNOW.shade);
-    R(x + ((c * 5) % 11), y + 1, 3, 1, ICY.iceLight);
-  }
-  for (let yy = 6; yy < TILE; yy += 6) R(x, y + yy, TILE, 1, mix(base, ICY.steelShade, 0.25));
-  if ((c * 7 + r * 3) % 5 === 0) R(x + ((c * 3 + r) % 10) + 2, y + 8, 4, 3, mix(STONE.base, base, 0.4));
+/** Snow (order 26, from the textured set): wind-packed layers, a white crust with sparkles on top, its blue shadow side, darker deeper down in four steps. */
+const SNOWS: Grain[] = [0, 1, 2, 3].map((d) => {
+  const base = mix(SNOW.lying, ICY.groove, 0.35 + (d / 3) * 0.45);
+  return { name: `hk-snow ${d}`, kind: "snow", ramp: [mix(base, ICY.steelShade, 0.45), mix(base, ICY.steelShade, 0.25), base, WHITE], accent: { sparkle: ICY.iceLight } };
+});
+function snowTile(c: number, r: number, x: number, y: number, m: TileMap) {
+  const d = Math.min(3, Math.max(0, Math.round(((r - surfaceRow(c)) / 6) * 3)));
+  textured(SNOWS[d], c, r, x, y, m, null, undefined, d);
+  if ((c * 7 + r * 3) % 5 === 0 && d > 0) R(x + ((c * 3 + r) % 10) + 2, y + 8, 4, 3, mix(STONE.base, SNOWS[d].ramp[2], 0.4));
 }
 function surfaceRow(c: number) {
   for (let r = 0; r < ROWS; r++) if (at(c, r) === "#" || at(c, r) === "I") return r;
   return ROWS;
 }
 
-/** Ice: a glassy blue sheet with bright streaks on top, over snow. */
-function iceTile(c: number, x: number, y: number) {
-  R(x, y, TILE, TILE, mix(SNOW.lying, ICY.groove, 0.4));
-  R(x, y, TILE, 8, ICY.ice);
-  R(x, y, TILE, 1, ICY.iceLight);
-  R(x + ((c * 7) % 9), y + 2, 6, 1, ICY.iceLight);
-  R(x + ((c * 5 + 4) % 11), y + 5, 3, 1, ICY.iceLight);
-  R(x, y + 8, TILE, 1, ICY.iceDark);
-  R(x + ((c * 3) % 13), y + 3, 1, 4, ICY.iceDark);
-}
+/** Ice: a glassy blue sheet with streaks of light and a crack, over snow (order 26). */
+const ICE_SHEET: Grain = { name: "hk-ice", kind: "ice", ramp: [ICY.iceDark, mix(ICY.ice, ICY.iceDark, 0.4), ICY.ice, ICY.iceLight], accent: { snow: mix(SNOW.lying, ICY.groove, 0.4), snowShade: ICY.groove } };
 
 /** A red rail: the padded fence of a ski course, as high as a tile, that stops a slide. */
 function railTile(x: number, y: number) {
@@ -264,18 +256,33 @@ function bigSpruce() {
   const x = 82 * TILE + 8;
   const top = 3 * TILE;
   const foot = 13 * TILE;
+  const needles = mix(PLANTS.spruce, ICY.steelDark, 0.15);
+  spire(x, top, needles);
   for (let y = top; y < foot - 8; y++) {
     const k = y - top;
     const half = Math.min(26, Math.floor(2 + (k % 22) * 0.9 + k * 0.08));
-    const color = k % 22 === 0 ? SNOW.lying : k % 22 === 1 ? SNOW.shade : mix(PLANTS.spruce, ICY.steelDark, 0.15);
+    const color = k % 22 === 0 ? SNOW.lying : k % 22 === 1 ? SNOW.shade : needles;
     R(x - half, y, half * 2 + 1, 1, color);
   }
   R(x - 2, top + 8, 5, foot - top - 8, PLANTS.spruceTrunk);
   R(x - 2, top + 8, 1, foot - top - 8, mix(PLANTS.spruceTrunk, WHITE, 0.15));
 }
 
+/**
+ * A spruce's spire over its top tier (order 26, section 3c: its top was a flat tier five wide): a single pixel, a pixel,
+ * then three, snow lying on the tip; the tier under it, five wide, starts with its snow as before.
+ */
+function spire(x: number, top: number, green: string, snow: string = SNOW.lying, put = R) {
+  put(x, top - 4, 1, 1, snow);
+  put(x, top - 3, 1, 1, green);
+  put(x - 1, top - 2, 3, 1, green);
+  put(x - 1, top - 1, 3, 1, green);
+  put(x, top - 2, 1, 1, snow);
+}
+
 /** A spruce weighed down with snow, from its foot. */
 function spruce(x: number, foot: number, h: number) {
+  spire(x, foot - h, PLANTS.spruce);
   R(x - 1, foot - 4, 3, 4, PLANTS.spruceTrunk);
   for (let i = 0; i < h - 4; i++) {
     const half = Math.floor(2 + (i % 7) * 0.8 + i * 0.22);
@@ -310,11 +317,8 @@ function jump(v: View) {
   for (let x = tx + 6; x < tx + 6 * TILE - 6; x += 6) R(x, 5 * TILE + 3, 1, 7, ICY.steelShade);
   R(tx + 4, 5 * TILE + 3, 6 * TILE - 8, 1, ICY.steelShade);
   R(tx + 6 * TILE / 2, 2 * TILE, 1, 3 * TILE + 3, METAL.flagpole);
-  R(tx + 6 * TILE / 2 + 1, 2 * TILE, 13, 9, FLAG.red);
-  R(tx + 6 * TILE / 2 + 4, 2 * TILE, 3, 9, FLAG.white);
-  R(tx + 6 * TILE / 2 + 1, 2 * TILE + 3, 13, 3, FLAG.white);
-  R(tx + 6 * TILE / 2 + 5, 2 * TILE, 1, 9, FLAG.blue);
-  R(tx + 6 * TILE / 2 + 1, 2 * TILE + 4, 13, 1, FLAG.blue);
+  // The flag on the tower: the game's own, in the mountain's wind (order 26, section 3b).
+  flagFlying(tx + 6 * TILE / 2 + 1, 2 * TILE - 1, v.t, 5);
   // The hut: red planks, a lit window, the start gate.
   R(tx, 14 * TILE + 5, 6 * TILE, 2 * TILE - 5, PAINT.red);
   for (let x = tx + 3; x < tx + 6 * TILE; x += 4) R(x, 14 * TILE + 5, 1, 2 * TILE - 5, PAINT.redLine);
@@ -506,6 +510,7 @@ function nearSpruces() {
     const c = Math.floor(wx / TILE);
     const foot = surfaceRow(Math.min(COLS - 1, c)) * TILE + 6;
     const h = 30 + ((i * 17) % 22);
+    spire(x, foot - h, mix(PLANTS.spruce, LAND.headland, 0.3), SNOW.far, box);
     box(x - 1, foot - 4, 3, 4, PLANTS.spruceTrunk);
     for (let k = 0; k < h - 4; k++) {
       const half = Math.floor(2 + (k % 7) * 0.8 + k * 0.22);
@@ -597,21 +602,14 @@ export const HOLMENKOLLEN: LevelDef = {
     front(v) {
       outrunCrowd(v.t, v.flourish !== null);
     },
-    ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: SNOW.shade }),
+    ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: SNOW.shade, kind: "snow" }),
     tile(t, c, r, x, y, m: TileMap) {
       if (t === "#") {
-        snowTile(c, r, x, y, !m.isSolid(c, r - 1));
+        snowTile(c, r, x, y, m);
         return true;
       }
-      if (t === "I") {
-        iceTile(c, x, y);
-        return true;
-      }
-      if (t === "V") {
-        R(x, y, TILE, TILE, UNDER_SLOPE);
-        if ((c * 7 + r * 3) % 4 === 0) R(x + ((c * 5 + r) % 11), y + ((c + r * 7) % 12), 3, 1, mix(UNDER_SLOPE, ICY.steelShade, 0.3));
-        return true;
-      }
+      if (t === "I") return textured(ICE_SHEET, c, r, x, y, m, null);
+      if (t === "V") return textured(UNDER_SLOPES, c, r, x, y, m, null, 0, 2);
       if (t === "H") {
         railTile(x, y);
         return true;

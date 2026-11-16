@@ -4,23 +4,20 @@ As of the evening of 16 November 2026. Change this file in the same change that 
 
 ## In flight
 
-**Order 26, the ground** (branch `the-ground`, in the main checkout, not yet handed back when
-this was written). Textured ground and props, plus three additions sent while it ran: small
-Norwegian flags unambiguous (3b), spires on Holmenkollen's spruces (3c), longer rat tails and
-wasps amber-and-black (3d). Its order file is committed by its implementer as
-`../orders/26-the-ground.md`; the additions were sent as messages and it was told to append
-them. On hand-back: review as in [`playbook.md`](playbook.md), and look hardest at the order's
-named risk, that textured ground makes figures harder to see.
+**Order 27, the neon invaders** (branch `the-neon-invaders`), started after order 26 merged
+(PR #73). See "Next" below for what it is and how to split it if it comes back partly done.
 
-If you arrive and find `the-ground` unmerged with no agent running: read its last commits and
-`apps/viking/tools/review/o26/`, run the review script, and either finish it or merge what is
-sound.
+Order 26 (the ground, small flags, spruce spires, rat tails, amber wasps; ADR 0049) is live.
+What it left: lamp posts, railings, panel doors, the sauna rafts, sheds' plank walls, the
+rowing boat and carriers' bodies are not textured; the ground was not added to order 22's
+saturation and value band test; it reports the stone at Gamlebyen, Ekeberg and Akershus as
+busier than before (`apps/viking/tools/review/o26/after.md`): ask Lars whether figures still
+stand out there on a phone.
 
 ## Next
 
 **Order 27, the neon invaders** ([`../orders/27-the-neon-invaders.md`](../orders/27-the-neon-invaders.md),
-[ADR 0050](../../adr/0050-the-glamour.md)). Written, not started. Start it after order 26 is
-merged: both touch the enemies' drawings. It is large (a neon system, glam marks on every
+[ADR 0050](../../adr/0050-the-glamour.md)). Written on 16 November and started that night. It is large (a neon system, glam marks on every
 enemy, a natural look for each, the stomp that breaks the glamour, the story, scenery, sound,
 four redraws Lars asked for by name). If it comes back partly done, the natural split is:
 (a) the look and the stomp, (b) the story, scenery and sound.

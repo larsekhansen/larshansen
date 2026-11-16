@@ -256,6 +256,15 @@ const WIND: Record<string, { rate: number; still?: boolean }> = {
   gamlebyen: { rate: 10 }
 };
 
+/**
+ * Norway's flag as the game flies it, 13 x 9 (with its ripple's rows, 14), on a wall's pole, a roof's or a tower's (order 26,
+ * section 3b: in place of the kit's flat one): its top left at (x, y) as the kit's `flagCloth(x, y + 1)` put its cloth;
+ * rippling at `rate` steps a frame, still with reduced motion.
+ */
+export function flagFlying(x: number, y: number, t: number, rate = 12) {
+  stamp(CLOTH.out[view.reduced ? 0 : Math.floor((t + x) / rate) % 3], x, y);
+}
+
 /** A flag on its pole (a checkpoint), folded at its foot until he raises it, then run up and flying in its level's wind. */
 export function flag(f: Flag, raisedAt: number | null, steps: number, level: string) {
   const top = f.bottom - POLE.h;
@@ -369,12 +378,27 @@ export function person(x: number, y: number, coat: string, hair: string, hat = f
   }
   stamp(f, x, y);
 }
-const CROWD_FLAG_INK: Record<string, string> = { p: PARADE.pole, R: lit(FLAG.red, 0.2), r: FLAG.red, W: FLAG.white, b: FLAG.blue };
-/** A small flag on its stick, waved: the cloth out (and up a pixel) or dipping, 6 x 8 from the stick's top. */
-const CROWD_FLAGS = [
-  frame("a waved flag", CROWD_FLAG_INK, [["pRWrr.", "pWbWW.", "prWrr.", "p.....", "p.....", "p.....", "p.....", "p....."]]),
-  frame("a waved flag, dipping", CROWD_FLAG_INK, [["p.....", "pRW...", "pWbWr.", "prWbWr", "p..Wrr", "p.....", "p.....", "p....."]])
+const CROWD_FLAG_INK: Record<string, string> = { p: PARADE.pole, R: lit(FLAG.red, 0.2), r: FLAG.red, q: shade(FLAG.red, 0.25), W: FLAG.white, b: FLAG.blue };
+/**
+ * A hand flag's cloth, 7 x 5 (order 26, section 3b: at 4 x 3 it was a red patch with a white mark): Norway's, so it cannot
+ * be anything else: from the stick, red, white, the blue upright, white, then three red; from the top, red, white, the blue
+ * arm, white, red; the cross's arms running the whole width and height, its upright nearer the stick. Lit in the corner by
+ * the stick, its free end a shade darker. `dip`: how far each column hangs below the top (a wave).
+ */
+export const HAND_FLAG = ["RWbWrrr", "WWbWWWW", "bbbbbbb", "WWbWWWW", "rWbWrrq"];
+export function handFlag(dip: readonly number[]): string[] {
+  const rows = Array.from({ length: 5 + Math.max(...dip) }, () => [..."......."]);
+  HAND_FLAG.forEach((row, y) => [...row].forEach((ch, x) => (rows[y + dip[x]][x] = ch)));
+  return rows.map((r) => r.join(""));
+}
+/** The waves a hand flag is shown in: out, its free end dipping, a ripple. */
+export const HAND_WAVES: readonly (readonly number[])[] = [
+  [0, 0, 0, 0, 0, 0, 0],
+  [0, 0, 0, 0, 1, 1, 2],
+  [0, 0, 1, 1, 1, 0, 0]
 ];
+/** A small flag on its stick, waved: the cloth out or dipping, 8 x 8 from the stick's top (the stick down its left). */
+const CROWD_FLAGS = HAND_WAVES.slice(0, 2).map((dip, k) => frame(k ? "a waved flag, dipping" : "a waved flag", CROWD_FLAG_INK, [Array(8).fill("p")], [handFlag(dip), 1, 0]));
 export function crowdFlag(x: number, y: number, k: number) {
   stamp(CROWD_FLAGS[k], x, y);
 }

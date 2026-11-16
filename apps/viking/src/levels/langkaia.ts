@@ -11,6 +11,7 @@ import { keepBoxes, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { drawLongship } from "../render/ship";
 import { tbaneDoor, walls } from "../render/furniture";
+import { TEXTURED } from "../render/tiles";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -266,7 +267,7 @@ function shed(x0: number, color: string, line: string, door: Door | undefined) {
   walls(x0, 14 * TILE + 5, 6 * TILE, color, line, WATER);
   R(x0 - 2, 14 * TILE + 5, 6 * TILE + 4, 1, INK);
   pane(x0 + 10, 14 * TILE + 10, 8, 6);
-  if (door) plankDoor(door, PAINT.trim);
+  if (door && !TEXTURED.door?.(door, PAINT.trim)) plankDoor(door, PAINT.trim);
 }
 
 /** Verkstedet's window: the 3D printer at work on a small longship, a spool of the same orange on the shelf. */
@@ -582,10 +583,11 @@ export const LANGKAIA: LevelDef = {
       perchedGull(v, Math.abs(v.him.x - PERCH.x) < 56 && Math.abs(v.him.y - PERCH.y) < 40);
     },
     front: (v) => mooring(v.t),
-    ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth }),
+    ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth, kind: "sand" }),
     // The stern, solid under its deck: drawn as the deck, the hull behind it.
     tile(t, _c, _r, x, y, _map, sky) {
-      if (t !== "H") return false;
+      // With the textured set here (order 26) the stern is its deck's planks, drawn with the shared letters.
+      if (t !== "H" || TEXTURED.tile) return false;
       ledge(x, y, WOOD_LEDGE, false, false, sky.snow);
       return true;
     },

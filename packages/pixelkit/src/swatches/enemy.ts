@@ -14,7 +14,12 @@ export const plumLight = "#f07ccb";
 /** Orange: foxes, squirrels, owls, breasts, beaks, a brazier's flames. */
 export const orange = "#ff7a1a";
 export const orangeLight = "#ff9a30";
-/** Poison green: what slithers, hops and flies at him; a wasp's bands, a scooter. */
+/**
+ * Amber: a wasp's bands between its black ones (order 26: in poison green a wasp read as green). The nearest to a wasp's
+ * yellow that stands off every field, the red outline, the paint's yellow and every other role (`tools/glance/tones.ts`).
+ */
+export const amber = "#ffb020";
+/** Poison green: what slithers, hops and flies at him; a scooter. */
 export const poison = "#9ae62a";
 export const poisonLight = "#d8ff8a";
 /** Pink: feet, tails, tongues, a crab's shell, a snowball's shadow. */

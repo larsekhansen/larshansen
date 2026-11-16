@@ -14,6 +14,7 @@ import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
 
 // Level 6, rune A: Akerselva. A summer's day, down the river from Nydalen to Vaterland, the only
 // level that goes downhill all the way: three terraces, each a stretch of river with a fall at its
@@ -844,35 +845,13 @@ function grassTop(c: number, x: number, y: number) {
   }
 }
 
-/** Rock: wet stone by the river, rounded where it meets the air, moss on its top, blue-dark where it is under water, in strata where it is a cliff. */
+/** Rock (order 26, from the textured set): wet stone by the river in facets, the cracks between them dark, grass and leaves on its top, lichen on it, blue-dark where it is under water. */
+const WET_ROCK: Grain = { name: "ak-rock", kind: "rock", ramp: [RIVER.wetStoneDark, mix(RIVER.wetStone, RIVER.wetStoneDark, 0.5), RIVER.wetStone, RIVER.wetStoneLight], band: [P.grassDark, PLANTS.leaves, P.grass], accent: { moss: STONE.moss } };
+const SUNK_ROCK: Grain = { name: "ak-rock under", kind: "rock", ramp: [RIVER.wetStoneDark, mix(RIVER.wetStone, P.waterDeep, 0.5), mix(mix(RIVER.wetStone, RIVER.wetStoneLight, 0.5), P.waterDeep, 0.5), mix(RIVER.wetStoneLight, P.waterDeep, 0.5)] };
 function rockTile(c: number, r: number, x: number, y: number, m: TileMap) {
-  const h = (k: number) => {
-    const n = Math.sin(c * 12.9898 + r * 78.233 + k * 37.719) * 43758.5453;
-    return n - Math.floor(n);
-  };
   const water = (cc: number, rr: number) => m.tileAt(cc, rr) === "~";
   const under = (water(c - 1, r) && water(c - 1, r - 1)) || (water(c + 1, r) && water(c + 1, r - 1));
-  const base = under ? mix(RIVER.wetStone, P.waterDeep, 0.5) : RIVER.wetStone;
-  const open = !m.isSolid(c, r - 1) && !water(c, r - 1);
-  const leftOpen = m.tileAt(c - 1, r) !== "K" && !m.isSolid(c - 1, r);
-  const rightOpen = m.tileAt(c + 1, r) !== "K" && !m.isSolid(c + 1, r);
-  if (open) {
-    R(x + (leftOpen ? 2 : 0), y, TILE - (leftOpen ? 2 : 0) - (rightOpen ? 2 : 0), 1, base);
-    R(x + (leftOpen ? 1 : 0), y + 1, TILE - (leftOpen ? 1 : 0) - (rightOpen ? 1 : 0), 1, base);
-    R(x, y + 2, TILE, TILE - 2, base);
-  } else R(x, y, TILE, TILE, base);
-  R(x + Math.floor(h(1) * 8), y + 3 + Math.floor(h(2) * 9), 6, 3, under ? mix(RIVER.wetStoneLight, P.waterDeep, 0.5) : RIVER.wetStoneLight);
-  R(x + Math.floor(h(3) * 9), y + 4 + Math.floor(h(4) * 10), 5, 1, RIVER.wetStoneDark);
-  if (!under && r % 3 === 0 && !open) R(x, y + 9, TILE, 1, mix(RIVER.wetStoneDark, RIVER.wetStone, 0.4));
-  if (leftOpen) R(x, y + (open ? 2 : 0), 1, TILE, RIVER.wetStoneDark);
-  if (rightOpen) R(x + TILE - 1, y + (open ? 2 : 0), 1, TILE, RIVER.wetStoneDark);
-  if (open) {
-    R(x + (leftOpen ? 2 : 0), y, TILE - (leftOpen ? 2 : 0) - (rightOpen ? 2 : 0), 1, P.grass);
-    R(x + 2, y + 1, TILE - 4, 1, PLANTS.leaves);
-    if ((c * 5) % 3 === 0) R(x + 5, y - 2, 1, 2, P.grassDark);
-  }
-  // Moss and ferns down the side of a cliff, now and then.
-  if (!under && (leftOpen || rightOpen) && h(5) < 0.3) R(rightOpen ? x + TILE - 3 : x, y + 4, 3, 5, STONE.moss);
+  textured(under ? SUNK_ROCK : WET_ROCK, c, r, x, y, m, null, edgesAt(m, c, r, null) & ~EDGE.WET);
   // The dark line where it meets the water, at the surface.
   if ((water(c - 1, r) && !water(c - 1, r - 1)) || (water(c + 1, r) && !water(c + 1, r - 1))) R(x, y + 1, TILE, 2, RIVER.waterline);
 }
