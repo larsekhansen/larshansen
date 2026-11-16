@@ -254,7 +254,7 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.52 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
+- **First script**: 59.51 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
   the story's hooks in `main.ts`, the map's story sign in `kart.ts`, the new blurb; everything else of it, the neons' ramps, the natural
   ramps, the marks' drawing, the story's words, in `feel`'s file and the levels'). 59.06 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
   `render/furniture.ts`; the set itself is in `feel`'s file, which grew from 20.6 to 28.0 kB gzipped). 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's

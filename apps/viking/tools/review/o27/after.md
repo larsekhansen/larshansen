@@ -18,10 +18,15 @@ stings are drawing and sound only.
 
 ## Tests, types, builds
 
-- `bun test`: pixelkit 153 pass, maze 211 pass, landing 18 pass, viking (see the hand-back for the final count; 419 pass at part
-  (c), with the new `alive/natural.test.ts` and `alive/invasion.test.ts`).
+- `bun test`: pixelkit 153 pass, maze 211 pass, landing 18 pass, viking 421 pass (13 files, with the new `alive/natural.test.ts`
+  and `alive/invasion.test.ts`), none failing.
 - `tsc --noEmit` clean in all four; `bun run build` clean in the viking game and the front page.
 - The first script: 59.51 kB gzipped as vite reports it (59.06 after order 26; the budget is 60).
+
+## The front page
+
+28 of 28 pictures byte-identical to `/tmp/shots-before-jernhaugen/` (`docs/games/handbook/scripts/frontgate.sh`), taken once after the last
+change to the kit (the neons in `swatches/enemy.ts`, `ROLES.glamour`, the heron's beak in `swatches/lake.ts`).
 
 ## Perf
 
