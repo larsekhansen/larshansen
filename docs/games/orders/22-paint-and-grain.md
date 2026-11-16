@@ -158,3 +158,47 @@ Write it for Lars, who is not reading the code. No ADR yet: it is his choice.
 3. Part B: the facts table, the three ways' costs, your recommendation in five lines.
 4. Identical-run proof, perf, tests, first-script size, front page comparison.
 5. Departures, doubts, found and not fixed. Branch and commits.
+
+## Part C: what two reference games teach
+
+Added by the planner the same day. Lars asked the planner to look at two open-source games: Open Surge
+(parallax and layering) and Shattered Pixel Dungeon (enemy readability). Both are GPL: read them for
+technique only, copy no code and no art.
+
+1. **Shattered Pixel Dungeon's pixels are as big as ours or bigger** (16 x 16 art-pixel tiles and 12 to 16 px
+   characters, on a view as small as 135 x 225 art pixels upright). It does not feel coarse because every
+   pixel is placed by hand: each sprite has 3 to 5 tones per material (a ramp: shadow, mid, light, one
+   highlight), a face with eyes, an asymmetric silhouette, and tiles with per-pixel texture (stone courses with
+   a lit top edge and a shadowed bottom edge, moss, cracks). Our game draws with rectangles in code, so shapes
+   come out as flat blocks of one tone: that, more than the size of a pixel, is very likely what Lars is
+   seeing. So part B's third way ("same grain, better drawn") must be taken seriously and done well: draw the
+   subjects as per-pixel maps (rows of palette indices, painted once into the sprite cache already there, so
+   the cost per frame is unchanged), with tone ramps, a lit side and a shaded side, eyes, and tile texture on
+   the two study scenes. Show it at its best before concluding a finer grid is needed. For ways 1 and 2 use
+   the same per-pixel method, so the comparison is grain against grain and not rectangles against
+   hand-placed pixels. Say in GRAIN.md how sprite maps would be authored and kept in the repository (text grids
+   in .ts, lazily loaded per level), and what that does to the first script.
+2. **Shattered Pixel Dungeon has no outlines on enemies.** Readability comes from value: the dungeon's tiles
+   sit in a narrow dark-to-mid, low-saturation band, and characters are lighter and more saturated than
+   anything behind them, with a dark internal line only where a limb crosses the body. Enemies' eyes are often
+   the one saturated accent (the rat's red eyes). State is shown with a small icon over the head that grows
+   and shrinks (asleep "zzz", alert "!", investigating "?", lost), plus a flash on hit. For part A this means:
+   (a) the red outline Lars asked for is right for this game, because its backdrops are bright and varied
+   where that game's are dark and even, but hold the backdrops' value and saturation band behind the play lane
+   down where possible (ADR 0039's scenery rule) so bodies in natural colours read; (b) consider the alert mark
+   for the harmless-to-harmful change in A2 (a small "!" over a swan, a statue, a guard at the moment the
+   outline turns red), in the hurt red, as a still mark under reduced motion.
+3. **Open Surge runs at 426 x 240 art pixels with a player about 40 px tall** in a 64 x 64 frame: a much finer
+   grain relative to the character than ours, which is where its smooth look comes from, and it is bitmap art.
+   Its parallax is data: a theme file lists 15 to 20 layers, each with an initial position, a scroll speed as a
+   fraction of the camera (0 for sky, -0.02 for far clouds, up to -0.4 near), an optional drift of its own
+   (clouds and water move by themselves), and repeat flags. The trick worth taking: the sea or ground plane is
+   cut into a dozen strips each 4 px tall, each a little faster than the one above (-0.125, -0.15, -0.175 ...
+   -0.4), which gives a plane that seems to recede in depth for almost no cost. This game has five canvases at
+   fixed depths. In GRAIN.md add a short section "depth": what it would take to give a level's water, snow or
+   ground plane that strip effect and one or two more far layers with their own drift, within ADR 0036/0041's
+   drawn-once rule, and mock it on Langkaia's fjord if it is cheap to do behind the same debug switch. Do not
+   build it into the live game in this order.
+
+None of this changes part A's scope except the alert mark in 2(b), which is the implementer's to judge by
+looking.
