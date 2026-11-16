@@ -202,3 +202,35 @@ technique only, copy no code and no art.
 
 None of this changes part A's scope except the alert mark in 2(b), which is the implementer's to judge by
 looking.
+
+## Part A6: haze behind the play lane
+
+Added by the planner the same day, built as part of part A. Lars shared advice he was given; three points
+of it are worth building.
+
+Push the backdrops back, so that what he plays with stands forward:
+
+1. **A haze** between the play lane and everything behind it: one translucent wash per backdrop layer,
+   stronger the further away the layer is (try about 8 % on the nearest backdrop layer up to 25 to 30 % on the
+   farthest), in the level's own air colour (cool pale blue by day, warm at sunset and dawn, deep blue at
+   night, grey-white in snow and mist). It must cost almost nothing: fold it into the backdrop layers' own
+   drawing or their drawn-once caches (ADR 0036, 0041), not a full-screen translucent rectangle per layer per
+   frame on five canvases; measure with `?debug&perf` and stay within part A's 200 rectangles.
+2. **Backdrops lower in contrast and saturation than the lane** (ADR 0039's scenery rule, now measured): for
+   every level, the far layers' colours must sit in a narrower value band and at lower saturation than the
+   lane's tiles, him, enemies, platforms and pickups. Add that to the palette test as numbers chosen and stated.
+3. **Parallax speeds**: list each level's layers and their speeds as fractions of the camera. Where a level has
+   fewer than three distinct speeds behind the lane, or two layers at nearly the same speed, say so in the
+   hand-back; change a speed only if it is a one-line data change and the pictures are better for it, since
+   order 20 just tuned Akershus's and Slottet's far layers.
+
+Judge by looking, level by level, day and its own sky, both sizes: the haze must make enemies, platforms and
+him stand forward without making the places grey or foggy. Oslo's landmarks must still be recognisable. If a
+level looks worse with haze (Nordmarka's dark, Stortinget underground, the map), leave it off there and say
+so. Before and after pictures for every level in `/tmp/shots-paint/haze/`.
+
+Correction: the advice said Shattered Pixel Dungeon outlines its enemies in dark. It does not (see part C,
+point 2: value contrast, no outline). Part A's outlines stand because Lars asked for them and this game's
+backdrops are bright.
+
+The front page must stay byte-identical: the haze is the viking game's only.
