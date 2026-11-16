@@ -54,6 +54,7 @@ Lars before reversing one of his.
 | [0042](0042-flat-places.md) | Flat places found by a walk along every route at both sizes and given what the place has, as scenery drawn once and copied; far layers may rise with a climbed view | planner (order 20) | holds; builds on 0039, 0041 |
 | [0043](0043-the-game-in-the-hand.md) | On a phone the screen is the game's: the bar the run alone during a level, the touch pad over the picture in the thumbs' corners, every target 56 x 56 and 8 apart, each finger followed on its own, the camera keeping him clear of the buttons, the help line a note of what changed, the banner off what matters | planner (order 21) | holds; builds on 0019, adjusts 0021 |
 | [0044](0044-paint-says-where-to-go.md) | A red outline (a dark line inside it) round what hurts, a pale one round what moves and does not, a "!" when it turns; yellow paint on what he stands on and nothing else that yellow; the gold of what he takes a deep amber; the haze behind the lane toward each level's air | planner (order 22, Lars's words) | holds; amends 0039 |
+| [0045](0045-the-grain-same-grid-better-drawn.md) | The art pixel stays as it is; figures and small things are drawn as per-pixel maps with a ramp of three to five tones per material and a lit side (way 3 of `GRAIN.md`); ways 1 and 2 not chosen | Lars (after order 22's study) | holds |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".
