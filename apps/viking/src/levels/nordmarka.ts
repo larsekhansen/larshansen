@@ -6,7 +6,7 @@ import type { Light } from "@larshansen/pixelkit/dark";
 import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
-import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
+import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
@@ -20,7 +20,7 @@ import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
-import { tile as textured, type Grain } from "../alive/ground";
+import { plankDoor as plankDoor2, tile as textured, type Grain } from "../alive/ground";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -478,7 +478,7 @@ function mound(v: View) {
   R(d.x + d.w + 3, top - 3, 3, d.h + 3, P.rock);
   R(d.x - 9, top - 6, d.w + 18, 6, edge);
   R(d.x - 8, top - 5, d.w + 16, 4, P.rock);
-  plankDoor(d, DOORWAY.wood);
+  plankDoor2(d, DOORWAY.wood);
   // The torch inside, through the door's crack, flickering in three frames (order 24; still with reduced motion).
   if (!d.open) flame(d.x + 7, d.bottom - 11, v.t);
 }

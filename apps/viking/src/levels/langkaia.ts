@@ -267,7 +267,7 @@ function shed(x0: number, color: string, line: string, door: Door | undefined) {
   walls(x0, 14 * TILE + 5, 6 * TILE, color, line, WATER);
   R(x0 - 2, 14 * TILE + 5, 6 * TILE + 4, 1, INK);
   pane(x0 + 10, 14 * TILE + 10, 8, 6);
-  if (door) plankDoor(door, PAINT.trim);
+  if (door && !TEXTURED.door?.(door, PAINT.trim)) plankDoor(door, PAINT.trim);
 }
 
 /** Verkstedet's window: the 3D printer at work on a small longship, a spool of the same orange on the shelf. */

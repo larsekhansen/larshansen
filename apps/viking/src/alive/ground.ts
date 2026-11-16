@@ -5,6 +5,7 @@ import { BRICK, DOORWAY, FACADE, INK, MASONRY, PAINT, PALETTE, SNOW, STAND, STON
 import type { Door } from "@larshansen/pixelkit/doors";
 import type { Board } from "@larshansen/pixelkit/text";
 import { wdisc } from "@larshansen/pixelkit/paint";
+import { shakeX } from "@larshansen/pixelkit/doors";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Art, Surface } from "../levels/types";
 import { TEXTURED } from "../render/tiles";
@@ -945,6 +946,32 @@ function tbane(d: Door): boolean {
   return true;
 }
 
+/**
+ * A plank door in its frame (the shed's on Langkaia, the mound's in Nordmarka): the frame lit on its top and left,
+ * planks with their grain and a gap between them, two iron bands with their rivets, a ring for a handle. Open, a dark hole.
+ */
+export function plankDoor(d: Door, frame: string): boolean {
+  const ox = shakeX(d.shake);
+  const top = d.bottom - d.h;
+  const w = d.w + 4;
+  const h = d.h + 2;
+  const wood = [P.woodDark, mix(P.wood, P.woodDark, 0.45), P.wood, mix(P.wood, WHITE, 0.18)];
+  const p = custom(`door ${d.w} ${d.h} ${d.open ? 1 : 0} ${frame}`, w, h, (px, py) => {
+    if (px < 2 || px >= w - 2 || py < 2) return px === 0 || py === 0 ? mix(frame, WHITE, 0.25) : px >= w - 1 ? mix(frame, INK, 0.3) : frame;
+    if (d.open) return DOORWAY.wood;
+    const x = px - 2;
+    const y = py - 2;
+    if (y === 6 || y === 7 || y === 22 || y === 23) return (x % 4 === 1 && y % 2 === 0) ? mix(P.iron, WHITE, 0.3) : y % 2 ? P.ironDark : P.iron;
+    if (x > 0 && x % 4 === 0) return wood[0];
+    if (x === d.w - 4 && (y === 15 || y === 17)) return P.iron;
+    if (x === d.w - 5 && y === 16) return P.iron;
+    if (y === 0) return wood[3];
+    return hash(d.w, x, y >> 2, 17) < 0.2 ? wood[1] : wood[2];
+  });
+  drawProp(p, d.x - 2 + ox, top - 2, w);
+  return true;
+}
+
 // --- One-way ledges: the platform's teal body under its paint ---------------------------------------------------
 
 /** Under the paint (its two rows, as the kit draws them), the body's two rows and the line under: lit under the paint, a rivet each side of every joint, a scuff now and then. */
@@ -975,6 +1002,7 @@ TEXTURED.tile = shared;
 TEXTURED.ledge = ledgeBody;
 TEXTURED.boards = boards;
 TEXTURED.tbane = tbane;
+TEXTURED.door = plankDoor;
 /**
  * The ground going on down under the map on a tall screen, row r past its foot: the level's own ground as it is drawn
  * under its surface, on a map whose bottom row goes on down (so each row is deeper, its own variant, nothing open over it).

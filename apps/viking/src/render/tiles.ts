@@ -39,6 +39,7 @@ export const TEXTURED: {
   /** Props at arm's length: the sign boards on their posts, the T-bane's entrance (says whether it drew it). */
   boards?(boards: Board[]): void;
   tbane?(d: Door): boolean;
+  door?(d: Door, frame: string): boolean;
 } = {};
 
 /** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */
