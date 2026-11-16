@@ -626,7 +626,7 @@ function grassTile(c: number, r: number, x: number, y: number, m: TileMap) {
 /** The quarry's cut faces (order 26): blocks split by the drill, lit on their tops, grass on the top. */
 const QUARRY: Grain = { name: "ek-quarry", kind: "blocks", ramp: [mix(HILL.quarryDark, INK, 0.3), HILL.quarryDark, HILL.quarry, HILL.quarryLight], h: 8, w: 16, off: 6, split: 0.4, kerb: [HILL.grass, HILL.grassDark], accent: { moss: STONE.moss } };
 /** The viewpoint's granite: dressed blocks, and its steps. */
-const GRANITE: Grain = { name: "ek-granite", kind: "blocks", ramp: [mix(HILL.graniteDark, INK, 0.3), HILL.graniteDark, HILL.granite, HILL.graniteLight], h: 8, w: 16, off: 8, kerb: [HILL.graniteLight, HILL.graniteLight] };
+const GRANITE: Grain = { name: "ek-granite", kind: "blocks", ramp: [HILL.graniteDark, mix(HILL.granite, HILL.graniteDark, 0.5), HILL.granite, HILL.graniteLight], h: 8, w: 16, off: 8, kerb: [HILL.graniteLight, HILL.graniteLight] };
 const STEP: Grain = { ...GRANITE, name: "ek-step", h: 8, w: 32, off: 16, rows: 8, kerb: [HILL.graniteLight] };
 function rockTile(c: number, r: number, x: number, y: number, m: TileMap) {
   textured(QUARRY, c, r, x, y, m, null);

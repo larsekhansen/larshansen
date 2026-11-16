@@ -720,7 +720,7 @@ function closing(v: View) {
 }
 
 /** Old stone (order 26, from the textured set): rubble in courses, mortar, a block split here and there, moss in the shadowed joints and on top where it is open to the sky. */
-const OLD_STONE: Grain = { name: "gb-stone", kind: "blocks", ramp: [mix(G.stoneDark, INK, 0.25), G.stoneDark, G.stone, G.stoneLight], h: 8, w: 16, off: 6, split: 0.45, kerb: [G.stoneLight, G.stoneLight], accent: { moss: G.moss, tuft: G.moss } };
+const OLD_STONE: Grain = { name: "gb-stone", kind: "blocks", ramp: [G.stoneDark, mix(G.stone, G.stoneDark, 0.5), G.stone, G.stoneLight], h: 8, w: 16, off: 6, split: 0.45, kerb: [G.stoneLight, G.stoneLight], accent: { moss: G.moss, tuft: G.moss } };
 function oldStone(c: number, r: number, x: number, y: number, map: TileMap) {
   textured(OLD_STONE, c, r, x, y, map, null);
 }

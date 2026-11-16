@@ -35,7 +35,7 @@ export interface Grain {
   band?: readonly string[];
   top?: "grass" | "sand" | "paving" | "gravel" | "moss" | "setts" | "snow" | "reed";
   /** Small things in another colour, each on a few pixels. */
-  accent?: { moss?: string; salt?: string; tuft?: string; flower?: string; rivet?: string; sparkle?: string; snow?: string; snowShade?: string; weed?: string };
+  accent?: { moss?: string; salt?: string; tuft?: string; flower?: string; rivet?: string; sparkle?: string; snow?: string; snowShade?: string; weed?: string; pebble?: string };
   /** Blocks: a course's height and a block's width with its joint, how far every other course is moved, a block split in two now and then, its corners rounded (setts), fine joints (marble). */
   h?: number;
   w?: number;
@@ -267,8 +267,13 @@ function earth(k: Work) {
     const px = 1 + Math.floor(hash(v, i, k.depth, 23) * 12);
     const py = Math.max(b0 + 1, 3 + Math.floor(hash(v, i, k.depth, 24) * 11));
     if (py + 1 >= k.rows) continue;
-    set(k, px, py, L(k));
-    set(k, px + 1, py, L(k));
+    if (g.accent?.pebble) {
+      put(k, px, py, g.accent.pebble);
+      put(k, px + 1, py, g.accent.pebble);
+    } else {
+      set(k, px, py, L(k));
+      set(k, px + 1, py, L(k));
+    }
     set(k, px, py + 1, 1);
     set(k, px + 1, py + 1, 0);
   }
@@ -734,20 +739,12 @@ export function earthOf(s: Surface): Grain {
   let g = earths.get(key);
   if (!g) {
     // The pebble the kit draws in earth (a quarter black over it) is the earth's shade here.
-    // Its light a grey, not white: a lighter earth comes near the copper of a coin.
-    const body = [mix(s.fill, INK, 0.38), mix(s.fill, "#000000", 0.25), s.fill, mix(s.fill, "#9a9a9a", 0.3)];
+    // No lighter earth (a lighter brown comes near the copper of a coin and the enemies' orange): its pebbles are lit
+    // in its top's own dark (the grass's, the sand's, the paving's), a colour the level already paints.
+    const body = [mix(s.fill, INK, 0.38), mix(s.fill, "#000000", 0.25), s.fill];
     const band = s.kind === "snow" ? [SNOW.shade, mix(SNOW.shade, SNOW.lying, 0.5), SNOW.lying] : [s.dot, mix(s.top, s.dot, 0.5), s.top, mix(s.top, WHITE, 0.18)];
-    earths.set(key, (g = { name: `earth ${key}`, kind: "earth", ramp: body, band, top: s.kind ?? "grass" }));
+    earths.set(key, (g = { name: `earth ${key}`, kind: "earth", ramp: body, band, top: s.kind ?? "grass", accent: { pebble: s.dot } }));
   }
-  return g;
-}
-
-/** The earth going on down under the map on a tall screen: the earth's body, or snow's in layers where the ground is snow. */
-const deeps = new Map<string, Grain>();
-function deepOf(s: Surface): Grain {
-  if (s.kind !== "snow") return earthOf(s);
-  let g = deeps.get(s.fill);
-  if (!g) deeps.set(s.fill, (g = { name: `deep snow ${s.fill}`, kind: "snow", ramp: [mix(s.fill, INK, 0.12), mix(s.fill, INK, 0.06), s.fill, s.top] }));
   return g;
 }
 
@@ -978,4 +975,16 @@ TEXTURED.tile = shared;
 TEXTURED.ledge = ledgeBody;
 TEXTURED.boards = boards;
 TEXTURED.tbane = tbane;
-TEXTURED.deep = (c, r, x, y, map, art) => void tile(deepOf(art.ground(c)), c, r + (y >> 4), x, y, map, null, 0, 2);
+/**
+ * The ground going on down under the map on a tall screen, row r past its foot: the level's own ground as it is drawn
+ * under its surface, on a map whose bottom row goes on down (so each row is deeper, its own variant, nothing open over it).
+ */
+TEXTURED.deep = (c, r, x, y, map, art, sky) => {
+  const foot = map.rows - 1;
+  const buried: TileMap = Object.create(map);
+  buried.tileAt = (cc, rr) => map.tileAt(cc, Math.min(rr, foot));
+  buried.isSolid = (cc, rr) => map.isSolid(cc, Math.min(rr, foot));
+  buried.isWater = (cc, rr) => map.isWater(cc, Math.min(rr, foot));
+  buried.isOneWay = (cc, rr) => map.isOneWay(cc, Math.min(rr, foot));
+  if (!art.tile?.("#", c, r, x, y, buried, sky)) shared("#", c, r, x, y, buried, art, sky);
+};
