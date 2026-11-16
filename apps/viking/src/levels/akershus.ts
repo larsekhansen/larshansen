@@ -7,6 +7,7 @@ import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
+import { flame } from "../alive/things";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -420,7 +421,7 @@ function cellar() {
 
 /** The inside of the keep: its stone in shadow, seen past its open front. */
 const INSIDE: Stone = { base: mix(STONE_BACK.base, INK, 0.35), light: mix(STONE_BACK.light, INK, 0.35), dark: mix(STONE_BACK.dark, INK, 0.35), mortar: mix(STONE_BACK.mortar, INK, 0.35), moss: STONE_BACK.moss };
-function keepInside() {
+function keepInside(t: number) {
   stoneWall((KEEP[0] + 1) * TILE, (TOP + 1) * TILE, (KEEP[1] - KEEP[0] - 1) * TILE, KEEP_FLOOR * TILE, INSIDE);
   // Two fire baskets on the walls inside, lit: only to see by.
   for (const [x, y] of [
@@ -428,8 +429,9 @@ function keepInside() {
     [229 * TILE + 2, 11 * TILE + 6]
   ] as const) {
     R(x, y + 4, 6, 3, METAL.lampPost);
-    R(x + 1, y + 1, 4, 3, FIRE.flame);
-    R(x + 2, y, 2, 2, FIRE.core);
+    R(x, y + 4, 6, 1, mix(METAL.lampPost, WHITE, 0.3));
+    // Their flames flicker (order 24), still with reduced motion.
+    flame(x + 3, y + 5, t, x);
     light(x, y, 6, 6, "soft");
   }
 }
@@ -581,7 +583,7 @@ export const AKERSHUS: LevelDef = {
     back(v: View) {
       castle(v);
       pillars();
-      keepInside();
+      keepInside(v.t);
       spire(v);
       well();
       cellar();

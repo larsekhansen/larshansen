@@ -1,4 +1,4 @@
-import { COIN, FEATHER, FLAG, FOOD, GHOST, INK, METAL, PALETTE, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
+import { COIN, FEATHER, FIRE, FLAG, FOOD, GHOST, INK, METAL, PALETTE, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { POLE, HOIST_STEPS, type Flag } from "@larshansen/pixelkit/checkpoint";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { runeCells, type RuneChar } from "../game/runes";
@@ -301,4 +301,26 @@ export function feather(x: number, y: number, gold: boolean) {
     R(fx, fy - 1, n, 3, FEATHER.shine);
   }
   stamp(f, x, y);
+}
+
+// --- Flames and lamps (order 24, section 2) -------------------------------------------------------------------------
+const FLAME_INK: Record<string, string> = { f: FIRE.flame, g: FIRE.glow, c: FIRE.core };
+/** A small flame, 5 x 6, in three frames: its tongue licking left and right, its core low and hot. */
+const FLAMES = [
+  ["..f..", ".fgf.", ".fgf.", "fgcgf", "fgccf", ".fff."],
+  ["...f.", "..fg.", ".fgf.", "fgcgf", "fgcgf", ".fff."],
+  [".f...", ".gf..", ".fgf.", "fgcgf", "fccgf", ".fff."]
+].map((rows, k) => frame(`flame ${k + 1}`, FLAME_INK, [rows]));
+
+/** A flame with its foot at (x, y), flickering on its own clock (`seed`), still with reduced motion. */
+export function flame(x: number, y: number, t: number, seed = 0) {
+  const k = view.reduced ? 0 : Math.floor((t + seed * 7) / 5) % 3;
+  stamp(FLAMES[k], x - 2, y - 6);
+}
+
+/** How bright an oil lamp burns just now, 0 to 2, on its own clock (`seed`): it gutters now and then; 1 with reduced motion. */
+export function lampFlicker(t: number, seed = 0): number {
+  if (view.reduced) return 1;
+  const k = (t + seed * 13) % 97;
+  return k < 4 ? 0 : k < 40 ? 1 : k < 46 ? 2 : 1;
 }

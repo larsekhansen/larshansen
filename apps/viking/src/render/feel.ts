@@ -8,6 +8,9 @@ import type { Body } from "@larshansen/pixelkit/physics";
 import type { Sfx, Voice } from "@larshansen/pixelkit/sfx";
 import { FONT, fontPx, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { timedPhase } from "@larshansen/pixelkit/timed";
+import type { Phase } from "@larshansen/pixelkit/oslo";
+import type { LevelDef } from "../levels/types";
+import { airOf } from "./haze";
 import { WINDUP, untilThrow, type Enemy } from "../game/enemies";
 import { HEARTS, runeFree, type Events, type Play } from "../game/play";
 import { LINE_Y, stationX } from "../levels/kart";
@@ -21,13 +24,15 @@ import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
 import { bench, bracteate, bracteateOutline, cheese, feather, flag, runeStone, sheep, skiPole, skilling } from "../alive/things";
 import { DEPTH } from "./backdrop";
-import { fjord } from "../alive/depth";
+import { fjord, lap } from "../alive/depth";
+import { LAP } from "./tiles";
 import { drawFore } from "../alive/fore";
 
 // The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the
 // fjord's water is a plane that recedes.
 Object.assign(LOOKS, { enemy: drawFoeLook, skilling, cheese, bench, bracteate, bracteateOutline, rune: runeStone, sheep, flag, pole: skiPole, feather });
 DEPTH.fjord = fjord;
+LAP.at = lap;
 
 // Felt at a glance (order 19, ADR 0040): every event answers at once, where it happened, in its role's
 // colour (ADR 0039), with a sound, and with a still answer under reduced motion. This file is the answers:
@@ -726,10 +731,13 @@ export function createFeel(host: Host) {
       shadows(p, body, alpha);
     },
 
-    /** Something in front of him now and then (order 23), over him on the text canvas; never over the touch pad's buttons. */
-    fore(id: string) {
+    /**
+     * Something in front of him now and then (order 23), over him on the text canvas, in a dark tone of the level's air;
+     * never over the touch pad's buttons or the banner, and gone while a bubble is up or he sits (order 24).
+     */
+    fore(def: LevelDef, phase: Phase, banner: { x: number; y: number; w: number; h: number } | null, quiet: boolean) {
       const pad = document.body.classList.contains("touch") ? document.getElementById("pad") : null;
-      drawFore(id, pad && !pad.hidden ? pad.getBoundingClientRect().top - (document.getElementById("stage")?.getBoundingClientRect().top ?? 0) : null);
+      drawFore(def.id, pad && !pad.hidden ? pad.getBoundingClientRect().top - (document.getElementById("stage")?.getBoundingClientRect().top ?? 0) : null, airOf(def, phase), banner, quiet);
     },
 
     /** The page's step count, for a frame drawn without a step (a stepped page's still frame). */

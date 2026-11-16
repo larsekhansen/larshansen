@@ -6,7 +6,9 @@ import { keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
-import { panelDoor } from "@larshansen/pixelkit/props";
+import { STOVE_SMOKE, panelDoor, smoke } from "@larshansen/pixelkit/props";
+/** A chimney's smoke on a winter night: pale, thin. */
+const NIGHT_SMOKE = { ...STOVE_SMOKE, rgb: "225, 230, 240", alpha: 0.4 };
 import { ICE } from "@larshansen/pixelkit/surface";
 import * as WINTER from "@larshansen/pixelkit/swatches/winter";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
@@ -379,6 +381,8 @@ function chimneys(t: number) {
     R(x - 1, top * TILE - 2, 10, 2, MASONRY.chimney);
     R(x - 1, top * TILE - 3, 10, 1, SNOW.lying);
   }
+  // Two more chimneys smoke a little, pale against the night (order 24; still, with reduced motion: none).
+  if (!view.reduced) for (const c of [16, 69]) smoke(c * TILE + 6, (c === 16 ? 11 : 8) * TILE - 4, t + c * 7, NIGHT_SMOKE);
   // The warm air over the fourth house: puffs rising the height of the zone, fast.
   const z = SMOKE;
   for (let i = 0; i < 14; i++) {

@@ -1595,7 +1595,7 @@ function render(alpha: number) {
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
   feel?.him(p, body, seated ? 0 : state.walk, sky.phase, look(), seen);
-  feel?.fore(scene.def.id);
+  feel?.fore(scene.def, sky.phase, drawn.banner, !!shownBubble || !!p.sitting);
   if (!shownBubble) feel?.hint(hint);
   drawFlight();
   follows(door ?? (bench !== null ? benchStop : null), state.moved && state.steps > state.helpUntil);

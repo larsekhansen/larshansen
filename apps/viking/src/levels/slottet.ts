@@ -9,7 +9,9 @@ import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
-import { climbed, drawOsloHills } from "../render/backdrop";
+import { climbed, drawGulls, drawOsloHills } from "../render/backdrop";
+/** Birds far off over the city: small, dark, as quiet as the far layer they fly in (scenery, ADR 0039). */
+const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
@@ -939,7 +941,11 @@ export const SLOTTET: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
-    far: (v) => farHills(v.sky, v.him.x),
+    // Far off over the city, a few birds where the sky was empty (order 24, ADR 0039's scenery: quiet, small, never near the lane).
+    far: (v) => {
+      farHills(v.sky, v.him.x);
+      drawGulls(v.t, 6, FAR_BIRD);
+    },
     mid: (v) => cityRoofs(v.t, v.him.x),
     near: () => nearTrees(),
     back(v) {

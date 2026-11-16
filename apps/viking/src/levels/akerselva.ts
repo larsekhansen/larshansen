@@ -7,6 +7,7 @@ import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
+import { drawGulls } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
@@ -1006,7 +1007,11 @@ export const AKERSELVA: LevelDef = {
     { id: "qr", tile: "q", sign: "Runesmia", href: "/qr/" }
   ],
   art: {
-    far: () => farHills(),
+    // Gulls far up over the river, where the sky was empty (order 24; scenery, ADR 0039).
+    far: (v) => {
+      farHills();
+      drawGulls(v.t, 10);
+    },
     mid: (v) => midTown(v.t),
     near: () => nearTrees(),
     back(v) {

@@ -13,6 +13,7 @@ import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Tro
 import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
+import { flame, lampFlicker } from "../alive/things";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
@@ -432,6 +433,9 @@ function ullevalseter(v: View) {
   // Upstairs: the one window that is lit, over the gallery.
   R(x + 49, g - 58, 12, 11, PAINT.trim);
   R(x + 50, g - 57, 10, 9, LAMP);
+  // An oil lamp inside: it gutters now and then and flares (order 24), steady with reduced motion.
+  const burn = lampFlicker(v.t, 3);
+  if (burn !== 1) R(x + 50, g - 51, 10, 3, burn ? mix(LAMP, WHITE, 0.35) : mix(LAMP, INK, 0.25));
   R(x + 54, g - 57, 1, 9, PAINT.trim);
   R(x + 50, g - 53, 10, 1, PAINT.trim);
   light(x + 50, g - 57, 4, 4);
@@ -474,10 +478,8 @@ function mound(v: View) {
   R(d.x - 9, top - 6, d.w + 18, 6, edge);
   R(d.x - 8, top - 5, d.w + 16, 4, P.rock);
   plankDoor(d, DOORWAY.wood);
-  if (!d.open) {
-    const flick = view.reduced ? 0 : Math.floor(v.t / 7) % 2;
-    R(d.x + 6, d.bottom - 14 - flick, 3, 3, LAMP);
-  }
+  // The torch inside, through the door's crack, flickering in three frames (order 24; still with reduced motion).
+  if (!d.open) flame(d.x + 7, d.bottom - 11, v.t);
 }
 
 /** The gorge: its rock walls going down into the dark. */
