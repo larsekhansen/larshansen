@@ -304,7 +304,9 @@ export function feather(x: number, y: number, gold: boolean) {
 }
 
 // --- Flames and lamps (order 24, section 2) -------------------------------------------------------------------------
-const FLAME_INK: Record<string, string> = { f: FIRE.flame, g: FIRE.glow, c: FIRE.core };
+// Its middle tone is between the flame and the core, not the kit's glow: that is within 10 of the yellow paint, which
+// nothing but what he stands on may be (the palette test).
+const FLAME_INK: Record<string, string> = { f: FIRE.flame, g: mix(FIRE.flame, FIRE.core, 0.4), c: FIRE.core };
 /** A small flame, 5 x 6, in three frames: its tongue licking left and right, its core low and hot. */
 const FLAMES = [
   ["..f..", ".fgf.", ".fgf.", "fgcgf", "fgccf", ".fff."],

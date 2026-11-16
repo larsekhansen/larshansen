@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, and by order 23's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, and by order 24's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -74,7 +74,8 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-15 | Lars: "do more design polishing like that". Order 19: every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use in one cyan; his rim after dusk; the header between 760 and 1359 px (ADR 0040) | `orders/19-felt-at-a-glance.md`, branch `felt-at-a-glance` |
 | 2026-11-16 | Lars: "i like what i see. keep going"; he plays on a phone. Order 21: the game in the hand. The phone's screen is the game's (the bar the run alone during a level, the pad over the picture), buttons that fit thumbs and answer them finger by finger, the camera keeping him clear of the buttons, the help line on a touch screen only a note of what changed, the banner off what matters (ADR 0043); Stortinget and Slottet drawn at a sixth to a half of the rectangles, the pictures byte-identical | `orders/21-in-the-hand.md`, branch `in-the-hand` |
 | 2026-11-16 | Lars, after orders 18 to 20 live: "red for enemies that can hurt you, in terms of the outline", "the light blu you had for rats can be for moving npcs that don't hurt", "yellow paint ... for 'you can go here'", and "i just fear i made a blunder with the pixel design ... the pixels are too big. they need more detail". Order 22: part A (built) the red outline, the calm pale, the yellow paint, every other yellow reconsidered, the haze behind the lane (ADR 0044); part B (a study, not live) three ways to a finer look, for Lars to choose (`GRAIN.md`) | `orders/22-paint-and-grain.md`, branch `paint-and-grain` |
-| 2026-11-16 | Lars, in a conversation he saved: the game is "not that engaging"; the research record (`research/2026-11-16-reference-games.md`) on three open-source games. He chooses the grain: way 3, "do way 3 like you suggested. for the pixels" (ADR 0045). Order 23: frames for him and every enemy (him, the first three levels' enemies, the skilling and the cheese drawn pixel by pixel), a shadow under everything that moves, a receding plane on the water and snow, more speeds, something in front of him now and then, the edge's forgiveness from 6 to 10 steps, the alert mark (ADR 0046 to 0048) | `orders/23-alive.md`, branch `alive` |
+| 2026-11-16 | Lars, in a conversation he saved: the game is "not that engaging"; the research record (`research/2026-11-16-reference-games.md`) on three open-source games. He chooses the grain: way 3, "do way 3 like you suggested. for the pixels" (ADR 0045). Order 23: frames for him and every enemy (him, the first three levels' enemies, the skilling and the cheese drawn pixel by pixel; order 24 the rest of line 1), a shadow under everything that moves, a receding plane on the water and snow, more speeds, something in front of him now and then, the edge's forgiveness from 6 to 10 steps, the alert mark (ADR 0046 to 0048) | `orders/23-alive.md`, branch `alive` |
+| 2026-11-16 | Order 24: line 1 redrawn (way 3, ADR 0045): every enemy of line 1, both its bosses, the sheep, the moose, the parade, what is thrown and the small things every level has drawn as per-pixel frames; water lapping at quays, flames that flicker, the serpent's breath and daze, things in front a person knows at a glance, far birds and smoke; three things moved a tile where the edge's longer forgiveness made a late jump fire in the air (ADR 0048 kept, its cost put to Lars) | `orders/24-line-one-redrawn.md`, branch `line-one-redrawn` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -247,7 +248,7 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
+- **First script**: 58.86 kB gzipped after order 24 (the small things' drawings to `feel`'s file). 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
   worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
   with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
   it export more: the study's sheet of subjects is made outside the page for that). Before: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
@@ -380,9 +381,8 @@ Order 22 (`orders/22-paint-and-grain.md`, ADR 0044, `GRAIN.md`). What to know:
 Order 23 (`orders/23-alive.md`, ADR 0045 to 0048, DESIGN's "Frames, shadows and depth"). What to know:
 - **The grain is decided** (ADR 0045): the same grid, better drawn. New drawings are per-pixel frames with a ramp of tones
   and a lit side (`apps/viking/src/alive/frames.ts`). Drawn so far: him (every frame), Langkaia's pigeon, gull and rat,
-  Akershus's crow, guard and brazier, Rådhuset's standing gull and the scooter, the skilling and the cheese. Everything
-  else is still in the old style; order 23's hand-back lists each drawing (kind, level, file) for later orders, a level at
-  a time.
+  Akershus's crow, guard and brazier, Rådhuset's standing gull and the scooter, the skilling and the cheese. Order 24 drew the
+  rest of line 1 (see "Order 24"); what is left is listed in `apps/viking/tools/review/o24/old-style.md`.
 - **Frames come from what the rules keep** (ADR 0046): him in `alive/him.ts` (picked by `render/feel.ts`, which now draws
   him: the page gives the kit's overlay an alpha of nought once feel's file is here); the looks drawn as frames in
   `alive/foes.ts`; every other look's cycle, breath and bob from `parts` (`alive/parts.ts`, out of the first script); a
@@ -400,6 +400,32 @@ Order 23 (`orders/23-alive.md`, ADR 0045 to 0048, DESIGN's "Frames, shadows and 
 - **First script**: 59.44 kB gzipped (59.85 after order 22): the shared enemies' and the small things' old drawings and
   `parts` moved to feel's file.
 - **Unplayed**: none of it has been seen at speed. What only a person can judge is in the order's hand-back.
+
+## Order 24: line 1 redrawn
+
+Order 24 (`orders/24-line-one-redrawn.md`; DESIGN's "Frames, shadows and depth"; numbers in `apps/viking/tools/review/o24/`). What to know:
+- **Line 1 is drawn as frames** (ADR 0045): the shared looks (`render/looks.ts`), line 1's own kinds in their levels' files, the
+  troll and the plough (shaded pixel by pixel in five tones a material, every tell where it was; the troll's eyes in the dark
+  follow its head), the sheep, the moose, Slottet's parade and Guard, the chip, the cone and the snowball, and the small things
+  (`alive/things.ts`: the bench, the bracteate, the rune stone, the flag the game flies, the ski pole, the feather; the shield
+  in `game/shield.ts`). What is left is line 2's own (`tools/review/o24/old-style.md`). The enemy palette has no tone to add:
+  `tools/glance/tones.ts` finds no brown or dark orange that passes the palette test.
+- **The first script** lost the bench's, the bracteate's, the rune stone's and the sheep's drawings to `feel`'s file (hooks in
+  `LOOKS`, plain shapes if that file never comes): 59.44 to 58.86 kB gzipped.
+- **Places live** (section 2): water laps at quay walls (`lap`, a hook in `drawWater`); the keep's fire baskets and Jernhaugen's
+  torch flicker, Ullevålseter's lamp gutters; the serpent breathes reared and rocks in its daze (its pixels are order 25's); far
+  birds over Slottet and Akerselva, smoke from two of Vålerenga's chimneys.
+- **Things in front** are a mast, a lamp post, a trunk a person knows, a half again larger than the street, in a dark tone of
+  the level's air, measured from under the page's bar (the canvases run on up behind it: order 23's mast had its head hidden
+  there, which is why it read as a line), never over the banner, and faded out while a bubble is up or he sits.
+- **The edge** (section 3, `tools/review/edgeplace.ts` replays a seed with 6 and 10 side by side): every place where 10 did
+  worse is a short drop (one or two tiles, 11 to 16 steps of fall) followed by a jump: there the 10 steps after leaving an edge
+  overlap the 6 steps a press is kept before landing, and a press meant for the landing fires in the air. Langkaia's deck
+  pigeon, Akershus's brazier and Vålerenga's fox were moved a tile; Akershus then does no worse anywhere, Langkaia and Vålerenga
+  still do at ±4 (see `o24/sloppy-edge.md`). Ekeberg's and Stortinget's runs that left the route are the sloppy player's (the
+  sheep crossing; the last stairs), not a person's. Going back to 6 or to 8, or a rule that keeps such a press for the landing,
+  is for Lars to choose.
+- **Unplayed**: none of it has been seen at speed or on a phone.
 
 ## Known weak spots, as of order 16
 
