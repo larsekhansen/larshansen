@@ -42,7 +42,6 @@ import {
   stepEnd,
   stepStart,
   stepThrough,
-  wirePad,
   wirePointer,
   wireSkyKey
 } from "@larshansen/pixelkit/scene";
@@ -50,7 +49,7 @@ import { createSfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
 import { drawTimed, pulsePhase, timedPhase } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
-import { boardWidth, doorBoard, drawOverlay, fontPx, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
+import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
@@ -59,6 +58,8 @@ import { strings } from "./game/i18n";
 import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
 import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, againAtBoss, benchAt, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
+import type { Rect } from "./game/frame";
+import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
@@ -143,7 +144,8 @@ const fetchLevel = (id: string) => {
   if (mode === "fail") return Promise.reject(new Error("held back by ?debug&fetch=fail"));
   return loadLevel(id);
 };
-const touch = isTouch();
+/** A touch screen (or `?debug&touch`, to look at one without it): the pad over the picture, the bar as small as a level needs. */
+const touch = isTouch() || (debug && params.has("touch"));
 /** The double jump is the raven's feather, from the maze; `?feather` gives it for checking. Read again on coming out of the mound. */
 const abilities = { doubleJump: false, gold: false, pole: false, shield: false };
 function readFeather() {
@@ -331,8 +333,11 @@ function openScene(id: string, at?: string) {
   finishEl.hidden = true;
   dashButton.hidden = !pole || scene.map;
   showShieldButton(!!play.shield?.has && !scene.map);
-  if (scene.map) help.textContent = t.help;
-  else keysLine(play);
+  // On a touch screen the help line is only ever a note of what just changed (order 21): never the keys.
+  if (touch) help.hidden = true;
+  if (scene.map) {
+    if (!touch) help.textContent = t.help;
+  } else keysLine(play);
   feel?.reset(play);
   // On the map after a level cleared for the first time: its stone and the station it opened answer.
   if (scene.map && firstClear) {
@@ -383,6 +388,8 @@ const nameOf = (id: string) => (id === "kart" ? "T-banen" : LINE.find((l) => l.i
 function needed(id: string): Promise<unknown> | null {
   // What answers events comes with the first scene; a scene opens without it if it does not come.
   const waits: Promise<unknown>[] = feel ? [] : [loadFeel().catch(() => undefined)];
+  // On a touch screen the pad comes with it too.
+  if (touch && !padKit) waits.push(loadPad().catch(() => undefined));
   if (id === "kart") {
     if (!kartArt) waits.push(loadKart());
   } else {
@@ -582,7 +589,7 @@ function leaveMazeNow() {
   document.body.classList.remove("in-maze");
   if (touch) {
     document.body.classList.add("touch");
-    pad.hidden = false;
+    pad.hidden = !padKit;
   }
   help.textContent = fjordHelp.text || help.textContent;
   help.hidden = fjordHelp.text ? fjordHelp.hidden : help.hidden;
@@ -647,6 +654,8 @@ const shieldButton = pad.querySelector<HTMLButtonElement>('[data-action="down"]'
 let keysRiding: boolean | null = null;
 /** What the help line last said in a level. */
 let keysSaid = "";
+/** What he had when it said it: a note on a touch screen says what changed. */
+let keysWere = { pole: false, shield: false, riding: false };
 /**
  * The help line in a level, and the shield's button: on the sledge down ducks, and the button says so.
  * When what it says changes (the shield given, the sledge, the pole), it comes back for five seconds.
@@ -655,11 +664,17 @@ function keysLine(p: Play) {
   keysRiding = p.riding;
   const sw = shieldKit?.SHIELD_WORDS[lang];
   const text = p.riding && sw ? sw.helpSledge : t.helpLevel(p.pole, p.shield?.has && sw ? sw.help : "");
-  if (keysSaid && text !== keysSaid && !touch) {
+  const now = { pole: p.pole, shield: !!p.shield?.has, riding: p.riding };
+  // On a touch screen the help line never names keys: it says only what changed, in the pad's words (order 21).
+  const note = touch && keysSaid && text !== keysSaid ? padMod?.noteFor(lang, keysWere, now) ?? null : null;
+  keysWere = now;
+  if (keysSaid && text !== keysSaid && (!touch || note)) {
     help.hidden = false;
     state.helpUntil = state.steps + 300;
   }
-  help.textContent = keysSaid = text;
+  keysSaid = text;
+  if (!touch) help.textContent = text;
+  else if (note) help.textContent = note;
   const word = (p.riding ? sw?.duck : sw?.shield) ?? "";
   shieldButton.textContent = word;
   shieldButton.setAttribute("aria-label", word);
@@ -685,6 +700,28 @@ function loadFeel() {
   ));
 }
 void loadFeel().catch(() => undefined);
+/** The touch pad (`render/pad.ts`, order 21): fetched on a touch screen only, with the first scene. */
+let padMod: typeof import("./render/pad") | null = null;
+let padKit: Pad | null = null;
+let padLoading: Promise<void> | null = null;
+function loadPad() {
+  return (padLoading ??= import("./render/pad").then(
+    (m) => {
+      padMod = m;
+      padKit = m.createPad(pad, input, lang, { header, help });
+      pad.hidden = mode === "maze";
+    },
+    (e) => {
+      padLoading = null;
+      throw e;
+    }
+  ));
+}
+if (touch) {
+  document.body.classList.add("touch");
+  help.hidden = true;
+  void loadPad().catch(() => undefined);
+}
 const restartButton = $<HTMLButtonElement>("restart");
 const finishEl = $<HTMLElement>("finish");
 
@@ -1231,7 +1268,11 @@ function camera(elapsedMs: number, snap: boolean) {
   if (lookAt) Object.assign(focus, { x: lookAt[0], y: lookAt[1], facing: 0, lookUp: 0 });
   const floor = scene.def.floor?.(focus.x) ?? scene.play.map.height;
   const bottom = view.h > view.w ? Math.max(floor, Math.round(focus.y + view.h / 3)) : floor;
-  const at = follow({ x: view.camXf - shake.x, y: view.camYf - shake.y }, focus, { width: scene.play.map.width, bottom, top: bar }, view, elapsedMs, snap);
+  // On a touch screen the buttons lie over the picture: he, two tiles under him and six ahead are kept clear of them (order 21).
+  const cam = { x: view.camXf - shake.x, y: view.camYf - shake.y };
+  const bounds = { width: scene.play.map.width, bottom, top: bar };
+  let at = follow(cam, focus, bounds, view, elapsedMs, snap);
+  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing, p.body.vy);
   const nudge = feel?.nudge(state.steps);
   shake.x = nudge?.x ?? 0;
   shake.y = nudge?.y ?? 0;
@@ -1242,6 +1283,7 @@ const lookAt = debug ? params.get("look")?.split(",").map(Number) : null;
 
 function layout() {
   kit.resize();
+  padKit?.layout();
   maze?.resize();
   if (!scene) return;
   scene.boards = layoutBoards(scene);
@@ -1572,6 +1614,7 @@ function render(alpha: number) {
     enterButton.textContent = label;
     enterButton.setAttribute("aria-label", label);
   }
+  if (touch) inHand(p);
   hud();
   feel?.hud(p, scene.map);
   feel?.drew(state.steps);
@@ -1584,12 +1627,55 @@ const benchStop = { id: "bench" };
  * fading out after about two and a half seconds (with reduced motion it simply goes).
  */
 function plated(b: typeof state.banner) {
+  drawn.banner = null;
   if (!b) return null;
   const age = state.steps - b.since;
   const alpha = view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, (165 - age) / 30));
-  // Below the header, however many rows it has wrapped to.
-  const under = header.getBoundingClientRect().bottom - stage.getBoundingClientRect().top + fontPx() * 2.4;
-  return alpha > 0 ? { title: b.title, sub: b.sub, alpha, plate: true, top: Math.max(Math.min(110, view.cssH * 0.18), under) } : null;
+  if (alpha <= 0) return null;
+  // Below the header, however many rows it has wrapped to; or, if something is there, right under it.
+  const bar = header.getBoundingClientRect().bottom - stage.getBoundingClientRect().top;
+  const half = Math.round(fontPx() * 1.25);
+  for (const top of [Math.max(Math.min(110, view.cssH * 0.18), bar + fontPx() * 2.4), bar + half + 6]) {
+    const r = platedRect(b, top);
+    if (covers(r)) continue;
+    drawn.banner = r;
+    return { title: b.title, sub: b.sub, alpha, plate: true, top };
+  }
+  // It never covers him, an enemy or something to take (order 21): with nowhere to stand, it has gone.
+  state.banner = null;
+  return null;
+}
+
+/** What the page drew where, for `?debug` (order 21's measuring, `tools/glance/hand.ts`). */
+const drawn: { banner: Rect | null } = { banner: null };
+
+/** A world rectangle on the screen, in CSS pixels. */
+const onScreen = (x: number, y: number, w: number, h: number): Rect => ({ x: sx(x), y: sy(y), w: w * unit(), h: h * unit() });
+const meets = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+
+/** Whether a rectangle of the screen (CSS pixels) is over him, an enemy, something thrown, or something to take. */
+function covers(r: Rect): boolean {
+  if (meets(r, onScreen(shown.x - 2, shown.y - 4, PLAYER.w + 4, PLAYER.h + 4))) return true;
+  const p = scene.play;
+  // Enemies are drawn a quarter larger than a kept box: two pixels round it is the picture.
+  for (const e of p.enemies) if (e.alive && meets(r, onScreen(e.x - e.w / 2 - 2, e.y - e.h - 3, e.w + 4, e.h + 3))) return true;
+  for (const s of p.shots) if (meets(r, onScreen(s.x - 4, s.y - 4, 8, 8))) return true;
+  for (const c of p.skilling) if (c.at === null && meets(r, onScreen(c.box.x, c.box.y, c.box.w, c.box.h))) return true;
+  const boxes = [p.cheese?.at === null ? p.cheese.box : null, p.bracteateAt === null ? p.bracteate : null, p.runeAt === null ? p.rune : null];
+  return boxes.some((b) => b && meets(r, onScreen(b.x, b.y, b.w, b.h)));
+}
+
+/** On a touch screen, once a frame: the bar, the pad and the help line's note (`render/pad.ts`, order 21). */
+function inHand(p: Play) {
+  padKit?.frame(p, {
+    level: mode === "scene" && !scene.map && !state.card && !fetching,
+    on: mode === "scene" && !state.card && !fetching,
+    still: frozen() || state.finished || !!state.flight || !!p.loaded || state.mode !== "play",
+    shown,
+    banner: drawn.banner,
+    noteUntil: state.helpUntil,
+    steps: state.steps
+  });
 }
 
 /** The rune on its way from the level to its slot in the header, on the text canvas. */
@@ -1634,7 +1720,6 @@ const loop = createLoop(
   }
 );
 
-wirePad(pad, input, touch, help);
 // Pointing at a plain link lights up its door in the game.
 for (const link of links) {
   const on = () => (state.highlight = scene?.doors.find((d) => d.id === link.id) ?? null);
@@ -1799,12 +1884,18 @@ if (debugging)
         return shown;
       },
       state,
+      drawn,
       view,
       input,
       sfx,
       step: stepOnce,
       frame: loop.frame,
       still,
+      /** What a resize does (the stage's observer), for a headless browser that delivers none: lays out and, stepped, draws again. */
+      layout: () => {
+        layout();
+        if (harness) still();
+      },
       get doors() {
         return scene.doors;
       },

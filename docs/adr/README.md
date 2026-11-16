@@ -30,7 +30,7 @@ Lars before reversing one of his.
 | [0018](0018-the-blinking-fall-and-the-visit.md) | A fall while blinking is free; a visit remembers the cheese and paid skilling | planner (order 12) | holds; adjusts 0008 |
 | [0019](0019-the-view-on-an-upright-phone.md) | On an upright phone the viking view stays 240 art px wide | planner (order 12) | holds; adjusted by 0021 |
 | [0020](0020-waiting-is-not-length.md) | The scripted clear's floor is 40 s (80 s), now that waits are cut | planner (order 12) | holds; adjusts 0009's measure |
-| [0021](0021-the-upright-view-stands-him-two-thirds-down.md) | On an upright screen he stands two thirds down; the ground goes on under him, the far layers sit behind the street | planner (order 13) | holds; adjusts 0019 |
+| [0021](0021-the-upright-view-stands-him-two-thirds-down.md) | On an upright screen he stands two thirds down; the ground goes on under him, the far layers sit behind the street | planner (order 13) | holds; adjusts 0019; adjusted by 0043 (on a touch screen, counted from the pad) |
 | [0022](0022-the-plough-hurts-only-while-it-moves.md) | The plough hurts only while it moves; standing still it is in his way; running into him shows the round's hint | planner (order 13) | holds |
 | [0023](0023-what-hurts-keeps-its-light-after-dusk.md) | After dusk enemies keep a rim of light and eye-shine; the place's name stands on a plate | planner (order 13) | holds; adjusted by 0039 (every enemy's eyes, platforms' tops keep light) |
 | [0024](0024-the-shield-is-a-held-stance.md) | The shield: held down on the ground it comes up in six steps and stops throws and charges from in front; a held stance, not a parry | planner (order 14) | holds; adjusted by 0032 |
@@ -52,6 +52,7 @@ Lars before reversing one of his.
 | [0040](0040-felt-at-a-glance.md) | Every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use marked in one cyan; his rim after dusk | planner (order 19) | holds; builds on 0039 |
 | [0041](0041-off-the-screen-is-not-drawn.md) | What is off the screen is not drawn; the dark in rectangles, not rows; large unchanging pieces kept as strips, alike shapes stamped; scenery added is drawn so | planner (order 20) | holds; amends 0036 |
 | [0042](0042-flat-places.md) | Flat places found by a walk along every route at both sizes and given what the place has, as scenery drawn once and copied; far layers may rise with a climbed view | planner (order 20) | holds; builds on 0039, 0041 |
+| [0043](0043-the-game-in-the-hand.md) | On a phone the screen is the game's: the bar the run alone during a level, the touch pad over the picture in the thumbs' corners, every target 56 x 56 and 8 apart, each finger followed on its own, the camera keeping him clear of the buttons, the help line a note of what changed, the banner off what matters | planner (order 21) | holds; builds on 0019, adjusts 0021 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

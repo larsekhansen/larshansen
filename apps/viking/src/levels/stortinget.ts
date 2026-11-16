@@ -2,7 +2,7 @@ import { box } from "@larshansen/pixelkit/backdrop";
 import { carrierAt, carrierShown, pathPeriod, stopAt, untilStop, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
-import { kept } from "@larshansen/pixelkit/kept";
+import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerOrigin, layerX, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
@@ -267,6 +267,14 @@ const hash = (a: number, b: number) => {
   return n - Math.floor(n);
 };
 
+/**
+ * The part of world x0..x1 that is on the street's canvas, a pixel more each side: a loop over x draws only
+ * there (order 21; what is off the screen is not drawn, ADR 0041). The pictures are the same.
+ */
+const onCanvas = (x0: number, x1: number): [number, number] => [Math.max(x0, view.camX - 1), Math.min(x1, view.camX + view.w + 1)];
+/** The first of start, start + step, start + 2 step ... at or past `min`. */
+const stepFrom = (start: number, step: number, min: number) => (min <= start ? start : start + Math.ceil((min - start) / step) * step);
+
 /** Blasted rock in rough courses: blocks of a few shades with dark cracks between, drawn by `put` (world or layer pixels). */
 function rockCourses(put: (x: number, y: number, w: number, h: number, c: string) => void, lx0: number, lx1: number, y0: number, y1: number, shades: string[], crack: string, seed = 0) {
   for (let y = Math.floor(y0 / 10) * 10; y < y1; y += 10) {
@@ -287,7 +295,13 @@ function rockCourses(put: (x: number, y: number, w: number, h: number, c: string
 function farDark() {
   const o = Math.floor(layerOrigin(0.12));
   box(0, view.camY, view.w, view.h, METRO.vault);
-  rockCourses((x, y, w, h, c) => box(x - o, y, w, h, c), o, o + view.w, view.camY, view.camY + view.h, [METRO.vault, FAR_ROCK, METRO.vaultLight], FAR_CRACK, 3);
+  // In blocks of the layer's own pixels, each drawn once and copied (order 21): the rock alone is thousands of
+  // rectangles on a tall screen. A block's courses fill it to its edges, so the copies make the same picture.
+  for (let by = Math.floor(view.camY / FAR_BLOCK) * FAR_BLOCK; by < view.camY + view.h; by += FAR_BLOCK)
+    for (let bx = Math.floor(o / FAR_BLOCK) * FAR_BLOCK; bx < o + view.w; bx += FAR_BLOCK)
+      stamp(`far rock ${bx} ${by}`, bx - o, by - view.camY, FAR_BLOCK, FAR_BLOCK, () =>
+        rockCourses((x, y, w, h, c) => R(x - bx, y - by, w, h, c), bx, bx + FAR_BLOCK, by, by + FAR_BLOCK, [METRO.vault, FAR_ROCK, METRO.vaultLight], FAR_CRACK, 3)
+      );
   for (let i = 0; i < 30; i++) {
     const x = layerX(i * 240 + ((i * 71) % 90), 0.12);
     if (x < -4 || x > view.w + 4) continue;
@@ -297,6 +311,7 @@ function farDark() {
   }
 }
 const FAR_ROCK = mix(METRO.vault, METRO.vaultLight, 0.5);
+const FAR_BLOCK = 128;
 const FAR_CRACK = mix(METRO.vault, INK, 0.5);
 
 /** Other platforms, far off across the rock: a lit band of tiles with a train in it, every line in the city. */
@@ -348,8 +363,9 @@ function nearColumns() {
 function tiles(x0: number, x1: number, y0: number, y1: number, band: number | null) {
   R(x0, y0, x1 - x0, y1 - y0, METRO.tile);
   for (let y = y0 + 7; y < y1; y += 8) R(x0, y, x1 - x0, 1, METRO.tileLine);
-  for (let y = y0; y < y1; y += 16) for (let x = x0 + 7; x < x1; x += 8) R(x, y, 1, 8, METRO.tileLine);
-  for (let y = y0 + 8; y < y1; y += 16) for (let x = x0 + 3; x < x1; x += 8) R(x, y, 1, 8, METRO.tileLine);
+  const [a, b] = onCanvas(x0, x1);
+  for (let y = y0; y < y1; y += 16) for (let x = stepFrom(x0 + 7, 8, a); x < b; x += 8) R(x, y, 1, 8, METRO.tileLine);
+  for (let y = y0 + 8; y < y1; y += 16) for (let x = stepFrom(x0 + 3, 8, a); x < b; x += 8) R(x, y, 1, 8, METRO.tileLine);
   if (band !== null) {
     R(x0, band, x1 - x0, 6, METRO.band);
     R(x0, band, x1 - x0, 1, mix(METRO.band, WHITE, 0.3));
@@ -376,6 +392,7 @@ function tube(x: number, y: number, w = 14) {
 
 /** The ticket hall: a tiled wall under the rock vault, lamps on wires, ticket machines, the sign over the gates with the roundel, the way out. */
 function hall(v: View) {
+  if (!seen(-16, 34 * TILE + 16)) return;
   const g = H * TILE;
   tiles(0, 34 * TILE, g - 84, g, g - 36);
   for (const x of [40, 136, 232, 328, 424]) {
@@ -408,7 +425,9 @@ function hall(v: View) {
 function escalator(ramp: { points: [number, number][] }, belt: number, t: number) {
   const [, [x0, y0], [x1, y1]] = ramp.points;
   const tt = view.reduced ? 0 : t;
-  for (let x = x0; x <= x1; x++) {
+  if (!seen(x0 - 4, x1 + 4)) return;
+  const [a, b] = onCanvas(x0, x1 + 1);
+  for (let x = a; x < b; x++) {
     const y = Math.round(y0 + ((x - x0) / (x1 - x0)) * (y1 - y0));
     // The truss under the steps, and the glass balustrade with the black handrail over them.
     R(x, y + 1, 1, 9, METRO.steel);
@@ -430,7 +449,8 @@ function escalator(ramp: { points: [number, number][] }, belt: number, t: number
 
 /** The shafts' back walls: a band of tiles going down with the escalators, the rock above. */
 function shaft() {
-  for (let x = 34 * TILE; x < 60 * TILE; x++) {
+  const [a, b] = onCanvas(34 * TILE, 60 * TILE);
+  for (let x = a; x < b; x++) {
     const ramp = Math.round(rampHeight([ESC1, ESC2], x) ?? M * TILE);
     const top = ramp - 70;
     R(x, top - 4, 1, 4, METRO.concrete);
@@ -444,6 +464,7 @@ function shaft() {
 function platformWall(c0: number, c1: number, floor: number, seed: number) {
   const x0 = c0 * TILE;
   const x1 = (c1 + 1) * TILE;
+  if (!seen(x0 - 8, x1 + 8)) return;
   const top = floor - 84;
   tiles(x0, x1, top, floor - 6, floor - 52);
   // The station's name in the band, every so often, in white.
@@ -497,6 +518,8 @@ const PLANT_GREEN = PALETTE.grassDark;
 /** The kiosk on platform 1: red, its shutter half down, magazines in the window; its door is Quintle's, padlocked until it is out. */
 function kiosk(v: View) {
   const x = 67 * TILE;
+  const d0 = v.doors.get("quintle");
+  if (!seen(x - 4, x + 5 * TILE + 4) && !(d0 && seen(d0.x - 4, d0.x + d0.w + 4))) return;
   const g = P * TILE;
   const top = 16 * TILE + 4;
   R(x, top, 5 * TILE, g - top, METRO.kiosk);
@@ -548,9 +571,12 @@ function board(c: number, y: number, until: number, line: number, t: number) {
 
 /** A tunnel's wall: blasted rock in courses, a cable tray, a small lamp every few metres. */
 function tunnelWall(c0: number, c1: number) {
+  if (!seen(c0 * TILE - 4, (c1 + 1) * TILE + 32)) return;
   const top = ceilingAt(c0);
-  rockCourses(R, c0 * TILE, (c1 + 1) * TILE, top, P * TILE, [METRO.rock, METRO.rockLight, mix(METRO.rock, METRO.vault, 0.4)], METRO.vault, 11);
-  for (let x = c0 * TILE; x < (c1 + 1) * TILE; x += 6) R(x, top + 10, 4, 1, METRO.concreteDark);
+  // Only the courses on the screen: their blocks stand where they always stand, wherever the drawing starts.
+  const [a, b] = onCanvas(c0 * TILE, (c1 + 1) * TILE);
+  rockCourses(R, a, b, top, P * TILE, [METRO.rock, METRO.rockLight, mix(METRO.rock, METRO.vault, 0.4)], METRO.vault, 11);
+  for (let x = stepFrom(c0 * TILE, 6, a - 4); x < b; x += 6) R(x, top + 10, 4, 1, METRO.concreteDark);
   for (let x = c0 * TILE + 20; x < (c1 + 1) * TILE; x += 64) {
     R(x, top + 4, 3, 3, LAMP);
     light(x - 1, top + 3, 5, 5, "soft");
@@ -564,11 +590,13 @@ function tunnelWall(c0: number, c1: number) {
 function cavern() {
   const x0 = 176 * TILE;
   const x1 = 228 * TILE;
+  if (!seen(x0 - 8, Math.max(x1, DIP + 14 * TILE, DIP + 84) + 8)) return;
   const top = 8 * TILE;
   // The express's tunnel mouth high in the wall, and its track down to the shelf.
   R(x0 - 2, 128, 26, 40, METRO.concreteDark);
   R(x0, 132, 22, 36, METRO.vault);
-  for (let x = x0; x < x1; x++) {
+  const [a, b] = onCanvas(x0, x1);
+  for (let x = a; x < b; x++) {
     const y = rampHeight([{ points: [[168 * TILE, 136], [180 * TILE, HIGH], [x1 + 400, HIGH]] }], x) ?? HIGH;
     const bed = Math.round(y) + 34;
     R(x, bed, 1, 5, METRO.concrete);
@@ -587,7 +615,8 @@ function cavern() {
     light(x - 4, top + 21, 9, 2, "lamp");
   }
   // The slot down to the depot, where the local goes.
-  for (let x = DIP; x < DIP + 14 * TILE; x++) {
+  const [d0, d1] = onCanvas(DIP, DIP + 14 * TILE);
+  for (let x = d0; x < d1; x++) {
     const k = (x - DIP) / (14 * TILE);
     R(x, P * TILE - 2, 1, 4 + Math.round(k * 10), METRO.vault);
   }
@@ -599,6 +628,7 @@ function cavern() {
 
 /** The gate past the end of platform 3, the cable drums under the service walkway, and the signal cabinet with its lamps, under the rune. */
 function pastTheEnd(v: View) {
+  if (!seen(237 * TILE - 8, 270 * TILE + 8)) return;
   const g = U * TILE;
   for (const x of [247 * TILE + 6, 249 * TILE + 10]) {
     wdisc(x + 8, g - 9, 9, P_WOOD);
@@ -753,7 +783,7 @@ function train(at: { x: number; y: number }, line: number, clip: { x0: number; x
   const { x, y } = at;
   for (let dx = 0; dx < CAR; dx++) {
     const wx = x + dx;
-    if (wx < clip.x0 || wx >= clip.x1) continue;
+    if (wx < clip.x0 || wx >= clip.x1 || wx < view.camX - 1 || wx > view.camX + view.w) continue;
     const c = Math.floor(wx / TILE);
     const floor = "#-".includes(MAP[P][c]) ? P * TILE : MAP[U][c] === "#" ? U * TILE : Infinity;
     const bottom = Math.min(y + 36, floor, dipping ? P * TILE : Infinity);
@@ -937,7 +967,7 @@ export const STORTINGET: LevelDef = {
       cavern();
       platformWall(228, COLS - 1, U * TILE, 2);
       // The depot's siding, sunk below platform 3: its own tiled wall down to its floor, and a dark mouth where it goes in under the end.
-      tiles(254 * TILE, 264 * TILE, U * TILE - 6, P * TILE - 6, null);
+      if (seen(254 * TILE, 264 * TILE)) tiles(254 * TILE, 264 * TILE, U * TILE - 6, P * TILE - 6, null);
       R(254 * TILE, P * TILE - 6, 10 * TILE, 6, METRO.bed);
       // The open crossings, and the one under the grating: dark down to the track.
       for (const [c0, c1] of [[63, 64], [79, 81], [153, 157], [258, 260]] as const) R(c0 * TILE, P * TILE, (c1 - c0 + 1) * TILE, TILE, METRO.vault);
@@ -951,7 +981,8 @@ export const STORTINGET: LevelDef = {
       board(167, 12 * TILE, nextLocal(1, v.t), 1, v.t);
       // The walkway's belt, moving against him.
       const tt = view.reduced ? 0 : v.t;
-      for (let x = WALKWAY.x0; x < WALKWAY.x1; x++) {
+      const [a, b] = onCanvas(WALKWAY.x0, WALKWAY.x1);
+      for (let x = a; x < b; x++) {
         R(x, WALKWAY.y, 1, 2, METRO.steps);
         if ((((x - Math.floor(tt * BELT.walkway)) % 6) + 6) % 6 === 0) R(x, WALKWAY.y, 1, 1, METRO.steel);
       }

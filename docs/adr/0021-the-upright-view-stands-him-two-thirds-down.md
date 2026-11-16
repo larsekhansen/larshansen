@@ -33,3 +33,8 @@ shaft in Nordmarka ran up to the top of the screen, and the help line ran off bo
 ## Not chosen
 - Capping the view's height (letterboxing). Bars above and below on a phone are a waste of its screen.
 - Redrawing every far layer for every height. The shift does it in one place.
+
+## Adjusted by 0043 (order 21)
+On a touch screen, where the pad lies over the bottom of the picture, the two thirds are counted from the top of the
+pad's bottom row, upright and on its side: he stands higher, with the ground he has passed under the pad. See
+[0043](0043-the-game-in-the-hand.md).

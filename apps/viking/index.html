@@ -86,21 +86,16 @@
       </noscript>
     </main>
 
+    <!-- The touch pad, over the picture (order 21): placed and followed by src/render/pad.ts. -->
     <div class="pad" id="pad" hidden>
-      <div>
-        <button type="button" data-action="left" aria-label="Walk left">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
-        </button>
-        <button type="button" data-action="right" aria-label="Walk right">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
-        </button>
+      <div class="move" role="group" aria-label="Walk left or right">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5 8 12l7 7" /></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7" /></svg>
       </div>
-      <div>
-        <button type="button" data-action="enter" class="enter">Go in</button>
-        <button type="button" data-action="dash" class="dash" hidden>Dash</button>
-        <button type="button" data-action="down" class="shield" hidden>Shield</button>
-        <button type="button" data-action="jump">Jump</button>
-      </div>
+      <button type="button" data-action="enter" class="enter">Go in</button>
+      <button type="button" data-action="dash" class="dash" hidden>Dash</button>
+      <button type="button" data-action="down" class="shield" hidden>Shield</button>
+      <button type="button" data-action="jump" class="jump">Jump</button>
     </div>
 
     <script type="module" src="/src/main.ts"></script>

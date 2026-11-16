@@ -16,6 +16,21 @@ export interface Stage {
 }
 
 /**
+ * The view for a stage `cssW` x `cssH` at `dpr`: `k` whole device pixels per art pixel, keeping about 192 art
+ * pixels of height and 180 of width (a tall phone zooms in further, so the street is not a strip under an
+ * empty sky; never narrower than `minWidth` where a page asks), and `w` x `h` art pixels, one more than the
+ * screen in each direction, so nudging a layer never shows an edge.
+ */
+export function viewFor(cssW: number, cssH: number, dpr: number, minWidth?: number): { k: number; w: number; h: number } {
+  const devW = Math.max(1, Math.round(cssW * dpr));
+  const devH = Math.max(1, Math.round(cssH * dpr));
+  let k = Math.max(1, Math.floor(Math.min(devH / 192, devW / 180)));
+  if (devH > devW * 1.2) k = Math.max(k, Math.min(Math.ceil(devH / 280), Math.floor(devW / 120)));
+  if (minWidth) k = Math.max(1, Math.min(k, Math.floor(devW / minWidth)));
+  return { k, w: Math.ceil(devW / k) + 1, h: Math.ceil(devH / k) + 1 };
+}
+
+/**
  * `minWidth`: the fewest art pixels the view may be wide, however tall and narrow the screen; a page
  * that needs to see far ahead (the viking game, on an upright phone) passes it. Without it a tall
  * phone zooms in until the street fills it (the front page).
@@ -43,17 +58,9 @@ export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; u
   function resize() {
     const rect = stage.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
-    const devW = Math.max(1, Math.round(rect.width * dpr));
-    const devH = Math.max(1, Math.round(rect.height * dpr));
-    // Whole device pixels per art pixel, keeping about 192 art pixels of height and 180 of width.
-    // A tall phone zooms in further, so the street is not a strip under an empty sky.
-    let k = Math.max(1, Math.floor(Math.min(devH / 192, devW / 180)));
-    if (devH > devW * 1.2) k = Math.max(k, Math.min(Math.ceil(devH / 280), Math.floor(devW / 120)));
-    if (opts.minWidth) k = Math.max(1, Math.min(k, Math.floor(devW / opts.minWidth)));
-    // One art pixel more than the screen in each direction, so nudging a layer never shows an edge.
-    Object.assign(view, { k, dpr, w: Math.ceil(devW / k) + 1, h: Math.ceil(devH / k) + 1 });
-    view.cssW = (view.w * k) / dpr;
-    view.cssH = (view.h * k) / dpr;
+    Object.assign(view, viewFor(rect.width, rect.height, dpr, opts.minWidth), { dpr });
+    view.cssW = (view.w * view.k) / dpr;
+    view.cssH = (view.h * view.k) / dpr;
     for (const c of [px, ui, ...depths.map((d) => d.canvas)]) {
       c.style.width = `${view.cssW}px`;
       c.style.height = `${view.cssH}px`;

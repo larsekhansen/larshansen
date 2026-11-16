@@ -1,0 +1,16 @@
+# Every screen state of order 21, for `hand.ts`: a name, a tab, the address's path and query. Pages under `auto`
+# play the level's scripted route to that step (the troll's and the plough's wind-up, the serpent rearing, the sledge
+# under way, Langkaia's and Vålerenga's runes taken and their cards up).
+start	/viking/?debug&steps=40&level=langkaia&sky=day#langkaia
+mid	/viking/?debug&steps=200&level=akershus&x=1006#akershus
+mid-armed	/viking/?debug&steps=200&level=vigelandsparken&x=654#vigelandsparken
+troll	/viking/?debug&auto&steps=2620&level=nordmarka#nordmarka
+plough	/viking/?debug&auto&steps=3640&level=nabolaget#nabolaget
+serpent	/viking/?debug&auto&steps=3230&level=gamlebyen#gamlebyen
+sledge	/viking/?debug&auto&steps=600&level=korketrekkeren#korketrekkeren
+map	/viking/?debug&steps=30&sky=day&cleared=langkaia,akershus,radhuset,slottet,holmenkollen,akerselva,nordmarka,stortinget,ekeberg,nabolaget&x=792#kart
+card	/viking/?debug&auto&steps=3900&level=langkaia&sky=day#langkaia
+card-home	/viking/?debug&auto&steps=5200&level=nabolaget&cleared=langkaia,akershus,radhuset,slottet,holmenkollen,akerselva,nordmarka,stortinget,ekeberg#nabolaget
+over	/viking/?debug&steps=400&level=langkaia&sky=day&hearts=1&lives=1&x=700&y=200&keys=r300#langkaia
+loading	/viking/?debug&fetch=hang#akershus
+failed	/viking/?debug&fetch=fail#akershus

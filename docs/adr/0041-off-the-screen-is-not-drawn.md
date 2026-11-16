@@ -58,6 +58,11 @@ step 0 it is identical); Stortinget (whose `kept` changed) 14 of 14 at each; the
   Every level's walk before and after is in `apps/viking/tools/review/o20/perf.md`.
 - A level that draws something across its whole length should ask `seen` first, or keep it; a shape repeated
   along a level should be stamped. Scenery added since (order 20's flat places, ADR 0042) is drawn so.
+- Order 21 did Stortinget the same way (its halls, shafts, escalators, cavern and trains drawn only where on the screen,
+  its far rock stamped in 128-pixel blocks: 27,900 to 29,900 rectangles a frame at 390 x 844 to 3,600 to 9,950) and
+  Slottet (the ground under the street kept tile by tile, its slopes only on the screen: 13,300 to 17,800 to 9,000 to
+  9,800); every level is now under 15,000 at every place of its walk; the pictures byte-identical
+  (`apps/viking/tools/review/o21/perf.md`).
 - Not done: the far layers' columns (`column`, a rectangle per screen column per layer: 700 to 1,500 a frame
   at 390 wide), the kit's tiles and Stortinget's far rock (27,000 to 30,000 a frame at 390 x 844, now the
   heaviest level) are still drawn every frame; colours are still set on every rectangle.

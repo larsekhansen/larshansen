@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, and by order 20's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, and by order 21's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -72,6 +72,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-15 | An adversarial review of line 2 (`reviews/2026-11-15-line-2.md`); order 17 makes it good: the serpent's fight and ending, a lost life at a boss, what line 2 teaches and gives made visible, each level asking more of its idea, the review's tools made honest, the first script's budget enforced | `orders/17-line-2-made-good.md`, branch `line-2-made-good` |
 | 2026-11-15 | Lars plays on his phone after the speed fix (PR #63): the card takes him out to the map (ADR 0037); Nabolaget is shown as Vålerenga (ADR 0038); runes that read at a glance; enemies a quarter larger, outlined, in a palette of their own; platforms with a standing top; every role's colours named and held apart (ADR 0039) | `orders/18-seen-at-a-glance.md`, branch `seen-at-a-glance` |
 | 2026-11-15 | Lars: "do more design polishing like that". Order 19: every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use in one cyan; his rim after dusk; the header between 760 and 1359 px (ADR 0040) | `orders/19-felt-at-a-glance.md`, branch `felt-at-a-glance` |
+| 2026-11-16 | Lars: "i like what i see. keep going"; he plays on a phone. Order 21: the game in the hand. The phone's screen is the game's (the bar the run alone during a level, the pad over the picture), buttons that fit thumbs and answer them finger by finger, the camera keeping him clear of the buttons, the help line on a touch screen only a note of what changed, the banner off what matters (ADR 0043); Stortinget and Slottet drawn at a sixth to a half of the rectangles, the pictures byte-identical | `orders/21-in-the-hand.md`, branch `in-the-hand` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -175,9 +176,13 @@ pieces are kept or stamped (ADR 0041): Nordmarka from 16,600 to 29,100 rectangle
 4,200 to 5,700, Bygdøy from about 22,000 to 5,800 to 7,300, Korketrekkeren from about 15,700 to 3,400 to 3,700.
 A change like that must leave the pictures byte-identical: take the same addresses from a build before and a
 build after (check which build each preview serves) and compare bytes. Every level's numbers are in
-`apps/viking/tools/review/o20/perf.md`. Next in line: Stortinget (27,000 to 30,000 a frame at 390 x 844, its far
-rock filling a tall view), the far layers' one rectangle per column, colours set on every rectangle, the five
-stacked canvases. No one has measured on a real phone: the numbers are the Pi's software renderer.
+`apps/viking/tools/review/o20/perf.md`. Order 21 did Stortinget (27,900 to 29,900 a frame at 390 x 844 to 3,600 to
+9,950: what is off the screen is not drawn, its far rock stamped in blocks) and Slottet (13,300 to 17,800 to 9,000 to
+9,800: the ground under the street kept, its slopes only on the screen); every level is now under 15,000 at every place
+of its walk, the heaviest Bjørvika (14,600) and Vålerenga (14,300) (`tools/review/o21/perf.md`). Next in line: the far
+layers' one rectangle per column, colours set on every rectangle, the five stacked canvases, Stortinget's escalator
+shafts (3,600 of its worst place). No one has measured on a real
+phone: the numbers are the Pi's software renderer.
 
 ## Line 2: what is built, what order 17 owes
 
@@ -238,7 +243,8 @@ stacked canvases. No one has measured on a real phone: the numbers are the Pi's 
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.00 kB gzipped after order 20 (`kept.ts` and the kit's `dark.ts` are chunks of their own now;
+- **First script**: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
+  the camera's room for it, `render/pad.ts` and `game/frame.ts`, 3.1 kB, are a chunk fetched on a touch screen only). Before: 59.00 kB gzipped after order 20 (`kept.ts` and the kit's `dark.ts` are chunks of their own now;
   the far layers' `climbed` and `lift` came in). Before: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
   with the first scene, which took the old sparks, the beaten enemies' puff and the page's freeze with it). Before: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
   59.8). Earlier: 59.18 kB after order 16 (order 16 allowed 59.5). Order 15 moved Nordmarka's
@@ -310,6 +316,34 @@ Order 20 (`orders/20-places-at-their-best.md`, ADR 0041, 0042). What to know:
   sheet is away from the sign.
 - **Unplayed**: none of it has been seen at speed or heard by a person.
 
+## Order 21: in the hand
+
+Order 21 (`orders/21-in-the-hand.md`, ADR 0043, DESIGN's "In the hand"). Lars plays on a phone; nobody can touch one from
+this Pi. What to know:
+- **Looking at a phone here.** `tools/glance/hand.ts` opens a screen state in headless Firefox told it has a coarse
+  pointer and a pixel ratio of 3 (a phone's), at any size, and measures from the page (it serves the game through
+  itself, so its page can read the game's): the bar, the pad and every target, the help line, the cards, and from
+  `?debug`'s `window.__game` where he, the enemies and the pickups are and where the banner is drawn (`drawn`).
+  `--turn` turns the phone after the first measuring; a headless Firefox delivers no resize observations, so the tool
+  calls `__game.layout()`, as the page's observer would. `hand.tsv` lists the states; `hand-table.ts` makes the tables
+  (`tools/review/o21/before.md`, `after.md`). `?debug&touch` shows the pad without a touch screen.
+- **The pad** is `render/pad.ts`, a chunk fetched on a touch screen only (with `game/frame.ts`): `padLayout` places
+  the controls (the same slots whatever is shown; the way in and the shield share one), `createThumbs`/`wireThumbs`
+  follow each finger, `frame` folds the bar during a level, dims what has nothing to do and places the help line's
+  note; `roomy` (`game/frame.ts`) stands him two thirds down the screen above the pad's bottom row and lifts him over a
+  button he would otherwise be under. On a notched phone on its side a turn on landing beside the dash can still jump
+  the camera (17 frames over 24 px in all sixteen routes).
+  The pad's markup is the viking page's own (`index.html`); the kit's `wirePad` is the front page's alone now.
+- **The bar on a phone** is CSS (`styles.css`, "The bar on a phone") on the body's `touch` and `playing` classes; the
+  cards read `--bar` to keep below it.
+- **Not on a phone during a level**: the restart (the Game over card starts a level again), the gold count, the links.
+- **On its side the game is drawn larger** than before order 21: the stage is the window's whole height now, so the
+  kit's sizing gives 2 CSS pixels to an art pixel at a pixel ratio of 3 (1.33 before): 26 tiles across 844 px, not 40.
+- **He stands higher** on a touch screen: two thirds of the way down the screen above the pad's bottom row.
+- **Speed**: see "Speed" above; Stortinget's and Slottet's pictures are byte-identical before and after (both sizes,
+  day and night).
+- **Unplayed**: none of it has been touched. The list for a person with a phone is in the order's hand-back.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -356,8 +390,8 @@ reorder this list.
    all of it the reach and dead-end searches in sixteen workers on four cores (Gamlebyen's, eight searches
    in one worker, is the slowest).
 9. **The viking header is solid cream,** not the front page's frosted bar
-   ([ADR 0015](../adr/0015-solid-header-in-viking.md)); on an upright phone it wraps to three rows,
-   and on a phone on its side its run group is cut at the right.
+   ([ADR 0015](../adr/0015-solid-header-in-viking.md)). Since order 21 on a touch phone it is the run alone during a
+   level (two rows upright, one on its side, ADR 0043); with a mouse on a narrow window it still wraps as before.
 10. **The maze's words** keep the original game's taunting voice, one exclamation mark included;
    order 13 read the viking game's lines, not the maze's.
 11. **Line 2 is unplayed too.** Bygdøy, Vigelandsparken, Korketrekkeren, Østensjøvannet, Bjørvika,
@@ -366,10 +400,11 @@ reorder this list.
    whether a rising stone is seen in time; the serpent's rhythm and its hints on a phone. Untested by a
    person: whether a statue's creeping reads when it is at the edge of the screen; the sledge at speed,
    the duck on a touch screen (the Shield button), the camera's lead on a real phone; whether a person
-   lingers on the lake's pads long enough for its swans to matter. The shield's touch button and the pad's smaller layout with
-   five buttons were not seen on a touch screen. The rocking decks' feel (carried a pixel up or down a
-   step as he walks) is untested by a person. On an upright phone (in headless Firefox at a device
-   pixel ratio of 1) a level's run row is cut at the right, past the lives: it was before line 2 too.
+   lingers on the lake's pads long enough for its swans to matter. The pad (since order 21 over the picture, every control
+   56 x 56 or more) was not seen on a touch screen. The rocking decks' feel (carried a pixel up or down a
+   step as he walks) is untested by a person. On an upright phone with a mouse (in headless Firefox at a device
+   pixel ratio of 1) a level's run row is cut at the right, past the lives; on a touch phone the bar is the run alone
+   since order 21.
 
 ## Things considered and not done
 

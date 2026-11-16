@@ -1,6 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
+import { kept } from "@larshansen/pixelkit/kept";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
@@ -719,7 +720,9 @@ function pondRail() {
 function slopes() {
   for (const ramp of SLOPES) {
     const xs = ramp.points.map((p) => p[0]);
-    for (let x = Math.min(...xs); x < Math.max(...xs); x++) {
+    // Only where it is on the street's canvas (order 21; what is off the screen is not drawn, ADR 0041).
+    const end = Math.min(Math.max(...xs), view.camX + view.w + 1);
+    for (let x = Math.max(Math.min(...xs), view.camX - 1); x < end; x++) {
       const y = Math.round(rampHeight([ramp], x) ?? 0);
       R(x, y, 1, 4, GROUND.paving);
       R(x, y + 4, 1, 1, GROUND.pavingDot);
@@ -730,8 +733,12 @@ function slopes() {
 }
 const UNDER = mix(GROUND.pavingFill, INK, 0.1);
 
-/** Ground under the street, and under slopes: setts in courses, darker the deeper. */
+/** Ground under the street, and under slopes: setts in courses, darker the deeper. Drawn once a tile and copied (order 21). */
 function under(c: number, r: number, x: number, y: number) {
+  kept(`under ${c} ${r} ${y}`, x, y, TILE, TILE, () => underPixels(c, r, x, y));
+}
+
+function underPixels(c: number, r: number, x: number, y: number) {
   const depth = Math.max(0, r * TILE - streetY(x + 8));
   const base = mix(UNDER, INK, Math.min(0.5, depth / 120));
   R(x, y, TILE, TILE, base);
