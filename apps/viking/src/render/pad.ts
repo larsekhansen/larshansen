@@ -146,10 +146,11 @@ interface PointerLike {
 }
 
 /**
- * Pointer events on `root` (the pad) feed the fingers; the window turning or losing focus, and the page being
- * hidden, let go of all of them. `changed` is told after anything that may change what looks pressed.
+ * Pointer events on `root` (the pad) feed the fingers; the screen turning (from upright to on its side or back) or
+ * the window losing focus, and the page being hidden, let go of all of them. A resize that does not turn it (a
+ * phone's toolbar showing) lets go of nothing. `changed` is told after anything that may change what looks pressed.
  */
-export function wireThumbs(root: EventTarget, win: EventTarget, doc: EventTarget & { hidden: boolean }, thumbs: Thumbs, changed: () => void) {
+export function wireThumbs(root: EventTarget, win: EventTarget & { innerWidth?: number; innerHeight?: number }, doc: EventTarget & { hidden: boolean }, thumbs: Thumbs, changed: () => void) {
   root.addEventListener("pointerdown", (ev) => {
     const e = ev as unknown as PointerLike;
     if (!thumbs.down(e.pointerId, e.clientX, e.clientY)) return;
@@ -173,7 +174,14 @@ export function wireThumbs(root: EventTarget, win: EventTarget, doc: EventTarget
     thumbs.clear();
     changed();
   };
-  for (const type of ["blur", "resize", "orientationchange", "pagehide"]) win.addEventListener(type, all);
+  for (const type of ["blur", "orientationchange", "pagehide"]) win.addEventListener(type, all);
+  const side = () => (win.innerWidth ?? 0) > (win.innerHeight ?? 0);
+  let wide = side();
+  win.addEventListener("resize", () => {
+    if (side() === wide) return thumbs.refresh();
+    wide = side();
+    all();
+  });
   doc.addEventListener("visibilitychange", () => doc.hidden && all());
 }
 
@@ -236,7 +244,7 @@ export interface Pad {
   rects(): Rect[];
   /** Where the camera goes with room left for the buttons (`roomy` in `game/frame.ts`), from where `follow` put it. */
   room(at: { x: number; y: number }, cam: { x: number; y: number }, focus: Focus, bounds: Bounds, elapsedMs: number, snap: boolean, him: { x: number; y: number }, facing: number): { x: number; y: number };
-  /** Puts each control where it goes and lets go of every finger: after a resize. */
+  /** Puts each control where it goes: after a resize. */
   layout(): void;
   show(s: PadState): void;
 }
@@ -286,7 +294,8 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
       const r = slots[c];
       Object.assign(controls[c].style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
     }
-    thumbs.clear();
+    // A finger on a control that moved is looked at again where it now is (turning the screen let go of it already).
+    thumbs.refresh();
     paint();
   }
   layout();

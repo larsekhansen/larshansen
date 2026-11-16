@@ -57,7 +57,7 @@ function rig(w = 390, h = 844) {
   const log: [Action, boolean][] = [];
   const thumbs = createThumbs(() => slots, (a, on) => log.push([a, on]));
   const root = new EventTarget();
-  const win = new EventTarget();
+  const win = Object.assign(new EventTarget(), { innerWidth: w, innerHeight: h });
   const doc = Object.assign(new EventTarget(), { hidden: false });
   let changed = 0;
   wireThumbs(root, win, doc, thumbs, () => changed++);
@@ -165,6 +165,8 @@ describe("a button answers the thumb", () => {
       const r = rig();
       r.fire("pointerdown", 1, r.mid("move", 0.2));
       r.fire("pointerdown", 2, r.mid("jump"));
+      // Turned: on its side now.
+      Object.assign(r.win, { innerWidth: 844, innerHeight: 390 });
       r.win.dispatchEvent(new Event(type));
       expect(Object.values(r.thumbs.held).some(Boolean)).toBe(false);
       // Its lifting, after, changes nothing; the next touch is a fresh press.
@@ -173,6 +175,14 @@ describe("a button answers the thumb", () => {
       r.fire("pointerdown", 5, r.mid("jump"));
       expect(r.thumbs.held.jump).toBe(true);
     }
+  });
+
+  test("a resize that does not turn the screen (a toolbar showing) lets go of nothing", () => {
+    const r = rig();
+    r.fire("pointerdown", 1, r.mid("jump"));
+    Object.assign(r.win, { innerHeight: 790 });
+    r.win.dispatchEvent(new Event("resize"));
+    expect(r.thumbs.held.jump).toBe(true);
   });
 
   test("the page losing focus or being hidden lets go of everything", () => {
