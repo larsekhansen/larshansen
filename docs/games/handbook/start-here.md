@@ -41,8 +41,8 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 23 alive | #69 | Frames, shadows, depth, alert mark, edge forgiveness 6 to 10 (ADRs 0045 to 0048) |
 | 24 line 1 redrawn | #70 | Way 3 for all of line 1, its bosses, the small things; laps, flicker, things in front |
 | 25 line 2 redrawn | #71 | Way 3 for line 2 and the sea serpent |
-| 26 the ground | building | Textured ground and props; small flags; spruce tips; rat tails; wasp colour |
-| 27 the neon invaders | planned | The glamour: the story and the look Lars chose on 16 November (ADR 0050) |
+| 26 the ground | #73 | Textured ground and props (ADR 0049); small flags; spruce spires; rat tails; amber wasps |
+| 27 the neon invaders | building | The glamour: the story and the look Lars chose on 16 November (ADR 0050) |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
 phone before going live. The Pi cannot run the game in a headless browser (HANDOVER,
