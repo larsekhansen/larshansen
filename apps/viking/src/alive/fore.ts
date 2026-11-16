@@ -40,8 +40,10 @@ export const FORE: Record<string, readonly Fore[]> = {
   ostensjovannet: [{ x: 257.75 * T, kind: "reeds" }]
 };
 
-/** How wide each kind is (art pixels): never more than a tenth of the narrowest view (240). */
-export const FORE_WIDTH: Record<ForeKind, number> = { post: 9, mast: 16, trunk: 14, reeds: 14, rope: 10 };
+/** Nearer than the lane, a thing in front is drawn larger than the street: each of its pixels this many art pixels (order 24). */
+export const FORE_SCALE = 1.5;
+/** How wide each kind is as drawn (art pixels, its own pixels times `FORE_SCALE`): never more than a tenth of the narrowest view (240). */
+export const FORE_WIDTH: Record<ForeKind, number> = { post: 9 * FORE_SCALE, mast: 16 * FORE_SCALE, trunk: 14 * FORE_SCALE, reeds: 14 * FORE_SCALE, rope: 10 * FORE_SCALE };
 
 /**
  * Its tones (order 24): the level's own air darkened, not black: a body, a darker shade, and a rim a little lighter on
@@ -64,12 +66,12 @@ type Box = { x: number; y: number; w: number; h: number };
  * (nothing is drawn over it). `quiet`: a bubble is up or he sits: they fade away for as long, so none stands over what
  * he reads or over him at rest.
  */
-export function drawFore(id: string, padTop: number | null, air: string, banner: Box | null, quiet: boolean) {
+export function drawFore(id: string, padTop: number | null, air: string, banner: Box | null, quiet: boolean, top = 0) {
   const list = FORE[id];
   shown = Math.max(0, Math.min(1, shown + (quiet ? -0.1 : 0.05)));
   if (!list || view.reduced || shown <= 0) return;
   const g = textCtx();
-  const n = unit();
+  const n = unit() * FORE_SCALE;
   const mid = view.camXf + view.w / 2;
   const bottom = padTop ?? view.cssH;
   const c = tones(air);
@@ -86,8 +88,10 @@ export function drawFore(id: string, padTop: number | null, air: string, banner:
     // Where it is on the screen (art pixels): at the middle as the camera's middle passes its place, faster than the street.
     const sx = (f.x - mid) * FORE_SPEED + view.w / 2;
     if (sx < -w - 2 || sx > view.w + 2) continue;
-    const x = snap((sx - w / 2) * n);
+    const x = snap((sx - w / 2) * unit());
     const H = view.cssH;
+    // The picture as it is seen: from under the page's bar (the canvas runs on up behind it) to the foot of the screen.
+    const seenH = H - top;
     const r = (ax: number, ay: number, aw: number, ah: number, colour: string) => {
       const y0 = Math.max(0, ay);
       const y1 = Math.min(bottom, ay + ah);
@@ -99,24 +103,24 @@ export function drawFore(id: string, padTop: number | null, air: string, banner:
       case "post": {
         // A lamp post: a plinth, its shaft lit down its left, a crook at the top and the lantern hanging from it (a
         // cap, its panes a shade lighter, a finial).
-        const top = H * 0.24;
-        r(3, top, 2, H, c.body);
-        r(3, top, 1, H, c.rim);
+        const lamp = top + seenH * 0.22;
+        r(3, lamp, 2, H, c.body);
+        r(3, lamp, 1, H, c.rim);
         r(2, H - 9 * n, 4, 9 * n, c.body);
         r(1, H - 4 * n, 6, 4 * n, c.deep);
-        r(3, top - 3 * n, 4, 2 * n, c.body);
-        r(6, top - 2 * n, 1, 3 * n, c.body);
-        r(4, top + 1 * n, 5, 1 * n, c.deep);
-        r(5, top + 2 * n, 3, 4 * n, c.rim);
-        r(5, top + 2 * n, 1, 4 * n, c.body);
-        r(4, top + 6 * n, 5, 1 * n, c.deep);
-        r(6, top + 7 * n, 1, 1 * n, c.deep);
+        r(3, lamp - 3 * n, 4, 2 * n, c.body);
+        r(6, lamp - 2 * n, 1, 3 * n, c.body);
+        r(4, lamp + 1 * n, 5, 1 * n, c.deep);
+        r(5, lamp + 2 * n, 3, 4 * n, c.rim);
+        r(5, lamp + 2 * n, 1, 4 * n, c.body);
+        r(4, lamp + 6 * n, 5, 1 * n, c.deep);
+        r(6, lamp + 7 * n, 1, 1 * n, c.deep);
         break;
       }
       case "mast": {
         // A ship's mast, stepped below the screen: the pole lit down its left, a yard across it with the sail furled
         // along it in lumps, a shroud down to the rail, the truck at its head.
-        const head = H * 0.14;
+        const head = top + seenH * 0.12;
         const yard = head + 10 * n;
         r(7, head, 2, H, c.body);
         r(7, head, 1, H, c.rim);
@@ -133,10 +137,11 @@ export function drawFore(id: string, padTop: number | null, air: string, banner:
         r(3, 0, 8, H, c.body);
         r(3, 0, 1, H, c.rim);
         r(10, 0, 1, H, c.deep);
-        for (let k = 0; k < 9; k++) r(5 + ((k * 3) % 5), (k * 37) % 100 / 100 * H, 1, (6 + (k % 3) * 3) * n, c.deep);
-        r(11, H * 0.15, 3, 2 * n, c.body);
-        r(13, H * 0.15 - 3 * n, 1, 3 * n, c.deep);
-        r(12, H * 0.15 + 2 * n, 1, 2 * n, c.deep);
+        for (let k = 0; k < 9; k++) r(5 + ((k * 3) % 5), top + (((k * 37) % 100) / 100) * seenH, 1, (6 + (k % 3) * 3) * n, c.deep);
+        const branch = top + seenH * 0.15;
+        r(11, branch, 3, 2 * n, c.body);
+        r(13, branch - 3 * n, 1, 3 * n, c.deep);
+        r(12, branch + 2 * n, 1, 2 * n, c.deep);
         r(1, H - 5 * n, 2, 5 * n, c.body);
         r(11, H - 4 * n, 2, 4 * n, c.deep);
         r(0, H - 2 * n, 14, 2 * n, c.deep);

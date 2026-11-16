@@ -737,7 +737,10 @@ export function createFeel(host: Host) {
      */
     fore(def: LevelDef, phase: Phase, banner: { x: number; y: number; w: number; h: number } | null, quiet: boolean) {
       const pad = document.body.classList.contains("touch") ? document.getElementById("pad") : null;
-      drawFore(def.id, pad && !pad.hidden ? pad.getBoundingClientRect().top - (document.getElementById("stage")?.getBoundingClientRect().top ?? 0) : null, airOf(def, phase), banner, quiet);
+      const stageTop = document.getElementById("stage")?.getBoundingClientRect().top ?? 0;
+      // Where the picture is seen from: under the page's bar, which the canvases run on up behind.
+      const bar = Math.max(0, (document.querySelector("header")?.getBoundingClientRect().bottom ?? 0) - stageTop);
+      drawFore(def.id, pad && !pad.hidden ? pad.getBoundingClientRect().top - stageTop : null, airOf(def, phase), banner, quiet, bar);
     },
 
     /** The page's step count, for a frame drawn without a step (a stepped page's still frame). */
