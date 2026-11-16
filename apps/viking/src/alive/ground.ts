@@ -1007,12 +1007,17 @@ TEXTURED.door = plankDoor;
  * The ground going on down under the map on a tall screen, row r past its foot: the level's own ground as it is drawn
  * under its surface, on a map whose bottom row goes on down (so each row is deeper, its own variant, nothing open over it).
  */
+const buriedOf = new WeakMap<TileMap, TileMap>();
 TEXTURED.deep = (c, r, x, y, map, art, sky) => {
-  const foot = map.rows - 1;
-  const buried: TileMap = Object.create(map);
-  buried.tileAt = (cc, rr) => map.tileAt(cc, Math.min(rr, foot));
-  buried.isSolid = (cc, rr) => map.isSolid(cc, Math.min(rr, foot));
-  buried.isWater = (cc, rr) => map.isWater(cc, Math.min(rr, foot));
-  buried.isOneWay = (cc, rr) => map.isOneWay(cc, Math.min(rr, foot));
+  let buried = buriedOf.get(map);
+  if (!buried) {
+    const foot = map.rows - 1;
+    buried = Object.create(map) as TileMap;
+    buried.tileAt = (cc, rr) => map.tileAt(cc, Math.min(rr, foot));
+    buried.isSolid = (cc, rr) => map.isSolid(cc, Math.min(rr, foot));
+    buried.isWater = (cc, rr) => map.isWater(cc, Math.min(rr, foot));
+    buried.isOneWay = (cc, rr) => map.isOneWay(cc, Math.min(rr, foot));
+    buriedOf.set(map, buried);
+  }
   if (!art.tile?.("#", c, r, x, y, buried, sky)) shared("#", c, r, x, y, buried, art, sky);
 };
