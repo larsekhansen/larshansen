@@ -45,7 +45,10 @@ order 23 implementer. Drawn at the grain Lars chose ([0045](0045-the-grain-same-
 ## Consequences
 - Every tone is held by the palette test: the enemy palette gained `plumDark` and `whiteShade`; his tunic's and skin's
   ramps are named in `ROLES.him` (the tunic's three held by day off every field).
-- First script: from 59.85 to about 59.4 kB gzipped: the shared enemies' and the small things' old drawings and `parts`
+- Rectangles a frame: fewer at every place of every level (`apps/viking/tools/review/o23/perf.md`): the skilling and the
+  cheese are copied from canvases drawn once (as a map a coin would have been twelve rectangles, the old coin six), the
+  shadows are copies, him a rectangle a run of his frame.
+- First script: from 59.85 to 59.44 kB gzipped: the shared enemies' and the small things' old drawings and `parts`
   left it for `feel`'s file, which every scene waits for (a scene opens without it only if it never comes, and then shows
   plain boxes for enemies and coins).
 - A level author's rule (DESIGN): a new enemy has an idle, a cycle, a wind-up pose if it throws, and is drawn as frames.

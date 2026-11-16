@@ -181,7 +181,9 @@ build after (check which build each preview serves) and compare bytes. Every lev
 `apps/viking/tools/review/o20/perf.md`. Order 21 did Stortinget (27,900 to 29,900 a frame at 390 x 844 to 3,600 to
 9,950: what is off the screen is not drawn, its far rock stamped in blocks) and Slottet (13,300 to 17,800 to 9,000 to
 9,800: the ground under the street kept, its slopes only on the screen); every level is now under 15,000 at every place
-of its walk, the heaviest Bjørvika (14,600) and Vålerenga (14,300) (`tools/review/o21/perf.md`). Next in line: the far
+of its walk, the heaviest Bjørvika (14,600) and Vålerenga (14,300) (`tools/review/o21/perf.md`). Order 23 drew fewer at every
+place (copied coins, the fjords as planes of copied strips, Bjørvika's most 14,391 to 9,497; the heaviest now Holmenkollen,
+11,618: `tools/review/o23/perf.md`). Next in line: the far
 layers' one rectangle per column, colours set on every rectangle, the five stacked canvases, Stortinget's escalator
 shafts (3,600 of its worst place). No one has measured on a real
 phone: the numbers are the Pi's software renderer.
@@ -245,7 +247,7 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: about 59.4 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
+- **First script**: 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
   worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
   with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
   it export more: the study's sheet of subjects is made outside the page for that). Before: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
@@ -395,7 +397,7 @@ Order 23 (`orders/23-alive.md`, ADR 0045 to 0048, DESIGN's "Frames, shadows and 
   only `tools/review/edge.ts` asks for it). The sloppy player's runs before and after are in `apps/viking/tools/review/o23/`.
 - **The alert mark** swells and shrinks twice, on more moments; an arrow at the screen's edge for a thrower or flyer about
   to come in (`EDGE_ARROWS` in `render/feel.ts`).
-- **First script**: about 59.4 kB gzipped (59.85 after order 22): the shared enemies' and the small things' old drawings and
+- **First script**: 59.44 kB gzipped (59.85 after order 22): the shared enemies' and the small things' old drawings and
   `parts` moved to feel's file.
 - **Unplayed**: none of it has been seen at speed. What only a person can judge is in the order's hand-back.
 

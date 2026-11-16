@@ -25,6 +25,17 @@ byte-identical on the four levels the order names.
   reached both ways; new spots only in Akershus (5), Holmenkollen (20), Slottet (8) and Vålerenga (16), none past a gate or
   in a boss's fight (`reach-edge.txt`; ADR 0048).
 
+## Tests, build, budget, front page
+
+- `bun test`: pixelkit 153 pass, maze 211 pass, landing 18 pass, viking 405 pass (392 after order 22, and 13 new: the frames'
+  test, the things in front, the shadow's palette test), 0 fail anywhere. The viking suite took 216 s with the Pi busy.
+- `bunx tsc --noEmit` clean; `bun run build` clean.
+- First script 59.44 kB gzipped (59.85 after order 22): the shared enemies' and the small things' old drawings and `parts`
+  moved to `feel`'s file (16.7 kB gzipped now, fetched with the first scene; 8.5 kB before).
+- The front page: 28 of 28 byte-identical to `/tmp/shots-before-jernhaugen/`, with the edge's forgiveness at 10 and the
+  enemy palette's two shades in the kit.
+
 ## Rectangles a frame
 
-See `perf.md`.
+Every place of every level draws fewer than order 22's code at the same place (141 to 4,884 fewer); none near 15,000
+(the most, Holmenkollen, 11,618). See `perf.md`.

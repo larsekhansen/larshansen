@@ -32,8 +32,9 @@ implementer. Within ADR 0036's rule (what never changes is drawn once and copied
 
 ## Consequences
 - Rectangles a frame: the planes replace a column a pixel of flat water (and Bjørvika's nine bands of swell a column) with
-  copies, so the fjord levels draw fewer; the split rows draw what they drew. The numbers are in
-  `apps/viking/tools/review/o23/perf.md`.
+  copies: Bjørvika's most from 14,391 to 9,497 at 390 x 844. The split rows draw as many as before, the slower half spaced
+  as the row was (spaced at its own speed it put a third more on the screen, up to 760 rectangles more a frame). Every
+  place of every level draws fewer than before order 23: `apps/viking/tools/review/o23/perf.md`.
 - Pictures can show a plane only as two moments: the strips nearer him have slid further.
 
 ## Not chosen
