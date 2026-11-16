@@ -1,7 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
@@ -13,6 +13,7 @@ import { parts, stride } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 6, rune A: Akerselva. A summer's day, down the river from Nydalen to Vaterland, the only
 // level that goes downhill all the way: three terraces, each a stretch of river with a fall at its
@@ -314,11 +315,13 @@ function farHills() {
 /** The old mills and the new blocks along the river, between: brick, sawtooth roofs, chimneys, trees. */
 function midTown(t: number) {
   const ground = sink(170, 0.26);
-  for (let i = 0; i < 48; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 48; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     // Sparser than a street: groups of two with sky and trees between.
     if (i % 3 === 2) continue;
     const wx = i * 104 + ((i * 41) % 48);
-    const x = layerX(wx, 0.2);
+    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
     if (x < -50 || x > view.w + 10) continue;
     const w = 26 + ((i * 29) % 22);
     const h = 18 + ((i * 53) % 24);
@@ -346,11 +349,13 @@ function midTown(t: number) {
 
 /** Trees along the banks just behind the path, in clumps: birch and alder in summer leaf, their feet on the terrace behind. */
 function nearTrees() {
-  for (let i = 0; i < 90; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 90; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     // Clumps of two or three, with clear gaps between them.
     if (i % 5 === 3 || i % 7 === 5) continue;
     const wx = i * 46 + ((i * 23) % 30) + (Math.floor(i / 5) % 2) * 20;
-    const x = layerX(wx, 0.4);
+    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
     if (x < -24 || x > view.w + 24) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor(wx / TILE)));
     const foot = terrace(c) * TILE - 2;

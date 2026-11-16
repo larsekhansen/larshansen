@@ -1,4 +1,4 @@
-import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { seen, stamp } from "@larshansen/pixelkit/kept";
@@ -13,6 +13,7 @@ import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { parts } from "../alive/parts";
+import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -249,10 +250,12 @@ function farHills(v: View) {
     const h = 50 + Math.round(16 * Math.sin(wx * 0.011) + 8 * Math.sin(wx * 0.037));
     column(x, base - h, base + 400, mix(LAND.farHills, WHITE, 0.4));
     column(x, base - h, base - h + 2, mix(K.lantern, WHITE, 0.55));
-    // The fjord, far down under the hills.
-    column(x, base - 12, base + 400, mix(P.water, WHITE, 0.45));
     if (Math.floor(wx) % 13 < 2) column(x, base - 12 - (Math.floor(wx) % 5), base - 12, mix(STONE.light, WHITE, 0.3));
   }
+  // The fjord far down under the hills, and the snow on the slopes before it, as planes running away from him (order
+  // 23): strips each a little faster than the one above; the water drifts, the snow lies still.
+  plane({ layer: 0.12, top: base - 12, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.55), mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.35)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
+  box(0, base + 40, view.w, 360, mix(P.water, WHITE, 0.35));
 }
 
 /** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. Each shape is drawn once and copied (ADR 0036). */

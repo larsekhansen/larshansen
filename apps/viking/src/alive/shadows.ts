@@ -8,7 +8,7 @@ import type { Play } from "../game/play";
 
 // A shadow under everything that moves (order 23, section 2): him, every enemy and harmless mover, every thrown thing,
 // every carrier, the troll and the plough. A soft dark ellipse on the ground below it, 1.2 times its width and a
-// quarter of that high at rest, smaller and fainter the higher it is, faint on water, gone over a pit. It is on the
+// quarter of that high at rest, smaller and fainter the higher it is, gone over a pit or water. It is on the
 // ground under him also while he is in the air: it shows where he will land; under a gull it is how high the gull is.
 //
 // Drawn on the street, under what moves and over the tiles, carriers and ledges, from ellipses drawn once (a copy each,
@@ -21,8 +21,6 @@ export const SHADOW = { edge: 0.22, core: 0.24 };
 export const SHADOW_MOST = 1 - (1 - SHADOW.edge) * (1 - SHADOW.core);
 /** Higher than this above the ground, nothing; between, smaller and fainter (pixels). */
 export const SHADOW_FADE = 8 * TILE;
-/** On water a shadow is this faint. */
-const ON_WATER = 0.45;
 /** How far down to look for ground under something, in tiles. */
 const DEEPEST = 10;
 
@@ -88,13 +86,14 @@ export function groundUnder(p: Play, x: number, y: number, alpha: number, skipCa
 function cast(p: Play, cx: number, feet: number, w: number, alpha: number, skipCarrier = -1) {
   if (cx < view.camX - 48 || cx > view.camX + view.w + 48) return;
   const under = groundUnder(p, cx, feet, alpha, skipCarrier);
-  if (!under) return;
+  // Over a pit, none; over water, none either (a faint one on the water came near his blue, and read as a dark patch, not a shadow).
+  if (!under || under.water) return;
   const h = Math.max(0, under.y - feet);
   const f = 1 - h / SHADOW_FADE;
   if (f <= 0) return;
   const size = Math.max(3, Math.round(1.2 * w * (1 - 0.5 * (h / SHADOW_FADE))));
   const g = ctx();
-  g.globalAlpha = f * (under.water ? ON_WATER : 1);
+  g.globalAlpha = f;
   g.drawImage(ellipse(size), Math.round(cx - size / 2) - view.camX, under.y - view.camY);
   g.globalAlpha = 1;
 }

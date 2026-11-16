@@ -1,7 +1,7 @@
 import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Lift } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
@@ -16,6 +16,7 @@ import { clock, parts } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 12, rune I: Vigelandsparken, by day, eerie and funny. Its one idea: the statues move only while
 // his back is turned. A statue walks toward him while he faces away from it, and is stone (harmless,
@@ -226,9 +227,11 @@ function farTown() {
 
 /** The park's tall trees behind the paths, round-crowned limes and maples in rows, now and then a lamp. */
 function parkTrees(factor: number, foot: number, n: number, fade: number) {
-  for (let i = 0; i < n; i++) {
+  for (const far of [true, false]) for (let i = 0; i < n; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 44 + ((i * 29) % 21);
-    const x = layerX(wx, factor);
+    const x = spedX(wx, far ? (factor * 0.75) : factor, factor);
     if (x < -30 || x > view.w + 30) continue;
     const h = 22 + ((i * 13) % 14);
     const r = 11 + ((i * 7) % 5);

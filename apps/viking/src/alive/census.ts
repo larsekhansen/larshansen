@@ -46,7 +46,9 @@ export async function census(): Promise<Record<string, Census>> {
       for (const e0 of p.enemies) {
         const name = lookName(e0);
         if (out[name]) continue;
-        const e: Enemy = { ...e0, def: { ...e0.def }, x: 200, y: 200, prevY: 200, dir: 1, calm: undefined, n: e0.def.look === "swan" ? 0 : e0.n };
+        // Where it starts in its level (a jumper's water, a thrower's perch), facing right, not calm.
+        const e: Enemy = { ...e0, def: { ...e0.def }, prevY: e0.y, dir: 1, calm: undefined, n: e0.def.look === "swan" ? 0 : e0.n };
+        const home = { x: e.x, y: e.y };
         const draw = (label: string, t: number, own = t): Drawn => {
           const rects: Drawn["rects"] = [];
           const rec = { fillStyle: "", globalAlpha: 1, fillRect(x: number, y: number, w: number, h: number) { rects.push({ x, y, w, h, c: rec.fillStyle }); } };
@@ -54,9 +56,13 @@ export async function census(): Promise<Record<string, Census>> {
           clock.t = own;
           p.t = t;
           void (def.art.enemy?.(e, at(p)) || drawEnemy(e, t));
-          // Where it stands, as the same place in every frame (a walker moves along as its frames go by).
+          // From where it stands (a walker moves along as its frames go by, a jumper leaps): as if at (200, 200).
           const dx = Math.round(e.x) - 200;
-          for (const r of rects) r.x -= dx;
+          const dy = Math.round(e.y) - 200;
+          for (const r of rects) {
+            r.x -= dx;
+            r.y -= dy;
+          }
           return { name: `${name}, ${label}`, rects };
         };
         // Still: two breaths a second apart, at a moment it is not winding up.
@@ -68,20 +74,19 @@ export async function census(): Promise<Record<string, Census>> {
         forced.state = "move";
         const move: Drawn[] = [];
         for (let k = 0; k < 4; k++) {
-          e.x = 200 + k * 3;
+          e.x = home.x + k * 3;
           if (e.def.kind === "jumper") {
             // Rising, at the top, falling: its leap's own moments.
             const t = findT(e, (t) => leap(e, t).up > 0 && [leap(e, t + 1).up > leap(e, t).up + 1, Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 1, leap(e, t + 1).up < leap(e, t).up - 1, leap(e, t + 1).up < leap(e, t).up - 2][k]);
-            const base = e.y;
-            e.y = 200 - leap(e, t).up;
-            e.prevY = 200 - leap(e, t - 1).up;
+            e.y = home.y - leap(e, t).up;
+            e.prevY = home.y - leap(e, t - 1).up;
             move.push(draw(`leaping ${k + 1}`, t));
-            e.y = base;
+            e.y = home.y;
             continue;
           }
           move.push(draw(`moving ${k + 1}`, e.def.kind === "flyer" ? k * 7 : calmT));
         }
-        e.x = 200;
+        e.x = home.x;
         e.prevY = e.y;
         forced.state = null;
         // Winding up: half a second before it throws.
@@ -97,7 +102,7 @@ export async function census(): Promise<Record<string, Census>> {
           const rects: Drawn["rects"] = [];
           const rec = { fillStyle: "", globalAlpha: 1, fillRect(x: number, y: number, w: number, h: number) { rects.push({ x, y, w, h, c: rec.fillStyle }); } };
           target(rec as unknown as CanvasRenderingContext2D);
-          drawDeath(shape, Math.round(e.y), k, false);
+          drawDeath(shape, 200, k, false);
           return { name: `${name}, ${["hit", "fold", "gone"][k]}`, rects };
         });
         out[name] = { level: def.id, kind: e.def.kind, idle, move, windup, death };

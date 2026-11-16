@@ -165,8 +165,9 @@ export function himFrame(b: Body, s: HimState): Frame {
   if (!s.reduced && s.landed < (s.deep ? LAND_STEPS.high : LAND_STEPS.low)) return s.deep ? HIM.landDeep : HIM.land;
   if (s.walking) return HIM.run[runFrame(b.x, b.facing)];
   const breath = Math.floor(s.t / 30) % 2 === 1;
-  // A blink now and then: six steps in about every three and a half seconds, not on a beat.
-  const blink = (s.t * 7919) % 211 < 6 && s.t % 211 < 200;
+  // A blink now and then: six steps at the end of every three and a half seconds or so, every other one sooner.
+  const k = s.t % 360;
+  const blink = (k >= 205 && k < 211) || k >= 354;
   return breath ? (blink ? HIM.breathBlink : HIM.breath) : blink ? HIM.blink : HIM.stand;
 }
 

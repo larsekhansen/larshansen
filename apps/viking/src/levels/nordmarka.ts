@@ -4,7 +4,7 @@ import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
-import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
@@ -17,6 +17,7 @@ import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -300,9 +301,11 @@ function farRidges(v: View) {
 /** Nearer forest: rows of spruce, darker the nearer. */
 function midSpruces() {
   const base = 220 + view.camY * 0.75;
-  for (let i = 0; i < 160; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 160; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 31 + ((i * 17) % 23);
-    const x = layerX(wx, 0.2);
+    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
     if (x < -12 || x > view.w + 12) continue;
     const h = 26 + ((i * 29) % 26);
     const colour = mix(LAND.headland, LAND.farHills, 0.15 + (i % 3) * 0.05);
@@ -317,11 +320,13 @@ function midSpruces() {
 
 /** Big spruce trunks just behind the path, between the clearings. */
 function nearTrunks() {
-  for (let i = 0; i < 70; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 70; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 58 + ((i * 37) % 30);
     const c = Math.floor(wx / TILE);
     if ((c > 0 && c < 16) || (c > 87 && c < 104) || (c > 119 && c < 140)) continue;
-    const x = layerX(wx, 0.4);
+    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const foot = G * TILE;
     const h = 90 + ((i * 23) % 40);

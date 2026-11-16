@@ -8,7 +8,7 @@ import type { Body } from "@larshansen/pixelkit/physics";
 import type { Sfx, Voice } from "@larshansen/pixelkit/sfx";
 import { FONT, fontPx, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { timedPhase } from "@larshansen/pixelkit/timed";
-import type { Enemy } from "../game/enemies";
+import { WINDUP, untilThrow, type Enemy } from "../game/enemies";
 import { HEARTS, type Events, type Play } from "../game/play";
 import { LINE_Y, stationX } from "../levels/kart";
 import { drawBracteate } from "./actors";
@@ -18,10 +18,16 @@ import { pixels, type Frame } from "../alive/frames";
 import { shadows } from "../alive/shadows";
 import { DEATH, deathFrame, drawDeath } from "../alive/death";
 import { drawFoeLook } from "../alive/foes";
+import { clock } from "../alive/parts";
 import { cheese, skilling } from "../alive/things";
+import { DEPTH } from "./backdrop";
+import { fjord } from "../alive/depth";
+import { drawFore } from "../alive/fore";
 
-// The frames (order 23): the shared enemies and the small things are drawn from them once this file is here.
+// The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the
+// fjord's water is a plane that recedes.
 Object.assign(LOOKS, { enemy: drawFoeLook, skilling, cheese });
+DEPTH.fjord = fjord;
 
 // Felt at a glance (order 19, ADR 0040): every event answers at once, where it happened, in its role's
 // colour (ADR 0039), with a sound, and with a still answer under reduced motion. This file is the answers:
@@ -184,23 +190,44 @@ export const pools = { px, py, plife, pcol };
 // --- The alert: a "!" over what has just turned on him (order 22) ---------------------------------------
 
 const ALERTS = 4;
-const alertOf: (Enemy | null)[] = Array.from({ length: ALERTS }, () => null);
+/** What each "!" stands over: an enemy (by its index), the troll, or the boss; and the step it came. */
+const alertKind = new Int8Array(ALERTS);
+const alertIdx = new Int16Array(ALERTS);
 const alertAt = new Int32Array(ALERTS).fill(-9999);
-/** How long the "!" stands over it, in steps. */
+/** How long the "!" stands over it, in steps; how long it swells and shrinks (twice) as it comes (order 23). */
 export const ALERT_STEPS = 40;
+export const ALERT_PULSE = 24;
 let alertNext = 0;
-function alert(e: Enemy, now: number) {
+/** A "!" over what has just turned on him: an enemy (`kind` 0, by index), the troll (1) or the boss (2). */
+function alert(kind: number, idx: number, now: number) {
   const k = alertNext++ % ALERTS;
-  alertOf[k] = e;
+  alertKind[k] = kind;
+  alertIdx[k] = idx;
   alertAt[k] = now;
 }
-/** The "!": a red bar and dot with a dark edge, `h` (0 to 1) of its full height, its foot at (x, y). */
+/** How big the "!" is `age` steps after it came: it springs up, swells and shrinks twice, and stands (still, full, with reduced motion). */
+export function alertSize(age: number, reduced: boolean): number {
+  if (reduced) return 1;
+  const up = Math.min(1, (age + 1) / 3);
+  return age < ALERT_PULSE ? up * (1 + 0.45 * Math.abs(Math.sin((age / (ALERT_PULSE / 2)) * Math.PI))) : 1;
+}
+/** The "!": a red bar and dot with a dark edge, `h` of its full height (wider as it swells), its foot at (x, y). */
 function bang(x: number, y: number, h: number) {
   const n = Math.max(1, Math.round(7 * h));
-  R(x - 2, y - n - 1, 4, n + 1, ENEMY.line);
-  R(x - 1, y - n, 2, n - (n > 3 ? 3 : 0), ENEMY.warning);
-  if (n > 3) R(x - 1, y - 1, 2, 1, ENEMY.warning);
+  const w = h > 1.25 ? 4 : 2;
+  R(x - w / 2 - 1, y - n - 1, w + 2, n + 1, ENEMY.line);
+  R(x - w / 2, y - n, w, n - (n > 3 ? 3 : 0), ENEMY.warning);
+  if (n > 3) R(x - w / 2, y - 1, w, 1, ENEMY.warning);
 }
+/** An arrow at the screen's edge, pointing out to `dir`, its tip at (x, y): something about to come into view (order 23). */
+function arrow(x: number, y: number, dir: number) {
+  for (let k = 0; k < 4; k++) {
+    R(x - dir * k - (dir > 0 ? 1 : 0), y - k - 1, 2, 2 * k + 3, ENEMY.line);
+    R(x - dir * k - (dir > 0 ? 0 : 0), y - k, 1, 2 * k + 1, ENEMY.warning);
+  }
+}
+/** Arrows at the screen's edge for throwers and flyers about to come into view: on (order 23, section 5, tried; see the hand-back). */
+export const EDGE_ARROWS = { on: true };
 
 const RINGS = 6;
 const rx = new Float32Array(RINGS);
@@ -346,7 +373,6 @@ export function createFeel(host: Host) {
       plife.fill(0);
       rt.fill(-9999);
       alertAt.fill(-9999);
-      alertOf.fill(null);
       lAt.fill(-1);
       holdUntil = flashUntil = nudge.until = -1;
       sat.fill(0);
@@ -528,6 +554,9 @@ export function createFeel(host: Host) {
         ring(cx, b.y + PLAYER.h / 2, 16, 4, 16, ROLES.speech.bubble, t);
       }
       if (ev.lifeLost) ring(cx, b.y + PLAYER.h / 2, 20, 4, 24, ROLES.speech.bubble, t);
+      // The troll rising, the plough starting up, the serpent's first rise: a "!" over it (order 23).
+      if (ev.troll === "wake") alert(1, 0, t);
+      if (ev.boss === "wake") alert(2, 0, t);
       if (ev.troll) {
         const tr = p.troll;
         const box = tr && p.def.trollRules?.box(tr);
@@ -629,11 +658,14 @@ export function createFeel(host: Host) {
           if (!c) for (let dx = -4; dx <= 4; dx += 8) spark(e.x + dx, e.y - 1, dx * 0.08, -0.2, 16, DUST);
           else ring(e.x, e.y - e.h / 2, e.w / 2 + 6, e.w / 2 + 2, 8, WHITE, now);
         }
-        // Whatever turns on him (its outline turning from the calm pale to the warning red) gets a "!" over it.
-        if (primed && e.alive && !c && calm[i] && seen(e.x, e.y)) alert(e, now);
+        // Whatever turns on him gets a "!" over it (order 22; order 23: more moments): its outline turning from the calm
+        // pale to the warning red (a statue, a guard), a swan's warning, a thrower taking aim at him.
+        if (primed && e.alive && !c && calm[i] && seen(e.x, e.y)) alert(0, i, now);
+        if (e.alive && e.def.kind === "thrower" && untilThrow(e, t) === WINDUP && seen(e.x, e.y, 0) && Math.abs(e.x - (b.x + PLAYER.w / 2)) < (e.def.reach ?? 7) * TILE) alert(0, i, now);
         calm[i] = c;
         if (e.def.look === "swan" && e.alive) {
           if (e.n === 180) {
+            alert(0, i, now);
             voice("hiss");
             ring(e.x, e.y - 8, 4, 14, 14, ENEMY.warning, now);
           }
@@ -688,8 +720,17 @@ export function createFeel(host: Host) {
       }
     },
 
-    /** A shadow under everything that moves (order 23), drawn on the street under it: `body` is where he is drawn. */
-    shadows,
+    /** A shadow under everything that moves (order 23), drawn on the street under it: `body` is where he is drawn. Sets the frames' clock. */
+    shadows(p: Play, body: { x: number; y: number } | null, alpha: number) {
+      clock.t = p.t;
+      shadows(p, body, alpha);
+    },
+
+    /** Something in front of him now and then (order 23), over him on the text canvas; never over the touch pad's buttons. */
+    fore(id: string) {
+      const pad = document.body.classList.contains("touch") ? document.getElementById("pad") : null;
+      drawFore(id, pad && !pad.hidden ? pad.getBoundingClientRect().top - (document.getElementById("stage")?.getBoundingClientRect().top ?? 0) : null);
+    },
 
     /** The page's step count, for a frame drawn without a step (a stepped page's still frame). */
     at(steps: number) {
@@ -747,14 +788,47 @@ export function createFeel(host: Host) {
         const r = rr0[k] + (rr1[k] - rr0[k]) * f;
         for (let j = 0; j < 12; j++) R(rx[k] + COS[j] * r, ry[k] + SIN[j] * r * 0.8, 1, 1, rcol[k]);
       }
-      // A "!" over what has just turned on him: it springs up and stands (still, at its full height, with reduced motion).
+      // A "!" over what has just turned on him: it springs up, swells and shrinks twice, and stands (still, at its full
+      // height, with reduced motion).
       for (let k = 0; k < ALERTS; k++) {
-        const e = alertOf[k];
         const age = now - alertAt[k];
-        if (!e || age < 0 || age >= ALERT_STEPS || !e.alive || e.calm) continue;
-        const h = view.reduced ? 1 : Math.min(1, (age + 1) / 4) * (age < 6 ? 1 + (6 - age) * 0.04 : 1);
-        bang(Math.round(e.x), Math.round(e.y - e.h - 4), Math.min(1.2, h));
+        if (age < 0 || age >= ALERT_STEPS) continue;
+        let x = 0;
+        let y = 0;
+        if (alertKind[k] === 0) {
+          const e = p.enemies[alertIdx[k]];
+          if (!e || !e.alive || e.calm) continue;
+          x = e.x;
+          y = e.y - e.h - 4;
+        } else if (alertKind[k] === 1) {
+          const box = p.troll && p.def.trollRules?.box(p.troll);
+          if (!box) continue;
+          x = box.x + box.w / 2;
+          y = box.y - 6;
+        } else {
+          if (!p.boss) continue;
+          const top = p.boss.rules.top(p.boss.state);
+          x = top.x;
+          y = top.y - 6;
+        }
+        bang(Math.round(x), Math.round(y), alertSize(age, view.reduced));
       }
+      // An arrow at the screen's edge for a thrower or a flyer about to come into view: within a second of it (his run
+      // toward a thrower, a flyer's own flight toward the view), at its height, pointing where it is.
+      if (EDGE_ARROWS.on && !p.def.underground)
+        for (let i = 0; i < p.enemies.length; i++) {
+          const e = p.enemies[i];
+          if (!e.alive || e.calm || (e.def.kind !== "thrower" && e.def.kind !== "flyer")) continue;
+          const left = view.camX - e.x;
+          const right = e.x - (view.camX + view.w);
+          const off = Math.max(left, right);
+          if (off <= 0 || e.y < view.camY + 8 || e.y > view.camY + view.h - 8) continue;
+          const dir = right > 0 ? 1 : -1;
+          // How fast the gap closes: his run toward it, and a flyer's own way.
+          const closing = Math.max(0, p.body.vx * dir) + (e.def.kind === "flyer" && e.dir === -dir ? e.def.speed ?? 0.5 : 0);
+          if (off > closing * 60 || off > 6 * TILE) continue;
+          arrow(dir > 0 ? view.camX + view.w - 3 : view.camX + 2, Math.round(e.y - e.h / 2), dir);
+        }
       // Benches he has sat on keep a tick at the end of their back.
       for (let i = 0; i < p.benches.length; i++) {
         const s = p.benches[i];

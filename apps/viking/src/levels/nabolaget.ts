@@ -4,7 +4,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
-import { R, gable, layerX, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
+import { R, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -19,6 +19,7 @@ import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 10, rune N: Nabolaget. A winter night over Vålerenga and Kampen, the northern lights up,
 // snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
@@ -268,9 +269,11 @@ const LAND_NIGHT = "#2a3458";
 /** Kampen and Vålerenga further off: rows of small houses, snow on their roofs, Kampen kirke's spire. */
 function midRoofs(t: number) {
   const base = 230 + view.camY * 0.75;
-  for (let i = 0; i < 60; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 60; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 46 + ((i * 31) % 20);
-    const x = layerX(wx, 0.2);
+    const x = spedX(wx, far ? 0.16 : 0.2, 0.2);
     if (x < -30 || x > view.w + 10) continue;
     const w = 20 + ((i * 7) % 10);
     const h = 14 + ((i * 11) % 10);
@@ -296,9 +299,11 @@ function gableBox(x: number, baseY: number, w: number, h: number, c: string) {
 
 /** Nearer: bare trees with snow on their branches, and lamp posts. */
 function nearTrees() {
-  for (let i = 0; i < 40; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 40; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 157 + ((i * 53) % 70);
-    const x = layerX(wx, 0.4);
+    const x = spedX(wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor((view.camX + x) / TILE)));
     const foot = Math.min(S, surfaceRow(c) + 2) * TILE;
