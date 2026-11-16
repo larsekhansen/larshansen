@@ -308,14 +308,20 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
   let said = "";
   let playing = false;
   let barAt = -1;
+  /** Where the bar ends, for the cards, which keep below it (`--bar`): now, whenever the bar changes, and every frame. */
+  const barEnds = () => {
+    const bar = Math.round(page.header.getBoundingClientRect().bottom);
+    if (bar !== barAt) document.body.style.setProperty("--bar", `${(barAt = bar)}px`);
+    return bar;
+  };
+  barEnds();
+  if (typeof ResizeObserver !== "undefined") new ResizeObserver(barEnds).observe(page.header);
   const meets = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
   const pad: Pad = {
     thumbs,
     frame(p, h) {
       if (h.level !== playing) document.body.classList.toggle("playing", (playing = h.level));
-      // Where the bar ends, for the cards, which keep below it.
-      const bar = Math.round(page.header.getBoundingClientRect().bottom);
-      if (bar !== barAt) document.body.style.setProperty("--bar", `${(barAt = bar)}px`);
+      const bar = barEnds();
       // The slot above the jump: the way in at a door or a bench (the page has just said so, `show`); elsewhere the
       // shield, or Duck on the sledge, once he has it; with neither, the way in, dimmed.
       const door = controls.enter.classList.contains("show");

@@ -702,6 +702,7 @@ body.touch .card .actions button {
   min-width: 56px;
   min-height: 56px;
   padding: 6px 20px;
+  white-space: nowrap;
 }
 
 /* A card never goes under the bar, and scrolls when a short screen cannot hold it. */
@@ -711,6 +712,10 @@ body.touch .card {
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
+}
+
+body.touch .card.loading {
+  top: max(40%, calc(var(--bar, 0px) + 10px));
 }
 
 /* While a level is on, nothing else moves the page: no panning, zooming or double-tap zoom on the game, no
@@ -816,6 +821,19 @@ body.touch.playing .stage {
   body.touch .apps a.here::before,
   body.touch .apps a:focus-visible::before {
     border-color: #541321;
+  }
+}
+
+/* Upright under 420 px the four links do not fit one row: two by two, so they read as meant. */
+@media (max-width: 419px) {
+  body.touch .apps {
+    flex-basis: 100%;
+  }
+
+  body.touch .apps ul {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
   }
 }
 
