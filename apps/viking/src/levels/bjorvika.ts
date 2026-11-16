@@ -7,6 +7,7 @@ import { ENEMY, INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
+import { box as pbox, dot, prop, tone, type Stuff } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
@@ -541,24 +542,48 @@ function siteFence() {
   const y = G * TILE;
   for (let c = 26; c < 34; c++) {
     if (c === 30 || c === 31) continue;
-    R(c * TILE, y - 28, TILE, 26, S.fence);
-    R(c * TILE, y - 28, TILE, 1, WHITE);
-    for (let k = 0; k < TILE; k += 3) R(c * TILE + k, y - 27, 1, 25, mix(S.fence, S.shore, 0.25));
-    R(c * TILE, y - 2, TILE, 2, S.graniteDark);
+    // A mesh panel of the site's fence (order 28): its frame of tube lit on the left and top, the mesh's wires, a
+    // concrete foot under each joint.
+    prop("site fence", [FENCE], "", TILE, 28, c * TILE, y - 28, (g) => {
+      const F = (i: number) => tone(FENCE, i);
+      for (let k = 0; k < TILE; k++) {
+        dot(g, k, 0, k % 7 === 2 ? F(3) : F(2));
+        for (let j = 1; j < 26; j++) dot(g, k, j, k % 3 === 0 ? F(1) : j % 7 === 0 ? mix(S.fence, S.shore, 0.25) : null);
+      }
+      for (let j = 0; j < 26; j++) {
+        dot(g, 0, j, F(3));
+        dot(g, TILE - 1, j, F(0));
+      }
+      for (let k = 0; k < TILE; k++) for (const j of [26, 27]) dot(g, k, j, j === 26 && k > 2 && k < TILE - 2 ? S.graniteDark : k < 3 || k > TILE - 4 ? S.graniteDark : null);
+      pbox(g, 0, 26, 4, 2, mix(S.graniteDark, WHITE, 0.15));
+    });
   }
   // Its sign's stripes orange and black, not yellow: yellow is the paint on what he stands on (order 22).
   R(29 * TILE, y - 18, 2 * TILE, 4, S.net);
   for (let k = 0; k < 2 * TILE; k += 4) R(29 * TILE + k, y - 18, 2, 4, S.stripe);
 }
 
+/** The site fence's galvanised mesh, and the hut's blue steel. */
+const FENCE: Stuff = { name: "site fence", ramp: [mix(S.fence, INK, 0.35), mix(S.fence, INK, 0.15), S.fence, mix(S.fence, WHITE, 0.3)] };
+const HUT: Stuff = { name: "site hut", ramp: [mix(S.hutDark, INK, 0.3), S.hutDark, S.hut, S.hutLight] };
+
 /** The site hut on the roof: a blue container, its door open, a lit window, the bench inside. */
 function hut() {
   const x0 = 202 * TILE;
   const x1 = 210 * TILE;
   const y = ROOF * TILE;
-  R(x0, y - 44, x1 - x0, 44, S.hut);
-  for (let x = x0 + 2; x < x1; x += 4) R(x, y - 44, 1, 44, S.hutDark);
-  R(x0, y - 44, x1 - x0, 2, S.hutLight);
+  // The container's corrugated steel (order 28): each rib lit on its left and shaded on its right, a corner casting at each
+  // end, its top rail lit; a streak of rust under the roof's edge now and then.
+  prop("container", [HUT], "", x1 - x0, 44, x0, y - 44, (g) => {
+    const H = (i: number) => tone(HUT, i);
+    for (let j = 0; j < 44; j++)
+      for (let k = 0; k < x1 - x0; k++) {
+        const rib = (k - 2) % 4;
+        let c = j < 2 ? H(3) : rib === 0 ? H(1) : rib === 1 ? H(3) : H(2);
+        if (k < 3 || k >= x1 - x0 - 3) c = j % 40 < 4 && j > 1 ? H(0) : k === 0 ? H(3) : H(1);
+        dot(g, k, j, c);
+      }
+  });
   R(x0 + 30, y - 34, x1 - x0 - 60, 34, mix(S.hutDark, INK, 0.45));
   light(x1 - 22, y - 34, 12, 8, "window");
   R(x0 - 2, y - 46, x1 - x0 + 4, 3, S.hutDark);

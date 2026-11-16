@@ -33,6 +33,7 @@ import { DEPTH } from "./backdrop";
 import { fjord, lap } from "../alive/depth";
 import { LAP } from "./tiles";
 import "../alive/ground";
+import "../alive/props";
 import { drawFore } from "../alive/fore";
 
 // The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the

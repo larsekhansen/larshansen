@@ -5,7 +5,7 @@ import type { Door } from "@larshansen/pixelkit/doors";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { DOORWAY, FACADE, GLASS, INK, LAMP, LAND, METAL, PAINT, PALETTE, ROOF as ROOFS, STONE, WHITE } from "@larshansen/pixelkit/palette";
-import { STOVE_SMOKE, WOOD_LEDGE, ledge, pane, plankDoor, smoke, type LedgeLook } from "@larshansen/pixelkit/props";
+import { WOOD_LEDGE, ledge, pane, plankDoor, type LedgeLook } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
@@ -212,27 +212,10 @@ const CONCRETE: LedgeLook = { body: FACADE.marbleWall, top: WHITE, edge: FACADE.
 /** A sauna raft: pontoons, a plank deck, and a tarred cabin with a warm window and a smoking stove pipe. */
 function saunaRaft(x: number, y: number, t: number) {
   const n = RAFT_W / TILE;
-  R(x + 3, y + 4, RAFT_W - 6, 1, PAINT.tar);
-  R(x + 2, y + 5, RAFT_W - 4, 2, mix(PAINT.tar, P.water, 0.5));
+  TEXTURED.prop?.("pontoons", x, y, RAFT_W);
   for (let i = 0; i < n; i++) ledge(x + i * TILE, y, WOOD_LEDGE, i === 0, i === n - 1, false);
-  // The cabin, between the deck and its roof.
-  const cx = x + TILE;
-  R(cx, y - 18, 2 * TILE, 18, PAINT.tar);
-  for (let i = 2; i < 2 * TILE; i += 4) R(cx + i, y - 18, 1, 18, mix(PAINT.tar, INK, 0.35));
-  R(cx, y - 18, 1, 18, mix(PAINT.tar, WHITE, 0.15));
-  R(cx + 2 * TILE - 1, y - 18, 1, 18, INK);
-  // A small door, and the window with the stove's light behind it.
-  R(cx + 4, y - 13, 7, 13, mix(PAINT.tar, INK, 0.5));
-  R(cx + 9, y - 8, 1, 1, METAL.brass);
-  R(cx + 17, y - 14, 10, 7, P.woodDark);
-  R(cx + 18, y - 13, 8, 5, LAMP);
-  R(cx + 22, y - 13, 1, 5, P.woodDark);
-  light(cx + 18, y - 13, 4, 5, "soft");
-  light(cx + 23, y - 13, 3, 5, "soft");
-  // The stove pipe through the roof, and its smoke.
-  R(cx + 24, y - 27, 3, 7, METAL.pipe);
-  R(cx + 23, y - 28, 5, 1, METAL.pipeCap);
-  if (!view.reduced) smoke(cx + 24, y - 30, t, { ...STOVE_SMOKE, rise: 18 });
+  // The cabin, between the deck and its roof: drawn with the props (order 28, `alive/props.ts`).
+  TEXTURED.prop?.("raft", x, y, t);
 }
 
 /** The roof of a sauna's cabin: tarred boards, a ledge he can stand on. */
@@ -302,25 +285,12 @@ function printer(x: number, y: number, t: number) {
 /** Posts under a wooden ledge down to the ground or the water, so a deck or a roof stands on something. */
 function posts(c0: number, c1: number, r: number, ground: number) {
   const y = r * TILE + 5;
-  for (const x of [c0 * TILE + 2, (c1 + 1) * TILE - 5]) {
-    R(x, y, 3, ground - y, P.woodDark);
-    R(x, y, 1, ground - y, mix(P.woodDark, WHITE, 0.15));
-  }
+  for (const x of [c0 * TILE + 2, (c1 + 1) * TILE - 5]) TEXTURED.prop?.("post", x, y, ground);
 }
 
 /** The sauna club's hut on its pier: black-tarred planks, a lit window, a stove pipe smoking. Its roof is the map's ledge. */
 function clubHut(t: number) {
-  const x = 110 * TILE;
-  const top = 14 * TILE + 5;
-  walls(x, top, 4 * TILE, PAINT.tar, mix(PAINT.tar, INK, 0.35), WATER);
-  R(x - 2, top, 4 * TILE + 4, 1, INK);
-  R(x + 8, top + 4, 12, 7, P.woodDark);
-  R(x + 9, top + 5, 10, 5, LAMP);
-  light(x + 9, top + 5, 10, 5, "soft");
-  R(x + 40, top + 3, 9, 16, mix(PAINT.tar, INK, 0.5));
-  R(x + 52, top - 14, 3, 13, METAL.pipe);
-  R(x + 51, top - 15, 5, 1, METAL.pipeCap);
-  if (!view.reduced) smoke(x + 52, top - 18, t + 30, STOVE_SMOKE);
+  TEXTURED.prop?.("hut", 110 * TILE, 14 * TILE + 5, 4 * TILE, WATER, t);
 }
 
 /** A small sailboat at its buoy behind the drifting rafts: a white hull, the mast, the furled sail; its crosstree is a ledge. */
@@ -342,23 +312,7 @@ function sailboat() {
 
 /** Sørenga's diving tower: two white concrete legs out of the water, a ladder, its platforms (the map's ledges). */
 function divingTower() {
-  const x0 = 155 * TILE;
-  const top = 8 * TILE;
-  for (const lx of [x0 + 4, x0 + 5 * TILE - 10]) {
-    R(lx, top, 6, WATER - top, FACADE.marbleWall);
-    R(lx, top, 2, WATER - top, WHITE);
-    R(lx + 5, top, 1, WATER - top, FACADE.marbleSeam);
-  }
-  // The ladder up the middle.
-  const lx = x0 + 2 * TILE + 6;
-  R(lx, top, 1, WATER - top, METAL.rail);
-  R(lx + 6, top, 1, WATER - top, METAL.rail);
-  for (let y = top + 3; y < WATER; y += 5) R(lx, y, 7, 1, METAL.rail);
-  // A railing round the top platform, and the board out over the water.
-  R(x0, top - 9, 5 * TILE, 1, METAL.rail);
-  for (let x = x0; x < x0 + 5 * TILE; x += 8) R(x, top - 9, 1, 9, METAL.rail);
-  R(x0 + 5 * TILE, top + 2, 24, 3, PAINT.ochre);
-  R(x0 + 5 * TILE, top + 2, 24, 1, mix(PAINT.ochre, WHITE, 0.4));
+  TEXTURED.prop?.("tower", 155 * TILE, 8 * TILE, WATER);
 }
 
 /** A low wooden deck on legs: the sauna club's, with its bench. */
@@ -403,13 +357,7 @@ const SHIP = { x0: 192 * TILE + 8, x1: 229 * TILE + 8, deck: 15 * TILE, mast: MA
 
 /** The rowing boat: a varnished hull, its oars shipped. Its thwart is what he stands on. */
 function rowingBoat(at: { x: number; y: number }) {
-  const { x, y } = at;
-  const w = BOAT.w;
-  for (let i = 0; i < 6; i++) R(x - 2 + i, y + i, w + 4 - i * 2, 1, i < 1 ? mix(P.wood, WHITE, 0.3) : i % 2 ? P.woodDark : P.wood);
-  R(x + 2, y, w - 4, 2, P.wood);
-  R(x + 4, y - 2, 1, 2, P.woodDark);
-  R(x + w - 5, y - 2, 1, 2, P.woodDark);
-  R(x + 3, y - 3, w - 6, 1, P.woodDark);
+  TEXTURED.prop?.("rowboat", at.x, at.y, BOAT.w);
 }
 
 /**

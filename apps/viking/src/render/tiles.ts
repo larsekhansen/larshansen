@@ -40,6 +40,9 @@ export const TEXTURED: {
   boards?(boards: Board[]): void;
   tbane?(d: Door): boolean;
   door?(d: Door, frame: string): boolean;
+  /** The last flat things (order 28, `alive/props.ts`): painted plank walls, and Langkaia's props by name. */
+  walls?(x: number, top: number, w: number, color: string, line: string, ground: number): boolean;
+  prop?(kind: string, a: number, b: number, c?: number, d?: number, e?: number): boolean;
 } = {};
 
 /** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */

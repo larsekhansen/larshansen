@@ -9,6 +9,7 @@ import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { EDGE, tile as textured, type Grain } from "../alive/ground";
+import { lamp } from "../alive/props";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
@@ -432,11 +433,10 @@ function mid() {
   }
 }
 
-/** A street lamp of the modern town, its light on the cobbles. */
+/** A street lamp of the town, its light on the cobbles. */
 function streetLamp(x: number, ground: number) {
-  R(x, ground - 34, 2, 34, G.lampPost);
-  R(x - 3, ground - 36, 8, 3, G.lampPost);
-  light(x - 2, ground - 33, 6, 2, "lamp");
+  // The old town's cast iron (order 28): a lantern on a fluted post.
+  lamp("old", x, ground, 26);
   light(x - 14, ground - 1, 30, 4, "pool");
 }
 

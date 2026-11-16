@@ -14,6 +14,7 @@ import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
 import { crowdFlag, flagFlying, person } from "../alive/things";
 import { tile as textured, type Grain } from "../alive/ground";
+import { CAST, post } from "../alive/props";
 import type { LevelDef, View } from "./types";
 
 // Level 5, rune H: Holmenkollen. Winter, snowing. Off the train at the top, along a path where the
@@ -296,7 +297,8 @@ function station(v: View) {
   const y = 9 * TILE;
   R(0, y - 34, 14 * TILE, 4, ROOF.slate);
   R(0, y - 34, 14 * TILE, 2, SNOW.lying);
-  for (const x of [8, 100, 200]) R(x, y - 30, 3, 30, METAL.lampPost);
+  // The platform roof's posts, steel painted dark (order 28).
+  for (const x of [8, 100, 200]) post(CAST, x, y - 30, y, 3);
   R(80, y - 26, 60, 10, PAINT.tbane);
   R(82, y - 24, 56, 6, WHITE);
   for (let i = 0; i < 7; i++) R(86 + i * 7, y - 23, 4, 4, PAINT.tbane);

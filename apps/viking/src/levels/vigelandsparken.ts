@@ -21,6 +21,7 @@ import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
+import { lamp, type Stuff } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 
 // Level 12, rune I: Vigelandsparken, by day, eerie and funny. Its one idea: the statues move only while
@@ -313,6 +314,9 @@ function gate(v: View) {
   R(0, FLOOR, 35 * TILE, 2, V.gravelDark);
 }
 
+/** The bridge's wrought iron. */
+const BRIDGE_IRON: Stuff = { name: "bridge iron", ramp: [mix(V.iron, INK, 0.35), V.iron, mix(V.iron, WHITE, 0.14), mix(V.iron, WHITE, 0.28)] };
+
 /** The bridge: granite parapets with a bronze figure on every post, lamps between, the pond under it. */
 function bridge() {
   const x0 = 35 * TILE;
@@ -329,19 +333,16 @@ function bridge() {
     R(px, FLOOR - 20, 8, 20, V.granite);
     R(px, FLOOR - 20, 8, 1, V.graniteLight);
     figure(px - 1, FLOOR - 20, i, i % 2 ? 1 : -1, BRONZE);
-    if (i % 3 === 1) {
-      R(px + 22, FLOOR - 40, 2, 26, V.iron);
-      R(px + 19, FLOOR - 44, 8, 5, V.iron);
-      R(px + 20, FLOOR - 43, 6, 3, mix(P.sail, WHITE, 0.3));
-      light(px + 20, FLOOR - 43, 6, 3, "lamp");
-    }
+    // The bridge's lanterns (order 28): wrought iron on the parapet, a ring foot, a round lantern under a cap.
+    if (i % 3 === 1) lamp("park", px + 22, FLOOR - 14, 22, false, BRIDGE_IRON);
   }
   // The broken span: the parapet gone, the slabs' sockets showing, a fence of rope on posts either side.
   for (const ex of [56 * TILE - 2, 61 * TILE - 2]) {
     R(ex, FLOOR - 12, 4, 12, V.graniteDark);
     R(ex, FLOOR - 12, 4, 1, V.graniteLight);
   }
-  for (let k = 0; k < 5 * TILE; k++) R(56 * TILE + k, FLOOR - 10 + Math.round(Math.sin((k / (5 * TILE)) * Math.PI) * 4), 1, 1, P.sailStripe);
+  // The rope (order 28): twisted, its strands catching the light every other pixel.
+  for (let k = 0; k < 5 * TILE; k++) R(56 * TILE + k, FLOOR - 10 + Math.round(Math.sin((k / (5 * TILE)) * Math.PI) * 4), 1, 1, k % 3 === 1 ? mix(P.sailStripe, WHITE, 0.2) : k % 3 === 2 ? mix(P.sailStripe, INK, 0.25) : P.sailStripe);
   // The Angry Boy's post: tall granite, at the far side of the broken span.
   const bx = BOY.c * TILE + 2;
   R(bx, FLOOR - 48, 12, 48, V.granite);

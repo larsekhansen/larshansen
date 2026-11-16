@@ -6,7 +6,8 @@ import { keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
-import { STOVE_SMOKE, panelDoor, smoke } from "@larshansen/pixelkit/props";
+import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
+import { STEEL, lamp, panelDoor, plankWall, post, railing } from "../alive/props";
 /** A chimney's smoke on a winter night: pale, thin. */
 const NIGHT_SMOKE = { ...STOVE_SMOKE, rgb: "225, 230, 240", alpha: 0.4 };
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -790,11 +791,8 @@ function lane() {
     if (x % 9 === 0) R(x, g - 24, 1, 24, MASONRY.edge);
   }
   R(79 * TILE, g - 26, 33 * TILE, 2, SNOW.lying);
-  for (const x of LANE_LAMPS) {
-    R(x, g - 40, 2, 40, METAL.lampPost);
-    R(x - 3, g - 44, 8, 4, METAL.lampHat);
-    R(x - 2, g - 41, 6, 2, LAMP);
-  }
+  // The old town's cast-iron lanterns, lit (order 28).
+  for (const x of LANE_LAMPS) lamp("old", x, g, 36, true);
 }
 
 /** The plough's street: the house with the terrace, the washing line by the bank, the tram's slots, and the yellow house. */
@@ -802,23 +800,19 @@ function street(v: View, p: Plough | null) {
   const g = S * TILE;
   // The house he waits on: red, its terrace railing, a lit window.
   const hx = 168 * TILE;
-  R(hx, TERRACE.top, 6 * TILE, g - TERRACE.top, PAINT.red);
-  for (let k = hx + 3; k < hx + 6 * TILE - 2; k += 4) R(k, TERRACE.top, 1, g - TERRACE.top, PAINT.redLine);
-  R(hx, TERRACE.top, 2, g - TERRACE.top, PAINT.trim);
-  R(hx + 6 * TILE - 2, TERRACE.top, 2, g - TERRACE.top, PAINT.trim);
+  plankWall(hx, TERRACE.top, 6 * TILE, PAINT.red, PAINT.redLine, g);
   R(hx + 20, g - 30, 14, 14, PAINT.trim);
   R(hx + 21, g - 29, 12, 12, GLASS.farWindow);
   light(hx + 21, g - 29, 12, 12);
-  for (let x = hx; x < TERRACE.right; x += 6) R(x, TERRACE.top - 10, 1, 10, METAL.lampPost);
-  R(hx, TERRACE.top - 10, 6 * TILE, 1, METAL.lampPost);
+  railing("bars", hx, TERRACE.right, TERRACE.top - 10, 10, 24);
   // Its upper floor, set back, and the roof.
-  R(hx + 8, TERRACE.top - 40, 6 * TILE - 16, 40, PAINT.red);
+  plankWall(hx + 8, TERRACE.top - 40, 6 * TILE - 16, PAINT.red, PAINT.redLine, TERRACE.top);
   gable(hx + 2, TERRACE.top - 40, 6 * TILE - 4, 18, SNOW.lying);
   light(hx + 30, TERRACE.top - 30, 10, 10);
   // The washing line: two poles, the line, the washing; down in the snow once the plough has had its pole.
   const l = PLOUGH_DEF.line;
   if (!p || lineHolds(p)) {
-    for (const x of [l.x0, l.x1 - 2]) R(x, l.y - 6, 2, g - l.y + 6, METAL.lampPost);
+    for (const x of [l.x0, l.x1 - 2]) post(STEEL, x, l.y - 6, g, 2);
     const sag = p && v.t - p.lineAt < 10 && !view.reduced ? 4 : 1;
     for (let x = l.x0; x < l.x1; x++) R(x, l.y - 5 + Math.round(sag * Math.sin(((x - l.x0) / (l.x1 - l.x0)) * Math.PI)), 1, 1, METAL.wire);
     washing(l.x0 + 6, l.y - 4, v.t);
@@ -858,10 +852,7 @@ function washing(x: number, y: number, t: number) {
 function home(v: View) {
   const { x, w, top } = HOME;
   const g = S * TILE;
-  R(x, top, w, g - top, PAINT.ochre);
-  for (let k = x + 3; k < x + w - 2; k += 4) R(k, top, 1, g - top, PAINT.ochreLine);
-  R(x, top, 2, g - top, PAINT.trim);
-  R(x + w - 2, top, 2, g - top, PAINT.trim);
+  plankWall(x, top, w, PAINT.ochre, PAINT.ochreLine, g);
   // Its roof under snow, as the front page draws it in winter, the slate showing at the eaves.
   gable(x - 6, top, w + 12, 30, SNOW.lying);
   R(x - 6, top - 2, w + 12, 2, ROOF.slate);

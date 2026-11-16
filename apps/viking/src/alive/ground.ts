@@ -589,7 +589,7 @@ function edges(k: Work) {
 
 // --- Pieces, kept on sheets -----------------------------------------------------------------------------------
 
-interface Piece {
+export interface Piece {
   /** Four numbers a run: x, y from the piece's top left (LIFT rows over the tile), its length, its colour's index. */
   runs: Int16Array;
   ink: string[];
@@ -851,7 +851,7 @@ function bollard(x: number, y: number) {
 }
 
 /** A piece of any size from a function of its pixels (a colour, or null for nothing), kept by its key. */
-function custom(key: string, w: number, h: number, at: (x: number, y: number) => string | null): Piece {
+export function custom(key: string, w: number, h: number, at: (x: number, y: number) => string | null): Piece {
   let p = props.get(key);
   if (p) return p;
   const ink: string[] = [];
@@ -875,7 +875,7 @@ function custom(key: string, w: number, h: number, at: (x: number, y: number) =>
 const props = new Map<string, Piece>();
 const propCanvas = new Map<Piece, HTMLCanvasElement>();
 /** A prop's piece at world (x, y), its top left: one copy (runs where there is no page). */
-function drawProp(p: Piece, x: number, y: number, w: number) {
+export function drawProp(p: Piece, x: number, y: number, w: number) {
   const r = p.runs;
   if (typeof document === "undefined") {
     for (let i = 0; i < r.length; i += 4) R(x + r[i], y + r[i + 1], r[i + 2], 1, p.ink[r[i + 3]]);
@@ -902,9 +902,16 @@ function boards(list: Board[]) {
   for (const b of list) {
     const x = Math.round(b.cx - b.w / 2);
     if (b.post !== undefined) {
+      // Its post (order 28): lit on its left, a grain down it, its foot dark where it stands.
       const top = b.y + 10;
-      R(b.cx - 1, top, 1, b.post - top, mix(P.woodDark, P.wood, 0.3));
-      R(b.cx, top, 1, b.post - top, P.woodDark);
+      const h = Math.round(b.post - top);
+      if (h > 0)
+        drawProp(
+          custom(`sign post ${h}`, 2, h, (px, py) => (py >= h - 1 ? mix(P.woodDark, INK, 0.4) : px === 0 ? (hash(h, py >> 2, 0, 19) < 0.2 ? P.woodDark : mix(P.woodDark, P.wood, 0.3)) : hash(h, py >> 2, 1, 19) < 0.25 ? mix(P.woodDark, INK, 0.25) : P.woodDark)),
+          b.cx - 1,
+          top,
+          2
+        );
     }
     const w = Math.round(b.w);
     const p = custom(`board ${w}`, w, 11, (px, py) => {

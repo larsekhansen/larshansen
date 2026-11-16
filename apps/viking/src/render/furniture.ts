@@ -7,6 +7,7 @@ import { TEXTURED } from "./tiles";
 
 /** Painted plank walls from `top` down to the ground, white trim at the corners, as on the front page. */
 export function walls(x: number, top: number, w: number, color: string, line: string, ground: number) {
+  if (TEXTURED.walls?.(x, top, w, color, line, ground)) return;
   R(x, top, w, ground - top, color);
   for (let i = 3; i < w - 2; i += 4) R(x + i, top, 1, ground - top, line);
   R(x, top, 2, ground - top, PAINT.trim);

@@ -1,8 +1,8 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
-import { column } from "@larshansen/pixelkit/backdrop";
+import { box } from "@larshansen/pixelkit/backdrop";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, COIN, DOORWAY, FACADE, FLAG, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, COIN, DOORWAY, FACADE, FLAG, FOOD, HAT_RED, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
@@ -14,6 +14,8 @@ import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, STORY_SIGN, UP, sta
 import type { Art, View } from "./types";
 import { STORY } from "../game/story";
 import { mirrorBall } from "../alive/invasion";
+import { custom, drawProp, hash } from "../alive/ground";
+import { CONCRETE, leg } from "../alive/props";
 
 // The map's sign by Langkaia's station tells the story of the glamour again (order 27): its words are the story's.
 STORY_SIGN.label = { nb: STORY.nb.signLabel, en: STORY.en.signLabel };
@@ -33,110 +35,317 @@ const LOW = LINE_Y + 2 * TILE - 9;
 const LEAVE = stationX(7) + 6;
 const JOIN = (LINE_1_END + 1) * TILE;
 
-/** A low skyline of each place behind its station: a few shapes taken from its level. */
+/**
+ * A low skyline of each place behind its station (order 28: drawn as a level is, a piece a station, painted once and
+ * copied): each place's own shapes in three to five tones of their own material, lit on the left (the sun is the map's),
+ * shaded on the right, with the windows, courses, spires and slopes that make it that place at a glance.
+ */
+const SKY_W = 76;
+const SKY_H = 56;
 function skyline(i: number, x: number, g: number) {
-  const s = (dx: number, w: number, h: number, c: string) => R(x + dx, g - h, w, h, c);
+  drawProp(custom(`kart skyline ${i}`, SKY_W, SKY_H, skyCell(i)), x - SKY_W / 2, g - SKY_H, SKY_W);
+}
+function skyCell(i: number) {
+  let a: (string | null)[] | null = null;
+  return (px: number, py: number) => {
+    if (!a) {
+      a = new Array<string | null>(SKY_W * SKY_H).fill(null);
+      paintSkyline(i, a);
+    }
+    return a[py * SKY_W + px];
+  };
+}
+/** A tone between a colour and toward white (k > 0) or toward the dark (k < 0). */
+const lit = (c: string, k = 0.22) => mix(c, WHITE, k);
+const dim = (c: string, k = 0.22) => mix(c, INK, k);
+function paintSkyline(i: number, a: (string | null)[]) {
+  // dx from the station's middle, up from the ground (1 is the row on the ground).
+  const dot = (dx: number, up: number, c: string | null) => {
+    const px = dx + SKY_W / 2;
+    const py = SKY_H - up;
+    if (px >= 0 && px < SKY_W && py >= 0 && py < SKY_H) a[py * SKY_W + px] = c;
+  };
+  const fill = (dx: number, w: number, h: number, c: string, from = 1) => {
+    for (let k = 0; k < w; k++) for (let u = from; u <= h; u++) dot(dx + k, u, c);
+  };
+  /** A building or a block: its face, its left lit, its right shaded, its top lit, its foot shaded. */
+  const block = (dx: number, w: number, h: number, c: string, from = 1) => {
+    fill(dx, w, h, c, from);
+    for (let u = from; u <= h; u++) {
+      dot(dx, u, lit(c));
+      dot(dx + w - 1, u, dim(c, 0.18));
+    }
+    for (let k = 0; k < w; k++) {
+      dot(dx + k, h, k === w - 1 ? c : lit(c, 0.3));
+      if (from === 1) dot(dx + k, 1, dim(c, 0.15));
+    }
+  };
+  const windows = (dx: number, w: number, u0: number, u1: number, sx: number, sy: number, ww: number, wh: number, c: string) => {
+    for (let k = 1; k + ww <= w - 1; k += sx) for (let u = u0; u + wh - 1 <= u1; u += sy) fill(dx + k, ww, u + wh - 1, c, u);
+  };
+  const courses = (dx: number, w: number, h: number, c: string, every: number, from = 2) => {
+    for (let u = from; u < h; u += every) for (let k = 1; k < w - 1; k++) if ((k + Math.floor(u / every) * 3) % 7 !== 0) dot(dx + k, u, c);
+  };
+  /** A spruce: a spire, then tiers widening, its left lit and its right in shade. */
+  const spruce = (dx: number, h: number, c: string) => {
+    dot(dx, h, lit(c, 0.15));
+    dot(dx, h - 1, c);
+    for (let k = 2; k < h; k++) {
+      const half = Math.min(1 + Math.floor((k % 4) + k / 4), 7);
+      for (let j = -half; j <= half; j++) dot(dx + j, h - k, j < 0 ? (j === -half ? lit(c, 0.12) : c) : j === 0 ? c : dim(c, 0.25));
+    }
+    fill(dx, 1, 2, PLANTS.bark);
+  };
+  /** A round-crowned tree on a trunk. */
+  const tree = (dx: number, h: number, c: string) => {
+    fill(dx, 2, h - 6, PLANTS.bark);
+    dot(dx + 1, h - 7, dim(PLANTS.bark));
+    for (let k = 0; k < 8; k++) {
+      const half = 4 - Math.abs(k - 3.5) * 0.9;
+      for (let j = -Math.round(half); j <= Math.round(half); j++) dot(dx + 1 + j, h - k, j < 0 ? lit(c, k > 4 ? 0.08 : 0.18) : dim(c, j > 1 ? 0.25 : 0.1));
+    }
+  };
   switch (i) {
-    case 0: // Langkaia: the Opera's white slope, its stage tower, the Barcode behind
-      for (let k = 0; k < 7; k++) s(-30 + k * 6, 4, 30 + (k % 3) * 8, k % 2 ? FACADE.stageDoor : FACADE.libraryTop);
-      for (let k = 0; k < 28; k++) s(-14 + k, 1, Math.round(k * 0.5) + 2, FACADE.marble);
-      s(-20, 10, 20, FACADE.stageTower);
-      return;
-    case 1: // Akershus: a wall and a copper spire
-      s(-22, 44, 12, STONE.base);
-      s(-6, 12, 22, STONE.light);
-      for (let k = 0; k < 8; k++) R(x - 6 + k, g - 22 - (8 - Math.abs(k * 2 - 7)) * 2, 1, (8 - Math.abs(k * 2 - 7)) * 2, METAL.copper);
-      return;
-    case 2: // Rådhuset: two brick towers
-      s(-20, 12, 34, BRICK.red);
-      s(8, 12, 36, BRICK.red);
-      s(-8, 16, 16, BRICK.course);
-      s(10, 6, 6, PAINT.trim);
-      return;
-    case 3: // Slottet: the palace, pale yellow, a flag on top
-      s(-20, 40, 18, FACADE.palace);
-      s(-2, 1, 28, METAL.flagpole);
-      // Norway's flag, 7 x 5 (order 26, section 3b: it was a red patch): the white cross, the blue in it, nearer the pole.
-      R(x - 1, g - 28, 7, 5, FLAG.red);
-      R(x, g - 28, 3, 5, FLAG.white);
-      R(x - 1, g - 27, 7, 3, FLAG.white);
-      R(x + 1, g - 28, 1, 5, FLAG.blue);
-      R(x - 1, g - 26, 7, 1, FLAG.blue);
-      return;
-    case 4: // Holmenkollen: the ski jump
-      for (let k = 0; k < 30; k++) s(-14 + k, 1, Math.max(2, 34 - k), k < 3 ? STONE.light : mix(FACADE.stageTower, INK, 0.1));
-      return;
-    case 5: // Akerselva: a waterfall and an old mill
-      s(-18, 16, 18, BRICK.red);
-      s(0, 6, 14, PALETTE.water);
-      s(0, 6, 2, PALETTE.foam);
-      return;
-    case 6: // Nordmarka: spruce
-      for (const [dx, h] of [[-14, 20], [-4, 28], [7, 22]] as const) for (let k = 0; k < h; k++) R(x + dx - (Math.floor(k / 3) % 4), g - h + k, (Math.floor(k / 3) % 4) * 2 + 1, 1, PLANTS.spruce);
-      return;
-    case 7: // Stortinget: yellow brick and a round hall
-      s(-20, 40, 16, FACADE.storting);
-      s(-6, 12, 22, FACADE.stortingDark);
-      return;
-    case 8: // Ekeberg: the hill
-      for (let k = -22; k < 22; k++) s(k, 1, Math.round(24 * Math.exp(-((k / 14) ** 2))), LAND.forest);
-      return;
-    case 9: // Nabolaget: small wooden houses
-      s(-18, 12, 12, PAINT.mint);
-      s(-4, 12, 14, PAINT.ochre);
-      s(10, 10, 11, PAINT.red);
-      return;
-    case 10: // Bygdøy: the polar ship's hall, a tall A of a roof, and a longship's dragon prow beside it
-      for (let k = 0; k < 18; k++) s(-22 + k, 1, k * 2 + 2, k % 6 === 5 ? PAINT.trim : mix(PAINT.trim, STONE.base, 0.35));
-      for (let k = 0; k < 18; k++) s(-4 + k, 1, 36 - k * 2, k % 6 === 0 ? PAINT.trim : mix(PAINT.trim, STONE.base, 0.35));
-      s(-12, 12, 10, mix(PALETTE.water, WHITE, 0.3));
-      s(14, 16, 6, PALETTE.woodDark);
-      s(26, 3, 14, PALETTE.woodDark);
-      R(x + 26, g - 16, 5, 3, PALETTE.wood);
-      return;
-    case 11: // Vigelandsparken: the monolith on its steps, a tree each side
-      s(-18, 36, 3, STONE.light);
-      s(-12, 24, 3, STONE.base);
-      for (let k = 0; k < 30; k++) R(x - 3 + ((k * 7) % 3 === 0 ? 0 : 1), g - 6 - k, 6, 1, k % 4 === 0 ? STONE.light : mix(STONE.light, WHITE, 0.25));
-      R(x - 2, g - 38, 4, 2, mix(STONE.light, WHITE, 0.25));
-      for (const dx of [-22, 18]) {
-        s(dx + 1, 2, 8, PLANTS.bark);
-        for (let k = 0; k < 7; k++) R(x + dx - 3 + Math.abs(k - 3), g - 18 + k, 10 - Math.abs(k - 3) * 2, 1, PLANTS.leaves);
+    case 0: {
+      // Langkaia: the Barcode's slim towers behind, the Opera's white roof sloping up out of the water to the stage tower,
+      // the glass foyer under it.
+      [[-34, 5, 40], [-28, 4, 46], [-23, 5, 36], [-17, 4, 42]].forEach(([dx, w, h], k) => {
+        const c = k % 2 ? mix(FACADE.stageDoor, WHITE, 0.25) : FACADE.libraryTop;
+        block(dx, w, h, c);
+        for (let u = 4; u < h - 1; u += 3) for (let j = 1; j < w - 1; j++) dot(dx + j, u, k % 2 ? lit(c, 0.35) : FACADE.libraryTopMullion);
+      });
+      block(-6, 13, 30, FACADE.stageTower);
+      for (let u = 4; u < 28; u += 3) for (let j = 1; j < 12; j += 2) dot(-6 + j + (u % 2), u, FACADE.stageTowerDot);
+      for (let k = 0; k < 34; k++) {
+        const h = Math.round(k * 0.55) + 2;
+        const dx = -18 + k;
+        for (let u = 1; u <= h; u++) dot(dx, u, u >= h - 1 ? (u === h ? FACADE.marble : FACADE.marbleEdge) : k > 8 && u < h - 2 ? (dx % 3 === 0 ? FACADE.libraryTopMullion : mix(FACADE.stageDoor, FACADE.libraryTop, 0.45)) : FACADE.marbleWall);
       }
       return;
-    case 12: // Korketrekkeren: the hill, the run winding down it, spruce
-      for (let k = -24; k < 24; k++) s(k, 1, Math.round(22 * Math.exp(-((k / 18) ** 2))), mix(LAND.forest, WHITE, 0.15));
-      for (let k = -18; k < 18; k++) R(x + k, g - Math.round(22 * Math.exp(-((k / 18) ** 2))) + 3 + Math.round(3 * Math.sin(k * 0.45)), 1, 1, SNOW.lying);
-      for (const dx of [-14, 9]) for (let k = 0; k < 10; k++) R(x + dx - (Math.floor(k / 3) % 3), g - 30 + k, (Math.floor(k / 3) % 3) * 2 + 1, 1, PLANTS.spruce);
+    }
+    case 1: {
+      // Akershus: the curtain wall in courses with its battlements, the keep, a copper spire gone green.
+      block(-26, 52, 12, STONE.base);
+      courses(-26, 52, 12, STONE.dark, 3);
+      for (let k = -26; k < 26; k += 4) fill(k, 2, 14, STONE.base, 13), dot(k, 14, STONE.light);
+      // The keep stands to the right of the rune stone, so its spire is seen.
+      block(9, 14, 24, STONE.light);
+      courses(9, 14, 24, STONE.base, 4);
+      fill(15, 2, 18, INK, 14);
+      for (let k = 0; k < 9; k++) {
+        const w = 9 - k;
+        for (let j = 0; j < w; j++) dot(12 + Math.ceil(k / 2) + j, 25 + k * 2, j < w / 2 ? METAL.copperLight : j === w - 1 ? METAL.copperDark : METAL.copper);
+        for (let j = 0; j < w; j++) dot(12 + Math.ceil(k / 2) + j, 26 + k * 2, j < w / 2 ? METAL.copper : METAL.copperDark);
+      }
+      dot(16, 44, METAL.copperDark);
       return;
-    case 13: // Østensjøvannet: the lake, reeds, a bird hide on its legs
-      s(-22, 44, 3, PALETTE.water);
-      for (let k = 0; k < 14; k++) R(x - 20 + k * 3, g - 7 - (k % 3) * 2, 1, 7 + (k % 3) * 2, k % 2 ? PLANTS.hedgeDark : PLANTS.hedge);
-      s(6, 14, 12, PALETTE.woodDark);
-      R(x + 5, g - 14, 16, 2, PALETTE.wood);
-      R(x + 9, g - 10, 6, 2, INK);
-      R(x - 6, g - 5, 4, 2, WHITE);
-      R(x - 3, g - 8, 1, 3, WHITE);
+    }
+    case 2: {
+      // Rådhuset: the two brick towers, their courses and window slits, the clock on the east tower; the hall between.
+      block(-8, 16, 16, BRICK.course);
+      windows(-8, 16, 4, 13, 3, 12, 1, 8, dim(BRICK.course, 0.4));
+      for (const [dx, h] of [[-21, 36], [8, 38]] as const) {
+        block(dx, 13, h, BRICK.red);
+        courses(dx, 13, h, BRICK.course, 3);
+        for (let u = 6; u < h - 6; u += 8) fill(dx + 3, 1, u + 3, dim(BRICK.red, 0.45), u), fill(dx + 8, 1, u + 3, dim(BRICK.red, 0.45), u);
+        fill(dx - 1, 15, h + 1, lit(BRICK.red, 0.35), h);
+      }
+      fill(11, 6, 34, PAINT.trim, 29);
+      dot(13, 32, INK);
+      dot(13, 31, INK);
+      dot(14, 31, INK);
+      fill(11, 1, 34, lit(PAINT.trim, 0.1), 29);
       return;
-    case 14: // Bjørvika: a tower crane over a tower half built
-      s(-20, 16, 22, mix(STONE.light, WHITE, 0.2));
-      for (let y = g - 20; y < g; y += 5) R(x - 20, y, 16, 1, STONE.base);
-      for (let k = 0; k < 36; k++) R(x + 6 + (k % 2), g - k, 1, 1, MAP_CRANE);
-      R(x + 5, g - 36, 4, 36, mix(MAP_CRANE, WHITE, 0.0));
-      for (let y = g - 34; y < g; y += 4) R(x + 6, y, 2, 1, mix(MAP_CRANE, INK, 0.35));
-      R(x - 14, g - 38, 34, 2, MAP_CRANE);
-      R(x - 10, g - 36, 1, 14, METAL.wire);
-      R(x - 12, g - 22, 5, 2, METAL.lampPost);
+    }
+    case 3: {
+      // Slottet: the palace, pale yellow, its rows of windows, the portico's columns and pediment, the flag on the roof.
+      block(-24, 48, 18, FACADE.palace);
+      for (const u of [4, 11]) for (let k = -22; k < 22; k += 4) if (k < -6 || k > 4) fill(k, 2, u + 3, mix(GLASS_DARK, FACADE.palace, 0.25), u);
+      fill(-24, 48, 18, lit(FACADE.palace, 0.4), 18);
+      fill(-24, 48, 17, dim(FACADE.palace, 0.12), 17);
+      for (let k = -6; k <= 5; k += 3) fill(k, 1, 15, PAINT.trim, 2), fill(k + 1, 1, 15, dim(FACADE.palace, 0.18), 2);
+      for (let k = 0; k < 7; k++) for (let j = -7 + k; j <= 6 - k; j++) dot(j, 19 + k, k === 0 ? dim(FACADE.palace, 0.1) : lit(FACADE.palace, 0.25));
+      fill(-2, 1, 31, METAL.flagpole, 26);
+      // Norway's flag, 7 x 5 (order 26).
+      for (let u = 27; u <= 31; u++) for (let k = -1; k <= 5; k++) {
+        const col = k === 1 || u === 29 ? FLAG.blue : k === 0 || k === 2 || u === 28 || u === 30 ? FLAG.white : FLAG.red;
+        dot(k, u, col);
+      }
       return;
-    default: // Gamlebyen: a ruined church's arches, the stone of a thousand years
+    }
+    case 4: {
+      // Holmenkollen: the jump's inrun on its steel, the tower at its top, the landing hill in snow.
+      for (let k = 0; k < 40; k++) {
+        const dx = -20 + k;
+        const top = Math.max(3, Math.round(40 - k * 1.05));
+        // The landing hill's snow under the inrun, curving down to the right.
+        const hill = Math.max(2, Math.round(16 * Math.exp(-(((k - 6) / 22) ** 2)) + 2));
+        fill(dx, 1, hill, k < 20 ? SNOW.lying : SNOW.shade);
+        if (k < 30) {
+          dot(dx, top, STONE.light);
+          dot(dx, top - 1, mix(FACADE.stageTower, INK, 0.1));
+          dot(dx, top + 1, SNOW.lying);
+          if (k % 5 === 0) for (let u = hill + 1; u < top - 1; u++) dot(dx, u, mix(FACADE.stageTower, INK, 0.25));
+        }
+      }
+      block(-22, 5, 46, mix(FACADE.stageTower, INK, 0.12), 38);
+      fill(-23, 7, 47, STONE.light, 46);
+      return;
+    }
+    case 5: {
+      // Akerselva: the brick mill with its rows of arched windows and a chimney, the fall white over the rocks beside it.
+      block(-22, 18, 20, BRICK.red);
+      courses(-22, 18, 20, BRICK.course, 3);
+      for (const u of [4, 11]) for (let k = -20; k < -6; k += 4) fill(k, 2, u + 4, BRICK.kruttverketWindow, u), dot(k, u + 4, dim(BRICK.red, 0.3)), dot(k + 1, u + 4, dim(BRICK.red, 0.3));
+      block(-8, 4, 30, BRICK.kruttverketChimney, 18);
+      fill(-9, 6, 31, BRICK.kruttverketCap, 30);
+      for (let k = 0; k < 8; k++) for (let u = 1; u <= 14; u++) dot(k, u, u > 12 ? PALETTE.foam : (k + u) % 4 === 0 ? PALETTE.foam : k < 2 ? lit(PALETTE.water, 0.2) : PALETTE.water);
+      fill(0, 8, 3, PALETTE.foam);
+      for (const [dx, h] of [[-2, 6], [8, 8], [11, 5]] as const) block(dx, 4, h, PALETTE.rock);
+      return;
+    }
+    case 6:
+      // Nordmarka: spruces, their spires, their lit sides and their shade.
+      spruce(-16, 22, PLANTS.spruce);
+      spruce(-4, 32, PLANTS.spruce);
+      spruce(8, 26, PLANTS.spruce);
+      spruce(18, 18, dim(PLANTS.spruce, 0.1));
+      return;
+    case 7: {
+      // Stortinget: the yellow brick wings and windows, the round hall in the middle with its cornice and tall windows.
+      block(-26, 52, 16, FACADE.storting);
+      for (const u of [4, 10]) for (let k = -24; k < 24; k += 4) if (k < -9 || k > 7) fill(k, 2, u + 3, mix(GLASS_DARK, FACADE.storting, 0.2), u);
+      for (let k = 0; k < 18; k++) {
+        const dx = -9 + k;
+        const h = 22 + Math.round(Math.sin((k / 17) * Math.PI) * 3);
+        for (let u = 1; u <= h; u++) dot(dx, u, k < 5 ? lit(FACADE.stortingDark, 0.15) : k > 13 ? dim(FACADE.stortingDark, 0.15) : FACADE.stortingDark);
+        dot(dx, h, lit(FACADE.storting, 0.35));
+        if (k % 4 === 1) fill(dx, 2, 17, mix(GLASS_DARK, FACADE.stortingDark, 0.2), 6);
+      }
+      return;
+    }
+    case 8: {
+      // Ekeberg: the wooded hill, lit on its left, tufts of trees; the white restaurant on its brow.
+      for (let k = -30; k < 30; k++) {
+        const h = Math.round(26 * Math.exp(-((k / 17) ** 2)));
+        for (let u = 1; u <= h; u++) dot(k, u, k < -6 ? (u > h - 2 ? lit(LAND.forest, 0.18) : LAND.forest) : k > 8 ? dim(LAND.forest, 0.18) : LAND.forest);
+        if (h > 3 && (k * 7) % 5 === 0) dot(k, h + 1, k < 0 ? lit(LAND.forest, 0.1) : LAND.forest);
+        for (let u = 2; u < h - 2; u++) if (hash(k, u, 8, 61) < 0.08) dot(k, u, dim(LAND.forest, 0.3));
+      }
+      block(-4, 15, 30, FACADE.marbleWall, 20);
+      fill(-3, 13, 27, mix(GLASS_DARK, FACADE.marbleWall, 0.35), 25);
+      fill(-3, 13, 23, mix(GLASS_DARK, FACADE.marbleWall, 0.5), 22);
+      fill(-4, 15, 30, WHITE, 30);
+      return;
+    }
+    case 9: {
+      // Vålerenga: small wooden houses, plank by plank, under their roofs; the church's spire behind.
+      // Vålerenga kirke's tower and its spire, behind the houses.
+      block(20, 6, 28, MASONRY.churchTower);
+      fill(22, 2, 22, MASONRY.churchWindow, 18);
+      for (let k = 0; k < 18; k++) {
+        const half = Math.max(0, Math.round(3 - k / 6));
+        for (let j = -half; j <= half; j++) dot(23 + j, 29 + k, j < 0 ? lit(ROOF.churchSlate, 0.15) : j > 0 ? dim(ROOF.churchSlate) : ROOF.churchSlate);
+      }
+      [[-22, 13, 13, PAINT.mint, PAINT.mintLine], [-7, 13, 15, PAINT.ochre, PAINT.ochreLine], [8, 12, 12, PAINT.red, PAINT.redLine]].forEach(([dx, w, h, c, line]) => {
+        const X = dx as number;
+        const W = w as number;
+        const H = h as number;
+        block(X, W, H, c as string);
+        for (let k = 2; k < W - 1; k += 3) fill(X + k, 1, H - 1, line as string, 2);
+        fill(X + 3, 3, 8, mix(GLASS_DARK, c as string, 0.2), 5);
+        for (let k = 0; k <= Math.ceil(W / 2); k++) for (let j = k; j < W - k; j++) dot(X + j, H + 1 + k, j === k ? lit(ROOF.red, 0.15) : j === W - k - 1 ? dim(ROOF.red) : ROOF.red);
+      });
+      return;
+    }
+    case 10: {
+      // Bygdøy: Fram's hall, a tall A of a roof with its ribs; the longship's dragon prow beside it.
+      for (let k = 0; k < 18; k++) {
+        fill(-22 + k, 1, k * 2 + 2, k % 6 === 5 ? PAINT.trim : mix(PAINT.trim, STONE.base, 0.3));
+        fill(-4 + k, 1, 36 - k * 2, k % 6 === 0 ? PAINT.trim : mix(PAINT.trim, STONE.base, 0.42));
+      }
+      fill(-12, 12, 10, mix(PALETTE.water, WHITE, 0.3));
+      for (let k = 0; k < 12; k += 3) fill(-12 + k, 1, 10, mix(PALETTE.water, WHITE, 0.15));
+      block(14, 16, 6, PALETTE.woodDark);
+      for (let k = 0; k < 16; k += 4) dot(14 + k, 4, lit(PALETTE.woodDark, 0.3));
+      block(26, 3, 14, PALETTE.woodDark);
+      fill(26, 5, 16, PALETTE.wood, 14);
+      dot(29, 15, HAT_RED);
+      return;
+    }
+    case 11: {
+      // Vigelandsparken: the Monolith on its steps, its carved figures in light and shade; a lime each side.
+      block(-18, 36, 3, STONE.light);
+      block(-12, 24, 6, STONE.base, 4);
+      for (let u = 7; u < 38; u++) for (let k = -3; k < 3; k++) dot(k, u, k === -3 ? lit(STONE.light, 0.3) : k === 2 ? STONE.base : (u + k * 2) % 4 === 0 ? STONE.base : lit(STONE.light, 0.15));
+      fill(-2, 4, 39, lit(STONE.light, 0.3), 38);
+      tree(-24, 18, PLANTS.leaves);
+      tree(20, 18, PLANTS.leaves);
+      return;
+    }
+    case 12: {
+      // Korketrekkeren: the snowy hill, the run winding down it in its groove, spruces dark against the snow.
+      for (let k = -30; k < 30; k++) {
+        const h = Math.round(24 * Math.exp(-((k / 20) ** 2)));
+        for (let u = 1; u <= h; u++) dot(k, u, k > 6 ? SNOW.shade : SNOW.lying);
+        const run = h - 3 - Math.round(3 * Math.sin(k * 0.45));
+        if (k > -20 && k < 20 && run > 1) dot(k, run, mix(SNOW.shade, INK, 0.12));
+      }
+      spruce(-16, 14, PLANTS.spruce);
+      spruce(10, 20, PLANTS.spruce);
+      spruce(17, 12, dim(PLANTS.spruce, 0.1));
+      return;
+    }
+    case 13: {
+      // Østensjøvannet: the lake with its bank of reeds, the bird hide on its legs, a swan.
+      fill(-26, 52, 3, PALETTE.water);
+      for (let k = -26; k < 26; k += 5) dot(k, 2, lit(PALETTE.water, 0.35));
+      for (let k = 0; k < 16; k++) fill(-24 + k * 3, 1, 7 + (k % 3) * 2, k % 2 ? PLANTS.hedgeDark : PLANTS.hedge, 3), dot(-24 + k * 3, 8 + (k % 3) * 2, PLANTS.bark);
+      block(6, 14, 14, PALETTE.woodDark, 4);
+      for (let k = 2; k < 13; k += 3) fill(6 + k, 1, 13, dim(PALETTE.woodDark), 5);
+      fill(9, 6, 11, INK, 10);
+      for (let k = 0; k < 16; k++) dot(5 + k, 15, k < 8 ? lit(PALETTE.wood) : PALETTE.wood), dot(5 + k, 14, dim(PALETTE.wood));
+      fill(7, 1, 3, PALETTE.woodDark), fill(18, 1, 3, PALETTE.woodDark);
+      fill(-8, 4, 5, WHITE, 4), fill(-5, 1, 7, WHITE, 5), dot(-5, 8, PALETTE.sailStripe);
+      return;
+    }
+    case 14: {
+      // Bjørvika: a tower going up in floors of concrete and glass, its top floors bare; the crane's lattice over it.
+      block(-24, 18, 26, lit(STONE.light, 0.15));
+      for (let u = 3; u < 24; u += 5) fill(-23, 16, u, STONE.base, u);
+      for (let u = 4; u < 17; u += 5) for (let k = -22; k < -8; k += 3) fill(k, 2, u + 2, mix(GLASS_DARK, WHITE, 0.35), u);
+      for (const k of [-24, -16, -8]) fill(k, 1, 32, STONE.base, 26);
+      // The crane's mast to the right of the rune stone, its lattice; the jib over the tower, its hook down to a beam.
+      for (let u = 1; u <= 40; u++) {
+        dot(10, u, lit(MAP_CRANE, 0.2));
+        dot(13, u, dim(MAP_CRANE, 0.2));
+        dot(11 + (u % 2), u, (u >> 1) % 2 ? dim(MAP_CRANE, 0.35) : MAP_CRANE);
+      }
+      for (let k = -14; k < 26; k++) dot(k, 42, MAP_CRANE), dot(k, 41, (k & 1) ? dim(MAP_CRANE, 0.35) : MAP_CRANE);
+      fill(-10, 1, 40, METAL.wire, 26);
+      fill(-12, 5, 26, METAL.lampPost, 25);
+      fill(20, 6, 41, dim(MAP_CRANE, 0.4), 38);
+      return;
+    }
+    default: {
+      // Gamlebyen: a ruined church's arches, the stone of a thousand years in courses, grass along their tops.
+      fill(-26, 52, 3, mix(STONE.base, PALETTE.grass, 0.5));
       for (const [dx, h] of [[-20, 24], [-8, 30], [4, 26], [16, 18]] as const) {
-        s(dx, 4, h, STONE.base);
-        R(x + dx, g - h, 4, 1, STONE.light);
+        block(dx, 5, h, STONE.base);
+        courses(dx, 5, h, STONE.dark, 3);
+        fill(dx, 5, h + 1, mix(STONE.moss, PALETTE.grass, 0.4), h + 1);
       }
-      for (const dx of [-16, -4, 8]) for (let k = 0; k < 8; k++) R(x + dx + (k < 4 ? 0 : 0), g - 22 - Math.round(Math.sin((k / 7) * Math.PI) * 4), 8, 1, k === 0 ? STONE.light : STONE.base);
-      s(-22, 44, 3, mix(STONE.base, PALETTE.grass, 0.5));
+      for (const dx of [-15, -3, 9]) for (let k = 0; k < 7; k++) {
+        const u = 20 + Math.round(Math.sin((k / 6) * Math.PI) * 4);
+        dot(dx + k, u, STONE.light);
+        dot(dx + k, u - 1, STONE.base);
+        dot(dx + k, u - 2, STONE.dark);
+      }
+    }
   }
 }
+/** Windows seen from the map, dark glass. */
+const GLASS_DARK = "#3a4650";
 
 /** The burial mound around the door Jernhaugen: turf over a stone doorway, standing stones on top. */
 function mound(door: Door | undefined, snow: boolean) {
@@ -184,11 +393,24 @@ function faintly(on: boolean, draw: () => void) {
 /** The station on the line: a white square in a frame of its line's colour, as on a metro map; grey while closed. */
 function stationMark(i: number, open: boolean) {
   const x = stationX(i);
-  const frame = LINE[i].line === 2 ? LINE_2_COLOR : HAT_RED;
-  R(x - 6, LINE_Y - 2, 12, 10, open ? frame : mix(frame, INK, 0.4));
-  R(x - 4, LINE_Y, 8, 6, open ? WHITE : mix(WHITE, STONE.base, 0.6));
-  // Stortinget is where line 2 leaves: an orange bar across the foot of its square.
-  if (ORDER[i] === "stortinget") R(x - 4, LINE_Y + 4, 8, 2, LINE_2_COLOR);
+  const frame = open ? (LINE[i].line === 2 ? LINE_2_COLOR : HAT_RED) : mix(LINE[i].line === 2 ? LINE_2_COLOR : HAT_RED, INK, 0.4);
+  const white = open ? WHITE : mix(WHITE, STONE.base, 0.6);
+  // Its frame enamelled (order 28): lit along its top and left, shaded along its bottom and right, the white face's inner
+  // edge in the frame's shadow. Stortinget is where line 2 leaves: an orange bar across the foot of its square.
+  const two = ORDER[i] === "stortinget";
+  drawProp(
+    custom(`kart station ${frame} ${two ? 1 : 0}`, 12, 10, (px, py) => {
+      if (px >= 2 && px < 10 && py >= 2 && py < 8) {
+        if (two && py >= 6) return LINE_2_COLOR;
+        return px === 2 || py === 2 ? mix(white, STONE.base, 0.25) : white;
+      }
+      if ((px === 0 && py === 0) || (px === 11 && py === 9)) return mix(frame, INK, 0.15);
+      return py === 0 || px === 0 ? mix(frame, WHITE, 0.3) : py === 9 || px === 11 ? mix(frame, INK, 0.3) : frame;
+    }),
+    x - 6,
+    LINE_Y - 2,
+    12
+  );
 }
 
 /** The gate across line 2 while it is closed: boards up to the sky, braces, a warning stripe. */
@@ -203,15 +425,30 @@ function gate() {
 
 /** The viaducts under the lines: concrete piers every three tiles, the far city seen between them. */
 function viaduct() {
-  // Its piers go down into the water out of sight, however tall the screen.
-  const h = 16 * TILE - LINE_Y - 11 + 1200;
+  // Its piers go down into the water out of sight, however tall the screen (order 28): white concrete lit on the left,
+  // the formwork's joints, a bracket under the deck, darker and wet where the water reaches, and under the water's surface
+  // the fjord's own green-blue over them, deeper and deeper, so they stand in it and do not float on it.
+  const water = LINE_Y + 2 * TILE + 8;
   for (let x = 2 * TILE; x < KART_COLS * TILE; x += 3 * TILE) {
     if (x > 8 * TILE && x < 18 * TILE) continue;
-    R(x, LINE_Y + 11, 8, h, FACADE.marbleWall);
-    R(x, LINE_Y + 11, 2, h, WHITE);
-    R(x + 6, LINE_Y + 11, 2, h, FACADE.marbleSeam);
+    drawProp(custom("kart bracket", 12, 4, bracketCell), x - 2, LINE_Y + 11, 12);
+    leg(x, LINE_Y + 15, water, 8, CONCRETE, 3);
+    drawProp(custom("kart pier under", 8, 1200, underCell), x, water, 8);
   }
 }
+const bracketCell = (px: number, py: number) => {
+  const w = 12 - py * 2 + (py === 0 ? 0 : 2);
+  const x0 = (12 - w) / 2;
+  if (px < x0 || px >= x0 + w) return null;
+  return py === 0 ? mix(FACADE.marbleSeam, INK, 0.2) : px === x0 ? mix(FACADE.marbleWall, WHITE, 0.55) : px === x0 + w - 1 ? FACADE.marbleSeam : FACADE.marbleWall;
+};
+const underCell = (px: number, py: number) => {
+  const deep = Math.min(0.9, 0.5 + py / 120);
+  const c = px < 2 ? mix(FACADE.marbleWall, WHITE, 0.55) : px >= 6 ? FACADE.marbleSeam : FACADE.marbleWall;
+  // A ripple's light now and then where the surface moves over it.
+  if (py < 24 && px > 0 && px < 7 && (px * 5 + py * 3) % 11 === 0) return mix(PALETTE.foam, PALETTE.water, 0.4);
+  return mix(c, py > 60 ? PALETTE.waterDeep : PALETTE.water, deep);
+};
 
 /**
  * Line 2's track out of Stortinget: it leaves line 1's deck just past Stortinget's board, goes down
@@ -247,12 +484,20 @@ function branch() {
 }
 
 /** Line 2's deck, for him to walk along: an orange band on concrete, as line 1's is red. */
-function deck(x: number, y: number) {
-  R(x, y, TILE, 6, LINE_2_COLOR);
-  R(x, y, TILE, 1, mix(LINE_2_COLOR, WHITE, 0.35));
-  R(x, y + 5, TILE, 1, mix(LINE_2_COLOR, INK, 0.3));
-  R(x, y + 6, TILE, 5, FACADE.marbleWall);
-  R(x, y + 10, TILE, 1, FACADE.marbleSeam);
+function deck(x: number, y: number, c = LINE_2_COLOR) {
+  drawProp(custom(`kart deck ${c}`, TILE, 11, (px, py) => deckCell(c, px, py)), x, y, TILE);
+}
+/**
+ * A tile of a line's deck (order 28): the line's colour in a band lit along its top and shaded under, a joint between
+ * sections and two bolts in each; under it the concrete in the band's shadow, the formwork's joint, its seam.
+ */
+function deckCell(c: string, px: number, py: number) {
+  if (py === 0) return px === 0 ? mix(c, WHITE, 0.2) : mix(c, WHITE, 0.35);
+  if (py < 5) return px === 0 ? mix(c, INK, 0.25) : (px === 4 || px === 12) && py === 2 ? mix(c, INK, 0.3) : (px === 5 || px === 13) && py === 2 ? mix(c, WHITE, 0.2) : c;
+  if (py === 5) return mix(c, INK, 0.3);
+  if (py === 6) return mix(FACADE.marbleWall, INK, 0.12);
+  if (py === 10) return FACADE.marbleSeam;
+  return px === 8 ? FACADE.marbleSeam : FACADE.marbleWall;
 }
 
 /** The stone's dashed outline and faint carving while its level is not cleared: an empty slot, as in the header. */
@@ -289,13 +534,26 @@ function runeStone(x: number, y: number, char: RuneChar, cleared: boolean) {
   for (const [lx, ly, lw, lh] of [[x + 1, y, 14, 1], [x + 1, y + 15, 14, 1], [x, y + 1, 1, 14], [x + 15, y + 1, 1, 14]]) light(lx, ly, lw, lh, "soft");
 }
 
+/** The mirror ball's bracket: a post up from the rune stone's corner and an arm out over the ball, iron lit on top and on its left. */
+const ballBracket = (px: number, py: number) => {
+  if (px === 0 || px === 1) return py >= 1 ? (px === 0 ? mix(METAL.lampHat, WHITE, 0.2) : METAL.castIron) : null;
+  if (py === 1) return px === 8 ? METAL.castIron : mix(METAL.lampHat, WHITE, 0.2);
+  if (py === 2 && px > 1 && px < 8) return METAL.castIron;
+  if (py === 3 && px === 2) return METAL.castIron;
+  return null;
+};
+
 /** Behind a station: its place's skyline, and its rune stone above it: gold with a tick once the level is cleared. */
 function stationBack(i: number, cleared: boolean, clean: boolean, t: number) {
   const x = stationX(i);
   skyline(i, x, LINE_Y);
   runeStone(x - 8, LINE_Y - 46, RUNE_CHARS[LINE[i].rune] as RuneChar, cleared);
   // Still under the glamour (order 27): a mirror ball turning over its stone; a cleared station is plain Oslo again.
-  if (!cleared) mirrorBall(x + 13, LINE_Y - 40, t, 8);
+  if (!cleared) {
+    // Hung from a bracket the invaders clamped to the stone's corner (order 28), so it hangs from something.
+    drawProp(custom("kart ball bracket", 9, 9, ballBracket), x + 6, LINE_Y - 54, 9);
+    mirrorBall(x + 13, LINE_Y - 40, t, 7);
+  }
   if (clean) waffle(x + 9, LINE_Y - 37);
 }
 
@@ -367,15 +625,46 @@ export function kartArt(progress: Progress, open: boolean): Art {
     mid(v) {
       drawFjord(v.t, LINE_Y + 2 * TILE);
       // The fjord goes on down under the viaduct, however tall the screen.
-      for (let x = 0; x < view.w; x++) column(x, LINE_Y + 2 * TILE + 8, LINE_Y + 2 * TILE + 1200, PALETTE.water);
+      // In bands growing darker as it goes down (order 28), a band a rectangle, with the light of a wave here and there.
+      const top = LINE_Y + 2 * TILE + 8;
+      for (let k = 0; k < 8; k++) box(0, top + k * 12, view.w, 12, mix(PALETTE.water, PALETTE.waterDeep, k * 0.12));
+      box(0, top + 96, view.w, 1200 - 96, mix(PALETTE.water, PALETTE.waterDeep, 0.95));
+      for (let k = 0; k < 24; k++) {
+        const wx = (k * 173) % (KART_COLS * TILE);
+        const sx = Math.round(wx - view.camX * 0.2) % (view.w + 40);
+        const yy = top + 4 + ((k * 37) % 80);
+        box(sx < -20 ? sx + view.w + 40 : sx, yy, 4 + (k % 3) * 2, 1, mix(PALETTE.water, PALETTE.foam, 0.35 - Math.min(0.25, (yy - top) / 400)));
+      }
     },
     back(v) {
       const home = v.doors.get("home");
       if (home) {
-        R(home.x - 6, home.bottom - home.h - 10, home.w + 12, home.h + 10, FACADE.stageTower);
-        for (let y = home.bottom - home.h - 6; y < home.bottom; y += 4) for (let xx = home.x - 4; xx < home.x + home.w + 4; xx += 4) R(xx + ((y / 4) % 2) * 2, y, 1, 1, FACADE.stageTowerDot);
-        R(home.x, home.bottom - home.h, home.w, home.h, home.open ? DOORWAY.stage : FACADE.stageDoor);
-        R(home.x + home.w - 4, home.bottom - 16, 2, 2, METAL.brass);
+        // The stage tower's cladding round the door Hjem (order 28): lit on its left, shaded on its right, its dotted
+        // panels; the door of dark steel, lit along its edge, a push bar, its brass handle.
+        const w = home.w + 12;
+        const h = home.h + 10;
+        drawProp(
+          custom(`kart hjem ${home.w} ${home.h} ${home.open ? 1 : 0}`, w, h, (px, py) => {
+            const dx = px - 6;
+            const dy = py - 10;
+            if (dx >= 0 && dx < home.w && dy >= 0) {
+              if (home.open) return dy < 2 ? mix(DOORWAY.stage, INK, 0.3) : DOORWAY.stage;
+              if (dx === 0) return mix(FACADE.stageDoor, WHITE, 0.2);
+              if (dx === home.w - 1) return mix(FACADE.stageDoor, INK, 0.3);
+              if (dy === home.h - 16 && dx > 1 && dx < home.w - 2) return mix(FACADE.stageDoor, WHITE, 0.12);
+              if (dx >= home.w - 4 && dx < home.w - 2 && (dy === home.h - 16 || dy === home.h - 15)) return dy === home.h - 16 ? mix(METAL.brass, WHITE, 0.3) : METAL.brass;
+              return FACADE.stageDoor;
+            }
+            if (dx >= -1 && dx <= home.w && dy >= -1) return FACADE.stageTowerDot;
+            if (px === 0) return mix(FACADE.stageTower, WHITE, 0.4);
+            if (px === w - 1) return FACADE.stageTowerTop;
+            if (py === 0) return mix(FACADE.stageTower, WHITE, 0.4);
+            return py >= 4 && py % 4 === 0 && (px + (py / 4) % 2 * 2) % 4 === 2 ? FACADE.stageTowerDot : py % 12 === 11 ? FACADE.stageTowerTop : FACADE.stageTower;
+          }),
+          home.x - 6,
+          home.bottom - home.h - 10,
+          w
+        );
       }
       viaduct();
       if (complete) longship(v);
@@ -396,6 +685,8 @@ export function kartArt(progress: Progress, open: boolean): Art {
       });
     },
     tile(t, _c, _r, x, y) {
+      // Line 1's deck is the shared letter's (`render/tiles.ts`), drawn here in the same colours with its joints (order 28).
+      if (t === "L") return deck(x, y, HAT_RED), true;
       if (t !== "O") return false;
       faintly(!open, () => deck(x, y));
       return true;
