@@ -24,6 +24,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { EDGE, edgesAt, tile as textured, CRATE, type Grain } from "../alive/ground";
+import { STORY } from "../game/story";
 
 // Level 10, rune N: Nabolaget. A winter night over Vålerenga and Kampen, the northern lights up,
 // snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
@@ -1177,7 +1178,8 @@ export const NABOLAGET: LevelDef = {
   drum: 7,
   boss: ploughBoss(PLOUGH_DEF),
   bossWords: {
-    wake: { nb: "Brøytebilen våkner.\nDet siste mellom deg og døra hjem.", en: "The snow plough wakes.\nThe last thing between you and the door home." },
+    // Its arrival (order 27): the story's line for it (`game/story.ts`).
+    wake: { nb: `Brøytebilen våkner.\nDet siste mellom deg og døra hjem.\n${STORY.nb.boss.plough}`, en: `The snow plough wakes.\nThe last thing between you and the door home.\n${STORY.en.boss.plough}` },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
     beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
     // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.

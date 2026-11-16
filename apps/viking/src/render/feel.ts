@@ -24,6 +24,7 @@ import { glam, glows, leanFor } from "../alive/glamour";
 import { NATURAL, naturalName } from "../alive/natural";
 import { forced } from "../alive/parts";
 import { lean, outlined } from "./sprite";
+import { STORY, type StoryWords } from "../game/story";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
 import { bench, bracteate, bracteateOutline, cheese, feather, flag, runeStone, sheep, skiPole, skilling } from "../alive/things";
@@ -766,6 +767,27 @@ export function createFeel(host: Host) {
       now = steps;
     },
 
+    /** The story's words (order 27, `game/story.ts`). */
+    story(lang: "nb" | "en"): StoryWords {
+      return STORY[lang];
+    },
+    /**
+     * The line under a place's name as he arrives, where the story has one (order 27): the map's until the opening card has
+     * been read, the first level's until it is cleared (`first`), Rådhuset's always. Null: the place's own.
+     */
+    arrival(id: string, lang: "nb" | "en", first: boolean): string | null {
+      const s = STORY[lang];
+      if (id === "kart") return storyTold() ? null : s.mapSub;
+      if (id === "langkaia") return first ? s.arrival.langkaia : null;
+      return s.arrival[id] ?? null;
+    },
+    /** The opening card (order 27): the first time he arrives on the map, once (`again` shows it whatever). True when shown. */
+    opening(lang: "nb" | "en", stage: HTMLElement, again = false): boolean {
+      if (!again && storyTold()) return false;
+      openingCard(STORY[lang], stage);
+      return true;
+    },
+
     /** After dark, under the outlines: each invader's glow of its own neon (order 27). */
     glows(g: CanvasRenderingContext2D) {
       glows(g);
@@ -1206,6 +1228,54 @@ function record(e: Enemy, look: () => void, ink: (c: string) => string = (c) => 
   return { r, c, a: by[0]?.[0] ?? ENEMY.plum, b: by[1]?.[0] ?? by[0]?.[0] ?? ENEMY.pink };
 }
 
+
+/** Whether the opening card has been read in this browser (`localStorage["viking.told"]`); reading it marks it so. */
+function storyTold(): boolean {
+  try {
+    return localStorage.getItem("viking.told") === "1";
+  } catch {
+    return true;
+  }
+}
+
+/**
+ * The opening card (order 27): the story's title, its lines, one button on. Any key, a tap on the button or a click
+ * closes it (the key is the card's, not the game's). Marks the story told.
+ */
+function openingCard(s: StoryWords, stage: HTMLElement) {
+  try {
+    localStorage.setItem("viking.told", "1");
+  } catch {
+    /* A browser that keeps nothing is told every time. */
+  }
+  stage.querySelector(".card.story")?.remove();
+  const card = document.createElement("div");
+  card.className = "card story";
+  card.setAttribute("role", "dialog");
+  card.setAttribute("aria-label", s.title);
+  card.appendChild(document.createElement("strong")).textContent = s.title;
+  for (const line of s.opening) card.appendChild(document.createElement("p")).textContent = line;
+  const actions = card.appendChild(document.createElement("span"));
+  actions.className = "actions";
+  const on = actions.appendChild(document.createElement("button"));
+  on.type = "button";
+  on.className = "primary";
+  on.textContent = s.onward;
+  const key = (e: KeyboardEvent) => {
+    if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    close();
+  };
+  const close = () => {
+    card.remove();
+    removeEventListener("keydown", key, true);
+  };
+  on.addEventListener("click", close);
+  addEventListener("keydown", key, true);
+  stage.appendChild(card);
+  on.focus({ preventScroll: true });
+}
 
 /** How long the rune's ring of daylight runs, in steps, and how far it has gone (world pixels). */
 const LIFT_STEPS = 50;

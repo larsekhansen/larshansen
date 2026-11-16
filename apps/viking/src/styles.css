@@ -508,6 +508,15 @@ body {
 }
 
 /* The tenth rune: the card says so, plainly, in both languages, the visitor's own first. */
+/* The story's opening card (order 27): wider than a level's card, its lines left to breathe. */
+.card.story {
+  width: min(32em, calc(100% - 32px));
+  box-sizing: border-box;
+}
+.card.story p {
+  margin: 0.35em 0;
+}
+
 /* The board while a level's file is fetched. */
 .card.loading {
   top: 40%;

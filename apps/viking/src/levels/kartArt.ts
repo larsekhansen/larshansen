@@ -10,8 +10,13 @@ import { drawTick } from "../render/actors";
 import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import { isOpen, type Progress } from "../game/progress";
 import { LINE, ORDER } from "./index";
-import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, UP, stationX } from "./kart";
+import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, STORY_SIGN, UP, stationX } from "./kart";
 import type { Art, View } from "./types";
+import { STORY } from "../game/story";
+
+// The map's sign by Langkaia's station tells the story of the glamour again (order 27): its words are the story's.
+STORY_SIGN.label = { nb: STORY.nb.signLabel, en: STORY.en.signLabel };
+STORY_SIGN.lines = { nb: STORY.nb.sign, en: STORY.en.sign };
 
 // How the line map looks, fetched on its own (see kart.ts for what it is): the skyline of each place
 // behind its station, the runes carved over them, the viaduct, the burial mound in its dip, Hjem, and

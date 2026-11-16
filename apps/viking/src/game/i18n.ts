@@ -13,7 +13,7 @@ const STRINGS = {
     /** The help line in a level: no clicking there (a click never walks him off an edge, but it is not how to play). */
     /** The help line in a level; `shield`, the shield's words for it (they come with the shield). */
     helpLevel: (pole: boolean, shield = "") => `Piltastene for å gå, mellomrom eller pil opp for å hoppe, pil opp ved en dør for å gå inn.${pole ? " Shift eller X for et rykk." : ""}${shield} R starter banen på nytt.`,
-    blurb: "Du fant den hemmelige døra. Ta T-banen gjennom Oslo og finn de ti runene i navnet.",
+    blurb: "Du fant den hemmelige døra. Ta T-banen gjennom Oslo, finn runene i navnet, og tramp neonsynkvervingen av byen.",
     finishNew: "Ny bestetid.",
     finishBest: (t: string) => `Bestetida di er ${t}.`,
     goldFound: "Brakteaten: funnet.",
@@ -60,7 +60,7 @@ const STRINGS = {
     ...SCENE_WORDS.en,
     help: "Arrow keys to walk, Space to jump, up at a door to go in. Or click where you want to go.",
     helpLevel: (pole: boolean, shield = "") => `Arrow keys to walk, Space or up to jump, up at a door to go in.${pole ? " Shift or X to dash." : ""}${shield} R starts the level again.`,
-    blurb: "You found the secret door. Take the T-bane through Oslo and find the ten runes of the name.",
+    blurb: "You found the secret door. Take the T-bane through Oslo, find the runes of the name, and stomp the neon glamour off the city.",
     finishNew: "A new best time.",
     finishBest: (t: string) => `Your best is ${t}.`,
     goldFound: "The bracteate: found.",

@@ -341,6 +341,10 @@ function openScene(id: string, at?: string) {
     if (!touch) help.textContent = t.help;
   } else keysLine(play);
   feel?.reset(play);
+  // The story (order 27): a line under the place's name where it has one, and the opening card the first time on the map.
+  const line = feel?.arrival(def.id, lang, !progress.cleared.length);
+  if (line && state.banner) state.banner.sub = line;
+  if (scene.map) feel?.opening(lang, stage);
   // On the map after a level cleared for the first time: its stone and the station it opened answer.
   if (scene.map && firstClear) {
     const i = ORDER.indexOf(firstClear);
@@ -898,6 +902,12 @@ function showCard(r: CardResult) {
   } else if (r.opened) more.textContent = t.lineTwoOpened;
   else if (scene.def.id === "nabolaget") more.textContent = t.runesLeft(of(LINE_1));
   else more.textContent = scene.def.cardLine?.[lang](of(LINE_2), ORDER.length - progress.bracteates.length) ?? "";
+  // The story's end (order 27): line 1 is lifted with the tenth rune, all of Oslo with the last of line 2.
+  const end = r.home ? feel?.story(lang).endOne : scene.def.id === lastOfTwo && of(LINE_2) === LINE_2.length ? feel?.story(lang).endTwo : "";
+  if (end) {
+    more.hidden = false;
+    more.appendChild(document.createElement("span")).textContent = ` ${end}`;
+  }
   finishEl.hidden = false;
   say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""} ${t.toMap}.`);
   sfx.play("clear");

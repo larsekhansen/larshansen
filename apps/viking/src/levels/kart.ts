@@ -26,6 +26,9 @@ export const LINE_1_END = 58;
 /** The gate across line 2 while it is closed, and its sign just before it. */
 export const GATE_COL = 60;
 export const SIGN_COL = 58;
+/** The sign that tells the story of the glamour again (order 27), past Langkaia's station; its words come with the map's look. */
+export const STORY_COL = 8;
+export const STORY_SIGN: SignDef = { label: { nb: "", en: "" }, lines: { nb: [], en: [] } };
 export const LINE_Y = 11 * TILE;
 export const DIP = 14 * TILE;
 export const DOWN = { points: [[9 * TILE, LINE_Y], [12 * TILE, DIP]] as [number, number][] };
@@ -34,7 +37,7 @@ export const UP = { points: [[15 * TILE, DIP], [18 * TILE, LINE_Y]] as [number, 
 /** The map, with the gate across line 2 while it is closed. */
 export function kartMap(open: boolean): string[] {
   const k = mapBuilder(KART_COLS, 16);
-  k.put(2, 10, "h").put(4, 10, "S").put(13, 13, "j").put(SIGN_COL, 10, "i");
+  k.put(2, 10, "h").put(4, 10, "S").put(13, 13, "j").put(STORY_COL, 10, "i").put(SIGN_COL, 10, "i");
   STATIONS.forEach((c, i) => k.put(c, 10, STATION_TILES[i]));
   k.run(0, LINE_1_END, 11, "L").run(LINE_1_END + 1, KART_COLS - 1, 11, "O").run(9, 17, 11, ".");
   k.fill(9, 17, 14, 15, "#");
@@ -72,7 +75,7 @@ export function kartDef(progress: Progress, art: KartArt): LevelDef {
     carriers: [],
     timed: [],
     cannons: [],
-    signs: [LINE_2_SIGN(open)],
+    signs: [STORY_SIGN, LINE_2_SIGN(open)],
     doors: [
       { id: "home", tile: "h", sign: "Hjem", href: "/?from=viking" },
       { id: "maze", tile: "j", sign: "Jernhaugen", href: "#jernhaugen" },

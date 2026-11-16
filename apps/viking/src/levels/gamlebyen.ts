@@ -22,6 +22,7 @@ import { calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
+import { STORY } from "../game/story";
 
 // Level 16, rune G: Gamlebyen, at night, the finale of line 2. Its one idea: the ruins rebuild as he
 // passes. A ruin's missing stones rise out of the ground, as ledges and walls, when he comes within a
@@ -1322,7 +1323,8 @@ export const GAMLEBYEN: LevelDef = {
   rules: RULES,
   boss: serpentBoss(SERPENT_DEF),
   bossWords: {
-    wake: { nb: "Vannet ved kaia rører seg.\nDet er noe stort der nede.", en: "The water by the quay stirs.\nSomething large is down there." },
+    // Its arrival (order 27): the story's line for it (`game/story.ts`).
+    wake: { nb: `Vannet ved kaia rører seg.\nDet er noe stort der nede.\n${STORY.nb.boss.serpent}`, en: `The water by the quay stirs.\nSomething large is down there.\n${STORY.en.boss.serpent}` },
     hit: { nb: "Rett i hodet.", en: "Right on the head." },
     beaten: { nb: "Ormen synker. Vannet blir stille.", en: "The serpent sinks. The water goes still." },
     // Shown beside it, each only when it is true; again after ten seconds of nothing, unless he has done it since.

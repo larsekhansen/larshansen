@@ -21,6 +21,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { plankDoor as plankDoor2, tile as textured, type Grain } from "../alive/ground";
+import { STORY } from "../game/story";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -933,7 +934,8 @@ export const NORDMARKA: LevelDef = {
   // The troll's lines, in a bubble beside it: as it wakes, at each hit, when a round goes by with no hit (or
   // it gives up waiting under him), and at the end.
   bossWords: {
-    wake: { nb: "Steinen reiser seg. Det er et troll.", en: "The boulder stands up. It is a troll." },
+    // Its arrival (order 27): the story's line for it (`game/story.ts`).
+    wake: { nb: `Steinen reiser seg. Det er et troll.\n${STORY.nb.boss.troll}`, en: `The boulder stands up. It is a troll.\n${STORY.en.boss.troll}` },
     hit1: { nb: "En tredjedel av trollet er stein.", en: "A third of the troll is stone." },
     hit2: { nb: "To tredjedeler stein.", en: "Two thirds stone." },
     hit3: { nb: "Trollet blir til stein.", en: "The troll turns to stone." },
