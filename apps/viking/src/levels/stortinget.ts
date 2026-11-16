@@ -11,7 +11,8 @@ import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../alive/parts";
+import { FOE_INK, RAT, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, turned } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -829,71 +830,106 @@ function train(at: { x: number; y: number }, line: number, clip: { x0: number; x
   if (lit) light(Math.max(x, clip.x0), y + 8, Math.max(0, Math.min(x + CAR, clip.x1) - Math.max(x, clip.x0)), 7, "soft");
 }
 
+// Stortinget's own kinds, drawn as frames (order 24; way 3, ADR 0045).
+
+/** The rat out of the pit between the rails: Langkaia's rat turned on end, nose up rising, level at the top, nose down falling. */
+const TRACK_RAT = { rising: turned(RAT.move[0], "track rat, rising", "up"), top: RAT.move[2], falling: turned(RAT.move[0], "track rat, falling", "down"), kicking: turned(RAT.move[2], "track rat, falling, kicking", "down") };
 function trackRat(e: Enemy, t: number) {
   const l = leap(e, t);
   const floor = (P + 1) * TILE;
   if (l.ripple && !view.reduced && Math.floor(t / 5) % 2) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast)));
   if (l.up <= 0) return;
-  // A rat out of the pit between the rails, leaping: nose up on the way out, down on the way back. 12 x 15.
-  const r = parts(e, 12);
-  const falling = leap(e, t + 1).up < l.up;
-  r(2, -12, 8, 11, ENEMY.plum);
-  r(3, -13, 6, 1, ENEMY.plum);
-  r(4, -11, 3, 7, ENEMY.plumLight);
-  r(3, falling ? -2 : -15, 6, 3, ENEMY.plum);
-  r(5, falling ? 0 : -15, 1, 1, ENEMY.eye);
-  r(9, -8, 3, 1, ENEMY.pink);
-  r(1, falling ? -14 : -3, 1, 5, ENEMY.pink);
+  const next = leap(e, t + 1).up;
+  const f = Math.abs(next - l.up) <= 1 && Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 2 ? TRACK_RAT.top : next < l.up ? (Math.floor(t / 4) % 2 ? TRACK_RAT.kicking : TRACK_RAT.falling) : TRACK_RAT.rising;
+  // Its head at its box's top (where he lands on it), squashed to its box's height (it keeps the box it had before order 18).
+  drawFoe(e, f, 12, 15);
 }
 
-/** A luggage trolley that rolls by itself: a plum cage, its handle up, two wheels. 15 x 14. */
-function trolley(e: Enemy) {
-  const r = parts(e, 15);
-  r(1, -12, 13, 1, ENEMY.plum);
-  r(1, -5, 13, 1, ENEMY.plum);
-  for (let k = 1; k < 14; k += 4) r(k, -12, 1, 8, ENEMY.plum);
-  r(2, -11, 11, 6, ENEMY.pink);
-  r(0, -14, 1, 3, ENEMY.plum);
-  r(-1, -15, 3, 1, ENEMY.orange);
-  const roll = view.reduced ? 0 : Math.floor(e.x / 2) % 2;
-  for (const wx of [2, 11]) r(wx, -3, 3, 3, roll ? ENEMY.plum : ENEMY.plumLight);
-}
+/** A luggage trolley rolling by itself, 15 x 15: a plum cage lit along its rails, a suitcase and a bag in it, the handle up behind, two wheels turning by the distance it rolls. */
+const TROLLEY_CAGE = [
+  "OOO............",
+  "Ol.............",
+  ".l.............",
+  ".lMMMMMMMMMMMMM",
+  ".lm..OOOo....md",
+  ".lmaaaaaaaaa.md",
+  ".lmpplppppplpmd",
+  ".lmpplppppplpmd",
+  ".lmplllllllllmd",
+  ".lmpplppppplpmd",
+  ".ldddddddddddd.",
+  "..d.........d.."
+];
+const TROLLEY_WHEEL = [["mMm", "mlm", ".m."], ["mmM", "mlm", ".m."], ["mmm", "mlM", ".m."], ["mmm", "Mlm", ".m."]];
+const trolleyFrame = (name: string, k: number, dy = 0) => frame(name, FOE_INK, [TROLLEY_CAGE.slice(0, 3), 0, 0], [TROLLEY_CAGE.slice(3), 0, 3 + dy], [TROLLEY_WHEEL[k], 2, 12], [TROLLEY_WHEEL[k], 10, 12]);
+const TROLLEY: Looks = {
+  w: 15,
+  h: 15,
+  // Still, it rocks a little on its wheels.
+  idle: [trolleyFrame("trolley, still", 0), trolleyFrame("trolley, rocking on its wheels", 1)],
+  move: [0, 1, 2, 3].map((k) => trolleyFrame(`trolley, rolling ${k + 1}`, k))
+};
 
-/** An umbrella blown along the platform: spinning, or inside out with its ribs up like spikes. It hurts from above. 15 x 12. */
-function umbrella(e: Enemy, t: number) {
-  const r = parts(e, 15);
-  const cloth = e.def.c % 2 ? ENEMY.pink : ENEMY.plum;
-  const shine = e.def.c % 2 ? ENEMY.white : ENEMY.plumLight;
-  const spin = view.reduced ? 0 : Math.floor(t / 8 + e.x / 6) % 2;
-  if (spin) {
-    // Canopy up, ribs sticking out of its edge.
-    for (let k = 0; k < 6; k++) r(7 - Math.round(k * 1.2), -10 + k, 1 + Math.round(k * 2.4), 1, k === 0 ? shine : cloth);
-    for (const dx of [0, 4, 10, 14]) r(dx, -5, 1, 3, ENEMY.pale);
-    r(7, -4, 1, 4, ENEMY.orange);
-    r(6, -1, 3, 1, ENEMY.orange);
-  } else {
-    // Inside out: the cloth a cup, the ribs up like spikes, the handle on the ground.
-    r(1, -7, 13, 5, cloth);
-    r(2, -7, 5, 1, shine);
-    for (const dx of [1, 5, 9, 13]) r(dx, -12, 1, 5, ENEMY.pale);
-    r(7, -2, 1, 2, ENEMY.orange);
-    r(8, -1, 4, 1, ENEMY.orange);
-  }
-}
+/**
+ * An umbrella blown along the platform, 15 x 12: its canopy up and spinning (its panels lit and shaded in turn, coming
+ * round by the distance it is blown), then inside out with its ribs up like spikes. It hurts from above.
+ */
+const canopy = (phase: number) =>
+  Array.from({ length: 5 }, (_, r) =>
+    Array.from({ length: 15 }, (_, c) => {
+      const half = Math.round(7.5 * Math.sqrt(Math.max(0, 1 - ((4.6 - r) / 5) ** 2)));
+      if (Math.abs(c + 0.5 - 7.5) > half) return ".";
+      if (r === 0) return c === 7 ? "a" : "C";
+      const panel = Math.floor((c + phase) / 4) % 2;
+      const side = c < 5 ? 0 : c < 10 ? 1 : 2;
+      return panel ? ["C", "c", "c"][side] : ["c", "k", "k"][side];
+    }).join("")
+  );
+const UMBRELLA_HANDLE = ["a...a..O..a...a", ".......O.......", ".......O.......", ".......O.......", ".......O.......", "......OOO......", "......O........"];
+const UMBRELLA_OUT = [
+  ".a...a...a...a.",
+  ".a...a...a...a.",
+  ".a...a...a...a.",
+  ".a...a...a...a.",
+  ".CcccckkkkkkkC.",
+  ".CCccckkkkkkCk.",
+  "..CcccckkkkkC..",
+  "...cccckkkkk...",
+  ".......O.......",
+  ".......O.......",
+  ".......OOOO...."
+];
+const umbrellaLooks = (ink: Record<string, string>): Looks => {
+  const all = { ...FOE_INK, ...ink };
+  const up = (k: number) => frame(`umbrella, spinning ${k + 1}`, all, [canopy(k * 2), 0, 0], [UMBRELLA_HANDLE, 0, 5]);
+  const out = (k: number) => frame(`umbrella, inside out${k ? ", flapping" : ""}`, all, [UMBRELLA_OUT, 0, 1 - k], [UMBRELLA_OUT.slice(8), 0, 9]);
+  return { w: 15, h: 12, idle: [up(0), up(1)], move: [up(0), up(1), out(0), out(1)] };
+};
+const UMBRELLA = { plum: umbrellaLooks({ C: ENEMY.plumLight, c: ENEMY.plum, k: ENEMY.plumDark }), pink: umbrellaLooks({ C: ENEMY.pale, c: ENEMY.pink, k: ENEMY.plumLight }) };
 
-/** A pigeon flying through the hall: plum, an orange breast, wings up or down. 17 x 9. */
-function pigeonFlying(e: Enemy, t: number) {
-  const r = parts(e, 17);
-  const flap = view.reduced ? 0 : Math.floor(t / 6) % 2;
-  r(4, -6, 9, 4, ENEMY.plum);
-  r(9, -5, 3, 3, ENEMY.orange);
-  r(12, -7, 3, 3, ENEMY.plum);
-  r(13, -6, 1, 1, ENEMY.eye);
-  r(15, -6, 1, 1, ENEMY.orange);
-  r(1, -5, 3, 2, ENEMY.plum);
-  r(2, flap ? -9 : -3, 6, 2, ENEMY.plumLight);
-  r(9, flap ? -9 : -3, 5, 2, ENEMY.plumLight);
-}
+/** A pigeon flying through the hall, 17 x 9: Langkaia's pigeon on the wing, plum lit along its back, its breast orange, its neck's green sheen, wings beating on its own clock. */
+const PIGEON_BODY = [
+  "Mm..........MMm..",
+  "lmmMMMMMMMgGmmea.",
+  "ldmmmmmmmmoOmm...",
+  "..dmmmmmmooo.....",
+  "....dddddd......."
+];
+const PIGEON_WING: Record<string, readonly string[]> = {
+  up: ["...MMM.....", "...MMmmM...", "....Mmmmm..", ".....ddmm.."],
+  high: ["...........", "..MMMM.....", "..MMmmmMm..", "....dddmm.."],
+  level: ["...........", "...........", "...........", "MMMMMMmm..."],
+  down: ["...........", "...........", "...........", "..........."]
+};
+const PIGEON_DOWN = ["...mmmm....", "..mmmm.....", "..dd......."];
+const pigeonFrame = (name: string, wing: string, dy = 0) =>
+  frame(name, FOE_INK, [PIGEON_WING[wing], 2, dy], [PIGEON_BODY, 0, 3 + dy], ...(wing === "down" ? [[PIGEON_DOWN, 3, 6 + dy] as [string[], number, number]] : []));
+const PIGEON_FLYING: Looks = {
+  w: 17,
+  h: 9,
+  idle: [pigeonFrame("pigeon on the wing, gliding", "level"), pigeonFrame("pigeon on the wing, gliding, lower", "level", 1)],
+  move: [pigeonFrame("pigeon on the wing, wings up", "up"), pigeonFrame("pigeon on the wing, wings half up", "high"), pigeonFrame("pigeon on the wing, wings out", "level"), pigeonFrame("pigeon on the wing, wings down", "down", -1)]
+};
 
 /** The flourish: the lamps along platform 3 come on bright one after another, the cabinet's lamps all go green, and the board over the end spells the rune. */
 function flourish(age: number) {
@@ -1046,9 +1082,11 @@ export const STORTINGET: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look === "trackrat") trackRat(e, v.t);
-      else if (e.def.look === "trolley") trolley(e);
-      else if (e.def.look === "umbrella") umbrella(e, v.t);
-      else if (e.def.look === "pigeonfly") pigeonFlying(e, v.t);
+      else if (e.def.look === "trolley") drawFoe(e, foeFrame(e, v.t, TROLLEY), TROLLEY.w, TROLLEY.h);
+      else if (e.def.look === "umbrella") {
+        const l = e.def.c % 2 ? UMBRELLA.pink : UMBRELLA.plum;
+        drawFoe(e, foeFrame(e, v.t, l), l.w, l.h);
+      } else if (e.def.look === "pigeonfly") drawFoe(e, foeFrame(e, v.t, PIGEON_FLYING), PIGEON_FLYING.w, PIGEON_FLYING.h);
       else return drawLook(e, v.t);
       return true;
     },

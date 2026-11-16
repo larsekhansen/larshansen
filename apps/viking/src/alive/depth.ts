@@ -1,4 +1,5 @@
 import { ctx, layerOrigin, mix, view } from "@larshansen/pixelkit/paint";
+import { frame, stamp } from "./frames";
 import { PALETTE } from "@larshansen/pixelkit/palette";
 
 // Depth (order 23, section 3). What Open Surge's sea does, within the rule that what never changes is drawn once and
@@ -151,3 +152,20 @@ export function fjord(t: number, top: number, bottom: number) {
 }
 const WATER_FAR = mix(PALETTE.water, PALETTE.foam, 0.22);
 const WATER_NEAR = mix(PALETTE.water, "#1d4f6e", 0.25);
+
+// --- Water lapping at a quay (order 24, section 2) -----------------------------------------------------------------
+const LAP_INK: Record<string, string> = { a: mix(PALETTE.foam, "#ffffff", 0.4), f: PALETTE.foam, w: mix(PALETTE.water, PALETTE.foam, 0.45) };
+/**
+ * The water against a wall, 6 x 5 from the wall out, its top two rows above the water's line: the swell climbing the
+ * wall in foam, falling back, drawing away; three frames, drawn once and copied. Facing the other way, mirrored.
+ */
+const LAPS = [
+  ["......", "a.....", "aaff..", "ffww..", "w....."],
+  ["a.....", "af....", "fffa..", "wwf...", "......"],
+  ["......", "......", "fa....", "ffaw..", "ww...."]
+];
+const LAP_FRAMES = { [-1]: LAPS.map((rows, k) => frame(`lap ${k + 1}`, LAP_INK, [rows])), [1]: LAPS.map((rows, k) => frame(`lap ${k + 1}, the other way`, LAP_INK, [rows.map((r) => [...r].reverse().join(""))])) } as Record<number, ReturnType<typeof frame>[]>;
+/** The water lapping at a wall at x (its face), the water's line at y, the wall on `side` (-1 its left, 1 its right). */
+export function lap(x: number, y: number, side: number, t: number) {
+  stamp(LAP_FRAMES[side][Math.floor(t / 16) % 3], side < 0 ? x : x - 6, y - 2);
+}

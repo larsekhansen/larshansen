@@ -7,6 +7,7 @@ import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
+import { flame } from "../alive/things";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -128,7 +129,7 @@ const LOW: [number, number][] = [
   [127, 8], [129, 7], [131, 7],
   [167, 10], [169, 10], [176, 10], [178, 10], [185, 9], [187, 9],
   [196, 15], [197, 15], [203, 14], [204, 14],
-  [212, 14], [213, 13], [214, 14]
+  [213, 14], [214, 13], [215, 14]
 ];
 const COINS: [number, number][] = [
   ...LOW.map(([c, r]): [number, number] => [c, r + D]),
@@ -187,7 +188,8 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "rat", c: 128, r: G - 1, range: 2 },
   // He stands his post between the flag and the end of the wall, clear of both: the leap over the water is its own problem.
   { kind: "walker", look: "guard", c: 198, r: WALL - 1, range: 0, speed: 0, w: 10, h: 14 },
-  { kind: "spiky", look: "brazier", c: 213, r: WALL - 1, speed: 0, w: 10, h: 12 },
+  // A tile on from the ledge he drops off (order 24): a jump for it pressed as he drops now comes after he lands.
+  { kind: "spiky", look: "brazier", c: 214, r: WALL - 1, speed: 0, w: 10, h: 12 },
   { kind: "walker", look: "guard", c: 223, r: KEEP_FLOOR - 1, range: 2, speed: 0.3, w: 10, h: 14 },
   { kind: "walker", look: "guard", c: 229, r: TOP - 1, range: 1, speed: 0.3, w: 10, h: 14 },
   { kind: "flyer", look: "crow", c: 233, r: TOP - 2, range: 1, rise: 5, period: 140 },
@@ -420,7 +422,7 @@ function cellar() {
 
 /** The inside of the keep: its stone in shadow, seen past its open front. */
 const INSIDE: Stone = { base: mix(STONE_BACK.base, INK, 0.35), light: mix(STONE_BACK.light, INK, 0.35), dark: mix(STONE_BACK.dark, INK, 0.35), mortar: mix(STONE_BACK.mortar, INK, 0.35), moss: STONE_BACK.moss };
-function keepInside() {
+function keepInside(t: number) {
   stoneWall((KEEP[0] + 1) * TILE, (TOP + 1) * TILE, (KEEP[1] - KEEP[0] - 1) * TILE, KEEP_FLOOR * TILE, INSIDE);
   // Two fire baskets on the walls inside, lit: only to see by.
   for (const [x, y] of [
@@ -428,8 +430,9 @@ function keepInside() {
     [229 * TILE + 2, 11 * TILE + 6]
   ] as const) {
     R(x, y + 4, 6, 3, METAL.lampPost);
-    R(x + 1, y + 1, 4, 3, FIRE.flame);
-    R(x + 2, y, 2, 2, FIRE.core);
+    R(x, y + 4, 6, 1, mix(METAL.lampPost, WHITE, 0.3));
+    // Their flames flicker (order 24), still with reduced motion.
+    flame(x + 3, y + 5, t, x);
     light(x, y, 6, 6, "soft");
   }
 }
@@ -581,7 +584,7 @@ export const AKERSHUS: LevelDef = {
     back(v: View) {
       castle(v);
       pillars();
-      keepInside();
+      keepInside(v.t);
       spire(v);
       well();
       cellar();

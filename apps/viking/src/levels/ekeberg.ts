@@ -2,15 +2,16 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, GLASS, INK, LAMP, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
+import { GLASS, INK, LAMP, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame } from "../alive/frames";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
@@ -590,21 +591,29 @@ function gustLeaves(z: Zone, t: number) {
   }
 }
 
-/** A magpie hopping: plum with a pale-green flash on its side and a poison sheen on its long tail. 13 x 11. */
-function magpie(e: Enemy, t: number) {
-  const hop = view.reduced ? 0 : Math.floor(t / 9 + e.x / 7) % 2;
-  const r = parts(e, 13);
-  const d = -hop;
-  r(2, -9 + d, 7, 5, ENEMY.plum);
-  r(3, -7 + d, 5, 2, ENEMY.poisonLight);
-  r(8, -11 + d, 4, 4, ENEMY.plum);
-  r(10, -10 + d, 1, 1, ENEMY.eye);
-  r(12, -9 + d, 2, 1, ENEMY.plumLight);
-  r(-3, -8 + d, 6, 1, ENEMY.poison);
-  r(-4, -9 + d, 4, 1, ENEMY.plum);
-  r(4, -4 + d, 1, 4, ENEMY.line);
-  r(6, -4 + d, 1, 4, ENEMY.line);
-}
+/**
+ * A magpie hopping, drawn as frames (order 24; way 3, ADR 0045): 18 x 11 with its tail, black (the plum's darkest) with a
+ * sheen on its head, a white belly and shoulder, a long tail in green lit at its edge; it hops in four frames by the
+ * distance it covers (crouched, up, up, landing).
+ */
+const MAGPIE_BODY = [
+  "............ddd...",
+  "...........dMddl..",
+  "...........ldeldll",
+  "GGgg....lddddddl..",
+  "lgGGgg.ldMWWWdd...",
+  ".llgGgldWWWWWWd...",
+  "....lllWWWWWWd....",
+  "........wwwww....."
+];
+const MAGPIE_LEGS = [[".........l.l......", ".........l.l......", "........ll.ll....."], ["..................", ".........l.l......", "........ll.ll....."], ["..................", "..........l.l.....", ".........l.l......"]];
+const magpieFrame = (name: string, dy: number, legs: number) => frame(name, FOE_INK, [MAGPIE_BODY, -4, dy], [MAGPIE_LEGS[legs], -4, 8]);
+const MAGPIE: Looks = {
+  w: 13,
+  h: 11,
+  idle: [magpieFrame("magpie, still", 0, 0), magpieFrame("magpie, its tail dipping", 1, 1)],
+  move: [magpieFrame("magpie, crouched", 1, 1), magpieFrame("magpie, hopping", -1, 2), magpieFrame("magpie, hopping, high", -1, 2), magpieFrame("magpie, landing", 0, 0)]
+};
 
 /** Grass on the hill: a top of evening grass with tufts, soil under. Rock: grey with lichen, in courses. */
 function grassTile(c: number, r: number, x: number, y: number, m: TileMap) {
@@ -760,7 +769,7 @@ export const EKEBERG: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look !== "magpie") return drawLook(e, v.t);
-      magpie(e, v.t);
+      drawFoe(e, foeFrame(e, v.t, MAGPIE), MAGPIE.w, MAGPIE.h);
       return true;
     },
     shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),

@@ -170,12 +170,12 @@ export function gull(x: number, y: number, wing: number, color: string = PALETTE
 }
 
 /** Gulls over the water: `top` is the world y of the highest of them. */
-export function drawGulls(t: number, top: number) {
+export function drawGulls(t: number, top: number, color?: string) {
   const tt = view.reduced ? 0 : t;
   const span = view.w + 40;
   for (const [i, g] of GULLS.entries()) {
     const x = ((((g.x + tt * g.speed - layerOrigin(HEADLANDS) * 0.2) % span) + span) % span) - 20;
     const wing = view.reduced ? 0 : Math.floor(tt / 8 + i * 3) % 2 ? 1 : -1;
-    gull(Math.round(x), top + g.y + Math.round(Math.sin(tt * 0.02 + i) * 3), wing);
+    gull(Math.round(x), top + g.y + Math.round(Math.sin(tt * 0.02 + i) * 3), wing, color);
   }
 }

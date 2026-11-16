@@ -959,7 +959,10 @@ function serpentArt(s: Serpent, v: View) {
     // Reared high through its tell; lowered and leaning out at him to spit; leaning his way, watching, after
     // its ball has hit him and while its tail lashes.
     const low = s.phase === "lash" || s.phase === "watch";
-    const headY = spit ? mouth(s).y - 8 : low ? floor - SERPENT.rear + 10 : floor - Math.round((SERPENT.rear + 4) * rising);
+    // Reared, it breathes (order 24): its head and neck down a pixel every other half second, on its own clock (kept
+    // with reduced motion: it is how it reads as alive); not while it spits.
+    const breath = spit || s.phase === "rise" ? 0 : Math.floor(t / 30) % 2;
+    const headY = (spit ? mouth(s).y - 8 : low ? floor - SERPENT.rear + 10 : floor - Math.round((SERPENT.rear + 4) * rising)) + breath;
     const lean = spit ? s.dir * 12 : low ? s.dir * 6 : -s.dir * 3;
     const tellK = s.phase === "rear" ? age / Math.max(1, SERPENT_STEPS.tell[Math.min(s.hits, 2)]) : 0;
     const open = spit ? 4 : s.phase === "rear" && tellK > 0.5 ? (tellK > 0.8 ? 3 : 1) : 0;
@@ -982,13 +985,15 @@ function serpentArt(s: Serpent, v: View) {
     const d = s.dir;
     const hx = h.x + h.w / 2 - d * 2;
     const bx = hx - d * 18;
+    // Dazed, its head rocks on the planks (order 24): lifted a pixel and back, groggily, its tongue in and out.
+    const rock = s.phase === "dazed" ? [0, 0, 1, 0, 0, -1][Math.floor(t / 12) % 6] : 0;
     outlined(() => {
       for (let y = floor - 9; y < base; y++) {
         const f = (y - floor + 9) / (base - floor + 9);
         bodyRow(bx + Math.round(d * 6 * (1 - f) ** 2), y, Math.round(12 + 6 * f), d, y);
       }
-      for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3), 9, d, i);
-      serpentHead(hx, h.y - 1, d, s.phase === "reel" ? 2 : 1, true);
+      for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3) + (i > 6 ? Math.min(0, rock) : 0), 9, d, i);
+      serpentHead(hx, h.y - 1 - Math.max(0, rock) + Math.max(0, -rock), d, s.phase === "reel" ? 2 : rock > 0 ? 2 : 1, true);
       // Dazed it cannot hurt him: the calm pale round it, the "now" violet over it where to hit (order 22).
     }, undefined, ROLES.calm);
     if (s.phase === "dazed") for (let k = 0; k < 3; k++) {

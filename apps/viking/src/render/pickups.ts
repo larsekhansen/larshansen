@@ -1,6 +1,8 @@
-import { R, mix } from "@larshansen/pixelkit/paint";
-import { COIN, ENEMY, FOOD, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { R } from "@larshansen/pixelkit/paint";
+import { COIN, ENEMY, FOOD, PALETTE } from "@larshansen/pixelkit/palette";
+import type { Flag } from "@larshansen/pixelkit/checkpoint";
 import { KIND, SHOT, type Enemy, type Shot } from "../game/enemies";
+import type { Sheep } from "../game/sheep";
 
 // The small things of a level: skilling, the brown cheese, park benches, and the enemies every level
 // may meet (the first level's) and the snowball. Enemies are drawn a quarter larger than before order
@@ -13,7 +15,19 @@ const P = PALETTE;
  * What draws the small things and the shared enemies (order 23: frames, `src/alive/`), once `render/feel.ts`'s file
  * is here, which every scene waits for; until then, if it never comes, plain shapes in their place.
  */
-export const LOOKS: { enemy?(e: Enemy, t: number): boolean; skilling?(x: number, y: number, t: number, seed: number): void; cheese?(x: number, y: number, t: number): void } = {};
+export const LOOKS: {
+  enemy?(e: Enemy, t: number): boolean;
+  skilling?(x: number, y: number, t: number, seed: number): void;
+  cheese?(x: number, y: number, t: number): void;
+  bench?(x: number, bottom: number, sitting: boolean): void;
+  bracteate?(x: number, y: number, steps: number): void;
+  bracteateOutline?(x: number, y: number): void;
+  rune?(x: number, y: number, char: string, state: "lit" | "dark" | "ghost", steps: number, seed?: number): void;
+  sheep?(s: Sheep): void;
+  flag?(f: Flag, raisedAt: number | null, steps: number, level: string): void;
+  pole?(x: number, top: number, h: number): void;
+  feather?(x: number, y: number, gold: boolean): void;
+} = {};
 
 /** A skilling: a 5 px copper coin that turns, with a glint (`alive/things.ts`). */
 export function drawSkilling(x: number, y: number, t: number, seed: number) {
@@ -27,23 +41,10 @@ export function drawCheese(x: number, y: number, t: number) {
   R(x, y + 3, 12, 6, FOOD.cheese);
 }
 
-/** A park bench: a wooden seat and back on iron legs. Sitting, he is drawn on it; the armrest goes in front. */
+/** A park bench: planks on iron ends (`alive/things.ts`). Sitting, he is drawn on it. */
 export function drawBench(x: number, bottom: number, sitting: boolean) {
-  const left = x - 11;
-  // The back.
-  R(left + 1, bottom - 13, 20, 2, P.wood);
-  R(left + 1, bottom - 10, 20, 2, P.wood);
-  R(left + 1, bottom - 13, 20, 1, mix(P.wood, WHITE, 0.25));
-  // The seat.
-  R(left, bottom - 7, 22, 2, P.wood);
-  R(left, bottom - 7, 22, 1, mix(P.wood, WHITE, 0.25));
-  R(left, bottom - 5, 22, 1, P.woodDark);
-  // The iron ends.
-  for (const lx of [left + 1, left + 19]) {
-    R(lx, bottom - 13, 2, 13, METAL.castIron);
-    R(lx - 1, bottom - 1, 4, 1, METAL.castIron);
-  }
-  if (sitting) R(left + 19, bottom - 9, 2, 3, METAL.castIron);
+  if (LOOKS.bench) return LOOKS.bench(x, bottom, sitting);
+  R(x - 11, bottom - 7, 22, 7, P.wood);
 }
 
 /** An enemy in one of the looks every level may meet (pigeons, gulls, crows, rats: `alive/foes.ts`). The level draws the rest. */

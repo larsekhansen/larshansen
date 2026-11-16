@@ -26,6 +26,7 @@ Run everything from this folder.
 | `standing.ts` | the perfect route's standing still, split into standing on the map's own ground and standing on what is not the map's: moving ground, the bells on their beat ("riding") | `bun standing.ts [level...]` |
 | `mazesloppy.ts`, `mazegeo.ts` | the maze with a sloppy player; stones and arrivals against snakes and sliders | `bun mazesloppy.ts ks=0,2,4 seeds=20` |
 | `edge.ts`, `edgecmp.py` | the edge's forgiveness (order 23, ADR 0048): the reach search with and without a longer forgiveness, and a late jump off an edge as a move of its own (`--where` names the spots only the longer one reaches); the sloppy player's runs with 6 and with 10 steps compared seed by seed | `bun edge.ts [level ...] [--where]`, `python3 edgecmp.py <runs with 6> <runs with 10>` |
+| `edgeplace.ts`, `coyote.ts` | the edge's places (order 24): one seed replayed with 6 and 10 steps of forgiveness side by side, where the runs part, what the late jump did there and every heart after (`--steps`, `--after=<steps>`); the sloppy player on fresh seeds with the forgiveness set | `bun edgeplace.ts langkaia 4 205 --steps`, `bun coyote.ts coyote=6 levels=langkaia ks=2,4 seeds=60 first=201 out=<file>` |
 | `urls.ts` | screenshot addresses at six standable spots per level | `bun ../../../../tools/shots.ts <dir> $(bun urls.ts 6)` with `apps/viking` built and served on 5181 |
 
 `bun sloppy.ts ks=0` must print `clear 1/1` for all sixteen levels: at k = 0 the harness reproduces the
@@ -33,7 +34,7 @@ scripted clear exactly. If it does not, a route or the harness has drifted from 
 
 `o18/`, `o19/` and `o20/` hold those orders' numbers (order 20's: every level's rectangles a frame before and after at its
 walk's places, `perf.md`, and the flat places marked by `../glance/flat.py` and what each was given, `flat.md`). `o21/` holds order 21's: every screen state at five phone sizes before and after (`before.md`, `after.md`, made by
-`../glance/hand.ts` and `hand-table.ts`), and the rectangles a frame of every level's walk (`perf.md`). `o23/` holds order 23's: the reach search and the sloppy player with the edge's longer forgiveness (`reach-edge.txt`,
+`../glance/hand.ts` and `hand-table.ts`), and the rectangles a frame of every level's walk (`perf.md`). `o24/` holds order 24's: the edge place by place and the tables with 6, 8 and 10 steps (`sloppy-edge.md`), the rectangles a frame against order 23's code (`perf.md`), the identical runs, tests and budget (`after.md`), and what is still drawn in the old style (`old-style.md`). `o23/` holds order 23's: the reach search and the sloppy player with the edge's longer forgiveness (`reach-edge.txt`,
 `sloppy-edge.md`), the rectangles a frame against order 22's code (`perf.md`), the identical runs, tests and budget
 (`after.md`), and every drawing still in the old style (`old-style.md`). `o22/` holds order 22's:
 every yellow the game paints and what became of each (`yellows.md`, from `../glance/yellows.ts`), the rectangles a frame

@@ -1,5 +1,5 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { view } from "@larshansen/pixelkit/paint";
+import { mix, view } from "@larshansen/pixelkit/paint";
 import { snap, textCtx, unit } from "@larshansen/pixelkit/text";
 
 // Something in front of him now and then (order 23, section 3.4): a lamp post, a mast, a trunk, reeds, a rope, passing
@@ -40,70 +40,127 @@ export const FORE: Record<string, readonly Fore[]> = {
   ostensjovannet: [{ x: 257.75 * T, kind: "reeds" }]
 };
 
-/** Its silhouette's colour: near-black, a little of the night in it, plain. */
-const DARK = "rgba(14, 16, 24, 0.92)";
-const DARKER = "rgba(8, 9, 14, 0.95)";
-
-/** How wide each kind is (art pixels): never more than a tenth of the narrowest view (240). */
-export const FORE_WIDTH: Record<ForeKind, number> = { post: 4, mast: 3, trunk: 12, reeds: 14, rope: 10 };
+/** Nearer than the lane, a thing in front is drawn larger than the street: each of its pixels this many art pixels (order 24). */
+export const FORE_SCALE = 1.5;
+/** How wide each kind is as drawn (art pixels, its own pixels times `FORE_SCALE`): never more than a tenth of the narrowest view (240). */
+export const FORE_WIDTH: Record<ForeKind, number> = { post: 9 * FORE_SCALE, mast: 16 * FORE_SCALE, trunk: 14 * FORE_SCALE, reeds: 14 * FORE_SCALE, rope: 10 * FORE_SCALE };
 
 /**
- * The things in front for this level, over him on the text canvas. `padTop`: on a touch screen the top of the pad's
- * buttons (CSS pixels), under which nothing is drawn.
+ * Its tones (order 24): the level's own air darkened, not black: a body, a darker shade, and a rim a little lighter on
+ * the side the light comes from, so it reads as a thing standing near, out of focus, in the same air as the rest.
  */
-export function drawFore(id: string, padTop: number | null) {
+function tones(air: string) {
+  return { rim: mix(air, NEAR, 0.7), body: mix(air, NEAR, 0.8), deep: mix(air, NEAR, 0.88) };
+}
+const NEAR = "#07080d";
+
+/** How much of the things in front shows (0 to 1): they step out of the way while he reads a bubble or sits, and come back after. */
+let shown = 1;
+
+/** A rectangle in CSS pixels. */
+type Box = { x: number; y: number; w: number; h: number };
+
+/**
+ * The things in front for this level, over him on the text canvas, in a dark tone of its air. `padTop`: on a touch
+ * screen the top of the pad's buttons (CSS pixels), under which nothing is drawn. `banner`: where the place's name is
+ * (nothing is drawn over it). `quiet`: a bubble is up or he sits: they fade away for as long, so none stands over what
+ * he reads or over him at rest.
+ */
+export function drawFore(id: string, padTop: number | null, air: string, banner: Box | null, quiet: boolean, top = 0) {
   const list = FORE[id];
-  if (!list || view.reduced) return;
+  shown = Math.max(0, Math.min(1, shown + (quiet ? -0.1 : 0.05)));
+  if (!list || view.reduced || shown <= 0) return;
   const g = textCtx();
-  const n = unit();
+  const n = unit() * FORE_SCALE;
   const mid = view.camXf + view.w / 2;
   const bottom = padTop ?? view.cssH;
+  const c = tones(air);
+  g.save();
+  g.globalAlpha *= shown;
+  if (banner) {
+    g.beginPath();
+    g.rect(0, 0, view.cssW, view.cssH);
+    g.rect(banner.x, banner.y, banner.w, banner.h);
+    g.clip("evenodd");
+  }
   for (const f of list) {
     const w = FORE_WIDTH[f.kind];
     // Where it is on the screen (art pixels): at the middle as the camera's middle passes its place, faster than the street.
     const sx = (f.x - mid) * FORE_SPEED + view.w / 2;
     if (sx < -w - 2 || sx > view.w + 2) continue;
-    const x = snap((sx - w / 2) * n);
+    const x = snap((sx - w / 2) * unit());
     const H = view.cssH;
-    const r = (ax: number, ay: number, aw: number, ah: number, c: string) => {
+    // The picture as it is seen: from under the page's bar (the canvas runs on up behind it) to the foot of the screen.
+    const seenH = H - top;
+    const r = (ax: number, ay: number, aw: number, ah: number, colour: string) => {
       const y0 = Math.max(0, ay);
       const y1 = Math.min(bottom, ay + ah);
       if (y1 <= y0) return;
-      g.fillStyle = c;
+      g.fillStyle = colour;
       g.fillRect(x + ax * n, y0, aw * n, y1 - y0);
     };
     switch (f.kind) {
-      case "post":
-        // A lamp post: its shaft up the screen, the lamp's arm and head near the top.
-        r(1, H * 0.22, 2, H, DARK);
-        r(0, H * 0.22, 6, 1.5 * n, DARK);
-        r(4, H * 0.22, 3, 3 * n, DARKER);
-        r(0, H - 4 * n, 4, 4 * n, DARKER);
+      case "post": {
+        // A lamp post: a plinth, its shaft lit down its left, a crook at the top and the lantern hanging from it (a
+        // cap, its panes a shade lighter, a finial).
+        const lamp = top + seenH * 0.22;
+        r(3, lamp, 2, H, c.body);
+        r(3, lamp, 1, H, c.rim);
+        r(2, H - 9 * n, 4, 9 * n, c.body);
+        r(1, H - 4 * n, 6, 4 * n, c.deep);
+        r(3, lamp - 3 * n, 4, 2 * n, c.body);
+        r(6, lamp - 2 * n, 1, 3 * n, c.body);
+        r(4, lamp + 1 * n, 5, 1 * n, c.deep);
+        r(5, lamp + 2 * n, 3, 4 * n, c.rim);
+        r(5, lamp + 2 * n, 1, 4 * n, c.body);
+        r(4, lamp + 6 * n, 5, 1 * n, c.deep);
+        r(6, lamp + 7 * n, 1, 1 * n, c.deep);
         break;
-      case "mast":
-        // A mast's pole from below to above the screen, a stay leaning off it.
-        r(1, 0, 2, H, DARK);
-        for (let k = 0; k < 24; k++) r(2 + Math.round(k * 0.5), H * 0.1 + k * 3 * n, 1, 3 * n, DARKER);
+      }
+      case "mast": {
+        // A ship's mast, stepped below the screen: the pole lit down its left, a yard across it with the sail furled
+        // along it in lumps, a shroud down to the rail, the truck at its head.
+        const head = top + seenH * 0.12;
+        const yard = head + 10 * n;
+        r(7, head, 2, H, c.body);
+        r(7, head, 1, H, c.rim);
+        r(6, head - 2 * n, 4, 2 * n, c.deep);
+        r(0, yard, 16, 1 * n, c.deep);
+        for (let k = 0; k < 15; k++) r(k, yard + 1 * n, 1, (2 + (k % 3 === 1 ? 1 : 0)) * n, k % 4 === 0 ? c.deep : c.body);
+        r(1, yard + 1 * n, 14, 1 * n, c.rim);
+        for (let k = 0; k < 30; k++) r(9 + Math.round(k * 0.22), yard + 4 * n + k * 3 * n, 1, 3 * n, c.deep);
         break;
-      case "trunk":
-        // A tree's trunk, wide, its bark darker at the edges, a branch off it near the top.
-        r(2, 0, 8, H, DARK);
-        r(1, 0, 1, H, DARKER);
-        r(10, 0, 1, H, DARKER);
-        r(10, H * 0.15, 4, 2 * n, DARK);
+      }
+      case "trunk": {
+        // A trunk, its bark in furrows, lit down its left and dark at its right edge, a branch off it high up with a
+        // few twigs, the roots flaring at its foot.
+        r(3, 0, 8, H, c.body);
+        r(3, 0, 1, H, c.rim);
+        r(10, 0, 1, H, c.deep);
+        for (let k = 0; k < 9; k++) r(5 + ((k * 3) % 5), top + (((k * 37) % 100) / 100) * seenH, 1, (6 + (k % 3) * 3) * n, c.deep);
+        const branch = top + seenH * 0.15;
+        r(11, branch, 3, 2 * n, c.body);
+        r(13, branch - 3 * n, 1, 3 * n, c.deep);
+        r(12, branch + 2 * n, 1, 2 * n, c.deep);
+        r(1, H - 5 * n, 2, 5 * n, c.body);
+        r(11, H - 4 * n, 2, 4 * n, c.deep);
+        r(0, H - 2 * n, 14, 2 * n, c.deep);
         break;
+      }
       case "reeds":
-        // Reeds at the foot of the screen, their heads leaning.
+        // Reeds at the foot of the screen, their heads (bulrushes) leaning.
         for (let k = 0; k < 7; k++) {
           const h = (14 + ((k * 5) % 9)) * n * 1.6;
-          r(k * 2, H - h, 1, h, k % 2 ? DARK : DARKER);
-          r(k * 2 + (k % 2 ? 1 : -1), H - h - 3 * n, 1, 4 * n, DARKER);
+          r(k * 2, H - h, 1, h, k % 2 ? c.body : c.deep);
+          if (k % 3 === 0) r(k * 2, H - h - 3 * n, 2, 4 * n, c.body);
+          else r(k * 2 + (k % 2 ? 1 : -1), H - h - 3 * n, 1, 4 * n, c.deep);
         }
         break;
       case "rope":
         // A rope from the top of the screen, hanging in a curve, as a mooring line or a rigging does.
-        for (let k = 0; k < 20; k++) r(Math.round(10 * Math.sin((k / 20) * Math.PI * 0.5)), k * 4 * n, 1, 4 * n, DARK);
+        for (let k = 0; k < 20; k++) r(Math.round(10 * Math.sin((k / 20) * Math.PI * 0.5)), k * 4 * n, 1, 4 * n, c.body);
         break;
     }
   }
+  g.restore();
 }

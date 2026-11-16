@@ -33,6 +33,9 @@ const WEED = mix(P.grassDark, P.waterDeep, 0.45);
 const WEED_LIGHT = mix(P.grass, P.waterDeep, 0.5);
 
 /** The water: a surface band with foam and drifting glints where it meets the air, deep blue below, deeper over the bed, with weed. */
+/** Water lapping at a quay's wall (order 24): drawn by `alive/depth.ts`, which comes with `render/feel.ts`. */
+export const LAP: { at?(x: number, y: number, side: number, t: number): void } = {};
+
 export function drawWater(map: TileMap, t: number) {
   const { c0, c1, r0, r1 } = visibleTiles(map);
   const tt = view.reduced ? 0 : t;
@@ -62,6 +65,8 @@ export function drawWater(map: TileMap, t: number) {
       R(x, y + 8, TILE, 8, mix(P.water, DEEP, 0.5));
       R(x + ((c * 5 + Math.floor(tt / 40)) % 9), y, 4, 1, P.foam);
       R(x + ((c * 7 + Math.floor(tt / 14)) % TILE), y + 3 + (c % 3) * 3, 2, 1, mix(P.water, P.foam, 0.6));
+      if (map.isSolid(c - 1, r)) LAP.at?.(x, y, -1, tt + c * 5);
+      if (map.isSolid(c + 1, r)) LAP.at?.(x + TILE, y, 1, tt + c * 5);
     }
 }
 

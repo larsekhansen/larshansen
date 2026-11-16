@@ -24,15 +24,15 @@ A side-view game built the way the front page is built. The reasons (one cloth f
 | `src/render/pad.ts` | The touch pad (order 21, ADR 0043): where each control goes on a screen (`padLayout`), each finger followed on its own (`createThumbs`, `wireThumbs`), what each control says and whether it has anything to do now, the bar's folding during a level, and the help line's notes in the pad's words. A chunk of its own, fetched on a touch screen only. |
 | `src/game/frame.ts` | Where the camera goes with room left under him for the pad's buttons (`roomy`, `roomFor`, `aheadOf`): pure, so the tests frame every route at every phone size as the page does. |
 | `src/game/card.ts` | The card at a level's end as pure rules: one action after a rune, which keys answer it, six seconds and it goes, where he arrives (ADR 0037). |
-| `src/alive/` | Order 23 (ADR 0045 to 0047), fetched with `render/feel.ts` in its file: frames as data (`frames.ts`: rows of letters, a colour a letter, kept as runs); his frames and how one is picked (`him.ts`); the enemies drawn as frames and how a look's frame is picked (`foes.ts`); `parts` and `stride`, how every other look is drawn with a cycle, a breath and a bob (`parts.ts`); a beaten enemy's death in three frames (`death.ts`); the skilling and the cheese (`things.ts`); a shadow under everything that moves (`shadows.ts`); the receding plane and pieces of a far layer at a speed of their own (`depth.ts`); things in front of him (`fore.ts`). For the tests and tools only: every look in every state (`census.ts`), where a thing in front may pass (`forecheck.ts`). |
+| `src/alive/` | Order 23 (ADR 0045 to 0047), fetched with `render/feel.ts` in its file: frames as data (`frames.ts`: rows of letters, a colour a letter, kept as runs); his frames and how one is picked (`him.ts`); the enemies drawn as frames and how a look's frame is picked (`foes.ts`); `parts` and `stride`, how every other look is drawn with a cycle, a breath and a bob (`parts.ts`); a beaten enemy's death in three frames (`death.ts`); the skilling and the cheese, and since order 24 the bench, the bracteate, the rune on its stone, the sheep, the flag the game flies (three frames in its level's wind), the ski pole, the feather, a flame and an oil lamp (`things.ts`); a shadow under everything that moves (`shadows.ts`); the receding plane, pieces of a far layer at a speed of their own and the water lapping at a quay's wall (`depth.ts`); things in front of him (`fore.ts`). For the tests and tools only: every look in every state (`census.ts`), where a thing in front may pass (`forecheck.ts`). |
 | `src/render/sprite.ts` | `outlined`: what moves (an enemy, a shot, a boss, a sheep, the heron) drawn into a recorder, painted once per shape with its outline (a near-black line and the warning red, or the calm pale: ADR 0044) and copied after; the eyes it drew, for the shine after dark; every outline of a frame, copied again over the night's tint (`rings`). |
 | `src/render/haze.ts` | The haze behind the lane (order 22, A6): each level's far layers' wash and its air. |
 | `src/grain/` | The grain study (order 22, part B), only under `?debug&grain=<way>`: the subjects drawn again as per-pixel maps three ways, on two scenes (`docs/games/GRAIN.md`). A chunk of its own; nothing of it is in the game. |
-| `src/render/looks.ts` | The enemy looks several levels share and the first does not (gulls standing, scooters, hedgehogs, grills, kids, wasps, foxes, owls, squirrels, their chips and cones): a chunk of its own, fetched with the first level that has one. |
+| `src/render/looks.ts` | The enemy looks several levels share and the first does not (gulls standing, scooters, hedgehogs, grills, kids, wasps, foxes, owls, squirrels, their chips, cones and snowballs), all drawn as frames since order 24: a chunk of its own, fetched with the first level that has one. |
 | `src/render/stand.ts` | What he stands on: the one-way ledges' look and the standing top every platform gets (holds, moves, gives way). |
 | `src/render/fields.ts`, `palette.test.ts` | For the tests only: every level drawn into a recorder for the colours it paints as fields, colour differences (CIEDE2000), colour-blind simulation; the palette test. |
 | `src/render/night.ts` | The night under the trees (the dark, his headlamp, what shines through), for the one level that has it: it comes with Nordmarka's file, called through `Art.night`. The dark and the lamp's pass are drawn in rectangles, a row's piece joined to the same piece in the row above (`merged`, ADR 0041). |
-| `src/render/` | Tiles and water for any level, the far layers (which a level may raise once the view has climbed above its ground, `climbed`, ADR 0042), the longship, sheep, runes, bracteates, the T-bane entrance. |
+| `src/render/` | Tiles and water for any level, the far layers (which a level may raise once the view has climbed above its ground, `climbed`, ADR 0042), the longship, the T-bane entrance; the sheep, the runes, the bracteates and the bench only as plain shapes, for the page without `feel`'s file (their drawings are in `src/alive/things.ts` since order 24, out of the first script). |
 
 The kit (`packages/pixelkit`) holds the map reader, the physics with moving ground, surfaces (ice, an inrun, a belt) and zones that push (`zone.ts`, on a beat for a gust), hazards (`hazard.ts`), the dash, carriers on a path (stopping at stations), an orbit or a lift, flags, cannons and drums, ledges on a beat and pulses (`timed.ts`), the dark with lights through it (`dark.ts`, which the maze's dark level uses too), the camera, doors, props and the scene helpers; and line 2's pieces: the rocking deck (`deck.ts`), the sinking pad (`sink.ts`) and the oar bank (`oars.ts`); and what is drawn once and copied (`kept.ts`, ADR 0036, 0041: `kept` for a piece in its place, `keptStrips` for a large one in 128 px strips, `stamp` for a shape alike wherever it stands, `seen` for whether a piece of the street is on the screen at all; a chunk of its own, as `dark.ts` is). Swatches used by one level alone (`swatches/metro.ts`, `hill.ts`, `winter.ts`, `museum.ts`, `park.ts`, `sledge.ts`, `lake.ts`, `site.ts`, `ruins.ts`) are imported by that level directly, so they come in its file.
 
@@ -149,7 +149,9 @@ colours: `palette.test.ts` will say which and by how much.
 Order 23 (ADR 0045, 0046, 0047). Lars chose the grain: the same grid, better drawn ("do way 3 like you suggested. for the
 pixels"). For anyone drawing something new:
 
-1. **Draw it as frames, pixel by pixel.** A figure or a small thing is a per-pixel map (`frame` in `src/alive/frames.ts`:
+1. **Draw it as frames, pixel by pixel.** (Since order 24 everything of line 1 is: every enemy, both bosses, the sheep, the
+   moose, the parade, what is thrown, and the small things every level has; what is left is line 2's own,
+   `tools/review/o24/old-style.md`.) A figure or a small thing is a per-pixel map (`frame` in `src/alive/frames.ts`:
    rows of letters, each letter a colour), with a ramp of three to five tones per material, a lit side and a shaded side,
    eyes. Its tones come from its role's colours (the enemy palette's ramps: plum light, plum, plum dark, the near-black;
    white and its shade; orange, green and pink from their light to the near-black), held by `render/palette.test.ts`.
@@ -166,7 +168,16 @@ pixels"). For anyone drawing something new:
 6. **Depth**: a band of water or snow behind the lane is a receding plane (`plane` in `alive/depth.ts`); a far layer's
    pieces may go at a speed of their own (`spedX`), the farther ones first; aim for five speeds between the sky and the lane
    by splitting what the layer has, not by drawing more. Something in front of him (`alive/fore.ts`) only where
-   `fore.test.ts` allows it (nothing he must read in the six tiles ahead as it passes), at most four a level.
+   `fore.test.ts` allows it (nothing he must read in the six tiles ahead as it passes), at most four a level. Since order
+   24 each is a shape a person knows at a glance (a mast with its yard and furled sail, a lamp post with its lantern, a trunk
+   with bark and roots), drawn a half again larger than the street (it is nearer), in a dark tone of the level's own air,
+   never over the banner (clipped out), and gone (faded in a sixth of a second) while a bubble is up or he sits, so it never
+   stands over him or what he reads; its height is measured from under the page's bar, which the canvases run on up behind.
+7. **Things that live in a place** (order 24): water laps at a quay's wall in three frames (`lap`, drawn once and copied,
+   through a hook in `drawWater`); a torch's or a fire basket's flame flickers in three (`flame`), an oil lamp gutters now
+   and then (`lampFlicker`), all still with reduced motion; the flag the game flies is its own (the kit's is the front
+   page's), three frames of a ripple at a pace set by its level's wind (`WIND` in `alive/things.ts`), hanging in still air
+   under Stortinget. Smoke from chimneys and birds far off go where a sky was empty, quieter than everything he plays with.
 
 ## What just happened
 

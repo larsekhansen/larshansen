@@ -7,9 +7,11 @@ import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
+import { drawGulls } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts, stride } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -223,21 +225,38 @@ export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
 
 // --- The river's own creatures: the salmon and the duck (drawn here, as no other level has them) -------------
 
-function duck(e: Enemy) {
-  const r = parts(e, 13);
-  const bob = stride(e);
-  // A mallard waddling: an orange body, a poison-green head bobbing, a red bill and feet.
-  r(1, -7, 10, 5, ENEMY.orange);
-  r(0, -6, 2, 3, ENEMY.orange);
-  r(3, -6, 5, 1, ENEMY.orangeLight);
-  r(9, -10 + bob, 4, 4, ENEMY.poison);
-  r(13, -9 + bob, 2, 1, ENEMY.orangeLight);
-  r(11, -9 + bob, 1, 1, ENEMY.eye);
-  r(4 + bob, -2, 2, 2, ENEMY.orange);
-  r(8 - bob, -2, 2, 2, ENEMY.orange);
+// The duck and the salmon, drawn as frames (order 24; way 3, ADR 0045).
+// A mallard drake waddling, 13 x 10, its bill on the right: a green head lit at its crown, a white ring, a plum breast,
+// a pale grey-white body shaded under its wing, a black tail with its curl, orange feet that go by turns.
+const DUCK_HEAD = ["..GG..", ".gGGG.", ".gGeGOO", ".ggGgOa"].map((r) => r.padEnd(7, "."));
+const DUCK_BODY = [
+  "l.......WW...",
+  "l.WWWWWWmMM..",
+  "lWWWwWWWmmM..",
+  ".lwwwwwwmm...",
+  "..wwwwwwww..."
+];
+const DUCK_FEET = [["...oo...oo...."], ["....oo..oo...."], [".....oooo....."], ["..oo....oo...."]];
+const duckFrame = (name: string, feet: number, nod: number, dy = 0) => frame(name, FOE_INK, [DUCK_BODY, 0, 4 + dy], [DUCK_HEAD, 7, nod + dy], [DUCK_FEET[feet], 0, 9]);
+const DUCK: Looks = {
+  w: 13,
+  h: 10,
+  idle: [duckFrame("duck, still", 1, 0), duckFrame("duck, dabbing its head", 1, 1)],
+  // Waddling: the head forward and down a pixel as each foot lands.
+  move: [duckFrame("duck, waddling 1", 0, 1, 1), duckFrame("duck, waddling 2", 2, 0), duckFrame("duck, waddling 3", 3, 1, 1), duckFrame("duck, waddling 4", 2, 0)]
+};
+function duck(e: Enemy, t: number) {
+  drawFoe(e, foeFrame(e, t, DUCK), DUCK.w, DUCK.h);
 }
 
-const SALMON = ["...bb...", "..bbbb..", ".bbbbbb.", ".bbebbs.", "bbbbbsss", "bbbbssss", "bbbsssss", "bbbsssss", ".bbssss.", ".bbsss..", "..bss...", "..bbs...", "...bb...", ".bb..bb.", "bb....bb"];
+/**
+ * The salmon, nose up (it turns as it leaps): a plum back lit along its ridge, pink flanks, a white belly shaded under,
+ * spots, a pale gill line, the tail fin flicking between two frames on its own clock. 8 x 15.
+ */
+const SALMON_BODY = ["...pa...", "..mppa..", ".mMppaW.", ".mlepaW.", "mMpppaWw", "mlMppWWw", "mMpppWWw", "mmlpWWww", ".mMpWww.", ".mppWw..", "..mpw...", "..mpp..."];
+const SALMON_TAILS = [["...mp...", ".mpp.pm.", "mp....pm"], ["..mp....", ".mp.pm..", "mp...pm."]];
+const SALMON = SALMON_TAILS.map((tail) => [...SALMON_BODY, ...tail]);
+const SALMON_INK: Record<string, string> = { m: ENEMY.plum, M: ENEMY.plumLight, p: ENEMY.pink, a: ENEMY.pale, W: ENEMY.white, w: ENEMY.whiteShade, l: ENEMY.line, e: ENEMY.eye };
 
 /**
  * A salmon leaping: nose up on the way out of the water, nose down on the way back, red, a lighter
@@ -257,16 +276,18 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
   if (l.up <= 0) return;
   // Past the top of its leap it turns over; at the top it lies level a moment, its nose the way it faces (order 23).
   const falling = leap(e, t + 1).up < l.up;
-  const colors: Record<string, string> = { b: ENEMY.pink, s: ENEMY.white, e: ENEMY.eye };
+  const colors = SALMON_INK;
+  // Its tail flicks on its own clock (reduced motion keeps it: it is how a leap reads).
+  const map = SALMON[Math.floor(t / 5) % 2];
   if (Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 1)
-    return SALMON.forEach((row, r) =>
+    return map.forEach((row, r) =>
       [...row].forEach((ch, c) => {
         if (ch === ".") return;
         const yy = Math.round(e.y) - e.h + 7 - c;
         if (yy < water) R(Math.round(e.x) + (e.dir > 0 ? 7 - r : r - 7), yy, 1, 1, colors[ch]);
       })
     );
-  SALMON.forEach((row, r) =>
+  map.forEach((row, r) =>
     [...row].forEach((ch, c) => {
       if (ch === ".") return;
       const yy = y + rowAt(falling ? 14 - r : r);
@@ -986,7 +1007,11 @@ export const AKERSELVA: LevelDef = {
     { id: "qr", tile: "q", sign: "Runesmia", href: "/qr/" }
   ],
   art: {
-    far: () => farHills(),
+    // Gulls far up over the river, where the sky was empty (order 24; scenery, ADR 0039).
+    far: (v) => {
+      farHills();
+      drawGulls(v.t, 10);
+    },
     mid: (v) => midTown(v.t),
     near: () => nearTrees(),
     back(v) {
@@ -1045,7 +1070,7 @@ export const AKERSELVA: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look === "salmon") drawSalmon(e, v.t, waterTop(e.x));
-      else if (e.def.look === "duck") duck(e);
+      else if (e.def.look === "duck") duck(e, v.t);
       else return drawLook(e, v.t);
       return true;
     },

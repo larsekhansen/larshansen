@@ -114,6 +114,27 @@ export function pixels(f: Frame, facing: number, w: number, dot: (c: number, r: 
     for (let k = 0; k < r[i + 2]; k++) dot(facing > 0 ? r[i] + k : w - 1 - r[i] - k, r[i + 1], f.ink[r[i + 3]]);
 }
 
+/**
+ * A frame turned: a quarter turn with its right side up ("up": a rat's snout pointing up as it leaps), the other way
+ * ("down"), or upside down ("over"). Its pixels and colours as they were, its origin at the turned picture's top left.
+ */
+export function turned(f: Frame, name: string, how: "up" | "down" | "over"): Frame {
+  const at: { x: number; y: number; c: string }[] = [];
+  pixels(f, 1, f.x1, (c, r, colour) => at.push({ x: c - f.x0, y: r - f.y0, c: colour }));
+  const w = f.x1 - f.x0;
+  const h = f.y1 - f.y0;
+  const moved = at.map((p) => (how === "up" ? { x: p.y, y: w - 1 - p.x, c: p.c } : how === "down" ? { x: h - 1 - p.y, y: p.x, c: p.c } : { x: p.x, y: h - 1 - p.y, c: p.c }));
+  const letters = new Map<string, string>();
+  const ink: Record<string, string> = {};
+  for (const p of moved) if (!letters.has(p.c)) letters.set(p.c, String.fromCharCode(65 + letters.size));
+  for (const [c, l] of letters) ink[l] = c;
+  const W = Math.max(...moved.map((p) => p.x)) + 1;
+  const H = Math.max(...moved.map((p) => p.y)) + 1;
+  const rows = Array.from({ length: H }, () => Array<string>(W).fill("."));
+  for (const p of moved) rows[p.y][p.x] = letters.get(p.c)!;
+  return frame(name, ink, [rows.map((r) => r.join(""))]);
+}
+
 /** A ramp's tones from one colour: toward a dark that keeps its hue, and toward white. */
 export const shade = (c: string, k: number) => mix(c, "#141018", k);
 export const lit = (c: string, k: number) => mix(c, "#ffffff", k);

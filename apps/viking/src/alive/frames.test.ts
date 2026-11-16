@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { PLAYER } from "@larshansen/pixelkit/config";
-import { view } from "@larshansen/pixelkit/paint";
+import { target, view } from "@larshansen/pixelkit/paint";
 import { census, type Census, type Drawn } from "./census";
 import { ALL_FRAMES, HIM, HIM_INK, LAND_STEPS, MARGIN, STRIDE, himFrame, runFrame, type HimState } from "./him";
 import { pixels, type Frame } from "./frames";
@@ -141,6 +141,48 @@ describe("his frames (order 23)", () => {
     // And the frame turns over every STRIDE pixels of ground covered, the same either way he faces.
     expect([0, 2.9, 3, 5.9, 6, 9, 12].map((x) => runFrame(x, 1))).toEqual([0, 0, 1, 1, 2, 3, 0]);
     expect(runFrame(-3, -1)).toBe(1);
+  });
+});
+
+describe("the small things and what moves and cannot hurt him (order 24)", () => {
+  /** A frame's pixels as one string, for telling frames apart. */
+  const sig = (f: Frame) => {
+    const out: string[] = [];
+    pixels(f, 1, f.x1, (c, r, colour) => out.push(`${c},${r},${colour}`));
+    return out.join(";");
+  };
+  test("the sheep walks in three frames or more, grazes in two, and is flattened by a landing; its box as before", async () => {
+    const { SHEEP_FRAMES } = await import("./things");
+    const { SHEEP } = await import("../game/sheep");
+    expect(new Set(SHEEP_FRAMES.walk.map(sig)).size).toBeGreaterThanOrEqual(3);
+    expect(new Set(SHEEP_FRAMES.graze.map(sig)).size).toBe(2);
+    for (const f of [...SHEEP_FRAMES.walk, ...SHEEP_FRAMES.graze, SHEEP_FRAMES.squash]) {
+      expect(f.x1).toBeLessThanOrEqual(SHEEP.w);
+      expect(f.y1).toBe(SHEEP.h);
+    }
+  });
+
+  test("the flag flies in three frames, in wind and in still air; a flame flickers in three; water laps in three", async () => {
+    const T = await import("./things");
+    const D = await import("./depth");
+    const recorded = (draw: () => void) => {
+      const rects: string[] = [];
+      const rec = { fillStyle: "", globalAlpha: 1, fillRect(x: number, y: number, w: number, h: number) { rects.push(`${x},${y},${w},${h},${rec.fillStyle}`); }, drawImage() {} };
+      target(rec as unknown as CanvasRenderingContext2D);
+      draw();
+      return rects.join(";");
+    };
+    Object.assign(view, { camX: 0, camY: 0, reduced: false });
+    const flag = { x: 20, bottom: 60 } as never;
+    for (const [level, rate] of [["langkaia", 9], ["stortinget", 26]] as const)
+      expect(new Set([0, 1, 2].map((k) => recorded(() => T.flag(flag, -1000, k * rate - 20, level)))).size).toBe(3);
+    expect(new Set([0, 5, 10].map((t) => recorded(() => T.flame(10, 10, t)))).size).toBe(3);
+    expect(new Set([0, 16, 32].map((t) => recorded(() => D.lap(10, 10, -1, t)))).size).toBe(3);
+    // Reduced motion: the flag and the flame hold still.
+    view.reduced = true;
+    expect(new Set([0, 9, 18].map((t) => recorded(() => T.flag(flag, -1000, t, "langkaia")))).size).toBe(1);
+    expect(new Set([0, 5, 10].map((t) => recorded(() => T.flame(10, 10, t)))).size).toBe(1);
+    view.reduced = false;
   });
 });
 

@@ -3,15 +3,18 @@ import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { kept } from "@larshansen/pixelkit/kept";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, ENEMY, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
-import { climbed, drawOsloHills } from "../render/backdrop";
+import { climbed, drawGulls, drawOsloHills } from "../render/backdrop";
+/** Birds far off over the city: small, dark, as quiet as the far layer they fly in (scenery, ADR 0039). */
+const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, paint } from "../alive/frames";
 import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -240,29 +243,49 @@ function balloons(i: number, t: number) {
   }
 }
 
+// The hot-dog cart, drawn as frames (order 24; way 3, ADR 0045): a striped canopy lit along its top, a sausage in its
+// bun on the counter, the cart's plum panels lit from the top left, two wheels whose spokes turn by the distance it
+// rolls (four frames, three pixels each), so they never slide. No eyes: it is a cart.
+const CART_TOP = [
+  ".OOppOOppOOppOOppOOpp.",
+  "OOppOOppOOppOOppOOppOO",
+  "Oo.pp.oO.pp.oO.pp.oO.p",
+  ".l..................l.",
+  ".l..aOOOOOOa..pa....l.",
+  ".l...pppppp..ppp....l."
+];
+const CART_BODY = [
+  "MMMMMMMMMMMMMMMMMMMMMM",
+  "mMMMMMMMMMmmMMMMMMMMMd",
+  "mMmmmmmmmdmmMmmmmmmmdd",
+  "mMmmmmmmmdmmMmmmmmmmdd",
+  "mmddddddddmmmdddddddmd",
+  "dddddddddddddddddddddd"
+];
+const CART_WHEEL = [
+  ["dmMd", "mlpm", "dmmd"],
+  ["dMmd", "mlmm", "dpmd"],
+  ["dmmd", "mlmM", "dmpd"],
+  ["dmmd", "plmm", "dmMd"]
+];
+const cartFrame = (name: string, k: number, dy = 0) =>
+  frame(name, FOE_INK, [CART_TOP, 0, dy], [CART_BODY, 0, 6 + dy], [CART_WHEEL[k], 3, 11], [CART_WHEEL[(k + 2) % 4], 15, 11]);
+const CART: Looks = {
+  w: 22,
+  h: 14,
+  idle: [cartFrame("hot-dog cart, waiting", 0), cartFrame("hot-dog cart, its canopy settling", 0, 1)],
+  move: [0, 1, 2, 3].map((k) => cartFrame(`hot-dog cart, rolling ${k + 1}`, k))
+};
+
 /**
- * A hot-dog cart rolling along the parade by itself: a red cart, a striped canopy, a sausage on the
- * grill and a bun. It keeps its old box (order 18: a bigger one broke the route); the picture is wider
- * round it, its top the box's top. 22 x 14.
+ * A hot-dog cart rolling along the parade by itself. It keeps its old box (order 18: a bigger one broke the route);
+ * the picture is wider round it, its top the box's top. 22 x 14.
  */
 function hotdogCart(e: Enemy, t: number) {
   if (!e.alive) return;
   // Drawn for the box it keeps already: not squeezed again.
-  const r = parts({ ...e, def: { ...e.def, small: false } }, 22);
-  r(0, -11, 22, 8, ENEMY.plum);
-  r(0, -11, 22, 1, ENEMY.plumLight);
-  r(3, -9, 9, 3, ENEMY.orange);
-  r(14, -9, 6, 3, ENEMY.orangeLight);
-  for (let k = 0; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.pink);
-  for (let k = 2; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.orangeLight);
-  r(1, -12, 1, 1, ENEMY.plum);
-  r(20, -12, 1, 1, ENEMY.plum);
-  const roll = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  for (const wx of [3, 15]) {
-    r(wx, -3, 4, 3, ENEMY.plum);
-    r(wx + 1 + roll, -2, 1, 1, ENEMY.plumLight);
-  }
-  void t;
+  const at = { ...e, def: { ...e.def, small: false } };
+  drawFoe(at, foeFrame(at, t, CART), CART.w, CART.h);
 }
 
 /** A row of windows in a facade, lit after dark, with a sill under each. */
@@ -481,24 +504,54 @@ function terraceStone(x: number, y: number) {
   for (let yy = y; yy < y + TILE; yy += 5) R(x + ((yy / 5) % 2 ? 4 : 11), yy, 1, 3, STONE.base);
 }
 
+// The parade's children, the banners' bearers and the King's Guard, drawn as frames (order 24; way 3, ADR 0045): a ramp
+// to each material, lit from the top left; they walk in four frames by the distance they go, so their feet hold, and
+// the children's little flags flutter in three. They cannot hurt him: outlined in the calm pale (order 22), and kept
+// (`outlined` paints each shape once and copies it after).
+const KID_DRESS = [PARADE.bunadRed, PARADE.bunadBlue, PARADE.bunadGreen, SWEATER, PARADE.russ];
+/** A child, 11 x 17 from one pixel behind it: hair, a face lit at the front with an eye, the dress or sweater lit at the shoulder with the bunad's blouse, stockings and shoes, a hand on the flag's stick. */
+const KID_TOP = [".hHhh.", ".sSSe.", ".zsSS.", "..zs..", ".dbbDS", "ddDDDd", ".dDDd.", ".dDDd.", ".kddk."];
+const KID_LEGS = [[".k..k.", ".k..k.", "kk.kk."], ["..k.k.", "..k.k.", ".kkkk."], ["..kk..", "..kk..", "..kkk."], [".k...k", ".k...k", "kk..kk"]];
+const KID_FLAG = [["rWrrr", "WWWWW", "vBvvv", "rWrrr"], ["rWrrr.", "WWWWWW", "vBvvvv", "rWrr.r"].map((r) => r.slice(0, 5)), [".rWrr", "rWWWW", "vBvvv", "rWrr."]];
+const kidFrames = new Map<string, ReturnType<typeof frame>>();
+function kidFrame(i: number, step: number, wave: number) {
+  const key = `${i % 5} ${i % 3} ${step} ${wave}`;
+  let f = kidFrames.get(key);
+  if (!f) {
+    const dress = KID_DRESS[i % 5];
+    const hair = i % 3 ? P.woodDark : PARADE.fringe;
+    const ink: Record<string, string> = {
+      h: i % 3 ? hair : mix(hair, INK, 0.3),
+      H: i % 3 ? mix(hair, WHITE, 0.25) : hair,
+      s: SKIN,
+      S: mix(SKIN, WHITE, 0.3),
+      z: mix(SKIN, INK, 0.2),
+      e: INK,
+      b: PARADE.blouse,
+      D: dress,
+      d: mix(dress, INK, 0.3),
+      k: INK,
+      t: PARADE.pole,
+      r: FLAG.red,
+      W: FLAG.white,
+      v: FLAG.blue,
+      B: FLAG.blue
+    };
+    f = frame(`parade child ${key}`, ink, [KID_TOP, 0, 4], [KID_LEGS[step], 0, 13], [["t", "t", "t", "t", "t", "t", "t", "t", "t"], 5, 0], [KID_FLAG[wave], 6, 0]);
+    kidFrames.set(key, f);
+  }
+  return f;
+}
+
 /** Children in the parade: a bunad or a sweater, a flag in hand; they walk up the street with the banners, and cannot hurt him: outlined in the calm pale (order 22). */
 function paradeKid(x: number, ground: number, i: number, t: number) {
   outlined(() => paradeKidBody(x, ground, i, t), undefined, ROLES.calm);
 }
 function paradeKidBody(x: number, ground: number, i: number, t: number) {
-  const dress = [PARADE.bunadRed, PARADE.bunadBlue, PARADE.bunadGreen, SWEATER, PARADE.russ][i % 5];
-  const step = view.reduced ? 0 : Math.floor((t + i * 7) / 10) % 2;
-  R(x, ground - 11, 4, 3, SKIN);
-  R(x, ground - 12, 4, 1, i % 3 ? P.woodDark : PARADE.fringe);
-  R(x - (i % 2), ground - 8, 4 + (i % 2), 5, dress);
-  R(x + 1, ground - 8, 2, 1, PARADE.blouse);
-  R(x + step, ground - 3, 1, 3, INK);
-  R(x + 3 - step, ground - 3, 1, 3, INK);
-  // A small flag on a stick.
-  R(x + 4, ground - 16, 1, 9, PARADE.pole);
-  R(x + 5, ground - 16, 5, 4, FLAG.red);
-  R(x + 6, ground - 16, 1, 4, FLAG.white);
-  R(x + 5, ground - 14, 5, 1, FLAG.blue);
+  // Their feet by the distance they have walked (with reduced motion they stand: the parade does not move).
+  const step = ((Math.floor(x / 3) + i) % 4 + 4) % 4;
+  const wave = view.reduced ? 0 : Math.floor((t + i * 7) / 9) % 3;
+  paint(kidFrame(i, [0, 1, 3, 2][step], wave), x - 1, ground - 16, 1, 0);
 }
 
 /** The parade between the banners: children walking up the street, a step behind his line. */
@@ -617,28 +670,25 @@ function schoolBanner(x: number, y: number, h: number, sway: number) {
 const SCHOOL_SILK = mix(PARADE.silkBlue, INK, 0.25);
 const BANNER_BAR: LedgeLook = { body: PARADE.pole, top: mix(PARADE.pole, WHITE, 0.3), edge: P.woodDark, joint: P.woodDark };
 
+/** The King's Guard, 10 x 22 each: the hat with its plume (the ledge he rides is the line of hats) lit at its crown, a face, the dark uniform lit at the shoulder with its white belt, the rifle on the shoulder, legs marching in four frames by the distance they go. */
+const GUARD_TOP = ["PPPPPPPppp", "pPppppppp.", "pppppppp..", "pppppppp..", "ppppppppg.", "..sSSs..g.", "..zsSe..g.", "..zss...g.", ".uUUUUuugG", ".uUUUUUug.", ".uuUUUUug.", ".uuUUUUu..", ".wwwwwww..", ".uuUUUUu..", ".uuuUUUu..", ".uuuuuuu.."];
+const GUARD_LEGS = [
+  ["..uu..uu..", "..uu..uu..", "..uu...uu.", ".uu....uu.", ".uu....uu.", "kkk....kkk"],
+  ["..uu..uu..", "..uu..uu..", "...uu.uu..", "...uu.uu..", "...uu.uu..", "..kkk.kkk."],
+  ["..uuuuuu..", "...uuuu...", "...uuuu...", "...uuuu...", "...uuuu...", "..kkkkkk.."],
+  ["..uu..uu..", "..uu..uu..", "..uu..uu..", "..uu...uu.", "..uu...uu.", ".kkk...kkk"]
+];
+const GUARD_INK: Record<string, string> = { P: mix(PARADE.plume, WHITE, 0.22), p: PARADE.plume, s: SKIN, S: mix(SKIN, WHITE, 0.3), z: mix(SKIN, INK, 0.2), e: INK, U: mix(PARADE.guard, WHITE, 0.18), u: PARADE.guard, w: PARADE.guardBelt, g: METAL.lampPost, G: mix(METAL.lampPost, WHITE, 0.4), k: INK };
+const GUARD_FRAMES = GUARD_LEGS.map((legs, k) => frame(`King's Guard, marching ${k + 1}`, GUARD_INK, [GUARD_TOP], [legs, 0, 16]));
+
 /** The King's Guard: three in step under their hats, rifles on the shoulder; they move and cannot hurt him, outlined in the calm pale (order 22). */
 function guards(at: { x: number; y: number }, t: number) {
   outlined(() => guardsBody(at, t), undefined, ROLES.calm);
 }
 function guardsBody(at: { x: number; y: number }, t: number) {
-  const step = view.reduced ? 0 : Math.floor(t / 12) % 2;
-  for (let k = 0; k < 3; k++) {
-    const gx = at.x + 3 + k * TILE;
-    const y = at.y;
-    // The hat with its plume: the ledge he rides is the line of hats.
-    R(gx, y, 10, 5, PARADE.plume);
-    R(gx + 1, y, 8, 1, mix(PARADE.plume, WHITE, 0.25));
-    R(gx + 7, y - 2, 3, 2, PARADE.plume);
-    R(gx + 2, y + 5, 6, 3, SKIN);
-    R(gx + 1, y + 8, 8, 8, PARADE.guard);
-    R(gx + 1, y + 12, 8, 1, PARADE.guardBelt);
-    R(gx + 8, y + 3, 1, 9, METAL.lampPost);
-    R(gx + 2 + step, y + 16, 2, 6, PARADE.guard);
-    R(gx + 6 - step, y + 16, 2, 6, PARADE.guard);
-    R(gx + 1 + step, y + 21, 3, 1, INK);
-    R(gx + 5 - step, y + 21, 3, 1, INK);
-  }
+  const step = ((Math.floor(at.x / 3) % 4) + 4) % 4;
+  for (let k = 0; k < 3; k++) paint(GUARD_FRAMES[[0, 1, 3, 2][step]], at.x + 3 + k * TILE, at.y, 1, 0);
+  void t;
 }
 
 /** The crowd along the near kerb: heads, hats and little flags, in front of the street; not solid. */
@@ -891,7 +941,11 @@ export const SLOTTET: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
-    far: (v) => farHills(v.sky, v.him.x),
+    // Far off over the city, a few birds where the sky was empty (order 24, ADR 0039's scenery: quiet, small, never near the lane).
+    far: (v) => {
+      farHills(v.sky, v.him.x);
+      drawGulls(v.t, 6, FAR_BIRD);
+    },
     mid: (v) => cityRoofs(v.t, v.him.x),
     near: () => nearTrees(),
     back(v) {

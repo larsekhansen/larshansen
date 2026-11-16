@@ -1,5 +1,5 @@
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { R, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
 import { INK, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
@@ -114,22 +114,48 @@ export function shieldDrawn(raise: number, reduced: boolean): number {
 /** The round shield's paint: red and cream boards, an iron rim, an iron boss in the middle. */
 const RED = PALETTE.sailStripe;
 const CREAM = PALETTE.sail;
-
+/** Its ramps (order 24; way 3, ADR 0045): each board lit at the top left and shaded to the bottom right, the rim's iron lit where the light falls on it, the boss with a glint. */
+const INK_OF: Record<string, string> = { R: mix(RED, WHITE, 0.25), r: RED, q: mix(RED, INK, 0.3), C: mix(CREAM, WHITE, 0.3), c: CREAM, k: mix(CREAM, INK, 0.25), i: PALETTE.ironDark, I: mix(PALETTE.ironDark, WHITE, 0.4), j: mix(PALETTE.ironDark, INK, 0.3), b: METAL.lampPost, B: mix(PALETTE.iron, WHITE, 0.5) };
+/** The shield seen face on, `size` across, as a map of letters: drawn once, copied after. */
+function faceMap(size: number): string[] {
+  const r = size / 2;
+  const rows: string[] = [];
+  for (let y = 0; y < size; y++) {
+    let row = "";
+    for (let x = 0; x < size; x++) {
+      const dx = x + 0.5 - r;
+      const dy = y + 0.5 - r;
+      const d = Math.hypot(dx, dy);
+      const toward = -(dx + dy) / r;
+      if (d > r) row += ".";
+      else if (d > r - 1.2) row += toward > 0.5 ? "I" : toward < -0.5 ? "j" : "i";
+      else if (d < (size > 8 ? 1.5 : 1)) row += toward > 0 ? "B" : "b";
+      else {
+        const board = Math.floor((Math.atan2(dy, dx) + Math.PI) / (Math.PI / 2)) % 2 === 0;
+        const tone = toward > 0.45 ? 2 : toward < -0.45 ? 0 : 1;
+        row += board ? "qrR"[tone] : "kcC"[tone];
+      }
+    }
+    rows.push(row);
+  }
+  return rows;
+}
+const FACES = new Map<number, HTMLCanvasElement>();
 /** The shield seen face on, 12 across: leaning at the longship's prow, or hung on his back. `x, y`: its top left. */
 export function drawShieldFace(x: number, y: number, size = 12) {
-  const r = size / 2;
-  for (let yy = 0; yy < size; yy++)
-    for (let xx = 0; xx < size; xx++) {
-      const dx = xx + 0.5 - r;
-      const dy = yy + 0.5 - r;
-      const d = Math.hypot(dx, dy);
-      if (d > r) continue;
-      const rim = d > r - 1.2;
-      const board = Math.floor((Math.atan2(dy, dx) + Math.PI) / (Math.PI / 2)) % 2 === 0;
-      R(x + xx, y + yy, 1, 1, rim ? PALETTE.ironDark : board ? RED : CREAM);
+  if (typeof document !== "undefined") {
+    let c = FACES.get(size);
+    if (!c) {
+      c = document.createElement("canvas");
+      c.width = c.height = size;
+      const g = c.getContext("2d")!;
+      faceMap(size).forEach((row, yy) => [...row].forEach((ch, xx) => ch !== "." && ((g.fillStyle = INK_OF[ch]), g.fillRect(xx, yy, 1, 1))));
+      FACES.set(size, c);
     }
-  R(x + r - 1, y + r - 1, 2, 2, METAL.lampPost);
-  R(x + r - 1, y + r - 1, 1, 1, mix(PALETTE.iron, WHITE, 0.3));
+    ctx().drawImage(c, Math.round(x) - view.camX, Math.round(y) - view.camY);
+    return;
+  }
+  faceMap(size).forEach((row, yy) => [...row].forEach((ch, xx) => ch !== "." && R(x + xx, y + yy, 1, 1, INK_OF[ch])));
 }
 
 /**
@@ -145,7 +171,8 @@ export function drawShieldOn(b: { x: number; y: number }, facing: 1 | -1, up: nu
     drawShieldFace(x, y0 + 2, 8);
     return;
   }
-  // Held up in front: the face seen edge on, five pixels thick, its top tilting out as it comes up.
+  // Held up in front: the face seen edge on, five pixels thick, its top tilting out as it comes up; its boards lit at
+  // the top and shaded toward his feet, the rim's iron on its outer side lit along its upper half.
   const h = Math.round(9 + 9 * up);
   const top = y0 + PLAYER.h - h + 1;
   const x = facing > 0 ? x0 + PLAYER.w - 1 : x0 - 4;
@@ -153,13 +180,17 @@ export function drawShieldOn(b: { x: number; y: number }, facing: 1 | -1, up: nu
     const out = Math.round((1 - i / h) * 2 * up);
     const xx = x + facing * out;
     const band = Math.floor((i / h) * 4) % 2 === 0;
-    R(xx, top + i, 5, 1, band ? RED : CREAM);
-    R(facing > 0 ? xx + 4 : xx, top + i, 1, 1, PALETTE.ironDark);
-    R(facing > 0 ? xx : xx + 4, top + i, 1, 1, mix(band ? RED : CREAM, INK, 0.35));
+    const tone = i < h * 0.3 ? 2 : i > h * 0.75 ? 0 : 1;
+    const face = band ? "qrR"[tone] : "kcC"[tone];
+    R(xx, top + i, 5, 1, INK_OF[face]);
+    R(facing > 0 ? xx + 4 : xx, top + i, 1, 1, INK_OF[i < h / 2 ? "I" : "i"]);
+    R(facing > 0 ? xx : xx + 4, top + i, 1, 1, INK_OF[band ? "q" : "k"]);
   }
-  // The iron boss, in the middle of its face.
+  // The iron boss, in the middle of its face, its glint on the side the light comes from.
   const mid = top + Math.floor(h / 2);
-  R(facing > 0 ? x + 4 + Math.round(up) : x - 1 - Math.round(up), mid - 1, 2, 3, METAL.lampPost);
+  const bx = facing > 0 ? x + 4 + Math.round(up) : x - 1 - Math.round(up);
+  R(bx, mid - 1, 2, 3, METAL.lampPost);
+  R(bx, mid - 1, 1, 1, INK_OF.B);
   // A glint along its rim once it is up.
   if (up >= 1 && !view.reduced) R(facing > 0 ? x + 4 : x, top + 1, 1, 3, mix(PALETTE.iron, WHITE, 0.5));
 }

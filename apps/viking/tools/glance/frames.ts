@@ -40,6 +40,44 @@ const table = (fs: Frame[], label: string) => {
 for (const [name, l] of Object.entries(ALL_FOES())) table([...l.idle, ...l.move, ...(l.windup ? [l.windup] : [])], `${name} (frames)`);
 table([...SKILLING, CHEESE], "things");
 
+// The small things (order 24), each drawn as the page draws it, through a recorder: the bench, the bracteate turning,
+// the rune on its stone, the sheep, the flag in still air and in wind, the ski pole, the feather, the shield.
+const recorded = (name: string, draw: () => void): { name: string; rects: { x: number; y: number; w: number; h: number; c: string }[] } => {
+  const rects: { x: number; y: number; w: number; h: number; c: string }[] = [];
+  const rec = { fillStyle: "", globalAlpha: 1, fillRect(x: number, y: number, w: number, h: number) { rects.push({ x, y, w, h, c: rec.fillStyle }); }, drawImage(c: { rects?: typeof rects }, x: number, y: number) { for (const r of c.rects ?? []) rects.push({ ...r, x: r.x + x, y: r.y + y }); } };
+  target(rec as unknown as CanvasRenderingContext2D);
+  draw();
+  return { name, rects: rects.filter((r) => !r.c.startsWith("rgba")) };
+};
+const asFigure = (label: string, ds: ReturnType<typeof recorded>[]) => {
+  if (only.length && !only.includes(label)) return;
+  const all = ds.flatMap((d) => d.rects);
+  const x0 = Math.min(...all.map((r) => r.x));
+  const y0 = Math.min(...all.map((r) => r.y));
+  const w = Math.max(...all.map((r) => r.x + r.w)) - x0;
+  const h = Math.max(...all.map((r) => r.y + r.h)) - y0;
+  out[label] = ds.map((d) => {
+    const px = Array.from({ length: h }, () => Array<string>(w).fill(""));
+    for (const r of d.rects) for (let y = r.y; y < r.y + r.h; y++) for (let x = r.x; x < r.x + r.w; x++) if (y - y0 >= 0 && y - y0 < h && x - x0 >= 0 && x - x0 < w) px[y - y0][x - x0] = r.c;
+    return { name: d.name, w, h, x0: 0, y0: 0, px };
+  });
+};
+{
+  // Without a page the things draw as rectangles (`stamp` falls back to runs), which the recorder notes.
+  const T = await import("../../src/alive/things");
+  const { drawShieldFace, drawShieldOn } = await import("../../src/game/shield");
+  Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 4000, h: 4000, reduced: false });
+  asFigure("bench", [recorded("bench", () => T.bench(20, 40, false)), recorded("bench, sitting", () => T.bench(20, 40, true))]);
+  asFigure("bracteate", [0, 15, 30, 45, 60, 140].map((s) => recorded(`bracteate, step ${s}`, () => T.bracteate(10, 10, s))));
+  asFigure("rune stone", [recorded("rune L, lit", () => T.runeStone(10, 10, "L", "lit", 0)), recorded("rune S, lit", () => T.runeStone(10, 10, "S", "lit", 40)), recorded("rune N, dark", () => T.runeStone(10, 10, "N", "dark", 0)), recorded("rune A, ghost", () => T.runeStone(10, 10, "A", "ghost", 0))]);
+  const sheep = (x: number, grazing: number, squash = 0) => ({ home: x, range: 60, x, bottom: 40, dir: 1 as const, grazing, squash, rnd: Math.random });
+  asFigure("sheep", [recorded("sheep, walking 1", () => T.sheep(sheep(20, 0))), recorded("walking 2", () => T.sheep(sheep(23, 0))), recorded("walking 3", () => T.sheep(sheep(26, 0))), recorded("walking 4", () => T.sheep(sheep(29, 0))), recorded("grazing", () => T.sheep(sheep(20, 10))), recorded("chewing", () => T.sheep(sheep(20, 30))), recorded("landed on", () => T.sheep(sheep(20, 0, 3)))]);
+  const flag = { x: 20, bottom: 50 } as never;
+  asFigure("flag", [recorded("folded", () => T.flag(flag, null, 0, "langkaia")), ...[0, 9, 18].map((t) => recorded(`in the wind ${t / 9 + 1}`, () => T.flag(flag, -100 - t, t - 20, "langkaia"))), ...[0, 26, 52].map((t) => recorded(`in still air ${t / 26 + 1}`, () => T.flag(flag, -100 - t, t - 20, "stortinget")))]);
+  asFigure("ski pole and feather", [recorded("ski pole", () => T.skiPole(20, 20, 10)), recorded("feather", () => T.feather(20, 20, false)), recorded("feather, gold", () => T.feather(20, 20, true))]);
+  asFigure("shield", [recorded("face", () => drawShieldFace(10, 10)), recorded("on his back", () => drawShieldOn({ x: 20, y: 10 }, 1, 0, false)), recorded("coming up", () => drawShieldOn({ x: 20, y: 10 }, 1, 0.5, false)), recorded("up", () => drawShieldOn({ x: 20, y: 10 }, 1, 1, false))]);
+}
+
 // The enemies: each look's frames as the page draws them (through `outlined`'s recorder), still, moving, winding up, beaten.
 Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 4000, h: 4000, reduced: false });
 for (const [look, frames] of Object.entries(await lookFrames())) {

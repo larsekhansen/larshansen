@@ -11,7 +11,7 @@ import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
-import { drawLook } from "../render/looks";
+import { drawLook, drawLookShot } from "../render/looks";
 import { parts } from "../alive/parts";
 import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
@@ -673,7 +673,8 @@ export const KORKETREKKEREN: LevelDef = {
       if (e.def.look !== "sledger") return drawLook(e, v.t);
       sledgerArt(e, v);
       return true;
-    }
+    },
+    shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look)
   }
 };
 
