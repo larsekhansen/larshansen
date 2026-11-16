@@ -637,14 +637,18 @@ function moose(at: { x: number; y: number }, t: number) {
 const HIDE = [FOREST.trollHair, FOREST.trollDark, FOREST.troll, FOREST.trollLight, mix(FOREST.trollLight, WHITE, 0.22)];
 const STONE_TONES = [mix(FOREST.stoneDark, INK, 0.25), FOREST.stoneDark, FOREST.stone, FOREST.stoneLight, mix(FOREST.stoneLight, WHITE, 0.25)];
 /**
- * After dusk (order 25: its shading was barely there in the dark) the lit side of its hide and its stone takes a little of
- * the night's rim light: its two lightest tones drawn again over the night's tint, faint, as lights are (drawing only).
+ * After dusk (order 25: its shading was barely there in the dark) the lit side of its hide and its stone catches a little
+ * moonlight over the forest's dark: its two lightest tones are noted as it is drawn (`TROLL_LIT`) and drawn again, faint,
+ * over the dark with what else shines there (`overDark`). Drawing only.
  */
 const rimOf = (c: string, a: number) => {
   const n = parseInt(c.slice(1), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
 };
-const TROLL_RIM = new Map<string, string>([HIDE[3], HIDE[4], STONE_TONES[3], STONE_TONES[4]].map((c, i) => [c, rimOf(c, i % 2 ? 0.5 : 0.35)]));
+const TROLL_RIM = new Map<string, string>([HIDE[3], HIDE[4], STONE_TONES[3], STONE_TONES[4]].map((c, i) => [c, rimOf(c, i % 2 ? 0.35 : 0.2)]));
+/** The runs of its lit side as this frame drew them (x, y, width, colour): what `overDark` lights. */
+const TROLL_LIT: { x: number; y: number; w: number; c: string }[] = [];
+let trollLitN = 0;
 const NOSE = [mix(FOREST.trollNose, INK, 0.3), FOREST.trollNose, mix(FOREST.trollNose, WHITE, 0.2)];
 const HAIR = [mix(FOREST.trollHair, INK, 0.3), FOREST.trollHair, FOREST.trollDark];
 const MOSS = [mix(FOREST.moss, INK, 0.25), FOREST.moss, FOREST.mossLight];
@@ -665,6 +669,7 @@ function trollBody(t: Troll, v: View) {
   const f = t.dir;
   /** A row of pixels from screen x0 to x1 (exclusive), each its tone from `tone(x)` in `ramp`, joined into runs. */
   const dusk = v.sky.phase !== "day";
+  trollLitN = 0;
   const row = (x0: number, x1: number, y: number, ramp: readonly string[], tone: (sx: number) => number) => {
     let start = x0;
     let k = tone(x0);
@@ -674,7 +679,11 @@ function trollBody(t: Troll, v: View) {
       const c = ramp[Math.max(0, Math.min(ramp.length - 1, k))];
       R(start, y, sx - start, 1, c);
       const rim = dusk ? TROLL_RIM.get(c) : undefined;
-      if (rim) light(start, y, sx - start, 1, "soft", rim);
+      if (rim) {
+        const l = TROLL_LIT[trollLitN] ?? (TROLL_LIT[trollLitN] = { x: 0, y: 0, w: 0, c: "" });
+        Object.assign(l, { x: start, y, w: sx - start, c: rim });
+        trollLitN++;
+      }
       start = sx;
       k = n;
     }
@@ -810,6 +819,8 @@ function overDark(v: View) {
   for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, CREATURE.eye);
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);
   const t = v.troll;
+  // Its lit side, faint over the dark (order 25), as it was drawn this frame.
+  if (t) for (let i = 0; i < trollLitN; i++) R(TROLL_LIT[i].x, TROLL_LIT[i].y, TROLL_LIT[i].w, 1, TROLL_LIT[i].c);
   if (t && t.phase !== "asleep" && t.phase !== "stone") {
     // Where its head is as its body is drawn (order 24): its eyes go with its walking bob and its heave.
     const head = trollHead(t, v.t);

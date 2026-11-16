@@ -52,8 +52,8 @@ function standNear(p: Play, x: number, y: number) {
   return { hx: x, hy: y };
 }
 
-// Every look of line 2's own, the first of each where it lives (him three tiles before it; a statue's back to him, so it
-// walks; a jumper at the top of its leap).
+// Every look of line 2's own, the first of each where it lives (him three tiles before it, six before a thrower; a statue's
+// back to him, so it walks; a jumper at the top of its leap).
 const OWN = new Set(["crab", "penguin", "slinger", "statue", "bronze", "boy", "ringer", "sledger", "swan", "coot", "duck", "nester", "riveter", "archer", "guard", "goose", "dog"]);
 for (const id of ["bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika", "gamlebyen"]) {
   const def = await loadLevel(id);
@@ -61,9 +61,7 @@ for (const id of ["bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet
   for (const [i, e] of (def.enemies ?? []).entries()) {
     if (!OWN.has(e.look) || seen.has(e.look)) continue;
     seen.add(e.look);
-    // Step 0, but for a jumper: a hit in the first steps holds the page's picture, and whether the first frame came first
-    // is a race (the handover's "Checking").
-    let steps = 0;
+    let steps = 2;
     if (e.kind === "jumper") {
       const probe = fresh(def);
       let best = 0;
@@ -72,7 +70,11 @@ for (const id of ["bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet
     const statue = e.look === "statue" || e.look === "bronze";
     const p = fresh(def);
     const ex = e.c * TILE + TILE / 2;
-    const { hx, hy } = standNear(p, ex + (statue ? 3 : -3) * TILE, (Math.floor(e.r) - 4) * TILE);
+    // A thrower six tiles off, where it sees him and he is clear of it (three tiles off, an archer on the wall walk had him
+    // standing in front of it, or hit in the first steps, which holds the page's picture: the handover's "Checking").
+    const off = statue ? 3 : e.kind === "thrower" ? -6 : -3;
+    // The archers stand on the arches over the wall walk: him on the walk below and in front.
+    const { hx, hy } = e.look === "archer" ? { hx: ex - 6 * TILE, hy: (e.r + 2) * TILE } : standNear(p, ex + off * TILE, (Math.floor(e.r) - 4) * TILE);
     const at = p.map.surfaceBelow(hx, hy);
     if (at !== null) placeBody(p.body, hx, at);
     for (let t = 0; t < steps; t++) stepPlay(p, IDLE);
@@ -144,7 +146,8 @@ for (const id of ["bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet
     const i = def.enemies!.findIndex((d) => d.look === look);
     const e = def.enemies![i];
     const p = fresh(def);
-    let steps = 2;
+    // Step 0 unless a moment is asked for: a hit in the first steps holds the page's picture (the handover's "Checking").
+    let steps = 0;
     if (phaseOf) for (let t = 2; t < 800; t++) if (phaseOf(t, p.enemies[i])) {
       steps = t;
       break;

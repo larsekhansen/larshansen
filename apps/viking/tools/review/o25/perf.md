@@ -35,3 +35,22 @@ and fifty to two hundred and seventy fewer rectangles for it, and more copies); 
 a lit run where it is in view (it is in none of these places). The one rise, Nordmarka at column 120 (+10 against order 23,
 +6 against order 24), is in the night's own rectangles (the dark's pieces), not in anything this order drew. Every place's
 line: `perf-after.tsv` beside this file.
+
+## The fights, which the walk does not reach
+
+The same measure at moments of the scripted route (`?debug&auto&steps=N`, the addresses of `tools/glance/line2shots.ts`),
+on a build of `origin/main` (order 24) and of this branch:
+
+| Place | order 24 | order 25 | rise |
+|---|---|---|---|
+| serpent, its tell-night | 5,337 | 5,348 | +11 |
+| serpent, dazed-night | 5,246 | 5,257 | +11 |
+| serpent, its tail's fin-night | 5,270 | 5,289 | +19 |
+| serpent, its tail-night | 5,291 | 5,302 | +11 |
+| troll walking, after dusk-day | 3,875 | 3,875 | +0 |
+| troll walking, after dusk-twilight | 3,956 | 4,034 | +78 |
+
+The serpent's places rise by 11 (the same at all four, not traced further: the serpent is drawn into the sprite recorder and
+copied, as before; perf's fifty frames include the first, which paints a new shape into the cache) and its fin's by 8 more
+(the fin's lit leading edge, a rectangle a row); the troll after dusk by 78 (its lit side drawn again over the forest's dark,
+a rectangle a lit run). The order allows 200.
