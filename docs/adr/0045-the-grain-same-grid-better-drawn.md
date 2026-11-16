@@ -37,3 +37,12 @@ the same maps at another scale.
   the front page shares) at four times the pixels, every canvas at twice the resolution (which a phone with three device
   pixels a point cannot show evenly), the front page's 28 pictures, and the first script's budget, for a gain the study's
   pictures did not show on a phone.
+
+## Carried through (orders 24 and 25)
+Order 24 drew the rest of line 1 and what every level shares; order 25 line 2's own (Bygdøy's to Gamlebyen's kinds, the
+sea serpent in every state, the heron, line 2's shots) and what the walk through all sixteen levels and the map still
+found in rectangles (him lying back on the sledge, the sledge, the crowds at Slottet and Holmenkollen, Bjørvika's welder).
+Nothing that moves or is picked up is drawn in rectangles now; what is, is scenery, listed with its reason in
+`apps/viking/tools/review/o25/old-style.md`. One rule came with it: a look drawn pixel by pixel for the box its level
+keeps (ADR 0039's `keepBoxes`) is drawn at that height (`drawFoe`'s `fit`), not squashed to it, so none of its rows are
+lost; its head stays within two pixels of the box's top, as the palette test holds.

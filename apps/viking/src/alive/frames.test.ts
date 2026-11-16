@@ -1,5 +1,6 @@
 import { beforeAll, describe, expect, test } from "bun:test";
 import { PLAYER } from "@larshansen/pixelkit/config";
+import { ENEMY } from "@larshansen/pixelkit/palette";
 import { target, view } from "@larshansen/pixelkit/paint";
 import { census, type Census, type Drawn } from "./census";
 import { ALL_FRAMES, HIM, HIM_INK, LAND_STEPS, MARGIN, STRIDE, himFrame, runFrame, type HimState } from "./him";
@@ -65,6 +66,18 @@ describe("every enemy and harmless mover has its frames (order 23)", () => {
     expect([0, 1, 2, 3, 4, 5, 6, 7, 8].map((a) => deathFrame(a, false))).toEqual([0, 0, 1, 1, 1, 2, 2, 2, -1]);
     // Reduced motion: no fold (a squash), the hit held, then gone.
     expect([...Array(15).keys()].map((a) => deathFrame(a, true)).filter((k) => k === 1)).toEqual([]);
+  });
+
+  test("every look of every level is drawn pixel by pixel (orders 23 to 25, ADR 0045): its body in runs one pixel high, none in the old blocks", () => {
+    const pal = new Set<string>(Object.values(ENEMY));
+    const blocks: string[] = [];
+    for (const [name, l] of Object.entries(looks))
+      for (const d of [...l.idle, ...l.move, ...(l.windup ? [l.windup] : [])])
+        if (d.rects.some((r) => pal.has(r.c) && r.h > 1)) {
+          blocks.push(`${name}: ${d.name}`);
+          break;
+        }
+    expect(blocks).toEqual([]);
   });
 
   test(`no frame leaves the box its look is drawn in: its still frame, ${REACH.side} pixels either side, ${REACH.up} over it, ${REACH.down} under`, () => {
