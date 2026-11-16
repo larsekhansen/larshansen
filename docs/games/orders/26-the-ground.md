@@ -58,6 +58,35 @@ barrels, bollards, lamp posts, signs' posts, railings, ladders, doors, the T-ban
 platform furniture, the sauna, market stalls, ski racks: whatever section 1 finds. Things he
 uses keep the "use" cyan corners exactly as they are.
 
+## 3b. The small flags (added the same evening)
+
+Lars: "the tiny flag on the 17 of may are not detailed enough. also upgrade their detail level. so the falg isnt
+ambiguous". Every small Norwegian flag in Slottet (17 May on Karl Johan): the hand flags the parade children and the crowd
+wave, the banner bearers', flags on buildings, stalls and bunting, and the same small flags anywhere else in the game
+(Holmenkollen's crowd, the map). Find them all first and picture each at 3x at 390 x 844 before changing anything.
+
+What "not ambiguous" needs: red field, a blue cross with a white edge on both sides of it, the cross's upright nearer the
+pole (not centred), proportions near 22:16. The smallest map that still carries all of that is about 7 wide by 5 high
+(columns from the pole: red, white, blue, white, red, red, red; rows: red, white, blue, white, red, with the cross's arms
+running full width and height); prefer 9 x 7 or the full-size game flag's drawing wherever there is room, and make the hand
+flags a pixel or two larger if their present box cannot hold 7 x 5 (they are drawing only, no boxes). Keep the red a true
+flag red even though it is near the warning red: a flag is unmistakable by its shape and cross, but check the palette test
+and name the flags there as kept by shape if it objects. A wave of two or three frames if cheap. The kit's own flag (shared
+with the front page) stays untouched: 28 pictures byte-identical. Perf budget as in the order (kept pieces, copied). Hand
+back before and after crops of each kind of flag at real size and at 3x, by day and at night.
+
+## 3c. Holmenkollen's spruces (added the same evening)
+
+Lars: "in holmenkollen, the trees are all missing the top part. no spike. They should have one. either green or white".
+Holmenkollen's spruces end in a flat tier with no pointed top. First find out why (picture them at 3x at both sizes: is
+the tip not drawn, clipped by a kept piece's box or the canvas edge, or hidden under the header?), then give every spruce a
+proper spire: a narrowing top of two or three pixels' steps ending in a single pixel, in the tree's green or snow-capped
+white, whichever reads better against that sky (snow on the top and on the tiers' upper edges would suit Holmenkollen).
+Check every layer of trees in the level (near row, far rows, split rows of order 23), and the same spruce drawing wherever
+else it is used (Nordmarka, Korketrekkeren, the map): fix them all, and say where you did. Kept pieces' boxes must grow to
+hold the tip. Scenery rule and haze of ADR 0044 hold; perf budget as in the order. Hand back before and after pictures of
+each layer at both sizes.
+
 ## 4. Docs
 
 DESIGN (a rule for level authors: surfaces come from the textured set, how to add one),

@@ -343,6 +343,13 @@ function earth(k: Work) {
     k.acc[idx(k, x, 4)] = T(0);
     k.tone[idx(k, x, 4)] = 0;
   }
+  // A drain cover in the paving now and then: a grate of the band's dark in its own frame.
+  if (g.top === "paving" && v === 2)
+    for (let y = 1; y < 3; y++)
+      for (let x = 3; x < 7; x++) {
+        const t = y === 1 || x === 3 || x === 6 ? 1 : x % 2 ? 0 : 1;
+        k.acc[idx(k, x, y)] = T(t);
+      }
   if (g.top === "snow") {
     if (g.accent?.sparkle) for (let x = 0; x < W; x++) if (hash(v, x, 0, 33) < 0.07) put(k, x, 1, g.accent.sparkle);
     return;

@@ -3,9 +3,12 @@
 **Decided, 16 November 2026: way 3, the same grid, better drawn.** Lars: "do way 3 like you suggested. for the
 pixels" ([ADR 0045](../adr/0045-the-grain-same-grid-better-drawn.md)). Order 23 drew him, the enemies of line 1's first
 three levels, the skilling and the cheese that way; order 24 the rest of line 1 and what every level shares; order 25 line
-2's own, the sea serpent and the last people still in rectangles. Everything that moves or is picked up is drawn so now;
-what is not is scenery (`apps/viking/tools/review/o25/old-style.md`). The study below is kept as it was written, before the
-choice.
+2's own, the sea serpent and the last people still in rectangles; order 26 the ground under him: every surface of the lane
+(ground, walls, platforms' bodies, crates, the bed under the water) and the props at arm's length (sign boards, the T-bane's
+entrance, doors, bollards) from one textured set of per-pixel pieces ([ADR 0049](../adr/0049-the-ground-is-textured.md)).
+Everything that moves or is picked up, and what he stands on and walks past, is drawn so now; what is not is the far
+scenery behind the lane, kept quiet on purpose (ADR 0044's band), and the few things `apps/viking/tools/review/o26/before.md`
+lists as not done. The study below is kept as it was written, before the choice.
 
 Written 16 November 2026 for Lars, after you said: "i just fear i made a blunder with the pixel design. or rather
 that the pixels are too big. they need more detail. espeiclally small items." This page says what is true, shows
