@@ -15,7 +15,7 @@ import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { parts } from "../render/pickups";
-import { outlined, plain } from "../render/sprite";
+import { calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
@@ -969,7 +969,8 @@ function serpentArt(s: Serpent, v: View) {
       // Its tell, plain to see: the throat swells pale as it gathers the brine.
       if (s.phase === "rear" && tellK > 0.3 && !view.reduced) R(x + lean + sway + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
       if (s.phase === "rear" && view.reduced) R(x + lean + s.dir * 2 - 3, headY + 11, 7, 3, ROLES.now);
-    });
+      // Its neck never hurts (it stands in his way): outlined in the calm pale; its ball and its tail in the red (order 22).
+    }, undefined, ROLES.calm);
     if (s.phase === "rise" || (s.phase === "rear" && age < 40)) streaming(x, headY, base, age + (s.phase === "rear" ? SERPENT_STEPS.rise : 0), 10);
     return;
   }
@@ -988,7 +989,8 @@ function serpentArt(s: Serpent, v: View) {
       }
       for (let i = 0; i < 10; i++) bodyRow(hx - d * (14 - i), floor - 9 + Math.round(i * 0.3), 9, d, i);
       serpentHead(hx, h.y - 1, d, s.phase === "reel" ? 2 : 1, true);
-    });
+      // Dazed it cannot hurt him: the calm pale round it, the "now" violet over it where to hit (order 22).
+    }, undefined, ROLES.calm);
     if (s.phase === "dazed") for (let k = 0; k < 3; k++) {
       const a = view.reduced ? k * 2.1 : t * 0.1 + k * 2.1;
       // Its dazed head is where to hit it: the stars over it in the bosses' "now" colour (order 18).
@@ -1029,21 +1031,22 @@ function ballArt(s: Serpent, t: number) {
 }
 
 /**
- * The bishop's guard: while he is a statue, grey stone and not outlined (stone does not bite); woken, a
- * plum coat over red mail, his halberd levelled at him. Squat, his head where his box's top is. 13 x 10.
+ * The bishop's guard: while he is a statue, grey stone outlined in the calm pale (stone does not bite); woken, a
+ * plum coat over pink mail, his halberd levelled at him, outlined in the warning red. Squat, his head where his
+ * box's top is. 13 x 10.
  */
 function guardArt(e: Enemy) {
   const stone = !e.n;
   const draw = () => {
     const r = parts(e, 13);
     const coat = stone ? G.statue : ENEMY.plum;
-    const mail = stone ? mix(G.statue, INK, 0.15) : ENEMY.red;
+    const mail = stone ? mix(G.statue, INK, 0.15) : ENEMY.pink;
     const step = stone || view.reduced ? 0 : Math.floor(e.x / 3) % 2;
     r(3, -3, 3, 3 - step, mail);
     r(7, -3, 3, 3 - (1 - step), mail);
     r(2, -7, 9, 4, coat);
     r(3, -10, 7, 3, mail);
-    r(3, -10, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.redLight);
+    r(3, -10, 7, 1, stone ? mix(G.statue, WHITE, 0.2) : ENEMY.pink);
     r(8, -9, 1, 1, stone ? mix(G.statue, INK, 0.4) : ENEMY.eye);
     // The halberd: upright beside the statue; woken (order 19: a change of outline), levelled at him.
     if (stone) {
@@ -1054,8 +1057,10 @@ function guardArt(e: Enemy) {
       r(17, -7, 2, 3, ENEMY.pale);
     }
   };
-  if (stone) plain(draw);
-  else draw();
+  // Stone, it is calm: outlined in the calm pale (from the first frame, before the rules have said so); woken, in
+  // the warning red (order 22).
+  if (stone) calmOutline();
+  draw();
 }
 
 /** An archer on the wall walk: a red coat, a hood, a bow drawn as the shot comes. 11 x 16. */
@@ -1064,28 +1069,29 @@ function archerArt(e: Enemy, t: number) {
   const up = windingUp(e, t);
   r(2, -5, 3, 5, ENEMY.plum);
   r(6, -5, 3, 5, ENEMY.plum);
-  r(1, -12, 9, 7, ENEMY.red);
+  r(1, -12, 9, 7, ENEMY.pink);
   r(3, -15, 6, 3, ENEMY.orangeLight);
-  r(2, -16, 8, 2, ENEMY.red);
+  r(2, -16, 8, 2, ENEMY.plum);
   r(7, -14, 1, 1, ENEMY.eye);
   // Drawing (order 19), the bow comes up two and bends further, the arrow on the string and his arm back.
   const lift = up ? 2 : 0;
   for (let k = -6; k <= 6; k++) r(11 + Math.round((1 - (k / 6) ** 2) * (up ? 3 : 2)), -10 - lift + k, 1, 1, ENEMY.orange);
   if (up) {
     r(5, -12, 8, 1, ENEMY.pale);
-    r(3, -13, 3, 2, ENEMY.red);
+    r(3, -13, 3, 2, ENEMY.pink);
   }
 }
 
-/** A goose of the market: an orange-light body, its neck up, an orange beak and feet. 14 x 13. */
+/** A goose of the market: white, its neck up, an orange beak and feet. 14 x 13. */
 function gooseArt(e: Enemy) {
   const r = parts(e, 14);
-  r(1, -8, 11, 6, ENEMY.orangeLight);
-  r(2, -6, 6, 1, ENEMY.orange);
-  r(9, -12, 3, 6, ENEMY.orangeLight);
-  r(10, -12, 3, 2, ENEMY.orangeLight);
+  r(1, -8, 11, 6, ENEMY.white);
+  r(2, -6, 6, 1, ENEMY.plumLight);
+  r(9, -12, 3, 6, ENEMY.white);
+  r(10, -12, 3, 2, ENEMY.white);
   r(13, -11, 2, 1, ENEMY.orange);
   r(11, -11, 1, 1, ENEMY.eye);
+  r(12, -11, 1, 1, ENEMY.line);
   r(4, -2, 2, 2, ENEMY.orange);
   r(8, -2, 2, 2, ENEMY.orange);
 }
@@ -1099,7 +1105,7 @@ function dogArt(e: Enemy) {
   r(13, -10, 1, 1, ENEMY.eye);
   r(11, -12, 1, 1, ENEMY.plum);
   r(0, -12, 1, 5, ENEMY.plum);
-  r(12, -7, 2, 1, ENEMY.red);
+  r(12, -7, 2, 1, ENEMY.pink);
   for (const dx of [2, 5, 9, 12]) r(dx, -4, 2, 4 - ((dx > 7 ? leg : 1 - leg) ? 1 : 0), ENEMY.plum);
 }
 
@@ -1112,7 +1118,7 @@ function arrowArt(s: Shot, t: number) {
     return;
   }
   const d = Math.hypot(s.vx, s.vy) || 1;
-  for (let k = 0; k < 9; k++) R(x - Math.round((s.vx / d) * k), y - Math.round((s.vy / d) * k), 1, 1, k < 2 ? ENEMY.red : ENEMY.orange);
+  for (let k = 0; k < 9; k++) R(x - Math.round((s.vx / d) * k), y - Math.round((s.vy / d) * k), 1, 1, k < 2 ? ENEMY.pale : ENEMY.orange);
   R(x - Math.round((s.vx / d) * 9), y - Math.round((s.vy / d) * 9) - 1, 1, 3, ENEMY.plumLight);
 }
 

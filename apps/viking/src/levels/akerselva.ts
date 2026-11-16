@@ -233,10 +233,10 @@ function duck(e: Enemy) {
   r(0, -6, 2, 3, ENEMY.orange);
   r(3, -6, 5, 1, ENEMY.orangeLight);
   r(9, -10 + bob, 4, 4, ENEMY.poison);
-  r(13, -9 + bob, 2, 1, ENEMY.red);
+  r(13, -9 + bob, 2, 1, ENEMY.orangeLight);
   r(11, -9 + bob, 1, 1, ENEMY.eye);
-  r(4 + bob, -2, 2, 2, ENEMY.red);
-  r(8 - bob, -2, 2, 2, ENEMY.red);
+  r(4 + bob, -2, 2, 2, ENEMY.orange);
+  r(8 - bob, -2, 2, 2, ENEMY.orange);
 }
 
 const SALMON = ["...bb...", "..bbbb..", ".bbbbbb.", ".bbebbs.", "bbbbbsss", "bbbbssss", "bbbsssss", "bbbsssss", ".bbssss.", ".bbsss..", "..bss...", "..bbs...", "...bb...", ".bb..bb.", "bb....bb"];
@@ -259,7 +259,7 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
   if (l.up <= 0) return;
   // Past the top of its leap it turns over.
   const falling = leap(e, t + 1).up < l.up;
-  const colors: Record<string, string> = { b: ENEMY.red, s: ENEMY.redLight, e: ENEMY.eye };
+  const colors: Record<string, string> = { b: ENEMY.pink, s: ENEMY.white, e: ENEMY.eye };
   SALMON.forEach((row, r) =>
     [...row].forEach((ch, c) => {
       if (ch === ".") return;

@@ -12,6 +12,7 @@ import { leap } from "../../src/game/enemies";
 import { newPlay, stepPlay } from "../../src/game/play";
 import { BUILT, ORDER, loadLevel } from "../../src/levels/index";
 import { SHIELD_RULES } from "../../src/game/shield";
+import { skyOf } from "./skies";
 
 const IDLE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const seen = new Set<string>();
@@ -22,7 +23,7 @@ for (const st of BUILT) {
   const def = await loadLevel(st.id);
   const i0 = ORDER.indexOf(st.id);
   for (const [i, e] of (def.enemies ?? []).entries()) {
-    const kind = e.look === "gull" && e.kind === "thrower" ? "gull-thrower" : e.look;
+    const kind = e.look === "gull" && e.kind === "thrower" ? "gull-thrower" : e.look === "guard" && st.id === "gamlebyen" ? "guard (Gamlebyen)" : e.look;
     if (seen.has(kind) || (PREFER[kind] && PREFER[kind] !== st.id)) continue;
     seen.add(kind);
     // A jumper is photographed in the air: at a step near the top of its leap.
@@ -66,6 +67,6 @@ for (const st of BUILT) {
     for (let t = 0; t < steps; t++) stepPlay(p, IDLE);
     const en = p.enemies[i];
     const wy = Math.round(en.y - en.h / 2);
-    for (const sky of ["day", "night"]) console.log(`${kind}\t${st.id}\t${sky}\t/viking/?debug&steps=${steps}&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(en.x)},${wy}&look=${Math.round(en.x)},${wy}#${st.id}`);
+    for (const sky of ["day", skyOf(def)]) console.log(`${kind}\t${st.id}\t${sky}\t/viking/?debug&steps=${steps}&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(en.x)},${wy}&look=${Math.round(en.x)},${wy}#${st.id}`);
   }
 }

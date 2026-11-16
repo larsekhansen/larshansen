@@ -20,7 +20,8 @@ export const bed = "#2a2a35"; // the track bed
 export const ballast = "#3c3a44";
 export const sleeper = "#4a3a2c";
 export const rail = "#8f98a3";
-export const live = "#f2c200"; // the third rail's cover, a warning yellow
+// The third rail's cover: the warning red of what hurts (order 22: the yellow is the paint on what he stands on).
+export const live = "#e8262e";
 export const spark = "#bfe9ff";
 export const train = "#e9edf1"; // the trains: pale grey, a dark band of windows, a red stripe
 export const trainShade = "#b7c2cf";

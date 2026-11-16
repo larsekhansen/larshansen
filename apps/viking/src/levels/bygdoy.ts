@@ -784,16 +784,16 @@ function halls() {
 
 // --- The creatures: the crab, the penguin, the slingers ------------------------------------------------
 
-/** A shore crab sidling: a red shell, claws up, eyes on stalks. 15 x 12. */
+/** A shore crab sidling: an orange shell, claws up, eyes on stalks. 15 x 12. */
 function crab(e: Enemy) {
   const r = parts(e, 15);
   const step = view.reduced ? 0 : Math.floor(e.x / 2) % 2;
-  r(2, -8, 11, 5, ENEMY.red);
-  r(3, -9, 9, 1, ENEMY.red);
-  r(3, -7, 9, 1, ENEMY.redLight);
+  r(2, -8, 11, 5, ENEMY.orange);
+  r(3, -9, 9, 1, ENEMY.orange);
+  r(3, -7, 9, 1, ENEMY.orangeLight);
   for (const dx of [0, 12]) {
-    r(dx, -11, 3, 4, ENEMY.red);
-    r(dx + (dx ? 1 : -1), -12, 3, 1, ENEMY.redLight);
+    r(dx, -11, 3, 4, ENEMY.orange);
+    r(dx + (dx ? 1 : -1), -12, 3, 1, ENEMY.orangeLight);
   }
   for (let k = 0; k < 3; k++) {
     r(2 + k * 2, -3, 1, 3 - ((k + step) % 2), ENEMY.plum);
@@ -803,24 +803,24 @@ function crab(e: Enemy) {
   r(9, -10, 1, 1, ENEMY.eye);
 }
 
-/** A penguin from the aquarium, waddling: a plum back, an orange front, a red beak and feet. 11 x 12. */
+/** A penguin from the aquarium, waddling: a plum back, an orange front, an orange beak and feet. 11 x 12. */
 function penguin(e: Enemy) {
   const r = parts(e, 11);
   const w = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
   r(1, -10 + w, 9, 9, ENEMY.plum);
   r(5, -8 + w, 4, 7, ENEMY.orangeLight);
   r(2, -12 + w, 7, 3, ENEMY.plum);
-  r(9, -11 + w, 3, 1, ENEMY.red);
+  r(9, -11 + w, 3, 1, ENEMY.orange);
   r(7, -11 + w, 1, 1, ENEMY.eye);
   r(0, -7 + w, 2, 4, ENEMY.plumLight);
-  r(2, -1, 3, 1, ENEMY.red);
-  r(6, -1, 3, 1, ENEMY.red);
+  r(2, -1, 3, 1, ENEMY.orange);
+  r(6, -1, 3, 1, ENEMY.orange);
 }
 
 /** A slinger on a storehouse ridge: a tunic, a cap, the sling going round over his head as the throw comes. 11 x 16. */
 function slinger(e: Enemy, t: number) {
   const r = parts(e, 11);
-  const coat = e.def.c % 2 ? ENEMY.red : ENEMY.plum;
+  const coat = e.def.c % 2 ? ENEMY.pink : ENEMY.plum;
   r(3, -5, 2, 5, ENEMY.plum);
   r(6, -5, 2, 5, ENEMY.plum);
   r(1, -12, 9, 7, coat);

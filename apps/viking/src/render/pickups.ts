@@ -90,29 +90,39 @@ function pigeon(e: Enemy) {
   r(9, -11 + s, 3, 2, E.plum);
   r(10, -11 + s, 1, 1, E.eye);
   r(12, -10 + s, 1, 1, E.orange);
-  r(4 + s, -3, 1, 3, E.red);
-  r(7 - s, -3, 1, 3, E.red);
+  r(4 + s, -3, 1, 3, E.pink);
+  r(7 - s, -3, 1, 3, E.pink);
 }
 
-/** A gull (or a crow) on the wing: a body, wings up or down, its head the way it flies. 17 x 9. */
+/** A gull (or a crow) on the wing: a body, wings up or down, its head the way it flies; a white gull's wings black at the tips and a dark mark by its eye. 17 x 9. */
 function gull(e: Enemy, t: number, body: string, wing: string) {
   const r = parts(e, 17);
   const up = view.reduced ? 0 : Math.floor(t / 7) % 2;
+  const white = body === E.white;
   r(4, -6, 9, 4, body);
   r(12, -7, 3, 3, body);
   r(13, -6, 1, 1, E.eye);
-  r(15, -6, 2, 1, E.red);
+  if (white) r(14, -6, 1, 1, E.line);
+  r(15, -6, 2, 1, E.orange);
   r(1, -5, 3, 2, body);
   if (up) {
     r(1, -9, 6, 3, wing);
     r(9, -9, 5, 3, wing);
+    if (white) {
+      r(1, -9, 2, 1, E.line);
+      r(12, -9, 2, 1, E.line);
+    }
   } else {
     r(2, -3, 6, 3, wing);
     r(9, -3, 5, 3, wing);
+    if (white) {
+      r(2, -1, 2, 1, E.line);
+      r(12, -1, 2, 1, E.line);
+    }
   }
 }
 
-/** A rat: a plum hump, a pointed snout, a red tail behind. 13 x 10. */
+/** A rat: a plum hump, a pointed snout, a pink tail and feet. 13 x 10. */
 function rat(e: Enemy) {
   const r = parts(e, 13);
   const s = stride(e);
@@ -120,13 +130,13 @@ function rat(e: Enemy) {
   r(3, -9, 6, 1, E.plum);
   r(4, -8, 4, 1, E.plumLight);
   r(10, -6, 2, 4, E.plum);
-  r(12, -4, 1, 1, E.red);
+  r(12, -4, 1, 1, E.pink);
   r(10, -6, 1, 1, E.eye);
-  r(9, -10, 2, 1, E.redLight);
-  r(0, -3, 3, 1, E.red);
-  r(-2, -4, 2, 1, E.red);
-  r(3 + s, -2, 2, 2, E.red);
-  r(8 - s, -2, 2, 2, E.red);
+  r(9, -10, 2, 1, E.pink);
+  r(0, -3, 3, 1, E.pink);
+  r(-2, -4, 2, 1, E.pink);
+  r(3 + s, -2, 2, 2, E.pink);
+  r(8 - s, -2, 2, 2, E.pink);
 }
 
 /** An enemy in one of the looks every level may use (the first level's: pigeons, gulls, rats; and crows). The level draws the rest. */
@@ -137,13 +147,13 @@ export function drawEnemy(e: Enemy, t: number) {
     case "pigeon":
       return pigeon(e);
     case "gull":
-      return gull(e, t, E.orangeLight, E.orange);
+      return gull(e, t, E.white, E.white);
     case "crow":
       return gull(e, t, E.plum, E.plumLight);
     case "rat":
       return rat(e);
     default:
-      R(e.x - e.w / 2, e.y - e.h, e.w, e.h, KIND[e.def.kind].stomp ? E.poison : E.red);
+      R(e.x - e.w / 2, e.y - e.h, e.w, e.h, KIND[e.def.kind].stomp ? E.poison : E.plum);
   }
 }
 
@@ -151,7 +161,7 @@ export function drawEnemy(e: Enemy, t: number) {
 export function drawShot(s: Shot) {
   const x = Math.round(s.x - SHOT.w / 2);
   const y = Math.round(s.y - SHOT.h / 2);
-  R(x + 1, y, 4, 6, ENEMY.redLight);
-  R(x, y + 1, 6, 4, ENEMY.redLight);
+  R(x + 1, y, 4, 6, ENEMY.pink);
+  R(x, y + 1, 6, 4, ENEMY.pink);
   R(x + 1, y + 1, 2, 1, ENEMY.pale);
 }

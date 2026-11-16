@@ -311,8 +311,10 @@ export interface LevelDef {
   hazards?: Hazard[];
   /** How far either side of home the sheep graze, in tiles, when not four: on a knoll, they stand. */
   sheepRange?: number;
-  /** How much the far, mid and near layers fade towards the horizon (0.35, 0.3, 0.2 when not said): under the ground, nothing does. */
+  /** How much the far, mid and near layers fade towards the level's air (`HAZE` in `render/haze.ts` when not said): under the ground, nothing does. */
   haze?: [number, number, number];
+  /** The air the far layers fade into by day when it is not the sky's at the horizon: a grey-white in snow and mist (order 22). */
+  air?: string;
   /** Under the ground, with no sky: its far layers fill the whole view, however tall, and are not moved down on an upright screen. */
   underground?: boolean;
   /** Its own moving ground: rocking decks, sinking pads. */

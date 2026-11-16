@@ -678,7 +678,7 @@ function floorTile(c: number, r: number, x: number, y: number, m: TileMap) {
   if (r === P || r === U) R(x, y + 1, TILE, 1, mix(METRO.edge, METRO.floor, 0.35));
 }
 
-/** The track bed: ballast, sleepers, two running rails and the third rail beside them under its yellow cover. */
+/** The track bed: ballast, sleepers, two running rails and the third rail beside them under its red cover. */
 function bedTile(c: number, x: number, y: number, top: boolean, t: number) {
   R(x, y, TILE, TILE, top ? METRO.bed : METRO.vault);
   if (!top) return;
@@ -839,18 +839,18 @@ function trackRat(e: Enemy, t: number) {
   r(4, -11, 3, 7, ENEMY.plumLight);
   r(3, falling ? -2 : -15, 6, 3, ENEMY.plum);
   r(5, falling ? 0 : -15, 1, 1, ENEMY.eye);
-  r(9, -8, 3, 1, ENEMY.red);
-  r(1, falling ? -14 : -3, 1, 5, ENEMY.red);
+  r(9, -8, 3, 1, ENEMY.pink);
+  r(1, falling ? -14 : -3, 1, 5, ENEMY.pink);
 }
 
-/** A luggage trolley that rolls by itself: a red cage, its handle up, two wheels. 15 x 14. */
+/** A luggage trolley that rolls by itself: a plum cage, its handle up, two wheels. 15 x 14. */
 function trolley(e: Enemy) {
   const r = parts(e, 15);
-  r(1, -12, 13, 1, ENEMY.red);
-  r(1, -5, 13, 1, ENEMY.red);
-  for (let k = 1; k < 14; k += 4) r(k, -12, 1, 8, ENEMY.red);
-  r(2, -11, 11, 6, ENEMY.redLight);
-  r(0, -14, 1, 3, ENEMY.red);
+  r(1, -12, 13, 1, ENEMY.plum);
+  r(1, -5, 13, 1, ENEMY.plum);
+  for (let k = 1; k < 14; k += 4) r(k, -12, 1, 8, ENEMY.plum);
+  r(2, -11, 11, 6, ENEMY.pink);
+  r(0, -14, 1, 3, ENEMY.plum);
   r(-1, -15, 3, 1, ENEMY.orange);
   const roll = view.reduced ? 0 : Math.floor(e.x / 2) % 2;
   for (const wx of [2, 11]) r(wx, -3, 3, 3, roll ? ENEMY.plum : ENEMY.plumLight);
@@ -859,8 +859,8 @@ function trolley(e: Enemy) {
 /** An umbrella blown along the platform: spinning, or inside out with its ribs up like spikes. It hurts from above. 15 x 12. */
 function umbrella(e: Enemy, t: number) {
   const r = parts(e, 15);
-  const cloth = e.def.c % 2 ? ENEMY.red : ENEMY.plum;
-  const shine = e.def.c % 2 ? ENEMY.redLight : ENEMY.plumLight;
+  const cloth = e.def.c % 2 ? ENEMY.pink : ENEMY.plum;
+  const shine = e.def.c % 2 ? ENEMY.white : ENEMY.plumLight;
   const spin = view.reduced ? 0 : Math.floor(t / 8 + e.x / 6) % 2;
   if (spin) {
     // Canopy up, ribs sticking out of its edge.
@@ -942,7 +942,7 @@ export const STORTINGET: LevelDef = {
     },
     {
       label: { nb: "Strømførende", en: "Live rail" },
-      lines: { nb: ["Ikke gå i sporet. Den gule skinna er strømførende.", "Tavla sier når neste tog står her."], en: ["Keep out of the track. The yellow rail is live.", "The board says when the next train stands here."] }
+      lines: { nb: ["Ikke gå i sporet. Den røde skinna er strømførende.", "Tavla sier når neste tog står her."], en: ["Keep out of the track. The red rail is live.", "The board says when the next train stands here."] }
     },
     {
       label: { nb: "Dørene lukkes", en: "Doors closing" },

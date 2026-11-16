@@ -440,7 +440,7 @@ function pier(c: number) {
   for (let k = 0; k < 2 * TILE; k += 7) R(x + k, WATER - 2, 3, 2, PLANTS.hedgeDark);
 }
 
-/** A guard of the fortress: a red coat, a plum helmet with a plume, a pike at his back. 13 x 20. */
+/** A guard of the fortress: a plum coat, a plum helmet with a plume, a pike at his back. 13 x 20. */
 function guard(e: Enemy) {
   const r = parts(e, 13);
   const s = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
@@ -450,20 +450,20 @@ function guard(e: Enemy) {
   r(8, -19, 4, 1, ENEMY.poisonLight);
   r(3, -15, 7, 4, ENEMY.orangeLight);
   r(8, -14, 1, 1, ENEMY.eye);
-  r(2, -11, 9, 8, ENEMY.red);
-  r(2, -7, 9, 1, ENEMY.plum);
-  r(3 + s, -3, 3, 3, ENEMY.red);
-  r(7 - s, -3, 3, 3, ENEMY.red);
+  r(2, -11, 9, 8, ENEMY.plum);
+  r(2, -7, 9, 1, ENEMY.line);
+  r(3 + s, -3, 3, 3, ENEMY.line);
+  r(7 - s, -3, 3, 3, ENEMY.line);
   r(2 + s, -1, 4, 1, ENEMY.plum);
   r(7 - s, -1, 4, 1, ENEMY.plum);
 }
 
-/** A brazier on its stone foot: a red iron basket, flames over the rim. It hurts from above. 13 x 16. */
+/** A brazier on its stone foot: a dark iron basket, flames over the rim. It hurts from above. 13 x 16. */
 function brazier(e: Enemy, t: number) {
   const r = parts(e, 13);
   r(3, -5, 7, 5, ENEMY.plum);
   r(3, -5, 7, 1, ENEMY.plumLight);
-  r(0, -11, 13, 6, ENEMY.red);
+  r(0, -11, 13, 6, ENEMY.line);
   for (let k = 1; k < 13; k += 4) r(k, -11, 1, 6, ENEMY.plum);
   const flick = view.reduced ? 0 : Math.floor(t / 5) % 3;
   r(1, -12, 11, 1, ENEMY.orange);

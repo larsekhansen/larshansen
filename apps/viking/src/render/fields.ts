@@ -4,6 +4,11 @@ import { TINT, ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { drawSky } from "@larshansen/pixelkit/sky";
 import { newPlay } from "../game/play";
 import type { LevelDef, View } from "../levels/types";
+import { carrierDrawn, carrierShown, drawCarrier } from "@larshansen/pixelkit/carrier";
+import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
+import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
+import { drawTimed } from "@larshansen/pixelkit/timed";
+import { STAND_LEDGE } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
 
 // For the tests only (order 18, ADR 0039), never imported by the page: what a level paints as fields,
@@ -88,40 +93,130 @@ export function skyOf(def: LevelDef, phase: Phase): Sky {
   return { ...(own ?? skyFor(new Date(2026, 5, 15, 12), phase)), phase };
 }
 
+/** What a level paints, by layer, as the area each colour covers (order 22: one walk over the level for every measure). */
+export interface Painted {
+  sky: Map<string, number>;
+  far: Map<string, number>;
+  mid: Map<string, number>;
+  near: Map<string, number>;
+  /** The street: its backdrop, water and tiles. */
+  lane: Map<string, number>;
+  /** What moves and is used (carriers, ledges on a beat, cannons, drums, flags) and what the level draws in front. */
+  things: Map<string, number>;
+}
+
 /**
- * The colours a level paints as fields under a phase's sky, untinted, with the share of the level's
- * area each covers. Drawn at views 320 x 200 across the whole map.
+ * Every colour a level paints under a phase's sky, untinted, by layer, with the area each covers. Drawn at views
+ * 320 x 200 across the whole map.
  */
-export function levelFields(def: LevelDef, phase: Phase): Map<string, number> {
+export function levelPaint(def: LevelDef, phase: Phase): Painted {
   const play = newPlay(def, {});
   const map = play.map;
   const sky = skyOf(def, phase);
-  const rec = areaRecorder();
+  const recs = { sky: areaRecorder(), far: areaRecorder(), mid: areaRecorder(), near: areaRecorder(), lane: areaRecorder(), things: areaRecorder() };
   const was = { ...view, g: ctx() };
   Object.assign(view, { w: 320, h: 200, k: 1, reduced: true });
   const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
-  target(rec.ctx);
   const horizon = map.height - 4 * TILE - 34;
+  const art = def.art;
   for (let y = -view.h; y < map.height + view.h / 2; y += view.h)
     for (let x = 0; x < map.width; x += view.w) {
       view.camX = view.camXf = x;
       view.camY = view.camYf = y;
       v.him = { x: x + view.w / 2, y: y + view.h / 2 };
+      target(recs.sky.ctx);
       drawSky(sky, 0, horizon);
-      def.art.far?.(v);
-      def.art.mid?.(v);
-      def.art.near?.(v);
-      def.art.back(v);
+      target(recs.far.ctx);
+      art.far?.(v);
+      target(recs.mid.ctx);
+      art.mid?.(v);
+      target(recs.near.ctx);
+      art.near?.(v);
+      target(recs.lane.ctx);
+      art.back(v);
       drawWater(map, 0);
-      drawTiles(map, def.art, sky, def.underground);
+      drawTiles(map, art, sky, def.underground);
+      // What moves and what is used, as the page draws them (`drawThings` in main.ts), at the start; and what is in front.
+      target(recs.things.ctx);
+      def.carriers.forEach((d, i) => {
+        if (!carrierShown(d, 0)) return;
+        const at = carrierDrawn(d, 0, 1);
+        if (art.carrier) art.carrier(i, at, v);
+        else drawCarrier(d, 0, 1, sky.snow, STAND_LEDGE);
+      });
+      def.timed.forEach((l, i) => (art.timed ? art.timed(i, v) : drawTimed(l, 0, sky.snow, STAND_LEDGE)));
+      play.cannons.forEach((l, i) => (art.cannon ? art.cannon(i, l, -999, play.firedAt[i], v) : drawCannon(l, 0, -999, play.firedAt[i])));
+      play.drums.forEach((l, i) => (art.drum ? art.drum(i, l, play.drummedAt[i], v) : drawDrum(l, 0, play.drummedAt[i])));
+      play.flags.forEach((f, i) => art.flag?.(i, f, null, v) || drawCheckpoint(f, null, 0));
+      art.front?.(v);
       lights.length = 0;
     }
   target(was.g);
   Object.assign(view, { w: was.w, h: was.h, k: was.k, camX: was.camX, camY: was.camY, camXf: was.camXf, camYf: was.camYf, reduced: was.reduced });
-  const total = [...rec.area.values()].reduce((a, b) => a + b, 0);
+  return { sky: recs.sky.area, far: recs.far.area, mid: recs.mid.area, near: recs.near.area, lane: recs.lane.area, things: recs.things.area };
+}
+
+/** Areas added together, as shares of their sum, keeping those of `share` or more. */
+export function shares(maps: Map<string, number>[], share = 0): Map<string, number> {
+  const sum = new Map<string, number>();
+  for (const m of maps) for (const [c, a] of m) sum.set(c, (sum.get(c) ?? 0) + a);
+  const total = [...sum.values()].reduce((a, b) => a + b, 0);
   const out = new Map<string, number>();
-  for (const [c, a] of rec.area) if (a / total >= FIELD_SHARE) out.set(c, a / total);
+  for (const [c, a] of sum) if (a / total >= share) out.set(c, a / total);
   return out;
+}
+
+/**
+ * The colours a level paints as fields under a phase's sky, untinted, with the share of the level's area each
+ * covers: the sky, the far layers, the street's backdrop, water and tiles. `share`: the least share kept (0 keeps
+ * every colour). `painted`: the level's paint already walked (`levelPaint`), so it is walked once.
+ */
+export function levelFields(def: LevelDef, phase: Phase, share = FIELD_SHARE, painted?: Painted): Map<string, number> {
+  const p = painted ?? levelPaint(def, phase);
+  return shares([p.sky, p.far, p.mid, p.near, p.lane], share);
+}
+
+/** A colour's saturation and value (HSV, 0 to 1). */
+export function satVal([r, g, b]: Rgb): { s: number; v: number } {
+  const mx = Math.max(r, g, b) / 255;
+  const mn = Math.min(r, g, b) / 255;
+  return { s: mx ? (mx - mn) / mx : 0, v: mx };
+}
+
+/** The p-th share (0 to 1) of weighted values. */
+export function percentile(xs: { x: number; w: number }[], p: number): number {
+  const sorted = [...xs].sort((a, b) => a.x - b.x);
+  const total = sorted.reduce((t, a) => t + a.w, 0);
+  let run = 0;
+  for (const a of sorted) {
+    run += a.w;
+    if (run >= p * total) return a.x;
+  }
+  return sorted.at(-1)?.x ?? 0;
+}
+
+/**
+ * What is behind the play lane against the lane itself (order 22, A6): the far layers' colours (far, mid, near) by
+ * day, each with the haze it is drawn with (`haze`, toward `air`), as saturation and value weighted by the area each
+ * covers; and the same of the street (its backdrop, water and tiles). The middle and the tenth and ninetieth
+ * percentiles of each.
+ */
+export function backdropBand(def: LevelDef, haze: readonly [number, number, number], air: string, painted?: Painted) {
+  const p = painted ?? levelPaint(def, "day");
+  const airRgb = parseColour(air)!.rgb;
+  const back: { s: number; v: number; w: number }[] = [];
+  [p.far, p.mid, p.near].forEach((layer, i) => {
+    for (const [c, a] of layer) back.push({ ...satVal(mixRgb(parseColour(c)!.rgb, airRgb, haze[i])), w: a });
+  });
+  const lane = [...p.lane].map(([c, a]) => ({ ...satVal(parseColour(c)!.rgb), w: a }));
+  const stats = (xs: { s: number; v: number; w: number }[]) => ({
+    s50: percentile(xs.map((a) => ({ x: a.s, w: a.w })), 0.5),
+    s90: percentile(xs.map((a) => ({ x: a.s, w: a.w })), 0.9),
+    v10: percentile(xs.map((a) => ({ x: a.v, w: a.w })), 0.1),
+    v50: percentile(xs.map((a) => ({ x: a.v, w: a.w })), 0.5),
+    v90: percentile(xs.map((a) => ({ x: a.v, w: a.w })), 0.9)
+  });
+  return { back: back.length ? stats(back) : null, lane: stats(lane) };
 }
 
 /** The night's (or evening's, twilight's) tint over a colour, as the street layer gets it. */

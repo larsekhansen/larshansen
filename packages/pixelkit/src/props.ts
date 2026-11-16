@@ -75,6 +75,8 @@ export interface LedgeLook {
   joint: string;
   /** The top edge's thickness, when not one pixel; and it stays its own colour under snow (a standing edge, the viking game's). */
   topH?: number;
+  /** The top edge worn at the ledge's ends: its outermost top pixel inside the end in this colour (the viking game's paint). */
+  worn?: string;
 }
 /** A stone lintel left from an arch: the front page's ledges. */
 export const STONE_LEDGE: LedgeLook = { body: MASONRY.lintel, top: MASONRY.worn, edge: MASONRY.edge, joint: STONE.mortar };
@@ -89,6 +91,8 @@ export function ledge(x: number, y: number, look: LedgeLook, first: boolean, las
   for (let i = 3; i < TILE; i += 6) R(x + i, y + 1, 1, 3, look.joint);
   if (first) R(x, y, 1, 5, look.edge);
   if (last) R(x + TILE - 1, y, 1, 5, look.edge);
+  if (look.worn && first) R(x + 1, y, 1, 1, look.worn);
+  if (look.worn && last) R(x + TILE - 2, y, 1, 1, look.worn);
 }
 
 /** A ground tile's earth, with one pebble in it at a place that comes from the tile. */

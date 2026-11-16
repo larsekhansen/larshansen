@@ -13,7 +13,6 @@ import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { parts } from "../render/pickups";
-import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -546,16 +545,14 @@ export function sledgerReady(e: Enemy, him: number, t: number) {
 }
 
 /**
- * A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, it is out of
- * the way and harmless, drawn faint and not outlined. About to set off, it leans forward over the sledge's
- * nose and digs its mittens into the snow either side to push (order 20). 19 x 15.
+ * A sledger: a kid on an orange sledge, slower than he is; pulled off at the end of its stretch, up on the bank,
+ * it is out of the way and harmless, outlined in the calm pale (order 22: the page outlines it so while it is
+ * calm). About to set off, it leans forward over the sledge's nose and digs its mittens into the snow either
+ * side to push (order 20). 19 x 15.
  */
 function sledgerArt(e: Enemy, v: View) {
-  const x = Math.round(e.x);
-  const y = Math.round(e.y);
-  if (e.calm) return plain(() => R(x + 12, y - 7, 12, 4, mix(K.sledgeWood, K.slope, 0.4)));
-  const r = parts(e, 18);
-  const coat = e.def.c % 2 ? ENEMY.plum : ENEMY.red;
+  const r = parts(e.calm ? { ...e, x: e.x + 18, y: e.y - 7 } : e, 18);
+  const coat = e.def.c % 2 ? ENEMY.plum : ENEMY.pink;
   r(0, -5, 17, 4, ENEMY.orange);
   r(0, -5, 17, 1, ENEMY.orangeLight);
   r(-1, -1, 20, 1, ENEMY.plum);
@@ -587,6 +584,8 @@ export const KORKETREKKEREN: LevelDef = {
   landmark: { nb: "Akebakken", en: "The sledge run" },
   place: { nb: "Frognerseteren", en: "Frognerseteren" },
   sky: "evening",
+  // The air in the snow: the far layers fade into a grey-white (order 22).
+  air: "#e6ebef",
   map: MAP,
   legend: { solid: "#", oneWay: "=", water: "" },
   ramps: [],

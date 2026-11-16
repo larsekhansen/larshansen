@@ -9,23 +9,24 @@ import { parts, stride } from "./pickups";
 
 const E = ENEMY;
 
-/** A gull standing on the bank with a chip in its beak, flicking it at him on its beat. 12 x 16. */
+/** A gull standing on the bank with a chip in its beak, flicking it at him on its beat: white, a plum wing tipped black. 12 x 16. */
 function gullStanding(e: Enemy, t: number) {
   const r = parts(e, 12);
   // Winding up (order 19) it rears: its head goes up two, its wing lifts over its back, the chip held high.
   const up = windingUp(e, t) ? 2 : 0;
-  r(1, -12, 9, 7, E.orangeLight);
-  r(1, -9, 6, 3, E.orange);
-  r(0, -9, 2, 3, E.orange);
-  r(7, -16 - up, 4, 4 + up, E.orangeLight);
+  r(1, -12, 9, 7, E.white);
+  r(1, -9, 6, 3, E.plum);
+  r(0, -9, 2, 3, E.line);
+  r(7, -16 - up, 4, 4 + up, E.white);
   r(8, -15 - up, 1, 1, E.eye);
-  r(10, -14 - up, 2, 1, E.red);
+  r(9, -15 - up, 1, 1, E.line);
+  r(10, -14 - up, 2, 1, E.orange);
   if (up) {
-    r(1, -15, 5, 3, E.orange);
-    r(11, -18, 2, 2, E.orange);
+    r(1, -15, 5, 3, E.plum);
+    r(11, -18, 2, 2, E.orangeLight);
   }
-  r(3, -5, 1, 5, E.red);
-  r(7, -5, 1, 5, E.red);
+  r(3, -5, 1, 5, E.pink);
+  r(7, -5, 1, 5, E.pink);
 }
 
 /** A rented e-scooter riding itself: deck, stem, bars, two small wheels, a lamp. 18 x 15. */
@@ -34,10 +35,10 @@ function scooter(e: Enemy) {
   r(2, -5, 13, 2, E.poison);
   r(2, -4, 13, 1, E.poisonLight);
   r(14, -15, 2, 10, E.poison);
-  r(12, -15, 5, 1, E.red);
+  r(12, -15, 5, 1, E.plum);
   for (const wx of [1, 14]) {
-    r(wx, -3, 4, 3, E.red);
-    r(wx + 1, -2, 2, 1, E.redLight);
+    r(wx, -3, 4, 3, E.plum);
+    r(wx + 1, -2, 2, 1, E.pink);
   }
   r(16, -12, 1, 1, E.eye);
 }
@@ -47,7 +48,7 @@ function hedgehog(e: Enemy) {
   const r = parts(e, 15);
   const s = stride(e);
   r(1, -6, 11, 5, E.orange);
-  for (let i = 0; i < 12; i += 2) r(i, -10 + (i % 4 ? 1 : 0), 2, 4, E.red);
+  for (let i = 0; i < 12; i += 2) r(i, -10 + (i % 4 ? 1 : 0), 2, 4, E.plum);
   r(11, -5, 3, 3, E.orangeLight);
   r(14, -4, 1, 1, E.plum);
   r(12, -5, 1, 1, E.eye);
@@ -58,9 +59,9 @@ function hedgehog(e: Enemy) {
 /** A fire basket on three legs, coals glowing, flames over the rim. 15 x 15. */
 function grill(e: Enemy, t: number) {
   const r = parts(e, 15);
-  r(1, -9, 13, 5, E.red);
-  r(0, -10, 15, 1, E.redLight);
-  for (const lx of [2, 7, 12]) r(lx, -4, 1, 4, E.red);
+  r(1, -9, 13, 5, E.plum);
+  r(0, -10, 15, 1, E.pink);
+  for (const lx of [2, 7, 12]) r(lx, -4, 1, 4, E.plum);
   const flick = view.reduced ? 0 : Math.floor(t / 5) % 3;
   r(2, -11, 11, 1, E.orange);
   r(3 + flick, -14, 3, 3, E.orange);
@@ -74,7 +75,7 @@ function kid(e: Enemy, t: number) {
   const r = parts(e, 11);
   const up = windingUp(e, t);
   const thrown = t - e.thrownAt < 10;
-  const jacket = e.def.c % 2 ? E.red : E.plum;
+  const jacket = e.def.c % 2 ? E.pink : E.plum;
   r(3, -17, 6, 3, E.poison);
   r(5, -18, 2, 1, E.poisonLight);
   r(3, -14, 6, 4, E.orangeLight);
@@ -85,7 +86,7 @@ function kid(e: Enemy, t: number) {
   // The arm: down, raised behind with a snowball while it winds up, forward as it throws.
   if (up) {
     r(0, -16, 2, 6, jacket);
-    r(-1, -19, 4, 4, E.redLight);
+    r(-1, -19, 4, 4, E.pink);
   } else if (thrown) r(10, -11, 4, 2, jacket);
   else r(9, -9, 2, 5, jacket);
 }
@@ -99,7 +100,7 @@ function wasp(e: Enemy, t: number) {
   r(7, -5, 1, 4, E.poison);
   r(10, -5, 2, 3, E.poison);
   r(11, -5, 1, 1, E.eye);
-  r(0, -3, 2, 1, E.red);
+  r(0, -3, 2, 1, E.line);
   r(3, -8 - buzz, 3, 2, E.plumLight);
   r(6, -8 + buzz - 1, 3, 2, E.plumLight);
 }
@@ -112,13 +113,13 @@ function fox(e: Enemy) {
   r(11, -10, 4, 5, E.orange);
   r(14, -8, 2, 2, E.orange);
   r(13, -9, 1, 1, E.eye);
-  r(11, -12, 1, 2, E.red);
-  r(14, -12, 1, 2, E.red);
+  r(11, -12, 1, 2, E.line);
+  r(14, -12, 1, 2, E.line);
   r(12, -6, 3, 1, E.orangeLight);
   r(0, -9, 4, 3, E.orange);
   r(-1, -9, 1, 3, E.orangeLight);
-  r(4 + s, -3, 1, 3, E.red);
-  r(11 - s, -3, 1, 3, E.red);
+  r(4 + s, -3, 1, 3, E.line);
+  r(11 - s, -3, 1, 3, E.line);
 }
 
 /** A tawny owl gliding: a round head, a light face, wide soft wings. 20 x 11. */
@@ -130,7 +131,7 @@ function owl(e: Enemy, t: number) {
   r(8, -11, 4, 2, E.orange);
   r(8, -8, 1, 1, E.eye);
   r(11, -8, 1, 1, E.eye);
-  r(9, -6, 2, 1, E.red);
+  r(9, -6, 2, 1, E.pale);
   if (up) {
     r(0, -9, 6, 3, E.orange);
     r(14, -9, 6, 3, E.orange);
@@ -144,17 +145,17 @@ function owl(e: Enemy, t: number) {
 function squirrel(e: Enemy, t: number) {
   const r = parts(e, 11);
   const up = windingUp(e, t);
-  r(3, -10, 5, 8, E.red);
+  r(3, -10, 5, 8, E.orange);
   r(5, -9, 2, 5, E.orangeLight);
-  r(5, -14, 4, 4, E.red);
-  r(6, -15, 1, 1, E.red);
+  r(5, -14, 4, 4, E.orange);
+  r(6, -15, 1, 1, E.orange);
   r(8, -13, 1, 1, E.eye);
-  r(-1, -15, 4, 12, E.red);
-  r(-2, -17, 4, 4, E.redLight);
+  r(-1, -15, 4, 12, E.orange);
+  r(-2, -17, 4, 4, E.orangeLight);
   r(3, -2, 2, 2, E.plum);
   r(6, -2, 2, 2, E.plum);
-  if (up) r(8, -18, 4, 4, E.orange);
-  else r(8, -9, 2, 3, E.orange);
+  if (up) r(8, -18, 4, 4, E.plum);
+  else r(8, -9, 2, 3, E.plum);
 }
 
 /** One of the looks in this file, and says so; false for any other. */
@@ -204,9 +205,9 @@ export function drawLookShot(s: Shot, look?: string): boolean {
     return true;
   }
   if (look === "squirrel") {
-    R(1, 0, 4, 6, E.orange);
-    R(0, 1, 6, 4, E.orange);
-    for (const [dx, dy] of [[1, 1], [3, 2], [1, 3], [4, 4]]) R(dx, dy, 1, 1, E.red);
+    R(1, 0, 4, 6, E.plum);
+    R(0, 1, 6, 4, E.plum);
+    for (const [dx, dy] of [[1, 1], [3, 2], [1, 3], [4, 4]]) R(dx, dy, 1, 1, E.plumLight);
     return true;
   }
   return false;
