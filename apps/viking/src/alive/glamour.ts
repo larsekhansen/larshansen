@@ -56,8 +56,8 @@ export function leanFor(level: string) {
   Object.assign(lean, LEANS[level] ?? {});
 }
 
-/** What a sheen may light: a body's own colours (never its eyes, its near-black, its claws, or a mark). */
-const LIT = new Set<string>([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade]);
+/** What a sheen may light: a body's own colours (never its eyes, its near-black, its claws, a mark, or the pink of a tail or a foot). */
+const LIT = new Set<string>([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.white, ENEMY.whiteShade]);
 
 const sheens = new WeakMap<Frame, Frame>();
 
