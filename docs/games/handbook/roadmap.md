@@ -4,8 +4,11 @@ As of the evening of 16 November 2026. Change this file in the same change that 
 
 ## In flight
 
-**Order 27, the neon invaders** (branch `the-neon-invaders`), started after order 26 merged
-(PR #73). See "Next" below for what it is and how to split it if it comes back partly done.
+**Order 27, the neon invaders** (branch `the-neon-invaders`), handed back on the night of 16 November with
+every part built: (a) the neon system and the palette test, (b) glam marks and a natural self for every figure and the four redraws,
+(c) the stomp that breaks the glamour and the rune's ring, (d) the bosses, (e) the story, (f) the map's mirror balls, the scenery and
+the stings, (g) the docs. Waiting for the planner's review, then Lars's list of lines to reword (`apps/viking/src/game/story.ts`) and the
+page of figures republished ([`resources.md`](resources.md)) from `/tmp/shots-neon/sheets/`.
 
 Order 26 (the ground, small flags, spruce spires, rat tails, amber wasps; ADR 0049) is live.
 What it left: lamp posts, railings, panel doors, the sauna rafts, sheds' plank walls, the
@@ -16,14 +19,10 @@ stand out there on a phone.
 
 ## Next
 
-**Order 27, the neon invaders** ([`../orders/27-the-neon-invaders.md`](../orders/27-the-neon-invaders.md),
-[ADR 0050](../../adr/0050-the-glamour.md)). Written on 16 November and started that night. It is large (a neon system, glam marks on every
-enemy, a natural look for each, the stomp that breaks the glamour, the story, scenery, sound,
-four redraws Lars asked for by name). If it comes back partly done, the natural split is:
-(a) the look and the stomp, (b) the story, scenery and sound.
-
-When it hands back: Lars gets the list of every line of text to reword, and the page of
-figures is republished ([`resources.md`](resources.md)).
+Review order 27 ([`../orders/27-the-neon-invaders.md`](../orders/27-the-neon-invaders.md),
+[ADR 0050](../../adr/0050-the-glamour.md), its hand-back). Then: Lars gets the list of every line of text to reword, and the page of
+figures is republished ([`resources.md`](resources.md)). What it left: shots are not glammed; a kind met in several levels was looked at
+in place only in its first; the stings are unheard.
 
 ## After that: ideas in rough order of value
 

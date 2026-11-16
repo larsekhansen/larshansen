@@ -297,13 +297,10 @@ export interface Host {
   gold?: HTMLElement;
 }
 
-/** A beaten enemy's shape as it was drawn the moment before (its rectangles and colours), for the squash and the puff. */
+/** A beaten enemy's shape as it was drawn the moment before: its rectangles and colours (order 27: for its broken glamour). */
 interface Shape {
   r: number[];
   c: string[];
-  /** Its two commonest colours. */
-  a: string;
-  b: string;
 }
 
 export type Feel = ReturnType<typeof createFeel>;
@@ -1229,7 +1226,7 @@ function drawHim(g: CanvasRenderingContext2D, f: Frame | null, body: Body, walk:
   g.globalAlpha = 1;
 }
 
-/** Records a beaten enemy's look as it was alive: its rectangles and colours (each through `ink`), and its two commonest colours. */
+/** Records a beaten enemy's look as it was alive: its rectangles and colours (each through `ink`). */
 function record(e: Enemy, look: () => void, ink: (c: string) => string = (c) => c): Shape {
   const r: number[] = [];
   const c: string[] = [];
@@ -1251,10 +1248,7 @@ function record(e: Enemy, look: () => void, ink: (c: string) => string = (c) => 
     setTarget(g);
     e.alive = alive;
   }
-  const area = new Map<string, number>();
-  for (let i = 0; i < c.length; i++) if (c[i] !== ENEMY.eye && c[i] !== ENEMY.line) area.set(c[i], (area.get(c[i]) ?? 0) + r[i * 4 + 2] * r[i * 4 + 3]);
-  const by = [...area].sort((x, y) => y[1] - x[1]);
-  return { r, c, a: by[0]?.[0] ?? ENEMY.plum, b: by[1]?.[0] ?? by[0]?.[0] ?? ENEMY.pink };
+  return { r, c };
 }
 
 

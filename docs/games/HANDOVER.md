@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, and by order 26's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, and by order 27's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -79,6 +79,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-16 | Order 24: line 1 redrawn (way 3, ADR 0045): every enemy of line 1, both its bosses, the sheep, the moose, the parade, what is thrown and the small things every level has drawn as per-pixel frames; water lapping at quays, flames that flicker, the serpent's breath and daze, things in front a person knows at a glance, far birds and smoke; three things moved a tile where the edge's longer forgiveness made a late jump fire in the air (ADR 0048 kept, its cost put to Lars) | `orders/24-line-one-redrawn.md`, branch `line-one-redrawn` |
 | 2026-11-16 | Order 25: line 2 redrawn (way 3): line 2's own kinds, the sea serpent in every state, the heron, line 2's shots, and what a walk through all sixteen levels and the map still found in rectangles (him lying back on the sledge, the sledge, the crowds at Slottet and Holmenkollen, Bjørvika's welder); one more pass on the wasp, the flying pigeon, the track rat and the kid's hat; the troll's lit side after dusk | `orders/25-line-two-redrawn.md`, branch `line-two-redrawn` |
 | 2026-11-16 | Order 26: the ground under him (way 3 for what he stands on and walks past). Every surface of the lane drawn from one textured set: three to five tones of one hue a material, four variants by a hash of the place, a lit top, dark ends, a shadowed foot, moss, salt, tufts, rivets, sparkles; drawn once and copied, the paint on top as before; sign boards, the T-bane's entrance, plank doors, bollards, gravestones, Vålerenga's slate roofs (ADR 0049) | `orders/26-the-ground.md`, branch `the-ground` |
+| 2026-11-16 | Lars, on the page of every figure: "all the pink... im just not sold on pink being a bad guy color. but maybe if we make it a theme somehow? like, oh no, the 80s glam invaders are here!" Order 27: the glamour (ADR 0050). The neon family and a level's lean, a sheen and a glow after dark, glam marks on every figure and a natural self it turns to when a stomp breaks the spell, the rune's ring of daylight, the bosses as headliners, the story of who paid Loki, the map's mirror balls, the invaders' scenery and stings; the Angry Boy, the kid, the sledger and the hot-dog cart redrawn as Lars asked | `orders/27-the-neon-invaders.md`, branch `the-neon-invaders` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -253,7 +254,9 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.06 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
+- **First script**: 59.52 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
+  the story's hooks in `main.ts`, the map's story sign in `kart.ts`, the new blurb; everything else of it, the neons' ramps, the natural
+  ramps, the marks' drawing, the story's words, in `feel`'s file and the levels'). 59.06 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
   `render/furniture.ts`; the set itself is in `feel`'s file, which grew from 20.6 to 28.0 kB gzipped). 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
   and the sledge's in `feel`'s). 58.86 kB gzipped after order 24 (the small things' drawings to `feel`'s file). 59.44 kB gzipped after order 23 (see "Order 23"). 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
   worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
@@ -491,6 +494,28 @@ Order 26 (`orders/26-the-ground.md`, ADR 0049, DESIGN's "The ground under him"; 
   difference between neighbouring pixels), the figures' dark line against the ground is 30 to 85; where it rose most is in
   `o26/after.md`. Unplayed: none of it has been seen at speed or on a phone.
 
+## Order 27: the neon invaders
+
+Order 27 (`orders/27-the-neon-invaders.md`, ADR 0050, DESIGN's "The glamour"; numbers in `apps/viking/tools/review/o27/`). What to know:
+- **The glamour is the enemies' colour, given a reason.** Natural is Oslo, neon is the glamour. The neon family is `ROLES.glamour`; each
+  level leans its two neons (`LEANS` in `alive/glamour.ts`, applied by `lean` in `render/sprite.ts` as a shape is recorded, so the
+  palette test sees what the page draws); every glammed frame gets a two-neon sheen on its lit top (`sheened`); after dark each invader
+  glows in its own neon under its outline (`glows`, `invaders` in `sprite.ts`, made once a shape).
+- **Every figure is one map twice**: glammed with its marks (pieces marked `glam`, `mark` in `alive/foes.ts`; a frame keeps `bare` and
+  `marks`) and its natural self (`NATURAL` in `alive/natural.ts`). `glam.mode` says how a look draws now; anything drawn outside `drawFoe`
+  honours it itself (the statues, the ringers, the salmon). The census draws both and the ending; `alive/natural.test.ts` holds them.
+- **Nobody dies any more**: a stomp breaks the glamour (`drawBreak` in `alive/death.ts`, through `feel`'s `beaten`), and a rune's ring of
+  daylight lifts it from what is in view (`feel`'s `lifted`, through `main`'s `foe`). Drawing only: the rules are untouched (the sloppy
+  player's runs on Langkaia, Slottet, Nordmarka and Gamlebyen, seeds 201 to 260, are byte-identical before and after).
+- **The story** is `game/story.ts` (in `feel`'s file: `vite.config.ts` puts it there): every line, both languages, alternatives beside
+  them. The opening card is shown once (`localStorage["viking.told"]`) and told again by the map's sign by Langkaia's station
+  (`STORY_SIGN` in `kart.ts`, its words filled by `kartArt.ts`).
+- **The invaders' scenery** is `alive/invasion.ts` (`PLACES`, held by `invasion.test.ts`; `tools/glance/invasion.ts` finds places); the
+  map's mirror balls are drawn over every station not yet cleared.
+- **Looking at it**: `tools/glance/frames.ts` (every figure glammed, natural and its ending), `tools/glance/stomp.ts` (a stomp's strip),
+  and `?debug&steps=0&on=<event>&skip=N` alone now takes a picture of a moment (it did only with `perf` or `strip`).
+- **Unplayed and unheard**: none of it has been seen at speed or on a phone, and nobody has heard the four stings.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -599,4 +624,6 @@ reorder this list.
   that yellow; DESIGN's "Colour says what a thing is", [ADR 0039](../adr/0039-colour-says-what-a-thing-is.md),
   [ADR 0044](../adr/0044-paint-says-where-to-go.md)).
   `render/palette.test.ts` says which colour is too near which, and by how much.
+- Drawing a new enemy: give it one or two glam marks (`mark` pieces) and a natural self (`NATURAL`), and a new level a lean (`LEANS`) and
+  two to four pieces of the invaders' scenery (`PLACES`): DESIGN's "The glamour", ADR 0050. Harmless things stay natural: no neon.
 - A decision made or reversed: add or supersede a record in `docs/adr/` and update this file.

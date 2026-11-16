@@ -99,7 +99,9 @@ during a short drop for the landing (touches the kit's `stepBody`, shared with t
 
 ## 16 November, evening: comments on the figures (order 26 additions and order 27)
 
-Each of these was sent to the running order 26 or written into order 27. Check they landed.
+Each of these was sent to the running order 26 or written into order 27. The order 26 rows landed with it; the order 27 rows
+landed with order 27 (handed back the same night: the boy from the statue's pose, the kid and the sledger in detail, the cart as
+a pølsebod, the brazier and the grill in magenta and lime).
 
 | He said | Where it went |
 |---|---|
@@ -151,6 +153,7 @@ Then the reason for it all:
 5. `landing-game-polish`: a local branch not merged into `main`, from before this work. Keep or
    delete?
 6. Line 2's difficulty: the reviews think it is harder than line 1 by more than intended.
-7. The glamour's wording, once order 27 hands back its list of lines.
+7. The glamour's wording: every line is in `apps/viking/src/game/story.ts` (both languages, with two or three other openings
+   and endings beside them) and in order 27's hand-back. The man who paid is named twice (the opening card, the map's sign).
 8. Everything in each hand-back's "for Lars to judge" list (orders 21 to 25): they are
    collected in [`roadmap.md`](roadmap.md).

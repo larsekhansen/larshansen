@@ -4,7 +4,7 @@ import { target, view } from "@larshansen/pixelkit/paint";
 import { census, type Census } from "./census";
 import { NATURAL } from "./natural";
 import { pixels } from "./frames";
-import { colourBlind, deltaE, parseColour } from "../render/fields";
+import { deltaE, parseColour } from "../render/fields";
 
 // Order 27 (ADR 0050): the glamour. Every invader is the same map twice: glammed in neon, and its natural self in a ramp of
 // its own real colours, which it turns to when the glamour breaks (a stomp, a rune) and then leaves. Natural is Oslo, neon
@@ -109,6 +109,5 @@ describe("what moves and cannot hurt him is natural (order 27)", () => {
       }
     expect(seen.size).toBe(4);
     expect([...new Set(neon)]).toEqual([]);
-    void colourBlind;
   });
 });

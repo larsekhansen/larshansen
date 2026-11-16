@@ -22,6 +22,7 @@ import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { plankDoor as plankDoor2, tile as textured, type Grain } from "../alive/ground";
 import { STORY } from "../game/story";
+import { glows } from "../alive/glamour";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -850,6 +851,12 @@ function troll(t: Troll, v: View) {
 function overDark(v: View) {
   dawnShaft(v);
   sunrise(v);
+  // The invaders' neon glows through the dark (order 27): neon is the one thing that looks better at night.
+  const g = ctx();
+  const a = g.globalAlpha;
+  g.globalAlpha = a * 0.8;
+  glows(g);
+  g.globalAlpha = a;
   for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, CREATURE.eye);
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);
   const t = v.troll;
