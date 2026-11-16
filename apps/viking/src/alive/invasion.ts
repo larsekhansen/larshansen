@@ -109,7 +109,7 @@ export const PLACES: Record<string, { c: number; r: number; kind: Piece; cable?:
   langkaia: [{ c: 18, r: 16, kind: "poster" }, { c: 181, r: 16, kind: "sign" }],
   akershus: [{ c: 50, r: 35, kind: "poster" }, { c: 132, r: 35, kind: "sign" }],
   radhuset: [{ c: 46, r: 48, kind: "poster" }, { c: 100, r: 48, kind: "sign" }],
-  slottet: [{ c: 66, r: 25, kind: "flamingo" }, { c: 113, r: 23, kind: "poster" }, { c: 195, r: 20, kind: "sign" }],
+  slottet: [{ c: 66, r: 25, kind: "sign" }, { c: 113, r: 23, kind: "poster" }, { c: 195, r: 20, kind: "flamingo" }],
   holmenkollen: [{ c: 63, r: 10, kind: "sign" }, { c: 155, r: 16, kind: "poster" }, { c: 218, r: 25, kind: "flamingo" }],
   akerselva: [{ c: 83, r: 12, kind: "flamingo" }, { c: 124, r: 12, kind: "poster" }, { c: 166, r: 26, kind: "sign" }],
   nordmarka: [{ c: 67, r: 18, kind: "sign" }, { c: 118, r: 18, kind: "flamingo" }, { c: 182, r: 18, kind: "poster" }],
