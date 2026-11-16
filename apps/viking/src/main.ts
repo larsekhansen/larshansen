@@ -1346,6 +1346,8 @@ function drawThings(v: View) {
     else drawTimed(l, p.t, v.sky.snow, STAND_LEDGE);
     g.translate(-dx, 0);
   });
+  // Under what moves and over what it moves on: its shadow (order 23).
+  feel?.shadows(p, p.loaded ? null : shown, v.alpha);
   p.cannons.forEach((l, i) => {
     const loadedAt = p.loaded?.i === i ? p.loaded.at : -999;
     if (art.cannon) art.cannon(i, l, loadedAt, p.firedAt[i], v);
@@ -1584,12 +1586,14 @@ function render(alpha: number) {
     banner: plated(state.banner),
     world: p.map,
     boards: scene.boards,
-    player: { body, walk: seated ? 0 : state.walk, alpha: seen * (feel?.alpha(p) ?? 1), phase: sky.phase, look: look() },
+    // Drawn by `render/feel.ts` from his frames (order 23), once it is here.
+    player: { body, walk: seated ? 0 : state.walk, alpha: feel ? 0 : seen, phase: sky.phase, look: look() },
     hint,
     bubble: shownBubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
   feel?.him(p, body, seated ? 0 : state.walk, sky.phase, look(), seen);
+  feel?.fore(scene.def.id);
   if (!shownBubble) feel?.hint(hint);
   drawFlight();
   follows(door ?? (bench !== null ? benchStop : null), state.moved && state.steps > state.helpUntil);

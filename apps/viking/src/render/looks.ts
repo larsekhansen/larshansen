@@ -1,7 +1,9 @@
 import { R as rect, light, view } from "@larshansen/pixelkit/paint";
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { SHOT, windingUp, type Enemy, type Shot } from "../game/enemies";
-import { parts, stride } from "./pickups";
+import { parts, stride } from "../alive/parts";
+import { FOE_INK, drawFoeLook, foeLooks, type Looks } from "../alive/foes";
+import { frame, type Piece } from "../alive/frames";
 
 // The enemy looks that several levels share but the first level does not: they come in a small file
 // of their own with the first level that needs one (order 18 moved them out of the first script). Each
@@ -9,39 +11,56 @@ import { parts, stride } from "./pickups";
 
 const E = ENEMY;
 
-/** A gull standing on the bank with a chip in its beak, flicking it at him on its beat: white, a plum wing tipped black. 12 x 16. */
-function gullStanding(e: Enemy, t: number) {
-  const r = parts(e, 12);
-  // Winding up (order 19) it rears: its head goes up two, its wing lifts over its back, the chip held high.
-  const up = windingUp(e, t) ? 2 : 0;
-  r(1, -12, 9, 7, E.white);
-  r(1, -9, 6, 3, E.plum);
-  r(0, -9, 2, 3, E.line);
-  r(7, -16 - up, 4, 4 + up, E.white);
-  r(8, -15 - up, 1, 1, E.eye);
-  r(9, -15 - up, 1, 1, E.line);
-  r(10, -14 - up, 2, 1, E.orange);
-  if (up) {
-    r(1, -15, 5, 3, E.plum);
-    r(11, -18, 2, 2, E.orangeLight);
-  }
-  r(3, -5, 1, 5, E.pink);
-  r(7, -5, 1, 5, E.pink);
-}
+// Rådhuset's gull on the bank and the rented scooter, drawn as frames (order 23; `src/alive/foes.ts`).
+const GULL_STAND = [
+  ".......WWW..",
+  "......WWelW.",
+  "......WWWWoo",
+  ".......WWW..",
+  ".WWWWWWWWW..",
+  "WWWWWWWWWWw.",
+  "WWWWWWWWWWw.",
+  "llmmmmmmWWw.",
+  "llMmmmmmWww.",
+  ".ldmmmmmwww.",
+  "..wwwwwwww.."
+];
+const GULL_LEGS = ["...p...p....", "...p...p....", "...p...p....", "...p...p....", "..pp..pp...."];
+const standing = (name: string, ...more: Piece[]) => frame(name, FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, 0], [GULL_LEGS, 0, 11], ...more);
+/** A gull standing on the bank with a chip in its beak, flicking it at him on its beat. 12 x 16. */
+const GULL_STANDING: Looks = {
+  w: 12,
+  h: 16,
+  idle: [standing("gull on the bank"), frame("gull on the bank, looking down", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, 1], [GULL_LEGS, 0, 11])],
+  move: [standing("gull on the bank")],
+  // Winding up (order 19) it rears: its head up two, its wing over its back, the chip held high.
+  windup: frame("gull on the bank, rearing", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, -2], [["WWW", "WWW"], 7, 2], [["mmmmm", "MmmmM", ".mmm."], 1, 1], [["OO", "OO"], 10, -3], [GULL_LEGS, 0, 11])
+};
 
-/** A rented e-scooter riding itself: deck, stem, bars, two small wheels, a lamp. 18 x 15. */
-function scooter(e: Enemy) {
-  const r = parts(e, 18);
-  r(2, -5, 13, 2, E.poison);
-  r(2, -4, 13, 1, E.poisonLight);
-  r(14, -15, 2, 10, E.poison);
-  r(12, -15, 5, 1, E.plum);
-  for (const wx of [1, 14]) {
-    r(wx, -3, 4, 3, E.plum);
-    r(wx + 1, -2, 2, 1, E.pink);
-  }
-  r(16, -12, 1, 1, E.eye);
-}
+const SCOOTER_TOP = [
+  "............mmmmm.",
+  "..............gG..",
+  "..............gG..",
+  "..............gGe.",
+  "..............gG..",
+  "..............gG..",
+  "..............gG..",
+  "..............gG..",
+  "..............gG..",
+  "..............gG..",
+  "..ggggggggggggggG.",
+  "..GGGGGGGGGGGGG..."
+];
+const WHEEL = [["Mmmm", "mppm", "mmmm"], ["mmmM", "mppm", "mmmm"], ["mmmm", "mppm", "mmmM"], ["mmmm", "mppm", "Mmmm"]];
+const scooterFrame = (name: string, k: number, lamp = true) => frame(name, FOE_INK, [SCOOTER_TOP], [WHEEL[k], 1, 12], [WHEEL[k], 14, 12], ...(lamp ? [] : [[["G"], 16, 3] as Piece]));
+/** A rented e-scooter riding itself: deck, stem, bars, two wheels that turn, a lamp. 18 x 15. */
+const SCOOTER: Looks = {
+  w: 18,
+  h: 15,
+  idle: [scooterFrame("scooter, waiting", 0), scooterFrame("scooter, its lamp off", 0, false)],
+  move: [0, 1, 2, 3].map((k) => scooterFrame(`scooter, rolling ${k + 1}`, k))
+};
+foeLooks({ gullStanding: GULL_STANDING, scooter: SCOOTER });
 
 /** A hedgehog: a red back of spines over an orange body, a pointed snout. 15 x 10. */
 function hedgehog(e: Enemy) {
@@ -163,11 +182,9 @@ export function drawLook(e: Enemy, t: number): boolean {
   switch (e.def.look) {
     case "gull":
       if (e.def.kind !== "thrower") return false;
-      gullStanding(e, t);
-      return true;
+      return drawFoeLook(e, t);
     case "scooter":
-      scooter(e);
-      return true;
+      return drawFoeLook(e, t);
     case "hedgehog":
       hedgehog(e);
       return true;

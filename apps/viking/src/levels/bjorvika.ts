@@ -1,4 +1,4 @@
-import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
@@ -10,7 +10,8 @@ import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
+import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -220,19 +221,12 @@ function far(v: View) {
     column(x, horizon - h, horizon - h + 1, mix(S.shore, WHITE, 0.08));
     if (Math.floor(wx) % 23 === 0) light(x + view.camX, Math.round(horizon - h + 4 + (Math.floor(wx) % 5)), 1, 1);
   }
-  const tt = view.reduced ? 0 : v.t;
-  for (let x = 0; x < view.w; x++) {
-    const wx = layerWorldX(x, 0.12);
-    column(x, horizon, horizon + 400, S.fjord);
-    // Swell in bands, darker the nearer (the further down), and the light of the far shore's windows on it.
-    for (let k = 0; k < 9; k++) {
-      const y = horizon + 6 + k * (6 + k * 2) + Math.round(1.5 * Math.sin(wx * 0.05 + k));
-      column(x, y, y + 1 + (k >> 2), mix(S.fjord, S.fjordDeep, 0.35 + k * 0.07));
-    }
-    column(x, horizon + 120, horizon + 400, S.fjordDeep);
-    if (Math.floor(wx) % 23 === 0) for (let k = 0; k < 4; k++) light(x + view.camX, Math.round(horizon + 2 + k * 3), 1, 1, "soft");
-  }
-  for (let i = 0; i < 40; i++) column(((i * 61 + Math.floor(tt / 35)) % (view.w + 20)) - 10, horizon + 3 + ((i * 7) % 11) * 9, horizon + 4 + ((i * 7) % 11) * 9, S.fjordLight);
+  // The fjord as a plane running away from him (order 23): strips from the horizon down, each a little faster than the
+  // one above and drifting a little faster, taller and darker the nearer they are; deep below them.
+  plane({ layer: 0.12, top: horizon, bottom: horizon + 120, from: 0.12, to: 0.42, tones: [mix(S.fjord, S.fjordLight, 0.15), S.fjord, mix(S.fjord, S.fjordDeep, 0.6), S.fjordDeep], glint: S.fjordLight, drift: 0.1, strip: 2, near: 9 }, v.t);
+  box(0, horizon + 120, view.w, 280, S.fjordDeep);
+  // The light of the far shore's windows on it.
+  for (let x = 0; x < view.w; x++) if (Math.floor(layerWorldX(x, 0.12)) % 23 === 0) for (let k = 0; k < 4; k++) light(x + view.camX, Math.round(horizon + 2 + k * 3), 1, 1, "soft");
   // An island, a ferry going out with its lights on, a sailing boat.
   const isle = layerX(900, 0.12);
   for (let k = -20; k <= 20; k++) column(isle + k, horizon + 8 - Math.round(4 * (1 - (k / 20) ** 2)), horizon + 9, S.shore);

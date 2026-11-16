@@ -59,8 +59,9 @@ export default defineConfig({
           if (/\/src\/levels\/kartArt\.ts$/.test(id)) return "kart";
           // The enemy looks several levels share but the first does not: fetched with the first level that has one.
           if (/\/src\/render\/looks\.ts$/.test(id)) return "looks";
-          // What answers events (order 19): fetched as the page starts, alongside the map's look.
-          if (/\/src\/render\/feel\.ts$/.test(id)) return "feel";
+          // What answers events (order 19), and the frames, shadows and depth that keep the picture alive (order 23):
+          // fetched as the page starts, alongside the map's look.
+          if (/\/src\/render\/feel\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
           // The touch pad and the camera's room for it (order 21): fetched on a touch screen only, with the first scene.
           if (/\/src\/(render\/pad|game\/frame)\.ts$/.test(id)) return "pad";
           // The shield's rules and drawing: fetched when he has it, or goes where it is given.

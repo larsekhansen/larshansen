@@ -13,7 +13,7 @@ import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts, stride } from "../alive/parts";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, View } from "./types";
@@ -806,15 +806,16 @@ function crab(e: Enemy) {
 /** A penguin from the aquarium, waddling: a plum back, an orange front, an orange beak and feet. 11 x 12. */
 function penguin(e: Enemy) {
   const r = parts(e, 11);
-  const w = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  r(1, -10 + w, 9, 9, ENEMY.plum);
-  r(5, -8 + w, 4, 7, ENEMY.orangeLight);
-  r(2, -12 + w, 7, 3, ENEMY.plum);
-  r(9, -11 + w, 3, 1, ENEMY.orange);
-  r(7, -11 + w, 1, 1, ENEMY.eye);
-  r(0, -7 + w, 2, 4, ENEMY.plumLight);
-  r(2, -1, 3, 1, ENEMY.orange);
-  r(6, -1, 3, 1, ENEMY.orange);
+  // Its waddle is the frames' bob (order 23); its feet go by turns.
+  const s = stride(e);
+  r(1, -10, 9, 9, ENEMY.plum);
+  r(5, -8, 4, 7, ENEMY.orangeLight);
+  r(2, -12, 7, 3, ENEMY.plum);
+  r(9, -11, 3, 1, ENEMY.orange);
+  r(7, -11, 1, 1, ENEMY.eye);
+  r(0, -7, 2, 4, ENEMY.plumLight);
+  r(2 + s, -1, 3, 1, ENEMY.orange);
+  r(6 - s, -1, 3, 1, ENEMY.orange);
 }
 
 /** A slinger on a storehouse ridge: a tunic, a cap, the sling going round over his head as the throw comes. 11 x 16. */

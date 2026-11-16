@@ -11,6 +11,7 @@ import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { mapBuilder } from "./build";
+import { plane } from "../alive/depth";
 import type { LevelDef, View } from "./types";
 
 // Level 5, rune H: Holmenkollen. Winter, snowing. Off the train at the top, along a path where the
@@ -481,15 +482,18 @@ function farCity() {
 }
 
 /** Forested ridges in between, white with snow on their tops. */
-function ridges() {
+function ridges(t: number) {
+  const base = sink(178, 0.45);
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.2);
     const h = 30 + 14 * Math.sin(wx * 0.006 + 2) + 6 * Math.sin(wx * 0.02);
-    const base = sink(178, 0.45);
     column(x, base - h, base + 240, LAND.headland);
     column(x, base - h, base - h + 2, SNOW.far);
     if ((Math.floor(wx / 2) * 7) % 5 === 0) column(x, base - h - 3, base - h, LAND.headlandDark);
   }
+  // The snowfield under the ridges, running down toward him as a plane (order 23): strips each a little faster
+  // than the one above, sparkling, still.
+  plane({ layer: 0.2, top: base - 4, bottom: base + 56, from: 0.2, to: 0.42, tones: [mix(SNOW.far, LAND.headland, 0.25), SNOW.far, SNOW.lying, SNOW.shade], glint: WHITE, drift: 0, strip: 2, near: 6 }, t);
 }
 
 /** Spruces just behind the path, white with snow. */
@@ -583,7 +587,7 @@ export const HOLMENKOLLEN: LevelDef = {
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
     far: () => farCity(),
-    mid: () => ridges(),
+    mid: (v) => ridges(v.t),
     near: () => nearSpruces(),
     back(v) {
       cave();

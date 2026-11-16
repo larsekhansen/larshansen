@@ -10,7 +10,8 @@ import * as L from "@larshansen/pixelkit/swatches/lake";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
+import { plane } from "../alive/depth";
 import { outlined, plain } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
@@ -298,6 +299,9 @@ function farShore(v: View) {
     column(x, top, base, mix(LAND.farHills, STONE.dark, 0.3));
     if (Math.floor(wx) % 17 === 0) column(x, top + 3, top + 4, L.sun);
   }
+  // The lake from the far shore to the bank he walks along, as a plane running away from him (order 23): still water,
+  // so its strips drift only a little.
+  plane({ layer: 0.12, top: base, bottom: FLOOR, from: 0.12, to: 0.36, tones: [mix(L.still, L.glint, 0.3), L.still, L.stillDeep], glint: L.glint, drift: 0.04, strip: 2, near: 4 }, v.t);
 }
 
 /** Birches and willows along the far bank, low, in rows. */

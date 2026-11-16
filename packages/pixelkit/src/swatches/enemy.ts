@@ -21,6 +21,16 @@ export const poisonLight = "#d8ff8a";
 export const pink = "#ff8f87";
 /** White, a little cool: gulls, swans, geese, a penguin's front (a white cooler than the clouds and the snow). */
 export const white = "#d2ffe6";
+/**
+ * The shades of a drawing's ramps (order 23: frames drawn pixel by pixel, three to five tones a material): the dark
+ * side of a plum body, under a white wing. Held off every field, off the outline and off every other role as the
+ * bodies are. Orange, green and pink have no darker shade that stands off them all (a dark orange is the copper's,
+ * a dark green or pink comes near the red outline without telling red from green): those ramps go from their light
+ * to the near-black.
+ */
+export const plumDark = "#7a2a78";
+/** A white's shade: under a gull's wing, a swan's fold. */
+export const whiteShade = "#c0f0c8";
 /** The near-black: pupils, bands, a wasp's stripes, the black of the warning stripe. */
 export const line = "#1a0f14";
 /** Eyes: the one pixel that shines after dark. Used for nothing else. */

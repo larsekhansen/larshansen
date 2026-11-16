@@ -20,7 +20,7 @@ export const JUMP = {
   gravityDown: 0.42,
   cut: 0.45, // share of the speed kept when the key is let go early
   maxFall: 5.5,
-  coyoteSteps: 6, // a jump still works this long after walking off an edge
+  coyoteSteps: 10, // a jump still works this long after walking off an edge (0.17 s; 6 until order 23, ADR 0048)
   bufferSteps: 6 // a jump pressed this long before landing still happens
 };
 

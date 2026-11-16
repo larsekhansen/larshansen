@@ -17,6 +17,8 @@ export function drawSheep(s: Sheep) {
   const left = Math.round(s.x - SHEEP.w / 2);
   const top = s.bottom - SHEEP.h;
   const squash = s.squash > 0 ? 1 : 0;
+  // Walking, its legs go by turns, four frames by the distance it covers (order 23).
+  const step = s.grazing > 0 ? 0 : [1, 0, -1, 0][((Math.floor(s.x / 3) % 4) + 4) % 4];
   SHEEP_ROWS.forEach((row, r) => {
     if (squash && r === 0) return; // flattened by a landing: the back is one pixel lower
     for (let c = 0; c < SHEEP.w; c++) {
@@ -25,7 +27,7 @@ export function drawSheep(s: Sheep) {
       // Grazing: the head goes down to the grass.
       const dip = s.grazing > 0 && (s.dir > 0 ? c >= 9 : c < SHEEP.w - 9) && ch === "f" ? 2 : 0;
       const shade = ch === "w" && r >= 3 ? mix(P.wool, WOOL_SHADE, 0.35) : SHEEP_COLORS[ch];
-      R(left + c, top + r + dip + (ch === "k" ? 0 : squash), 1, 1, shade);
+      R(left + c + (ch === "k" ? (c < 6 ? step : -step) : 0), top + r + dip + (ch === "k" ? 0 : squash), 1, 1, shade);
     }
   });
 }

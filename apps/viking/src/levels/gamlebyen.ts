@@ -14,7 +14,7 @@ import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringR
 import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";

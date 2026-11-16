@@ -1,7 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
@@ -9,10 +9,11 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts, stride } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 6, rune A: Akerselva. A summer's day, down the river from Nydalen to Vaterland, the only
 // level that goes downhill all the way: three terraces, each a stretch of river with a fall at its
@@ -222,9 +223,6 @@ export const AKERSELVA_RULES = { COLS, ROWS, CARRIERS, ZONES };
 
 // --- The river's own creatures: the salmon and the duck (drawn here, as no other level has them) -------------
 
-/** Two frames of walking, by its place. */
-const stride = (e: Enemy) => (view.reduced ? 0 : Math.floor(e.x / 3) % 2);
-
 function duck(e: Enemy) {
   const r = parts(e, 13);
   const bob = stride(e);
@@ -257,9 +255,17 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
       R(Math.round(e.x - 4), Math.min(water, Math.round(e.y)) - 2, 8, 1, mix(P.foam, P.water, 0.4));
     });
   if (l.up <= 0) return;
-  // Past the top of its leap it turns over.
+  // Past the top of its leap it turns over; at the top it lies level a moment, its nose the way it faces (order 23).
   const falling = leap(e, t + 1).up < l.up;
   const colors: Record<string, string> = { b: ENEMY.pink, s: ENEMY.white, e: ENEMY.eye };
+  if (Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 1)
+    return SALMON.forEach((row, r) =>
+      [...row].forEach((ch, c) => {
+        if (ch === ".") return;
+        const yy = Math.round(e.y) - e.h + 7 - c;
+        if (yy < water) R(Math.round(e.x) + (e.dir > 0 ? 7 - r : r - 7), yy, 1, 1, colors[ch]);
+      })
+    );
   SALMON.forEach((row, r) =>
     [...row].forEach((ch, c) => {
       if (ch === ".") return;
@@ -309,11 +315,13 @@ function farHills() {
 /** The old mills and the new blocks along the river, between: brick, sawtooth roofs, chimneys, trees. */
 function midTown(t: number) {
   const ground = sink(170, 0.26);
-  for (let i = 0; i < 48; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 48; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     // Sparser than a street: groups of two with sky and trees between.
     if (i % 3 === 2) continue;
     const wx = i * 104 + ((i * 41) % 48);
-    const x = layerX(wx, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -50 || x > view.w + 10) continue;
     const w = 26 + ((i * 29) % 22);
     const h = 18 + ((i * 53) % 24);
@@ -341,11 +349,13 @@ function midTown(t: number) {
 
 /** Trees along the banks just behind the path, in clumps: birch and alder in summer leaf, their feet on the terrace behind. */
 function nearTrees() {
-  for (let i = 0; i < 90; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 90; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     // Clumps of two or three, with clear gaps between them.
     if (i % 5 === 3 || i % 7 === 5) continue;
     const wx = i * 46 + ((i * 23) % 30) + (Math.floor(i / 5) % 2) * 20;
-    const x = layerX(wx, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -24 || x > view.w + 24) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor(wx / TILE)));
     const foot = terrace(c) * TILE - 2;

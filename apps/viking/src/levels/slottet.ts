@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { kept } from "@larshansen/pixelkit/kept";
-import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
@@ -11,10 +11,11 @@ import { timedPhase, type TimedLedge } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 4, rune S: Slottet. 17 May, Karl Johan, uphill all the way from Egertorget to the palace.
 // The children's parade walks up the street with its banners; stand on a banner's crossbar and it
@@ -803,9 +804,11 @@ function farHills(sky: Sky, him: number) {
 /** The city between: roofs in pale colours, and flags on every pole. Raised with the street (`raised`). */
 function cityRoofs(t: number, him: number) {
   const ground = BASE - 8 - raised(him);
-  for (let i = 0; i < 40; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 40; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 110 + ((i * 37) % 50);
-    const x = layerX(wx, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -40 || x > view.w + 10) continue;
     const h = 24 + ((i * 53) % 26);
     const w = 22 + ((i * 29) % 18);
@@ -829,9 +832,11 @@ function cityRoofs(t: number, him: number) {
 
 /** Karl Johan's trees, just behind the street, in their first green. */
 function nearTrees() {
-  for (let i = 0; i < 60; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 60; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 70 + 20;
-    const x = layerX(wx, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const g = streetY(wx) - 6;
     box(x, g - 30, 2, 30, PLANTS.bark);

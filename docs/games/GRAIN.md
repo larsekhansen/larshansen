@@ -1,5 +1,10 @@
 # The grain: are the pixels too big?
 
+**Decided, 16 November 2026: way 3, the same grid, better drawn.** Lars: "do way 3 like you suggested. for the
+pixels" ([ADR 0045](../adr/0045-the-grain-same-grid-better-drawn.md)). Order 23 drew him, the enemies of line 1's first
+three levels, the skilling and the cheese that way; the rest follow a level at a time. The study below is kept as it was
+written, before the choice.
+
 Written 16 November 2026 for Lars, after you said: "i just fear i made a blunder with the pixel design. or rather
 that the pixels are too big. they need more detail. espeiclally small items." This page says what is true, shows
 three ways to more detail on two real scenes of the game, and recommends one. Nothing on this page is in the game:

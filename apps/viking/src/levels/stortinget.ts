@@ -11,10 +11,11 @@ import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 8, rune S: Stortinget. The T-bane station under the centre, where every line in the city
 // passes through. No sky: tiled walls, the T roundel, lamps, the dark of the tunnels. Down the
@@ -338,9 +339,11 @@ function farPlatforms() {
 
 /** Columns nearer, holding up the vault, from the rock above to the dark below: concrete, the roundel on those in the cavern. Not in the tunnels. */
 function nearColumns() {
-  for (let i = 0; i < 40; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 40; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 190 + ((i * 53) % 40);
-    const x = layerX(wx, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -16 || x > view.w + 16) continue;
     const c = Math.floor((view.camX + x) / TILE);
     if ((c > 100 && c < 128) || c > 250) continue;

@@ -160,6 +160,8 @@ interface Move {
   dash: number;
   /** Steps at the start in which moving ground does not hold him: he drops off it as it goes. */
   drop?: number;
+  /** Steps after he has walked or run off an edge at which the jump is pressed (order 23, the edge's forgiveness: opt-in). */
+  late?: number;
 }
 
 function moves(feather: boolean, pole: boolean): Move[] {
@@ -196,7 +198,7 @@ export interface Graph {
  * checked while searching (the bracteate, the rune), so a touch in mid-air counts. With `graph`,
  * also the graph of which spot leads to which (see `Graph`); `spots[0]` is the start.
  */
-export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[], opts: { pole?: boolean; calm?: boolean; graph?: boolean } = {}): { spots: Spot[]; hit: boolean[]; graph?: Graph } {
+export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[], opts: { pole?: boolean; calm?: boolean; graph?: boolean; edge?: readonly number[] } = {}): { spots: Spot[]; hit: boolean[]; graph?: Graph } {
   const world = fastWorld(def);
   const map = levelMap(def);
   // The moving ground, everywhere at once, in buckets of 64 px so each step only sees what is near.
@@ -225,6 +227,9 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
   const queue: number[] = [0];
   const all: Spot[] = [start];
   const list = moves(feather, !!opts.pole);
+  // With `edge`: also walking or running off an edge and jumping that many steps after leaving it (the jump still
+  // works there for `JUMP.coyoteSteps`): what a longer forgiveness at an edge could reach (`tools/review/edge.ts`).
+  for (const late of opts.edge ?? []) for (const dir of [-1, 1] as const) for (const running of [false, true]) for (const hold of [5, 12, 40]) list.push({ dir, hold, running, release: 999, turn: false, second: 0, dash: 0, late });
   const out: number[][] = [];
   const falls: number[] = [];
   const touches: number[][] = boxes.map(() => []);
@@ -301,6 +306,8 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
       if (m.running) b.vx = m.dir * MOVE.run;
       let air = 0;
       let dashing = 0;
+      /** For a late jump off an edge: the step it was pressed. */
+      let pressed = -1;
       for (let i = 0; i < 300; i++) {
         const dir = i < m.release ? m.dir : m.turn ? -m.dir : 0;
         const second = m.second > 0 && air === m.second;
@@ -314,7 +321,10 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
         } else {
           const loose = m.drop !== undefined && i < m.drop;
           if (loose) b.onGround = false;
-          stepBody(b, { left: dir < 0, right: dir > 0, jumpHeld: (m.hold > 0 && i < m.hold) || second, jumpPressed: (m.hold > 0 && i === 0) || second }, world, { doubleJump: feather }, near(b, loose));
+          if (m.late !== undefined) {
+            if (pressed < 0 && !b.onGround && air === m.late) pressed = i;
+            stepBody(b, { left: dir < 0, right: dir > 0, jumpHeld: pressed >= 0 && i < pressed + m.hold, jumpPressed: pressed === i }, world, { doubleJump: feather }, near(b, loose));
+          } else stepBody(b, { left: dir < 0, right: dir > 0, jumpHeld: (m.hold > 0 && i < m.hold) || second, jumpPressed: (m.hold > 0 && i === 0) || second }, world, { doubleJump: feather }, near(b, loose));
         }
         touch(b);
         if (fellOut(b, world)) {
@@ -332,11 +342,12 @@ export function search(def: LevelDef, start: Spot, feather: boolean, boxes: Box[
           break;
         }
         if (!b.onGround) air++;
-        else if (air > 0 || (m.hold === 0 && i > 2)) {
-          land(b);
+        else if (air > 0 || ((m.hold === 0 || m.late !== undefined) && i > 2)) {
+          // A late jump off an edge counts only where it left the edge and jumped (walking on is the plain walk's).
+          if (m.late === undefined || pressed >= 0) land(b);
           if (air > 0) break;
         }
-        if (m.hold === 0 && i > 60) break;
+        if ((m.hold === 0 || (m.late !== undefined && pressed < 0)) && i > 60) break;
       }
     }
   }

@@ -101,6 +101,8 @@ export interface Painted {
   near: Map<string, number>;
   /** The street: its backdrop, water and tiles. */
   lane: Map<string, number>;
+  /** Its tiles alone: the ground he and what moves stand on, where their shadows fall (order 23). */
+  ground: Map<string, number>;
   /** What moves and is used (carriers, ledges on a beat, cannons, drums, flags) and what the level draws in front. */
   things: Map<string, number>;
 }
@@ -113,7 +115,7 @@ export function levelPaint(def: LevelDef, phase: Phase): Painted {
   const play = newPlay(def, {});
   const map = play.map;
   const sky = skyOf(def, phase);
-  const recs = { sky: areaRecorder(), far: areaRecorder(), mid: areaRecorder(), near: areaRecorder(), lane: areaRecorder(), things: areaRecorder() };
+  const recs = { sky: areaRecorder(), far: areaRecorder(), mid: areaRecorder(), near: areaRecorder(), lane: areaRecorder(), ground: areaRecorder(), things: areaRecorder() };
   const was = { ...view, g: ctx() };
   Object.assign(view, { w: 320, h: 200, k: 1, reduced: true });
   const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
@@ -136,6 +138,8 @@ export function levelPaint(def: LevelDef, phase: Phase): Painted {
       art.back(v);
       drawWater(map, 0);
       drawTiles(map, art, sky, def.underground);
+      target(recs.ground.ctx);
+      drawTiles(map, art, sky, def.underground);
       // What moves and what is used, as the page draws them (`drawThings` in main.ts), at the start; and what is in front.
       target(recs.things.ctx);
       def.carriers.forEach((d, i) => {
@@ -153,7 +157,7 @@ export function levelPaint(def: LevelDef, phase: Phase): Painted {
     }
   target(was.g);
   Object.assign(view, { w: was.w, h: was.h, k: was.k, camX: was.camX, camY: was.camY, camXf: was.camXf, camYf: was.camYf, reduced: was.reduced });
-  return { sky: recs.sky.area, far: recs.far.area, mid: recs.mid.area, near: recs.near.area, lane: recs.lane.area, things: recs.things.area };
+  return { sky: recs.sky.area, far: recs.far.area, mid: recs.mid.area, near: recs.near.area, lane: recs.lane.area, ground: recs.ground.area, things: recs.things.area };
 }
 
 /** Areas added together, as shares of their sum, keeping those of `share` or more. */

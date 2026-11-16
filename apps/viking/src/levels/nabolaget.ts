@@ -4,7 +4,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
-import { R, gable, layerX, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
+import { R, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "@larshansen/pixelkit/props";
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -14,11 +14,12 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 10, rune N: Nabolaget. A winter night over Vålerenga and Kampen, the northern lights up,
 // snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
@@ -268,9 +269,11 @@ const LAND_NIGHT = "#2a3458";
 /** Kampen and Vålerenga further off: rows of small houses, snow on their roofs, Kampen kirke's spire. */
 function midRoofs(t: number) {
   const base = 230 + view.camY * 0.75;
-  for (let i = 0; i < 60; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 60; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 46 + ((i * 31) % 20);
-    const x = layerX(wx, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -30 || x > view.w + 10) continue;
     const w = 20 + ((i * 7) % 10);
     const h = 14 + ((i * 11) % 10);
@@ -296,9 +299,11 @@ function gableBox(x: number, baseY: number, w: number, h: number, c: string) {
 
 /** Nearer: bare trees with snow on their branches, and lamp posts. */
 function nearTrees() {
-  for (let i = 0; i < 40; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 40; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 157 + ((i * 53) % 70);
-    const x = layerX(wx, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor((view.camX + x) / TILE)));
     const foot = Math.min(S, surfaceRow(c) + 2) * TILE;
@@ -938,6 +943,8 @@ function ploughBody(p: Plough, v: View) {
     span(0, 32, y0 + 20, 3, SNOW.lying);
     span(32, 40, g - 18, 18, mix(WINTER.blade, INK, 0.5));
     for (const wx of [-22, 18]) wdisc(at(wx), g - 6, 6, WINTER.tyre);
+    // Parked, its engine ticks over: a wisp from the stack every other second (order 23).
+    if (Math.floor(v.t / 60) % 2) plain(() => R(at(-34) - 1, y0 - 4, 3, 2, "rgba(70, 66, 62, 0.35)"));
     return;
   }
   const beaten = p.phase === "beaten";
@@ -952,11 +959,13 @@ function ploughBody(p: Plough, v: View) {
   span(-32, 32, y0 + 42, 2, WINTER.ploughDark);
   for (let k = -28; k < 30; k += 10) span(k, k + 5, y0 + 33, 2, WINTER.ploughDark);
   // The wheels, big, with chains.
-  const roll = view.reduced ? 0 : Math.floor(p.x / 3) % 2;
+  // Its wheels turn as it goes, a nut on each going round in four frames by the distance it covers (order 23).
+  const roll = ((Math.floor((f > 0 ? p.x : -p.x) / 3) % 4) + 4) % 4;
+  const [nx, ny] = [[0, -5], [4, -1], [0, 3], [-4, -1]][roll];
   for (const wx of [-22, 18]) {
     wdisc(at(wx), g - 7, 7, WINTER.tyre);
     wdisc(at(wx), g - 7, 3, P.iron);
-    R(at(wx) - 1 + roll, g - 13, 2, 2, P.iron);
+    R(at(wx) - 1 + f * nx, g - 8 + ny, 2, 2, P.iron);
   }
   // The blade: yellow, black stripes, angled out in front; raised off the snow while it revs, a sign
   // that holds still (for reduced motion too).

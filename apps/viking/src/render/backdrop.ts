@@ -50,6 +50,9 @@ export function climbed(floor: number, most: number) {
   return Math.min(most, Math.max(0, Math.round(floor - view.h - view.camY)));
 }
 
+/** The fjord's water as a plane running away from him (order 23, `alive/depth.ts`), once that file is here: it draws from the water's line to `deep`. */
+export const DEPTH: { fjord?(t: number, top: number, bottom: number): void } = {};
+
 /** The far shore of the fjord and its water, with glints that move; `lift` raises the shore and the water's line, the water running on down under it. */
 export function drawFjord(t: number, ground: number, lift = 0) {
   const deep = ground + 8;
@@ -58,9 +61,11 @@ export function drawFjord(t: number, ground: number, lift = 0) {
   const WATER_LINE = ground - 18; // the far water, which runs down behind the street
   const g = ctx();
   const tt = view.reduced ? 0 : t;
+  const plane = DEPTH.fjord;
+  plane?.(t, WATER_LINE, deep);
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, FJORD);
-    column(x, WATER_LINE, deep, PALETTE.water);
+    if (!plane) column(x, WATER_LINE, deep, PALETTE.water);
     const h = bank(wx);
     column(x, SHORE - h, WATER_LINE, LAND.forest);
     if ((Math.floor(wx / 3) + Math.floor(h)) % 7 === 0) column(x, SHORE - h, SHORE - h + 2, LAND.forestDark);
@@ -75,6 +80,7 @@ export function drawFjord(t: number, ground: number, lift = 0) {
     box(x + 2, foot - 4, 2, 2, GLASS.farWindow);
     lit(x + 2, foot - 4, 2, 2);
   }
+  if (plane) return;
   g.fillStyle = PALETTE.foam;
   for (let i = 0; i < 22; i++) {
     const wx = 150 + ((i * 97) % 2100);

@@ -4,19 +4,20 @@ import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
-import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -300,9 +301,11 @@ function farRidges(v: View) {
 /** Nearer forest: rows of spruce, darker the nearer. */
 function midSpruces() {
   const base = 220 + view.camY * 0.75;
-  for (let i = 0; i < 160; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 160; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 31 + ((i * 17) % 23);
-    const x = layerX(wx, 0.2);
+    const x = spedX(far ? (wx * 0.2) / 0.16 : wx, far ? 0.16 : 0.2, 0.2);
     if (x < -12 || x > view.w + 12) continue;
     const h = 26 + ((i * 29) % 26);
     const colour = mix(LAND.headland, LAND.farHills, 0.15 + (i % 3) * 0.05);
@@ -317,11 +320,13 @@ function midSpruces() {
 
 /** Big spruce trunks just behind the path, between the clearings. */
 function nearTrunks() {
-  for (let i = 0; i < 70; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 70; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 58 + ((i * 37) % 30);
     const c = Math.floor(wx / TILE);
     if ((c > 0 && c < 16) || (c > 87 && c < 104) || (c > 119 && c < 140)) continue;
-    const x = layerX(wx, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -20 || x > view.w + 20) continue;
     const foot = G * TILE;
     const h = 90 + ((i * 23) % 40);
@@ -613,11 +618,13 @@ function trollBody(t: Troll, v: View) {
   const age = step - t.since;
   const f = t.dir;
   if (t.phase === "asleep" || (t.phase === "waking" && age < TROLL_STEPS.waking / 2)) {
-    // A mossy boulder, its nose a bump on one side; waking, it shakes.
+    // A mossy boulder, its nose a bump on one side; asleep it breathes (its back up a pixel every other second, order
+    // 23); waking, it shakes.
     const shake = t.phase === "waking" && !view.reduced ? (age % 4 < 2 ? 1 : -1) : 0;
-    for (let k = 0; k < 24; k++) {
-      const half = Math.round(17 * Math.sqrt(1 - ((k - 2) / 23) ** 2));
-      R(x - half + shake, fl - k - 1, half * 2, 1, k > 18 ? FOREST.moss : k % 5 === 0 ? FOREST.stoneDark : FOREST.stone);
+    const breath = t.phase === "asleep" ? Math.floor(step / 60) % 2 : 0;
+    for (let k = 0; k < 24 + breath; k++) {
+      const half = Math.round(17 * Math.sqrt(Math.max(0, 1 - ((k - 2) / (23 + breath)) ** 2)));
+      R(x - half + shake, fl - k - 1, half * 2, 1, k > 18 + breath ? FOREST.moss : k % 5 === 0 ? FOREST.stoneDark : FOREST.stone);
     }
     R(x - 13 + shake, fl - 12, 5, 5, FOREST.stone);
     R(x - 14 + shake, fl - 11, 2, 3, FOREST.stoneDark);
@@ -643,8 +650,11 @@ function trollBody(t: Troll, v: View) {
       R(f > 0 ? x + cx : x - cx - w, y, w, 1, paint(y, c));
     }
   };
-  const bend = t.phase === "stuck" ? 4 : 0;
-  const stride = (t.phase === "walk" || t.phase === "retreat") && !view.reduced ? Math.floor(step / 10) % 2 : 0;
+  // Its club stuck, it heaves (a pixel, every other second); walking, a cycle of four by the distance it covers (order 23).
+  const bend = t.phase === "stuck" ? 4 + (Math.floor(step / 30) % 2) : 0;
+  const walking = t.phase === "walk" || t.phase === "retreat";
+  const stride = walking ? [1, 0, -1, 0][((Math.floor((f > 0 ? t.x : -t.x) / 4) % 4) + 4) % 4] : 0;
+  const lift = walking && stride === 0 ? 1 : 0;
   // The tail, behind, with its tuft.
   for (let k = 0; k < 8; k++) box(-14 - k, 12 - Math.floor(k * 0.8), 1, 1, FOREST.trollDark);
   blob(-22, 4, 2, 2, FOREST.trollHair);
@@ -654,13 +664,13 @@ function trollBody(t: Troll, v: View) {
   box(-8 + stride, 3, 6, 7, FOREST.troll);
   box(3 - stride, 3, 6, 7, FOREST.troll);
   // The body: a hunched back, a round belly.
-  blob(-5, 25 - bend, 9, 7, FOREST.trollDark);
-  blob(0, 18 - bend / 2, 13, 11, FOREST.troll);
-  blob(4, 16 - bend / 2, 7, 7, FOREST.trollLight);
-  blob(-6, 26 - bend, 7, 5, FOREST.troll);
+  blob(-5, 25 - bend + lift, 9, 7, FOREST.trollDark);
+  blob(0, 18 - bend / 2 + lift, 13, 11, FOREST.troll);
+  blob(4, 16 - bend / 2 + lift, 7, 7, FOREST.trollLight);
+  blob(-6, 26 - bend + lift, 7, 5, FOREST.troll);
   // The head, forward and low; its ear, nose, mouth and hair.
   const hx = 7 + bend;
-  const hy = 31 - bend * 2;
+  const hy = 31 - bend * 2 + lift;
   blob(hx, hy, 7, 6, FOREST.troll);
   blob(hx - 6, hy + 1, 2, 3, FOREST.trollDark);
   blob(hx + 7, hy - 1, 4, 4, FOREST.trollNose);

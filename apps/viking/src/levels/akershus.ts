@@ -1,11 +1,12 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
+import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, flagCloth, type LedgeLook } from "@larshansen/pixelkit/props";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
-import { parts } from "../render/pickups";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame } from "../alive/frames";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -440,36 +441,66 @@ function pier(c: number) {
   for (let k = 0; k < 2 * TILE; k += 7) R(x + k, WATER - 2, 3, 2, PLANTS.hedgeDark);
 }
 
-/** A guard of the fortress: a plum coat, a plum helmet with a plume, a pike at his back. 13 x 20. */
-function guard(e: Enemy) {
-  const r = parts(e, 13);
-  const s = view.reduced ? 0 : Math.floor(e.x / 4) % 2;
-  r(1, -19, 1, 11, ENEMY.plum);
-  r(1, -20, 1, 1, ENEMY.pale);
-  r(3, -18, 7, 3, ENEMY.plum);
-  r(8, -19, 4, 1, ENEMY.poisonLight);
-  r(3, -15, 7, 4, ENEMY.orangeLight);
-  r(8, -14, 1, 1, ENEMY.eye);
-  r(2, -11, 9, 8, ENEMY.plum);
-  r(2, -7, 9, 1, ENEMY.line);
-  r(3 + s, -3, 3, 3, ENEMY.line);
-  r(7 - s, -3, 3, 3, ENEMY.line);
-  r(2 + s, -1, 4, 1, ENEMY.plum);
-  r(7 - s, -1, 4, 1, ENEMY.plum);
-}
+// The fortress's guard and brazier, drawn as frames (order 23; `src/alive/foes.ts`): a ramp to each material, an idle
+// of two frames, a cycle of four; the brazier's flames are its cycle.
+const GUARD_TOP = [
+  ".a...........",
+  ".m.....GGGG..",
+  ".m.MMMMMMG...",
+  ".m.mmmmmmm...",
+  ".m.ddmmmmd...",
+  ".m.OOOOOOO...",
+  ".m.OOOOOeO...",
+  ".m.oOOOOOO...",
+  ".m..oOOOO....",
+  ".mMMmmmmmmM..",
+  ".mMmmmmmmmmm.",
+  ".mdmmmMmmmmd.",
+  ".mdmmmMmmmmd.",
+  ".mdlllllllld.",
+  ".mdmmmmmmmmd.",
+  "...dmmmmmmd.."
+];
+const GUARD_LEGS = {
+  stand: ["...ll..ll....", "...ll..ll....", "..mmm.mmm....", "..ddd.ddd...."],
+  a: ["..ll....ll...", ".ll......ll..", ".mmm.....mmm.", ".ddd.....ddd."],
+  b: ["....llll.....", "....llll.....", "...mmmmm.....", "...ddddd....."],
+  c: ["...ll...ll...", "..ll.....ll..", "..mmm....mmm.", "..ddd....ddd."]
+};
+const guardFrame = (name: string, legs: string[], nod = 0) => frame(name, FOE_INK, [GUARD_TOP.slice(0, 9), 0, nod], [GUARD_TOP.slice(9), 0, 9], [legs, 0, 16]);
+const GUARD: Looks = {
+  w: 13,
+  h: 20,
+  idle: [guardFrame("guard, at ease", GUARD_LEGS.stand), guardFrame("guard, breathing", GUARD_LEGS.stand, 1)],
+  move: [guardFrame("guard, marching 1", GUARD_LEGS.a), guardFrame("guard, marching 2", GUARD_LEGS.b, -1), guardFrame("guard, marching 3", GUARD_LEGS.c), guardFrame("guard, marching 4", GUARD_LEGS.b, -1)]
+};
 
-/** A brazier on its stone foot: a dark iron basket, flames over the rim. It hurts from above. 13 x 16. */
+const BRAZIER_BASE = [
+  "ooooooooooooo",
+  "lmllllmlllmll",
+  "lmlllMmlllmll",
+  "lmllllmlllmll",
+  "lmllllmlllmll",
+  ".lmlllmlllml.",
+  "..lllllllll..",
+  "...MMMMMMM...",
+  "...mmmmmmm...",
+  "...mmmmmmm...",
+  "...ddddddd...",
+  "..ddddddddd.."
+];
+const FLAMES = [
+  ["......a......", "....O.Oa.....", "...OaOOOO.a..", "..OOOoOOoOO.."],
+  ["....a........", "...aO..O.a...", "..OOOOaOOO...", "..oOoOOOoOO.."],
+  ["........a....", "..a..O.aO....", "..OOOOaOOOO..", ".OOoOOOoOOo.."],
+  ["......a......", "....aO.O.....", "..O.OOOOaO...", "..OOoOOoOOO.."]
+];
+const brazierFrame = (k: number) => frame(`brazier, flames ${k + 1}`, FOE_INK, [FLAMES[k], 0, 0], [BRAZIER_BASE, 0, 4]);
+const BRAZIER: Looks = { w: 13, h: 16, idle: [0, 1, 2, 3].map(brazierFrame), move: [0, 1, 2, 3].map(brazierFrame), rate: 5 };
+
+/** A brazier on its stone foot: an iron basket, coals, flames that flicker on its own clock. It hurts from above. 13 x 16. */
 function brazier(e: Enemy, t: number) {
-  const r = parts(e, 13);
-  r(3, -5, 7, 5, ENEMY.plum);
-  r(3, -5, 7, 1, ENEMY.plumLight);
-  r(0, -11, 13, 6, ENEMY.line);
-  for (let k = 1; k < 13; k += 4) r(k, -11, 1, 6, ENEMY.plum);
-  const flick = view.reduced ? 0 : Math.floor(t / 5) % 3;
-  r(1, -12, 11, 1, ENEMY.orange);
-  r(2 + flick, -15, 3, 3, ENEMY.orange);
-  r(8 - flick, -16, 2, 4, ENEMY.orangeLight);
-  r(5, -14, 3, 2, ENEMY.orangeLight);
+  drawFoe(e, foeFrame(e, t, BRAZIER), BRAZIER.w, BRAZIER.h);
   light(Math.round(e.x - 5), Math.round(e.y) - 16, 10, 5, "soft");
 }
 
@@ -586,7 +617,7 @@ export const AKERSHUS: LevelDef = {
     carrier: (_i, at) => hoist(at),
     enemy(e, v) {
       if (!e.alive) return false;
-      if (e.def.look === "guard") guard(e);
+      if (e.def.look === "guard") drawFoe(e, foeFrame(e, v.t, GUARD), GUARD.w, GUARD.h);
       else if (e.def.look === "brazier") brazier(e, v.t);
       else return false;
       return true;

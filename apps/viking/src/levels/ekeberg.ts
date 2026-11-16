@@ -10,9 +10,10 @@ import type { Zone } from "@larshansen/pixelkit/zone";
 import type { Enemy, EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../render/pickups";
+import { parts } from "../alive/parts";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
+import { spedX } from "../alive/depth";
 
 // Level 9, rune E: Ekeberg. Always evening, under the banded sky of The Scream, which Munch set on
 // this hillside. Up from Gamlebyen on the tram's roof as it climbs its trestle to the top of the
@@ -329,9 +330,11 @@ function midOaks() {
 
 /** Nearer: birches and lamp posts along the park's paths. */
 function nearPark() {
-  for (let i = 0; i < 50; i++) {
+  for (const far of [true, false]) for (let i = 0; i < 50; i++) {
+    // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
+    if ((i % 2 === 1) !== far) continue;
     const wx = i * 131 + ((i * 29) % 60);
-    const x = layerX(wx, 0.4);
+    const x = spedX(far ? (wx * 0.4) / 0.3 : wx, far ? 0.3 : 0.4, 0.4);
     if (x < -16 || x > view.w + 16) continue;
     const c = Math.max(0, Math.min(COLS - 1, Math.floor((view.camX + x) / TILE)));
     if (c >= 200 || at(c, surfaceRow(c)) === "K") continue;

@@ -30,7 +30,7 @@ const viewOf = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day
 
 /** The enemy palette's colours, and the ones a body is drawn in (not the outline's red, the near-black, the eyes, or the pale of teeth and claws). */
 const PALETTE_COLOURS = new Set<string>(Object.values(ENEMY));
-const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white])];
+const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade])];
 
 /**
  * The smallest difference (CIEDE2000) allowed between an enemy's body colour and a level's field, as each
@@ -179,6 +179,9 @@ describe("what can hurt him: the enemy palette", () => {
   });
 });
 
+/** What he can stand on: its paint and its bodies. */
+const TOP_AND_BODIES = [STAND.top, STAND.body, STAND.bodyLight, STAND.bodyDark];
+
 /** The sun by day and in the evening, and the moon (the kit's `sky.ts`): things in the sky, not fields. */
 const SKY_BODIES = ["#fff3b8", "#ffb26b", "#e9eefb"];
 
@@ -281,7 +284,7 @@ describe("every role has its colours", () => {
    * greys, and a palace has his skin's cream.
    */
   const FIELDS_OF: Record<string, { colours: readonly string[]; phases: Phase[] }> = {
-    him: { colours: [ROLES.him.tunic], phases: ["day"] },
+    him: { colours: [ROLES.him.tunic, ROLES.him.tunicLit, ROLES.him.tunicShade], phases: ["day"] },
     // The copper of a coin and the gold of a bracteate; their rims and glints are details on them, as an enemy's eyes are.
     take: { colours: [ROLES.take.copper, ROLES.take.gold, ROLES.take.goldDark], phases: ["day", "evening", "twilight", "night"] },
     now: { colours: ROLES.COLOURS.now, phases: ["day", "evening", "twilight", "night"] },
@@ -381,6 +384,36 @@ describe("every role has its colours", () => {
     const src = await Bun.file(new URL("../../../../packages/pixelkit/src/person.ts", import.meta.url)).text();
     for (const c of [ROLES.him.tunic, ROLES.him.skin]) expect(src).toContain(c);
   });
+});
+
+// Order 23 (section 2): a shadow under everything that moves is black at a share of the ground's light, so it is never a
+// role's colour: every colour of every level's ground (its tiles, where shadows fall; none falls on water), at the
+// shadow's edge and at its darkest, stands 10 or more off every role's colours, held as the roles are held against
+// fields, but for him: his skin and his helmet's iron are held only against the other roles (a shadow on snow is grey),
+// and his blue is not held against a shadow, as it is not against the water under the evening's tint (a darkened blue
+// tile on Bjørvika's quay comes within 9.6): the shadow lies on the ground under his boots, a flat ellipse, and what
+// tells him there is his figure. A shadow on what is already a role's colour (a platform's teal) stays that role's.
+describe("a shadow is never a role's colour", () => {
+  test("every colour of the ground darkened as a shadow darkens it stands 10 or more off what hurts, what he stands on, what he takes, a boss's tell, the things to use and the calm outline", async () => {
+    const { SHADOW, SHADOW_MOST } = await import("../alive/shadows");
+    const groups = [BODY, TOP_AND_BODIES, [ROLES.take.copper, ROLES.take.gold, ROLES.take.goldDark], ROLES.COLOURS.now, ROLES.COLOURS.use, ROLES.COLOURS.calm];
+    const roles = groups.flat();
+    const ROLE_OF = new Map(groups.flatMap((g) => g.map((c) => [c, g] as [string, readonly string[]])));
+    const near: string[] = [];
+    for (const st of BUILT) {
+      const ground = shares([(await paintedOf(st.id)).ground], FIELD_SHARE);
+      for (const field of ground.keys())
+        for (const a of [SHADOW.edge, SHADOW_MOST]) {
+          const dark = mixRgb(rgb(field), [0, 0, 0], a);
+          for (const c of roles) {
+            if (ROLE_OF.get(c)?.some((o) => deltaE(rgb(field), rgb(o)) < MIN_DELTA)) continue;
+            const d = deltaE(dark, rgb(c));
+            if (d < MIN_DELTA) near.push(`${field} in ${st.id} under a shadow (${a.toFixed(2)}) near ${c}: ${d.toFixed(1)}`);
+          }
+        }
+    }
+    expect([...new Set(near)]).toEqual([]);
+  }, 60_000);
 });
 
 // Order 22 (ADR 0044, A4): flat saturated yellow on a top edge means "stand here", and nothing else in the game is

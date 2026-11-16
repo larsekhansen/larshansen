@@ -1,0 +1,24 @@
+akerselva: 4388 spots with 6, 4388 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 107 s
+akershus: 6564 spots with 6, 6569 with 10, 5 only with 10 (columns 230, 231); rune true / true; bracteate without the feather false / false; 424 s
+bjorvika: 2440 spots with 6, 2440 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 77 s
+bygdoy: 2809 spots with 6, 2809 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 70 s
+ekeberg: 4065 spots with 6, 4052 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 94 s
+gamlebyen (every stone risen): 2341 spots with 6, 2341 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 64 s
+holmenkollen: 2713 spots with 6, 2713 with 10, 20 only with 10 (columns 180, 183, 192, 194, 218, 228, 229, 241, 242, 243, 244, 245, 246, 247, 249, 250, 258); rune true / true; bracteate without the feather false / false; 72 s
+korketrekkeren: 1953 spots with 6, 1953 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 34 s
+langkaia: 2924 spots with 6, 2924 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 47 s
+nabolaget: 3240 spots with 6, 3248 with 10, 16 only with 10 (columns 22, 24, 28, 29, 56, 57); rune true / true; bracteate without the feather false / false; 155 s
+nordmarka: 1069 spots with 6, 1069 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 32 s
+ostensjovannet: 1468 spots with 6, 1468 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 23 s
+radhuset: 4924 spots with 6, 4924 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 138 s
+slottet: 5055 spots with 6, 5098 with 10, 8 only with 10 (columns 75, 77, 78, 80, 86, 148, 181, 191); rune true / true; bracteate without the feather false / false; 239 s
+stortinget: 5053 spots with 6, 5053 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 118 s
+vigelandsparken: 3085 spots with 6, 3085 with 10, 0 only with 10; rune true / true; bracteate without the feather false / false; 66 s
+akershus: 6564 spots with 6, 6569 with 10, 5 only with 10 (columns 230, 231); rune true / true; bracteate without the feather false / false; 704 s
+  231,7.00  231,7.00  231,7.00  231,7.00  230,7.00
+holmenkollen: 2713 spots with 6, 2713 with 10, 20 only with 10 (columns 180, 183, 192, 194, 218, 228, 229, 241, 242, 243, 244, 245, 246, 247, 249, 250, 258); rune true / true; bracteate without the feather false / false; 154 s
+  180,17.37  192,21.14  194,23.36  218,17.13  228,19.87  229,20.14  250,29.60  247,28.10  249,29.10  246,27.61  245,27.36  245,27.11  244,26.86  244,26.61  243,26.11  242,25.86  242,25.61  258,33.60  241,25.11  183,18.87
+nabolaget: 3240 spots with 6, 3248 with 10, 16 only with 10 (columns 22, 24, 28, 29, 56, 57); rune true / true; bracteate without the feather false / false; 495 s
+  22,12.14  24,13.37  28,12.00  28,12.00  28,12.00  28,12.00  29,12.00  29,12.00  29,12.00  56,11.00  56,11.00  56,11.00  56,11.00  57,11.00  57,11.00  57,11.00
+slottet: 5055 spots with 6, 5098 with 10, 8 only with 10 (columns 75, 77, 78, 80, 86, 148, 181, 191); rune true / true; bracteate without the feather false / false; 562 s
+  75,24.89  77,24.63  78,24.38  80,24.13  86,23.12  148,22.11  181,21.64  191,19.86
