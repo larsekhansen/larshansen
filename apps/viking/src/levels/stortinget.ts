@@ -832,17 +832,60 @@ function train(at: { x: number; y: number }, line: number, clip: { x0: number; x
 
 // Stortinget's own kinds, drawn as frames (order 24; way 3, ADR 0045).
 
-/** The rat out of the pit between the rails: Langkaia's rat turned on end, nose up rising, level at the top, nose down falling. */
-const TRACK_RAT = { rising: turned(RAT.move[0], "track rat, rising", "up"), top: RAT.move[2], falling: turned(RAT.move[0], "track rat, falling", "down"), kicking: turned(RAT.move[2], "track rat, falling, kicking", "down") };
+/**
+ * The rat out of the pit between the rails, 10 x 13, drawn for the box it keeps (order 25: its rising frame was a blob at
+ * real size): rising, stretched out nose first, its forepaws reaching up either side of its head, its hind legs and tail
+ * trailing; at the top of its leap Langkaia's rat level in the air; falling, turned over, nose down, its legs kicking.
+ */
+const RAT_RISING = frame("track rat, rising", FOE_INK, [
+  [
+    "....p.....",
+    "...pmp....",
+    "...emM....",
+    "..pmmMp...",
+    "p.dmmMM..p",
+    "pp.dmmM.pp",
+    "...dmmmM..",
+    "...dmmmM..",
+    "...dmmmm..",
+    "...ddmmd..",
+    "..p.dd.p..",
+    ".pp..p.pp.",
+    ".....p....",
+    "......p..."
+  ]
+]);
+const RAT_FALLING = turned(RAT_RISING, "track rat, falling", "over");
+const RAT_KICKING = frame("track rat, falling, kicking", FOE_INK, [
+  [
+    "......p...",
+    ".....p....",
+    "pp..p..pp.",
+    ".p.dd.p...",
+    "...dmmd...",
+    "...dmmmm..",
+    "...dmmmM..",
+    "...dmmmM..",
+    "p.dmmM..p.",
+    "pp.dmmMMpp",
+    "..pmmMp...",
+    "...emM....",
+    "...pmp....",
+    "....p....."
+  ]
+]);
+const TRACK_RAT = { rising: RAT_RISING, top: RAT.move[2], falling: RAT_FALLING, kicking: RAT_KICKING };
 function trackRat(e: Enemy, t: number) {
   const l = leap(e, t);
   const floor = (P + 1) * TILE;
   if (l.ripple && !view.reduced && Math.floor(t / 5) % 2) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast)));
   if (l.up <= 0) return;
   const next = leap(e, t + 1).up;
-  const f = Math.abs(next - l.up) <= 1 && Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 2 ? TRACK_RAT.top : next < l.up ? (Math.floor(t / 4) % 2 ? TRACK_RAT.kicking : TRACK_RAT.falling) : TRACK_RAT.rising;
-  // Its head at its box's top (where he lands on it), squashed to its box's height (it keeps the box it had before order 18).
-  drawFoe(e, f, 12, 15);
+  const top = Math.abs(next - l.up) <= 1 && Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 2;
+  const f = top ? TRACK_RAT.top : next < l.up ? (Math.floor(t / 4) % 2 ? TRACK_RAT.kicking : TRACK_RAT.falling) : TRACK_RAT.rising;
+  // Its head at its box's top (where he lands on it); the level rat at the top is the rat's own, 13 wide.
+  if (top) drawFoe(e, f, 13, 11, true);
+  else drawFoe(e, f, 10, 13, true);
 }
 
 /** A luggage trolley rolling by itself, 15 x 15: a plum cage lit along its rails, a suitcase and a bag in it, the handle up behind, two wheels turning by the distance it rolls. */
@@ -907,21 +950,25 @@ const umbrellaLooks = (ink: Record<string, string>): Looks => {
 };
 const UMBRELLA = { plum: umbrellaLooks({ C: ENEMY.plumLight, c: ENEMY.plum, k: ENEMY.plumDark }), pink: umbrellaLooks({ C: ENEMY.pale, c: ENEMY.pink, k: ENEMY.plumLight }) };
 
-/** A pigeon flying through the hall, 17 x 9: Langkaia's pigeon on the wing, plum lit along its back, its breast orange, its neck's green sheen, wings beating on its own clock. */
+/**
+ * A pigeon flying through the hall, 17 x 9 (order 25: fuller at real size, drawn for the box it keeps, not squashed to
+ * it): a round plum body lit along its back, its breast orange, its neck's green sheen, an eye, a fanned tail with its dark
+ * band, broad wings beating on its own clock.
+ */
 const PIGEON_BODY = [
-  "Mm..........MMm..",
-  "lmmMMMMMMMgGmmea.",
-  "ldmmmmmmmmoOmm...",
-  "..dmmmmmmooo.....",
-  "....dddddd......."
+  "...........MMm...",
+  "Mm...MMMMMgGmmea.",
+  "lmmMMmmmmmoOmm...",
+  "ldmmmmmmmooo.....",
+  "l..dddmmdd......."
 ];
 const PIGEON_WING: Record<string, readonly string[]> = {
-  up: ["...MMM.....", "...MMmmM...", "....Mmmmm..", ".....ddmm.."],
-  high: ["...........", "..MMMM.....", "..MMmmmMm..", "....dddmm.."],
-  level: ["...........", "...........", "...........", "MMMMMMmm..."],
+  up: ["...MMM.....", "..MMmmMM...", "..MmmmmmM..", "...ddmmmm.."],
+  high: ["...........", "..MMMMMM...", ".MMmmmmmMm.", "...ddddmm.."],
+  level: ["...........", "...........", "...........", "MMMMMMMmm.."],
   down: ["...........", "...........", "...........", "..........."]
 };
-const PIGEON_DOWN = ["...mmmm....", "..mmmm.....", "..dd......."];
+const PIGEON_DOWN = ["..mmmmmm...", ".mmmmmM....", ".ddd......."];
 const pigeonFrame = (name: string, wing: string, dy = 0) =>
   frame(name, FOE_INK, [PIGEON_WING[wing], 2, dy], [PIGEON_BODY, 0, 3 + dy], ...(wing === "down" ? [[PIGEON_DOWN, 3, 6 + dy] as [string[], number, number]] : []));
 const PIGEON_FLYING: Looks = {
@@ -1086,7 +1133,7 @@ export const STORTINGET: LevelDef = {
       else if (e.def.look === "umbrella") {
         const l = e.def.c % 2 ? UMBRELLA.pink : UMBRELLA.plum;
         drawFoe(e, foeFrame(e, v.t, l), l.w, l.h);
-      } else if (e.def.look === "pigeonfly") drawFoe(e, foeFrame(e, v.t, PIGEON_FLYING), PIGEON_FLYING.w, PIGEON_FLYING.h);
+      } else if (e.def.look === "pigeonfly") drawFoe(e, foeFrame(e, v.t, PIGEON_FLYING), PIGEON_FLYING.w, PIGEON_FLYING.h, true);
       else return drawLook(e, v.t);
       return true;
     },

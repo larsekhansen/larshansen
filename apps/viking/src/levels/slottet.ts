@@ -15,6 +15,7 @@ const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
 import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
+import { crowdFlag, person } from "../alive/things";
 import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -701,16 +702,9 @@ function crowd(t: number) {
     const k = Math.floor(x / 7);
     const tall = (k * 37) % 5;
     const head = g - 6 - (tall % 3);
-    R(x, head + 4, 6, 9, [PARADE.bunadBlue, PAINT.ochre, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5]);
-    R(x + 1, head, 4, 4, SKIN);
-    R(x + 1, head - 1, 4, 1, [P.woodDark, INK, PARADE.fringe, P.earth][k % 4]);
-    if (k % 3 === 0) {
-      const wave = view.reduced ? 0 : Math.floor((t + k * 11) / 9) % 2;
-      R(x + 5, head - 9 + wave, 1, 8, PARADE.pole);
-      R(x + 6, head - 9 + wave, 5, 4, FLAG.red);
-      R(x + 7, head - 9 + wave, 1, 4, FLAG.white);
-      R(x + 6, head - 7 + wave, 5, 1, FLAG.blue);
-    }
+    // Drawn as frames since order 25 (`person` in alive/things.ts), each copied: shaded, and fewer rectangles.
+    person(x, head - 1, [PARADE.bunadBlue, PAINT.ochre, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5], [P.woodDark, INK, PARADE.fringe, P.earth][k % 4], false, k % 5 === 1);
+    if (k % 3 === 0) crowdFlag(x + 5, head - 9, view.reduced ? 0 : Math.floor((t + k * 11) / 9) % 2);
   }
 }
 

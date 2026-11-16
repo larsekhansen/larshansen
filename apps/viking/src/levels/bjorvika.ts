@@ -502,14 +502,32 @@ function sheetArt(x: number, y: number, w: number) {
 }
 
 /** The welder on his beam: kneeling, his mask down, his torch at the steel; sparks falling below on the beat. */
+/**
+ * The welder on the next floor's beam, crouched at his work (order 25: drawn as a frame, as people are): a hard hat lit at
+ * its crown, his mask down with the light on its glass, overalls lit across the shoulders and shaded down his back, the
+ * torch in his glove; the sparks fall from it on their beat (a hazard, with a second's warning).
+ */
+const WELDER = frame("the welder", { H: mix(S.hardhat, WHITE, 0.35), h: S.hardhat, k: INK, K: "#9fd0ff", O: mix(S.overalls, WHITE, 0.2), o: S.overalls, d: mix(S.overalls, INK, 0.3), g: "#c9b79a", t: "#8a8f96", l: INK }, [
+  [
+    "..HHh......",
+    ".HHHhh.....",
+    ".hkKkk.....",
+    "..kkkk.....",
+    ".OOoooo....",
+    "OOooooogttt",
+    "Oooooodd...",
+    ".ooooddd...",
+    ".Oooodd....",
+    "OOoooooo...",
+    "Ooodddoo...",
+    ".ll...ll...",
+    "lll...lll.."
+  ]
+]);
 function welder(t: number) {
   const x = 54 * TILE + 6;
   const y = F2 * TILE;
-  R(x, y - 9, 6, 6, S.overalls);
-  R(x + 1, y - 13, 5, 4, S.hardhat);
-  R(x + 5, y - 11, 3, 3, INK);
-  R(x - 1, y - 3, 8, 3, S.overalls);
-  R(x + 6, y - 6, 4, 2, S.overalls);
+  paint(WELDER, x - 1, y - 13, 1, 11);
   const phase = pulsePhase(t, SPARKS.beat!);
   const { age } = pulseAge(t, SPARKS.beat!);
   const flick = view.reduced ? 1 : Math.floor(t / 3) % 2;

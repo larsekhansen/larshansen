@@ -143,24 +143,29 @@ const OWL: Looks = {
   move: [owl("owl, wings up", "up"), owl("owl, wings half up", "high"), owl("owl, wings out", "level"), owl("owl, wings down", "down")]
 };
 
-// --- The wasp: 12 x 8, its head on the right: a banded body, a sting behind, wings a blur of pale over it ----------------
+// --- The wasp: 14 x 9, its head on the right (order 25: one more pass, larger and plainer at real size): a banded abdomen
+// pinched at its waist, its sting behind, a thorax lit on its back, a head with an eye and its jaws, legs hanging, wings a
+// pale blur over its back that beat on their own clock --------------------------------------------------------------------
 const WASP_BODY = [
-  "...GlGl.....",
-  "..GGlGlGlGG.",
-  ".GGGlGlllGGe",
-  "lggglglllgGl",
-  "..gglg..l.l."
+  "..GlGl...GG...",
+  ".GGlGlG.GGGgG.",
+  "lGGlGlgggGggea",
+  ".gglglg..gggg.",
+  "..glgl...g.g.."
 ];
+const WASP_LEGS = ["...l.l...l.l..", "..l...l..l..l."];
 const WASP_WING: Record<string, readonly string[]> = {
-  up: ["...WWw...", "..WWWw...", "...Ww....", "........."],
-  high: [".........", "..WWWWw..", "...wwww..", "........."],
-  level: [".........", ".........", "WWWWWw...", ".wwww...."],
-  down: [".........", ".........", ".........", "WWWw....."]
+  up: ["...WWw...", "..WWWWw..", "..wWWWWw.", "...wwWw.."],
+  high: [".........", ".WWWWWw..", "..wWWWWww", "...wwww.."],
+  level: [".........", ".........", "WWWWWWw..", ".wwwwwww."],
+  down: [".........", ".........", ".........", "........."]
 };
-const wasp = (name: string, wing: string, dy = 0) => make(name, at(WASP_BODY, 0, 2 + dy), at(["....l.l.l..."], 0, 7 + dy), at(WASP_WING[wing], 1, dy));
+const WASP_DOWN = [".wwWWWWw.", "..wwww..."];
+const wasp = (name: string, wing: string, dy = 0) =>
+  make(name, at(WASP_BODY, 0, 3 + dy), at(WASP_LEGS, 0, 7 + dy), at(WASP_WING[wing], 3, dy), ...(wing === "down" ? [at(WASP_DOWN, 3, 6 + dy)] : []));
 const WASP: Looks = {
-  w: 12,
-  h: 8,
+  w: 14,
+  h: 9,
   // Wings out or down, its body rises a pixel with the beat, so its back is where he lands on it.
   idle: [wasp("wasp, hovering", "up"), wasp("wasp, hovering, wings half up", "high")],
   move: [wasp("wasp, wings up", "up"), wasp("wasp, wings half up", "high"), wasp("wasp, wings out", "level", -1), wasp("wasp, wings down", "down", -1)]
@@ -198,12 +203,13 @@ const SQUIRREL_LOOKS: Looks = {
 };
 
 // --- The kid: 11 x 18 in a bobble hat and a puffy jacket (plum, or orange every other kid); a snowball raised behind
-// while it winds up, the arm forward as it throws ------------------------------------------------------------------
+// while it winds up, the arm forward as it throws. The hat (order 25: it read as hair at real size): a round white bobble
+// on a round knitted crown, lit at the top left, and a turned-up brim in the darker green ------------------------------
 const KID_TOP = [
-  ".....G.....",
-  "....gGGg...",
-  "...gGGggg..",
-  "...GGGGGG..",
+  "....WW.....",
+  "...gGGg....",
+  "..gGGGGg...",
+  "..ggggggg..",
   "...aaaaa...",
   "...aaaea...",
   "...aaapa...",

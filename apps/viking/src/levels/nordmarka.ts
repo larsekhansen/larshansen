@@ -636,6 +636,15 @@ function moose(at: { x: number; y: number }, t: number) {
 // whichever way it faces: a lit shoulder and head, a shaded belly and underside, legs and arms lit down their left.
 const HIDE = [FOREST.trollHair, FOREST.trollDark, FOREST.troll, FOREST.trollLight, mix(FOREST.trollLight, WHITE, 0.22)];
 const STONE_TONES = [mix(FOREST.stoneDark, INK, 0.25), FOREST.stoneDark, FOREST.stone, FOREST.stoneLight, mix(FOREST.stoneLight, WHITE, 0.25)];
+/**
+ * After dusk (order 25: its shading was barely there in the dark) the lit side of its hide and its stone takes a little of
+ * the night's rim light: its two lightest tones drawn again over the night's tint, faint, as lights are (drawing only).
+ */
+const rimOf = (c: string, a: number) => {
+  const n = parseInt(c.slice(1), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+};
+const TROLL_RIM = new Map<string, string>([HIDE[3], HIDE[4], STONE_TONES[3], STONE_TONES[4]].map((c, i) => [c, rimOf(c, i % 2 ? 0.5 : 0.35)]));
 const NOSE = [mix(FOREST.trollNose, INK, 0.3), FOREST.trollNose, mix(FOREST.trollNose, WHITE, 0.2)];
 const HAIR = [mix(FOREST.trollHair, INK, 0.3), FOREST.trollHair, FOREST.trollDark];
 const MOSS = [mix(FOREST.moss, INK, 0.25), FOREST.moss, FOREST.mossLight];
@@ -655,13 +664,17 @@ function trollBody(t: Troll, v: View) {
   const age = step - t.since;
   const f = t.dir;
   /** A row of pixels from screen x0 to x1 (exclusive), each its tone from `tone(x)` in `ramp`, joined into runs. */
+  const dusk = v.sky.phase !== "day";
   const row = (x0: number, x1: number, y: number, ramp: readonly string[], tone: (sx: number) => number) => {
     let start = x0;
     let k = tone(x0);
     for (let sx = x0 + 1; sx <= x1; sx++) {
       const n = sx < x1 ? tone(sx) : -1;
       if (n === k) continue;
-      R(start, y, sx - start, 1, ramp[Math.max(0, Math.min(ramp.length - 1, k))]);
+      const c = ramp[Math.max(0, Math.min(ramp.length - 1, k))];
+      R(start, y, sx - start, 1, c);
+      const rim = dusk ? TROLL_RIM.get(c) : undefined;
+      if (rim) light(start, y, sx - start, 1, "soft", rim);
       start = sx;
       k = n;
     }

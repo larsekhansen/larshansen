@@ -117,6 +117,13 @@ function sent(params: URLSearchParams, help: HTMLElement) {
 /** What `?debug` does once the page has started and drawn its first frame: `perf`, `where`, `strip`. */
 export function afterStart(params: URLSearchParams, frame: () => void, help: HTMLElement) {
   if (params.has("strip")) return void strip(params, help).catch((e) => (help.textContent = `strip: ${e}`));
+  // `?debug&fall=<steps>[&gold]` (order 25): the maze's feather floating down onto him, that many steps into its fall (of
+  // a hundred), for a picture of a moment that otherwise comes only on the way out of the maze.
+  if (params.has("fall")) {
+    const g = (window as unknown as { __game: Game & { state: { feather: unknown } } }).__game;
+    g.state.feather = { since: g.state.steps - (Number(params.get("fall")) || 50), gold: params.has("gold") };
+    frame();
+  }
   // `?debug&perf&on=<event>[&skip=N]`: measured with what answers the event in the air (order 19).
   if (params.has("perf") && params.has("on"))
     return void reach(params, (window as unknown as { __game: Game }).__game).then(
