@@ -66,10 +66,12 @@ tenth to nine tenths of its area.
 The middle distances hardly move (the materials keep their levels' tones; the new ones are mixes between them). Where a least
 distance fell, the nearest colour is one the level already painted that now covers more of its ground, never a new tone (the
 palette test holds every new tone at least as far from each role as the level's ground was before): Slottet's setts under the
-street came within 9.7 of his helmet's grey (12.0 before; the palette test holds his tunic's blue, not his helmet, against the
-fields, as before); Holmenkollen's snow within 17.7 of the enemies' white (18.8); Gamlebyen's light stone within 24.9 of the
-enemies' white and 27.2 of the calm outline (27.7, 31.1); Akershus's earth within 26.8 of the enemies (27.1). His tunic's blue,
-the enemies' bodies and the calm outline stand 10 or more off every field of every level, as before (the palette test).
+street within 10.8 of his helmet's grey (12.0 before; the palette test holds his tunic's blue, not his helmet, against the
+fields, as before); Holmenkollen's snow within 17.7 of the enemies' white (18.8) and 16.4 of the coin's glint (19.9);
+Gamlebyen's light stone within 24.9 of the enemies' white and 27.2 of the calm outline (27.7, 31.1); Korketrekkeren's crust
+within 18.4 of his helmet (20.7); Nordmarka's granite within 31.5 of the calm outline (34.3); Bjørvika's glass within 23.2 of
+it (25.9); Akershus's earth within 26.8 of the enemies (27.1). His tunic's blue, the enemies' bodies and the calm outline stand
+10 or more off every field of every level, as before (the palette test).
 
 ## How busy the surfaces are
 
