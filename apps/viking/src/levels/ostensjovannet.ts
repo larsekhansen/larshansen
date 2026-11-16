@@ -2,7 +2,7 @@ import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { stamp } from "@larshansen/pixelkit/kept";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, LAND, PALETTE, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { ENEMY, INK, LAND, PALETTE, ROLES, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
@@ -11,7 +11,7 @@ import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies
 import type { Play } from "../game/play";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
-import { plain } from "../render/sprite";
+import { outlined, plain } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
@@ -457,35 +457,38 @@ function swanArt(e: Enemy, t: number) {
   const r = parts({ ...e, y: waterOf(e) }, 20);
   const tell = telling(e);
   const coming = !e.calm;
-  // The body on the water: a pink-plum swan, as nothing else on the lake is.
-  r(0, -7, 18, 7, ENEMY.plumLight);
-  r(0, -2, 18, 2, ENEMY.plum);
-  r(-2, -6, 2, 3, ENEMY.plum);
+  // The body on the water: a white swan (order 22), its outline pale while it is calm and red once it comes.
+  r(0, -7, 18, 7, ENEMY.white);
+  r(0, -2, 18, 2, ENEMY.plumLight);
+  r(-2, -6, 2, 3, ENEMY.white);
   if (tell || coming) {
     // Wings half raised.
-    r(2, -11, 12, 4, ENEMY.plum);
-    r(3, -12, 10, 1, ENEMY.plumLight);
+    r(2, -11, 12, 4, ENEMY.white);
+    r(3, -8, 10, 1, ENEMY.plumLight);
   }
   if (coming) {
     // Neck stretched low and forward, the beak open.
-    for (let k = 0; k < 7; k++) r(16 + k, -7 - Math.floor(k / 3), 2, 2, ENEMY.plumLight);
-    r(22, -11, 4, 4, ENEMY.plumLight);
+    for (let k = 0; k < 7; k++) r(16 + k, -7 - Math.floor(k / 3), 2, 2, ENEMY.white);
+    r(22, -11, 4, 4, ENEMY.white);
     r(24, -10, 1, 1, ENEMY.eye);
-    r(26, -10, 3, 1, ENEMY.red);
-    r(26, -8, 3, 1, ENEMY.red);
+    r(25, -10, 1, 1, ENEMY.line);
+    r(26, -10, 3, 1, ENEMY.orange);
+    r(26, -8, 3, 1, ENEMY.orange);
   } else if (tell) {
     // Neck down, head low over the water, hissing: the tell (still with reduced motion).
     const shake = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    for (let k = 0; k < 5; k++) r(16 + k, -8 + k, 2, 2, ENEMY.plumLight);
-    r(20 + shake, -5, 4, 3, ENEMY.plumLight);
-    r(24 + shake, -4, 3, 1, ENEMY.red);
+    for (let k = 0; k < 5; k++) r(16 + k, -8 + k, 2, 2, ENEMY.white);
+    r(20 + shake, -5, 4, 3, ENEMY.white);
+    r(24 + shake, -4, 3, 1, ENEMY.orange);
     r(21 + shake, -5, 1, 1, ENEMY.eye);
+    r(22 + shake, -5, 1, 1, ENEMY.line);
   } else {
     // At peace: the neck up, the head high.
-    r(15, -17, 2, 11, ENEMY.plumLight);
-    r(15, -19, 4, 3, ENEMY.plumLight);
-    r(19, -18, 2, 1, ENEMY.red);
+    r(15, -17, 2, 11, ENEMY.white);
+    r(15, -19, 4, 3, ENEMY.white);
+    r(19, -18, 2, 1, ENEMY.orange);
     r(17, -18, 1, 1, ENEMY.eye);
+    r(18, -18, 1, 1, ENEMY.line);
   }
 }
 
@@ -496,10 +499,10 @@ function duckArt(e: Enemy) {
   r(0, -6, 2, 3, ENEMY.orange);
   r(3, -6, 5, 1, ENEMY.orangeLight);
   r(9, -10 + bob, 4, 4, ENEMY.poison);
-  r(13, -9 + bob, 2, 1, ENEMY.red);
+  r(13, -9 + bob, 2, 1, ENEMY.orangeLight);
   r(11, -9 + bob, 1, 1, ENEMY.eye);
-  r(4 + bob, -2, 2, 2, ENEMY.red);
-  r(8 - bob, -2, 2, 2, ENEMY.red);
+  r(4 + bob, -2, 2, 2, ENEMY.orange);
+  r(8 - bob, -2, 2, 2, ENEMY.orange);
 }
 
 /** A coot: plum, a pale shield on its brow, poison-green feet. 13 x 10. */
@@ -523,19 +526,21 @@ function nesterArt(e: Enemy, t: number) {
   const r = parts(e, 11);
   if (windingUp(e, t)) {
     const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
-    r(1, -12, 9, 7, ENEMY.orangeLight);
-    r(-4, -13 - flap * 2, 6, 2, ENEMY.orange);
-    r(9, -13 - flap * 2, 6, 2, ENEMY.orange);
-    r(8, -16, 4, 4, ENEMY.orangeLight);
-    r(12, -15, 2, 1, ENEMY.red);
+    r(1, -12, 9, 7, ENEMY.white);
+    r(-4, -13 - flap * 2, 6, 2, ENEMY.plum);
+    r(9, -13 - flap * 2, 6, 2, ENEMY.plum);
+    r(8, -16, 4, 4, ENEMY.white);
+    r(12, -15, 2, 1, ENEMY.orange);
     r(10, -15, 1, 1, ENEMY.eye);
+    r(11, -15, 1, 1, ENEMY.line);
   } else {
-    r(1, -9, 9, 6, ENEMY.orangeLight);
-    r(1, -9, 9, 1, ENEMY.orange);
-    r(8, -13, 2, 4, ENEMY.orangeLight);
-    r(7, -16, 4, 4, ENEMY.orangeLight);
-    r(11, -15, 2, 1, ENEMY.red);
+    r(1, -9, 9, 6, ENEMY.white);
+    r(1, -9, 9, 1, ENEMY.plum);
+    r(8, -13, 2, 4, ENEMY.white);
+    r(7, -16, 4, 4, ENEMY.white);
+    r(11, -15, 2, 1, ENEMY.orange);
     r(9, -15, 1, 1, ENEMY.eye);
+    r(10, -15, 1, 1, ENEMY.line);
   }
 }
 
@@ -559,14 +564,14 @@ function diveArt(s: Shot, t: number) {
   const d = s.vx < 0 ? -1 : 1;
   if (s.spent !== undefined) {
     const flap = view.reduced ? 0 : Math.floor(t / 3) % 2;
-    R(x - 5, y - 2, 10, 4, ENEMY.orangeLight);
-    R(x - 9, y - 3 - flap * 2, 18, 2, ENEMY.orange);
+    R(x - 5, y - 2, 10, 4, ENEMY.white);
+    R(x - 9, y - 3 - flap * 2, 18, 2, ENEMY.plum);
     return;
   }
-  R(x - 4, y - 1, 9, 4, ENEMY.orangeLight);
-  R(x - d * 8 - (d < 0 ? 7 : 0), y - 3, 8, 2, ENEMY.orange);
-  R(x - d * 8 - (d < 0 ? 7 : 0), y + 3, 8, 2, ENEMY.orange);
-  R(x + d * 5 - (d < 0 ? 2 : 0), y, 3, 1, ENEMY.red);
+  R(x - 4, y - 1, 9, 4, ENEMY.white);
+  R(x - d * 8 - (d < 0 ? 7 : 0), y - 3, 8, 2, ENEMY.plum);
+  R(x - d * 8 - (d < 0 ? 7 : 0), y + 3, 8, 2, ENEMY.plum);
+  R(x + d * 5 - (d < 0 ? 2 : 0), y, 3, 1, ENEMY.orange);
   R(x + d * 3, y - 1, 1, 1, ENEMY.eye);
 }
 
@@ -613,6 +618,8 @@ export const OSTENSJOVANNET: LevelDef = {
   landmark: { nb: "Fuglevannet", en: "The bird lake" },
   place: { nb: "Østensjø", en: "Østensjø" },
   sky: "twilight",
+  // The mist over the lake: the far layers fade into a grey-white (order 22).
+  air: "#dde4e8",
   map: MAP,
   legend: { solid: "#PK", oneWay: "=", water: "~" },
   ramps: [],
@@ -656,7 +663,8 @@ export const OSTENSJOVANNET: LevelDef = {
     front(v) {
       const s = v.grounds as Lake | null;
       if (s) PADS.forEach((p, i) => lilyPad(p, s.pads[i], v.t, i));
-      heronArt(s, v.t);
+      // The heron moves and cannot hurt him: outlined in the calm pale (order 22).
+      outlined(() => heronArt(s, v.t), undefined, ROLES.calm);
       mist(v);
       sunrise(v);
     },

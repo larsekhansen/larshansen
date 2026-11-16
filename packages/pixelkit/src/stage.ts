@@ -11,7 +11,8 @@ export interface Stage {
   depth(factor: number): CanvasRenderingContext2D;
   /** The sizing part of the page's layout: art pixel scale, canvas sizes. */
   resize(): void;
-  pass(onto: CanvasRenderingContext2D, draw: () => void, phase: Phase, haze?: number): void;
+  /** `air` (the viking game's, opt-in): the colour the haze goes toward, in place of the horizon's. */
+  pass(onto: CanvasRenderingContext2D, draw: () => void, phase: Phase, haze?: number, air?: string): void;
   nudge(canvas: HTMLCanvasElement, fracX: number): void;
 }
 
@@ -78,20 +79,21 @@ export function createStage(opts: { stage: HTMLElement; px: HTMLCanvasElement; u
    * colour of the horizon, which keeps them calm behind the player. At dusk and night the pass is
    * darkened and then its own windows and lamps come on, before nearer things cover what they should.
    */
-  function pass(onto: CanvasRenderingContext2D, draw: () => void, phase: Phase, haze = 0) {
+  function pass(onto: CanvasRenderingContext2D, draw: () => void, phase: Phase, haze = 0, air?: string) {
     sg.globalCompositeOperation = "source-over";
     sg.clearRect(0, 0, view.w, view.h);
     target(sg);
     lights.length = 0;
     draw();
+    const tint = TINT[phase];
     if (haze > 0) {
       sg.globalCompositeOperation = "source-atop";
       sg.globalAlpha = haze;
-      sg.fillStyle = horizonColor(phase);
+      // The viking game's haze goes toward the level's own air (`air`, opt-in); the front page's toward the horizon.
+      sg.fillStyle = air ?? horizonColor(phase);
       sg.fillRect(0, 0, view.w, view.h);
       sg.globalAlpha = 1;
     }
-    const tint = TINT[phase];
     if (tint) {
       sg.globalCompositeOperation = "source-atop";
       sg.fillStyle = tint;

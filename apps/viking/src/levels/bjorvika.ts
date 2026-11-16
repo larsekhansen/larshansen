@@ -474,9 +474,10 @@ function crane(k: (typeof CRANES)[number], t: number) {
 function hookArt(x: number, y: number, jib: number) {
   R(x + 15, jib + 6, 2, y - jib - 6, S.cable);
   R(x + 11, jib + 5, 10, 3, S.craneDark);
-  // The block he rides: in the platform palette (order 18), its standing top drawn by the page.
-  R(x, y, 2 * TILE, 8, STAND.body);
-  for (let k = 0; k < 2 * TILE; k += 6) for (let i = 0; i < 4; i++) R(x + k + i + 1, y + 2 + (i > 1 ? 1 : 0), 2, 1, STAND.bodyDark);
+  // The block he rides: painted as a crane's block is, yellow with black stripes (order 22: where the way is a
+  // thing that is not a platform, the yellow says he can go there); its standing top drawn by the page.
+  R(x, y, 2 * TILE, 8, STAND.top);
+  for (let k = 0; k < 2 * TILE + 4; k += 6) for (let i = 0; i < 5; i++) if (k - i >= 0 && k - i < 2 * TILE) R(x + k - i, y + 2 + i, Math.min(2, 2 * TILE - k + i), 1, STAND.mark);
   R(x, y + 7, 2 * TILE, 1, STAND.under);
   R(x + 12, y - 4, 8, 4, S.craneDark);
   R(x + 14, y - 3, 4, 2, S.cable);
@@ -548,7 +549,8 @@ function siteFence() {
     for (let k = 0; k < TILE; k += 3) R(c * TILE + k, y - 27, 1, 25, mix(S.fence, S.shore, 0.25));
     R(c * TILE, y - 2, TILE, 2, S.graniteDark);
   }
-  R(29 * TILE, y - 18, 2 * TILE, 4, PAINT.warning);
+  // Its sign's stripes orange and black, not yellow: yellow is the paint on what he stands on (order 22).
+  R(29 * TILE, y - 18, 2 * TILE, 4, S.net);
   for (let k = 0; k < 2 * TILE; k += 4) R(29 * TILE + k, y - 18, 2, 4, S.stripe);
 }
 
@@ -611,7 +613,7 @@ function gust(z: Zone, t: number) {
   }
 }
 
-/** A riveter on the girder: an orange vest with a hi-vis stripe, a red hard hat, a bolt raised to throw. 11 x 18. */
+/** A riveter on the girder: an orange vest with a hi-vis stripe, a white hard hat, a bolt raised to throw. 11 x 18. */
 function riveter(e: Enemy, t: number) {
   const r = parts(e, 11);
   const up = windingUp(e, t);
@@ -620,19 +622,19 @@ function riveter(e: Enemy, t: number) {
   r(1, -11, 9, 6, ENEMY.orange);
   r(1, -8, 9, 1, ENEMY.poisonLight);
   r(3, -15, 6, 4, ENEMY.orangeLight);
-  r(2, -17, 8, 2, ENEMY.red);
-  r(3, -18, 6, 1, ENEMY.red);
+  r(2, -17, 8, 2, ENEMY.white);
+  r(3, -18, 6, 1, ENEMY.white);
   r(7, -14, 1, 1, ENEMY.eye);
   if (up) {
     r(-1, -19, 2, 8, ENEMY.orange);
-    r(-2, -21, 4, 2, ENEMY.red);
+    r(-2, -21, 4, 2, ENEMY.white);
   } else r(10, -10, 2, 5, ENEMY.orange);
 }
 function boltArt(s: Shot, t: number) {
   const x = Math.round(s.x);
   const y = Math.round(s.y);
   const turn = view.reduced ? 0 : Math.floor(t / 4) % 2;
-  R(x - 3, y - 1 + turn, 6, 2, ENEMY.red);
+  R(x - 3, y - 1 + turn, 6, 2, ENEMY.plumLight);
   R(x - 1, y - 2, 3, 4, ENEMY.plum);
 }
 

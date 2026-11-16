@@ -427,12 +427,12 @@ function angryBoy(e: Enemy, t: number) {
   const { up, ripple } = leap(e, t);
   // Stamping: one foot up, then the other, faster as the jump comes.
   const stamp = ripple && !view.reduced ? Math.floor(t / 5) % 2 : 0;
-  r(1, -5 + (stamp ? -2 : 0), 3, 5, ENEMY.red);
-  r(6, -5 + (stamp ? 0 : ripple ? -2 : 0), 3, 5, ENEMY.red);
-  r(1, -11, 8, 6, ENEMY.red);
-  r(1, -11, 1, 6, ENEMY.redLight);
-  r(2, -15, 6, 4, ENEMY.red);
-  r(2, -15, 6, 1, ENEMY.redLight);
+  r(1, -5 + (stamp ? -2 : 0), 3, 5, ENEMY.orange);
+  r(6, -5 + (stamp ? 0 : ripple ? -2 : 0), 3, 5, ENEMY.orange);
+  r(1, -11, 8, 6, ENEMY.orange);
+  r(1, -11, 1, 6, ENEMY.orangeLight);
+  r(2, -15, 6, 4, ENEMY.orange);
+  r(2, -15, 6, 1, ENEMY.orangeLight);
   // Fists: down at his sides, up and shaking while he stamps, over his head in the air.
   const fy = up > 0 ? -17 : ripple ? -13 : -9;
   r(-2, fy, 3, 3, ENEMY.orange);
@@ -593,23 +593,16 @@ function wheel(t: number) {
 }
 
 /**
- * A statue on the path. Watched, it is stone: not an enemy for now, so drawn plain (not outlined), with an
- * edge a shade darker than it so it reads against the paths and the sky. Walking, it is in the enemy's
- * colours (granite plum, bronze orange) with its eyes open and dust at its feet. Its box is the one it
- * had (its head is a step he stands on), and so is its size.
+ * A statue on the path. Watched, it is stone: harmless for now, outlined in the calm pale (order 22; the page
+ * outlines it so while it is calm). Walking, it is in the enemy's colours (granite plum, bronze orange) with its
+ * eyes open and dust at its feet, outlined in the warning red: the change of outline is its tell. Its box is the
+ * one it had (its head is a step he stands on), and so is its size.
  */
 function statueArt(e: Enemy, v: View) {
   const x = Math.round(e.x - 5);
   const y = Math.round(e.y);
   const bronze = e.def.look === "bronze";
-  if (e.calm) {
-    const stone = bronze ? BRONZE : GRANITE;
-    const edge = bronze ? mix(V.bronzeDark, INK, 0.3) : V.graniteDark;
-    return plain(() => {
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1]] as const) figure(x + dx, y + dy, e.def.c, e.dir, { base: edge, light: edge, shade: edge });
-      figure(x, y, e.def.c, e.dir, stone);
-    });
-  }
+  if (e.calm) return figure(x, y, e.def.c, e.dir, bronze ? BRONZE : GRANITE);
   figure(x, y, e.def.c, e.dir, bronze ? WOKEN_BRONZE : WOKEN_GRANITE, view.reduced ? 0 : Math.round(e.x * 2));
   R(e.dir > 0 ? x + 6 : x + 3, y - 14, 1, 1, ENEMY.eye);
   if (!view.reduced) plain(() => R(x + (Math.floor(v.t / 4) % 2 ? 1 : 7), y - 1, 2, 1, V.gravelDark));

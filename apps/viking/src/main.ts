@@ -10,8 +10,8 @@ import { readHarness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
-import { R, TINT, ctx, lights, target, view } from "@larshansen/pixelkit/paint";
-import { DUST, ENEMY, FEATHER, FOOD, INK, METAL, PALETTE, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
+import { R, ctx, lights, target, view } from "@larshansen/pixelkit/paint";
+import { DUST, ENEMY, FEATHER, FOOD, INK, METAL, PALETTE, ROLES, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -56,7 +56,6 @@ import type { Maze } from "@larshansen/maze/scene";
 import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
 import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
-import { carefulStep } from "./game/careful";
 import { HEARTS, LIVES, againAtBoss, benchAt, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import type { Rect } from "./game/frame";
 import type { Pad } from "./render/pad";
@@ -67,11 +66,12 @@ import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
-import { eyes, outlined } from "./render/sprite";
+import { eyes, freshRings, outlined, ringCount, rings, ringsTo } from "./render/sprite";
 import { STAND_LEDGE, shiver, standTop } from "./render/stand";
 import type { Feel } from "./render/feel";
 import type { Enemy, Shot } from "./game/enemies";
 import { drawTiles, drawWater, standTops } from "./render/tiles";
+import { airOf, backHazeOf, hazeOf } from "./render/haze";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
 // a time, the line map (#kart) or a level (#langkaia ...), and the maze in the burial mound
@@ -159,6 +159,8 @@ function readFeather() {
  * goes to Bygdøy or beyond, where it is given and then always his (ADR 0024).
  */
 let shieldKit: typeof import("./game/shield") | null = null;
+/** Walking carefully to a clicked spot in a level: fetched with the first click. */
+let careful: typeof import("./game/careful") | null = null;
 let shieldLoading: Promise<void> | null = null;
 const loadShield = () =>
   (shieldLoading ??= import("./game/shield").then(
@@ -1194,7 +1196,9 @@ function play() {
 
 /** Walking to a clicked spot in a level: the walk's keys without its hops; at an edge or before an enemy, no keys, and the walk ends. */
 function carefully(p: Play, k: Intent): Intent {
-  const walk = carefulStep(p, k);
+  // Until its file has come he waits, the walk kept.
+  if (!careful) return STILL;
+  const walk = careful.carefulStep(p, k);
   if (walk) return walk;
   state.goal = null;
   return STILL;
@@ -1290,7 +1294,7 @@ function layout() {
   camera(0, true);
 }
 
-const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, scene.skies.sky.phase, haze);
+const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, scene.skies.sky.phase, haze, haze > 0 ? airOf(scene.def, scene.skies.sky.phase) : undefined);
 
 /** The height of view the far layers are drawn for. */
 const FAR_VIEW_H = 220;
@@ -1362,7 +1366,8 @@ function drawThings(v: View) {
     if (up !== null && (view.reduced || p.t - up >= HOIST_STEPS)) drawTick(f.x + 2, f.bottom - POLE.h - 9);
   });
   p.benches.forEach((s, i) => drawBench(s.x, s.bottom, p.sitting?.i === i));
-  for (const s of p.sheep) drawSheep(s);
+  // Sheep move and cannot hurt him: outlined in the calm pale (order 22).
+  for (const s of p.sheep) outlined(() => drawSheep(s), undefined, ROLES.calm);
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
   for (const e of p.enemies) foe(e, v);
@@ -1394,21 +1399,25 @@ function standing(v: View) {
   p.def.carriers.forEach((d) => {
     if (!carrierShown(d, p.t)) return;
     const at = carrierDrawn(d, p.t, v.alpha);
-    standTop(at.x, at.y, d.w, "moves", feel?.leaving(d, p.t));
+    standTop(at.x, at.y, d.w, "moves", feel?.leaving(d, p.t), p.t);
   });
   for (const l of p.def.timed) {
     const phase = timedPhase(p.t, l);
     if (phase !== "off") standTop(l.x + (phase === "warn" ? shiver(p.t) : 0), l.y, l.w, "gives", phase === "warn");
   }
-  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x + (s.soon ? shiver(p.t) : 0), s.y, s.w, s.how, s.soon);
+  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x + (s.soon ? shiver(p.t) : 0), s.y, s.w, s.how, s.soon, p.t);
   for (const c of p.def.rules?.ground?.(p) ?? []) standTop(c.x, c.y, c.w, "holds");
 }
 
-/** An enemy in its look (the level's own, or one every level may meet), outlined; once beaten, the squares it puffs into. */
+/**
+ * An enemy in its look (the level's own, or one every level may meet), outlined: in the warning red, or in the
+ * calm pale while it cannot hurt him (a watched statue, a guard still stone, a calm swan, a sledger pulled off:
+ * order 22); once beaten, the squares it puffs into.
+ */
 function foe(e: Enemy, v: View) {
   // Beaten: squashed in its own shape, then a puff of its own colours (`render/feel.ts`).
   if (!e.alive) return void feel?.beaten(e, v.t, () => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)));
-  outlined(() => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)), e);
+  outlined(() => void (scene.def.art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning);
 }
 /**
  * What hurts and is not an enemy (rebar, the third rail, a branch, the barrier, sparks): the enemy
@@ -1422,69 +1431,43 @@ function hazardEdge(h: Hazard, t: number) {
   const x1 = Math.min(h.x + h.w, view.camX + view.w + 4);
   if (x1 <= x0) return;
   R(x0, h.y, x1 - x0, 1, ENEMY.warning);
-  for (let x = h.x + 2; x < x1; x += 4) if (x + 2 > x0) R(x, h.y, 2, 1, ENEMY.outline);
+  for (let x = h.x + 2; x < x1; x += 4) if (x + 2 > x0) R(x, h.y, 2, 1, ENEMY.line);
 }
 
 /** Something thrown, outlined as its thrower is. */
 const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)));
 
-/** Eye-shine: the one bright pixel that answers a light in the dark; and the moonlit rim round what can hurt him. */
+/** Eye-shine: the one bright pixel that answers a light in the dark. */
 const EYE_SHINE = "#fff1c2";
-const RIM = "#c9d8ff";
-/** A scratch canvas the size of the view, for the enemies' outlines after dark. */
-const rimCanvas = document.createElement("canvas");
-const rimG = rimCanvas.getContext("2d")!;
 
 /**
- * After dusk the street layer has the night's tint over it, and a pigeon on dark planks is a dark shape
- * on dark. So what can hurt him and what he can pick up keep some light: each enemy, and what it throws,
- * gets a one-pixel pale rim round its top and sides and is a little lighter than its tinted self, with
- * eye-shine where it has eyes; the hazards get a lit edge; the skilling and the cheese shine nearly as
- * by day. In a level under the trees, the dark that comes after covers all of it but the lamp's circle.
+ * After dusk the street layer has the night's tint over it, and a pigeon on dark planks is a dark shape on dark.
+ * So what moves keeps the light of its outline (order 22: the warning red round what can hurt him, the calm pale
+ * round what cannot), what can hurt him is a little lighter than its tinted self, with eye-shine where it has
+ * eyes; the hazards get a lit edge; the skilling and the cheese shine nearly as by day; what he can stand on
+ * keeps the light of its paint. In a level under the trees, the dark that comes after covers all of it but the
+ * lamp's circle.
  */
 function afterDark(v: View) {
   const p = scene.play;
   const street = ctx();
-  const enemies = () => {
-    for (const e of p.enemies) if (e.alive) foe(e, v);
-    for (const s of p.shots) thrown(s, v);
-  };
-  if (rimCanvas.width !== view.w || rimCanvas.height !== view.h) {
-    rimCanvas.width = view.w;
-    rimCanvas.height = view.h;
-  }
-  // Their shapes, in the rim's colour, a pixel up and to each side; then they themselves over it, as tinted.
-  rimG.clearRect(0, 0, view.w, view.h);
-  target(rimG);
-  enemies();
-  rimG.globalCompositeOperation = "source-in";
-  rimG.fillStyle = RIM;
-  rimG.fillRect(0, 0, view.w, view.h);
-  rimG.globalCompositeOperation = "source-over";
-  street.globalAlpha = v.sky.phase === "night" ? 0.9 : 0.7;
-  for (const [dx, dy] of [[0, -1], [-1, 0], [1, 0]]) street.drawImage(rimCanvas, dx, dy);
-  street.globalAlpha = 1;
-  rimG.clearRect(0, 0, view.w, view.h);
-  enemies();
-  const tint = TINT[v.sky.phase];
-  if (tint) {
-    rimG.globalCompositeOperation = "source-atop";
-    rimG.fillStyle = tint;
-    rimG.fillRect(0, 0, view.w, view.h);
-    rimG.globalCompositeOperation = "source-over";
-  }
-  street.drawImage(rimCanvas, 0, 0);
-  target(street);
+  // A little of their own light back: the shapes drawn again, faint, over their tinted selves.
   street.globalAlpha = 0.25;
-  enemies();
+  const noted = ringCount();
+  for (const e of p.enemies) if (e.alive) foe(e, v);
+  for (const s of p.shots) thrown(s, v);
+  ringsTo(noted);
   street.globalAlpha = 0.8;
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
   street.globalAlpha = 0.85;
   for (const h of p.def.hazards ?? []) hazardEdge(h, p.t);
-  // What he can stand on keeps the light of its top edge.
+  // What he can stand on keeps the light of its paint.
   standing(v);
   standTops(p.map, scene.def.art);
+  // Every outline drawn on the street this frame, again, alone, over the tint.
+  street.globalAlpha = v.sky.phase === "night" ? 0.9 : 0.8;
+  rings(street);
   street.globalAlpha = 1;
   for (const e of p.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, EYE_SHINE);
   // What these drew of their own lights (a brazier's glow) has had its turn: it is not drawn twice.
@@ -1514,18 +1497,20 @@ function render(alpha: number) {
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
   const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
-  const haze = scene.def.haze ?? [0.35, 0.3, 0.2];
+  const haze = hazeOf(scene.def);
   if (art.far) farPass(kit.depth(0.12), () => art.far!(v), haze[0]);
   if (art.mid) farPass(kit.depth(0.2), () => art.mid!(v), haze[1]);
   if (art.near) farPass(kit.depth(0.4), () => art.near!(v), haze[2]);
   const street = kit.depth(1);
-  pass(street, () => art.back(v));
+  // The street's own backdrop, behind the lane: the lightest of the haze (order 22).
+  pass(street, () => art.back(v), backHazeOf(scene.def));
   pass(street, () => {
     drawBoards(scene.boards);
     drawWater(p.map, p.t);
     drawTiles(p.map, art, sky, scene.def.underground);
   });
   pass(street, () => {
+    freshRings();
     drawThings(v);
     art.front?.(v);
     if (!scene.map) standing(v);
@@ -1736,6 +1721,8 @@ wirePointer(stage, () => scene?.doors ?? [], state, {
   walk: (at, door) => {
     if (frozen() || state.finished || state.flight) return;
     state.goal = walkTo(at, door, scene.play.map.width, state.steps);
+    // Walking carefully in a level is a small file of its own, fetched with the first click (order 22, for the budget).
+    if (!careful) void import("./game/careful").then((m) => (careful = m));
     state.moved = true;
   }
 });

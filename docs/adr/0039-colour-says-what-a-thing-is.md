@@ -87,3 +87,10 @@ colour covering 0.4 % or more of what it paints is a field. Distances are CIEDE2
 - An outline drawn as four copies of the enemy each frame: four times the drawing (order 18 forbade it).
 - Honey wood for platforms (the order's example): it lands on the bracteate's gold and the coins' copper.
 - Scaling the old pictures by a quarter: pixels of uneven size.
+
+## Amended by 0044 (order 22)
+Lars asked for a red outline round what can hurt, the pale blue for what moves and does not, and yellow paint on what
+he can stand on. The rule above stands; the outline is now the warning red with a near-black line inside it, the
+standing top is yellow paint (marked where it moves, broken where it gives way), what moves and cannot hurt has a
+pale outline of its own (the role `calm`), and the gold of what he takes is a deep amber. See
+[0044](0044-paint-says-where-to-go.md).

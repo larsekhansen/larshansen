@@ -3,7 +3,7 @@ import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { kept } from "@larshansen/pixelkit/kept";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, ENEMY, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, ENEMY, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { flagCloth, ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
@@ -12,6 +12,7 @@ import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { parts } from "../render/pickups";
+import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 
@@ -247,11 +248,11 @@ function hotdogCart(e: Enemy, t: number) {
   if (!e.alive) return;
   // Drawn for the box it keeps already: not squeezed again.
   const r = parts({ ...e, def: { ...e.def, small: false } }, 22);
-  r(0, -11, 22, 8, ENEMY.red);
-  r(0, -11, 22, 1, ENEMY.redLight);
+  r(0, -11, 22, 8, ENEMY.plum);
+  r(0, -11, 22, 1, ENEMY.plumLight);
   r(3, -9, 9, 3, ENEMY.orange);
   r(14, -9, 6, 3, ENEMY.orangeLight);
-  for (let k = 0; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.red);
+  for (let k = 0; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.pink);
   for (let k = 2; k < 22; k += 4) r(k, -14, 2, 3, ENEMY.orangeLight);
   r(1, -12, 1, 1, ENEMY.plum);
   r(20, -12, 1, 1, ENEMY.plum);
@@ -479,8 +480,11 @@ function terraceStone(x: number, y: number) {
   for (let yy = y; yy < y + TILE; yy += 5) R(x + ((yy / 5) % 2 ? 4 : 11), yy, 1, 3, STONE.base);
 }
 
-/** Children in the parade: a bunad or a sweater, a flag in hand; they walk up the street with the banners. */
+/** Children in the parade: a bunad or a sweater, a flag in hand; they walk up the street with the banners, and cannot hurt him: outlined in the calm pale (order 22). */
 function paradeKid(x: number, ground: number, i: number, t: number) {
+  outlined(() => paradeKidBody(x, ground, i, t), undefined, ROLES.calm);
+}
+function paradeKidBody(x: number, ground: number, i: number, t: number) {
   const dress = [PARADE.bunadRed, PARADE.bunadBlue, PARADE.bunadGreen, SWEATER, PARADE.russ][i % 5];
   const step = view.reduced ? 0 : Math.floor((t + i * 7) / 10) % 2;
   R(x, ground - 11, 4, 3, SKIN);
@@ -612,8 +616,11 @@ function schoolBanner(x: number, y: number, h: number, sway: number) {
 const SCHOOL_SILK = mix(PARADE.silkBlue, INK, 0.25);
 const BANNER_BAR: LedgeLook = { body: PARADE.pole, top: mix(PARADE.pole, WHITE, 0.3), edge: P.woodDark, joint: P.woodDark };
 
-/** The King's Guard: three in step under their hats, rifles on the shoulder. */
+/** The King's Guard: three in step under their hats, rifles on the shoulder; they move and cannot hurt him, outlined in the calm pale (order 22). */
 function guards(at: { x: number; y: number }, t: number) {
+  outlined(() => guardsBody(at, t), undefined, ROLES.calm);
+}
+function guardsBody(at: { x: number; y: number }, t: number) {
   const step = view.reduced ? 0 : Math.floor(t / 12) % 2;
   for (let k = 0; k < 3; k++) {
     const gx = at.x + 3 + k * TILE;

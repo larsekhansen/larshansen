@@ -9,6 +9,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import { carrierDrawn, carrierShown } from "@larshansen/pixelkit/carrier";
 import { newPlay, stepPlay } from "../../src/game/play";
 import { SHIELD_RULES } from "../../src/game/shield";
+import { skyOf } from "./skies";
 import { BUILT, ORDER, loadLevel } from "../../src/levels/index";
 import { MARKS } from "../../src/levels/types";
 
@@ -56,7 +57,7 @@ for (const st of BUILT) {
     const statueish = th.label === "statue";
     const hx = Math.round(statueish ? th.x - 2 * TILE : th.x - 3 * TILE);
     const hy = Math.max(0, Math.round(th.y - 2 * TILE));
-    for (const sky of ["day", "night"]) out.push(`${th.label}\t${st.id}\t${sky}\t/viking/?debug&steps=2&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}&look=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}#${st.id}`);
+    for (const sky of ["day", skyOf(def)]) out.push(`${th.label}\t${st.id}\t${sky}\t/viking/?debug&steps=2&sky=${sky}&level=${st.id}&x=${hx}&y=${hy}&where=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}&look=${Math.round(th.x + th.w / 2)},${Math.round(th.y)}#${st.id}`);
   }
 }
 console.log(out.join("\n"));

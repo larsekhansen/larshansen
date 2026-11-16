@@ -599,8 +599,8 @@ function magpie(e: Enemy, t: number) {
   r(12, -9 + d, 2, 1, ENEMY.plumLight);
   r(-3, -8 + d, 6, 1, ENEMY.poison);
   r(-4, -9 + d, 4, 1, ENEMY.plum);
-  r(4, -4 + d, 1, 4, ENEMY.red);
-  r(6, -4 + d, 1, 4, ENEMY.red);
+  r(4, -4 + d, 1, 4, ENEMY.line);
+  r(6, -4 + d, 1, 4, ENEMY.line);
 }
 
 /** Grass on the hill: a top of evening grass with tufts, soil under. Rock: grey with lichen, in courses. */

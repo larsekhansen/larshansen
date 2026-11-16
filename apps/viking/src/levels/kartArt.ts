@@ -2,7 +2,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { column } from "@larshansen/pixelkit/backdrop";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, DOORWAY, FACADE, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, COIN, DOORWAY, FACADE, FOOD, HAT_RED, INK, LAND, METAL, PAINT, PALETTE, PLANTS, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
@@ -19,6 +19,8 @@ import type { Art, View } from "./types";
 // and the hoardings. Until line 2 opens, everything of it is drawn faint.
 
 const LINE_2_COLOR = PAINT.tbane2;
+/** Bjørvika's crane on the map: the quieter ochre the level's own cranes have, not the paint on what he stands on (order 22). */
+const MAP_CRANE = "#bfa95e";
 /** The low deck line 2 runs on under line 1, just over the water. */
 const LOW = LINE_Y + 2 * TILE - 9;
 /** Where line 2's track leaves the deck of line 1, just past Stortinget's board, and where it comes up to its own. */
@@ -108,10 +110,10 @@ function skyline(i: number, x: number, g: number) {
     case 14: // Bjørvika: a tower crane over a tower half built
       s(-20, 16, 22, mix(STONE.light, WHITE, 0.2));
       for (let y = g - 20; y < g; y += 5) R(x - 20, y, 16, 1, STONE.base);
-      for (let k = 0; k < 36; k++) R(x + 6 + (k % 2), g - k, 1, 1, PAINT.warning);
-      R(x + 5, g - 36, 4, 36, mix(PAINT.warning, WHITE, 0.0));
-      for (let y = g - 34; y < g; y += 4) R(x + 6, y, 2, 1, mix(PAINT.warning, INK, 0.35));
-      R(x - 14, g - 38, 34, 2, PAINT.warning);
+      for (let k = 0; k < 36; k++) R(x + 6 + (k % 2), g - k, 1, 1, MAP_CRANE);
+      R(x + 5, g - 36, 4, 36, mix(MAP_CRANE, WHITE, 0.0));
+      for (let y = g - 34; y < g; y += 4) R(x + 6, y, 2, 1, mix(MAP_CRANE, INK, 0.35));
+      R(x - 14, g - 38, 34, 2, MAP_CRANE);
       R(x - 10, g - 36, 1, 14, METAL.wire);
       R(x - 12, g - 22, 5, 2, METAL.lampPost);
       return;
@@ -185,7 +187,7 @@ function gate() {
   for (let y = 0; y < LINE_Y; y += 8) R(x - 2, y, TILE + 4, 1, PAINT.hoardingLine);
   R(x - 2, 0, 1, LINE_Y, INK);
   R(x + TILE + 1, 0, 1, LINE_Y, INK);
-  for (let y = LINE_Y - 24; y < LINE_Y - 16; y++) for (let k = 0; k < TILE + 4; k++) if (((k + y) >> 2) % 2 === 0) R(x - 2 + k, y, 1, 1, PAINT.warning);
+  for (let y = LINE_Y - 24; y < LINE_Y - 16; y++) for (let k = 0; k < TILE + 4; k++) if (((k + y) >> 2) % 2 === 0) R(x - 2 + k, y, 1, 1, HAT_RED);
 }
 
 /** The viaducts under the lines: concrete piers every three tiles, the far city seen between them. */
@@ -264,11 +266,11 @@ function runeStone(x: number, y: number, char: RuneChar, cleared: boolean) {
     cells.forEach((row, ry) => row.forEach((on, rx) => on && R(x + 4 + rx, y + 3 + ry, 1, 1, SLOT_RUNE)));
     return;
   }
-  R(x + 1, y, 14, 16, METAL.goldDark);
-  R(x, y + 1, 16, 14, METAL.goldDark);
-  R(x + 1, y + 1, 14, 14, METAL.gold);
-  R(x + 1, y + 1, 14, 1, METAL.goldLight);
-  R(x + 1, y + 1, 1, 14, METAL.goldLight);
+  R(x + 1, y, 14, 16, COIN.goldDark);
+  R(x, y + 1, 16, 14, COIN.goldDark);
+  R(x + 1, y + 1, 14, 14, COIN.gold);
+  R(x + 1, y + 1, 14, 1, COIN.goldLight);
+  R(x + 1, y + 1, 1, 14, COIN.goldLight);
   cells.forEach((row, ry) => row.forEach((on, rx) => on && R(x + 4 + rx, y + 3 + ry, 1, 1, INK)));
   // The tick: a dark disc over the top right corner with a pale check in it.
   drawTick(x + 11, y - 3);

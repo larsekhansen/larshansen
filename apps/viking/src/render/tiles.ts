@@ -1,7 +1,7 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Sky } from "@larshansen/pixelkit/oslo";
 import { R, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
-import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STAND, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Art } from "../levels/types";
@@ -170,7 +170,7 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
   if (t === ".") return;
   if (art.tile?.(t, c, r, x, y, map, sky)) {
     // A one-way tile the level draws its own way is still something he stands on: its standing top (order 18).
-    if (map.isOneWay(c, r) && map.tileAt(c, r - 1) !== t) tileTop(x, y);
+    if (map.isOneWay(c, r) && map.tileAt(c, r - 1) !== t) tileTop(x, y, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t);
     return;
   }
   if (t === "#") {
@@ -187,7 +187,7 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
   else if (t === "K") rock(c, r, x, y, map, sky);
   else if (t === "B") {
     crate(x, y, edgesOf(map.tileAt, c, r), !map.isSolid(c, r - 1), sky.snow);
-    if (!map.isSolid(c, r - 1)) tileTop(x, y);
+    if (!map.isSolid(c, r - 1)) tileTop(x, y, map.tileAt(c - 1, r) !== "B" || map.isSolid(c - 1, r - 1), map.tileAt(c + 1, r) !== "B" || map.isSolid(c + 1, r - 1));
   }
   else if (t === "L") line(x, y);
   // Every one-way ledge in the platform palette (order 18): the level's own look gives only its letter.
@@ -207,12 +207,32 @@ function fatal(map: TileMap, c: number, r: number) {
   return true;
 }
 
+/** The paint at the lip of a ledge he must jump from (order 22): the last pixels of the ground's top before a fatal drop. */
+const LIP_PAINT = 6;
+function lipPaint(x: number, y: number, side: number) {
+  R(side > 0 ? x + TILE - LIP_PAINT : x, y, LIP_PAINT, 2, STAND.top);
+  R(side > 0 ? x + TILE - 1 : x, y, 1, 1, STAND.worn);
+}
+/** The sides of a tile at whose edge a fatal drop begins: -1, 1, both (2) or none (0). */
+function lipSides(map: TileMap, c: number, r: number): number {
+  if (!map.isSolid(c, r) || map.isSolid(c, r - 1) || map.tileAt(c, r) === "~") return 0;
+  const at = (side: number) => !map.isSolid(c + side, r) && !map.isOneWay(c + side, r) && fatal(map, c + side, r);
+  const l = at(-1);
+  const rr = at(1);
+  return l && rr ? 2 : l ? -1 : rr ? 1 : 0;
+}
+
 export function drawTiles(map: TileMap, art: Art, sky: Sky, underground = false) {
   forVisibleTiles(map, (t, c, r, x, y) => {
     drawTile(t, c, r, x, y, map, art, sky);
-    // The lip of a fatal drop: the same dark band wherever ground stops over water or a pit.
-    if (map.isSolid(c, r) && !map.isSolid(c, r - 1) && t !== "~")
-      for (const side of [-1, 1]) if (!map.isSolid(c + side, r) && !map.isOneWay(c + side, r) && fatal(map, c + side, r)) R(side > 0 ? x + TILE - 2 : x, y + 2, 2, TILE - 2, LIP);
+    // The lip of a fatal drop: the same dark band wherever ground stops over water or a pit, and on top, the paint
+    // that says "up to here, and jump" (order 22).
+    const sides = lipSides(map, c, r);
+    for (const side of [-1, 1])
+      if (sides === side || sides === 2) {
+        R(side > 0 ? x + TILE - 2 : x, y + 2, 2, TILE - 2, LIP);
+        lipPaint(x, y, side);
+      }
   });
   drawBelow(map, art, sky);
   if (underground) drawAbove(map, art, sky);
@@ -261,6 +281,9 @@ function drawBelow(map: TileMap, art: Art, sky: Sky) {
 /** After dark: the standing tops of the one-way ledges and crates in view again, so they keep their light (order 18). */
 export function standTops(map: TileMap, art: Art) {
   forVisibleTiles(map, (t, c, r, x, y) => {
-    if ((map.isOneWay(c, r) || t === "B") && map.tileAt(c, r - 1) !== t && (art.ledges[t] || t === "B" || map.isOneWay(c, r))) tileTop(x, y);
+    if ((map.isOneWay(c, r) || t === "B") && map.tileAt(c, r - 1) !== t && (art.ledges[t] || t === "B" || map.isOneWay(c, r))) tileTop(x, y, map.tileAt(c - 1, r) !== t, map.tileAt(c + 1, r) !== t);
+    const sides = lipSides(map, c, r);
+    if (sides === -1 || sides === 2) lipPaint(x, y, -1);
+    if (sides === 1 || sides === 2) lipPaint(x, y, 1);
   });
 }

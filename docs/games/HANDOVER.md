@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, and by order 21's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, and by order 22's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -73,6 +73,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-15 | Lars plays on his phone after the speed fix (PR #63): the card takes him out to the map (ADR 0037); Nabolaget is shown as Vålerenga (ADR 0038); runes that read at a glance; enemies a quarter larger, outlined, in a palette of their own; platforms with a standing top; every role's colours named and held apart (ADR 0039) | `orders/18-seen-at-a-glance.md`, branch `seen-at-a-glance` |
 | 2026-11-15 | Lars: "do more design polishing like that". Order 19: every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use in one cyan; his rim after dusk; the header between 760 and 1359 px (ADR 0040) | `orders/19-felt-at-a-glance.md`, branch `felt-at-a-glance` |
 | 2026-11-16 | Lars: "i like what i see. keep going"; he plays on a phone. Order 21: the game in the hand. The phone's screen is the game's (the bar the run alone during a level, the pad over the picture), buttons that fit thumbs and answer them finger by finger, the camera keeping him clear of the buttons, the help line on a touch screen only a note of what changed, the banner off what matters (ADR 0043); Stortinget and Slottet drawn at a sixth to a half of the rectangles, the pictures byte-identical | `orders/21-in-the-hand.md`, branch `in-the-hand` |
+| 2026-11-16 | Lars, after orders 18 to 20 live: "red for enemies that can hurt you, in terms of the outline", "the light blu you had for rats can be for moving npcs that don't hurt", "yellow paint ... for 'you can go here'", and "i just fear i made a blunder with the pixel design ... the pixels are too big. they need more detail". Order 22: part A (built) the red outline, the calm pale, the yellow paint, every other yellow reconsidered, the haze behind the lane (ADR 0044); part B (a study, not live) three ways to a finer look, for Lars to choose (`GRAIN.md`) | `orders/22-paint-and-grain.md`, branch `paint-and-grain` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -243,7 +244,10 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
+- **First script**: 59.85 kB gzipped after order 22 (the outline's dark line and its rings after dark, the paint's marks and
+  worn ends, the lips, the haze's air; to make room the careful walk to a clicked spot, `game/careful.ts`, is a chunk fetched
+  with the first click. The grain study is a chunk of its own, and anything another chunk imports from the first script makes
+  it export more: the study's sheet of subjects is made outside the page for that). Before: 59.47 kB gzipped after order 21 (the banner kept off what matters, the pad's loading; the pad and
   the camera's room for it, `render/pad.ts` and `game/frame.ts`, 3.1 kB, are a chunk fetched on a touch screen only). Before: 59.00 kB gzipped after order 20 (`kept.ts` and the kit's `dark.ts` are chunks of their own now;
   the far layers' `climbed` and `lift` came in). Before: 59.43 kB gzipped after order 19 (its answers to events are `render/feel.ts`, a chunk fetched
   with the first scene, which took the old sparks, the beaten enemies' puff and the page's freeze with it). Before: 59.70 kB gzipped after order 18 (60 is the budget, and the build fails over it; order 18 allowed
@@ -343,6 +347,30 @@ this Pi. What to know:
 - **Speed**: see "Speed" above; Stortinget's and Slottet's pictures are byte-identical before and after (both sizes,
   day and night).
 - **Unplayed**: none of it has been touched. The list for a person with a phone is in the order's hand-back.
+## Order 22: paint and grain
+
+Order 22 (`orders/22-paint-and-grain.md`, ADR 0044, `GRAIN.md`). What to know:
+- **The paint (part A, live).** What hurts on touch and moves is outlined in the warning red with a near-black line
+  inside it; no body is that red (bodies plum, orange, poison, pink, a cool white). What moves and cannot hurt is
+  outlined in `ROLES.calm` (a pale blue-white); a statue, a guard or a swan that turns on him turns red and a "!"
+  springs up over it. Outlines keep their light after dark (`rings` in `render/sprite.ts`; the old pale rim is gone).
+  What he stands on has yellow paint on its top edge (marks where it moves, dashes where it gives way, worn at the
+  ends), and so do the lips of ground before a fatal drop, a hook's block and a statue's head while it is a step.
+  The gold of what he takes is a deep amber (`COIN.gold`); the third rail's cover is red. `tools/glance/yellows.ts`
+  lists every yellow a level paints; the palette test holds that only the paint, Rådhuset's bells and lamps' light are
+  near the paint's yellow.
+- **The haze (A6).** The far layers fade toward the level's air (0.5, 0.4, 0.3), the street's backdrop 0.08, on the
+  fill each pass already made (the street's backdrop gains one fill a frame); `tools/glance/haze.ts` prints each level's band, and the palette test holds it.
+  Every level has three far canvases at 0.12, 0.2 and 0.4 of the camera (Gamlebyen and the map two): the canvases are
+  the kit's, shared by all levels, so a level's speeds are not data to change in one line.
+- **The grain study (part B, not live).** `?debug&grain=0|1|2|3|depth` on Langkaia's quay and Stortinget's platform
+  (addresses in `GRAIN.md`): the subjects drawn as per-pixel maps (`src/grain/maps.ts`) at today's grain and twice as
+  fine. Lars chooses; no ADR yet. Its pictures are in `docs/games/shots/grain/`. An upright phone at a device pixel
+  ratio of 3 is photographed as a window of 1170 x 2532 at a ratio of 1 (the same art pixels on the same device
+  pixels; headless Firefox here ignores `layout.css.devPixelsPerPx`).
+- **The shots.** `tools/glance/paintshots.ts` (the movers' and pickups' sheets), `skies.ts` (day and each level's own
+  sky for every sheet), `grainmaps.ts` (the study's maps as JSON).
+- **Unplayed**: none of it has been seen on a phone or at speed.
 
 ## Known weak spots, as of order 16
 
@@ -443,7 +471,9 @@ reorder this list.
 - A new rule: pure, in `game/play.ts` or a small module beside it, with a test on a made-up
   level in `rules.test.ts`.
 - Words: Norwegian and English, both, in the dry voice ([ADR 0016](../adr/0016-two-languages-dry-voice.md)).
-- Drawing anything new: its colours come from its role (an enemy from `ENEMY`, outlined by the page; what he
-  stands on with the standing top; DESIGN's "Colour says what a thing is", [ADR 0039](../adr/0039-colour-says-what-a-thing-is.md)).
+- Drawing anything new: its colours come from its role (an enemy from `ENEMY`, never in its red, outlined by the page;
+  what moves and does not hurt outlined in `ROLES.calm`; what he stands on with the yellow paint, and nothing else in
+  that yellow; DESIGN's "Colour says what a thing is", [ADR 0039](../adr/0039-colour-says-what-a-thing-is.md),
+  [ADR 0044](../adr/0044-paint-says-where-to-go.md)).
   `render/palette.test.ts` says which colour is too near which, and by how much.
 - A decision made or reversed: add or supersede a record in `docs/adr/` and update this file.

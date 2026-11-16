@@ -998,12 +998,11 @@ function ploughBody(p: Plough, v: View) {
 }
 
 /**
- * The plough, outlined as every enemy is (order 18), its rim in the enemy palette's warning colour while it
- * can hurt (driving or charging at him); parked, or beaten, it is not outlined.
+ * The plough, outlined as everything that moves is (order 22): in the warning red while it can hurt (driving or
+ * charging at him), in the calm pale while it cannot (parked, revving in place, stuck, turning, beaten).
  */
 function plough(p: Plough, v: View) {
-  if (p.phase === "beaten" || (p.phase === "parked" && p.hits === 0)) return plain(() => ploughBody(p, v));
-  outlined(() => ploughBody(p, v), undefined, p.phase === "drive" || p.phase === "charge" ? ENEMY.warning : ENEMY.outline);
+  outlined(() => ploughBody(p, v), undefined, p.phase === "drive" || p.phase === "charge" ? ENEMY.warning : ROLES.calm);
 }
 
 /** The flourish: the Pi's light turns green (drawn by the house), the windows of the street warm up, the northern lights flare green over the yellow house. */
@@ -1031,7 +1030,7 @@ function cat(e: Enemy) {
   r(11, -12, 1, 1, ENEMY.orange);
   r(14, -12, 1, 1, ENEMY.orange);
   r(13, -10, 1, 1, ENEMY.eye);
-  r(14, -8, 1, 1, ENEMY.red);
+  r(14, -8, 1, 1, ENEMY.pink);
   r(0, -11, 1, 5, ENEMY.orange);
   r(-1, -12, 1, 2, ENEMY.orangeLight);
   r(3 + step, -3, 2, 3, ENEMY.orange);
@@ -1054,6 +1053,8 @@ export const NABOLAGET: LevelDef = {
   landmark: { nb: "Hjemover gjennom Gamle Oslo", en: "Homeward through Gamle Oslo" },
   place: { nb: "Fra Vålerenga hjem til Kværnertoppen", en: "From Vålerenga home to Kværnertoppen" },
   sky: "winter",
+  // The air in the snow: after dusk the far layers fade into the night lightened by the snow's grey-white (order 22).
+  air: "#e6ebef",
   map: MAP,
   legend: { solid: "#RHBWTK", oneWay: "=", water: "v" },
   ramps: [...ROOFS, DRIFT],

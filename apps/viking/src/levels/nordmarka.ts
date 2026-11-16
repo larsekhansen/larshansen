@@ -173,7 +173,7 @@ function anthill(e: Enemy, t: number) {
   if (view.reduced) return;
   for (let i = 0; i < 5; i++) {
     const k = ((t * 0.3 + i * 7) % 16) / 16;
-    r(3 + Math.round(k * 12), -2 - Math.round(Math.sin(k * Math.PI) * 7), 1, 1, ENEMY.red);
+    r(3 + Math.round(k * 12), -2 - Math.round(Math.sin(k * Math.PI) * 7), 1, 1, ENEMY.line);
   }
 }
 
@@ -698,14 +698,12 @@ function trollBody(t: Troll, v: View) {
 }
 
 /**
- * The troll, outlined as every enemy is (order 18), its rim in the enemy palette's warning colour while it
- * can hurt (walking at him, the club raised): dark on the dark floor of the forest, it is the rim that says
- * so. Asleep (a boulder) or all stone at the end, it is not outlined: stone does not bite.
+ * The troll, outlined as everything that moves is (order 22): in the warning red while it can hurt (walking at
+ * him, the club raised), and in the calm pale while it cannot (asleep as a boulder, its club stuck, flinching,
+ * backing off, all stone at the end). The change of outline as it sets off is the tell.
  */
 function troll(t: Troll, v: View) {
-  const sleeping = t.phase === "asleep" || (t.phase === "waking" && v.t - t.since < TROLL_STEPS.waking / 2);
-  if (sleeping || t.phase === "stone") return plain(() => trollBody(t, v));
-  outlined(() => trollBody(t, v), undefined, t.phase === "walk" || t.phase === "windup" ? ENEMY.warning : ENEMY.outline);
+  outlined(() => trollBody(t, v), undefined, t.phase === "walk" || t.phase === "windup" ? ENEMY.warning : ROLES.calm);
 }
 
 /** Over the dark: eyes that shine, the troll's eyes, the fireflies, the wave of the troll's slam in the dust. */
@@ -889,7 +887,7 @@ export const NORDMARKA: LevelDef = {
       _: { body: FOREST.trunk, top: FOREST.moss, edge: FOREST.trunkDark, joint: FOREST.trunkDark },
       "-": { body: P.wood, top: mix(P.wood, WHITE, 0.25), edge: P.woodDark, joint: P.woodDark }
     },
-    carrier: (_i, at, v) => moose(at, v.t),
+    carrier: (_i, at, v) => outlined(() => moose(at, v.t), undefined, ROLES.calm),
     flag(_i, f, raisedAt, v) {
       blueTrunk(f, raisedAt, v.t);
       return true;

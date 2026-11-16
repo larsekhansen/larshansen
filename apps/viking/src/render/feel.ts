@@ -172,6 +172,27 @@ export function particlesAlive(): number {
 /** The pools' arrays, for the test that nothing new is made. */
 export const pools = { px, py, plife, pcol };
 
+// --- The alert: a "!" over what has just turned on him (order 22) ---------------------------------------
+
+const ALERTS = 4;
+const alertOf: (Enemy | null)[] = Array.from({ length: ALERTS }, () => null);
+const alertAt = new Int32Array(ALERTS).fill(-9999);
+/** How long the "!" stands over it, in steps. */
+export const ALERT_STEPS = 40;
+let alertNext = 0;
+function alert(e: Enemy, now: number) {
+  const k = alertNext++ % ALERTS;
+  alertOf[k] = e;
+  alertAt[k] = now;
+}
+/** The "!": a red bar and dot with a dark edge, `h` (0 to 1) of its full height, its foot at (x, y). */
+function bang(x: number, y: number, h: number) {
+  const n = Math.max(1, Math.round(7 * h));
+  R(x - 2, y - n - 1, 4, n + 1, ENEMY.line);
+  R(x - 1, y - n, 2, n - (n > 3 ? 3 : 0), ENEMY.warning);
+  if (n > 3) R(x - 1, y - 1, 2, 1, ENEMY.warning);
+}
+
 const RINGS = 6;
 const rx = new Float32Array(RINGS);
 const ry = new Float32Array(RINGS);
@@ -309,6 +330,8 @@ export function createFeel(host: Host) {
     reset(p: Play) {
       plife.fill(0);
       rt.fill(-9999);
+      alertAt.fill(-9999);
+      alertOf.fill(null);
       lAt.fill(-1);
       holdUntil = flashUntil = nudge.until = -1;
       sat.fill(0);
@@ -382,7 +405,7 @@ export function createFeel(host: Host) {
         const s = p.skilling.find((k) => k.at === p.t);
         if (s) {
           ring(s.box.x + 4, s.box.y + 4, 2, 9, 10, COIN.shine, t);
-          burst(s.box.x + 4, s.box.y + 4, 4, 0.6, 14, COIN.shine, METAL.goldLight, 0);
+          burst(s.box.x + 4, s.box.y + 4, 4, 0.6, 14, COIN.shine, COIN.gold, 0);
         }
         pop.coins = t;
       }
@@ -449,17 +472,17 @@ export function createFeel(host: Host) {
         ring(fx, b.y + 5, 2, 8, 6, WHITE, t);
       }
       if (ev.gift) {
-        ring(cx, b.y + 6, 4, 18, 20, METAL.goldLight, t);
-        burst(cx, b.y + 4, 10, 0.8, 24, METAL.goldLight, COIN.shine);
+        ring(cx, b.y + 6, 4, 18, 20, COIN.gold, t);
+        burst(cx, b.y + 4, 10, 0.8, 24, COIN.gold, COIN.shine);
       }
       if (ev.bracteate && p.bracteate && !owned) {
         risen.bract = { x: p.bracteate.x, y: p.bracteate.y, at: t };
-        ring(p.bracteate.x + 6, p.bracteate.y + 6, 4, 16, 16, METAL.goldLight, t);
-        burst(p.bracteate.x + 6, p.bracteate.y + 6, 10, 0.9, 22, METAL.goldLight, WHITE);
+        ring(p.bracteate.x + 6, p.bracteate.y + 6, 4, 16, 16, COIN.gold, t);
+        burst(p.bracteate.x + 6, p.bracteate.y + 6, 10, 0.9, 22, COIN.gold, WHITE);
         pop.gold = t;
       }
       if (ev.rune && p.rune) {
-        ring(p.rune.x + 8, p.rune.y + 8, 4, 20, 18, METAL.goldLight, t);
+        ring(p.rune.x + 8, p.rune.y + 8, 4, 20, 18, COIN.gold, t);
         if (poleNew) {
           risen.pole.at = t;
           voice("pole");
@@ -497,7 +520,7 @@ export function createFeel(host: Host) {
           voice("bossHit");
           burst(box.x + box.w / 2, box.y + 8, 10, 1.2, 16, ROLES.now, WHITE);
         }
-        if (ev.troll === "stone" && box) burst(box.x + box.w / 2, box.y + 8, 14, 1, 30, METAL.goldLight, ROLES.now);
+        if (ev.troll === "stone" && box) burst(box.x + box.w / 2, box.y + 8, 14, 1, 30, COIN.gold, ROLES.now);
         if (ev.troll === "slam") jolt(0, 3);
       }
       if (ev.boss && p.boss) {
@@ -512,7 +535,7 @@ export function createFeel(host: Host) {
           burst(top.x, top.y + 2, 10, 1.3, 14, ROLES.now, WHITE);
           ring(top.x, top.y + 2, 3, 14, 10, ROLES.now, t);
         }
-        if (ev.boss === "beaten") burst(top.x, top.y + 6, 14, 1, 30, METAL.goldLight, ROLES.now);
+        if (ev.boss === "beaten") burst(top.x, top.y + 6, 14, 1, 30, COIN.gold, ROLES.now);
         if (ev.boss === "slam") jolt(0, 3);
       }
     },
@@ -575,6 +598,8 @@ export function createFeel(host: Host) {
           if (!c) for (let dx = -4; dx <= 4; dx += 8) spark(e.x + dx, e.y - 1, dx * 0.08, -0.2, 16, DUST);
           else ring(e.x, e.y - e.h / 2, e.w / 2 + 6, e.w / 2 + 2, 8, WHITE, now);
         }
+        // Whatever turns on him (its outline turning from the calm pale to the warning red) gets a "!" over it.
+        if (primed && e.alive && !c && calm[i] && seen(e.x, e.y)) alert(e, now);
         calm[i] = c;
         if (e.def.look === "swan" && e.alive) {
           if (e.n === 180) {
@@ -674,7 +699,7 @@ export function createFeel(host: Host) {
         }
         const cxe = (x0 + x1) / 2;
         const h = Math.max(2, Math.round((feet - y0) * k));
-        R(Math.round(cxe - ((x1 - x0) * wide) / 2) - 1, feet - h - 1, Math.round((x1 - x0) * wide) + 2, h + 1, ENEMY.outline);
+        R(Math.round(cxe - ((x1 - x0) * wide) / 2) - 1, feet - h - 1, Math.round((x1 - x0) * wide) + 2, h + 1, ENEMY.line);
         for (let i = 0; i < s.r.length; i += 4) {
           const ry0 = feet - Math.round((feet - s.r[i + 1]) * k);
           const ry1 = feet - Math.round((feet - s.r[i + 1] - s.r[i + 3]) * k);
@@ -696,6 +721,14 @@ export function createFeel(host: Host) {
         const f = view.reduced ? 1 : age / rdur[k];
         const r = rr0[k] + (rr1[k] - rr0[k]) * f;
         for (let j = 0; j < 12; j++) R(rx[k] + COS[j] * r, ry[k] + SIN[j] * r * 0.8, 1, 1, rcol[k]);
+      }
+      // A "!" over what has just turned on him: it springs up and stands (still, at its full height, with reduced motion).
+      for (let k = 0; k < ALERTS; k++) {
+        const e = alertOf[k];
+        const age = now - alertAt[k];
+        if (!e || age < 0 || age >= ALERT_STEPS || !e.alive || e.calm) continue;
+        const h = view.reduced ? 1 : Math.min(1, (age + 1) / 4) * (age < 6 ? 1 + (6 - age) * 0.04 : 1);
+        bang(Math.round(e.x), Math.round(e.y - e.h - 4), Math.min(1.2, h));
       }
       // Benches he has sat on keep a tick at the end of their back.
       for (let i = 0; i < p.benches.length; i++) {
@@ -858,7 +891,7 @@ export function createFeel(host: Host) {
       } else if (bh0) bh0.svg.style.display = "none";
       ticked(host.coins, now - pop.coins, "#8f5326");
       ticked(host.lives, now - pop.lives, pop.livesDown ? ENEMY.warning : "#2e7d32");
-      ticked(host.gold, now - pop.gold, "#a8801a");
+      ticked(host.gold, now - pop.gold, COIN.goldDark);
     },
 
     /** The maze's feather comes to rest on his shoulder: a glint and three high notes. */
@@ -875,8 +908,8 @@ export function createFeel(host: Host) {
     arrive(cleared: number, opened: number | null, line2: boolean) {
       const x = stationX(cleared);
       const y = LINE_Y - 38;
-      ring(x, y, 4, 18, 22, METAL.goldLight, now);
-      burst(x, y, 12, 0.8, 26, METAL.goldLight, WHITE, 0.01);
+      ring(x, y, 4, 18, 22, COIN.gold, now);
+      burst(x, y, 12, 0.8, 26, COIN.gold, WHITE, 0.01);
       voice("stone");
       if (opened !== null) {
         ring(stationX(opened), LINE_Y - 12, 18, 6, 26, ROLES.speech.bubble, now + 30);
@@ -965,9 +998,9 @@ function record(e: Enemy, look: () => void): Shape {
     e.alive = alive;
   }
   const area = new Map<string, number>();
-  for (let i = 0; i < c.length; i++) if (c[i] !== ENEMY.eye && c[i] !== ENEMY.outline) area.set(c[i], (area.get(c[i]) ?? 0) + r[i * 4 + 2] * r[i * 4 + 3]);
+  for (let i = 0; i < c.length; i++) if (c[i] !== ENEMY.eye && c[i] !== ENEMY.line) area.set(c[i], (area.get(c[i]) ?? 0) + r[i * 4 + 2] * r[i * 4 + 3]);
   const by = [...area].sort((x, y) => y[1] - x[1]);
-  return { r, c, a: by[0]?.[0] ?? ENEMY.red, b: by[1]?.[0] ?? by[0]?.[0] ?? ENEMY.redLight };
+  return { r, c, a: by[0]?.[0] ?? ENEMY.plum, b: by[1]?.[0] ?? by[0]?.[0] ?? ENEMY.pink };
 }
 
 

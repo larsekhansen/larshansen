@@ -31,6 +31,8 @@ import type { LevelDef, View } from "./types";
 const COLS = 280;
 const ROWS = 40;
 const b = mapBuilder(COLS, ROWS);
+/** The snow cannon's barrel: a quieter ochre than a warning yellow, which is the paint on what he stands on (order 22). */
+const LAUNCHER = "#c9a45e";
 
 // --- The path from the station, and the first ice -------------------------------------------------
 b.ground(0, 40, 9);
@@ -427,7 +429,7 @@ function snowCannon(l: Launcher, t: number, loadedAt: number, firedAt: number) {
   R(l.x + 6, bottom - 8, 3, 8, ICY.steelDark);
   R(l.x + 15, bottom - 8, 3, 8, ICY.steelDark);
   R(l.x + 3, bottom - 2, 18, 2, ICY.steelDark);
-  for (let i = 0; i < 20; i++) R(l.x + 2 + i, bottom - 16 - Math.floor(i / 4) + shake, 1, 9, i < 2 ? INK : PAINT.warning);
+  for (let i = 0; i < 20; i++) R(l.x + 2 + i, bottom - 16 - Math.floor(i / 4) + shake, 1, 9, i < 2 ? INK : LAUNCHER);
   R(l.x + 21, bottom - 21 + shake, 2, 10, ICY.steelDark);
   for (let k = 0; k < 3; k++) R(l.x + 4 + k * 6, bottom - 13 - k + shake, 2, 2, INK);
   const age = t - firedAt;
@@ -515,7 +517,7 @@ function outrunCrowd(t: number, cheering: boolean) {
     const head = g - 7 - ((k * 37) % 3);
     R(x, head + 4, 6, 9, [PARADE.bunadBlue, CREATURE.kidJacket, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5]);
     R(x + 1, head, 4, 4, SKIN);
-    R(x + 1, head - 1, 4, 2, [CREATURE.kidHat, PARADE.russ, PARADE.silkBlue, WHITE][k % 4]);
+    R(x + 1, head - 1, 4, 2, [FLAG.red, PARADE.russ, PARADE.silkBlue, WHITE][k % 4]);
     if (k % 3 === 0) {
       const wave = cheering && !view.reduced ? Math.floor((t + k * 7) / 6) % 2 : 0;
       R(x + 5, head - 9 - wave * 2, 1, 8, PARADE.pole);
@@ -548,6 +550,8 @@ export const HOLMENKOLLEN: LevelDef = {
   landmark: { nb: "Hoppbakken over byen", en: "The ski jump over the city" },
   place: { nb: "Hoppbakken", en: "The ski jump" },
   sky: "winterday",
+  // The air in the snow: the far layers fade into a grey-white (order 22).
+  air: "#e6ebef",
   map: MAP,
   legend: { solid: "#IHKV", oneWay: "=_-", water: "" },
   ramps: [KIDS, INRUN, DOWN, HILL, RISE],

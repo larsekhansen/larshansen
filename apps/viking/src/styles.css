@@ -58,9 +58,10 @@ body {
   overflow: visible;
 }
 
+/* The gold of what he takes and has earned (order 22): a deep amber, warmer than the yellow paint on what he stands on. */
 .runes li.lit {
-  border: 2px solid #7a5608;
-  background: #f0b92a;
+  border: 2px solid #8a5f14;
+  background: #c8902a;
 }
 
 .runes li.lit svg {
@@ -89,7 +90,7 @@ body {
 
 /* All ten (or all six): the tiles glow. */
 .runes.all li.lit {
-  box-shadow: 0 0 5px rgba(240, 185, 42, 0.9);
+  box-shadow: 0 0 5px rgba(200, 144, 42, 0.9);
 }
 
 /* With line 2's group as well, sixteen slots: narrower, so the run still fits its row. */
@@ -423,9 +424,9 @@ body {
 .goldcount i {
   width: 12px;
   height: 12px;
-  border: 2px solid #a8801a;
+  border: 2px solid #8a5f14;
   border-radius: 50%;
-  background: #e8b923;
+  background: #c8902a;
   box-sizing: border-box;
 }
 

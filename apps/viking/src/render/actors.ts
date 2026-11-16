@@ -1,4 +1,4 @@
-import { GHOST, INK, METAL, PALETTE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
+import { COIN, GHOST, INK, PALETTE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { SHEEP, type Sheep } from "../game/sheep";
 import { runeCells, type RuneChar } from "../game/runes";
@@ -67,7 +67,7 @@ const BRACTEATE = ["....rrrr....", "..rrggggrr..", ".rgghgghggr.", ".rggssssggr.
 
 /** A bracteate found on an earlier visit: its ring as a pale outline, still, where it hangs. */
 export function drawBracteateOutline(x: number, y: number) {
-  const ring = mix(METAL.goldLight, WHITE, 0.55);
+  const ring = mix(COIN.gold, WHITE, 0.55);
   R(x + 5, y - 2, 2, 2, ring);
   for (let r = 0; r < 12; r++)
     for (let c = 0; c < 12; c++) {
@@ -82,9 +82,9 @@ export function drawBracteate(x: number, y: number, steps: number) {
   const w = Math.max(2, Math.round(12 * (0.35 + 0.65 * turn)));
   const left = x + Math.floor((12 - w) / 2);
   const bob = view.reduced ? 0 : Math.round(Math.sin(steps * 0.06));
-  const colors: Record<string, string> = { r: METAL.goldDark, g: METAL.gold, h: METAL.goldLight, s: METAL.goldLight, d: METAL.goldDark };
+  const colors: Record<string, string> = { r: COIN.goldDark, g: COIN.gold, h: COIN.goldLight, s: COIN.goldLight, d: COIN.goldDark };
   // The loop it hangs from.
-  R(x + 5, y - 2 + bob, 2, 2, METAL.goldDark);
+  R(x + 5, y - 2 + bob, 2, 2, COIN.goldDark);
   for (let r = 0; r < 12; r++)
     for (let c = 0; c < w; c++) {
       const ch = BRACTEATE[r][Math.min(11, Math.floor((c * 12) / w))];
@@ -92,7 +92,7 @@ export function drawBracteate(x: number, y: number, steps: number) {
     }
   // A glint crosses it now and then.
   const g = (steps % 150) - 20;
-  if (!view.reduced && g >= 0 && g < w) R(left + g, y + 2 + bob, 1, 8, mix(METAL.goldLight, WHITE, 0.6));
+  if (!view.reduced && g >= 0 && g < w) R(left + g, y + 2 + bob, 1, 8, mix(COIN.goldLight, WHITE, 0.6));
   light(left, y + bob, w, 12, "soft");
 }
 
