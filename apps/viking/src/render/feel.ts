@@ -25,6 +25,7 @@ import { NATURAL, naturalName } from "../alive/natural";
 import { forced } from "../alive/parts";
 import { lean, outlined } from "./sprite";
 import { STORY, type StoryWords } from "../game/story";
+import { invasion } from "../alive/invasion";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
 import { bench, bracteate, bracteateOutline, cheese, feather, flag, runeStone, sheep, skiPole, skilling } from "../alive/things";
@@ -91,7 +92,14 @@ export const VOICES = {
   growl: [["t", "sawtooth", 70, 130, 0.7, 0.12]],
   rev: [["t", "sawtooth", 90, 240, 0.9, 0.09], ["n", 300, 1200, 0.9, 0.08]],
   open: [["t", "triangle", 523, 523, 0.1, 0.18], ["t", "triangle", 784, 784, 0.1, 0.18, 0.1], ["t", "triangle", 1047, 1047, 0.3, 0.18, 0.2]],
-  stone: [["t", "sine", 2093, 2093, 0.06, 0.08], ["t", "sine", 2637, 2637, 0.06, 0.08, 0.06], ["t", "sine", 3136, 3136, 0.14, 0.08, 0.12]]
+  stone: [["t", "sine", 2093, 2093, 0.06, 0.08], ["t", "sine", 2637, 2637, 0.06, 0.08, 0.06], ["t", "sine", 3136, 3136, 0.14, 0.08, 0.12]],
+  // The glamour's stings (order 27), made here, quiet, no tune: an invader turning on him (two square blips, rising); a
+  // stomp breaking the glamour (a glittering arpeggio downwards, under the stomp's thump); a boss's arrival (a low chord
+  // swelling); a line cleared, its glamour lifted (four soft notes climbing).
+  neon: [["t", "square", 660, 990, 0.06, 0.04], ["t", "square", 990, 1480, 0.08, 0.04, 0.06]],
+  unglam: [["t", "triangle", 2093, 2093, 0.05, 0.05], ["t", "triangle", 1661, 1661, 0.05, 0.05, 0.04], ["t", "triangle", 1319, 1319, 0.05, 0.05, 0.08], ["t", "triangle", 988, 988, 0.1, 0.05, 0.12]],
+  headliner: [["t", "sawtooth", 82, 82, 0.6, 0.04], ["t", "sawtooth", 123, 123, 0.6, 0.035], ["t", "square", 165, 330, 0.6, 0.025]],
+  lifted: [["t", "sine", 392, 392, 0.1, 0.07], ["t", "sine", 523, 523, 0.1, 0.07, 0.1], ["t", "sine", 659, 659, 0.1, 0.07, 0.2], ["t", "sine", 784, 784, 0.3, 0.07, 0.3]]
 } satisfies Record<string, readonly Voice[]>;
 export type VoiceName = keyof typeof VOICES;
 
@@ -141,7 +149,11 @@ export const SOUND_OF: Record<string, VoiceName | `kit:${string}`> = {
   "boss beaten": "kit:fanfare",
   "station opens": "open",
   "stone arrives": "stone",
-  "line 2 opens": "rise"
+  "line 2 opens": "rise",
+  "invader turns on him": "neon",
+  "glamour breaks": "unglam",
+  "boss arrives": "headliner",
+  "line's glamour lifted": "lifted"
 };
 
 // --- Particles and rings: fixed pools ----------------------------------------------------------------
@@ -476,6 +488,7 @@ export function createFeel(host: Host) {
         const e = p.enemies[ev.stomp];
         voice("stomp");
         // The glamour breaks (order 27): a burst of glitter in its level's neons, a sting gliding down.
+        voice("unglam");
         if (!view.reduced) burst(e.x, e.y - e.h / 2, 12, 1.3, 20, lean[ENEMY.hotPink] ?? ENEMY.hotPink, lean[ENEMY.blue] ?? ENEMY.blue, 0.04);
         jolt(0, 2);
         // His bounce: a little dust kicked off its back.
@@ -581,6 +594,8 @@ export function createFeel(host: Host) {
       // The troll rising, the plough starting up, the serpent's first rise: a "!" over it (order 23).
       if (ev.troll === "wake") alert(1, 0, t);
       if (ev.boss === "wake") alert(2, 0, t);
+      // The headliner arrives (order 27).
+      if (ev.troll === "wake" || ev.boss === "wake") voice("headliner");
       if (ev.troll) {
         const tr = p.troll;
         const box = tr && p.def.trollRules?.box(tr);
@@ -673,6 +688,8 @@ export function createFeel(host: Host) {
       // freezes the other in the same step: one sound for the pair, the grind of the one that wakes (order 20).
       let woke = false;
       let froze = false;
+      /** An invader turned on him this step: the glamour's sting (order 27), once. */
+      let turned = false;
       for (let i = 0; i < p.enemies.length; i++) {
         const e = p.enemies[i];
         const c = !!e.calm;
@@ -684,7 +701,10 @@ export function createFeel(host: Host) {
         }
         // Whatever turns on him gets a "!" over it (order 22; order 23: more moments): its outline turning from the calm
         // pale to the warning red (a statue, a guard), a swan's warning, a thrower taking aim at him.
-        if (primed && e.alive && !c && calm[i] && seen(e.x, e.y)) alert(0, i, now);
+        if (primed && e.alive && !c && calm[i] && seen(e.x, e.y)) {
+          alert(0, i, now);
+          turned = true;
+        }
         if (e.alive && e.def.kind === "thrower" && untilThrow(e, t) === WINDUP && seen(e.x, e.y, 0) && Math.abs(e.x - (b.x + PLAYER.w / 2)) < (e.def.reach ?? 7) * TILE) alert(0, i, now);
         calm[i] = c;
         if (e.def.look === "swan" && e.alive) {
@@ -698,6 +718,7 @@ export function createFeel(host: Host) {
       }
       if (woke) voice("wake");
       else if (froze) voice("freeze");
+      if (turned) voice("neon");
       primed = true;
       // Carriers near him: a clunk as one comes to a stop; a ding-dong two thirds of a second before it leaves.
       for (let i = 0; i < p.def.carriers.length; i++) {
@@ -767,6 +788,14 @@ export function createFeel(host: Host) {
       now = steps;
     },
 
+    /** Behind the lane: what the Neon Invaders left in this level (order 27, `alive/invasion.ts`). */
+    invasion(level: string, t: number) {
+      invasion(level, t);
+    },
+    /** A line's glamour lifted (order 27): its sting, as the card says so. */
+    lineLifted() {
+      voice("lifted");
+    },
     /** The story's words (order 27, `game/story.ts`). */
     story(lang: "nb" | "en"): StoryWords {
       return STORY[lang];

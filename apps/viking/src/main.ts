@@ -905,6 +905,7 @@ function showCard(r: CardResult) {
   // The story's end (order 27): line 1 is lifted with the tenth rune, all of Oslo with the last of line 2.
   const end = r.home ? feel?.story(lang).endOne : scene.def.id === lastOfTwo && of(LINE_2) === LINE_2.length ? feel?.story(lang).endTwo : "";
   if (end) {
+    feel?.lineLifted();
     more.hidden = false;
     more.appendChild(document.createElement("span")).textContent = ` ${end}`;
   }
@@ -1518,7 +1519,7 @@ function render(alpha: number) {
   if (art.near) farPass(kit.depth(0.4), () => art.near!(v), haze[2]);
   const street = kit.depth(1);
   // The street's own backdrop, behind the lane: the lightest of the haze (order 22).
-  pass(street, () => art.back(v), backHazeOf(scene.def));
+  pass(street, () => (art.back(v), feel?.invasion(scene.def.id, v.t)), backHazeOf(scene.def));
   pass(street, () => {
     TEXTURED.boards ? TEXTURED.boards(scene.boards) : drawBoards(scene.boards);
     drawWater(p.map, p.t);
