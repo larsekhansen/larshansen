@@ -11,10 +11,11 @@ import { ICE } from "@larshansen/pixelkit/surface";
 import * as WINTER from "@larshansen/pixelkit/swatches/winter";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import type { EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
-import { drawLook } from "../render/looks";
-import { parts } from "../alive/parts";
+import { drawLook, drawLookShot } from "../render/looks";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
@@ -925,6 +926,15 @@ function streetTile(c: number, r: number, x: number, y: number, m: TileMap) {
   if ((c * 5) % 7 === 0) R(x + 3, y + 1, 7, 1, SNOW.shade);
 }
 
+// The plough's tones (order 24; way 3, ADR 0045): its orange from a deep shade under the chassis to a lit top edge, the
+// same darkened where it stands parked under its snow, the cab's glass with a reflection across it, the tyres' tread,
+// the blade's yellow lit along its upper edge where it catches the light. Every tell (the blade raised in violet, the
+// beacons, the exhaust, the snow thrown up) is where it was.
+const ORANGE = [mix(WINTER.ploughDark, INK, 0.25), WINTER.ploughDark, WINTER.plough, WINTER.ploughLight, mix(WINTER.ploughLight, WHITE, 0.3)];
+const PARKED = ORANGE.map((c) => mix(c, INK, 0.45));
+const GLASS_TONES = [WINTER.cab, mix(WINTER.cab, WHITE, 0.12), mix(WINTER.cab, WHITE, 0.3)];
+const SNOW_TONES = [SNOW.shade, SNOW.lying, mix(SNOW.lying, WHITE, 0.4)];
+
 /** The plough: orange, its cab high and dark-windowed, beacons on the roof, the blade in front; snow thrown up as it charges; reeling when hit; its beacon out when beaten. */
 function ploughBody(p: Plough, v: View) {
   const x = Math.round(p.x);
@@ -933,50 +943,98 @@ function ploughBody(p: Plough, v: View) {
   const age = v.t - p.since;
   const at = (dx: number) => (f > 0 ? x + dx : x - dx);
   const span = (dx0: number, dx1: number, y: number, h: number, c: string) => R(Math.min(at(dx0), at(dx1)), y, Math.abs(dx1 - dx0), h, c);
+  /**
+   * A panel from dx0 to dx1 (its own frame), `h` rows from y, in a ramp: its top row lit, its bottom rows shaded, its
+   * left edge on the screen lit and its right edge shaded (the light comes from the top left whichever way it faces).
+   */
+  const panel = (dx0: number, dx1: number, y: number, h: number, ramp: readonly string[], base = 2) => {
+    const x0 = Math.min(at(dx0), at(dx1));
+    const w = Math.abs(dx1 - dx0);
+    for (let k = 0; k < h; k++) {
+      const tone = Math.max(0, Math.min(ramp.length - 1, base + (k === 0 ? 1 : k >= h - 2 && h > 4 ? -1 : 0)));
+      R(x0, y + k, w, 1, ramp[tone]);
+      if (w > 3 && k > 0) {
+        R(x0, y + k, 1, 1, ramp[Math.min(ramp.length - 1, tone + 1)]);
+        R(x0 + w - 1, y + k, 1, 1, ramp[Math.max(0, tone - 1)]);
+      }
+    }
+  };
+  /** A wheel: the tyre with its tread round the rim, the hub lit at its top left, a nut. */
+  const wheel = (cx: number, cy: number, r: number, hub: boolean) => {
+    wdisc(cx, cy, r, WINTER.tyre);
+    for (let k = 0; k < 8; k++) {
+      const a = (k / 8) * Math.PI * 2 + (hub ? (((Math.floor((f > 0 ? p.x : -p.x) / 3) % 4) + 4) % 4) * 0.4 : 0);
+      R(Math.round(cx + Math.cos(a) * (r - 0.5)), Math.round(cy + Math.sin(a) * (r - 0.5)), 1, 1, mix(WINTER.tyre, WHITE, 0.18));
+    }
+    if (!hub) return;
+    wdisc(cx, cy, 3, P.iron);
+    R(cx - 2, cy - 2, 2, 1, mix(P.iron, WHITE, 0.35));
+    R(cx - 2, cy - 1, 1, 1, mix(P.iron, WHITE, 0.35));
+  };
   const shake = (p.phase === "windup" || p.phase === "stuck") && !view.reduced ? (v.t % 4 < 2 ? 1 : 0) : 0;
   const y0 = g - PLOUGH.h + shake;
   if (p.phase === "parked" && p.hits === 0) {
-    // Parked, dark, snow on it.
-    span(-32, 32, y0 + 22, 22, mix(WINTER.plough, INK, 0.45));
-    span(-32, 0, y0 + 2, 22, mix(WINTER.plough, INK, 0.45));
-    span(-32, 0, y0, 3, SNOW.lying);
-    span(0, 32, y0 + 20, 3, SNOW.lying);
-    span(32, 40, g - 18, 18, mix(WINTER.blade, INK, 0.5));
-    for (const wx of [-22, 18]) wdisc(at(wx), g - 6, 6, WINTER.tyre);
+    // Parked, dark, snow on it, its glass dull.
+    panel(-32, 32, y0 + 22, 22, PARKED);
+    panel(-32, 0, y0 + 2, 22, PARKED);
+    span(-28, -4, y0 + 5, 12, mix(WINTER.cab, INK, 0.3));
+    panel(-32, 0, y0, 3, SNOW_TONES, 1);
+    panel(0, 32, y0 + 20, 3, SNOW_TONES, 1);
+    panel(32, 40, g - 18, 18, [WINTER.bladeDark, mix(WINTER.blade, INK, 0.5), mix(WINTER.blade, INK, 0.35)], 1);
+    for (const wx of [-22, 18]) wheel(at(wx), g - 6, 6, false);
     // Parked, its engine ticks over: a wisp from the stack every other second (order 23).
     if (Math.floor(v.t / 60) % 2) plain(() => R(at(-34) - 1, y0 - 4, 3, 2, "rgba(70, 66, 62, 0.35)"));
     return;
   }
   const beaten = p.phase === "beaten";
-  // The body: the cab at the back, high; the bonnet in front, lower.
-  span(-32, 0, y0, 30, WINTER.plough);
-  span(-32, 0, y0, 2, WINTER.ploughLight);
+  // The body: the cab at the back, high; the bonnet in front, lower; the chassis under both.
+  panel(-32, 0, y0, 30, ORANGE);
+  panel(-32, 0, y0, 2, ORANGE, 3);
+  // The cab's glass, a reflection across it from its top left; the door's seam and handle under it.
   span(-28, -4, y0 + 5, 12, WINTER.cab);
-  span(-26, -20, y0 + 6, 3, mix(WINTER.cab, WHITE, 0.25));
-  span(-32, 32, y0 + 30, 14, WINTER.plough);
-  span(0, 32, y0 + 22, 8, WINTER.plough);
+  span(-28, -4, y0 + 5, 1, GLASS_TONES[1]);
+  for (let k = 0; k < 6; k++) span(-26 + k * 2, -24 + k * 2, y0 + 6 + k, 1, GLASS_TONES[k < 2 ? 2 : 1]);
+  span(-26, -20, y0 + 6, 2, GLASS_TONES[2]);
+  span(-29, -28, y0 + 18, 1, ORANGE[1]);
+  span(-20, -19, y0 + 18, 10, ORANGE[1]);
+  span(-17, -14, y0 + 21, 1, ORANGE[0]);
+  panel(-32, 32, y0 + 30, 14, ORANGE);
+  panel(0, 32, y0 + 22, 8, ORANGE, 2);
+  span(0, 32, y0 + 22, 1, ORANGE[3]);
   span(0, 32, y0 + 22, 1, WINTER.ploughLight);
+  // The grille at the bonnet's front.
+  for (let k = 0; k < 3; k++) span(26, 31, y0 + 24 + k * 2, 1, ORANGE[0]);
   span(-32, 32, y0 + 42, 2, WINTER.ploughDark);
-  for (let k = -28; k < 30; k += 10) span(k, k + 5, y0 + 33, 2, WINTER.ploughDark);
-  // The wheels, big, with chains.
-  // Its wheels turn as it goes, a nut on each going round in four frames by the distance it covers (order 23).
+  for (let k = -28; k < 30; k += 10) {
+    span(k, k + 5, y0 + 33, 2, WINTER.ploughDark);
+    span(k, k + 5, y0 + 33, 1, ORANGE[0]);
+  }
+  // The wheels, big, with chains; they turn as it goes, a nut on each going round in four frames by the distance it
+  // covers (order 23).
   const roll = ((Math.floor((f > 0 ? p.x : -p.x) / 3) % 4) + 4) % 4;
   const [nx, ny] = [[0, -5], [4, -1], [0, 3], [-4, -1]][roll];
   for (const wx of [-22, 18]) {
-    wdisc(at(wx), g - 7, 7, WINTER.tyre);
-    wdisc(at(wx), g - 7, 3, P.iron);
+    wheel(at(wx), g - 7, 7, true);
     R(at(wx) - 1 + f * nx, g - 8 + ny, 2, 2, P.iron);
   }
-  // The blade: yellow, black stripes, angled out in front; raised off the snow while it revs, a sign
-  // that holds still (for reduced motion too).
+  // The blade: yellow, black stripes, angled out in front, its upper edge catching the light; raised off the snow
+  // while it revs, a sign that holds still (for reduced motion too).
   const bx = at(32);
   const raised = p.phase === "windup" ? 5 : 0;
   for (let k = 0; k < 20; k++) {
     const yy = g - 20 + k - raised;
     const out = Math.round(k * 0.4) + 2;
+    const stripe = ((k + Math.floor((bx + k) / 4)) >> 2) % 2;
     // Raised while it revs, its tell: then in the bosses' "now" colour (order 18).
-    R(f > 0 ? bx : bx - out - 4, yy, out + 4, 1, ((k + Math.floor((bx + k) / 4)) >> 2) % 2 ? (raised ? ROLES.now : WINTER.blade) : INK);
+    const face = stripe ? (raised ? ROLES.now : WINTER.blade) : INK;
+    R(f > 0 ? bx : bx - out - 4, yy, out + 4, 1, face);
+    if (!raised && stripe) {
+      // The lit edge along its front, the shade where it curls back under.
+      R(f > 0 ? bx + out + 3 : bx - out - 4, yy, 1, 1, k < 10 ? mix(WINTER.blade, WHITE, 0.35) : WINTER.blade);
+      R(f > 0 ? bx : bx - 1, yy, 1, 1, WINTER.bladeDark);
+    }
   }
+  if (!raised) R(f > 0 ? bx : bx - 6, g - 21, 6, 1, mix(WINTER.blade, WHITE, 0.35));
   // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when
   // beaten. With reduced motion they do not flash: one is lit while it drives, both (with their glow)
   // while it revs.
@@ -985,7 +1043,9 @@ function ploughBody(p: Plough, v: View) {
   for (const [k, dx] of [[0, -28], [1, -10]] as const) {
     const hot = !beaten && ((fast && view.reduced) || (beat + k) % 2 === 0);
     span(dx, dx + 6, y0 - 4, 4, hot ? (fast ? ROLES.now : WINTER.beacon) : mix(WINTER.beacon, INK, 0.55));
+    span(dx, dx + 6, y0 - 1, 1, mix(WINTER.beacon, INK, 0.7));
     if (hot) {
+      if (!fast) span(dx + 1, dx + 3, y0 - 4, 1, WINTER.beaconHot);
       light(Math.min(at(dx), at(dx + 6)), y0 - 4, 6, 4, "lamp");
       if (fast) plain(() => span(dx - 4, dx + 10, y0 - 7, 2, "rgba(255, 154, 26, 0.45)"));
     }
@@ -1003,7 +1063,6 @@ function ploughBody(p: Plough, v: View) {
   if (p.phase === "stuck") plain(() => span(34, 46, g - 16, 16, WINTER.bank));
   // Hit: it reels, white flashes on the cab.
   if (p.phase === "hit" && !view.reduced && Math.floor(age / 4) % 2 === 0) span(-30, -2, y0 + 1, 3, WHITE);
-  // Its stretch for this round, marked by the bank of snow it has pushed up at the end.
 }
 
 /**
@@ -1028,23 +1087,33 @@ function flourish(age: number) {
   }
 }
 
-/** A ginger cat on the prowl: striped, its tail up behind, its ears pricked. 15 x 12. */
-function cat(e: Enemy) {
-  const r = parts(e, 15);
-  const step = view.reduced ? 0 : Math.floor(e.x / 3) % 2;
-  r(2, -8, 10, 5, ENEMY.orange);
-  r(4, -8, 1, 3, ENEMY.orangeLight);
-  r(7, -8, 1, 3, ENEMY.orangeLight);
-  r(11, -11, 4, 5, ENEMY.orange);
-  r(11, -12, 1, 1, ENEMY.orange);
-  r(14, -12, 1, 1, ENEMY.orange);
-  r(13, -10, 1, 1, ENEMY.eye);
-  r(14, -8, 1, 1, ENEMY.pink);
-  r(0, -11, 1, 5, ENEMY.orange);
-  r(-1, -12, 1, 2, ENEMY.orangeLight);
-  r(3 + step, -3, 2, 3, ENEMY.orange);
-  r(9 - step, -3, 2, 3, ENEMY.orange);
-}
+/**
+ * A ginger cat on the prowl, drawn as frames (order 24; way 3, ADR 0045): 15 x 12, lit along its back with darker
+ * stripes, a pale chest, muzzle and paws, a pink nose, ears pricked, its tail up behind with a curl at the tip; it walks
+ * in four frames by the distance it covers, its tail swaying.
+ */
+const CAT_HEAD = ["O..O", "OOOO", "OOOO", "OOeO", "oaap", ".aa."];
+const CAT_BODY = [
+  "OOOOOOOOO",
+  "oOooOooOo",
+  "ooooooooo",
+  "aoooooooa",
+  ".aaoooaa."
+];
+const CAT_TAIL = { up: [".O", "Oo", "o.", "o.", "o.", "o."], curl: ["OO", ".o", ".o", "o.", "o.", "o."] };
+const CAT_LEGS = [
+  ["...o......o....", "..oo.......o...", ".aa.........aa."],
+  ["...o.....o.....", "...o.....o.....", "...aa....aa...."],
+  ["...o.....o.....", "....o...o......", ".....aaaa......"]
+];
+const catFrame = (name: string, legs: number, dy: number, tail: readonly string[]) =>
+  frame(name, FOE_INK, [tail, 1, dy], [CAT_BODY, 2, 4 + dy], [CAT_HEAD, 11, dy], [CAT_LEGS[legs], 0, 9]);
+const CAT: Looks = {
+  w: 15,
+  h: 12,
+  idle: [catFrame("cat, still", 1, 0, CAT_TAIL.up), catFrame("cat, its tail curling", 1, 0, CAT_TAIL.curl)],
+  move: [0, 1, 2, 1].map((k, i) => catFrame(`cat, walking ${i + 1}`, k, k === 1 ? 0 : 1, i % 2 ? CAT_TAIL.curl : CAT_TAIL.up))
+};
 
 /** A washing line between two yards: two poles, the line, the washing; it gives as he lands, and throws him. */
 function line(l: Launcher, firedAt: number, v: View) {
@@ -1182,9 +1251,10 @@ export const NABOLAGET: LevelDef = {
     enemy(e, v) {
       if (!e.alive) return false;
       if (e.def.look !== "cat") return drawLook(e, v.t);
-      cat(e);
+      drawFoe(e, foeFrame(e, v.t, CAT), CAT.w, CAT.h);
       return true;
     },
+    shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     lights: (v) => lights(v),
     overDark: (v) => {
       for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);

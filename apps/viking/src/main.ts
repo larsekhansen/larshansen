@@ -65,7 +65,7 @@ import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./le
 import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
-import { drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
+import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { eyes, freshRings, outlined, ringCount, rings, ringsTo } from "./render/sprite";
 import { STAND_LEDGE, shiver, standTop } from "./render/stand";
 import type { Feel } from "./render/feel";
@@ -1362,7 +1362,7 @@ function drawThings(v: View) {
   });
   p.drums.forEach((l, i) => (art.drum ? art.drum(i, l, p.drummedAt[i], v) : drawDrum(l, p.t, p.drummedAt[i])));
   p.flags.forEach((f, i) => {
-    if (!art.flag?.(i, f, p.raisedAt[i], v)) drawCheckpoint(f, p.raisedAt[i], p.t);
+    if (!art.flag?.(i, f, p.raisedAt[i], v)) (LOOKS.flag ?? drawCheckpoint)(f, p.raisedAt[i], p.t, p.def.id);
     // Raised, it says so as an earned rune does: a tick at the top of its pole (order 18).
     const up = p.raisedAt[i];
     if (up !== null && (view.reduced || p.t - up >= HOIST_STEPS)) drawTick(f.x + 2, f.bottom - POLE.h - 9);
@@ -1482,9 +1482,8 @@ function skiPole(v: View) {
   const side = scene.play.body.facing > 0 ? -1 : 1;
   const x = Math.round(b.x + PLAYER.w / 2 + side * 5);
   const top = Math.round(b.y + (scene.play.sitting || scene.play.riding ? 9 : 6));
-  R(x, top, 1, PLAYER.h - 4, METAL.lampPost);
-  R(x - 1, top + PLAYER.h - 8, 3, 1, METAL.lampPost);
-  R(x, top - 1, 1, 1, PALETTE.sailStripe);
+  if (LOOKS.pole) LOOKS.pole(x, top, PLAYER.h - 4);
+  else R(x, top, 1, PLAYER.h - 4, METAL.lampPost);
   void v;
 }
 
@@ -1529,7 +1528,10 @@ function render(alpha: number) {
     if (f < 1) {
       // The feather floats down, swaying, and comes to rest on his shoulder.
       const sway = view.reduced ? 0 : Math.round(Math.sin((state.steps - state.feather.since) * 0.11) * 5 * (1 - f));
-      drawFeather(Math.round(shown.x + PLAYER.w / 2 - FEATHER_W / 2 + sway), Math.round(shown.y - 60 * (1 - f) + 2 - FEATHER_H / 2 + 6 * f), FEATHER.vane, FEATHER.sheen, FEATHER.shine, state.feather.gold);
+      const fx = Math.round(shown.x + PLAYER.w / 2 - FEATHER_W / 2 + sway);
+      const fy = Math.round(shown.y - 60 * (1 - f) + 2 - FEATHER_H / 2 + 6 * f);
+      if (LOOKS.feather) LOOKS.feather(fx, fy, state.feather.gold);
+      else drawFeather(fx, fy, FEATHER.vane, FEATHER.sheen, FEATHER.shine, state.feather.gold);
     }
   }
 

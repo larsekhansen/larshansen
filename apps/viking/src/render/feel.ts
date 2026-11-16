@@ -19,14 +19,14 @@ import { shadows } from "../alive/shadows";
 import { DEATH, deathFrame, drawDeath } from "../alive/death";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
-import { cheese, skilling } from "../alive/things";
+import { bench, bracteate, bracteateOutline, cheese, feather, flag, runeStone, sheep, skiPole, skilling } from "../alive/things";
 import { DEPTH } from "./backdrop";
 import { fjord } from "../alive/depth";
 import { drawFore } from "../alive/fore";
 
 // The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the
 // fjord's water is a plane that recedes.
-Object.assign(LOOKS, { enemy: drawFoeLook, skilling, cheese });
+Object.assign(LOOKS, { enemy: drawFoeLook, skilling, cheese, bench, bracteate, bracteateOutline, rune: runeStone, sheep, flag, pole: skiPole, feather });
 DEPTH.fjord = fjord;
 
 // Felt at a glance (order 19, ADR 0040): every event answers at once, where it happened, in its role's

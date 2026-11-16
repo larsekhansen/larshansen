@@ -8,10 +8,11 @@ import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CREATURE, DOORWAY, ENEMY, ROLES, FOREST, GLASS, INK, LAND, LAMP, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, plankDoor, smoke } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import type { Enemy, EnemyDef } from "../game/enemies";
+import type { EnemyDef } from "../game/enemies";
 import { TROLL, TROLL_RULES, TROLL_STEPS, clubBox, dawnNow, waveFronts, type Troll, type TrollDef } from "../game/troll";
 import { drawLook, drawLookShot } from "../render/looks";
-import { parts } from "../alive/parts";
+import { FOE_INK, drawFoe, foeFrame, type Looks } from "../alive/foes";
+import { frame, paint } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
@@ -152,31 +153,39 @@ export const ENEMIES: EnemyDef[] = [
 
 // --- The forest's own creatures: the bat and the anthill (drawn here, as no other level has them) -----------
 
-/** A bat: a plum body with ears, wide wings flapping, eyes. 17 x 10. */
-function bat(e: Enemy, t: number) {
-  const r = parts(e, 17);
-  const flap = view.reduced ? 0 : Math.floor(t / 4) % 2;
-  r(7, -8, 3, 6, ENEMY.plum);
-  r(7, -9, 1, 1, ENEMY.plum);
-  r(9, -9, 1, 1, ENEMY.plum);
-  r(7, -7, 1, 1, ENEMY.eye);
-  r(9, -7, 1, 1, ENEMY.eye);
-  r(1, -6 - flap * 2, 6, 2, ENEMY.plumLight);
-  r(10, -6 - flap * 2, 6, 2, ENEMY.plumLight);
-  r(0, -4 - flap * 3, 1, 1, ENEMY.plum);
-  r(16, -4 - flap * 3, 1, 1, ENEMY.plum);
-}
+// The bat and the anthill, drawn as frames (order 24; way 3, ADR 0045).
+// A bat, 17 x 10, seen from the front: a plum body lit at the shoulders, pointed ears, two eyes, wings of dark membrane
+// on lit finger bones, scalloped at their trailing edge; four wing frames on its own clock.
+const BAT_BODY = [".M.M.", ".mmm.", ".eme.", "dmMmd", ".mmm.", ".dmd.", "..d.."];
+const BAT_WING: Record<string, readonly string[]> = {
+  up: ["M.......", "mM......", "dmM.....", ".ddmM...", "..dddmm.", "....d.d."],
+  high: ["........", "MM......", "dmMM....", ".ddmmM..", "..d.dddm", "........"],
+  level: ["........", "........", "MMMMMMm.", "dmddmddm", ".d..d.d.", "........"],
+  down: ["........", "........", "......mM", "....mMdd", "..mMdd.d", "mMd.d..."]
+};
+const flip = (rows: readonly string[]) => rows.map((r) => [...r].reverse().join(""));
+const batFrame = (name: string, wing: string, dy = 0) => frame(name, FOE_INK, [BAT_WING[wing], 0, 1 + dy], [flip(BAT_WING[wing]), 9, 1 + dy], [BAT_BODY, 6, dy]);
+const BAT: Looks = {
+  w: 17,
+  h: 10,
+  idle: [batFrame("bat, gliding", "level"), batFrame("bat, gliding, lower", "level", 1)],
+  move: [batFrame("bat, wings up", "up"), batFrame("bat, wings half up", "high"), batFrame("bat, wings out", "level"), batFrame("bat, wings down", "down")]
+};
 
-/** An anthill, alive: a heap of needles in orange bands, ants running over it. It hurts from above. 18 x 10. */
-function anthill(e: Enemy, t: number) {
-  const r = parts(e, 18);
-  for (let k = 0; k < 10; k++) r(9 - k, -10 + k, Math.max(1, k * 2), 1, k % 2 ? ENEMY.orange : ENEMY.orangeLight);
-  if (view.reduced) return;
-  for (let i = 0; i < 5; i++) {
-    const k = ((t * 0.3 + i * 7) % 16) / 16;
-    r(3 + Math.round(k * 12), -2 - Math.round(Math.sin(k * Math.PI) * 7), 1, 1, ENEMY.line);
-  }
-}
+/** A heap of spruce needles, 18 x 10, lit at its top left and darker down its right, ants running over it in four frames. */
+const HEAP = Array.from({ length: 10 }, (_, r) =>
+  Array.from({ length: 18 }, (_, c) => {
+    const half = Math.round(9 * Math.sqrt(Math.max(0, 1 - ((9.6 - r) / 10.2) ** 2)));
+    if (Math.abs(c + 0.5 - 9) > half) return ".";
+    const lit = (c - 9) * 0.6 + (r - 5) * 0.8;
+    const grain = (c * 7 + r * 5) % 5 === 0;
+    // Lit needles at the top left (a few catch the light), the shaded side plain; the near-black is the ants' alone.
+    return lit < -3 ? (grain ? "a" : "O") : lit < 0.5 ? (grain ? "o" : "O") : lit < 3 ? (grain ? "O" : "o") : "o";
+  }).join("")
+);
+const ANTS = [[[3, 7], [6, 3], [12, 4], [15, 8], [9, 1]], [[4, 5], [7, 2], [13, 5], [16, 9], [10, 1]], [[4, 4], [8, 1], [14, 6], [15, 7], [11, 2]], [[5, 3], [9, 1], [14, 7], [14, 6], [12, 3]]];
+const anthillFrame = (k: number) => frame(`anthill, ants ${k + 1}`, FOE_INK, [HEAP], ...ANTS[k].map(([c, r]) => [["l"], c, r] as [string[], number, number]));
+const ANTHILL: Looks = { w: 18, h: 10, idle: [0, 1, 2, 3].map(anthillFrame), move: [0, 1, 2, 3].map(anthillFrame), rate: 6 };
 
 // --- The dark ----------------------------------------------------------------------------------------------------
 /** How dark it is along the level before any light: open by the lake, the marsh and at Ullevålseter, darkest before the clearing. */
@@ -572,6 +581,26 @@ function blueTrunk(f: { x: number; bottom: number }, raisedAt: number | null, t:
   void POLE;
 }
 
+// The moose, drawn as a frame (order 24; way 3, ADR 0045): its body lit along the back he rides and shaded to its belly,
+// rough hair in it, the hump over its shoulders, the long head hanging forward with an eye, a nostril and the bell
+// under its throat, the antlers' palms lit on their top edge; its legs walk in four frames by the distance it goes.
+const MOOSE_INK: Record<string, string> = { L: mix(FOREST.mooseLight, WHITE, 0.15), l: FOREST.mooseLight, m: FOREST.moose, d: FOREST.mooseDark, D: mix(FOREST.mooseDark, INK, 0.35), e: INK, A: mix(FOREST.antler, WHITE, 0.3), a: FOREST.antler, b: mix(FOREST.antler, INK, 0.3) };
+const MOOSE_BODY = Array.from({ length: 11 }, (_, r) =>
+  Array.from({ length: 44 }, (_, c) => {
+    if ((r === 0 && (c < 2 || c > 41)) || (r === 1 && c < 1) || (r === 10 && (c < 3 || c > 40))) return ".";
+    const fleck = (c * 7 + r * 11) % 9 === 0;
+    if (r === 0) return c < 30 ? "L" : "l";
+    if (r < 3) return fleck ? "L" : c < 20 ? "l" : "m";
+    if (r < 7) return fleck ? "d" : "m";
+    if (r < 10) return fleck ? "D" : "d";
+    return "D";
+  }).join("")
+);
+const MOOSE_HUMP = ["..llllll", ".lLLllmm", "lLlmmmmm"];
+const MOOSE_HEAD = ["..lllll.....", ".lLmmmmmll..", "lmmemmmmmmml", "mmmmmmmmmmdD", ".mmdmmmmddDD", "..ddd..dDDe.", "...dd.......", "...dd.......", "....d......."];
+const MOOSE_ANTLERS = ["A.A.A.......A.A", "aAaAa.....AaAa.", ".aaab.....baa..", "..bb.......bb..", "...b.......b...", "....b.....b...."];
+const MOOSE_TOP = frame("moose", MOOSE_INK, [MOOSE_ANTLERS, 44, -8], [MOOSE_HUMP, 38, -3], [MOOSE_BODY, 2, 0], [MOOSE_HEAD, 46, 1]);
+
 /** The moose: a long brown body under its back (what he stands on), a hump, long legs walking, a heavy head and antlers the way it walks. */
 function moose(at: { x: number; y: number }, t: number) {
   const now = carrierAt(MOOSE, t);
@@ -579,31 +608,20 @@ function moose(at: { x: number; y: number }, t: number) {
   const dir = now.x > before.x ? 1 : now.x < before.x ? -1 : t % MOOSE.period < MOOSE.period / 2 ? 1 : -1;
   const { x, y } = at;
   const w = MOOSE.w;
-  R(x + 2, y, w - 4, 10, FOREST.moose);
-  R(x + 2, y, w - 4, 1, FOREST.mooseLight);
-  R(x + 2, y + 9, w - 4, 2, FOREST.mooseDark);
-  const front = dir > 0 ? x + w - 10 : x + 2;
-  R(front, y - 3, 8, 4, FOREST.moose);
-  // Legs: two pairs, a step apart, by where it is.
-  const step = view.reduced ? 0 : Math.floor(x / 4) % 2;
-  for (const [lx, s] of [[x + 6, step], [x + 11, 1 - step], [x + w - 13, 1 - step], [x + w - 8, step]] as const) {
-    R(lx + s, y + 10, 2, G * TILE - y - 12, FOREST.mooseDark);
-    R(lx + s - 1, G * TILE - 3, 3, 2, INK);
+  // Legs: two pairs, by the distance it has walked (four frames, three pixels each: apart, passing, apart, passing).
+  const k = ((Math.floor(x / 3) % 4) + 4) % 4;
+  const swing = [1, 0, -1, 0][k];
+  const ground = G * TILE;
+  for (const [lx, s] of [[6, swing], [11, -swing], [w - 13, -swing], [w - 8, swing]] as const) {
+    const at = dir > 0 ? x + lx + s : x + w - lx - 2 - s;
+    R(at, y + 10, 1, ground - y - 13, FOREST.mooseDark);
+    R(at + 1, y + 10, 1, ground - y - 13, MOOSE_INK.D);
+    R(at, y + 10, 1, 4, FOREST.moose);
+    R(at - 1, ground - 3, 3, 2, INK);
   }
-  // The head, hanging forward, a dewlap, and the antlers' broad palms.
-  const hx = dir > 0 ? x + w - 2 : x - 10;
-  R(hx, y + 1, 12, 7, FOREST.moose);
-  R(dir > 0 ? hx + 8 : hx, y + 3, 4, 6, FOREST.mooseDark);
-  R(dir > 0 ? hx + 3 : hx + 7, y + 8, 2, 4, FOREST.mooseDark);
-  R(dir > 0 ? hx + 4 : hx + 6, y + 2, 1, 1, INK);
-  for (const side of [-1, 1]) {
-    const ax = hx + 6 + side * 4;
-    R(ax - 3, y - 5, 7, 2, CREATURE_ANTLER);
-    R(ax - 3 + side * 2, y - 8, 2, 3, CREATURE_ANTLER);
-    R(ax + 1 + side, y - 7, 2, 2, CREATURE_ANTLER);
-  }
+  paint(MOOSE_TOP, x, y, dir, w);
+  void t;
 }
-const CREATURE_ANTLER = FOREST.antler;
 
 /**
  * The troll: three times his height, a hunched back, a round belly, a great nose, long arms, a club,
@@ -611,22 +629,62 @@ const CREATURE_ANTLER = FOREST.antler;
  * wakes; the club goes up for a second before every slam and sticks in the ground after; each hit of
  * the dawn turns a third of it to stone from the feet up, and at the end it is all stone.
  */
+// Its tones (order 24; way 3, ADR 0045): five of hide from its hair's dark to a lit shoulder, five of stone for what the
+// dawn has turned, the nose's, the hair's and the club's, each shaded pixel by pixel from the top left of the screen
+// whichever way it faces: a lit shoulder and head, a shaded belly and underside, legs and arms lit down their left.
+const HIDE = [FOREST.trollHair, FOREST.trollDark, FOREST.troll, FOREST.trollLight, mix(FOREST.trollLight, WHITE, 0.22)];
+const STONE_TONES = [mix(FOREST.stoneDark, INK, 0.25), FOREST.stoneDark, FOREST.stone, FOREST.stoneLight, mix(FOREST.stoneLight, WHITE, 0.25)];
+const NOSE = [mix(FOREST.trollNose, INK, 0.3), FOREST.trollNose, mix(FOREST.trollNose, WHITE, 0.2)];
+const HAIR = [mix(FOREST.trollHair, INK, 0.3), FOREST.trollHair, FOREST.trollDark];
+const MOSS = [mix(FOREST.moss, INK, 0.25), FOREST.moss, FOREST.mossLight];
+const CLUB = [mix(FOREST.club, INK, 0.3), FOREST.club, mix(FOREST.club, WHITE, 0.18)];
+/** Where its head is, in its own frame (forward, up from the floor), as its body is drawn: what its eyes in the dark follow. */
+function trollHead(t: Troll, step: number) {
+  const bend = t.phase === "stuck" ? 4 + (Math.floor(step / 30) % 2) : 0;
+  const walking = t.phase === "walk" || t.phase === "retreat";
+  const lift = walking && [1, 0, -1, 0][((Math.floor((t.dir > 0 ? t.x : -t.x) / 4) % 4) + 4) % 4] === 0 ? 1 : 0;
+  return { bend, walking, lift, hx: 7 + bend, hy: 31 - bend * 2 + lift };
+}
+
 function trollBody(t: Troll, v: View) {
   const step = v.t;
   const fl = TROLL_DEF.floor;
   const x = Math.round(t.x);
   const age = step - t.since;
   const f = t.dir;
+  /** A row of pixels from screen x0 to x1 (exclusive), each its tone from `tone(x)` in `ramp`, joined into runs. */
+  const row = (x0: number, x1: number, y: number, ramp: readonly string[], tone: (sx: number) => number) => {
+    let start = x0;
+    let k = tone(x0);
+    for (let sx = x0 + 1; sx <= x1; sx++) {
+      const n = sx < x1 ? tone(sx) : -1;
+      if (n === k) continue;
+      R(start, y, sx - start, 1, ramp[Math.max(0, Math.min(ramp.length - 1, k))]);
+      start = sx;
+      k = n;
+    }
+  };
+  /** Light from the top left of the screen on a point of a shape (its offset over its half-width and half-height). */
+  const lightOn = (nx: number, ny: number) => -(0.55 * nx + 0.85 * ny);
+  const step2 = (l: number) => (l > 0.55 ? 1 : l < -0.75 ? -2 : l < -0.3 ? -1 : 0);
   if (t.phase === "asleep" || (t.phase === "waking" && age < TROLL_STEPS.waking / 2)) {
-    // A mossy boulder, its nose a bump on one side; asleep it breathes (its back up a pixel every other second, order
-    // 23); waking, it shakes.
+    // A mossy boulder, its nose a bump on one side, lit at its top left; asleep it breathes (its back up a pixel every
+    // other second, order 23); waking, it shakes.
     const shake = t.phase === "waking" && !view.reduced ? (age % 4 < 2 ? 1 : -1) : 0;
     const breath = t.phase === "asleep" ? Math.floor(step / 60) % 2 : 0;
+    const top = 23 + breath;
     for (let k = 0; k < 24 + breath; k++) {
-      const half = Math.round(17 * Math.sqrt(Math.max(0, 1 - ((k - 2) / (23 + breath)) ** 2)));
-      R(x - half + shake, fl - k - 1, half * 2, 1, k > 18 + breath ? FOREST.moss : k % 5 === 0 ? FOREST.stoneDark : FOREST.stone);
+      const half = Math.round(17 * Math.sqrt(Math.max(0, 1 - ((k - 2) / top) ** 2)));
+      const y = fl - k - 1;
+      const moss = k > 18 + breath;
+      row(x - half + shake, x + half + shake, y, moss ? MOSS : STONE_TONES, (sx) => {
+        const l = lightOn((sx - x - shake) / 17, -(k - 11) / 12);
+        const crack = !moss && (k % 5 === 0 || (sx * 7 + k * 3) % 23 === 0);
+        return (moss ? 1 : 2) + step2(l) - (crack ? 1 : 0);
+      });
     }
     R(x - 13 + shake, fl - 12, 5, 5, FOREST.stone);
+    R(x - 13 + shake, fl - 12, 5, 1, FOREST.stoneLight);
     R(x - 14 + shake, fl - 11, 2, 3, FOREST.stoneDark);
     R(x - 6 + shake, fl - 15, 4, 3, FOREST.lichen);
     R(x + 6 + shake, fl - 9, 3, 2, FOREST.lichen);
@@ -634,73 +692,87 @@ function trollBody(t: Troll, v: View) {
   }
   const stoneBelow = t.phase === "stone" ? -Infinity : t.hits === 0 ? Infinity : fl - Math.round((TROLL.h * t.hits) / 3);
   const flash = t.phase === "hit" && !view.reduced && Math.floor(age / 4) % 2 === 0;
-  const STONE_OF: Record<string, string> = { [FOREST.troll]: FOREST.stone, [FOREST.trollDark]: FOREST.stoneDark, [FOREST.trollLight]: FOREST.stoneLight, [FOREST.trollNose]: FOREST.stoneLight, [FOREST.trollHair]: FOREST.moss };
-  const paint = (y: number, c: string) => (y >= stoneBelow ? STONE_OF[c] ?? c : c);
-  /** A filled ellipse round (cx, cy), in the troll's own frame (cx forward, cy up from the floor). */
-  const blob = (cx: number, cy: number, rx: number, ry: number, c: string) => {
+  /** The ramp a part is drawn in at a row: its own, or stone where the dawn has turned it. */
+  const rampAt = (y: number, ramp: readonly string[]) => (y < stoneBelow ? ramp : ramp === HIDE ? STONE_TONES : ramp === HAIR ? MOSS : ramp === NOSE ? STONE_TONES : ramp);
+  const baseAt = (y: number, ramp: readonly string[], base: number) => (y < stoneBelow || ramp === HIDE ? base : ramp === NOSE ? 3 : base);
+  /** A filled ellipse round (cx, cy), in the troll's own frame (cx forward, cy up from the floor), lit from the top left. */
+  const blob = (cx: number, cy: number, rx: number, ry: number, ramp: readonly string[], base: number) => {
+    const mx = f > 0 ? x + cx : x - cx;
     for (let dy = -ry; dy <= ry; dy++) {
       const half = Math.floor(rx * Math.sqrt(1 - (dy * dy) / (ry * ry)) + 0.3);
       const y = fl - cy + dy;
-      R(f > 0 ? x + cx - half : x - cx - half, y, half * 2 + 1, 1, paint(y, c));
+      row(mx - half, mx + half + 1, y, rampAt(y, ramp), (sx) => baseAt(y, ramp, base) + step2(lightOn((sx - mx) / (rx + 0.5), dy / (ry + 0.5))));
     }
   };
-  const box = (cx: number, cy: number, w: number, h: number, c: string) => {
+  /** A box (a leg, an arm, a foot), lit down its left side and shaded down its right, in the troll's own frame. */
+  const box = (cx: number, cy: number, w: number, h: number, ramp: readonly string[], base: number) => {
+    const x0 = f > 0 ? x + cx : x - cx - w;
     for (let k = 0; k < h; k++) {
       const y = fl - cy - k - 1;
-      R(f > 0 ? x + cx : x - cx - w, y, w, 1, paint(y, c));
+      row(x0, x0 + w, y, rampAt(y, ramp), (sx) => baseAt(y, ramp, base) + (w > 2 && sx === x0 ? 1 : w > 2 && sx === x0 + w - 1 ? -1 : 0) + (k === 0 && h > 2 ? -1 : 0));
     }
   };
   // Its club stuck, it heaves (a pixel, every other second); walking, a cycle of four by the distance it covers (order 23).
-  const bend = t.phase === "stuck" ? 4 + (Math.floor(step / 30) % 2) : 0;
-  const walking = t.phase === "walk" || t.phase === "retreat";
+  const { bend, walking, lift, hx, hy } = trollHead(t, step);
   const stride = walking ? [1, 0, -1, 0][((Math.floor((f > 0 ? t.x : -t.x) / 4) % 4) + 4) % 4] : 0;
-  const lift = walking && stride === 0 ? 1 : 0;
   // The tail, behind, with its tuft.
-  for (let k = 0; k < 8; k++) box(-14 - k, 12 - Math.floor(k * 0.8), 1, 1, FOREST.trollDark);
-  blob(-22, 4, 2, 2, FOREST.trollHair);
+  for (let k = 0; k < 8; k++) box(-14 - k, 12 - Math.floor(k * 0.8), 1, 1, HIDE, 1);
+  blob(-22, 4, 2, 2, HAIR, 1);
   // Legs and feet.
-  box(-9 + stride, 0, 8, 3, FOREST.trollDark);
-  box(2 - stride, 0, 8, 3, FOREST.trollDark);
-  box(-8 + stride, 3, 6, 7, FOREST.troll);
-  box(3 - stride, 3, 6, 7, FOREST.troll);
-  // The body: a hunched back, a round belly.
-  blob(-5, 25 - bend + lift, 9, 7, FOREST.trollDark);
-  blob(0, 18 - bend / 2 + lift, 13, 11, FOREST.troll);
-  blob(4, 16 - bend / 2 + lift, 7, 7, FOREST.trollLight);
-  blob(-6, 26 - bend + lift, 7, 5, FOREST.troll);
-  // The head, forward and low; its ear, nose, mouth and hair.
-  const hx = 7 + bend;
-  const hy = 31 - bend * 2 + lift;
-  blob(hx, hy, 7, 6, FOREST.troll);
-  blob(hx - 6, hy + 1, 2, 3, FOREST.trollDark);
-  blob(hx + 7, hy - 1, 4, 4, FOREST.trollNose);
-  box(hx + 9, hy - 3, 2, 1, mix(FOREST.trollNose, INK, 0.3));
-  box(hx + 1, hy - 5, 6, 1, INK);
-  box(hx + 4, hy - 5, 1, 2, FOREST.dawnPale);
-  for (const [dx, dy, w] of [[-5, 6, 4], [-2, 7, 5], [3, 6, 3], [-8, 3, 3]] as const) box(hx + dx, hy + dy, w, 2, FOREST.trollHair);
+  box(-9 + stride, 0, 8, 3, HIDE, 1);
+  box(2 - stride, 0, 8, 3, HIDE, 1);
+  box(-8 + stride, 3, 6, 7, HIDE, 2);
+  box(3 - stride, 3, 6, 7, HIDE, 2);
+  // The body: a hunched back, a round belly (shaded under), the lit shoulder.
+  blob(-5, 25 - bend + lift, 9, 7, HIDE, 1);
+  blob(0, 18 - bend / 2 + lift, 13, 11, HIDE, 2);
+  blob(4, 16 - bend / 2 + lift, 7, 7, HIDE, 3);
+  blob(-6, 26 - bend + lift, 7, 5, HIDE, 2);
+  // The head, forward and low; its ear, nose, mouth and hair; an eye under the brow.
+  blob(hx, hy, 7, 6, HIDE, 2);
+  blob(hx - 6, hy + 1, 2, 3, HIDE, 1);
+  blob(hx + 7, hy - 1, 4, 4, NOSE, 1);
+  box(hx + 9, hy - 3, 2, 1, NOSE, 0);
+  box(hx + 1, hy - 5, 6, 1, [INK], 0);
+  box(hx + 4, hy - 5, 1, 2, [FOREST.dawnPale], 0);
+  if (t.phase !== "stone" && fl - hy - 5 < stoneBelow) {
+    R(f > 0 ? x + hx - 1 : x - hx - 1, fl - hy - 5, 2, 1, INK);
+    R(f > 0 ? x + hx + 2 : x - hx - 3, fl - hy - 5, 1, 1, INK);
+  }
+  for (const [dx, dy, w] of [[-5, 6, 4], [-2, 7, 5], [3, 6, 3], [-8, 3, 3]] as const) box(hx + dx, hy + dy, w, 2, HAIR, 1);
   // The arm and the club: hanging, raised (the telegraph), or stuck in the ground.
   if (t.phase === "windup") {
-    const lift = Math.min(1, age / 14);
-    box(6, 22, 4, 6 + Math.round(12 * lift), FOREST.troll);
+    const raise = Math.min(1, age / 14);
+    box(6, 22, 4, 6 + Math.round(12 * raise), HIDE, 2);
     // The club raised, its tell, in the bosses' "now" colour (order 18).
-    for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - lift)) : x - 10 - Math.round(k * (1 - lift)), fl - 34 - Math.round(lift * 10) - Math.round(k * lift), 4, 2, ROLES.now);
-    R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(lift * 2), 6, 6, ROLES.now);
+    for (let k = 0; k < 16; k++) R(f > 0 ? x + 6 + Math.round(k * (1 - raise)) : x - 10 - Math.round(k * (1 - raise)), fl - 34 - Math.round(raise * 10) - Math.round(k * raise), 4, 2, ROLES.now);
+    R(f > 0 ? x + 5 : x - 11, fl - 54 - Math.round(raise * 2), 6, 6, ROLES.now);
   } else if (t.phase === "stuck") {
-    box(9, 10, 4, 12, FOREST.troll);
-    for (let k = 0; k < 14; k++) R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 2, FOREST.club);
+    box(9, 10, 4, 12, HIDE, 2);
+    for (let k = 0; k < 14; k++) {
+      R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 2, FOREST.club);
+      R(f > 0 ? x + 13 + k : x - 17 - k, fl - 14 + k, 4, 1, CLUB[2]);
+    }
     R(f > 0 ? x + 25 : x - 31, fl - 5, 7, 5, mix(FOREST.club, INK, 0.2));
+    R(f > 0 ? x + 25 : x - 31, fl - 5, 7, 1, FOREST.club);
   } else {
-    box(9, 8, 4, 16 - stride, FOREST.troll);
-    blob(11, 7 + stride, 2, 2, FOREST.trollDark);
+    box(9, 8, 4, 16 - stride, HIDE, 2);
+    blob(11, 7 + stride, 2, 2, HIDE, 1);
     if (t.phase !== "stone") {
-      for (let k = 0; k < 16; k++) R(f > 0 ? x + 11 : x - 15, fl - 12 + k - stride, 4, 1, FOREST.club);
+      for (let k = 0; k < 16; k++) {
+        const y = fl - 12 + k - stride;
+        R(f > 0 ? x + 11 : x - 15, y, 4, 1, FOREST.club);
+        R(f > 0 ? x + 11 : x - 15, y, 1, 1, CLUB[2]);
+        R(f > 0 ? x + 14 : x - 12, y, 1, 1, CLUB[0]);
+      }
       R(f > 0 ? x + 10 : x - 16, fl - 2 - stride, 6, 4, mix(FOREST.club, INK, 0.2));
+      R(f > 0 ? x + 10 : x - 16, fl - 2 - stride, 6, 1, FOREST.club);
     }
   }
   if (t.phase === "stone") {
     // All stone: moss on its back and head, a crack down it.
-    blob(-6, 30, 5, 2, FOREST.moss);
-    blob(hx - 1, hy + 6, 4, 1, FOREST.moss);
+    blob(-6, 30, 5, 2, MOSS, 1);
+    blob(hx - 1, hy + 6, 4, 1, MOSS, 1);
     for (let k = 0; k < 14; k++) R(x - 2 + (k % 3), fl - 30 + k, 1, 1, FOREST.stoneDark);
   }
   // In the light of the dawn, a white flash where it hits.
@@ -724,10 +796,12 @@ function overDark(v: View) {
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);
   const t = v.troll;
   if (t && t.phase !== "asleep" && t.phase !== "stone") {
-    const hy = TROLL_DEF.floor - 27 + (t.phase === "stuck" ? 6 : 0) - 9;
-    const ex = Math.round(t.x) + (t.dir > 0 ? 6 : -8);
-    R(ex, hy, 2, 1, FOREST.trollEye);
-    R(ex + 3, hy, 1, 1, FOREST.trollEye);
+    // Where its head is as its body is drawn (order 24): its eyes go with its walking bob and its heave.
+    const head = trollHead(t, v.t);
+    const ey = TROLL_DEF.floor - head.hy - 5;
+    const ex = t.dir > 0 ? Math.round(t.x) + head.hx - 1 : Math.round(t.x) - head.hx - 1;
+    R(ex, ey, 2, 1, FOREST.trollEye);
+    R(t.dir > 0 ? ex + 3 : ex - 2, ey, 1, 1, FOREST.trollEye);
     // The club's glint as it is raised: the telegraph shows even where the dark is.
     if (t.phase === "windup" && (view.reduced || Math.floor(v.t / 6) % 2 === 0)) R(Math.round(t.x) + (t.dir > 0 ? 6 : -12), TROLL_DEF.floor - 56, 6, 1, FOREST.dawnPale);
     // The wave in the ground: a hump of earth running out, clods and dust thrown up over it.
@@ -907,8 +981,8 @@ export const NORDMARKA: LevelDef = {
     night: (v, him, boards, map) => drawNight(NORDMARKA, v, him, boards, map),
     enemy(e, v) {
       if (!e.alive) return false;
-      if (e.def.look === "bat") bat(e, v.t);
-      else if (e.def.look === "anthill") anthill(e, v.t);
+      if (e.def.look === "bat") drawFoe(e, foeFrame(e, v.t, BAT), BAT.w, BAT.h);
+      else if (e.def.look === "anthill") drawFoe(e, foeFrame(e, v.t, ANTHILL), ANTHILL.w, ANTHILL.h);
       else return drawLook(e, v.t);
       return true;
     },
