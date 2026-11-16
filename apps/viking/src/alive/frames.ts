@@ -19,16 +19,39 @@ export interface Frame {
   y0: number;
   x1: number;
   y1: number;
+  /**
+   * An invader's frame with glam marks (order 27, ADR 0050): the same frame without them (its natural self, drawn in its
+   * natural ramp when the glamour breaks), and the marks alone (what flies off).
+   */
+  bare?: Frame;
+  marks?: Frame;
 }
 
-/** A piece of a drawing: its rows, put `dx` right and `dy` down of the frame's origin. */
-export type Piece = readonly [rows: readonly string[], dx?: number, dy?: number];
+/**
+ * A piece of a drawing: its rows, put `dx` right and `dy` down of the frame's origin. `glam`: a glam mark (shades, a
+ * crest, a headband, leg warmers: order 27), which the glamour put on and a stomp knocks off.
+ */
+export type Piece = readonly [rows: readonly string[], dx?: number, dy?: number, glam?: boolean];
 
 /**
  * A frame from pieces laid one over another (a later piece's letters over an earlier's; "." leaves what is under
- * it). Every row of a piece as wide as its first, and every letter with a colour, or the file is wrong.
+ * it). Every row of a piece as wide as its first, and every letter with a colour, or the file is wrong. With glam
+ * marks among the pieces it also has its bare self and its marks.
  */
 export function frame(name: string, colours: Record<string, string>, ...pieces: Piece[]): Frame {
+  const cells = laid(name, colours, pieces);
+  const f = ran(name, colours, cells);
+  if (pieces.some((p) => p[3])) {
+    const bare = laid(name, colours, pieces.filter((p) => !p[3]));
+    f.bare = ran(name, colours, bare);
+    // The marks: whatever the glam pieces changed, as it shows over the rest.
+    f.marks = ran(`${name}, its glam`, colours, new Map([...cells].filter(([k, ch]) => bare.get(k) !== ch)));
+  }
+  return f;
+}
+
+/** A drawing's cells, "column,row" to its letter, from pieces laid one over another. */
+function laid(name: string, colours: Record<string, string>, pieces: readonly Piece[]): Map<string, string> {
   const cells = new Map<string, string>();
   for (const [rows, dx = 0, dy = 0] of pieces) {
     const w = rows[0].length;
@@ -46,6 +69,11 @@ export function frame(name: string, colours: Record<string, string>, ...pieces: 
       }
     });
   }
+  return cells;
+}
+
+/** A frame from its cells: kept as runs. */
+function ran(name: string, colours: Record<string, string>, cells: Map<string, string>): Frame {
   const at = [...cells].map(([k, ch]) => {
     const [x, y] = k.split(",").map(Number);
     return { x, y, ch };
@@ -72,7 +100,7 @@ export function frame(name: string, colours: Record<string, string>, ...pieces: 
 
 /** The same frame with its colours changed (a gold helmet, the night's dimming): its runs shared, its ink new. */
 export function inked(f: Frame, recolour: (c: string) => string): Frame {
-  return { ...f, ink: f.ink.map(recolour) };
+  return { ...f, ink: f.ink.map(recolour), ...(f.bare && f.marks ? { bare: inked(f.bare, recolour), marks: inked(f.marks, recolour) } : {}) };
 }
 
 /**

@@ -16,6 +16,7 @@ import { FIELD_SHARE, areaRecorder, backdropBand, colourBlind, deltaE, levelFiel
 import { airOf, hazeOf } from "./haze";
 import { drawEnemy, drawShot } from "./pickups";
 import { eyes, lastShape, outlined } from "./sprite";
+import { LEANS, leanFor } from "../alive/glamour";
 import { RIM as HIM_RIM, RIM_ALPHA } from "./feel";
 
 // Order 18 (ADR 0039), order 22 (ADR 0044): colour says what a thing is. What can hurt him is drawn from the enemy
@@ -30,7 +31,9 @@ const viewOf = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day
 
 /** The enemy palette's colours, and the ones a body is drawn in (not the outline's red, the near-black, the eyes, or the pale of teeth and claws). */
 const PALETTE_COLOURS = new Set<string>(Object.values(ENEMY));
-const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade])];
+const BODY = [...new Set([ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade, ...ROLES.glamour])];
+/** The glamour's neons that the enemy palette did not have before order 27 (ADR 0050): held as every body colour is. */
+const NEW_NEONS = [ENEMY.hotPink, ENEMY.magenta, ENEMY.purple, ENEMY.purpleDark, ENEMY.blue, ENEMY.lime];
 
 /**
  * The smallest difference (CIEDE2000) allowed between an enemy's body colour and a level's field, as each
@@ -67,6 +70,9 @@ describe("what can hurt him: the enemy palette", () => {
   /** Outlines that were not what the thing's state says: red round what is calm, the calm pale round what is not. */
   const wrongRim: string[] = [];
   const calmSeen = new Set<string>();
+  /** The largest share of a look's pixels in a neon near a role (the purple, its dark, the electric blue, the magenta). */
+  const accentShare = new Map<string, number>();
+  const NEAR_ROLE_COLOURS = new Set<string>([ENEMY.purple, ENEMY.purpleDark, ENEMY.blue, ENEMY.magenta]);
 
   beforeAll(async () => {
     // A document whose canvases draw nothing.
@@ -80,6 +86,8 @@ describe("what can hurt him: the enemy palette", () => {
     for (const st of BUILT) {
       const def = await loadLevel(st.id);
       const p = newPlay(def, { pole: POLE.has(def.id), shield: SHIELD_RULES, hasShield: def.rune > 10 });
+      // As the page draws it: in its level's lean (order 27).
+      leanFor(def.id);
       const look = (e: Enemy) => {
         if (!e.alive) return;
         // As the page draws it (`foe` in main.ts): the calm pale while it cannot hurt him, the warning red while it can.
@@ -97,6 +105,14 @@ describe("what can hurt him: the enemy palette", () => {
           return;
         }
         for (const r of shape.rects) s.colours.add(r.c);
+        // How much of it is a neon that sits near a role (order 27): an accent only.
+        let near = 0;
+        let all = 0;
+        for (const r of shape.rects) {
+          all += r.w * r.h;
+          if (NEAR_ROLE_COLOURS.has(r.c)) near += r.w * r.h;
+        }
+        if (all) accentShare.set(`${name} (${def.id})`, Math.max(accentShare.get(`${name} (${def.id})`) ?? 0, near / all));
         if (eyes(e).length) withEyes.add(name);
         // Where the picture's head is, over the box, against the box's top (where he lands): not while a
         // thrower's arm is up (its arm and what it throws are over its head then).
@@ -126,6 +142,43 @@ describe("what can hurt him: the enemy palette", () => {
 
   afterAll(() => {
     delete (globalThis as Record<string, unknown>).document;
+    leanFor("");
+  });
+
+  // Order 27 (ADR 0050): the glamour. Every level's lean is the glamour's colours and nothing else, and every level has one.
+  test("every level leans its invaders within the glamour's family: its two neons and its bodies' plum are the family's", () => {
+    const strays: string[] = [];
+    for (const st of BUILT) {
+      if (!LEANS[st.id]) strays.push(`${st.id}: no lean`);
+      for (const [from, to] of Object.entries(LEANS[st.id] ?? {})) if (!PALETTE_COLOURS.has(from) || !ROLES.glamour.includes(to)) strays.push(`${st.id}: ${from} to ${to}`);
+    }
+    expect(strays).toEqual([]);
+  });
+
+  // The neons near a role, by name, with what keeps them apart besides colour; each is an accent, never most of a body.
+  const NEAR_ROLE: Record<string, { role: string; shape: string }> = {
+    [ENEMY.purple]: { role: "now", shape: "the boss's tell comes on and goes with its act, on a boss; the purple is an invader's sheen, crest or lean, under its red outline" },
+    [ENEMY.purpleDark]: { role: "now", shape: "as the purple: a shade, under the red outline" },
+    [ENEMY.blue]: { role: "him", shape: "his tunic is on the one person with a helmet and cape; the electric blue is a sheen or a mark on an invader, under its red outline" },
+    [ENEMY.magenta]: { role: "now", shape: "the boss's tell is on a boss; magenta is a fire's or a mark's, under the red outline" }
+  };
+  const ACCENT_MOST = 0.25;
+  test(`the glamour's neons: each new one ${MIN_DELTA} or more from every role, those within 15 of one named with the shape that keeps them apart, and never more than a quarter of a figure's body`, () => {
+    const table: string[] = [];
+    const unnamed: string[] = [];
+    for (const c of NEW_NEONS)
+      for (const [role, colours] of Object.entries(ROLES.COLOURS)) {
+        if (role === "enemy") continue;
+        const d = Math.min(...colours.map((o) => deltaE(rgb(c), rgb(o))));
+        if (d < 15) table.push(`${c} near ${role}: ${d.toFixed(1)}${NEAR_ROLE[c]?.role === role ? ` (apart by shape: ${NEAR_ROLE[c].shape})` : ""}`);
+        if (d < MIN_DELTA || (d < 15 && NEAR_ROLE[c]?.role !== role)) unnamed.push(table.at(-1) ?? `${c} near ${role}: ${d.toFixed(1)}`);
+      }
+    console.log(`The glamour's neons near a role:\n  ${table.join("\n  ")}`);
+    expect(unnamed).toEqual([]);
+    // As an accent: in no look's colours (as drawn in its level's lean) do these cover more than a quarter of what it paints.
+    const heavy: string[] = [];
+    for (const [name, share] of accentShare) if (share > ACCENT_MOST) heavy.push(`${name}: ${(share * 100).toFixed(0)} %`);
+    expect(heavy).toEqual([]);
   });
 
   test("every enemy look's colours, and what it throws, come from the enemy palette and nothing else", () => {
@@ -490,8 +543,10 @@ describe("the textured ground comes no nearer what he plays with than the ground
       const fresh = fields.filter((f) => !old.has(f));
       table.push(`${st.id}: ${fields.length} fields, ${fresh.length} new`);
       for (const field of fresh)
-        for (const [role, colours] of Object.entries(ROLES.COLOURS)) {
+        for (const [role, all] of Object.entries(ROLES.COLOURS)) {
           if (role === "stand") continue;
+          // The glamour's neons came after (order 27): they are held 10 or more off every field as every body colour is.
+          const colours = role === "enemy" ? all.filter((c) => !NEW_NEONS.includes(c)) : all;
           const d = Math.min(...colours.map((c) => deltaE(rgb(field), rgb(c))));
           if (d < before.least[role].d) near.push(`${st.id}: ${field} near ${role}, ${d.toFixed(2)} (before, ${before.least[role].d})`);
         }

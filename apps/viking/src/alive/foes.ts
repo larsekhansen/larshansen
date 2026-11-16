@@ -1,7 +1,8 @@
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { windingUp, type Enemy } from "../game/enemies";
 import { clock, moving, parts, step4 } from "./parts";
-import { frame, type Frame, type Piece } from "./frames";
+import { frame, inked, type Frame, type Piece } from "./frames";
+import { NEON_A, NEON_B, glamFrame } from "./glamour";
 
 // The enemies of line 1's first three levels drawn as frames (order 23, section 1; way 3 of `docs/games/GRAIN.md`),
 // in the enemy palette's ramps: plum (light, plum, dark, the near-black), white (the eye's pale, white, its shade),
@@ -14,7 +15,11 @@ import { frame, type Frame, type Piece } from "./frames";
 // the same rows at another scale.
 
 const E = ENEMY;
-/** The enemy palette's ramps by letter: M m d plum (light, plum, dark); W w white (white, shade); O o orange; G g green; p pink; l the near-black; e an eye; a the pale of a beak's tip or a claw. */
+/**
+ * The enemy palette's ramps by letter: M m d plum (light, plum, dark); W w white (white, shade); O o orange; G g green; p pink;
+ * l the near-black; e an eye; a the pale of a beak's tip or a claw. The glamour's (order 27): N and n the level's two neons
+ * (its lean: the marks and the sheen), X magenta, V v purple (and its dark), L lime.
+ */
 export const FOE_INK: Record<string, string> = {
   M: E.plumLight,
   m: E.plum,
@@ -29,7 +34,13 @@ export const FOE_INK: Record<string, string> = {
   p: E.pink,
   l: E.line,
   e: E.eye,
-  a: E.pale
+  a: E.pale,
+  N: NEON_A,
+  n: NEON_B,
+  X: E.magenta,
+  V: E.purple,
+  v: E.purpleDark,
+  L: E.lime
 };
 
 const make = (name: string, ...pieces: Piece[]) => frame(name, FOE_INK, ...pieces);
@@ -128,19 +139,9 @@ export const GULL: Looks = {
   // (Wings down, its body rises a pixel with the beat: so its back is where he lands on it.)
   move: [gull("gull, wings up", "up"), gull("gull, wings half up", "high"), gull("gull, wings out", "level", -1), gull("gull, wings down", "down", -1)]
 };
-/** The crow: the gull's frames in plum, its wingtips the near-black, its beak dark. */
-const CROW_INK: Record<string, string> = { ...FOE_INK, W: E.plum, w: E.plumDark, o: E.line, l: E.line };
-const crowed = (f: Frame): Frame => frame(f.name.replace("gull", "crow"), CROW_INK, [toRows(f)]);
-/** A frame's letters back as rows (for recolouring one drawing as another). */
-function toRows(f: Frame): string[] {
-  const rows = Array.from({ length: f.y1 }, () => Array<string>(f.x1).fill("."));
-  const letters = Object.entries(FOE_INK);
-  for (let i = 0; i < f.runs.length; i += 4) {
-    const ch = letters.find(([, c]) => c === f.ink[f.runs[i + 3]])?.[0] ?? ".";
-    for (let k = 0; k < f.runs[i + 2]; k++) rows[f.runs[i + 1]][f.runs[i] + k] = ch;
-  }
-  return rows.map((r) => r.join(""));
-}
+/** The crow: the gull's frames in plum, its wingtips the near-black, its beak dark (its marks and bare self with them). */
+const CROW_INK: Record<string, string> = { [E.white]: E.plum, [E.whiteShade]: E.plumDark, [E.orange]: E.line };
+const crowed = (f: Frame): Frame => ({ ...inked(f, (c) => CROW_INK[c] ?? c), name: f.name.replace("gull", "crow") });
 export const CROW: Looks = { w: 17, h: 9, idle: GULL.idle.map(crowed), move: GULL.move.map(crowed) };
 
 /** The looks drawn as frames, by name: a level's own add theirs (`foeLooks`). */
@@ -170,9 +171,12 @@ export function foeFrame(e: Enemy, t: number, l: Looks): Frame {
  * level keeps (order 25), so it is not squashed to it.
  */
 export function drawFoe(e: Enemy, f: Frame, w: number, h: number, fit = false) {
+  // As the glamour stands (order 27): glammed, its natural self, or what flies off when it breaks.
+  const g = glamFrame(f);
+  if (!g) return;
   const r = parts(e, w, true, fit);
-  const runs = f.runs;
-  for (let i = 0; i < runs.length; i += 4) r(runs[i], runs[i + 1] - h, runs[i + 2], 1, f.ink[runs[i + 3]]);
+  const runs = g.runs;
+  for (let i = 0; i < runs.length; i += 4) r(runs[i], runs[i + 1] - h, runs[i + 2], 1, g.ink[runs[i + 3]]);
 }
 
 /** An enemy in one of the looks drawn as frames, and says so; false for any other. */

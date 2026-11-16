@@ -20,6 +20,7 @@ import { DEEP_FALL, MARGIN, dressed, himFrame } from "../alive/him";
 import { pixels, type Frame } from "../alive/frames";
 import { shadows } from "../alive/shadows";
 import { DEATH, deathFrame, drawDeath } from "../alive/death";
+import { glows, leanFor } from "../alive/glamour";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
 import { bench, bracteate, bracteateOutline, cheese, feather, flag, runeStone, sheep, skiPole, skilling } from "../alive/things";
@@ -376,6 +377,7 @@ export function createFeel(host: Host) {
   return {
     /** A new scene: nothing in the air, nothing held, nothing remembered. */
     reset(p: Play) {
+      leanFor(p.def.id);
       plife.fill(0);
       rt.fill(-9999);
       alertAt.fill(-9999);
@@ -747,6 +749,11 @@ export function createFeel(host: Host) {
     /** The page's step count, for a frame drawn without a step (a stepped page's still frame). */
     at(steps: number) {
       now = steps;
+    },
+
+    /** After dark, under the outlines: each invader's glow of its own neon (order 27). */
+    glows(g: CanvasRenderingContext2D) {
+      glows(g);
     },
 
     /** True while the picture holds after a hit (the rules go on stepping): the page draws nothing new. */

@@ -37,10 +37,16 @@ export const speech = { bubble: "#ffffff", plate: "#141622" };
 /** Things to use, up at them (order 19): doors, benches and signs have their corners marked in it, and the bubble that says which key frames itself in it. */
 export const use = "#1ad9ff";
 
+/**
+ * The glamour (order 27, ADR 0050): the neon family every invader is drawn in, the warm end it already had and the rest.
+ * Natural is Oslo, neon is the glamour: nothing natural, nothing he takes and nothing he stands on is any of these.
+ */
+export const glamour: readonly string[] = [ENEMY.plum, ENEMY.plumLight, ENEMY.orange, ENEMY.orangeLight, ENEMY.poison, ENEMY.poisonLight, ENEMY.hotPink, ENEMY.magenta, ENEMY.purple, ENEMY.purpleDark, ENEMY.blue, ENEMY.lime];
+
 /** Every role's colours that must stand apart, by role (eyes, the near-black of lines and the line under a platform are contrast, not role, colours). */
 export const COLOURS: Record<string, readonly string[]> = {
   him: Object.values(him),
-  enemy: [ENEMY.red, ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade],
+  enemy: [ENEMY.red, ENEMY.plum, ENEMY.plumLight, ENEMY.plumDark, ENEMY.orange, ENEMY.orangeLight, ENEMY.amber, ENEMY.poison, ENEMY.poisonLight, ENEMY.pink, ENEMY.white, ENEMY.whiteShade, ENEMY.hotPink, ENEMY.magenta, ENEMY.purple, ENEMY.purpleDark, ENEMY.blue, ENEMY.lime],
   calm: [calm],
   stand: [STAND.top, STAND.body, STAND.bodyLight, STAND.bodyDark],
   take: Object.values(take),

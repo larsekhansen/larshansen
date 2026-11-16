@@ -1469,6 +1469,8 @@ function afterDark(v: View) {
   standTops(p.map, scene.def.art);
   // Every outline drawn on the street this frame, again, alone, over the tint.
   street.globalAlpha = v.sky.phase === "night" ? 0.9 : 0.8;
+  // Each invader's glow of its own neon (order 27), under its outline.
+  feel?.glows(street);
   rings(street);
   street.globalAlpha = 1;
   for (const e of p.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, EYE_SHINE);
