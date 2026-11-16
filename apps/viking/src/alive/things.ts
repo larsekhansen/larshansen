@@ -114,7 +114,11 @@ export function bracteate(x: number, y: number, steps: number) {
   // A glint crosses it now and then.
   const g = (steps % 150) - 20;
   if (!view.reduced && g >= 0 && g < w) R(left + g, y + 2 + bob, 1, 8, mix(COIN.goldLight, WHITE, 0.6));
-  light(left, y + bob, w, 12, "soft");
+  // Its own light after dusk on the disc alone, row by row (order 25: a square of light round it read as a tile at night).
+  for (let r = 0; r < 12; r++) {
+    const half = Math.round(Math.sqrt(Math.max(0, 36 - (r + 0.5 - 6) ** 2)) * (w / 12));
+    if (half > 0) light(left + Math.round(w / 2) - half, y + r + bob, half * 2, 1, "soft");
+  }
 }
 
 /** A bracteate found on an earlier visit: its ring as a pale outline, still, where it hangs. */

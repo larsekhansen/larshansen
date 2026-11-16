@@ -39,7 +39,7 @@ const played = (label: string, def: LevelDef, until: (p: Play) => boolean, at: (
   if (!until(p)) return console.error(`${label}: not met along ${def.id}'s route`);
   for (let k = 0; k < later; k++) stepPlay(p, IDLE);
   const [wx, wy] = at(p);
-  line(label, def, (sky) => `/viking/?debug&auto&steps=${r.steps + 1 + later}&sky=${sky}&level=${def.id}&where=${Math.round(wx)},${Math.round(wy)}#${def.id}`, true);
+  line(label, def, (sky) => `/viking/?debug&auto&steps=${r.steps + 1 + later}&sky=${sky}&level=${def.id}&where=${Math.round(wx)},${Math.round(wy)}&look=${Math.round(wx)},${Math.round(wy)}#${def.id}`, true);
 };
 /** Where he stands nearest x on ground under row y. */
 function standNear(p: Play, x: number, y: number) {
@@ -61,7 +61,9 @@ for (const id of ["bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet
   for (const [i, e] of (def.enemies ?? []).entries()) {
     if (!OWN.has(e.look) || seen.has(e.look)) continue;
     seen.add(e.look);
-    let steps = 2;
+    // Step 0, but for a jumper: a hit in the first steps holds the page's picture, and whether the first frame came first
+    // is a race (the handover's "Checking").
+    let steps = 0;
     if (e.kind === "jumper") {
       const probe = fresh(def);
       let best = 0;
@@ -160,7 +162,7 @@ for (const id of ["bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet
   const nord = await loadLevel("nordmarka");
   played("troll walking, after dusk", nord, (p) => !!p.troll && p.troll.phase === "walk" && p.t - p.troll.since > 20, (p) => [p.troll!.x, (p.def.troll?.floor ?? 0) - 24]);
   const lang = await loadLevel("langkaia");
-  for (const k of [40, 85]) line(`the feather falling, ${k} of 100`, lang, (sky) => `/viking/?debug&steps=2&sky=${sky}&level=langkaia&x=1315&y=232&fall=${k}&where=1320,180&look=1320,190#langkaia`);
+  for (const k of [40, 85]) line(`the feather falling, ${k} of 100`, lang, (sky) => `/viking/?debug&steps=2&sky=${sky}&level=langkaia&x=1315&y=232&fall=${k}&where=1318,${k < 50 ? 212 : 228}&look=1318,${k < 50 ? 212 : 228}#langkaia`);
   for (const id of ["langkaia", "gamlebyen"]) {
     const def = await loadLevel(id);
     const p = fresh(def);
