@@ -6,15 +6,15 @@ As of the night of 17 November 2026. Change this file in the same change that ma
 
 | | |
 |---|---|
-| Date | 17 November 2026, about 00:30 |
-| Last live | Order 27, the neon invaders (the glamour, ADR 0050); order 28 built, awaiting review |
+| Date | 17 November 2026, about 02:00 |
+| Last live | Order 28, the last flat things (ADR 0051), PR #76; before it order 27, the neon invaders (ADR 0050) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 68 % used when order 27 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | 69 % used when order 28 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No. One round at a time |
 
 ## In flight
 
-**Order 28, the last flat things** (ADR 0051): built on branch `the-last-flat-things`, handed back to the planner for review, not merged.
+Nothing. **Order 28, the last flat things** (ADR 0051) is live (PR #76).
 What it did and left: `apps/viking/tools/review/o28/after.md`. Left alone, with reasons: the trains and trams (drawn a column at a
 time and clipped), the bells, logs, buckets, chairlift and hoist (lit and detailed already), windows, the lanterns and torches that
 flicker, the Opera's door, line 2's low track on the map. The worktree's larger first script was not reproduced (`lessons.md`).
@@ -30,8 +30,9 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Review order 28 (`apps/viking/tools/review/o28/after.md`, the hand-back), merge and deploy; publish the page of before and after
-crops for Lars. Then the list below.
+Not chosen yet. The planner's candidate is idea 1 below (meet Loki: an encore after the last rune), because it needs no person to
+play first and finishes the story order 27 began. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
+tower, boat and posts have no fallback drawing (the decks still draw).
 
 ## After that: ideas in rough order of value
 
