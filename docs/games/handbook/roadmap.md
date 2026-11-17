@@ -6,15 +6,17 @@ As of the night of 17 November 2026. Change this file in the same change that ma
 
 | | |
 |---|---|
-| Date | 17 November 2026, about 02:00 |
-| Last live | Order 28, the last flat things (ADR 0051), PR #76; before it order 27, the neon invaders (ADR 0050) |
+| Date | 17 November 2026, about 03:30 |
+| Last live | Order 29, the encore (ADR 0052), PR #77; before it orders 28 (PR #76) and 27 (PR #74) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 69 % used when order 28 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
-| Paused? | No. One round at a time |
+| Weekly allowance | 72 % used when order 29 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Paused? | Yes, by the planner's choice, until the weekly reset: three rounds landed in one night and the next would end at or over 75 %. The six-hourly check still runs |
 
 ## In flight
 
-**Order 29, the encore** (ADR 0052), built on branch `the-encore`, waiting for review, merge and deploy. Loki met once, at a stage
+Nothing.
+
+**Order 29, the encore** (ADR 0052) is live (PR #77). Loki met once, at a stage
 on the water in Middelalderparken that appears past the longship only with every rune of both lines. Measures and what was left:
 `apps/viking/tools/review/o29/after.md`. Unplayed and unheard: the fight at speed, the four new stings, his frames on a phone.
 
@@ -34,7 +36,10 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Not chosen yet. Idea 1 below (meet Loki) is order 29, in flight. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
+After the reset on Saturday 21 November, the planner's candidate is **small debts in one round**: the encore's four "not fixed"
+items (`apps/viking/tools/review/o29/after.md`: the stop's neon does not glow at night, the club is small, nothing photographed under
+reduced motion, no prefetch from the map), Langkaia's missing fallback, and a reduced-motion picture of every boss. Idea 1 below (meet
+Loki) is done. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
 tower, boat and posts have no fallback drawing (the decks still draw).
 
 ## After that: ideas in rough order of value

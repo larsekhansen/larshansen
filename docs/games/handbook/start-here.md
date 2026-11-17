@@ -45,7 +45,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 26 the ground | #73 | Textured ground and props (ADR 0049); small flags; spruce spires; rat tails; amber wasps |
 | 27 the neon invaders | #74 | The glamour (ADR 0050): neon is a spell on Oslo, a stomp breaks it; marks and a natural self on every figure; the story; the boy, kid, sledger and cart redrawn |
 | 28 the last flat things | #76 | Props of their place (ADR 0051): lamp posts, railings, plank walls, doors, rafts, the boat, the ferry; the line map drawn as a level; a neon trail behind what the invaders throw; the ground's own band |
-| 29 the encore | (branch `the-encore`) | Loki met once (ADR 0052): with every rune, a stage on the water in Middelalderparken past the longship; he borrows the three bosses' moves and tells, poses between them, loses his hair, shades and jacket to three stomps and walks off plain with a thermos; no rune, no total, gates nothing |
+| 29 the encore | #77 | Loki met once (ADR 0052): with every rune, a stage on the water in Middelalderparken past the longship; he borrows the three bosses' moves and tells, poses between them, loses his hair, shades and jacket to three stomps and walks off plain with a thermos; no rune, no total, gates nothing |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
 phone before going live. The Pi cannot run the game in a headless browser (HANDOVER,
