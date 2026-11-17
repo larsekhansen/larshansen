@@ -1,7 +1,7 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { isOpen, type Progress } from "../game/progress";
+import { allRunes, isOpen, type Progress } from "../game/progress";
 import { mapBuilder } from "./build";
-import { LINE, LINE_2_AT, ORDER } from "./index";
+import { ENCORE_STOP, LINE, LINE_2_AT, ORDER } from "./index";
 import type { Art, LevelDef, SignDef } from "./types";
 
 // The line map, as a level built from the visitor's progress: its ground, its stations and its doors.
@@ -34,12 +34,17 @@ export const DIP = 14 * TILE;
 export const DOWN = { points: [[9 * TILE, LINE_Y], [12 * TILE, DIP]] as [number, number][] };
 export const UP = { points: [[15 * TILE, DIP], [18 * TILE, LINE_Y]] as [number, number][] };
 
-/** The map, with the gate across line 2 while it is closed. */
-export function kartMap(open: boolean): string[] {
-  const k = mapBuilder(KART_COLS, 16);
-  k.put(2, 10, "h").put(4, 10, "S").put(13, 13, "j").put(STORY_COL, 10, "i").put(SIGN_COL, 10, "i");
+/** The encore's stop (order 29), once every rune of both lines is held: line 2's viaduct runs on past the longship to it. */
+export const ENCORE_COL = 109;
+export const ENCORE_COLS = 115;
+
+/** The map, with the gate across line 2 while it is closed; with every rune, the encore's stop at the end. */
+export function kartMap(open: boolean, encore = false): string[] {
+  const cols = encore ? ENCORE_COLS : KART_COLS;
+  const k = mapBuilder(cols, 16);
+  k.put(2, 10, "h").put(4, 10, "S").put(13, 13, "j").put(STORY_COL, 10, "i").put(SIGN_COL, 10, "i").put(ENCORE_COL, 10, "E");
   STATIONS.forEach((c, i) => k.put(c, 10, STATION_TILES[i]));
-  k.run(0, LINE_1_END, 11, "L").run(LINE_1_END + 1, KART_COLS - 1, 11, "O").run(9, 17, 11, ".");
+  k.run(0, LINE_1_END, 11, "L").run(LINE_1_END + 1, cols - 1, 11, "O").run(9, 17, 11, ".");
   k.fill(9, 17, 14, 15, "#");
   if (!open) k.fill(GATE_COL, GATE_COL, 0, 10, "F");
   return k.rows_();
@@ -62,6 +67,7 @@ export type KartArt = (progress: Progress, open: boolean) => Art;
 
 export function kartDef(progress: Progress, art: KartArt): LevelDef {
   const open = lineTwoOpen(progress);
+  const encore = allRunes(progress, ORDER);
   return {
     id: "kart",
     rune: -1,
@@ -69,7 +75,7 @@ export function kartDef(progress: Progress, art: KartArt): LevelDef {
     landmark: open ? { nb: "Linje 1 og 2", en: "Lines 1 and 2" } : { nb: "Linje 1", en: "Line 1" },
     place: { nb: "", en: "" },
     sky: null,
-    map: kartMap(open),
+    map: kartMap(open, encore),
     legend: { solid: "LO#F", oneWay: "", water: "" },
     ramps: [DOWN, UP],
     carriers: [],
@@ -79,7 +85,8 @@ export function kartDef(progress: Progress, art: KartArt): LevelDef {
     doors: [
       { id: "home", tile: "h", sign: "Hjem", href: "/?from=viking" },
       { id: "maze", tile: "j", sign: "Jernhaugen", href: "#jernhaugen" },
-      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: l.short ?? l.name, href: `#${l.id}` }))
+      ...LINE.map((l, i) => ({ id: l.id, tile: STATION_TILES[i], sign: l.short ?? l.name, href: `#${l.id}` })),
+      ...(encore ? [{ id: ENCORE_STOP.id, tile: "E", sign: ENCORE_STOP.name, href: "#encore" }] : [])
     ],
     art: art(progress, open)
   };

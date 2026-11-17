@@ -10,7 +10,7 @@ import { drawTick } from "../render/actors";
 import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import { isOpen, type Progress } from "../game/progress";
 import { LINE, ORDER } from "./index";
-import { DIP, DOWN, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, STORY_SIGN, UP, stationX } from "./kart";
+import { DIP, DOWN, ENCORE_COL, ENCORE_COLS, GATE_COL, KART_COLS, LINE_1_END, LINE_Y, STORY_SIGN, UP, stationX } from "./kart";
 import type { Art, View } from "./types";
 import { STORY } from "../game/story";
 import { mirrorBall } from "../alive/invasion";
@@ -423,13 +423,13 @@ function gate() {
   for (let y = LINE_Y - 24; y < LINE_Y - 16; y++) for (let k = 0; k < TILE + 4; k++) if (((k + y) >> 2) % 2 === 0) R(x - 2 + k, y, 1, 1, HAT_RED);
 }
 
-/** The viaducts under the lines: concrete piers every three tiles, the far city seen between them. */
-function viaduct() {
+/** The viaducts under the lines: concrete piers every three tiles, the far city seen between them (as far as the map goes: past the longship to the encore's stop once every rune is held). */
+function viaduct(cols = KART_COLS) {
   // Its piers go down into the water out of sight, however tall the screen (order 28): white concrete lit on the left,
   // the formwork's joints, a bracket under the deck, darker and wet where the water reaches, and under the water's surface
   // the fjord's own green-blue over them, deeper and deeper, so they stand in it and do not float on it.
   const water = LINE_Y + 2 * TILE + 8;
-  for (let x = 2 * TILE; x < KART_COLS * TILE; x += 3 * TILE) {
+  for (let x = 2 * TILE; x < cols * TILE; x += 3 * TILE) {
     if (x > 8 * TILE && x < 18 * TILE) continue;
     drawProp(custom("kart bracket", 12, 4, bracketCell), x - 2, LINE_Y + 11, 12);
     leg(x, LINE_Y + 15, water, 8, CONCRETE, 3);
@@ -604,9 +604,9 @@ function longship(v: View) {
   light(x + 1, yy - 15, 3, 3, "lamp");
 }
 
-/** Both lines done: lanterns along both viaducts, lit after dusk. */
+/** Both lines done: lanterns along both viaducts, lit after dusk (on to the encore's stop). */
 function lanterns(v: View) {
-  for (let x = 3 * TILE; x < KART_COLS * TILE; x += 3 * TILE) {
+  for (let x = 3 * TILE; x < ENCORE_COLS * TILE; x += 3 * TILE) {
     if (x > 8 * TILE && x < 18 * TILE) continue;
     R(x, LINE_Y - 7, 1, 7, METAL.lampPost);
     R(x - 1, LINE_Y - 9, 3, 2, METAL.brass);
@@ -615,9 +615,82 @@ function lanterns(v: View) {
   void v;
 }
 
+/**
+ * The encore's stop (order 29, ADR 0052), past the longship at the end of line 2, once every rune of both lines is held: a
+ * small festival stage on a pontoon in Middelalderparken's water mirror, the park's trees behind it, its black roof on two
+ * towers of truss, a speaker stack at each side; under the glamour a mirror ball turning under its roof and the neon round
+ * its mouth, plain once the encore has been seen. No rune stone: it gives none.
+ */
+const STAGE_W = 60;
+const STAGE_H = 52;
+function encoreStop(seen: boolean, t: number) {
+  const x = ENCORE_COL * TILE + TILE / 2;
+  drawProp(custom(`kart encore ${seen ? 1 : 0}`, STAGE_W, STAGE_H, encoreCell(seen)), x - STAGE_W / 2, LINE_Y - STAGE_H, STAGE_W);
+  if (!seen) mirrorBall(x, LINE_Y - 36, t);
+}
+function encoreCell(seen: boolean) {
+  let a: (string | null)[] | null = null;
+  return (px: number, py: number) => {
+    if (!a) {
+      a = new Array<string | null>(STAGE_W * STAGE_H).fill(null);
+      const g = a;
+      const dot = (x: number, y: number, c: string) => x >= 0 && y >= 0 && x < STAGE_W && y < STAGE_H && (g[y * STAGE_W + x] = c);
+      const fill = (x: number, y: number, w: number, h: number, c: string) => {
+        for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) dot(x + i, y + j, c);
+      };
+      // The park's trees behind it: round crowns, lit on the left.
+      for (const [cx, cy, r] of [[8, 18, 9], [50, 16, 10], [30, 10, 8]] as const)
+        for (let j = -r; j <= r; j++)
+          for (let i = -r; i <= r; i++) if (i * i + j * j <= r * r) dot(cx + i, cy + j, i + j < -r / 2 ? PLANTS.leavesShine : i > r / 3 ? dim(PLANTS.leaves, 0.2) : PLANTS.leaves);
+      // The roof: black canvas, its edge lit; the two truss towers; the backdrop.
+      const top = 16;
+      fill(8, top, 44, 4, "#16131a");
+      fill(8, top, 44, 1, "#2e2a33");
+      fill(10, top + 4, 40, STAGE_H - top - 12, "#1c1920");
+      for (const tx of [7, 50]) for (let y = top; y < STAGE_H - 8; y++) {
+        dot(tx, y, METAL.rail);
+        dot(tx + 2, y, METAL.pipe);
+        dot(tx + 1, y, y % 4 < 2 ? METAL.rail : METAL.pipe);
+      }
+      // The neon round its mouth under the glamour; plain, its lights warm white.
+      if (!seen) {
+        fill(10, top + 5, 40, 1, "#ff2d95");
+        fill(10, top + 7, 40, 1, "#c8ff2a");
+      } else for (let k = 0; k < 5; k++) dot(14 + k * 8, top + 5, "#fff4dc");
+      // Speaker stacks at the sides, black with grilles.
+      for (const sx of [11, 42]) {
+        fill(sx, STAGE_H - 22, 7, 14, "#141216");
+        for (let y = STAGE_H - 20; y < STAGE_H - 9; y += 2) fill(sx + 1, y, 5, 1, "#2c2a30");
+      }
+      // The deck, and the pontoon under it in the water.
+      fill(6, STAGE_H - 8, 48, 2, "#29252b");
+      fill(6, STAGE_H - 8, 48, 1, "#36313a");
+      fill(8, STAGE_H - 6, 44, 4, mix("#4a4e58", PALETTE.water, 0.4));
+      fill(4, STAGE_H - 2, 52, 2, mix(PALETTE.water, PALETTE.foam, 0.25));
+    }
+    return a[py * STAGE_W + px];
+  };
+}
+/** Its station mark: the line's white square in line 2's frame, as every stop has. */
+function encoreMark() {
+  const x = ENCORE_COL * TILE + TILE / 2;
+  drawProp(
+    custom(`kart station ${LINE_2_COLOR} 0`, 12, 10, (px, py) => {
+      if (px >= 2 && px < 10 && py >= 2 && py < 8) return px === 2 || py === 2 ? mix(WHITE, STONE.base, 0.25) : WHITE;
+      if ((px === 0 && py === 0) || (px === 11 && py === 9)) return mix(LINE_2_COLOR, INK, 0.15);
+      return py === 0 || px === 0 ? mix(LINE_2_COLOR, WHITE, 0.3) : py === 9 || px === 11 ? mix(LINE_2_COLOR, INK, 0.3) : LINE_2_COLOR;
+    }),
+    x - 6,
+    LINE_Y - 2,
+    12
+  );
+}
+
 export function kartArt(progress: Progress, open: boolean): Art {
   /** Both lines, all sixteen runes: the map gains its longship and its lanterns. */
   const complete = ORDER.every((id) => progress.cleared.includes(id));
+  /** The encore seen (order 29): it has a best time; its stage is plain on the map from then on. */
+  const seen = progress.best.encore !== undefined;
   const cleared = (i: number) => progress.cleared.includes(ORDER[i]);
   const two = (i: number) => LINE[i].line === 2;
   return {
@@ -666,8 +739,9 @@ export function kartArt(progress: Progress, open: boolean): Art {
           w
         );
       }
-      viaduct();
+      viaduct(complete ? ENCORE_COLS : KART_COLS);
       if (complete) longship(v);
+      if (complete) encoreStop(seen, v.t);
       faintly(!open, lowTrack);
       mound(v.doors.get("maze"), v.sky.snow);
       branch();
@@ -679,6 +753,7 @@ export function kartArt(progress: Progress, open: boolean): Art {
     },
     front(v) {
       if (complete) lanterns(v);
+      if (complete) encoreMark();
       LINE.forEach((_l, i) => {
         if (two(i)) faintly(!open, () => stationMark(i, open && isOpen(progress, ORDER, i)));
         else stationMark(i, isOpen(progress, ORDER, i));

@@ -205,6 +205,8 @@ export interface Boss<S = unknown> {
   top(s: S): { x: number; y: number; w?: number };
   /** Beaten for good: the rune shows. */
   beaten(s: S): boolean;
+  /** The level is over with no rune (the encore, order 29: he has left the stage): the clock stops, as at a rune. */
+  ends?(s: S): boolean;
 }
 
 /**

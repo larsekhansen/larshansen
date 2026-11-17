@@ -44,6 +44,12 @@ export const LINE: Station[] = [
   two("gamlebyen", 15, "Gamlebyen", true)
 ];
 
+/**
+ * The encore (order 29, ADR 0052): a stop past the end of line 2, on the map only once every rune of both lines is held.
+ * Not on the line: it has no rune, opens nothing and counts in no total; it keeps a best time (`best.encore`), no more.
+ */
+export const ENCORE_STOP: Station = { id: "encore", rune: -1, name: "Middelalderparken", built: true, line: 2 };
+
 /** Every station's id, line 1 then line 2: a station opens when the one before it is cleared, so line 2 opens with Nabolaget. */
 export const ORDER = LINE.map((l) => l.id);
 /** The ten of line 1, LARS HANSEN: all ten make the gold helmet. */
@@ -72,7 +78,8 @@ const LOADERS: Record<string, () => Promise<LevelDef>> = {
   korketrekkeren: () => import("./korketrekkeren").then((m) => m.KORKETREKKEREN),
   ostensjovannet: () => import("./ostensjovannet").then((m) => m.OSTENSJOVANNET),
   bjorvika: () => import("./bjorvika").then((m) => m.BJORVIKA),
-  gamlebyen: () => import("./gamlebyen").then((m) => m.GAMLEBYEN)
+  gamlebyen: () => import("./gamlebyen").then((m) => m.GAMLEBYEN),
+  encore: () => import("./encore").then((m) => m.ENCORE)
 };
 
 const loaded = new Map<string, LevelDef>([[LANGKAIA.id, LANGKAIA]]);

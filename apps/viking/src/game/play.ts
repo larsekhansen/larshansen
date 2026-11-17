@@ -505,6 +505,8 @@ function meetBoss(p: Play, ev: Events, intent: PlayIntent, prevBottom: number) {
   if (!bs || p.run.state === "done") return;
   const b = p.body;
   ev.boss = bs.rules.step(bs.state, p.t, b);
+  // The encore ends when he has gone (order 29): no rune, the clock stops.
+  if (bs.rules.ends?.(bs.state)) p.run.state = "done";
   const landed = bs.rules.stomped(bs.state, p.t, b, prevBottom);
   if (landed) {
     b.y = landed.top - PLAYER.h;

@@ -61,7 +61,7 @@ import type { Rect } from "./game/frame";
 import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
-import { BUILT, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
+import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
 import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
@@ -250,11 +250,10 @@ function doorSpots(def: LevelDef, play: Play): DoorSpot[] {
 function layoutBoards(s: Scene): Board[] {
   const boards: Board[] = [];
   for (const d of s.doors) {
-    if (s.map && ORDER.includes(d.id)) {
-      const i = ORDER.indexOf(d.id);
+    if (s.map && (ORDER.includes(d.id) || d.id === ENCORE_STOP.id)) {
       const best = progress.best[d.id];
       const text = best !== undefined ? `${d.sign} ${formatTime(best)}` : d.sign;
-      boards.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10 + (i % 2) * 0, w: boardWidth(text) });
+      boards.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10, w: boardWidth(text) });
     } else boards.push(doorBoard(d, 13));
   }
   // On the map, under the end of a line all cleared: its best times added up.
@@ -365,7 +364,7 @@ function openScene(id: string, at?: string) {
 // ---------------------------------------------------------------------------------------------
 // Where he is: the address says which scene, so Back and Forward move between them.
 
-const ROUTES = ["kart", ...BUILT.map((l) => l.id)];
+const ROUTES = ["kart", ...BUILT.map((l) => l.id), ENCORE_STOP.id];
 const MAZE_HASH = "#jernhaugen";
 /** The station or stop to stand at the next time the map opens. */
 let arriveAt: string | null = null;
@@ -386,7 +385,7 @@ function showFetching(id: string | null) {
   }
 }
 /** A station's name, or the map's. */
-const nameOf = (id: string) => (id === "kart" ? "T-banen" : LINE.find((l) => l.id === id)?.name ?? id);
+const nameOf = (id: string) => (id === "kart" ? "T-banen" : [...LINE, ENCORE_STOP].find((l) => l.id === id)?.name ?? id);
 /**
  * What a scene needs fetched before it can open, or null when all of it is here: the map's look; a
  * level's file.
@@ -407,8 +406,8 @@ function needed(id: string): Promise<unknown> | null {
 /** True when going back in history leaves the mound: false when the page was opened inside it. */
 let canGoBack = false;
 
-/** A level may be played once the one before it is cleared (and any, for checking under ?debug). */
-const levelOpen = (id: string) => debug || isOpen(progress, ORDER, ORDER.indexOf(id));
+/** A level may be played once the one before it is cleared (and any, for checking under ?debug); the encore once every rune is held (order 29). */
+const levelOpen = (id: string) => debug || (id === ENCORE_STOP.id ? allRunes(progress, ORDER) : isOpen(progress, ORDER, ORDER.indexOf(id)));
 
 /** The scene for the address, and the station to stand at on the map. */
 function sync() {
@@ -879,10 +878,11 @@ const finishClean = $<HTMLElement>("finish-clean");
 /** The rune is in its slot: the card with the time, the best, the skilling, the bracteate, and a clean run. */
 function showCard(r: CardResult) {
   cardUp("clear");
-  $<HTMLElement>("finish-title").textContent = `${RUNE_CHARS[scene.def.rune]} · ${scene.def.name}`;
+  // The encore has no rune (order 29): its card is titled with what it is.
+  $<HTMLElement>("finish-title").textContent = `${scene.def.rune < 0 ? scene.def.landmark[lang] : RUNE_CHARS[scene.def.rune]} · ${scene.def.name}`;
   $<HTMLElement>("finish-line").textContent = `${formatTime(r.ms)} · ${r.newBest ? t.finishNew : t.finishBest(formatTime(progress.best[scene.def.id] ?? r.ms))}`;
   const gold = $<HTMLElement>("finish-gold");
-  gold.hidden = false;
+  gold.hidden = !scene.play.bracteate;
   gold.textContent = r.gold ? t.goldFound : t.goldMissed;
   finishCoins.hidden = r.total === 0;
   finishCoins.textContent = t.finishSkilling(r.found, r.total);
@@ -893,7 +893,7 @@ function showCard(r: CardResult) {
   const more = $<HTMLElement>("finish-more");
   const of = (ids: string[]) => ids.filter((id) => progress.cleared.includes(id)).length;
   const lastOfTwo = BUILT.filter((l) => l.line === 2).at(-1)?.id;
-  more.hidden = !r.home && !r.opened && scene.def.id !== "nabolaget" && scene.def.id !== lastOfTwo;
+  more.hidden = !r.home && !r.opened && scene.def.id !== "nabolaget" && !scene.def.cardLine;
   more.classList.toggle("home", r.home);
   more.textContent = "";
   if (r.home) {
@@ -1142,6 +1142,13 @@ function react(ev: Events) {
   if (ev.over) {
     session.lives = 0;
     showOver();
+  }
+  // The encore over (order 29): he has gone. No rune and nothing counted: its best time, and its card.
+  if (ev.boss === "gone") {
+    const ms = elapsedMs(p);
+    const newBest = !(progress.best[p.def.id] <= ms);
+    if (newBest) saveProgress({ ...progress, best: { ...progress.best, [p.def.id]: ms } });
+    showCard({ ms, newBest, gold: false, found: p.found, total: p.skilling.length, clean: !p.hurt, pole: false, home: false, opened: false });
   }
   if (ev.bracteate && p.bracteate && !known) {
     sfx.play("gold");
@@ -1768,7 +1775,7 @@ links.find((l) => l.id === "maze")?.el.addEventListener("click", (e) => {
 
 const from = params.get("from");
 const levelParam = params.get("level");
-const debugLevel = debug && levelParam && BUILT.some((l) => l.id === levelParam) ? levelParam : null;
+const debugLevel = debug && levelParam && [...BUILT, ENCORE_STOP].some((l) => l.id === levelParam) ? levelParam : null;
 if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceState(null, "", location.pathname + location.search + MAZE_HASH); // ?level=<n>: the maze at that level
 
 /** `?debug&auto`: the page plays the level's scripted route from the tests, for looking at (the routes are `?debug`'s to fetch). */
