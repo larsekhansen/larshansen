@@ -58,7 +58,7 @@ export const PLAIN: Record<string, string> = {
   k: "#2a2420",
   e: "#2a2420",
   f: "#d8bcae",
-  F: "#c4a090",
+  F: "#c09890",
   G: "#b08878",
   m: "#9a6a5e",
   r: "#8a7a6a",
@@ -482,11 +482,12 @@ function body(s: Loki, t: number) {
 /** The piece of his glamour a hit knocked off, flying up and away and fading: the wig, the shades, the jacket. */
 const PIECES = [frame("the wig, off", GLAM, [WIG]), frame("the shades, off", GLAM, [SHADES]), frame("the jacket, off", GLAM, [JACKET])];
 function flying(s: Loki, t: number) {
-  if (s.phase !== "reel" && !(s.phase === "plain" && s.hits >= 3)) return;
+  // With reduced motion nothing flies: the piece is simply gone from him.
+  if (view.reduced || (s.phase !== "reel" && !(s.phase === "plain" && s.hits >= 3))) return;
   const age = t - s.since + (s.phase === "plain" ? LOKI_STEPS.reel : 0);
   if (age > 70) return;
   const p = PIECES[Math.min(2, s.hits - 1)];
-  const k = view.reduced ? 1 : Math.min(1, age / 60);
+  const k = Math.min(1, age / 60);
   const x = s.x - s.dir * (6 + k * 30);
   const y = s.def.floor - LOKI.h - 10 - Math.sin(k * Math.PI) * 26 + k * 20;
   plain(() => paint(p, Math.round(x - 6), Math.round(y), -s.dir, 14));
