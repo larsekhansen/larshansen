@@ -21,3 +21,5 @@
 kart	/viking/?debug&told&steps=30&sky=day&cleared=langkaia,akershus,radhuset&x=392#kart
 kart-line2	/viking/?debug&told&steps=30&sky=day&cleared=langkaia,akershus,radhuset,slottet,holmenkollen,akerselva,nordmarka,stortinget,ekeberg,nabolaget&x=792#kart
 kart-end	/viking/?debug&told&steps=30&sky=day&cleared=all&x=1528#kart
+17-encore	/viking/?debug&told&level=encore&auto&steps=450#encore	wait
+kart-encore	/viking/?debug&told&steps=30&sky=day&cleared=all&x=1744#kart

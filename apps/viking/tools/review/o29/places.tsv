@@ -1,0 +1,11 @@
+encore-park	/viking/?debug&told&level=encore&steps=2&x=72#encore
+encore-waiting	/viking/?debug&told&level=encore&steps=2&x=230#encore
+encore-club	/viking/?debug&told&level=encore&auto&steps=380#encore
+encore-slam	/viking/?debug&told&level=encore&auto&steps=420#encore
+encore-pose	/viking/?debug&told&level=encore&auto&steps=450#encore
+encore-rev	/viking/?debug&told&level=encore&auto&steps=640#encore
+encore-charge	/viking/?debug&told&level=encore&auto&steps=700#encore
+encore-ring	/viking/?debug&told&level=encore&auto&steps=930#encore
+encore-bite	/viking/?debug&told&level=encore&auto&steps=990#encore
+encore-plain	/viking/?debug&told&level=encore&auto&steps=1200#encore
+encore-leaving	/viking/?debug&told&level=encore&auto&steps=1330#encore

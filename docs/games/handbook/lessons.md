@@ -60,7 +60,20 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   (`Error(` for `new Error(`, other chunk hashes). GNU `gzip -c` gives 59.52, Node's zlib 59.51. The 2 kB itself was not reproduced. *Read
   the size from `bun run build` in `apps/viking` (vite under Node), and say how it was measured; if a number differs, check which zlib.*
 
+- **A boss route that bounced for ever** (order 29): the first scripted run against Loki landed on his head as he reeled, bounced
+  (a dud), came down on it again, and never touched the floor; the ring under him then kept the height he last stood at. A person
+  steers off; a route does not. *When a boss has a bounce state, play the route and look at his feet's height over time; and decide
+  what landing on a figure that hurts does* (on Loki: a hurt, as spikes; only his pose is a stomp).
+- **A test that imported the review's tools** (order 29) pulled `tools/review/sloppy.ts` into the app's type-check, which failed the
+  build on an unused variable there. The test imports them by a path in a variable now. *Tools outside `src` stay outside `tsc`.*
+
 ## What worked and should be kept
+
+- **A feature gated by a test of the old picture** (order 29): the encore's stop is built only with every rune; with any rune missing
+  `kartDef` returns exactly the old map (a test for each of the sixteen), and the map's pictures from the two builds are compared byte
+  for byte. "Nothing shows before" became a fact, not a promise.
+- **Lines guarded by a hash** (order 29): the story's existing lines must not change, so the encore's words are a block appended to the
+  file and a test holds everything above the block to its sha256 on `origin/main`.
 
 - **A colour rule tried before it is set** (order 28): "no prop nearer a role than its old drawing" sounded right and forbade any lit tone on
   grey metal (every lighter grey comes nearer his helmet). Measuring first turned it into "no nearer than its level's flat props, or than

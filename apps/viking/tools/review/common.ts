@@ -5,7 +5,7 @@ const _play = await imp("game/play.ts");
 const _phys = await import(`${PK}/physics.ts`);
 /** The shield's rules go into every play: in line 1 he does not have it, Bygdøy gives it at its prow, and after Bygdøy it is his. */
 const _shield = (await imp("game/shield.ts")).SHIELD_RULES;
-export const play = { ..._play, newPlay: (def: any, opts: any = {}) => _play.newPlay(def, { shield: _shield, hasShield: def.rune > 10, ...opts }), placeBodyAt: (p: any, x: number, bottom: number) => _phys.placeBody(p.body, x, bottom) };
+export const play = { ..._play, newPlay: (def: any, opts: any = {}) => _play.newPlay(def, { shield: _shield, hasShield: def.rune > 10 || def.id === "encore", ...opts }), placeBodyAt: (p: any, x: number, bottom: number) => _phys.placeBody(p.body, x, bottom) };
 export const physics = _phys;
 export const bot = await imp("game/bot.ts");
 export const R = await imp("levels/routes.ts");
@@ -26,6 +26,8 @@ export const LEVELS = [
   ["ostensjovannet", (await imp("levels/ostensjovannet.ts")).OSTENSJOVANNET, R.OSTENSJOVANNET_ROUTE],
   ["bjorvika", (await imp("levels/bjorvika.ts")).BJORVIKA, R.BJORVIKA_ROUTE],
   ["gamlebyen", (await imp("levels/gamlebyen.ts")).GAMLEBYEN, R.GAMLEBYEN_ROUTE],
+  // The encore (order 29): every rune is held, so he has the pole and the shield.
+  ["encore", (await imp("levels/encore.ts")).ENCORE, R.ENCORE_ROUTE],
 ] as const;
-export const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika", "gamlebyen"]);
+export const POLE = new Set(["akerselva", "nordmarka", "stortinget", "ekeberg", "nabolaget", "bygdoy", "vigelandsparken", "korketrekkeren", "ostensjovannet", "bjorvika", "gamlebyen", "encore"]);
 

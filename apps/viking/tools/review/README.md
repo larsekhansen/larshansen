@@ -32,6 +32,9 @@ Run everything from this folder.
 `bun sloppy.ts ks=0` must print `clear 1/1` for all sixteen levels: at k = 0 the harness reproduces the
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
+`o29/` holds order 29's (the encore): the sloppy and hesitating players at the encore, the run files of four levels byte-identical,
+the tells against the bosses', the map's pictures with runes missing byte-identical (`map.md`, `mapurls.sh`) and the arena's rectangles a
+frame (`after.md`, `perf-390.tsv`, `perf-1280.tsv`, `places.tsv`). The encore is in `common.ts`'s levels (with the pole and the shield).
 `o18/`, `o19/` and `o20/` hold those orders' numbers (order 20's: every level's rectangles a frame before and after at its
 walk's places, `perf.md`, and the flat places marked by `../glance/flat.py` and what each was given, `flat.md`). `o21/` holds order 21's: every screen state at five phone sizes before and after (`before.md`, `after.md`, made by
 `../glance/hand.ts` and `hand-table.ts`), and the rectangles a frame of every level's walk (`perf.md`). `o28/` holds order 28's: every thing still flat and the decision for each (`before.md`), what became of each, the shots' trail, the ground's own band and the worktree's first script (`after.md`), the rectangles a frame against order 27's table and the line map's before and after (`perf.md`, `perf-after.tsv`). `o27/` holds order 27's: the run files byte-identical before and after, the tests and the first script (`after.md`), the rectangles a frame against order 26's table (`perf.md`, `perf-after.tsv`). `o26/` holds order 26's: every surface of the lane before and what it became (`before.md`), the measures (`after.md`: the

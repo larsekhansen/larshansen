@@ -24,7 +24,7 @@ import { NEON_A, glam, glows, leanFor } from "../alive/glamour";
 import { NATURAL, naturalName } from "../alive/natural";
 import { forced } from "../alive/parts";
 import { lean, outlined } from "./sprite";
-import { STORY, type StoryWords } from "../game/story";
+import { ENCORE, STORY, type StoryWords } from "../game/story";
 import { invasion } from "../alive/invasion";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
@@ -50,6 +50,9 @@ LAP.at = lap;
 //
 // What it keeps is fixed in size and made once: forty particles (plain rectangles), six rings, four sounds
 // waiting their turn. Nothing it does in a frame makes anything new.
+
+/** Loki's borrowed tells (order 29) and whose voice each has: the troll's growl, the plough's rev, the serpent's rear. */
+const ENCORE_TELLS: Record<string, VoiceName> = { club: "growl", rev: "rev", ring: "rear" };
 
 /** The longest a picture holds after a hit or a boss hit (drawing only: the rules go on), in steps. */
 export const HOLD = 4;
@@ -100,7 +103,15 @@ export const VOICES = {
   neon: [["t", "square", 660, 990, 0.06, 0.04], ["t", "square", 990, 1480, 0.08, 0.04, 0.06]],
   unglam: [["t", "triangle", 2093, 2093, 0.05, 0.05], ["t", "triangle", 1661, 1661, 0.05, 0.05, 0.04], ["t", "triangle", 1319, 1319, 0.05, 0.05, 0.08], ["t", "triangle", 988, 988, 0.1, 0.05, 0.12]],
   headliner: [["t", "sawtooth", 82, 82, 0.6, 0.04], ["t", "sawtooth", 123, 123, 0.6, 0.035], ["t", "square", 165, 330, 0.6, 0.025]],
-  lifted: [["t", "sine", 392, 392, 0.1, 0.07], ["t", "sine", 523, 523, 0.1, 0.07, 0.1], ["t", "sine", 659, 659, 0.1, 0.07, 0.2], ["t", "sine", 784, 784, 0.3, 0.07, 0.3]]
+  lifted: [["t", "sine", 392, 392, 0.1, 0.07], ["t", "sine", 523, 523, 0.1, 0.07, 0.1], ["t", "sine", 659, 659, 0.1, 0.07, 0.2], ["t", "sine", 784, 784, 0.3, 0.07, 0.3]],
+  // The encore's stings (order 29), made here from the same synth, quiet, no tune: Loki strikes a pose (one chord, struck once,
+  // a fifth over a low root); the jaws snap up out of the ring (noise and a falling bite); a piece of his glamour knocked off
+  // (the stomp's glitter, slower, lower); the stage's lights going plain as he walks off (a soft tone sinking, a breath of
+  // noise under it).
+  stab: [["t", "sawtooth", 147, 147, 0.22, 0.045], ["t", "sawtooth", 220, 220, 0.22, 0.04], ["t", "square", 294, 294, 0.18, 0.025]],
+  snap: [["n", 3200, 700, 0.09, 0.2], ["t", "square", 520, 160, 0.09, 0.09]],
+  piece: [["t", "triangle", 1568, 1568, 0.06, 0.05], ["t", "triangle", 1175, 1175, 0.06, 0.05, 0.06], ["t", "triangle", 880, 880, 0.12, 0.05, 0.12]],
+  houselights: [["t", "sine", 523, 262, 0.7, 0.07], ["n", 900, 300, 0.5, 0.04, 0.1]]
 } satisfies Record<string, readonly Voice[]>;
 export type VoiceName = keyof typeof VOICES;
 
@@ -154,7 +165,14 @@ export const SOUND_OF: Record<string, VoiceName | `kit:${string}`> = {
   "invader turns on him": "neon",
   "glamour breaks": "unglam",
   "boss arrives": "headliner",
-  "line's glamour lifted": "lifted"
+  "line's glamour lifted": "lifted",
+  "Loki's club raised (the troll's tell)": "growl",
+  "Loki revs (the plough's tell)": "rev",
+  "Loki's ring (the serpent's tell)": "rear",
+  "Loki poses": "stab",
+  "the jaws come up": "snap",
+  "a piece of his glamour off": "piece",
+  "the stage goes plain": "houselights"
 };
 
 // --- Particles and rings: fixed pools ----------------------------------------------------------------
@@ -649,6 +667,20 @@ export function createFeel(host: Host) {
         }
         if (ev.boss === "beaten") burst(top.x, top.y + 6, 14, 1, 30, COIN.gold, ROLES.now);
         if (ev.boss === "slam") jolt(0, 3);
+        // The encore (order 29): Loki's borrowed tells sound as the boss they are borrowed from, in the "now" violet; his
+        // pose strikes a chord; the jaws snap; a piece of his glamour flies off in glitter; the stage goes plain.
+        const tell = ENCORE_TELLS[ev.boss];
+        if (tell) {
+          voice(tell);
+          ring(top.x, top.y + 4, 6, 18, 16, ROLES.now, t);
+        }
+        if (ev.boss === "pose") voice("stab");
+        if (ev.boss === "bite") voice("snap");
+        if (ev.boss.startsWith("piece")) {
+          voice("piece");
+          burst(top.x, top.y + 4, 12, 0.8, 26, ENEMY.hotPink, ENEMY.poison);
+        }
+        if (ev.boss === "beaten" && p.def.id === "encore") later("houselights", t + 10);
       }
     },
 
@@ -832,7 +864,8 @@ export function createFeel(host: Host) {
       const s = STORY[lang];
       if (id === "kart") return storyTold() ? null : s.mapSub;
       if (id === "langkaia") return first ? s.arrival.langkaia : null;
-      return s.arrival[id] ?? null;
+      // The encore's own line (order 29), from its block of the story.
+      return s.arrival[id] ?? (id === "encore" ? ENCORE[lang].arrival : null);
     },
     /** The opening card (order 27): the first time he arrives on the map, once (`again` shows it whatever). True when shown. */
     opening(lang: "nb" | "en", stage: HTMLElement, again = false): boolean {

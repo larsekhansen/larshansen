@@ -19,3 +19,4 @@ export { KORKETREKKEREN_ROUTE } from "./routes/korketrekkeren";
 export { OSTENSJOVANNET_ROUTE } from "./routes/ostensjovannet";
 export { BJORVIKA_ROUTE } from "./routes/bjorvika";
 export { GAMLEBYEN_ROUTE } from "./routes/gamlebyen";
+export { ENCORE_ROUTE } from "./routes/encore";

@@ -1,6 +1,6 @@
 # Start here
 
-State as of the night of 17 November 2026, after order 28 was built. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of the night of 17 November 2026, after order 29 was built. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -12,7 +12,8 @@ Lars's personal monorepo, self-hosted on a Raspberry Pi 5 (8 GB) at his home, pu
   to his other apps. It is finished and guarded: 28 reference pictures must stay byte-identical.
 - **Vikingfjorden** (`apps/viking`, larshansen.dev/viking/): the game nearly all work goes
   into. A viking takes the T-bane through Oslo: sixteen levels on two lines, ten runes then six
-  (VIKING), three bosses. Reached by the secret door at the top of the Opera on the front page.
+  (VIKING), three bosses, and with every rune an encore where Loki is met. Reached by the secret door at the top of the Opera on
+  the front page.
 - **Jernhaugen** (`packages/maze`, `apps/iron-maze`, maze.larshansen.dev): a maze, also playable
   inside the viking game.
 
@@ -44,6 +45,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 26 the ground | #73 | Textured ground and props (ADR 0049); small flags; spruce spires; rat tails; amber wasps |
 | 27 the neon invaders | #74 | The glamour (ADR 0050): neon is a spell on Oslo, a stomp breaks it; marks and a natural self on every figure; the story; the boy, kid, sledger and cart redrawn |
 | 28 the last flat things | #76 | Props of their place (ADR 0051): lamp posts, railings, plank walls, doors, rafts, the boat, the ferry; the line map drawn as a level; a neon trail behind what the invaders throw; the ground's own band |
+| 29 the encore | #77 | Loki met once (ADR 0052): with every rune, a stage on the water in Middelalderparken past the longship; he borrows the three bosses' moves and tells, poses between them, loses his hair, shades and jacket to three stomps and walks off plain with a thermos; no rune, no total, gates nothing |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
 phone before going live. The Pi cannot run the game in a headless browser (HANDOVER,
