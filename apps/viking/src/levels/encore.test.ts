@@ -13,7 +13,7 @@ import { SERPENT_STEPS } from "../game/serpent";
 import { SHIELD_RULES } from "../game/shield";
 import { ENCORE as WORDS, STORY } from "../game/story";
 import { TROLL_STEPS } from "../game/troll";
-import { newPlay, stepPlay, type Play } from "../game/play";
+import { newPlay, stepPlay } from "../game/play";
 import { deltaE, parseColour } from "../render/fields";
 import { PLAIN, lokiFrames } from "../render/loki";
 import { ENCORE, FLOOR, STAGE } from "./encore";
@@ -176,9 +176,11 @@ describe("Loki", () => {
 
 describe("the sloppy player", () => {
   test("wins the encore on most seeds at a person's timing (±2 steps), as at the serpent", async () => {
-    const { LEVELS, POLE } = await import("../../tools/review/common.ts");
-    const { reference, sloppyRun } = await import("../../tools/review/sloppy.ts");
-    const [id, def, moves] = LEVELS.find((l) => l[0] === "encore")!;
+    // The review's own tools (outside the app's type-checking, so imported by a path the compiler does not follow).
+    const tools = "../../tools/review";
+    const { LEVELS, POLE } = await import(`${tools}/common.ts`);
+    const { reference, sloppyRun } = await import(`${tools}/sloppy.ts`);
+    const [id, def, moves] = LEVELS.find((l: [string]) => l[0] === "encore")!;
     const ref = reference(def, moves as never[], POLE.has(id));
     let won = 0;
     for (let seed = 201; seed < 211; seed++) if (sloppyRun(id, def, moves as never[], ref, { k: 2, drop: 0, overhold: 0, seed, pole: true }).outcome === "clear") won++;

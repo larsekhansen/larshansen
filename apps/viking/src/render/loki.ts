@@ -572,18 +572,19 @@ export function drawRing(s: Loki, t: number) {
 }
 /** The jaws coming up out of the ring: a serpent's head in his neon, its mouth open upward, the teeth, an eye, a lime crest. */
 const JAWS = [
-  "...a...........a....",
-  "..aHa.........aHa...",
-  "..HHHa.......aHHH...",
-  ".hHHHHa.....aHHHh...",
-  ".hHHHHHa...aHHHHh...",
-  ".hhHHHHHaaaHHHHhh...",
-  "..hhHHHHHHHHHHhh....",
-  "..LhhHeHHHHHHhh.....",
-  "...hhhHHHHHHhh......",
-  "....hhhhhhhhh......."
+  "L..................",
+  "LH...............h.",
+  ".HHa............aH.",
+  ".HHHa..........aHh.",
+  "LHHHHa........aHHh.",
+  ".hHHHHa.a..a.aHHhh.",
+  "LhHHHHHakkkkaHHHh..",
+  ".hhHHeHHkkkkHHHhh..",
+  "..hhHHHHHHHHHHhh...",
+  "...hhhHHHHHHhhh....",
+  "....hhhhhhhhhh....."
 ];
-const JAW_INK: Record<string, string> = { a: E.pale, H: E.hotPink, h: E.magenta, L: E.lime, e: E.eye };
+const JAW_INK: Record<string, string> = { a: E.pale, H: E.hotPink, h: E.magenta, L: E.lime, e: E.eye, k: E.line };
 
 /** The club's wave running out along the stage floor both ways, in the club's neon: what he must jump. */
 export function drawWave(s: Loki, t: number) {

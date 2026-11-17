@@ -195,13 +195,16 @@ function lights(v: View) {
     if (waiting()) return;
     const swing = p > 0 || view.reduced ? 0 : Math.sin(v.t * 0.012 + k * 1.3) * 34;
     const colour = mix(LENSES[k], "#fff4dc", p);
-    g.globalAlpha = 0.1 + 0.04 * p;
+    // Light adds to what it falls on: the beam brightens the curtain and the deck under it.
+    g.globalAlpha = 0.16 + 0.04 * p;
+    g.globalCompositeOperation = "lighter";
     for (let s = 0; s < 10; s++) {
       const yy = y + 6 + s * ((ground - y - 6) / 10);
       const w = 4 + s * 2.6;
       const cx = x + 0.5 + (swing * s) / 10;
       R(Math.round(cx - w / 2), Math.round(yy), Math.round(w), Math.ceil((ground - y - 6) / 10), colour);
     }
+    g.globalCompositeOperation = "source-over";
     g.globalAlpha = 1;
   });
   // A cold spot on him at his mark while he waits.
