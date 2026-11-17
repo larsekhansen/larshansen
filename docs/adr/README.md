@@ -60,6 +60,7 @@ Lars before reversing one of his.
 | [0048](0048-the-edge.md) | The jump still works 10 steps after walking off an edge (6 before); measured with the reach search and the sloppy player | planner (order 23) | holds; the one change to 0003's `JUMP` |
 | [0049](0049-the-ground-is-textured.md) | Everything he stands on and walks past is drawn from one textured set (three to five tones of one hue a material, four variants by a hash of the place, a lit top, dark ends, a shadowed foot, accents), drawn once and copied, the paint on top as before; no new tone nearer a role than the ground was, each material's contrast below the figures' | planner (order 26) | holds; within 0036, 0039, 0044, 0045 |
 | [0050](0050-the-glamour.md) | The glamour: neon is a spell the Neon Invaders put on Oslo; natural is Oslo; a stomp breaks it and the creature goes home; a neon spectrum; the story a joke told as one | Lars with the planner (before order 27) | holds; 0049 is order 26's |
+| [0051](0051-props-are-of-their-place.md) | Props are of their place and asked three questions (what he does with it, does it fit, should the glamour touch it: no); drawn as the ground is, one copy each; what the invaders throw trails its level's neon; the line map drawn as a level; the ground keeps a band of its own | planner (order 28) | holds; within 0044, 0049, 0050 |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

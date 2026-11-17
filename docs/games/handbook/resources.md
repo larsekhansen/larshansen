@@ -57,7 +57,8 @@ against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the fro
 | `tools/shots.ts` | Headless Firefox screenshots |
 | `apps/viking/tools/facts.ts` | Writes LEVELS.html's FACTS block from the levels |
 | `apps/viking/tools/pictures.ts`, `pictures.tsv` | Retakes LEVELS.html's pictures |
-| `apps/viking/tools/review/` | The sloppy and hesitating players, reach and dead-end checks, boss studies, `edgecmp.py`; one folder of results per order (`o18` … `o25`); a README |
+| `apps/viking/tools/review/` | The sloppy and hesitating players, reach and dead-end checks, boss studies, `edgecmp.py`; one folder of results per order (`o18` … `o28`); a README |
+| `apps/viking/tools/glance/diffcrop.py` | Before and after of what changed (order 28): two folders of the same addresses from two builds, each pair cropped to the pixels that differ, side by side |
 | `apps/viking/tools/glance/` | Contact sheets (`sheet.py`, `enemyshots.ts`, `platformshots.ts`), the level walk (`walk.ts`, `strips.ts`), `perf.ts`, `flat.py` (flat places), `frames.ts` and `framesheet.py` (frame sheets: since order 27 each figure glammed, natural and its ending), `stomp.ts` (a stomp's strip of frames), `invasion.ts` (where the invaders' scenery may stand), `tones.ts` (which tones pass the palette test), `yellows.ts`, `hand.ts` (phone states), `haze.ts`, `fore.ts` |
 | `apps/viking/src/render/palette.test.ts` | The colour rules as a test |
 | `apps/viking/src/game/frame.test.ts` | He is never under a touch button, all routes, five sizes |
