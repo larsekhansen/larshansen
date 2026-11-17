@@ -5,7 +5,8 @@ import { osloClock } from "@larshansen/pixelkit/oslo";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, GLASS, GROUND, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, ROOF, SHIMMER, SNOW, WHITE } from "@larshansen/pixelkit/palette";
-import { WOOD_LEDGE, lampPool, lampPost, pane, type LedgeLook } from "@larshansen/pixelkit/props";
+import { WOOD_LEDGE, lampPool, pane, type LedgeLook } from "@larshansen/pixelkit/props";
+import { STEEL, box as pbox, dot, lamp, prop, railing, tone, type Stuff } from "../alive/props";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type EnemyDef } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
@@ -205,25 +206,45 @@ const BRICK_LEDGE: LedgeLook = { body: MASONRY.lintel, top: MASONRY.worn, edge: 
 /** The ferry: a white hull with a red band, a row of lit windows, the wheelhouse, its funnel; the roof he rides. */
 function ferry(at: { x: number; y: number }) {
   const { x, y } = at;
-  R(x - 16, y + 12, 96, 14, PAINT.ferryWhite);
-  R(x - 14, y + 26, 92, 2, PAINT.ferryShade);
-  R(x - 16, y + 18, 96, 2, PAINT.ferryRed);
-  for (let i = 0; i < 6; i++) {
-    R(x - 18 + i, y + 12 + i, 1, 14 - i, P.water);
-    R(x + 79 - i, y + 12 + i, 1, 14 - i, P.water);
-  }
-  R(x + 2, y + 3, TILE * 4 - 4, 9, PAINT.ferryWhite);
-  for (let wx = x + 6; wx < x + 58; wx += 8) {
-    R(wx, y + 5, 5, 4, GLASS.pane);
-    light(wx, y + 5, 5, 4);
-  }
-  R(x, y, TILE * 4, 3, PAINT.ferryShade);
-  R(x, y, TILE * 4, 1, WHITE);
-  for (let rx = x + 2; rx < x + 62; rx += 6) R(rx, y - 4, 1, 4, PAINT.ferryShade);
-  R(x, y - 5, TILE * 4, 1, PAINT.ferryShade);
-  R(x + 52, y - 12, 6, 8, PAINT.ferryRed);
-  R(x + 52, y - 12, 6, 2, INK);
+  // Drawn once, plate by plate (order 28): the hull's plates and their seams, its raked bow and stern, the red band lit on
+  // its top, the waterline's shade; the saloon's windows in their frames; the roof he rides (the page paints it); the
+  // rail round it; the funnel lit on its left.
+  prop("ferry", [FERRY_WHITE], "", 100, 41, x - 18, y - 12, (g) => {
+    const F = (i: number) => tone(FERRY_WHITE, i);
+    for (let r = 0; r < 14; r++) {
+      const rake = Math.max(0, 6 - r);
+      for (let i = 2 + rake; i < 98 - rake; i++) {
+        let c = r === 0 ? F(3) : r === 6 || r === 7 ? (r === 6 ? mix(PAINT.ferryRed, WHITE, 0.15) : PAINT.ferryRed) : r >= 12 ? F(1) : F(2);
+        if (r > 0 && r < 12 && r !== 6 && r !== 7 && (i - 2) % 16 === 0) c = F(1);
+        if (r === 8) c = mix(PAINT.ferryRed, INK, 0.3);
+        dot(g, i, 24 + r, c);
+      }
+    }
+    for (let i = 4; i < 96; i++) pbox(g, i, 38, 1, 2, F(0));
+    // The saloon, its windows framed.
+    pbox(g, 20, 15, 60, 9, F(2));
+    pbox(g, 20, 15, 1, 9, F(3));
+    pbox(g, 79, 15, 1, 9, F(1));
+    for (let wx = 24; wx < 76; wx += 8) {
+      pbox(g, wx - 1, 16, 7, 6, F(1));
+      pbox(g, wx, 17, 5, 4, GLASS.pane);
+      dot(g, wx, 17, mix(GLASS.pane, WHITE, 0.4));
+    }
+    // The roof and the rail round it.
+    pbox(g, 18, 12, 64, 3, F(1));
+    pbox(g, 18, 12, 64, 1, F(3));
+    pbox(g, 18, 7, 64, 1, F(1));
+    for (let rx = 20; rx < 80; rx += 6) pbox(g, rx, 8, 1, 4, F(1));
+    // The funnel: red, its top black, lit on its left, a white band.
+    pbox(g, 70, 0, 6, 8, PAINT.ferryRed);
+    pbox(g, 70, 0, 6, 2, INK);
+    pbox(g, 70, 2, 1, 6, mix(PAINT.ferryRed, WHITE, 0.25));
+    pbox(g, 70, 4, 6, 1, F(2));
+  });
+  for (let wx = x + 6; wx < x + 58; wx += 8) light(wx, y + 5, 5, 4);
 }
+/** The ferry's white paint. */
+const FERRY_WHITE: Stuff = { name: "ferry white", ramp: [mix(PAINT.ferryShade, INK, 0.25), PAINT.ferryShade, PAINT.ferryWhite, WHITE] };
 
 /** The window-cleaner's gondola: a steel cradle on two ropes from a davit on the tower top. */
 function gondola(at: { x: number; y: number }) {
@@ -232,12 +253,23 @@ function gondola(at: { x: number; y: number }) {
   R(x + 6, top - 4, 3 * TILE + 2, 3, METAL.pipe);
   R(x + 3 * TILE + 6, top - 10, 3, 10, METAL.pipe);
   for (const rx of [x + 6, x + 3 * TILE - 7]) R(rx, top, 1, y - top - 8, METAL.chain);
-  R(x, y, 3 * TILE, 4, METAL.pipe);
-  R(x, y, 3 * TILE, 1, mix(METAL.pipe, WHITE, 0.35));
-  R(x, y - 9, 3 * TILE, 1, METAL.rail);
-  for (const px of [x, x + 3 * TILE - 1, x + 24]) R(px, y - 9, 1, 9, METAL.rail);
-  R(x + 34, y - 5, 6, 5, PAINT.tbane);
-  R(x + 34, y - 5, 6, 1, mix(PAINT.tbane, WHITE, 0.4));
+  // The cradle (order 28): its floor of steel plates lit on top, its rail a line with a glint, three posts, a blue bucket.
+  prop("gondola", [STEEL], "", 3 * TILE, 13, x, y - 9, (g) => {
+    const S = (i: number) => tone(STEEL, i);
+    for (let i = 0; i < 3 * TILE; i++) {
+      dot(g, i, 0, i % 11 === 3 ? S(3) : S(2));
+      dot(g, i, 9, mix(METAL.pipe, WHITE, 0.35));
+      dot(g, i, 10, i % 8 === 0 ? S(0) : S(1));
+      dot(g, i, 11, S(1));
+      dot(g, i, 12, S(0));
+    }
+    for (const px of [0, 3 * TILE - 2, 24]) {
+      pbox(g, px, 1, 1, 8, S(3));
+      pbox(g, px + 1, 1, 1, 8, S(1));
+    }
+    pbox(g, 34, 4, 6, 5, PAINT.tbane);
+    pbox(g, 34, 4, 6, 1, mix(PAINT.tbane, WHITE, 0.4));
+  });
 }
 
 /** A gold bell under its oak yoke (the yoke is what he stands on), swaying a pixel when he is on it. */
@@ -445,9 +477,8 @@ function towerTop() {
     R(x, y - 5, 5, 5, BRICK.red);
     R(x, y - 5, 5, 1, mix(BRICK.red, WHITE, 0.3));
   }
-  // The balcony's railing over the clock.
-  R(199 * TILE, 8 * TILE - 8, 8 * TILE, 1, METAL.castIron);
-  for (let x = 199 * TILE; x < 207 * TILE; x += 4) R(x, 8 * TILE - 8, 1, 8, METAL.castIron);
+  // The balcony's railing over the clock: cast-iron bars under a rail (order 28).
+  railing("bars", 199 * TILE, 207 * TILE, 8 * TILE - 8, 8, 16);
 }
 
 /** The lantern on the clock tower's corner, a tile at a time: white walls, its lit window, a copper roof. */
@@ -612,7 +643,7 @@ export const RADHUSET: LevelDef = {
       terminal();
       passage();
       upperTower();
-      for (const x of LAMPS) lampPost(x, SQUARE, 36);
+      for (const x of LAMPS) lamp("square", x, SQUARE, 36);
       tbaneDoor(v.doors.get("tbane"));
     },
     front(v: View) {

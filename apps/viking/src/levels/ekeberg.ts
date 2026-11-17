@@ -16,6 +16,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
+import { lamp, railing as rail, type Stuff } from "../alive/props";
 
 // Level 9, rune E: Ekeberg. Always evening, under the banded sky of The Scream, which Munch set on
 // this hillside. Up from Gamlebyen on the tram's roof as it climbs its trestle to the top of the
@@ -553,23 +554,17 @@ function viewpoint(v: View) {
   for (let sx = 217 * TILE; sx < COLS * TILE; sx += 3 * TILE) for (let k = 0; k < 8; k++) R(sx - k, g + 6 + k, 2 + k, 1, HILL.graniteDark);
   // The viewpoint's lamp at the end of the railing: lit once this level is cleared.
   const lx = 249 * TILE + 8;
-  R(lx, g - 34, 2, 34, METAL.lampPost);
-  R(lx - 3, g - 38, 8, 4, METAL.lampHat);
-  if (v.cleared.includes("ekeberg") || v.runeAt !== null) {
-    R(lx - 2, g - 34, 6, 3, LAMP);
-    light(lx - 2, g - 34, 6, 3, "lamp");
-  } else R(lx - 2, g - 34, 6, 3, METAL.lampGlass);
+  // An old cast-iron lantern (order 28), lit by day too once this level is cleared; after dark its glass is a lamp's light.
+  lamp("old", lx, g, 26, v.cleared.includes("ekeberg") || v.runeAt !== null);
 }
 
 /** The railing along the deck, in front of him: posts and two rails. */
 function railing() {
-  const g = T * TILE;
-  for (let x = 216 * TILE; x < 251 * TILE; x++) {
-    R(x, g - 14, 1, 1, HILL.rail);
-    R(x, g - 8, 1, 1, HILL.rail);
-    if (x % 24 === 0) R(x, g - 14, 2, 14, HILL.rail);
-  }
+  // A tube railing on posts (order 28), in the viewpoint's own grey-blue: a glint along each rail, the posts lit on their left.
+  rail("tube", 216 * TILE, 251 * TILE, T * TILE - 14, 14, 24, VIEW_RAIL);
 }
+/** The railing's steel, in the hill's own tone of it. */
+const VIEW_RAIL: Stuff = { name: "viewpoint rail", ramp: [mix(HILL.rail, INK, 0.45), mix(HILL.rail, INK, 0.2), HILL.rail, mix(HILL.rail, WHITE, 0.12)] };
 
 /** The leaves a gust carries: a few streaming through while it warns, many while it blows, the grass bending. */
 function gustLeaves(z: Zone, t: number) {

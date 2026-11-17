@@ -8,6 +8,7 @@ import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop
 import { FOE_INK, SHADES, drawFoe, foeFrame, glamFire, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { flagFlying, flame } from "../alive/things";
+import { CAST, dot, prop, tone } from "../alive/props";
 import { tbaneDoor } from "../render/furniture";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
@@ -429,8 +430,14 @@ function keepInside(t: number) {
     [218 * TILE + 4, 16 * TILE + 6],
     [229 * TILE + 2, 11 * TILE + 6]
   ] as const) {
-    R(x, y + 4, 6, 3, METAL.lampPost);
-    R(x, y + 4, 6, 1, mix(METAL.lampPost, WHITE, 0.3));
+    // The basket's iron (order 28): its rim lit, bars down to its bowl.
+    prop("fire basket", [CAST], "", 6, 3, x, y + 4, (g) => {
+      for (let k = 0; k < 6; k++) {
+        dot(g, k, 0, k === 0 ? tone(CAST, 4) : tone(CAST, 3));
+        dot(g, k, 1, k % 2 ? tone(CAST, 1) : tone(CAST, 2));
+        dot(g, k, 2, k === 0 || k === 5 ? null : tone(CAST, 1));
+      }
+    });
     // Their flames flicker (order 24), still with reduced motion.
     flame(x + 3, y + 5, t, x);
     light(x, y, 6, 6, "soft");

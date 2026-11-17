@@ -6,31 +6,33 @@ As of the night of 17 November 2026. Change this file in the same change that ma
 
 | | |
 |---|---|
-| Date | 17 November 2026, about 00:30 |
-| Last live | Order 27, the neon invaders (the glamour, ADR 0050) |
+| Date | 17 November 2026, about 02:00 |
+| Last live | Order 28, the last flat things (ADR 0051), PR #76; before it order 27, the neon invaders (ADR 0050) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 68 % used when order 27 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | 69 % used when order 28 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No. One round at a time |
 
 ## In flight
 
-Nothing. Order 27 is live. What it left: what enemies throw is not glammed; the lean is per level, not per kind; a kind met in
-several levels was looked at in place only in its first; line 2's ending card was checked in code only; the four stings are unheard;
-a worktree under `~/.cache` measures the first script 2 kB larger than the main checkout does and nobody knows why
-(`apps/viking/tools/review/o27/`).
+Nothing. **Order 28, the last flat things** (ADR 0051) is live (PR #76).
+What it did and left: `apps/viking/tools/review/o28/after.md`. Left alone, with reasons: the trains and trams (drawn a column at a
+time and clipped), the bells, logs, buckets, chairlift and hoist (lit and detailed already), windows, the lanterns and torches that
+flicker, the Opera's door, line 2's low track on the map. The worktree's larger first script was not reproduced (`lessons.md`).
+Unplayed: none of it has been seen at speed or on a phone.
 
-Order 26 (the ground, small flags, spruce spires, rat tails, amber wasps; ADR 0049) is live.
-What it left: lamp posts, railings, panel doors, the sauna rafts, sheds' plank walls, the
-rowing boat and carriers' bodies are not textured; the ground was not added to order 22's
-saturation and value band test; it reports the stone at Gamlebyen, Ekeberg and Akershus as
-busier than before (`apps/viking/tools/review/o26/after.md`): ask Lars whether figures still
-stand out there on a phone.
+Order 27 (the glamour, ADR 0050) is live. What it left that order 28 did not take up: the lean is per level, not per kind; a kind met in
+several levels was looked at in place only in its first; line 2's ending card was checked in code only; the four stings are unheard.
+
+Order 26 (the ground, ADR 0049) is live; what it left (lamp posts, railings, panel doors, the sauna rafts, sheds' plank walls, the rowing
+boat, the band test) order 28 did. It reported the stone at Gamlebyen, Ekeberg and Akershus as busier than before: the ground's band now
+holds every material to a sixth of the figures' contrast, and Akershus's fortress and Gamlebyen's quay planks were quietened for it;
+whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-**Order 28, the last flat things**: a sweep of everything in the lane still drawn as plain rectangles (order 26's list above, the line
-map, anything else a look finds), each judged against the whole game: what he does with it, whether it fits its level, and whether
-the glamour should touch it. Then the ground joins order 22's band test.
+Not chosen yet. The planner's candidate is idea 1 below (meet Loki: an encore after the last rune), because it needs no person to
+play first and finishes the story order 27 began. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
+tower, boat and posts have no fallback drawing (the decks still draw).
 
 ## After that: ideas in rough order of value
 

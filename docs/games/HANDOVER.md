@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, and by order 27's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, and by order 28's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -80,6 +80,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-16 | Order 25: line 2 redrawn (way 3): line 2's own kinds, the sea serpent in every state, the heron, line 2's shots, and what a walk through all sixteen levels and the map still found in rectangles (him lying back on the sledge, the sledge, the crowds at Slottet and Holmenkollen, Bjørvika's welder); one more pass on the wasp, the flying pigeon, the track rat and the kid's hat; the troll's lit side after dusk | `orders/25-line-two-redrawn.md`, branch `line-two-redrawn` |
 | 2026-11-16 | Order 26: the ground under him (way 3 for what he stands on and walks past). Every surface of the lane drawn from one textured set: three to five tones of one hue a material, four variants by a hash of the place, a lit top, dark ends, a shadowed foot, moss, salt, tufts, rivets, sparkles; drawn once and copied, the paint on top as before; sign boards, the T-bane's entrance, plank doors, bollards, gravestones, Vålerenga's slate roofs (ADR 0049) | `orders/26-the-ground.md`, branch `the-ground` |
 | 2026-11-16 | Lars, on the page of every figure: "all the pink... im just not sold on pink being a bad guy color. but maybe if we make it a theme somehow? like, oh no, the 80s glam invaders are here!" Order 27: the glamour (ADR 0050). The neon family and a level's lean, a sheen and a glow after dark, glam marks on every figure and a natural self it turns to when a stomp breaks the spell, the rune's ring of daylight, the bosses as headliners, the story of who paid Loki, the map's mirror balls, the invaders' scenery and stings; the Angry Boy, the kid, the sledger and the hot-dog cart redrawn as Lars asked | `orders/27-the-neon-invaders.md`, branch `the-neon-invaders` |
+| 2026-11-17 | Lars away, with a standing instruction: "keep looking for more assets that should have increased details. and consider them with the rest of the game. interaction, fit, thematics, etc. ... remember to write docs too btw." Order 28: the last flat things, each asked what he does with it, whether it fits its place and whether the glamour should touch it (ADR 0051). The props kit (lamp posts of their place, railings, plank walls, panel doors, posts, a ladder, concrete legs, the rowing boat, the sauna rafts), the ferry and the gondola at Rådhuset, Bjørvika's fence and hut; the line map drawn as a level (a skyline a station, piers in the water, decks, station marks, the mirror balls' brackets); a neon trail behind what the invaders throw; the ground's own band, the fortress and Gamlebyen's planks quietened for it | `orders/28-the-last-flat-things.md`, branch `the-last-flat-things` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -254,7 +255,9 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.51 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
+- **First script**: 59.07 kB gzipped after order 28 (Langkaia's sauna rafts, club hut, diving tower, boat and posts moved to the props kit in
+  `feel`'s file behind one hook, `TEXTURED.prop`, and the shed walls behind `TEXTURED.walls`; the kit's flat lamp post and panel door, which no
+  level calls now, left the script). 59.51 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
   the story's hooks in `main.ts`, the map's story sign in `kart.ts`, the new blurb; everything else of it, the neons' ramps, the natural
   ramps, the marks' drawing, the story's words, in `feel`'s file and the levels'). 59.06 kB gzipped after order 26 (the hooks for the textured set in `render/tiles.ts`, `main.ts` and
   `render/furniture.ts`; the set itself is in `feel`'s file, which grew from 20.6 to 28.0 kB gzipped). 58.86 kB gzipped after order 25 (unchanged by it: line 2's drawings are in their levels' files, the crowd's
@@ -516,6 +519,39 @@ Order 27 (`orders/27-the-neon-invaders.md`, ADR 0050, DESIGN's "The glamour"; nu
   and `?debug&steps=0&on=<event>&skip=N` alone now takes a picture of a moment (it did only with `perf` or `strip`).
 - **Unplayed and unheard**: none of it has been seen at speed or on a phone, and nobody has heard the four stings.
 
+## Order 28: the last flat things
+
+Order 28 (`orders/28-the-last-flat-things.md`, ADR 0051, DESIGN's "Props at arm's length"; numbers and pictures' places in
+`apps/viking/tools/review/o28/`). What to know:
+- **The table first.** Every thing still flat in or beside the lane, and the map, with what he does with it, whether it fits its
+  level, whether the glamour should touch it and the decision: `o28/before.md`; what became of each: `o28/after.md`.
+- **The props kit** is `apps/viking/src/alive/props.ts` (in `feel`'s file): `lamp` of four kinds by place, `railing` of three, `plankWall`,
+  `panelDoor`, `post`, `ladder`, `leg`, `rowboat`, the sauna rafts' pontoons and cabins, and `prop` for a level's own piece. Every prop is a
+  per-pixel piece in a material (`Stuff`), kept and copied. Langkaia (first script) reaches it through `TEXTURED.prop` and `TEXTURED.walls`.
+  The kit's own `lampPost`, `panelDoor`, `walls` drawing are the front page's and untouched.
+- **Drawn**: the lamp posts at Rådhuset (the square's), Gamlebyen, Vålerenga and Ekeberg's viewpoint (the old town's cast-iron lantern),
+  Vigelandsparken's bridge (a park lantern in its iron); railings at Ekeberg's viewpoint, Rådhuset's balcony, Slottet's pond, Vålerenga's
+  terrace, the diving tower; plank walls of Langkaia's sheds and club hut and Vålerenga's yellow and red houses; the kiosk's and the home's
+  doors; the sauna rafts, the rowing boat, the diving tower's legs and ladder, the posts under the club's deck; Rådhuset's ferry and
+  gondola; Slottet's balusters and crowd barriers; Holmenkollen station's posts; Akershus's fire baskets; Bjørvika's mesh fence and
+  container; every sign board's post; the rope at Vigelandsparken's broken span. **Left alone, with reasons** (`o28/before.md`): the
+  trains and trams (drawn a column at a time, clipped by tunnels and track), the bells, the logs and buckets, the chairlift, the hoist,
+  windows, lanterns and torches that already flicker, the Opera's door.
+- **The line map** (`levels/kartArt.ts`): every station's skyline is a piece of its own, the piers stand in the water, the decks have joints
+  and bolts (line 1's `L` tile is drawn by the map's `tile` now), the station marks are enamelled, the water darkens in bands (a rectangle
+  a band where it was one a screen column), the door Hjem is the stage tower's cladding, and the mirror balls hang from a bracket on
+  the rune stone.
+- **What the invaders throw** trails three pixels of its level's first neon (`trails` in `render/feel.ts`): drawing only, never once the
+  shield has spent it, never inside the rune's ring, never with reduced motion. The shots themselves are as they were.
+- **The ground's own band** (`render/palette.test.ts`, "the lane's ground keeps a band of its own"): saturation and the spread of value by
+  area, and every material's neighbouring pixels at most a sixth of the figures' contrast apart; the fortress at Akershus and
+  Gamlebyen's quay planks were quietened to pass it.
+- **The first script in a worktree** (order 27's open question): not reproduced; what was ruled out and what was found (vite under Bun
+  measures 0.84 kB more and fails the budget) is in `o28/after.md` and `handbook/lessons.md`.
+- **Looking at a prop**: serve two builds side by side, take the same addresses at `--size=1280x850` (four screen pixels an art pixel),
+  and `python3 tools/glance/diffcrop.py <out> <before> <after>` crops both to what changed.
+- **Unplayed**: none of it has been seen at speed or on a phone.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -616,6 +652,8 @@ reorder this list.
 - A new rule: pure, in `game/play.ts` or a small module beside it, with a test on a made-up
   level in `rules.test.ts`.
 - Words: Norwegian and English, both, in the dry voice ([ADR 0016](../adr/0016-two-languages-dry-voice.md)).
+- Drawing a prop (a lamp post, a railing, a wall of planks, a door, a boat): from the props kit, of its place, after the three questions
+  (DESIGN's "Props at arm's length", ADR 0051); `alive/props.test.ts` says what it may not come near.
 - Drawing ground or a wall: from the textured set (DESIGN's "The ground under him", ADR 0049): a material in the level's file,
   its tiles drawn with `tile`; the test names any solid tile that is not.
 - Drawing anything new: draw it as per-pixel frames with a ramp of tones and a lit side, with the frames DESIGN's "Frames,

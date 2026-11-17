@@ -20,7 +20,7 @@ import { DEEP_FALL, MARGIN, dressed, himFrame } from "../alive/him";
 import { pixels, type Frame } from "../alive/frames";
 import { shadows } from "../alive/shadows";
 import { BREAK, drawBreak, type Broken } from "../alive/death";
-import { glam, glows, leanFor } from "../alive/glamour";
+import { NEON_A, glam, glows, leanFor } from "../alive/glamour";
 import { NATURAL, naturalName } from "../alive/natural";
 import { forced } from "../alive/parts";
 import { lean, outlined } from "./sprite";
@@ -33,6 +33,7 @@ import { DEPTH } from "./backdrop";
 import { fjord, lap } from "../alive/depth";
 import { LAP } from "./tiles";
 import "../alive/ground";
+import "../alive/props";
 import { drawFore } from "../alive/fore";
 
 // The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the
@@ -335,6 +336,32 @@ export function createFeel(host: Host) {
   /** The level's id (the names its looks go by), and the rune's ring of daylight (order 27): the step it set off, where from, and what it has lifted. */
   let level = "";
   const lift = { at: -1, x: 0, y: 0, done: new Set<Enemy>() };
+  /**
+   * What the invaders throw is theirs (order 28, ADR 0051): a short trail behind it in its level's first neon (`lean`, as
+   * its thrower's marks are), three pixels fading, clear of its outline, over the night's tint so it glows after dark. The shot itself and its
+   * outline are as they were, so it is never harder to see. None once the shield has spent it (it falls, harmless), none
+   * inside the rune's ring of daylight (the glamour is lifted there), none with reduced motion (nothing streaks).
+   */
+  function trails(p: Play) {
+    if (view.reduced) return;
+    const neon = lean[NEON_A] ?? NEON_A;
+    for (const sh of p.shots) {
+      if (sh.spent !== undefined) continue;
+      if (lift.at >= 0 && Math.hypot(sh.x - lift.x, sh.y - lift.y) <= liftRadius(now - lift.at)) continue;
+      const speed = Math.hypot(sh.vx, sh.vy);
+      if (speed < 0.6) continue;
+      const ux = sh.vx / speed;
+      const uy = sh.vy / speed;
+      const g = ctx();
+      const a = g.globalAlpha;
+      for (let k = 0; k < 3; k++) {
+        const d = 6 + k * 2;
+        g.globalAlpha = a * (1 - k * 0.3);
+        R(Math.round(sh.x - ux * d), Math.round(sh.y - uy * d), k ? 1 : 2, 1, neon);
+      }
+      g.globalAlpha = a;
+    }
+  }
   let calm: boolean[] = [];
   /** A step has been taken in this scene: what is stone from the start is not heard turning to stone. */
   let primed = false;
@@ -870,6 +897,7 @@ export function createFeel(host: Host) {
       for (let i = 0; i < PARTICLES; i++) if (plife[i] > 0) R(px[i], py[i], psize[i], psize[i], pcol[i]);
       // The rune's ring of daylight (order 27): plain light running out from the stone, the width of the screen and more.
       if (lift.at >= 0 && now - lift.at < LIFT_STEPS) daylight(lift.x, lift.y, now - lift.at);
+      trails(p);
       for (let k = 0; k < RINGS; k++) {
         const age = now - rt[k];
         if (age < 0 || age >= rdur[k]) continue;

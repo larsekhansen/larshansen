@@ -52,8 +52,19 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   "troll asleep" without the troll). Ask for crops found by the subject's outline, and open
   them.
 - **A finished subagent's worktree stays locked.** `git worktree unlock`, then remove.
+- **The first script measured in a worktree** (order 27: "about 2 kB larger" than the main checkout). Order 28 spent half an hour on it:
+  a worktree of `origin/main` under `~/.cache`, with node_modules linked from the main checkout or freshly installed (`bun install
+  --frozen-lockfile`), builds byte-identical (the same file name and hash, 59.51 kB): the path and the install are not it. What does
+  change the number: **vite run under Bun** (`bun --bun vite build`, or any shell where `node` is not what runs vite). Its budget plugin then
+  measures with Bun's zlib, 60.35 kB for the same script (0.84 kB more), and the build fails; its output also differs trivially
+  (`Error(` for `new Error(`, other chunk hashes). GNU `gzip -c` gives 59.52, Node's zlib 59.51. The 2 kB itself was not reproduced. *Read
+  the size from `bun run build` in `apps/viking` (vite under Node), and say how it was measured; if a number differs, check which zlib.*
 
 ## What worked and should be kept
+
+- **A colour rule tried before it is set** (order 28): "no prop nearer a role than its old drawing" sounded right and forbade any lit tone on
+  grey metal (every lighter grey comes nearer his helmet). Measuring first turned it into "no nearer than its level's flat props, or than
+  10", which still caught real things (a lit ochre near his skin, the kiosk door's panel near a coin's copper) and let iron have a lit edge.
 
 - **Quoting Lars exactly** in orders, ADRs and messages to implementers.
 - **"Look first"** as section 1 of every order: a table of the present state before any change.

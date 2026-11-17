@@ -2,6 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
+import { CAST, box as pbox, dot, prop, railing, tone, type Stuff } from "../alive/props";
 import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
@@ -713,11 +714,19 @@ function crowd(t: number) {
 
 /** The barriers round a dig: red and white boards on feet, in front. */
 function barriers(c0: number, c1: number) {
+  // A crowd barrier's end (order 28): its steel frame lit on the left, bars in it, the red bands across, its foot.
   for (const x of [c0 * TILE - 6, (c1 + 1) * TILE + 1]) {
     const g = streetY(x);
-    R(x, g - 9, 5, 9, P.iron);
-    for (let y = g - 9; y < g - 1; y += 4) R(x, y, 5, 2, PARADE.russ);
-    R(x - 1, g - 1, 7, 1, INK);
+    prop("barrier", [BARRIER], "", 7, 9, x - 1, g - 9, (b) => {
+      const S = (i: number) => tone(BARRIER, i);
+      for (let y = 0; y < 8; y++) {
+        dot(b, 1, y, S(3));
+        dot(b, 5, y, S(1));
+        for (const i of [2, 3, 4]) dot(b, i, y, (y >> 2) % 2 === 0 && y % 4 < 2 ? (i === 2 ? mix(PARADE.russ, WHITE, 0.2) : PARADE.russ) : i === 3 ? S(1) : S(2));
+      }
+      dot(b, 1, 0, S(3));
+      pbox(b, 0, 8, 7, 1, INK);
+    });
   }
 }
 
@@ -762,13 +771,23 @@ function farKerbs() {
 function balusters(c0: number, c1: number, r: number) {
   const y = r * TILE;
   R(c0 * TILE, y - 9, (c1 - c0 + 1) * TILE, 2, MASONRY.worn);
-  for (let x = c0 * TILE + 2; x < (c1 + 1) * TILE - 2; x += 4) R(x, y - 7, 2, 7, mix(MASONRY.worn, INK, 0.1));
+  // Each baluster turned (order 28): lit on its left, shaded on its right, narrower at its waist.
+  for (let x = c0 * TILE + 2; x < (c1 + 1) * TILE - 2; x += 4)
+    prop("baluster", [BALUSTER], "", 2, 7, x, y - 7, (b) => {
+      for (let k = 0; k < 7; k++) {
+        dot(b, 0, k, k === 3 ? null : tone(BALUSTER, 3));
+        dot(b, 1, k, k === 0 ? tone(BALUSTER, 2) : tone(BALUSTER, 1));
+      }
+    });
 }
+/** A crowd barrier's steel, in the grey it was. */
+const BARRIER: Stuff = { name: "barrier", ramp: [mix(P.iron, INK, 0.45), mix(P.iron, INK, 0.25), mix(P.iron, INK, 0.1), P.iron] };
+/** A balcony's stone. */
+const BALUSTER: Stuff = { name: "baluster", ramp: [mix(MASONRY.worn, INK, 0.3), mix(MASONRY.worn, INK, 0.16), mix(MASONRY.worn, INK, 0.1), MASONRY.worn] };
 
 /** The railing in front of the pond. */
 function pondRail() {
-  for (let x = 52 * TILE; x < 59 * TILE; x += 8) R(x, 25 * TILE + 3, 1, 7, METAL.castIron);
-  R(52 * TILE, 25 * TILE + 3, 7 * TILE, 1, METAL.castIron);
+  railing("tube", 52 * TILE, 59 * TILE, 25 * TILE + 3, 7, 8, CAST);
 }
 
 /** The street's surface where it slopes: the same setts as the flat, laid along the slope. */

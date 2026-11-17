@@ -1,6 +1,6 @@
 # Start here
 
-State as of the night of 17 November 2026. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of the night of 17 November 2026, after order 28 was built. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -43,6 +43,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 25 line 2 redrawn | #71 | Way 3 for line 2 and the sea serpent |
 | 26 the ground | #73 | Textured ground and props (ADR 0049); small flags; spruce spires; rat tails; amber wasps |
 | 27 the neon invaders | #74 | The glamour (ADR 0050): neon is a spell on Oslo, a stomp breaks it; marks and a natural self on every figure; the story; the boy, kid, sledger and cart redrawn |
+| 28 the last flat things | #76 | Props of their place (ADR 0051): lamp posts, railings, plank walls, doors, rafts, the boat, the ferry; the line map drawn as a level; a neon trail behind what the invaders throw; the ground's own band |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
 phone before going live. The Pi cannot run the game in a headless browser (HANDOVER,

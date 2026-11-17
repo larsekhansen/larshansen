@@ -555,3 +555,76 @@ describe("the textured ground comes no nearer what he plays with than the ground
     expect(near).toEqual([]);
   }, 60_000);
 });
+
+// Order 28 (ADR 0051): the lane's ground joins order 22's band with a band of its own. By day, over the area each colour
+// covers on a level's tiles (the paint and the platforms' teal left out): its middle saturation below the figures' (0.69),
+// nine tenths of it at most GROUND_S90 saturated (the bed seen under water is the most), the middle eight tenths of its value
+// within GROUND_V_SPAN. And every material of the textured set quiet in itself: the mean difference of lightness (CIE L*)
+// between neighbouring pixels of its pieces at most a sixth of the figures' own contrast, so no stone or plank is busier
+// than what stands on it. (Order 26 found Akershus's fortress, Gamlebyen's quay planks, Ekeberg's quarry the busiest; the
+// two over the band were quietened, the band was not widened: `tools/review/o28/after.md`.)
+describe("the lane's ground keeps a band of its own (order 28)", () => {
+  const GROUND_S50 = 0.6;
+  const GROUND_S90 = 0.8;
+  const GROUND_V_SPAN = 0.35;
+  test(`the ground's middle saturation at most ${GROUND_S50}, nine tenths of it at most ${GROUND_S90}, and the middle eight tenths of its value within ${GROUND_V_SPAN}`, async () => {
+    const OWN = [...ROLES.COLOURS.stand, STAND.worn, STAND.under, STAND.mark];
+    const loud: string[] = [];
+    const table: string[] = [];
+    for (const st of BUILT) {
+      const xs = [...(await paintedOf(st.id)).ground].filter(([c]) => parseColour(c) && !OWN.some((o) => deltaE(rgb(c), rgb(o)) < 1)).map(([c, a]) => ({ ...satVal(rgb(c)), w: a }));
+      const q = (k: "s" | "v", f: number) => percentile(xs.map((x) => ({ x: x[k], w: x.w })), f);
+      const [s50, s90, span] = [q("s", 0.5), q("s", 0.9), q("v", 0.9) - q("v", 0.1)];
+      table.push(`${st.id}: saturation ${s50.toFixed(2)} / ${s90.toFixed(2)}, value ${q("v", 0.1).toFixed(2)} to ${q("v", 0.9).toFixed(2)}`);
+      if (s50 > GROUND_S50 || s90 > GROUND_S90 || span > GROUND_V_SPAN) loud.push(table.at(-1)!);
+    }
+    console.log(`The ground (saturation middle / nine tenths, value from a tenth to nine tenths):\n  ${table.join("\n  ")}`);
+    expect(loud).toEqual([]);
+  }, 60_000);
+
+  test("every material of the textured set is quiet in itself: its neighbouring pixels a sixth of the figures' contrast apart, at most", async () => {
+    const { DRAWN, EDGE, piece } = await import("../alive/ground");
+    const figures = Math.min(...[ENEMY.plum, ENEMY.orange, ENEMY.poison, ENEMY.pink, ENEMY.white].map((b) => deltaE(rgb(b), rgb(ENEMY.line))), deltaE(rgb(ROLES.him.tunic), rgb(ROLES.him.skin)));
+    const BUSY = figures / 6;
+    for (const st of BUILT) await paintedOf(st.id);
+    // Every material any level's tiles drew (`paintedOf` draws them all), its four variants as a tile under the sky and as one inside.
+    DRAWN.grains ??= new Set();
+    if (DRAWN.grains.size < 30) {
+      for (const st of BUILT) levelPaint(await loadLevel(st.id), "day");
+    }
+    const L = (c: string) => {
+      const [r, g, b] = rgb(c).map((v) => (v / 255 <= 0.04045 ? v / 255 / 12.92 : ((v / 255 + 0.055) / 1.055) ** 2.4));
+      const Y = r * 0.2126 + g * 0.7152 + b * 0.0722;
+      return 116 * (Y > 216 / 24389 ? Math.cbrt(Y) : ((24389 / 27) * Y + 16) / 116) - 16;
+    };
+    const busy: string[] = [];
+    const table: string[] = [];
+    for (const g of DRAWN.grains) {
+      let sum = 0;
+      let n = 0;
+      for (let v = 0; v < 4; v++)
+        for (const m of [0, EDGE.TOP]) {
+          const p = piece(g, v * 37 + 1, v * 11 + 3, m);
+          const W = 16;
+          const px: (number | null)[] = new Array(W * p.h).fill(null);
+          for (let i = 0; i < p.runs.length; i += 4) for (let k = 0; k < p.runs[i + 2]; k++) px[p.runs[i + 1] * W + p.runs[i] + k] = L(p.ink[p.runs[i + 3]]);
+          // The tile itself, not the tufts over its top.
+          for (let y = 3; y < p.h; y++)
+            for (let x = 0; x < W; x++) {
+              const a = px[y * W + x];
+              if (a === null) continue;
+              for (const b of [x + 1 < W ? px[y * W + x + 1] : null, y + 1 < p.h ? px[(y + 1) * W + x] : null]) {
+                if (b === null) continue;
+                sum += Math.abs(a - b);
+                n++;
+              }
+            }
+        }
+      const d = sum / n;
+      table.push(`${d.toFixed(2)} ${g.name}`);
+      if (d > BUSY) busy.push(`${g.name}: ${d.toFixed(2)} (at most ${BUSY.toFixed(2)})`);
+    }
+    console.log(`The materials' local contrast (mean L* between neighbours; at most a sixth of the figures' ${figures.toFixed(1)}):\n  ${table.sort().reverse().slice(0, 12).join("\n  ")}`);
+    expect(busy).toEqual([]);
+  }, 120_000);
+});

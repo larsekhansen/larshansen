@@ -5,7 +5,7 @@ import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerOrigin, layerX, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
-import { panelDoor } from "@larshansen/pixelkit/props";
+import { panelDoor } from "../alive/props";
 import * as METRO from "@larshansen/pixelkit/swatches/metro";
 import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";

@@ -9,6 +9,7 @@ import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { EDGE, tile as textured, type Grain } from "../alive/ground";
+import { lamp } from "../alive/props";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
@@ -432,11 +433,10 @@ function mid() {
   }
 }
 
-/** A street lamp of the modern town, its light on the cobbles. */
+/** A street lamp of the town, its light on the cobbles. */
 function streetLamp(x: number, ground: number) {
-  R(x, ground - 34, 2, 34, G.lampPost);
-  R(x - 3, ground - 36, 8, 3, G.lampPost);
-  light(x - 2, ground - 33, 6, 2, "lamp");
+  // The old town's cast iron (order 28): a lantern on a fluted post.
+  lamp("old", x, ground, 26);
   light(x - 14, ground - 1, 30, 4, "pool");
 }
 
@@ -727,7 +727,8 @@ function oldStone(c: number, r: number, x: number, y: number, map: TileMap) {
 }
 
 /** The quay's planks on their piles over the dark water (order 26: planks with grain and nails). */
-const QUAY_PLANKS: Grain = { name: "gb-planks", kind: "planks", ramp: [G.plankDark, G.plank, G.plankLight, mix(G.plankLight, WHITE, 0.2)], h: 5, rows: 5 };
+// Order 28: the joints between its boards quietened toward the plank (7.1 of lightness between neighbours against a band of 6.4).
+const QUAY_PLANKS: Grain = { name: "gb-planks", kind: "planks", ramp: [mix(G.plankDark, G.plank, 0.35), G.plank, G.plankLight, mix(G.plankLight, WHITE, 0.2)], h: 5, rows: 5 };
 function quayPlank(c: number, r: number, x: number, y: number, map: TileMap) {
   textured(QUAY_PLANKS, c, r, x, y, map, null, (!map.isSolid(c, r - 1) ? EDGE.TOP : 0) | (map.tileAt(c - 1, r) !== "J" ? EDGE.LEFT : 0) | (map.tileAt(c + 1, r) !== "J" ? EDGE.RIGHT : 0));
   if (c % 3 === 0) R(x + 6, y + 6, 4, TILE - 6, G.plankDark);
