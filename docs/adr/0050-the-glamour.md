@@ -53,7 +53,8 @@ like trump paid loki to terrorize oslo because he didnt win the peace prize!' or
   character or a boss. The satire is of public behaviour (vanity, sulking, prizes, money,
   spectacle), never of looks, health, family or supporters; nothing cruel.
 - Loki is the Invaders' front man and is not met in order 27 (a poster or a silhouette at
-  most). Meeting him is kept for later.
+  most). Meeting him is kept for later. *(Amended 17 November 2026 by order 29: he is met once, at the encore after every rune of
+  both lines, as an extra that gates nothing; these limits stand there unchanged, [0052](0052-the-encore.md).)*
 - **Nothing borrowed**: no real band, song, person's likeness, logo, album cover, lyric or
   nameable melody. The 80s is a look and a sound made here. (`docs/games/PLAN.md` records that
   a commercial recording had to leave the old maze.)
@@ -110,7 +111,7 @@ stays natural. The old question "why is the rat pink" has an answer inside the g
 
 ## What it did not do
 
-- **Loki is not met**, as decided: his poster only.
+- **Loki is not met**, as decided: his poster only. *(Order 29 met him: the encore, [0052](0052-the-encore.md).)*
 - **Shots are not glammed**: what the invaders throw keeps its look (the order: "it still throws what it throws").
 - **The lean is per level, not per kind**: a kind met in several levels takes each level's two neons; its body keeps its own colour.
 - **Every enemy in place was looked at once per kind**, in the first level that has it, by day and under its own sky, at both

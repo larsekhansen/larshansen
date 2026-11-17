@@ -21,7 +21,7 @@ export function showErrors(help: HTMLElement) {
     });
 }
 
-/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it; `all` is every station. */
+/** `?debug&cleared=langkaia,akershus&gold=langkaia` pretends progress, without storing it; `all` is every station; `&seen` the encore seen (order 29: its best time). */
 export function debugProgress(params: URLSearchParams): Progress | null {
   // `?debug&told` (order 27): the story's opening card has been read, so the map is seen without it.
   if (params.has("told"))
@@ -32,7 +32,9 @@ export function debugProgress(params: URLSearchParams): Progress | null {
     }
   if (!params.has("cleared") && !params.has("gold") && !params.has("clean")) return null;
   const list = (k: string) => (params.get(k) === "all" ? [...ORDER] : (params.get(k) ?? "").split(",").filter((id) => ORDER.includes(id)));
-  return { cleared: list("cleared"), best: Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700])), bracteates: list("gold"), skilling: {}, clean: list("clean") };
+  const best = Object.fromEntries(list("cleared").map((id, i) => [id, 41300 + i * 23700]));
+  if (params.has("seen")) best.encore = 31400;
+  return { cleared: list("cleared"), best, bracteates: list("gold"), skilling: {}, clean: list("clean") };
 }
 
 /** `window.__game`, for driving a page by hand in a headless browser. */

@@ -14,7 +14,11 @@ As of the night of 17 November 2026. Change this file in the same change that ma
 
 ## In flight
 
-Nothing. **Order 28, the last flat things** (ADR 0051) is live (PR #76).
+**Order 29, the encore** (ADR 0052), built on branch `the-encore`, waiting for review, merge and deploy. Loki met once, at a stage
+on the water in Middelalderparken that appears past the longship only with every rune of both lines. Measures and what was left:
+`apps/viking/tools/review/o29/after.md`. Unplayed and unheard: the fight at speed, the four new stings, his frames on a phone.
+
+**Order 28, the last flat things** (ADR 0051) is live (PR #76).
 What it did and left: `apps/viking/tools/review/o28/after.md`. Left alone, with reasons: the trains and trams (drawn a column at a
 time and clipped), the bells, logs, buckets, chairlift and hoist (lit and detailed already), windows, the lanterns and torches that
 flicker, the Opera's door, line 2's low track on the map. The worktree's larger first script was not reproduced (`lessons.md`).
@@ -30,16 +34,14 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Not chosen yet. The planner's candidate is idea 1 below (meet Loki: an encore after the last rune), because it needs no person to
-play first and finishes the story order 27 began. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
+Not chosen yet. Idea 1 below (meet Loki) is order 29, in flight. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
 tower, boat and posts have no fallback drawing (the decks still draw).
 
 ## After that: ideas in rough order of value
 
 None of these is decided. Each has a reason.
 
-1. **Meet Loki.** ADR 0050 keeps him for later. A final boss or an encore after VIKING: a
-   front man on a stage, the glamour at its thickest. The ending of line 2 could lead to it.
+1. **Meet Loki.** Order 29 (ADR 0052): the encore. What a person must judge is in its hand-back.
 2. **Tune by play.** No level has been tuned by a person. Ask Lars to play line 1 start to end
    and say where it is unfair, boring or unclear; turn that into an order. The reviews'
    weak-spot lists (HANDOVER, "Known weak spots") are the starting list.

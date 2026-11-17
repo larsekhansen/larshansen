@@ -160,3 +160,18 @@ Then the reason for it all:
    and endings beside them) and in order 27's hand-back. The man who paid is named twice (the opening card, the map's sign).
 8. Everything in each hand-back's "for Lars to judge" list (orders 21 to 25): they are
    collected in [`roadmap.md`](roadmap.md).
+9. The encore's words (order 29, ADR 0052): every line is in the encore's block at the end of
+   `apps/viking/src/game/story.ts`, both languages, with one or two other ways beside each (`ENCORE_ALTERNATIVES`). As shown:
+   - Banner: "Loki has one more song" / "Loke har ett nummer til".
+   - As he wakes: "Good evening, Oslo! / One more, then you can all go home." / "God kveld, Oslo! / Ett nummer til, så kan dere
+     gå hjem."
+   - The wig off: "That was a wig. / You all knew." / "Det var en parykk. / Det visste dere."
+   - The shades off: "Shades, in November. / Fair point." / "Solbriller i november. / Greit nok."
+   - The jacket off: "Careful. That jacket was rented." / "Forsiktig. Den jakka er leid."
+   - Leaving, plain, with his thermos: "Lovely crowd. Nobody danced, / but nobody left either." / "Fint publikum. Ingen danset, /
+     men ingen gikk heller."
+   - The ending card: "The stage lights are just lights again. Oslo walks home, plain and quite content." / "Scenelysene er bare lys
+     igjen. Oslo går hjem, vanlig og ganske fornøyd."
+   The man who paid is not named, and neither the invoice nor the client is mentioned. Also for him: the place (Middelalderparken,
+   because the park held the summer festival for years and the water mirror is the old shore), and whether the encore should
+   be easier or harder (the sloppy player wins it every time).

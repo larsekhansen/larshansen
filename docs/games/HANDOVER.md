@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, and by order 28's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, and by order 29's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -47,7 +47,8 @@ page is published as a private artifact on Lars's claude.ai account.
   0024); Vigelandsparken, Korketrekkeren (the sledge he cannot stop, ADR 0026) and Østensjøvannet came
   with order 15, Bjørvika (crane hooks) and Gamlebyen (the ruins that rise as he passes, ADR 0028; the sea
   serpent, ADR 0027) with order 16. All sixteen are built; with all six of line 2 the header's VIKING is gold,
-  and with all sixteen the map gets a longship at anchor at the end of the line and lanterns (ADR 0030, 0031).
+  and with all sixteen the map gets a longship at anchor at the end of the line and lanterns (ADR 0030, 0031), and since order
+  29 one more stop past it: the encore at Middelalderparken, where Loki is met once (ADR 0052). It is extra: no rune, no total.
 - **Jernhaugen** (`packages/maze`; alone at maze.larshansen.dev through `apps/iron-maze`, and
   inside the viking game at `#jernhaugen`): seven maze levels. It is a bonus stop on the line and
   is never required. Clearing its level 3 gives the raven's feather (a double jump); all seven
@@ -81,6 +82,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-16 | Order 26: the ground under him (way 3 for what he stands on and walks past). Every surface of the lane drawn from one textured set: three to five tones of one hue a material, four variants by a hash of the place, a lit top, dark ends, a shadowed foot, moss, salt, tufts, rivets, sparkles; drawn once and copied, the paint on top as before; sign boards, the T-bane's entrance, plank doors, bollards, gravestones, Vålerenga's slate roofs (ADR 0049) | `orders/26-the-ground.md`, branch `the-ground` |
 | 2026-11-16 | Lars, on the page of every figure: "all the pink... im just not sold on pink being a bad guy color. but maybe if we make it a theme somehow? like, oh no, the 80s glam invaders are here!" Order 27: the glamour (ADR 0050). The neon family and a level's lean, a sheen and a glow after dark, glam marks on every figure and a natural self it turns to when a stomp breaks the spell, the rune's ring of daylight, the bosses as headliners, the story of who paid Loki, the map's mirror balls, the invaders' scenery and stings; the Angry Boy, the kid, the sledger and the hot-dog cart redrawn as Lars asked | `orders/27-the-neon-invaders.md`, branch `the-neon-invaders` |
 | 2026-11-17 | Lars away, with a standing instruction: "keep looking for more assets that should have increased details. and consider them with the rest of the game. interaction, fit, thematics, etc. ... remember to write docs too btw." Order 28: the last flat things, each asked what he does with it, whether it fits its place and whether the glamour should touch it (ADR 0051). The props kit (lamp posts of their place, railings, plank walls, panel doors, posts, a ladder, concrete legs, the rowing boat, the sauna rafts), the ferry and the gondola at Rådhuset, Bjørvika's fence and hut; the line map drawn as a level (a skyline a station, piers in the water, decks, station marks, the mirror balls' brackets); a neon trail behind what the invaders throw; the ground's own band, the fortress and Gamlebyen's planks quietened for it | `orders/28-the-last-flat-things.md`, branch `the-last-flat-things` |
+| 2026-11-17 | Order 29: the encore (ADR 0052). With every rune of both lines held, a stop past the longship: a small festival stage on the water in Middelalderparken, where Loki, the Invaders' front man, plays one more song. He borrows the three bosses' moves (the troll's club, the plough's charge, the serpent's bite) with their own tells and answers, poses between them (the opening), loses his hair, shades and jacket to three stomps and walks off a thin man in a wool sweater with a thermos. Extra: no rune, no total, a best time only; the map with any rune missing is as it was | `orders/29-the-encore.md`, branch `the-encore` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -255,7 +257,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.07 kB gzipped after order 28 (Langkaia's sauna rafts, club hut, diving tower, boat and posts moved to the props kit in
+- **First script**: 59.34 kB gzipped after order 29 (the encore's stop on the map with every rune, its route in the page, its card
+  and best time, `Boss.ends`; the encore itself is a chunk of its own, 8.6 kB gzipped, and its words are in `feel`'s file). 59.07 kB gzipped after order 28 (Langkaia's sauna rafts, club hut, diving tower, boat and posts moved to the props kit in
   `feel`'s file behind one hook, `TEXTURED.prop`, and the shed walls behind `TEXTURED.walls`; the kit's flat lamp post and panel door, which no
   level calls now, left the script). 59.51 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
   the story's hooks in `main.ts`, the map's story sign in `kart.ts`, the new blurb; everything else of it, the neons' ramps, the natural
@@ -551,6 +554,28 @@ Order 28 (`orders/28-the-last-flat-things.md`, ADR 0051, DESIGN's "Props at arm'
 - **Looking at a prop**: serve two builds side by side, take the same addresses at `--size=1280x850` (four screen pixels an art pixel),
   and `python3 tools/glance/diffcrop.py <out> <before> <after>` crops both to what changed.
 - **Unplayed**: none of it has been seen at speed or on a phone.
+
+## Order 29: the encore
+
+Order 29 (`orders/29-the-encore.md`, ADR 0052, DESIGN's "Loki at the encore"; numbers and pictures' places in
+`apps/viking/tools/review/o29/`). What to know:
+- **Gated by every rune, gating nothing.** `kartDef` adds the stop (`ENCORE_STOP` in `levels/index.ts`, the door `E` at column 109 of a
+  map 115 wide) only when `allRunes(progress, ORDER)`; otherwise the map is `kartMap(open)` exactly as before (tested for every set
+  with one rune missing; the pictures compared byte for byte, `o29/map.md`). The page lets `#encore` open only then (or under
+  `?debug`). It is not in `LINE`, `ORDER` or `BUILT`, so no test or count that walks the stations sees it.
+- **A level with no rune.** `rune: -1`; its card's title is its landmark ("The encore · Middelalderparken") and its last line its
+  `cardLine`; the level ends when the boss slot's `ends()` says so (`play.ts` stops the clock); the page saves `best.encore` and shows
+  the card on the boss's `gone` event (`main.ts`).
+- **Loki** is `game/loki.ts` (rules), `render/loki.ts` (drawing), `levels/encore.ts` (the stage): one chunk (`vite.config.ts`, `OWN`).
+  His frames are built from a rig of parts (head, wig, shades, jacket, sweater, limbs drawn as two- and three-pixel strokes between
+  joints), so a pose is a list of joints; `tools/glance/loki.ts` writes his sheet for `framesheet.py`. His glammed colours are the enemy
+  palette's; his plain ones are held off every neon and role by `levels/encore.test.ts`.
+- **His tells** are the bosses' own lengths (club 60, rev 60, ring 90 steps), tested against the shortest of the three bosses' (60).
+- **The route and the sloppy player**: `levels/routes/encore.ts` (one closed-loop fight move); the encore is in `tools/review/common.ts`
+  (with the pole and the shield), so `bun fresh.ts levels=encore` measures it.
+- **The words** are a block of their own at the end of `game/story.ts` (`ENCORE`, `ENCORE_ALTERNATIVES`); a test holds every line
+  above it to its hash on `origin/main`.
+- **Unplayed and unheard**: nobody has seen it at speed or on a phone, or heard the four new stings.
 
 ## Known weak spots, as of order 16
 
