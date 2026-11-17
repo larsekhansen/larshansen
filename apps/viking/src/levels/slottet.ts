@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { CAST, STEEL, box as pbox, dot, prop, railing, tone, type Stuff } from "../alive/props";
+import { CAST, box as pbox, dot, prop, railing, tone, type Stuff } from "../alive/props";
 import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { ledge, type LedgeLook } from "@larshansen/pixelkit/props";
 import type { Sky } from "@larshansen/pixelkit/oslo";
@@ -717,8 +717,8 @@ function barriers(c0: number, c1: number) {
   // A crowd barrier's end (order 28): its steel frame lit on the left, bars in it, the red bands across, its foot.
   for (const x of [c0 * TILE - 6, (c1 + 1) * TILE + 1]) {
     const g = streetY(x);
-    prop("barrier", [STEEL], "", 7, 9, x - 1, g - 9, (b) => {
-      const S = (i: number) => tone(STEEL, i);
+    prop("barrier", [BARRIER], "", 7, 9, x - 1, g - 9, (b) => {
+      const S = (i: number) => tone(BARRIER, i);
       for (let y = 0; y < 8; y++) {
         dot(b, 1, y, S(3));
         dot(b, 5, y, S(1));
@@ -780,8 +780,10 @@ function balusters(c0: number, c1: number, r: number) {
       }
     });
 }
+/** A crowd barrier's steel, in the grey it was. */
+const BARRIER: Stuff = { name: "barrier", ramp: [mix(P.iron, INK, 0.45), mix(P.iron, INK, 0.25), mix(P.iron, INK, 0.1), P.iron] };
 /** A balcony's stone. */
-const BALUSTER: Stuff = { name: "baluster", ramp: [mix(MASONRY.worn, INK, 0.3), mix(MASONRY.worn, INK, 0.16), mix(MASONRY.worn, INK, 0.1), mix(MASONRY.worn, WHITE, 0.12)] };
+const BALUSTER: Stuff = { name: "baluster", ramp: [mix(MASONRY.worn, INK, 0.3), mix(MASONRY.worn, INK, 0.16), mix(MASONRY.worn, INK, 0.1), MASONRY.worn] };
 
 /** The railing in front of the pond. */
 function pondRail() {

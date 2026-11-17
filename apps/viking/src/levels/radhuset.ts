@@ -269,7 +269,6 @@ function gondola(at: { x: number; y: number }) {
     }
     pbox(g, 34, 4, 6, 5, PAINT.tbane);
     pbox(g, 34, 4, 6, 1, mix(PAINT.tbane, WHITE, 0.4));
-    pbox(g, 39, 5, 1, 4, mix(PAINT.tbane, INK, 0.3));
   });
 }
 

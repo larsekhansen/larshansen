@@ -7,7 +7,7 @@ import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
-import { STEEL, lamp, panelDoor, plankWall, post, railing } from "../alive/props";
+import { CAST, lamp, panelDoor, plankWall, post, railing } from "../alive/props";
 /** A chimney's smoke on a winter night: pale, thin. */
 const NIGHT_SMOKE = { ...STOVE_SMOKE, rgb: "225, 230, 240", alpha: 0.4 };
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -812,7 +812,7 @@ function street(v: View, p: Plough | null) {
   // The washing line: two poles, the line, the washing; down in the snow once the plough has had its pole.
   const l = PLOUGH_DEF.line;
   if (!p || lineHolds(p)) {
-    for (const x of [l.x0, l.x1 - 2]) post(STEEL, x, l.y - 6, g, 2);
+    for (const x of [l.x0, l.x1 - 2]) post(CAST, x, l.y - 6, g, 2);
     const sag = p && v.t - p.lineAt < 10 && !view.reduced ? 4 : 1;
     for (let x = l.x0; x < l.x1; x++) R(x, l.y - 5 + Math.round(sag * Math.sin(((x - l.x0) / (l.x1 - l.x0)) * Math.PI)), 1, 1, METAL.wire);
     washing(l.x0 + 6, l.y - 4, v.t);

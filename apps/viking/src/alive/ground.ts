@@ -727,7 +727,9 @@ export const QUAY: Grain = {
 /** The Opera's marble: big slabs, fine seams, a sheen. */
 export const MARBLE: Grain = { name: "marble", kind: "blocks", ramp: [FACADE.marbleEdge, FACADE.marbleSeam, FACADE.marbleWall, FACADE.marble], h: 16, w: 48, off: 24, fine: true, flat: true, kerb: [FACADE.marble, FACADE.marble, FACADE.marble, FACADE.marbleEdge] };
 /** The fortress: rough stone in small courses, moss in its shadowed joints, worn on top. */
-export const FORTRESS: Grain = { name: "fortress", kind: "blocks", ramp: [STONE.mortar, STONE.dark, STONE.base, STONE.light], h: 4, w: 8, off: 4, split: 0.3, flat: true, kerb: [MASONRY.edge, MASONRY.worn], end: MASONRY.edge, accent: { moss: STONE.moss, tuft: STONE.moss } };
+// Order 28: its joints quietened to halfway between the mortar and the dark stone (the busiest material of order 26, 8.3 of
+// lightness between neighbours against a band of 6.4: `render/palette.test.ts`, "the lane's ground keeps a band of its own").
+export const FORTRESS: Grain = { name: "fortress", kind: "blocks", ramp: [mix(STONE.mortar, STONE.dark, 0.5), STONE.dark, STONE.base, STONE.light], h: 4, w: 8, off: 4, split: 0.3, flat: true, kerb: [MASONRY.edge, MASONRY.worn], end: MASONRY.edge, accent: { moss: STONE.moss, tuft: STONE.moss } };
 /** Brick: courses of bricks, a few darker, chipped corners. */
 export const BRICKS: Grain = { name: "brick", kind: "blocks", ramp: [mix(BRICK.red, INK, 0.45), BRICK.course, BRICK.red, BRICK.red], h: 4, w: 8, off: 4, flat: true, kerb: [mix(BRICK.red, INK, 0.45), mix(BRICK.red, WHITE, 0.3)] };
 /** Planks: a jetty's deck, five rows. */

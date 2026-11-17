@@ -29,25 +29,25 @@ export interface Stuff {
 
 const P = PALETTE;
 /** Natural wood: planks, a boat's strakes, a jetty's posts. */
-export const WOOD: Stuff = { name: "wood", ramp: [P.woodDark, mix(P.wood, P.woodDark, 0.45), P.wood, mix(P.wood, WHITE, 0.25)] };
+export const WOOD: Stuff = { name: "wood", ramp: [P.woodDark, mix(P.woodDark, P.wood, 0.3), P.wood, mix(P.wood, WHITE, 0.25)] };
 /** Old wood, a post's: the sign posts, the legs under a deck. */
-export const POST: Stuff = { name: "post", ramp: [mix(P.woodDark, INK, 0.4), P.woodDark, mix(P.woodDark, P.wood, 0.3), mix(P.woodDark, P.wood, 0.55)] };
+export const POST: Stuff = { name: "post", ramp: [mix(P.woodDark, INK, 0.4), P.woodDark, mix(P.woodDark, WHITE, 0.08), mix(P.woodDark, WHITE, 0.15)] };
 /** Tarred timber: the sauna rafts' cabins and the club's hut. */
-export const TAR: Stuff = { name: "tar", ramp: [mix(PAINT.tar, INK, 0.45), PAINT.tar, mix(PAINT.tar, P.woodDark, 0.45), mix(PAINT.tar, P.wood, 0.3)] };
+export const TAR: Stuff = { name: "tar", ramp: [mix(PAINT.tar, INK, 0.45), PAINT.tar, mix(PAINT.tar, WHITE, 0.08), mix(PAINT.tar, WHITE, 0.15)] };
 /** Cast iron, painted black-green: the old town's lamp posts, a balcony's bars, a basket for a fire. */
-export const CAST: Stuff = { name: "cast iron", ramp: [mix(METAL.castIron, INK, 0.4), METAL.castIron, METAL.lampPost, METAL.lampHat, mix(METAL.lampHat, WHITE, 0.2)] };
+export const CAST: Stuff = { name: "cast iron", ramp: [mix(METAL.castIron, INK, 0.4), METAL.castIron, METAL.lampPost, METAL.lampHat] };
 /** Galvanised steel: the harbour's lamps, a tube railing, a ladder, a roof's posts. */
-export const STEEL: Stuff = { name: "steel", ramp: [METAL.pipeCap, METAL.pipe, METAL.rail, METAL.pipeShine] };
+export const STEEL: Stuff = { name: "steel", ramp: [METAL.pipeCap, METAL.pipe, mix(METAL.pipe, METAL.rail, 0.5), METAL.rail] };
 /** White-painted concrete: the diving tower's legs, the map's piers. */
 export const CONCRETE: Stuff = { name: "concrete", ramp: [FACADE.marbleSeam, mix(FACADE.marbleWall, FACADE.marbleSeam, 0.45), FACADE.marbleWall, mix(FACADE.marbleWall, WHITE, 0.55)] };
 /** A rope, hemp. */
 export const ROPE: Stuff = { name: "rope", ramp: [mix(P.woodDark, INK, 0.2), mix(P.wood, P.woodDark, 0.4), mix(P.wood, WHITE, 0.2)] };
 
-/** Painted planks or a painted door in `color`, its joints in `line`: the shade and the shadow from the line, the light a little toward white. */
+/** Painted planks or a painted door in `color`, its joints in `line`: the shadow and the shade from the line, the grain between the face and the line (no tone lighter than the paint: a lighter one came nearer his skin and the coins). */
 const painteds = new Map<string, Stuff>();
 export function painted(color: string, line: string): Stuff {
   let s = painteds.get(color + line);
-  if (!s) painteds.set(color + line, (s = { name: `painted ${color}`, ramp: [mix(line, INK, 0.3), line, color, mix(color, WHITE, 0.12)] }));
+  if (!s) painteds.set(color + line, (s = { name: `painted ${color}`, ramp: [mix(line, INK, 0.3), line, color, mix(color, line, 0.45)] }));
   return s;
 }
 
@@ -135,7 +135,6 @@ export function lamp(kind: LampKind, x: number, ground: number, tall: number, li
   x = Math.round(x);
   ground = Math.round(ground);
   const glass = lit ? LAMP : METAL.lampGlass;
-  const glassTop = lit ? mix(LAMP, METAL.lampHat, 0.25) : mix(METAL.lampGlass, METAL.lampHat, 0.3);
   if (kind === "old") {
     // 9 wide, the post's three columns from x - 1; the lantern 13 rows over the post.
     const H = tall + 13;
@@ -154,7 +153,7 @@ export function lamp(kind: LampKind, x: number, ground: number, tall: number, li
       for (let y = 4; y < 10; y++) {
         dot(g, 1, y, C(2));
         dot(g, 7, y, C(1));
-        for (let i = 2; i < 7; i++) dot(g, i, y, i === 4 ? C(1) : y === 4 ? glassTop : glass);
+        for (let i = 2; i < 7; i++) dot(g, i, y, i === 4 ? C(1) : glass);
       }
       box(g, 1, 10, 7, 1, C(2));
       dot(g, 1, 10, C(3));
@@ -196,12 +195,9 @@ export function lamp(kind: LampKind, x: number, ground: number, tall: number, li
       box(g, 1, 0, 8, 1, C(3));
       dot(g, 0, 0, C(2));
       dot(g, 9, 0, C(2));
-      dot(g, 2, 0, C(4));
       box(g, 0, 1, 10, 1, C(1));
       box(g, 1, 2, 8, 1, C(2));
       box(g, 2, 3, 6, 3, glass);
-      box(g, 2, 3, 6, 1, glassTop);
-      dot(g, 2, 4, mix(glass, C(3), 0.3));
       box(g, 3, 6, 4, 1, C(1));
       dot(g, 3, 6, C(2));
       const foot = H - 5;
@@ -261,7 +257,7 @@ export function lamp(kind: LampKind, x: number, ground: number, tall: number, li
     for (let y = 3; y < 7; y++) {
       dot(g, 1, y, C(2));
       dot(g, 5, y, C(1));
-      box(g, 2, y, 3, 1, y === 3 ? glassTop : glass);
+      box(g, 2, y, 3, 1, glass);
     }
     box(g, 1, 7, 5, 1, C(1));
     dot(g, 1, 7, C(2));
@@ -278,7 +274,7 @@ export function lamp(kind: LampKind, x: number, ground: number, tall: number, li
   light(x, y0 + 3, 3, 4, "lamp");
 }
 /** A park's lamp posts, painted the dark green of park iron. */
-const PARK: Stuff = { name: "park iron", ramp: [mix("#1f3a2c", INK, 0.35), "#1f3a2c", "#2c4a39", "#3e5e4b"] };
+const PARK: Stuff = { name: "park iron", ramp: [mix("#1f3a2c", INK, 0.35), "#1f3a2c", "#2c4a39", "#34503f"] };
 
 // --- Railings and fences ------------------------------------------------------------------------------------------
 
@@ -346,37 +342,37 @@ export function railing(kind: RailKind, x0: number, x1: number, top: number, h: 
 
 /**
  * Painted plank walls from `top` down to `ground`, as the front page has them, drawn plank by plank: the joints in `line`,
- * each plank's grain and a nail now and then, a shadow under the eaves, the foot darker where it meets the ground, white
- * trim at the corners lit on its left.
+ * each plank's grain and a nail now and then, a shadow under the eaves, the foot darker where it meets the ground, the
+ * white trim at the corners.
  */
 export function plankWall(x: number, top: number, w: number, color: string, line: string, ground: number) {
   const h = Math.round(ground - top);
   const s = painted(color, line);
-  const trim = [mix(PAINT.trim, line, 0.3), PAINT.trim];
   put("plank wall", [s], `${color}|${line}|${w}|${h}`, w, h, Math.round(x), Math.round(top), (g) => {
     for (let y = 0; y < h; y++)
       for (let i = 0; i < w; i++) {
         let c: string;
-        if (i < 2 || i >= w - 2) c = i === 0 || i === w - 2 ? trim[1] : trim[0];
+        const isTrim = i < 2 || i >= w - 2;
+        if (isTrim) c = PAINT.trim;
         else if (i >= 3 && (i - 3) % 4 === 0) c = T(s, 1);
         else {
           const plank = Math.floor((i - 3) / 4);
           c = T(s, 2);
           // The grain: a streak down the plank now and then, a few pixels long, in a tone between the face and the joint.
           const j = (i - 3) % 4;
-          if (j > 0 && hash(plank, j, (y + plank * 3) >> 2, 47) < 0.13) c = mix(T(s, 2), T(s, 1), 0.45);
+          if (j > 0 && hash(plank, j, (y + plank * 3) >> 2, 47) < 0.13) c = T(s, 3);
           if ((y === 3 || y === h - 4) && (i - 3) % 4 === 2) c = T(s, 1);
         }
-        if (y < 2) c = y === 0 ? T(s, 0) : mix(c, T(s, 0), 0.5);
-        else if (y >= h - 2 && i >= 2 && i < w - 2) c = mix(c, T(s, 1), 0.5);
+        if (!isTrim && y < 2) c = y === 0 ? T(s, 0) : T(s, 1);
+        else if (!isTrim && y >= h - 2) c = T(s, 3);
         dot(g, i, y, c);
       }
   });
 }
 
 /**
- * A painted door with two raised panels (the kiosk's, the home's), drawn as the kit's: each panel lit on its top and left
- * edge and shaded on its bottom and right, a brass knob with its glint and a keyhole under it, a kick rail at its foot;
+ * A painted door with two raised panels (the kiosk's, the home's), drawn as the kit's: each panel shaded on its bottom and
+ * right edge (no tone lighter than the panel: a lighter one came nearer the coins), a brass knob and a keyhole under it, a kick rail at its foot;
  * open, a dark hole with its frame's shadow. Padlocked while what is behind it is to come.
  */
 export function panelDoor(d: Door, color: string, panel: string) {
@@ -390,26 +386,24 @@ export function panelDoor(d: Door, color: string, panel: string) {
       box(g, 0, 0, 1, d.h, mix(DOORWAY.wood, INK, 0.25));
       return;
     }
-    box(g, 0, 0, d.w, d.h, T(s, 2));
+    const dark = mix(color, INK, 0.3);
+    box(g, 0, 0, d.w, d.h, color);
     for (let y = 0; y < d.h; y++) {
-      dot(g, 0, y, T(s, 3));
-      dot(g, d.w - 1, y, T(s, 1));
+      dot(g, 0, y, panel);
+      dot(g, d.w - 1, y, dark);
     }
-    box(g, 0, 0, d.w, 1, T(s, 3));
+    box(g, 0, 0, d.w, 1, panel);
     for (const py of [2, 17]) {
       const pw = d.w - 4;
+      // The raised panel in the panel's colour, its bevel shaded below and on the right, the door's own colour in its grain.
       box(g, 2, py, pw, 12, panel);
-      box(g, 2, py, pw, 1, mix(panel, WHITE, 0.16));
-      box(g, 2, py, 1, 12, mix(panel, WHITE, 0.1));
-      box(g, 2, py + 11, pw, 1, T(s, 1));
-      box(g, 1 + pw, py, 1, 12, T(s, 1));
-      // A grain down the panel.
-      for (let y = py + 2; y < py + 10; y++) if (hash(d.w, y >> 2, py, 49) < 0.4) dot(g, 4 + ((y * 3) % (pw - 4)), y, mix(panel, T(s, 1), 0.35));
+      box(g, 2, py + 11, pw, 1, dark);
+      box(g, 1 + pw, py, 1, 12, dark);
+      for (let y = py + 2; y < py + 10; y++) if (hash(d.w, y >> 2, py, 49) < 0.4) dot(g, 4 + ((y * 3) % (pw - 4)), y, color);
     }
-    box(g, 1, d.h - 2, d.w - 2, 2, T(s, 1));
-    box(g, 1, d.h - 2, d.w - 2, 1, mix(T(s, 2), T(s, 1), 0.5));
+    box(g, 1, d.h - 2, d.w - 2, 2, dark);
+    box(g, 1, d.h - 2, d.w - 2, 1, mix(color, dark, 0.5));
     box(g, d.w - 4, 15, 2, 2, METAL.brass);
-    dot(g, d.w - 4, 15, mix(METAL.brass, WHITE, 0.4));
     dot(g, d.w - 3, 16, mix(METAL.brass, INK, 0.3));
     dot(g, d.w - 3, 18, INK);
   });
@@ -517,9 +511,7 @@ export function saunaCabin(x: number, y: number, t: number) {
     dot(g, 9, 10, METAL.brass);
     // The window's frame and the stove's light behind it.
     box(g, 17, 4, 10, 7, T(WOOD, 0));
-    box(g, 17, 4, 10, 1, T(WOOD, 1));
     box(g, 18, 5, 8, 5, LAMP);
-    box(g, 18, 5, 8, 1, mix(LAMP, T(WOOD, 1), 0.35));
     box(g, 22, 5, 1, 5, T(WOOD, 0));
   });
   light(cx + 18, y - 13, 4, 5, "soft");
@@ -528,9 +520,7 @@ export function saunaCabin(x: number, y: number, t: number) {
   put("stove pipe", [STEEL], "", 5, 8, cx + 23, y - 28, (g) => {
     box(g, 0, 0, 5, 1, T(STEEL, 1));
     box(g, 1, 1, 3, 7, T(STEEL, 1));
-    dot(g, 1, 0, T(STEEL, 3));
-    for (let yy = 1; yy < 8; yy++) dot(g, 1, yy, T(STEEL, 3));
-    dot(g, 3, 4, T(STEEL, 0));
+    for (let yy = 1; yy < 8; yy++) dot(g, 3, yy, T(STEEL, 0));
   });
   if (!view.reduced) smoke(cx + 24, y - 30, t, { ...STOVE_SMOKE, rise: 18 });
 }
@@ -559,13 +549,12 @@ function clubHut(x: number, top: number, w: number, water: number, t: number) {
     for (let y = 0; y < 16; y++) dot(g, 0, y, T(TAR, 2));
     box(g, 1, 4, 8, 1, T(TAR, 1));
     box(g, 1, 11, 8, 1, T(TAR, 1));
-    dot(g, 6, 8, METAL.brass);
+    dot(g, 6, 8, T(TAR, 3));
   });
   put("stove pipe", [STEEL], "tall", 5, 14, x + 51, top - 15, (g) => {
     box(g, 0, 0, 5, 1, T(STEEL, 1));
     box(g, 1, 1, 3, 13, T(STEEL, 1));
-    for (let y = 0; y < 14; y++) dot(g, 1, y, T(STEEL, 3));
-    dot(g, 3, 6, T(STEEL, 0));
+    for (let y = 1; y < 14; y++) dot(g, 3, y, T(STEEL, 0));
   });
   if (!view.reduced) smoke(x + 52, top - 18, t + 30, STOVE_SMOKE);
 }

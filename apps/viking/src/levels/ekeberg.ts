@@ -564,7 +564,7 @@ function railing() {
   rail("tube", 216 * TILE, 251 * TILE, T * TILE - 14, 14, 24, VIEW_RAIL);
 }
 /** The railing's steel, in the hill's own tone of it. */
-const VIEW_RAIL: Stuff = { name: "viewpoint rail", ramp: [mix(HILL.rail, INK, 0.45), mix(HILL.rail, INK, 0.2), HILL.rail, mix(HILL.rail, WHITE, 0.3)] };
+const VIEW_RAIL: Stuff = { name: "viewpoint rail", ramp: [mix(HILL.rail, INK, 0.45), mix(HILL.rail, INK, 0.2), HILL.rail, mix(HILL.rail, WHITE, 0.12)] };
 
 /** The leaves a gust carries: a few streaming through while it warns, many while it blows, the grass bending. */
 function gustLeaves(z: Zone, t: number) {

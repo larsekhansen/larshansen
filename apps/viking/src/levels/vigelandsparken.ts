@@ -315,7 +315,7 @@ function gate(v: View) {
 }
 
 /** The bridge's wrought iron. */
-const BRIDGE_IRON: Stuff = { name: "bridge iron", ramp: [mix(V.iron, INK, 0.35), V.iron, mix(V.iron, WHITE, 0.14), mix(V.iron, WHITE, 0.28)] };
+const BRIDGE_IRON: Stuff = { name: "bridge iron", ramp: [mix(V.iron, INK, 0.35), V.iron, mix(V.iron, WHITE, 0.07), mix(V.iron, WHITE, 0.12)] };
 
 /** The bridge: granite parapets with a bronze figure on every post, lamps between, the pond under it. */
 function bridge() {
