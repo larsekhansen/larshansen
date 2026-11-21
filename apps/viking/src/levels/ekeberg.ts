@@ -7,6 +7,7 @@ import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
+import { lampPool } from "@larshansen/pixelkit/props";
 import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
@@ -537,6 +538,9 @@ function quarry() {
   }
 }
 
+/** Where the viewpoint's old lamp stands, at the end of the railing. */
+const VIEW_LAMP = 249 * TILE + 8;
+
 /** The viewpoint: Ekebergrestauranten behind the terrace, white and square; the railing along the deck; the old lamp at the end. */
 function viewpoint(v: View) {
   const g = T * TILE;
@@ -554,7 +558,7 @@ function viewpoint(v: View) {
   // The deck's slab, out over the cliff, on brackets.
   for (let sx = 217 * TILE; sx < COLS * TILE; sx += 3 * TILE) for (let k = 0; k < 8; k++) R(sx - k, g + 6 + k, 2 + k, 1, HILL.graniteDark);
   // The viewpoint's lamp at the end of the railing: lit once this level is cleared.
-  const lx = 249 * TILE + 8;
+  const lx = VIEW_LAMP;
   // An old cast-iron lantern (order 28), lit by day too once this level is cleared; after dark its glass is a lamp's light.
   lamp("old", lx, g, 26, v.cleared.includes("ekeberg") || v.runeAt !== null);
 }
@@ -708,6 +712,8 @@ export const EKEBERG: LevelDef = {
     },
     front() {
       railing();
+      // After dark the viewpoint's old lamp lights the deck under it (order 32, ADR 0054).
+      lampPool(VIEW_LAMP + 1, T * TILE);
     },
     ground: () => ({ top: HILL.grass, dot: HILL.grassDark, fill: HILL.soil }),
     tile(t, c, r, x, y, m) {

@@ -1,5 +1,6 @@
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { ROLES } from "@larshansen/pixelkit/palette";
+import { view } from "@larshansen/pixelkit/paint";
 import { invaders, lean, type Sprite } from "../render/sprite";
 import type { Frame } from "./frames";
 
@@ -112,6 +113,29 @@ export function glamFrame(f: Frame): Frame | null {
   if (glam.mode === "bare") return f.bare ?? f;
   if (glam.mode === "marks") return f.marks ?? null;
   return sheened(f);
+}
+
+/** How much of its light the red outline keeps over a level's own dark (order 31): as much as over the night's tint. */
+export const RING_OVER_DARK = 0.9;
+
+/**
+ * Over a level's own dark, which comes after the night's tint and covers all but its lights (Nordmarka under the trees,
+ * Vålerenga's lane behind the church): each invader's neon glow, and over it the red outline alone, on its own pixels, as
+ * clear as by day (orders 27, 31; Vålerenga's since order 32), so the dark round it is as dark as before.
+ */
+export function overTheDark(g: CanvasRenderingContext2D, dark?: (wx: number) => boolean) {
+  const a = g.globalAlpha;
+  // Where the dark lies only over part of the level (Vålerenga's lane), only the invaders under it: elsewhere `afterDark` drew them.
+  const under = (s: Sprite, x: number) => !dark || dark(x + view.camX + s.whole.width / 2);
+  g.globalAlpha = a * 0.8;
+  invaders((s, x, y) => {
+    if (!under(s, x)) return;
+    if (!s.glow) s.glow = glowOf(s);
+    g.drawImage(s.glow, x - GLOW + 2, y - GLOW + 2);
+  });
+  g.globalAlpha = a * RING_OVER_DARK;
+  invaders((s, x, y) => under(s, x) && g.drawImage(s.ring, x, y));
+  g.globalAlpha = a;
 }
 
 /** How far the glow reaches past an invader's shape (its outline covers the first two pixels of it). */

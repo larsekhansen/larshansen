@@ -1,4 +1,4 @@
-import { R as rect, light, view } from "@larshansen/pixelkit/paint";
+import { R as rect, view } from "@larshansen/pixelkit/paint";
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { SHOT, windingUp, type Enemy, type Shot } from "../game/enemies";
 import { FOE_INK, SHADES, drawFoe, drawFoeLook, foeFrame, foeLooks, glamFire, mark, type Looks } from "../alive/foes";
@@ -329,10 +329,8 @@ export function drawLook(e: Enemy, t: number): boolean {
     kid(e, t);
     return true;
   }
-  if (!drawFoeLook(e, t)) return false;
-  // The grill's coals light what is round them.
-  if (look === "grill") light(Math.round(e.x - 5), Math.round(e.y) - 15, 10, 5, "soft");
-  return true;
+  // The grill's fire is the glamour's: after dark it glows in its own neon (`glows`), not a lamp's warm light (order 32, ADR 0054).
+  return drawFoeLook(e, t);
 }
 
 // What these looks throw, as frames (order 24): a chip, a cone, a snowball, each turning over in flight (two frames by

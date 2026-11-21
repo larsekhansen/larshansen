@@ -18,9 +18,11 @@ import type { EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
+import { overTheDark } from "../alive/glamour";
 import { frame } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
+import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
@@ -252,7 +254,7 @@ function dark(x: number, v: View) {
 /** What shows through the dark: the church's windows, the lamps in the lane, the flag and the bench. */
 function lights(v: View): Light[] {
   const out: Light[] = [];
-  for (const w of CHURCH_WINDOWS) out.push({ rect: { x: w.x - 1, y: w.y - 1, w: 8, h: 18 }, dark: 0 }, { x: w.x + 3, y: w.y + 12, rings: [[22, 0.5], [14, 0.25]] });
+  for (const w of CHURCH_WINDOWS) out.push({ rect: { x: w.x - 1, y: w.y - 1, w: 8, h: 20 }, dark: 0 }, { x: w.x + 3, y: w.y + 12, rings: [[22, 0.5], [14, 0.25]] });
   for (const x of LANE_LAMPS) out.push({ x, y: S * TILE - 40, rings: [[34, 0.45], [24, 0.2], [10, 0]] });
   for (const f of v.flags) if (f.x > 80 * TILE && f.x < 112 * TILE) out.push({ x: f.x, y: f.bottom - 20, rings: [[14, 0.4]] });
   return out;
@@ -1279,8 +1281,14 @@ export const NABOLAGET: LevelDef = {
     },
     shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     lights: (v) => lights(v),
+    // The lane's dark behind the church, with the church's windows and the lane's lamps through it, and what is drawn over the
+    // night (the cats' eyes, the paper cranes, the Pi and its light). Not drawn from order 15, when the night left `main.ts` for
+    // Nordmarka's file and only Nordmarka was given it, until order 32 (ADR 0054).
+    night: (v, him, boards, map) => drawNight(NABOLAGET, v, him, boards, map),
     overDark: (v) => {
-      for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
+      // In the lane's dark the invaders keep their glow and their red outline, as under Nordmarka's trees (order 32).
+      overTheDark(ctx(), (x) => dark(x, v) > 0);
+      for (const e of v.enemies) if (e.alive && dark(e.x, v) > 0) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
       cranes(v.t);
       pi(v);
     },

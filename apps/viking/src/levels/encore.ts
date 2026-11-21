@@ -1,11 +1,12 @@
 import { box, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { DECK, tile as textured, type Grain } from "../alive/ground";
 import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
+import { lampPool } from "@larshansen/pixelkit/props";
 import { ENCORE as WORDS } from "../game/story";
 import { LOKI_STEPS, lokiBoss, type Loki, type LokiDef } from "../game/loki";
 import { drawOsloHills } from "../render/backdrop";
@@ -190,19 +191,26 @@ function lights(v: View) {
     const x = c * TILE + 4;
     const y = ROOF + 7;
     R(x - 2, y, 5, 5, "#0e0d10");
-    R(x - 1, y + 4, 3, 2, mix(LENSES[k], "#fff4dc", p));
+    const colour = mix(LENSES[k], "#fff4dc", p);
+    R(x - 1, y + 4, 3, 2, colour);
     // The beam: a slow sweep (none with reduced motion, nor once the stage is plain or before the show), down to the deck.
     if (waiting()) return;
+    // After dark the lens is lit, its own colour over the dark (order 32, ADR 0054), and so is its beam.
+    light(x - 1, y + 4, 3, 2, "window", colour);
     const swing = p > 0 || view.reduced ? 0 : Math.sin(v.t * 0.012 + k * 1.3) * 34;
-    const colour = mix(LENSES[k], "#fff4dc", p);
+    const a = 0.16 + 0.04 * p;
+    const beam = `rgba(${[1, 3, 5].map((i) => parseInt(colour.slice(i, i + 2), 16)).join(", ")}, ${a.toFixed(2)})`;
     // Light adds to what it falls on: the beam brightens the curtain and the deck under it.
-    g.globalAlpha = 0.16 + 0.04 * p;
+    g.globalAlpha = a;
     g.globalCompositeOperation = "lighter";
     for (let s = 0; s < 10; s++) {
       const yy = y + 6 + s * ((ground - y - 6) / 10);
       const w = 4 + s * 2.6;
       const cx = x + 0.5 + (swing * s) / 10;
-      R(Math.round(cx - w / 2), Math.round(yy), Math.round(w), Math.ceil((ground - y - 6) / 10), colour);
+      const [bx, by, bw] = [Math.round(cx - w / 2), Math.round(yy), Math.round(w)];
+      R(bx, by, bw, Math.ceil((ground - y - 6) / 10), colour);
+      // Its light, the slices end to end, and not over the speaker stacks, which stand in front of it.
+      beamLight(bx, by, bw, Math.round(y + 6 + (s + 1) * ((ground - y - 6) / 10)) - by, beam);
     }
     g.globalCompositeOperation = "source-over";
     g.globalAlpha = 1;
@@ -212,7 +220,24 @@ function lights(v: View) {
     g.globalAlpha = 0.12;
     R(Math.round(show.loki.x) - 12, ROOF + 7, 24, ground - ROOF - 7, "#dfe8ff");
     g.globalAlpha = 1;
+    beamLight(Math.round(show.loki.x) - 12, ROOF + 7, 24, ground - ROOF - 7, "rgba(223, 232, 255, 0.12)");
   }
+}
+
+/** A slice of a beam as a light, but where a speaker stack stands in front of it. */
+function beamLight(x: number, y: number, w: number, h: number, colour: string) {
+  const top = TOPS * TILE + 4;
+  if (y + h <= top) return void light(x, y, w, h, "soft", colour);
+  // Below the stacks' tops: the slice in the gaps between them.
+  if (y < top) light(x, y, w, top - y, "soft", colour);
+  let from = x;
+  for (const c of STACKS) {
+    const [s0, s1] = [c * TILE, c * TILE + 2 * TILE];
+    if (s1 <= from || s0 >= x + w) continue;
+    if (s0 > from) light(from, Math.max(y, top), s0 - from, y + h - Math.max(y, top), "soft", colour);
+    from = Math.max(from, s1);
+  }
+  if (x + w > from) light(from, Math.max(y, top), x + w - from, y + h - Math.max(y, top), "soft", colour);
 }
 
 /** The neon round the stage's mouth (the glamour's: off once he is plain, dark glass then). */
@@ -220,21 +245,39 @@ function neon(v: View) {
   const on = glammed();
   const a = on ? ENEMY.hotPink : "#3a3440";
   const b2 = on ? ENEMY.lime : "#34383a";
-  R(X0 + 2, ROOF + 10, X1 - X0 - 4, 1, a);
-  R(X0 + 2, ROOF + 12, X1 - X0 - 4, 1, b2);
+  // A tube, and while the glamour is on, its light: after dark the neon is its own colour over the dark (order 32, ADR 0054),
+  // as the encore's stop on the map is (order 30). Neon is the glamour's, and this stage is the glamour's.
+  const tube = (x: number, y: number, w: number, h: number, c: string) => {
+    R(x, y, w, h, c);
+    if (on) light(x, y, w, h, "window", c);
+  };
+  // The tubes along the stage's mouth; their light only where nothing hangs in front of them (the lights' cans, the ball's wire).
+  const front = [...CANS.map((c) => [c * TILE + 2, c * TILE + 7] as const), [BALL_X, BALL_X + 1] as const].sort((p, q) => p[0] - q[0]);
+  for (const [y, c] of [[ROOF + 10, a], [ROOF + 12, b2]] as const) {
+    R(X0 + 2, y, X1 - X0 - 4, 1, c);
+    if (!on) continue;
+    let x = X0 + 2;
+    for (const [h0, h1] of front) {
+      if (h0 > x) light(x, y, h0 - x, 1, "window", c);
+      x = Math.max(x, h1);
+    }
+    if (X1 - 2 > x) light(x, y, X1 - 2 - x, 1, "window", c);
+  }
   // Two lightning bolts on the backdrop, in tubes, either side of the ball: a zigzag of three strokes each.
   for (const bx of [24 * TILE, 36 * TILE]) {
     const by = ROOF + 26;
-    for (let k = 0; k < 8; k++) R(bx + k, by + k, 2, 1, a);
-    for (let k = 0; k < 6; k++) R(bx + 8 - k, by + 8, 1, 1, a);
-    for (let k = 0; k < 9; k++) R(bx + 3 + k, by + 8 + k, 2, 1, a);
+    for (let k = 0; k < 8; k++) tube(bx + k, by + k, 2, 1, a);
+    for (let k = 0; k < 6; k++) tube(bx + 8 - k, by + 8, 1, 1, a);
+    for (let k = 0; k < 9; k++) tube(bx + 3 + k, by + 8 + k, 2, 1, a);
   }
   void v;
 }
 
 /** The mirror ball over the middle of the stage, turning until the stage is plain, then still. */
+/** Where the mirror ball hangs: its wire comes down through the neon along the stage's mouth. */
+const BALL_X = 30 * TILE;
 function ball(v: View) {
-  const x = 30 * TILE;
+  const x = BALL_X;
   R(x, ROOF + 7, 1, 10, METAL.castIron);
   mirrorBall(x, ROOF + 21, glammed() && !waiting() ? v.t : 0);
 }
@@ -319,6 +362,8 @@ export const ENCORE: LevelDef = {
       stageBack(v);
     },
     front() {
+      // After dark the park's lamp lights the path under it (order 32, ADR 0054).
+      lampPool(6 * TILE + 3, ground);
       stageFront();
     },
     ground: () => ({ top: mix(PALETTE.grass, "#b8a888", 0.6), dot: PALETTE.grassDark, fill: PALETTE.earth, kind: "gravel" }),

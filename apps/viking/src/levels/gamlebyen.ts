@@ -433,11 +433,10 @@ function mid() {
   }
 }
 
-/** A street lamp of the town, its light on the cobbles. */
+/** A street lamp of the town (its light on the cobbles is in `pools`). */
 function streetLamp(x: number, ground: number) {
   // The old town's cast iron (order 28): a lantern on a fluted post.
   lamp("old", x, ground, 26);
-  light(x - 14, ground - 1, 30, 4, "pool");
 }
 
 /** The torches by the harbour, in the order they go out at dawn, and the step of the dawn each goes out at. */
@@ -459,7 +458,25 @@ function torch(x: number, ground: number, t: number, out = false) {
   const flick = view.reduced ? 0 : Math.floor((t + x) / 5) % 3;
   light(x - 1, ground - 30 + flick, 4, 6 - flick, "lamp", G.flame);
   light(x, ground - 28 + flick, 2, 3, "lamp", G.flameHot);
-  light(x - 16, ground - 1, 34, 4, "pool");
+}
+
+/** The street's lamps; the town's, the market's and the quay's torches, by column, each on its ground's row. */
+const STREET_LAMPS = [10, 22, 31];
+const TORCHES: [number[], number][] = [
+  [[140, 158, 170], TOWN],
+  [[179, 185, 203, 210], MARKET],
+  [QUAY_TORCHES, QUAY]
+];
+
+/**
+ * The light of the lamps and the torches on the ground under them, and of the market hall's door on the street (order 32, ADR
+ * 0054): registered in front, over the tiles, so it lies on the cobbles and the planks (registered with the lamps behind the
+ * lane, the tiles covered it); a torch gone out at dawn has none.
+ */
+function pools() {
+  for (const c of STREET_LAMPS) light(c * TILE + 8 - 14, STREET * TILE, 30, 4, "pool");
+  for (const [cs, row] of TORCHES) for (const c of cs) if (!isOut(c)) light(c * TILE + 6 - 16, row * TILE, 34, 4, "pool");
+  light(191 * TILE + 50, MARKET * TILE, 50, 4, "pool");
 }
 
 /**
@@ -525,10 +542,9 @@ function market(t: number) {
   R(x0, g - 4 * TILE, x1 - x0, 4 * TILE, G.timber);
   for (let x = x0; x < x1; x += 4) R(x, g - 4 * TILE, 1, 4 * TILE, G.timberDark);
   R(x0 + 64, g - 30, 18, 30, mix(G.timberDark, INK, 0.4));
-  light(x0 + 66, g - 28, 14, 26, "soft", "rgba(255, 170, 90, 0.35)");
+  light(x0 + 66, g - 28, 14, 26, "soft", "rgba(255, 190, 120, 0.35)");
   // Firelight from inside: slits in the plank wall, and the light from the door on the street.
   for (const wx of [x0 + 18, x0 + 40, x0 + 110, x0 + 140]) light(wx, g - 44, 3, 10, "window");
-  light(x0 + 50, g - 1, 50, 4, "pool");
   // The shingles catch the torches' light along their lower edge.
   for (let x = x0 + 8; x < x1 - 8; x += 6) light(x, g - 4 * TILE - 1, 3, 1, "soft", "rgba(255, 190, 120, 0.4)");
   for (let k = 0; k < 4 * TILE; k++) R(x0 + 8 + Math.floor(k / 2), g - 4 * TILE - k, x1 - x0 - 16 - k, 1, k % 6 === 0 ? G.timberDark : G.shingle);
@@ -1370,13 +1386,11 @@ export const GAMLEBYEN: LevelDef = {
       calm = dawnOf(v);
       tbaneDoor(v.doors.get("tbane"));
       // The modern street's lamps; the medieval town's torches from the town wall on.
-      for (const c of [10, 22, 31]) streetLamp(c * TILE + 8, STREET * TILE);
+      for (const c of STREET_LAMPS) streetLamp(c * TILE + 8, STREET * TILE);
       church();
       bishop();
       townWall();
-      for (const c of [140, 158, 170]) torch(c * TILE + 6, TOWN * TILE, v.t, isOut(c));
-      for (const c of [179, 185, 203, 210]) torch(c * TILE + 6, MARKET * TILE, v.t, isOut(c));
-      for (const c of QUAY_TORCHES) torch(c * TILE + 6, QUAY * TILE, v.t, isOut(c));
+      for (const [cs, row] of TORCHES) for (const c of cs) torch(c * TILE + 6, row * TILE, v.t, isOut(c));
       market(v.t);
       // The dig in the park: a rope round it on stakes.
       for (const x of [23 * TILE + 12, 26 * TILE + 2]) R(x, STREET * TILE - 10, 2, 10, G.timber);
@@ -1387,6 +1401,7 @@ export const GAMLEBYEN: LevelDef = {
       lastLongship(v.t);
     },
     front(v) {
+      pools();
       reflections(v);
       closing(v);
       const s = v.grounds as Ruins | null;

@@ -511,10 +511,13 @@ const FLAMES = [
 const brazierFrame = (k: number) => frame(`brazier, flames ${k + 1}`, FOE_INK, [glamFire(FLAMES[k]), 0, 0], [BRAZIER_BASE, 0, 4], [["XXXXXXXXXXXXX"], 0, 4]);
 const BRAZIER: Looks = { w: 13, h: 16, idle: [0, 1, 2, 3].map(brazierFrame), move: [0, 1, 2, 3].map(brazierFrame), rate: 5 };
 
-/** A brazier on its stone foot: an iron basket, coals, flames that flicker on its own clock. It hurts from above. 13 x 16. */
+/**
+ * A brazier on its stone foot: an iron basket, coals, flames that flicker on its own clock. It hurts from above. 13 x 16. After
+ * dark its fire is the glamour's and glows in its own neon, as every invader's does (`glows`); it gives no lamp's warm light
+ * over it (order 32, ADR 0054: that light turned its magenta and lime to a muddy yellow).
+ */
 function brazier(e: Enemy, t: number) {
   drawFoe(e, foeFrame(e, t, BRAZIER), BRAZIER.w, BRAZIER.h);
-  light(Math.round(e.x - 5), Math.round(e.y) - 16, 10, 5, "soft");
 }
 
 /** The flourish: the flag runs up the keep's pole, and the saluting battery fires three times, puffs of square smoke over the walls. */

@@ -7,7 +7,7 @@ import { keptStrips, seen } from "@larshansen/pixelkit/kept";
 import { drawOar, oarBank, type Oar } from "@larshansen/pixelkit/oars";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
-import type { LedgeLook } from "@larshansen/pixelkit/props";
+import { lampPool, type LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
@@ -317,6 +317,8 @@ function ferry(at: { x: number; y: number }, t: number) {
   R(wh, y - 18, 22, 18, PAINT.ferryWhite);
   R(wh, y - 18, 22, 1, PAINT.ferryShade);
   for (let k = 0; k < 3; k++) R(wh + 2 + k * 7, y - 15, 5, 5, GLASS.pane);
+  // After dark its wheelhouse is lit, as the ferry at Rådhuset's saloon is (order 32, ADR 0054).
+  for (let k = 0; k < 3; k++) light(wh + 2 + k * 7, y - 15, 5, 5);
   R(wh + 6, y - 24, 6, 6, PAINT.ferryRed);
   R(wh + 6, y - 24, 6, 1, INK);
   R(x + 2, y - 6, 1, 6, METAL.rail);
@@ -976,6 +978,8 @@ export const BYGDOY: LevelDef = {
       halls();
     },
     front(v) {
+      // After dark the pier's lamp lights the planks under it (order 32, ADR 0054).
+      lampPool(34 * TILE + 10, FLOOR);
       DECKS.forEach((d) => deckArt(d, v.t));
       const s = v.grounds as Ground | null;
       if (s) PADS.forEach((p, i) => bundle(p, s.pads[i], v.t));

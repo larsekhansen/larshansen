@@ -18,7 +18,7 @@ import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
-import { CAST, box as pbox, dot, prop, tone, type Stuff } from "../alive/props";
+import { CAST, box as pbox, dot, poolAlong, prop, tone, type Stuff } from "../alive/props";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -532,17 +532,36 @@ function lightPole(x: number, y: number) {
     dot(g, 6, 5, K.lantern);
     pbox(g, 2, 34, 2, 2, W(0));
   });
-  light(x + 3, y - 32, 3, 2, "lamp");
 }
+
+/** Where a pole's lamp hangs over the run: its lens, under the hood at the end of the arm. */
+const LENS = { dx: 3, dy: -32, w: 3, h: 2 };
+
+/** The lit trail's poles, every sixth column through the trees at dusk. */
+const TRAIL = Array.from({ length: 7 }, (_, k) => 198 + k * 6);
 
 /** The trees at dusk: the lit trail's poles along the run, their light on the snow. */
 function lanterns(t: number) {
-  for (let c = 198; c < 236; c += 6) {
+  for (const c of TRAIL) {
     const x = c * TILE + 4;
     const y = trackY(x)!;
     lightPole(x, y);
     const glow = view.reduced ? 0 : Math.round(Math.sin(t * 0.05 + c));
     R(x - 8, y - 1, 18 + glow, 1, mix(K.lantern, K.run, 0.4));
+  }
+}
+
+/**
+ * The lit trail after dark (order 32, ADR 0054): each pole's lamp is registered over the dusk under the trees (in front, so the
+ * dusk drawn there does not dim it, as it did), and its light falls on the run under it, a warm pool following the run's steps.
+ */
+function trailLights() {
+  for (const c of TRAIL) {
+    const x = c * TILE + 4;
+    if (!seen(x - 14, x + 20)) continue;
+    const y = trackY(x)!;
+    light(x + LENS.dx, y + LENS.dy, LENS.w, LENS.h, "lamp");
+    poolAlong(x + LENS.dx + 1, 13, trackY);
   }
 }
 
@@ -736,6 +755,7 @@ export const KORKETREKKEREN: LevelDef = {
         const k = Math.min(1, (x - 192 * TILE) / 64, (240 * TILE - x) / 64);
         R(x, view.camY, 4, view.h, `rgba(20, 28, 60, ${(0.32 * k).toFixed(3)})`);
       }
+      trailLights();
       crossing(v.t);
       for (const h of BRANCHES) branchArt(h, h.x > 196 * TILE);
       // The sledge: waiting at the top, under him on the run, left at Midtstuen.

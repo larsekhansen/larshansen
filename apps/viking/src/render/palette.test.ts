@@ -632,7 +632,7 @@ describe("the lane's ground keeps a band of its own (order 28)", () => {
 
 // Order 31 (item 3): in Nordmarka the level's own dark comes after the night's tint and covers everything but the lamp's
 // circle; the invaders showed there as their glow round a dark shape, not their red outline. The outline is now copied again
-// over the dark (`RING_OVER_DARK`), on its own pixels only. Measured as the fields are measured above: the outline as it is
+// over the dark (`RING_OVER_DARK`, `overTheDark` in `alive/glamour.ts`), on its own pixels only. Measured as the fields are measured above: the outline as it is
 // seen against each of the level's fields as it is seen, by day (the red over the field) and under the trees (the field under
 // the level's twilight tint, the outline over it at the strength `afterDark` gives it, the dark of every depth the level has
 // over both, and the outline once more over that).
@@ -641,7 +641,7 @@ describe("under Nordmarka's dark the red outline reads as clearly as by day (ord
     const def = await loadLevel("nordmarka");
     const f = levelFields(def, "day", FIELD_SHARE, await paintedOf("nordmarka"));
     const { NIGHT } = await import("./night");
-    const { RING_OVER_DARK } = await import("../levels/nordmarka");
+    const { RING_OVER_DARK } = await import("../alive/glamour");
     const night = NIGHT.split(",").map(Number) as Rgb;
     const red = rgb(ENEMY.red);
     const phase = def.sky as Phase;

@@ -273,6 +273,22 @@ export function lamp(kind: LampKind, x: number, ground: number, tall: number, li
   });
   light(x, y0 + 3, 3, 4, "lamp");
 }
+/**
+ * A lamp's light on what it stands over (order 32, ADR 0054): a small warm pool, brightest under the lamp at `cx` and gone
+ * `half` pixels either side, lying on the surface `under(x)` (the top of what is lit at x, or null where there is none) and
+ * following it where it is not flat, as the kit's `lampPool` lies on flat ground. Registered as lights, so it is there after
+ * dark only; register it where what it lies on is already drawn (a level's `front`), or the tiles cover it.
+ */
+export function poolAlong(cx: number, half: number, under: (x: number) => number | null, rows = 3, step = 2) {
+  for (let x = cx - half; x < cx + half; x += step) {
+    const mid = x + step / 2;
+    const t = 1 - Math.abs(mid - cx) / half;
+    const y = under(mid);
+    if (t <= 0 || y === null) continue;
+    light(x, y, step, rows, "soft", `rgba(255, 186, 96, ${(0.34 * t * t).toFixed(3)})`);
+  }
+}
+
 /** A park's lamp posts, painted the dark green of park iron. */
 const PARK: Stuff = { name: "park iron", ramp: [mix("#1f3a2c", INK, 0.35), "#1f3a2c", "#2c4a39", "#34503f"] };
 

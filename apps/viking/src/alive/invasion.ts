@@ -1,4 +1,4 @@
-import { R, view } from "@larshansen/pixelkit/paint";
+import { R, light, view } from "@larshansen/pixelkit/paint";
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { TILE } from "@larshansen/pixelkit/config";
 import { frame, stamp, type Frame } from "./frames";
@@ -54,7 +54,15 @@ const FLAMINGO = make("flamingo", [
 /** A neon sign on a pole, 12 x 18: a heart in tubes on a dark board; now and then a tube flickers. */
 const HEART = ["llllllllllll", "lD.NN..NN.Dl", "lDN..NN..NDl", "lDN......NDl", "lD.N....N.Dl", "lD..N..N..Dl", "lDD..NN..DDl", "llllllllllll"].map((r) => r.replace(/\./g, "D"));
 const POLE = [".....mm.....", ".....mm.....", ".....mm.....", ".....mm.....", ".....mm.....", ".....mm.....", ".....mm.....", ".....mm.....", "....mmmm....", "...mmmmmm..."];
-const SIGNS = [make("neon sign", [...HEART, ...POLE]), make("neon sign, a tube flickering", [...HEART.map((r, i) => (i === 2 || i === 3 ? r.replace(/N/g, (_m, k: number) => (k < 6 ? "X" : "N")) : r)), ...POLE])];
+const SIGN_ROWS = [HEART, HEART.map((r, i) => (i === 2 || i === 3 ? r.replace(/N/g, (_m, k: number) => (k < 6 ? "X" : "N")) : r))];
+const SIGNS = SIGN_ROWS.map((rows, k) => make(k ? "neon sign, a tube flickering" : "neon sign", [...rows, ...POLE]));
+/**
+ * The sign's tubes, run by run in each frame (x, y, width, colour): after dark they are lit, their own neon over the dark (order 32,
+ * ADR 0054). A sign in tubes gives light; it is the glamour's, as the encore's stage and its stop on the map are.
+ */
+const TUBES = SIGN_ROWS.map((rows) =>
+  rows.flatMap((row, y) => [...row.matchAll(/N+|X+/g)].map((m) => ({ x: m.index ?? 0, y, w: m[0].length, c: INK[m[0][0]] })))
+);
 
 /** The Invaders' poster on its stand, 16 x 21: LOKI in lime, a striped sunset, his silhouette (horns, the hair). */
 const POSTER = make("poster", [
@@ -131,6 +139,11 @@ export function mirrorBall(x: number, y: number, t: number, up = 0) {
   stamp(BALL[view.reduced ? 0 : Math.floor(t / 8) % 3], Math.round(x - 4), Math.round(y - 4));
 }
 
+/** Where a level's neon signs' boards are (world x, y, w, h): their tubes are lit after dark, and a level's own dark lets them through (order 32). */
+export function signBoards(level: string): { x: number; y: number; w: number; h: number }[] {
+  return (PLACES[level] ?? []).filter((p) => p.kind === "sign").map((p) => ({ x: p.c * TILE + TILE / 2 - Math.floor(SIZE.sign.w / 2), y: p.r * TILE - SIZE.sign.h, w: SIZE.sign.w, h: HEART.length }));
+}
+
 /** The level's evidence of the invasion, behind the lane: what is on the screen, each one copy. */
 export function invasion(level: string, t: number) {
   const list = PLACES[level];
@@ -141,7 +154,11 @@ export function invasion(level: string, t: number) {
     const foot = p.r * TILE;
     if (x + s.w < view.camX - 8 || x > view.camX + view.w + 8) continue;
     if (p.kind === "flamingo") stamp(FLAMINGO, x, foot - s.h);
-    else if (p.kind === "sign") stamp(SIGNS[!view.reduced && Math.floor(t / 7) % 23 === 0 ? 1 : 0], x, foot - s.h);
+    else if (p.kind === "sign") {
+      const k = !view.reduced && Math.floor(t / 7) % 23 === 0 ? 1 : 0;
+      stamp(SIGNS[k], x, foot - s.h);
+      for (const u of TUBES[k]) light(x + u.x, foot - s.h + u.y, u.w, 1, "window", u.c);
+    }
     else if (p.kind === "poster") stamp(POSTER, x, foot - s.h);
     else mirrorBall(x + 4, foot - 4, t, (p.cable ?? 3) * TILE);
   }
