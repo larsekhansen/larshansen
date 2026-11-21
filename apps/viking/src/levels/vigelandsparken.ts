@@ -21,7 +21,7 @@ import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
-import { lamp, type Stuff } from "../alive/props";
+import { box as pbox, dot, lamp, prop, tone, type Stuff } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 
 // Level 12, rune I: Vigelandsparken, by day, eerie and funny. Its one idea: the statues move only while
@@ -286,19 +286,81 @@ function figure(x: number, y: number, pose: number, face: 1 | -1, stone: { base:
 const GRANITE = { base: V.granite, light: V.graniteLight, shade: V.graniteShade };
 const BRONZE = { base: V.bronze, light: V.bronzeLight, shade: V.bronzeDark };
 
+/** The gate's granite (order 31): the park's own greys, darkest first. */
+const GATE_GRANITE: Stuff = { name: "gate granite", ramp: [V.graniteDark, V.graniteShade, V.granite, V.graniteLight] };
+/** A gate lantern's glass, lit after dark (it is registered as a lamp's light where it stands). */
+const GATE_GLASS = mix(P.sail, WHITE, 0.3);
+
+/**
+ * A pillar of the main gate (order 31; ADR 0051): dressed granite in courses with their joints, lit on its left and shaded
+ * on its right, a grain of specks, a moulded cap that overhangs it (no lit band along its top: nothing here is somewhere to
+ * stand) with its shadow under it, and a darker foot where it stands in the gravel. 16 x 50, its shaft at `px`.
+ */
+function gatePillar(px: number) {
+  prop("gate pillar", [GATE_GRANITE], "", 16, 50, px - 2, FLOOR - 50, (g) => {
+    const G = (i: number) => tone(GATE_GRANITE, i);
+    // The cap: three rows over all sixteen, a bevel of fourteen under it; lit at its left end only.
+    pbox(g, 0, 0, 16, 2, G(2));
+    pbox(g, 0, 2, 16, 1, G(1));
+    pbox(g, 1, 3, 14, 1, G(1));
+    dot(g, 0, 0, G(3));
+    dot(g, 1, 0, G(3));
+    dot(g, 0, 1, G(3));
+    dot(g, 15, 1, G(1));
+    // The shaft, x 2 to 13 from row 4 down: courses seven high, their joints, the vertical joints staggered.
+    for (let y = 4; y < 50; y++)
+      for (let x = 2; x < 14; x++) {
+        const course = Math.floor((y - 4) / 7);
+        const joint = (y - 4) % 7 === 6 || x === (course % 2 ? 8 : 5);
+        let c = x === 2 ? G(3) : x === 13 ? G(1) : G(2);
+        if (joint && x > 2) c = G(1);
+        if (!joint && x > 3 && x < 12 && ((x * 7 + y * 13 + course) % 23 === 0)) c = G(1);
+        if (!joint && x > 3 && x < 12 && ((x * 11 + y * 5) % 37 === 0)) c = G(3);
+        dot(g, x, y, c);
+      }
+    // The shadow under the cap, and the foot.
+    for (let x = 3; x < 14; x++) dot(g, x, 4, G(1));
+    pbox(g, 2, 48, 12, 2, G(1));
+    pbox(g, 3, 49, 11, 1, G(0));
+  });
+}
+
+/**
+ * A lantern on a pillar (order 31): the gates' wrought iron, a cage of four panes under a little roof with a finial, on a
+ * collar; 8 x 13, standing on the pillar's cap. Its glass is where the old lantern's was, and lit after dark.
+ */
+function gateLantern(px: number) {
+  prop("gate lantern", [BRIDGE_IRON], "", 8, 13, px + 2, FLOOR - 63, (g) => {
+    const I = (i: number) => tone(BRIDGE_IRON, i);
+    dot(g, 3, 0, I(3));
+    dot(g, 4, 0, I(1));
+    pbox(g, 2, 1, 4, 1, I(2));
+    dot(g, 2, 1, I(3));
+    pbox(g, 1, 2, 6, 1, I(1));
+    dot(g, 1, 2, I(3));
+    pbox(g, 0, 3, 8, 1, I(0));
+    dot(g, 0, 3, I(2));
+    for (let y = 4; y < 12; y++) {
+      dot(g, 1, y, I(3));
+      dot(g, 6, y, I(1));
+    }
+    pbox(g, 2, 4, 4, 1, I(1));
+    pbox(g, 2, 5, 4, 6, GATE_GLASS);
+    pbox(g, 3, 7, 2, 1, mix(GATE_GLASS, V.iron, 0.25));
+    pbox(g, 2, 11, 4, 1, I(1));
+    pbox(g, 2, 12, 4, 1, I(0));
+    dot(g, 2, 12, I(2));
+  });
+  light(px + 4, FLOOR - 58, 4, 6, "lamp");
+}
+
 /** Kirkeveien and the main gate: granite pillars, the wrought-iron gates folded open, lanterns on top. */
 function gate(v: View) {
   tbaneDoor(v.doors.get("tbane"));
   const x = 11 * TILE;
   for (const px of [x, x + 52]) {
-    R(px, FLOOR - 46, 12, 46, V.granite);
-    R(px, FLOOR - 46, 12, 2, V.graniteLight);
-    R(px + 11, FLOOR - 44, 1, 44, V.graniteShade);
-    R(px - 2, FLOOR - 50, 16, 4, V.graniteShade);
-    // The lantern on top, lit.
-    R(px + 3, FLOOR - 60, 6, 10, V.iron);
-    R(px + 4, FLOOR - 58, 4, 6, mix(P.sail, WHITE, 0.3));
-    light(px + 4, FLOOR - 58, 4, 6, "lamp");
+    gatePillar(px);
+    gateLantern(px);
   }
   // The gates folded back against the pillars: black bars, scrolls, gilt tips.
   for (const [gx, d] of [[x + 12, 1], [x + 40, -1]] as const) {

@@ -1,7 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { GLASS, INK, LAMP, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
@@ -16,7 +16,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
-import { lamp, railing as rail, type Stuff } from "../alive/props";
+import { lamp, railing as rail, tramSide, type Stuff } from "../alive/props";
 
 // Level 9, rune E: Ekeberg. Always evening, under the banded sky of The Scream, which Munch set on
 // this hillside. Up from Gamlebyen on the tram's roof as it climbs its trestle to the top of the
@@ -765,27 +765,39 @@ function tram(at: { x: number; y: number }, t: number) {
     if (c >= 18 && c < 45) return Math.max(G1 * TILE, Math.min(G0 * TILE, Math.round(G0 * TILE + ((wx - (18 * TILE + TRAM_W / 2)) / (26 * TILE)) * (G1 - G0) * TILE)));
     return surfaceRow(Math.max(0, c)) * TILE;
   };
+  // At the stop at the top it goes in under the ground (columns 45 to 48): nothing of it below that.
+  const under = (wx: number) => (Math.floor(wx / TILE) >= 45 && Math.floor(wx / TILE) <= 48 && y > ROOF1 ? G1 * TILE : Infinity);
+  // Its side (order 31): one piece from the props kit, held to what shows of it.
+  const g = ctx();
+  const held = y > ROOF1 && x + TRAM_W > 45 * TILE && x < 49 * TILE;
+  if (held) {
+    const [a, b, top] = [45 * TILE - view.camX, 49 * TILE - view.camX, G1 * TILE - view.camY];
+    g.save();
+    g.beginPath();
+    g.rect(-9999, -9999, a + 9999, 29999);
+    g.rect(b, -9999, 29999, 29999);
+    g.rect(a, -9999, b - a, top + 9999);
+    g.clip();
+  }
+  const panes = tramSide(x, y, TRAM_W, 24, 6, 8);
+  if (held) g.restore();
+  // Its windows are lit after dark, as far as they show.
+  for (const p of panes) if (p.y + p.h <= Math.min(under(p.x), under(p.x + p.w - 1))) light(p.x, p.y, p.w, p.h, "window");
   for (let dx = 0; dx < TRAM_W; dx++) {
     const wx = x + dx;
-    const clip = Math.floor(wx / TILE) >= 45 && Math.floor(wx / TILE) <= 48 && y > ROOF1 ? G1 * TILE : Infinity;
+    const clip = under(wx);
     const col = (yy: number, h: number, c: string) => {
       const top = y + yy;
       const end = Math.min(top + h, clip);
       if (end > top) R(wx, top, 1, end - top, c);
     };
-    const gap = dx === 31 || dx === 32;
-    col(0, 2, mix(TRAM.body, WHITE, 0.3));
-    col(2, 22, gap ? TRAM.skirt : TRAM.body);
-    if (!gap && dx > 2 && dx < TRAM_W - 3) col(6, 8, dx % 8 < 6 ? LAMP : TRAM.body);
-    col(20, 4, TRAM.skirt);
     // The bogies, reaching down to the rail wherever it is under them, and their wheels on it.
     if (dx % 32 > 4 && dx % 32 < 12) {
-      const g = Math.min(ground(wx), clip);
-      if (g > y + 24) col(24, g - y - 24, mix(TRAM.skirt, INK, 0.4));
-      if (g >= y + 27) col(g - y - 3, 3, dx % 32 === 8 ? METAL.pipe : INK);
+      const gr = Math.min(ground(wx), clip);
+      if (gr > y + 24) col(24, gr - y - 24, mix(TRAM.skirt, INK, 0.4));
+      if (gr >= y + 27) col(gr - y - 3, 3, dx % 32 === 8 ? METAL.pipe : INK);
     }
   }
-  light(x + 3, y + 6, TRAM_W - 6, 8, "soft");
   // The pantograph, up to where the wire would be.
   R(x + 20, y - 8, 1, 8, METAL.wire);
   R(x + 16, y - 9, 9, 1, METAL.wire);

@@ -4,10 +4,10 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
-import { R, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
+import { R, ctx, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
-import { CAST, lamp, panelDoor, plankWall, post, railing } from "../alive/props";
+import { CAST, lamp, panelDoor, plankWall, post, railing, tramSide } from "../alive/props";
 /** A chimney's smoke on a winter night: pale, thin. */
 const NIGHT_SMOKE = { ...STOVE_SMOKE, rgb: "225, 230, 240", alpha: 0.4 };
 import { ICE } from "@larshansen/pixelkit/surface";
@@ -1294,27 +1294,30 @@ const VIEW_T = { t: 0 };
 function tram(at: { x: number; y: number }) {
   const { x, y } = at;
   const g = S * TILE;
+  // Nothing of it below the street: it rises out of its slot and goes down into the other. Its side (order 31) is one piece
+  // from the props kit, held to above the street; its windows lit after dark as far as they show.
+  const c = ctx();
+  c.save();
+  c.beginPath();
+  c.rect(-9999, -9999, 29999, g - view.camY + 9999);
+  c.clip();
+  const panes = tramSide(x, y, TRAM_W, 52, 8, 12);
+  c.restore();
+  for (const p of panes) if (p.y + p.h <= g) light(p.x, p.y, p.w, p.h, "window");
   for (let dx = 0; dx < TRAM_W; dx++) {
     const wx = x + dx;
-    // Nothing of it below the street: it rises out of its slot and goes down into the other.
     const clip = g;
     const col = (yy: number, h: number, colour: string) => {
       const top = y + yy;
       const end = Math.min(top + h, clip);
       if (end > top) R(wx, top, 1, end - top, colour);
     };
-    const gap = dx === 31 || dx === 32;
-    col(0, 2, mix(TRAM.body, WHITE, 0.3));
-    col(2, 50, gap ? TRAM.skirt : TRAM.body);
-    if (!gap && dx > 2 && dx < TRAM_W - 3) col(8, 12, dx % 8 < 6 ? LAMP : TRAM.body);
-    col(46, 6, TRAM.skirt);
     // The bogies, and their wheels on the rail.
     if (dx % 32 > 4 && dx % 32 < 12) {
       col(52, 9, mix(TRAM.skirt, INK, 0.4));
       col(61, 3, dx % 32 === 8 ? METAL.pipe : INK);
     }
   }
-  light(x + 3, y + 8, TRAM_W - 6, 12, "soft");
   R(x + 20, y - 8, 1, 8, METAL.wire);
   R(x + 16, y - 9, 9, 1, METAL.wire);
 }
