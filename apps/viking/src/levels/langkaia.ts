@@ -212,10 +212,11 @@ const CONCRETE: LedgeLook = { body: FACADE.marbleWall, top: WHITE, edge: FACADE.
 /** A sauna raft: pontoons, a plank deck, and a tarred cabin with a warm window and a smoking stove pipe. */
 function saunaRaft(x: number, y: number, t: number) {
   const n = RAFT_W / TILE;
-  TEXTURED.prop?.("pontoons", x, y, RAFT_W);
+  // Without feel's file each prop is a plain shape where it stands (order 30, ADR 0053).
+  TEXTURED.prop?.("pontoons", x, y, RAFT_W) || R(x + 2, y + 4, RAFT_W - 4, 3, PAINT.tar);
   for (let i = 0; i < n; i++) ledge(x + i * TILE, y, WOOD_LEDGE, i === 0, i === n - 1, false);
   // The cabin, between the deck and its roof: drawn with the props (order 28, `alive/props.ts`).
-  TEXTURED.prop?.("raft", x, y, t);
+  TEXTURED.prop?.("raft", x, y, t) || R(x + TILE, y - 18, 2 * TILE, 18, PAINT.tar);
 }
 
 /** The roof of a sauna's cabin: tarred boards, a ledge he can stand on. */
@@ -285,12 +286,12 @@ function printer(x: number, y: number, t: number) {
 /** Posts under a wooden ledge down to the ground or the water, so a deck or a roof stands on something. */
 function posts(c0: number, c1: number, r: number, ground: number) {
   const y = r * TILE + 5;
-  for (const x of [c0 * TILE + 2, (c1 + 1) * TILE - 5]) TEXTURED.prop?.("post", x, y, ground);
+  for (const x of [c0 * TILE + 2, (c1 + 1) * TILE - 5]) TEXTURED.prop?.("post", x, y, ground) || R(x, y, 3, ground - y, P.woodDark);
 }
 
 /** The sauna club's hut on its pier: black-tarred planks, a lit window, a stove pipe smoking. Its roof is the map's ledge. */
 function clubHut(t: number) {
-  TEXTURED.prop?.("hut", 110 * TILE, 14 * TILE + 5, 4 * TILE, WATER, t);
+  TEXTURED.prop?.("hut", 110 * TILE, 14 * TILE + 5, 4 * TILE, WATER, t) || R(110 * TILE, 14 * TILE + 5, 4 * TILE, WATER - 14 * TILE - 5, PAINT.tar);
 }
 
 /** A small sailboat at its buoy behind the drifting rafts: a white hull, the mast, the furled sail; its crosstree is a ledge. */
@@ -312,7 +313,7 @@ function sailboat() {
 
 /** Sørenga's diving tower: two white concrete legs out of the water, a ladder, its platforms (the map's ledges). */
 function divingTower() {
-  TEXTURED.prop?.("tower", 155 * TILE, 8 * TILE, WATER);
+  if (!TEXTURED.prop?.("tower", 155 * TILE, 8 * TILE, WATER)) for (const x of [4, 70]) R(155 * TILE + x, 8 * TILE, 6, WATER - 8 * TILE, FACADE.marbleWall);
 }
 
 /** A low wooden deck on legs: the sauna club's, with its bench. */
@@ -357,7 +358,7 @@ const SHIP = { x0: 192 * TILE + 8, x1: 229 * TILE + 8, deck: 15 * TILE, mast: MA
 
 /** The rowing boat: a varnished hull, its oars shipped. Its thwart is what he stands on. */
 function rowingBoat(at: { x: number; y: number }) {
-  TEXTURED.prop?.("rowboat", at.x, at.y, BOAT.w);
+  TEXTURED.prop?.("rowboat", at.x, at.y, BOAT.w) || R(at.x, at.y, BOAT.w, 6, P.wood);
 }
 
 /**
