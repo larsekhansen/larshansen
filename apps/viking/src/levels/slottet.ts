@@ -572,7 +572,9 @@ const FIRST_FOE = [9 * TILE, 18 * TILE] as const;
 function parade(t: number) {
   const span = 46;
   const shift = view.reduced ? 0 : (t * BANNER_SPEED) % span;
-  for (let x = FIRST_FOE[1] + shift; x < 196 * TILE; x += span) {
+  for (let x = 8 * TILE + shift; x < 196 * TILE; x += span) {
+    // Where they walked before order 31, each pair as before; none over the first pigeon's stretch.
+    if (x < FIRST_FOE[1]) continue;
     const g = streetY(x) + Math.max(0, Math.round(16 - (x - FIRST_FOE[1]) / 2));
     paradeKid(Math.round(x), g - 1, Math.floor(x / span), t);
     paradeKid(Math.round(x) + 14, g - 1, Math.floor(x / span) + 2, t);
