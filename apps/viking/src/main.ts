@@ -483,7 +483,8 @@ const mazeUi = {
 };
 const mazeShown = { name: "", level: "", clock: "", best: "", deaths: "" };
 let mazeText: { deaths(n: number): string; best(time: string): string; formatTime(ms: number): string } | null = null;
-const fjordHelp = { text: "", hidden: false };
+/** What the help line said and whether it was hidden, for after the mound (`hidden` as the DOM types it: newer libraries add "until-found"). */
+const fjordHelp: { text: string; hidden: HTMLElement["hidden"] } = { text: "", hidden: false };
 /** The feather the maze reported, for the moment at the mound's stop once the map is back. */
 let featherPending: "plain" | "gold" | null = null;
 /** The level he went into the mound from (Nordmarka's door to Jernhaugen), to come back out into, as he left it. */
