@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, and by order 29's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, and by order 30's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -83,6 +83,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-16 | Lars, on the page of every figure: "all the pink... im just not sold on pink being a bad guy color. but maybe if we make it a theme somehow? like, oh no, the 80s glam invaders are here!" Order 27: the glamour (ADR 0050). The neon family and a level's lean, a sheen and a glow after dark, glam marks on every figure and a natural self it turns to when a stomp breaks the spell, the rune's ring of daylight, the bosses as headliners, the story of who paid Loki, the map's mirror balls, the invaders' scenery and stings; the Angry Boy, the kid, the sledger and the hot-dog cart redrawn as Lars asked | `orders/27-the-neon-invaders.md`, branch `the-neon-invaders` |
 | 2026-11-17 | Lars away, with a standing instruction: "keep looking for more assets that should have increased details. and consider them with the rest of the game. interaction, fit, thematics, etc. ... remember to write docs too btw." Order 28: the last flat things, each asked what he does with it, whether it fits its place and whether the glamour should touch it (ADR 0051). The props kit (lamp posts of their place, railings, plank walls, panel doors, posts, a ladder, concrete legs, the rowing boat, the sauna rafts), the ferry and the gondola at Rådhuset, Bjørvika's fence and hut; the line map drawn as a level (a skyline a station, piers in the water, decks, station marks, the mirror balls' brackets); a neon trail behind what the invaders throw; the ground's own band, the fortress and Gamlebyen's planks quietened for it | `orders/28-the-last-flat-things.md`, branch `the-last-flat-things` |
 | 2026-11-17 | Order 29: the encore (ADR 0052). With every rune of both lines held, a stop past the longship: a small festival stage on the water in Middelalderparken, where Loki, the Invaders' front man, plays one more song. He borrows the three bosses' moves (the troll's club, the plough's charge, the serpent's bite) with their own tells and answers, poses between them (the opening), loses his hair, shades and jacket to three stomps and walks off a thin man in a wool sweater with a thermos. Extra: no rune, no total, a best time only; the map with any rune missing is as it was | `orders/29-the-encore.md`, branch `the-encore` |
+| 2026-11-21 | Order 30: small debts, the things orders 27 to 29 found and left. Langkaia's props drawn plainly if `feel`'s file never comes (ADR 0053), and the bare map's line 2; the encore's stop glowing after dark until seen; Loki's club at the troll's size; the encore's file fetched ahead from the map with every rune; reduced motion photographed and held by a test (the oars' and Slottet's banners' warnings and five other things were still running); a debug card at a level's end, and the card as wide as its lines on a phone; every kind met in several levels looked at in each; `tsc` from the root | `orders/30-small-debts.md`, branch `small-debts` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -158,7 +159,9 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   nothing at all, and whether the first frame came first is a race with `feel.ts`'s chunk; use `steps=0` there);
   `?debug&auto&steps=N` plays the scripted route in the page; `bun tools/shots.ts <dir> <url>…`
   takes the pictures with headless Firefox (`--size=390x844` for an upright phone; `--wait=5000`
-  for a built page under `?debug&auto`, which fetches after the load event the picture is taken at).
+  for a built page under `?debug&auto`, which fetches after the load event the picture is taken at; `--lang=nb-NO` in Norwegian).
+  `?debug&card` puts the level's card at its end over it, as its rune would (order 30), as `&told` and `&seen` set the story's
+  card read and the encore seen.
 - **The front page gate**: 28 reference screenshots of the front page, taken before any of this
   work. After every kit change they must be byte-identical (`cmp`). The references live in
   `/tmp/shots-before-jernhaugen` (earlier `/tmp/shots-before`) with addresses in `/tmp/shots-urls.txt` (the `:5180` lines); `/tmp` does
@@ -257,7 +260,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.34 kB gzipped after order 29 (the encore's stop on the map with every rune, its route in the page, its card
+- **First script**: 59.55 kB gzipped after order 30 (the plain drawings without `feel`'s file, the bare map's line 2, the encore's
+  file fetched ahead, `?debug&card`'s hook). 59.34 kB gzipped after order 29 (the encore's stop on the map with every rune, its route in the page, its card
   and best time, `Boss.ends`; the encore itself is a chunk of its own, 8.6 kB gzipped, and its words are in `feel`'s file). 59.07 kB gzipped after order 28 (Langkaia's sauna rafts, club hut, diving tower, boat and posts moved to the props kit in
   `feel`'s file behind one hook, `TEXTURED.prop`, and the shed walls behind `TEXTURED.walls`; the kit's flat lamp post and panel door, which no
   level calls now, left the script). 59.51 kB gzipped after order 27 (the lean as a shape is recorded and the glow's bookkeeping in `render/sprite.ts`,
@@ -577,6 +581,31 @@ Order 29 (`orders/29-the-encore.md`, ADR 0052, DESIGN's "Loki at the encore"; nu
   above it to its hash on `origin/main`.
 - **Unplayed and unheard**: nobody has seen it at speed or on a phone, or heard the four new stings.
 
+## Order 30: small debts
+
+Order 30 (`orders/30-small-debts.md`, ADR 0053; numbers and pictures' places in `apps/viking/tools/review/o30/after.md`). It added
+nothing new. What to know:
+- **Without `feel`'s file** (ADR 0053): every hook the first script calls into `feel`'s file (`TEXTURED` in `render/tiles.ts`) has a
+  plain drawing where its thing stands; Langkaia's props had none (`TEXTURED.prop?.(…) || R(…)` now). Levels fetched later import
+  `feel`'s file with them, so they never draw without it. The map without its look (`BARE`, now in `levels/kart.ts`) draws line 2's
+  deck and gate. `levels/lazy.test.ts` holds all of it.
+- **The encore, finished off**: its stop on the map keeps its neon's light after dark, with a glow of its first neon round the tubes
+  (`light()` in `kartArt.ts`'s `encoreStop`), until the encore is seen; Loki's club is drawn at the troll's size (raised, all of it
+  the tell's violet); with every rune the map fetches the encore's file when the page is idle (`ahead` in `levels/kart.ts`), never
+  with a rune missing.
+- **Reduced motion** is held by `render/reduced.test.ts`: every place the drawing reads the clock to turn something on and off (in
+  the app and the kit) is held with reduced motion or named as an idle or a cycle; every boss held at each move, every ledge's
+  warning and the map drawn with the clock running. It found the kit's oars blinking their warning and Slottet's banners
+  theirs, Stortinget's platform board scrolling, the dawn's rays, the fountain's streaks, the serpent's daze and the parked
+  plough's wisp running; all held now.
+- **`?debug&card`** shows a level's card at its end as its rune would (line 1's ending on Vålerenga with every rune of line 1,
+  line 2's on Gamlebyen with all sixteen, the encore's). The card was held to half the screen's width (placed at `left: 50%`
+  with no width); on a phone line 2's ending wrapped two or three words a line. It is as wide as its lines now, up to the
+  screen less 32 pixels. `tools/shots.ts --lang=nb-NO` photographs in Norwegian.
+- **`tsc` from the root** fetches TypeScript 7 (the root has no TypeScript of its own; `bunx` takes the newest), whose DOM types
+  say `hidden` may be `"until-found"`: `handbook/lessons.md`. Both are clean.
+- **Unplayed**: none of it has been seen on a phone or at speed; reduced motion has been seen only in still pictures.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -617,7 +646,7 @@ reorder this list.
 7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
-8. **Margins.** The first script is 59.34 kB gzipped of a 60 kB budget, and the build fails over it
+8. **Margins.** The first script is 59.55 kB gzipped of a 60 kB budget, and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    130 s of a three-and-a-half-minute budget, nearly
    all of it the reach and dead-end searches in sixteen workers on four cores (Gamlebyen's, eight searches

@@ -67,6 +67,18 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **A test that imported the review's tools** (order 29) pulled `tools/review/sloppy.ts` into the app's type-check, which failed the
   build on an unused variable there. The test imports them by a path in a variable now. *Tools outside `src` stay outside `tsc`.*
 
+- **`tsc` from the root is not the app's `tsc`** (order 30). The root has no TypeScript of its own, so `bunx tsc -p apps/viking` from
+  the root fetches the newest from npm (7.0.2, the native port, whose DOM types allow `hidden` to be `"until-found"`), while inside
+  `apps/viking` `bunx tsc` is the workspace's 5.9.3. That is why the root reported `main.ts:540` and the app was clean. Both are clean
+  now (the help line's saved `hidden` is typed as the DOM types it). *Run `tsc` inside each package (as `review.sh` does); a number
+  or an error from the root may be another compiler.*
+- **`mapfile` is bash's** (order 30): in this zsh, `mapfile -t U < file` silently leaves `U` empty and `"${U[@]}"` passes one empty
+  address. Put such loops in a `#!/bin/bash` script, as `frontgate.sh` is.
+- **A test that watches pixels cannot tell a flash from motion** (order 30): drawing a whole level with its clock running found
+  trams crossing the view's edge and a salmon's tail. What held was reading the source for every clock-driven blink (each held
+  with reduced motion or named as an idle with why), and drawing one thing at a time (a boss with its age held, a ledge through
+  its warning). *Watch the thing, not the screen.*
+
 ## What worked and should be kept
 
 - **A feature gated by a test of the old picture** (order 29): the encore's stop is built only with every rune; with any rune missing

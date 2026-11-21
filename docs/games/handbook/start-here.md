@@ -1,6 +1,6 @@
 # Start here
 
-State as of the night of 17 November 2026, after order 29 was built. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 21 November 2026, after order 30 was built (not yet reviewed or live). Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -46,6 +46,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 27 the neon invaders | #74 | The glamour (ADR 0050): neon is a spell on Oslo, a stomp breaks it; marks and a natural self on every figure; the story; the boy, kid, sledger and cart redrawn |
 | 28 the last flat things | #76 | Props of their place (ADR 0051): lamp posts, railings, plank walls, doors, rafts, the boat, the ferry; the line map drawn as a level; a neon trail behind what the invaders throw; the ground's own band |
 | 29 the encore | #77 | Loki met once (ADR 0052): with every rune, a stage on the water in Middelalderparken past the longship; he borrows the three bosses' moves and tells, poses between them, loses his hair, shades and jacket to three stomps and walks off plain with a thermos; no rune, no total, gates nothing |
+| 30 small debts | (branch `small-debts`) | What 27 to 29 left: plain drawings without `feel`'s file (ADR 0053); the encore's stop glows after dark, Loki's club at the troll's size, the encore fetched ahead; reduced motion photographed and held by a test (seven things still ran); a debug card at a level's end and the card as wide as its lines on a phone; shared kinds looked at in every level; `tsc` from the root |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
 phone before going live. The Pi cannot run the game in a headless browser (HANDOVER,

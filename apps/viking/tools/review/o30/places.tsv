@@ -1,0 +1,15 @@
+encore-park	/viking/?debug&told&level=encore&steps=2&x=72#encore
+encore-waiting	/viking/?debug&told&level=encore&steps=2&x=230#encore
+encore-club	/viking/?debug&told&level=encore&auto&steps=380#encore
+encore-slam	/viking/?debug&told&level=encore&auto&steps=420#encore
+encore-pose	/viking/?debug&told&level=encore&auto&steps=450#encore
+encore-rev	/viking/?debug&told&level=encore&auto&steps=640#encore
+encore-charge	/viking/?debug&told&level=encore&auto&steps=700#encore
+encore-ring	/viking/?debug&told&level=encore&auto&steps=930#encore
+encore-bite	/viking/?debug&told&level=encore&auto&steps=990#encore
+encore-plain	/viking/?debug&told&level=encore&auto&steps=1200#encore
+encore-leaving	/viking/?debug&told&level=encore&auto&steps=1330#encore
+kart-every-rune-night	/viking/?debug&told&steps=30&sky=night&cleared=all&x=1744#kart
+kart-every-rune-day	/viking/?debug&told&steps=30&sky=day&cleared=all&x=1744#kart
+langkaia-rafts	/viking/?debug&level=langkaia&steps=2&sky=day&look=1200,230#langkaia
+slottet-banners	/viking/?debug&told&level=slottet&steps=2&sky=day&look=1550,352#slottet
