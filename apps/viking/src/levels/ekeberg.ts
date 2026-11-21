@@ -268,7 +268,8 @@ function city(v: View) {
   box(0, fy(156), view.w, view.h + 200, HILL.fjord);
   const deep = mix(HILL.fjord, INK, 0.2);
   for (let x = 0; x < view.w; x++) box(x, fy(178) + Math.round(2 * Math.sin(layerWorldX(x, f) * 0.05)), 1, view.h + 200, deep);
-  for (let i = 0; i < 28; i++) box(((i * 53 + Math.floor(v.t / 30)) % (view.w + 20)) - 10, fy(160 + (i % 7) * 5), 4 + (i % 3), 1, HILL.fjordLight);
+  // Its glints drift as the boat goes, and stand with it under reduced motion (order 31: they drifted on before).
+  for (let i = 0; i < 28; i++) box(((i * 53 + (view.reduced ? 0 : Math.floor(v.t / 30))) % (view.w + 20)) - 10, fy(160 + (i % 7) * 5), 4 + (i % 3), 1, HILL.fjordLight);
   for (let k = -16; k <= 16; k++) box(L(150) + k, fy(170) - Math.round(4 * (1 - (k / 16) ** 2)), 1, 5, mix(HILL.oak, HILL.fjord, 0.4));
   // The boat out to Nesodden with its wake, a sailing boat, and the red buoy off the quay.
   const ferry = L(-70) + (view.reduced ? 0 : Math.floor(v.t / 40) % 60);

@@ -47,8 +47,7 @@ import {
 } from "@larshansen/pixelkit/scene";
 import { createSfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
-import { drawTimed, pulsePhase, timedPhase } from "@larshansen/pixelkit/timed";
-import type { Hazard } from "@larshansen/pixelkit/hazard";
+import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
@@ -67,7 +66,7 @@ import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { eyes, freshRings, outlined, ringCount, rings, ringsTo } from "./render/sprite";
-import { STAND_LEDGE, shiver, standTop } from "./render/stand";
+import { STAND_LEDGE, hazardEdge, shiver, standTop } from "./render/stand";
 import type { Feel } from "./render/feel";
 import type { Enemy, Shot } from "./game/enemies";
 import { TEXTURED, drawTiles, drawWater, standTops } from "./render/tiles";
@@ -1449,21 +1448,6 @@ function foe(e: Enemy, v: View) {
   if (feel?.lifted(e, look)) return;
   outlined(look, e, e.calm ? ROLES.calm : ENEMY.warning);
 }
-/**
- * What hurts and is not an enemy (rebar, the third rail, a branch, the barrier, sparks): the enemy
- * palette's warning colour on its dangerous edge, the same stripe everywhere, while it hurts (blinking
- * through its warning, steady with reduced motion). Drawn over the level's own drawing of it.
- */
-function hazardEdge(h: Hazard, t: number) {
-  const phase = h.beat ? pulsePhase(t, h.beat) : "live";
-  if (phase === "rest" || (phase === "warn" && !view.reduced && Math.floor(t / 8) % 2)) return;
-  const x0 = Math.max(h.x, view.camX - 4);
-  const x1 = Math.min(h.x + h.w, view.camX + view.w + 4);
-  if (x1 <= x0) return;
-  R(x0, h.y, x1 - x0, 1, ENEMY.warning);
-  for (let x = h.x + 2; x < x1; x += 4) if (x + 2 > x0) R(x, h.y, 2, 1, ENEMY.line);
-}
-
 /** Something thrown, outlined as its thrower is. */
 const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)));
 

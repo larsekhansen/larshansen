@@ -1,7 +1,9 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, view } from "@larshansen/pixelkit/paint";
-import { STAND } from "@larshansen/pixelkit/palette";
+import { ENEMY, STAND } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
+import { pulsePhase } from "@larshansen/pixelkit/timed";
+import type { Hazard } from "@larshansen/pixelkit/hazard";
 
 // What he stands on reads at a glance (order 18, section 5, ADR 0039; order 22, ADR 0044): its top edge is painted
 // yellow, two pixels thick and a little worn at the ends, the same on every ledge, raft, lift, deck and stone: the
@@ -59,3 +61,19 @@ export function standTop(x: number, y: number, w: number, how: Footing, soon = f
 
 /** A tile he stands on that a level draws its own way (a risen stone, a crate): its paint, worn where its row of them ends. */
 export const tileTop = (x: number, y: number, first = true, last = true) => paint(x, y, TILE, first, last);
+
+/**
+ * What hurts and is not an enemy (rebar, the third rail, a branch, the barrier, sparks): the enemy
+ * palette's warning colour on its dangerous edge, the same stripe everywhere, while it hurts (blinking
+ * through its warning, steady with reduced motion). Drawn over the level's own drawing of it. (Here since
+ * order 31, so `render/reduced.test.ts` can draw it.)
+ */
+export function hazardEdge(h: Hazard, t: number) {
+  const phase = h.beat ? pulsePhase(t, h.beat) : "live";
+  if (phase === "rest" || (phase === "warn" && !view.reduced && Math.floor(t / 8) % 2)) return;
+  const x0 = Math.max(h.x, view.camX - 4);
+  const x1 = Math.min(h.x + h.w, view.camX + view.w + 4);
+  if (x1 <= x0) return;
+  R(x0, h.y, x1 - x0, 1, ENEMY.warning);
+  for (let x = h.x + 2; x < x1; x += 4) if (x + 2 > x0) R(x, h.y, 2, 1, ENEMY.line);
+}
