@@ -127,15 +127,68 @@ export function overTheDark(g: CanvasRenderingContext2D, dark?: (wx: number) => 
   const a = g.globalAlpha;
   // Where the dark lies only over part of the level (Vålerenga's lane), only the invaders under it: elsewhere `afterDark` drew them.
   const under = (s: Sprite, x: number) => !dark || dark(x + view.camX + s.whole.width / 2);
+  // A pixel of the dark between the outline and the glow (order 32): the glow starts a pixel further out, and the pixel next to
+  // the red is the night's own colour, so the red stands as far off what is round it as by day (its own orange glow came
+  // within 22.7 of it; the palette test holds it).
+  invaders((s, x, y) => under(s, x) && g.drawImage((s.gap ??= gapOf(s)), x - 1, y - 1));
   g.globalAlpha = a * 0.8;
   invaders((s, x, y) => {
     if (!under(s, x)) return;
-    if (!s.glow) s.glow = glowOf(s);
-    g.drawImage(s.glow, x - GLOW + 2, y - GLOW + 2);
+    s.glowFar ??= farGlowOf(s);
+    g.drawImage(s.glowFar, x - FAR + 2, y - FAR + 2);
   });
   g.globalAlpha = a * RING_OVER_DARK;
   invaders((s, x, y) => under(s, x) && g.drawImage(s.ring, x, y));
   g.globalAlpha = a;
+}
+
+/** The night's colour under a level's own dark (`NIGHT` in `render/night.ts`): the gap between an invader's outline and its glow there. */
+export const DARK_GAP = "rgb(4, 6, 18)";
+/** How far the glow over the dark reaches past the shape: a pixel further than after dusk (`GLOW`), past the gap. */
+const FAR = 6;
+
+/** The shape on a canvas `margin` pixels larger all round than its own, grown by `by` pixels: squarely, or as the outline is (a diamond). */
+function grownShape(s: Sprite, margin: number, by: number, square: boolean): HTMLCanvasElement {
+  const c = document.createElement("canvas");
+  c.width = s.shape.width + 2 * margin;
+  c.height = s.shape.height + 2 * margin;
+  const g = c.getContext("2d")!;
+  for (let dx = -by; dx <= by; dx++) for (let dy = -by; dy <= by; dy++) if (square || Math.abs(dx) + Math.abs(dy) <= by) g.drawImage(s.shape, margin + dx, margin + dy);
+  return c;
+}
+
+/** The ring a pixel outside the outline (the outline is the shape grown as a diamond by two), in the dark's colour. */
+function gapOf(s: Sprite): HTMLCanvasElement {
+  const out = grownShape(s, 1, 3, false);
+  const o = out.getContext("2d")!;
+  o.globalCompositeOperation = "source-in";
+  o.fillStyle = DARK_GAP;
+  o.fillRect(0, 0, out.width, out.height);
+  o.globalCompositeOperation = "destination-out";
+  o.drawImage(grownShape(s, 1, 2, false), 0, 0);
+  return out;
+}
+
+/** The glow over the dark: as `glowOf`'s, the shape grown by four, five and six pixels, faint, all it covers to three cut out. */
+function farGlowOf(s: Sprite): HTMLCanvasElement {
+  const m = FAR - 2;
+  const hue = hueOf(s);
+  const out = grownShape(s, m, 0, true);
+  const o = out.getContext("2d")!;
+  o.clearRect(0, 0, out.width, out.height);
+  for (const by of [FAR - 2, FAR - 1, FAR]) {
+    const layer = grownShape(s, m, by, true);
+    const l = layer.getContext("2d")!;
+    l.globalCompositeOperation = "source-in";
+    l.fillStyle = hue;
+    l.fillRect(0, 0, layer.width, layer.height);
+    o.globalAlpha = 0.2;
+    o.drawImage(layer, 0, 0);
+  }
+  o.globalAlpha = 1;
+  o.globalCompositeOperation = "destination-out";
+  o.drawImage(grownShape(s, m, 3, false), 0, 0);
+  return out;
 }
 
 /** How far the glow reaches past an invader's shape (its outline covers the first two pixels of it). */
@@ -153,13 +206,19 @@ export function glows(g: CanvasRenderingContext2D) {
   });
 }
 
-function glowOf(s: Sprite): HTMLCanvasElement {
+/** An invader's glow's neon: the commonest of the glamour's colours in it; a white gull's, its level's first neon. */
+function hueOf(s: Sprite): string {
   // The shape's key is its colours and rectangles, "#colourx,y,w,h;" each.
   const area = new Map<string, number>();
   for (const m of s.key.matchAll(/(#[0-9a-f]{6})-?\d+,-?\d+,(\d+),(\d+);/g)) if (ROLES.glamour.includes(m[1])) area.set(m[1], (area.get(m[1]) ?? 0) + +m[2] * +m[3]);
   let hue = lean[NEON_A] ?? NEON_A;
   let most = 0;
   for (const [c, a] of area) if (a > most) [hue, most] = [c, a];
+  return hue;
+}
+
+function glowOf(s: Sprite): HTMLCanvasElement {
+  const hue = hueOf(s);
   const w = s.shape.width + 2 * GLOW - 4;
   const h = s.shape.height + 2 * GLOW - 4;
   const make = () => {

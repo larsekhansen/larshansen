@@ -38,6 +38,9 @@ export interface Sprite {
   shape: HTMLCanvasElement;
   key: string;
   glow?: HTMLCanvasElement;
+  /** Over a level's own dark (order 32): the glow a pixel further out, and the dark's own pixel between it and the outline. */
+  glowFar?: HTMLCanvasElement;
+  gap?: HTMLCanvasElement;
 }
 const kept = new Map<string, Sprite>();
 const KEPT_MOST = 800;
