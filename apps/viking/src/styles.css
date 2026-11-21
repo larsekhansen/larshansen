@@ -739,6 +739,21 @@ body.touch .card.loading {
   top: max(40%, calc(var(--bar, 0px) + 10px));
 }
 
+/* With a mouse too (order 31): the game's own cards (a level's end, Game over, the opening, the loading board) keep below the
+   header however many rows it has wrapped to (a narrow window wraps the runes to two rows), and scroll when the window is too
+   short. `--bar` is where the header ends, set by the page every frame (and by the pad on a touch screen). */
+#finish,
+.card.story {
+  top: max(22%, calc(var(--bar, 0px) + 10px));
+  max-height: calc(100% - max(22%, calc(var(--bar, 0px) + 10px)) - 10px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+#loading {
+  top: max(40%, calc(var(--bar, 0px) + 10px));
+}
+
 /* While a level is on, nothing else moves the page: no panning, zooming or double-tap zoom on the game, no
    selecting or callout on a long press. (No 300 ms delay anywhere.) */
 html {

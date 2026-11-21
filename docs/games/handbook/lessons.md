@@ -79,7 +79,23 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   with reduced motion or named as an idle with why), and drawing one thing at a time (a boss with its age held, a ledge through
   its warning). *Watch the thing, not the screen.*
 
+- **A recorder that also fingerprints shared state** (order 31): the reduced-motion test draws each path once unrecorded (so what is made
+  once is made) and then records it at several steps of the clock, the lights it registers included. The unrecorded draw's lights were
+  left in the list, so the first recording had them twice and every path in every level looked as if it changed. *Clear shared state
+  after any draw that is not recorded; when a new test finds everything, suspect the test first.*
+- **A picture taken before the level's file came** (order 31): one of 72 pictures of Stortinget differed from its pair in every pixel; it
+  was the page's empty background, the level not yet fetched. *Look at a differing pair before believing it; retake it.*
+- **zsh does not split words** (order 31): `for l in "a b" "c d"; do set -- $l; …` gives `$1` the whole pair in zsh. Put such loops in a
+  `#!/bin/bash` script or `bash -c`, as with `mapfile`.
+- **A source search for idioms can be written around** (order 30's, replaced in order 31): Ekeberg's fjord glints drifted with reduced
+  motion because their clock was read inside a sum (`(i * 53 + Math.floor(v.t / 30)) % w`), which the search's pattern did not match.
+  Drawing every path with the clock running and the world held found it at once. *Hold behaviour by doing it, not by reading for it.*
+
 ## What worked and should be kept
+
+- **Drawing as in a browser, in a test** (order 31): with a stand-in `document` whose canvases draw nothing, `kept`, `stamp` and
+  `outlined` take their browser path, so a kept piece is drawn once and copied, and the test records a copy by which piece it copies.
+  Akershus's stonework took 116 s to record drawn pixel by pixel; as copies it takes seconds, and it is what the page does.
 
 - **A feature gated by a test of the old picture** (order 29): the encore's stop is built only with every rune; with any rune missing
   `kartDef` returns exactly the old map (a test for each of the sixteen), and the map's pictures from the two builds are compared byte

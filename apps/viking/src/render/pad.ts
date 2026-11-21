@@ -308,7 +308,10 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
   let said = "";
   let playing = false;
   let barAt = -1;
-  /** Where the bar ends, for the cards, which keep below it (`--bar`): now, whenever the bar changes, and every frame. */
+  /**
+   * Where the bar ends, for the cards, which keep below it (`--bar`): now, whenever the bar changes, and every frame. The page's
+   * camera sets it too, with a mouse as well (order 31); this one also follows the bar folding and unfolding within the frame.
+   */
   const barEnds = () => {
     const bar = Math.round(page.header.getBoundingClientRect().bottom);
     if (bar !== barAt) document.body.style.setProperty("--bar", `${(barAt = bar)}px`);

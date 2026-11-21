@@ -58,12 +58,13 @@ against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the fro
 | `tools/shots.ts` | Headless Firefox screenshots |
 | `apps/viking/tools/facts.ts` | Writes LEVELS.html's FACTS block from the levels |
 | `apps/viking/tools/pictures.ts`, `pictures.tsv` | Retakes LEVELS.html's pictures |
-| `apps/viking/tools/review/` | The sloppy and hesitating players, reach and dead-end checks, boss studies, `edgecmp.py`; one folder of results per order (`o18` … `o28`); a README |
+| `apps/viking/tools/review/` | The sloppy and hesitating players, reach and dead-end checks, boss studies, `edgecmp.py`; one folder of results per order (`o18` … `o31`); a README |
 | `apps/viking/tools/glance/diffcrop.py` | Before and after of what changed (order 28): two folders of the same addresses from two builds, each pair cropped to the pixels that differ, side by side |
 | `apps/viking/tools/glance/` | Contact sheets (`sheet.py`, `enemyshots.ts`, `platformshots.ts`), the level walk (`walk.ts`, `strips.ts`), `perf.ts`, `flat.py` (flat places), `frames.ts` and `framesheet.py` (frame sheets: since order 27 each figure glammed, natural and its ending), `stomp.ts` (a stomp's strip of frames), `invasion.ts` (where the invaders' scenery may stand), `tones.ts` (which tones pass the palette test), `yellows.ts`, `hand.ts` (phone states), `haze.ts`, `fore.ts` |
 | `apps/viking/src/render/palette.test.ts` | The colour rules as a test |
 | `apps/viking/src/game/frame.test.ts` | He is never under a touch button, all routes, five sizes |
-| `apps/viking/src/render/reduced.test.ts` | Nothing blinks with reduced motion: every clock-driven blink held or named; bosses, ledges' warnings and the map with the clock running (order 30) |
+| `apps/viking/src/render/reduced.test.ts` | Nothing blinks with reduced motion (order 30; since order 31 by drawing, not by reading the source): every level's scenery across the whole level and every thing in it as the route finds it, recorded call by call at several steps of the clock with the world held, as in a browser; bosses, ledges' warnings, the map; the cards' CSS |
+| `apps/viking/src/game/words.test.ts` | Every word kept by language, in every module and every level, in both languages with the same keys, lines and arguments (order 31, ADR 0016) |
 | `apps/viking/src/levels/lazy.test.ts` | What the first script draws without `feel`'s file (ADR 0053) |
 | `apps/viking/tools/glance/leanplaces.ts` | Every enemy kind met in more than one level: where, its level's two neons and how far each is from that level's fields, by day and under its sky; the addresses of the pictures in place (order 30) |
 | [`scripts/review.sh`](scripts/review.sh), [`frontgate.sh`](scripts/frontgate.sh), [`cmpfront.py`](scripts/cmpfront.py) | The planner's review of a hand-back. They carry one session's scratch path in `S`: change it |

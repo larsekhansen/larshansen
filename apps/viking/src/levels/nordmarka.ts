@@ -14,7 +14,7 @@ import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
 import { flame, lampFlicker } from "../alive/things";
-import { eyes, outlined, plain } from "../render/sprite";
+import { eyes, invaders, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
@@ -847,7 +847,10 @@ function troll(t: Troll, v: View) {
   outlined(() => trollBody(t, v), undefined, t.phase === "walk" || t.phase === "windup" ? ENEMY.warning : ROLES.calm);
 }
 
-/** Over the dark: eyes that shine, the troll's eyes, the fireflies, the wave of the troll's slam in the dust. */
+/** How much of its light the red outline keeps over the dark (order 31): as much as over the night's tint. */
+export const RING_OVER_DARK = 0.9;
+
+/** Over the dark: the invaders' glow and red outline, eyes that shine, the troll's eyes, the fireflies, the wave of the troll's slam in the dust. */
 function overDark(v: View) {
   dawnShaft(v);
   sunrise(v);
@@ -856,6 +859,10 @@ function overDark(v: View) {
   const a = g.globalAlpha;
   g.globalAlpha = a * 0.8;
   glows(g);
+  // What hurts keeps its red outline over the dark (order 31), as clear as by day: the ring alone, on its own pixels, so the
+  // dark round it is as dark as before (`render/palette.test.ts` measures it against the forest under the dark).
+  g.globalAlpha = a * RING_OVER_DARK;
+  invaders((s, x, y) => g.drawImage(s.ring, x, y));
   g.globalAlpha = a;
   for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, CREATURE.eye);
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);

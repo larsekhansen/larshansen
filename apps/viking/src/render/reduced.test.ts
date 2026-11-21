@@ -1,11 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync, readdirSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { carrierDrawn, carrierShown, drawCarrier } from "@larshansen/pixelkit/carrier";
+import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
+import { TILE } from "@larshansen/pixelkit/config";
+import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
-import { drawTimed } from "@larshansen/pixelkit/timed";
+import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
+import { drawSky } from "@larshansen/pixelkit/sky";
+import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
+import { invasion } from "../alive/invasion";
 import { autopilot, type Move } from "../game/bot";
+import { leap } from "../game/enemies";
 import { newPlay, stepPlay, type Play } from "../game/play";
 import { fresh, type Progress } from "../game/progress";
+import { RUNE_CHARS } from "../game/runes";
 import { SHIELD_RULES } from "../game/shield";
 import { BUILT, ORDER, loadLevel } from "../levels/index";
 import { kartDef } from "../levels/kart";
@@ -13,51 +22,322 @@ import { kartArt } from "../levels/kartArt";
 import * as ROUTES from "../levels/routes";
 import { ENCORE_ROUTE } from "../levels/routes/encore";
 import type { LevelDef, View } from "../levels/types";
+import { drawBracteate, drawRune, drawSheep } from "./actors";
+import "./feel";
 import { areaRecorder, skyOf } from "./fields";
-import { STAND_LEDGE } from "./stand";
+import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./pickups";
+import { freshRings, outlined } from "./sprite";
+import { STAND_LEDGE, hazardEdge, standTop } from "./stand";
+import { drawTiles, drawWater } from "./tiles";
 
-// Order 30 (debt 5): with reduced motion nothing flashes. Two ways of holding it.
+// With reduced motion nothing flashes (order 30, debt 5; order 31, item 4).
 //
-// 1. Every place the drawing reads the clock to turn something on and off (`Math.floor(t / n) % k`, `(t >> n) % k`) is held
-//    still with reduced motion on its own line, or reads a clock already held (`tt = view.reduced ? 0 : t`), or is named
-//    below with why it may run: an idle or a cycle (they say what a thing is doing: DESIGN's "Frames, shadows and depth"),
-//    or a drawing that is never reached with reduced motion.
-// 2. What the order looked at is drawn with its state held while the clock runs. Every boss at each of its moves, its age in
-//    the move held too (what it does as a move goes on is not a flash): no colour's area comes and goes back. The ledges on
-//    a beat through their warning, the map's mirror balls and the encore's stop: each colour covers the same area at every
-//    step. Without reduced motion the plough's beacons flash, so the test can see one.
+// 1. Every drawing path, watched with the clock running and the world held (order 31): what a level draws behind and in front
+//    of the lane, across the whole level (the sky, the far layers, the street's backdrop and every prop in it, the invaders'
+//    scenery, the water, the tiles, what is in front, the night), and every thing in it alone (each carrier, ledge on a beat,
+//    cannon, drum, flag, bench, sheep, skilling, cheese, every enemy of every kind as the scripted route finds it, what is
+//    thrown, what hurts and is not an enemy, the bracteate, the rune, the standing tops), and the line map with no runes and
+//    with every rune. Each is drawn into a recording canvas at several steps of the clock, and every call it makes is kept
+//    (its colour, its alpha, its place; a copy by which kept piece it copies): with reduced motion the recordings must be
+//    identical where the world is identical. This replaces order 30's search of the source for two blink idioms, which a
+//    blink written any other way passed: here nothing is read, everything is drawn.
+//    - What a level draws across itself must be identical at every step, but what is named below with why: the world's own
+//      motion where its drawing reads the clock (a wheel turning with its buckets, a gust's leaves with its beat, a board
+//      counting down to the next train). Nothing named comes back to a recording it left within 24 steps.
+//    - A thing held as the route leaves it may change as the clock runs (an idle: a breath, a blink of the eyes; the world
+//      under it: a ledge's phase), but it never comes back to a recording it left within 24 steps: anything that turns on and
+//      off two and a half times a second or faster does (its colour comes and goes); an idle of a second or slower turns at
+//      most once. Where the world it reads moves (a carrier the kit draws, a ledge going through its beat) the window is one
+//      in which it stands still.
+// 2. Every boss at each of its moves, its age in the move held (order 30): no colour's area comes and goes back.
+// 3. The ledges on a beat through their warning, and the map's mirror balls and the encore's stop: each colour the same area
+//    at every step (order 30).
+// 4. The cards (order 31): the only motion a card has is CSS, and every animation in the page's styles is on a class the page
+//    sets only without reduced motion.
 
 const SRC = resolve(dirname(import.meta.path), "..");
-/** The kit's own drawing, which the levels call (named below as `kit/<file>`). */
-const KIT = resolve(SRC, "../../../packages/pixelkit/src");
 
-/** The clock read to blink, named and allowed: a file, a piece of the line, and why. */
-const ALLOWED: { file: string; has: string; why: string }[] = [
-  { file: "levels/akerselva.ts", has: "const k = Math.floor(t / 5) % 2", why: "the salmon's tail flicks as it leaps: a cycle, how a leap reads" },
-  { file: "levels/stortinget.ts", has: "TRACK_RAT.kicking : TRACK_RAT.falling", why: "the track rat kicks as it falls: a cycle while it falls" },
-  { file: "levels/nordmarka.ts", has: 'const bend = t.phase === "stuck"', why: "the troll heaves at its stuck club a pixel every other second: an idle" },
-  { file: "levels/nordmarka.ts", has: 'const breath = t.phase === "asleep"', why: "the troll breathes asleep: an idle" },
-  { file: "levels/nordmarka.ts", has: "Math.floor(age / 6 + i) % 2", why: "the flourish's birds: the flourish returns first with reduced motion" },
-  { file: "levels/langkaia.ts", has: "const wing = Math.floor(a / 5) % 2", why: "the flourish's gulls: drawn after its `if (view.reduced) return`" },
-  { file: "levels/radhuset.ts", has: "const wing = Math.floor(a / 5) % 2", why: "the flourish's pigeons: the flourish returns first with reduced motion" },
-  { file: "levels/vigelandsparken.ts", has: "Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2", why: "a statue's breath while watched: an idle" },
-  { file: "levels/gamlebyen.ts", has: 'const breath = spit || s.phase === "rise"', why: "the serpent breathes reared: an idle" },
-  { file: "levels/gamlebyen.ts", has: "GUARD_FRAMES.still[Math.floor(", why: "a guard's breath as it stands: an idle" },
-  { file: "render/loki.ts", has: "PLAINLY.stand[Math.floor(age / 40) % 2]", why: "Loki plain, standing and breathing: an idle" },
-  { file: "alive/him.ts", has: "const breath = Math.floor(s.t / 30) % 2", why: "his breath: an idle (frames.test.ts holds that reduced motion keeps it)" },
-  { file: "alive/death.ts", has: "Math.floor(age /", why: "how a broken glamour leaves: `drawBreak` draws a plain change of colour with reduced motion and never calls it" },
-  { file: "alive/depth.ts", has: "LAP_FRAMES[side][Math.floor(t / 16) % 3]", why: "water lapping: its clock is `drawWater`'s, held with reduced motion" },
-  { file: "render/feel.ts", has: "return Math.floor(p.t / 5) % 2 ? 0.35 : 1", why: "his blink after a hit: the line before returns 1 with reduced motion" }
+/**
+ * What a level draws across itself that changes as the clock runs with reduced motion, and why: the world's own motion, where
+ * the drawing reads the clock for it. A level and a path (`sky`, `far`, `mid`, `near`, `back`, `invasion`, `water`, `tiles`,
+ * `front`, `night`).
+ */
+const MOVES: { level: string; path: string; why: string }[] = [
+  { level: "akerselva", path: "back", why: "the water wheel turns with its buckets, which are carriers on its orbit (the world)" },
+  { level: "ekeberg", path: "back", why: "a gust's leaves come with its beat (its warning and its push), held in place" },
+  { level: "stortinget", path: "front", why: "the platform board counts down to the next train (the timetable)" },
+  { level: "bygdoy", path: "front", why: "the rocking decks tilt on their beat (ground he stands on); the balsa bundles sink as the play has it" },
+  { level: "vigelandsparken", path: "back", why: "the loose slab over the broken span drops and comes back on the Angry Boy's beat (a ledge on a beat)" },
+  { level: "vigelandsparken", path: "front", why: "the same slab's shadow" },
+  { level: "korketrekkeren", path: "front", why: "the crossing's barrier comes down on its beat, its lights lit and still while it warns" },
+  { level: "bjorvika", path: "back", why: "the welder's sparks come with their beat, held in place, and their light with them" },
+  { level: "bjorvika", path: "front", why: "a gust's dust comes with its beat, held in place" }
 ];
 
-/** Every source file of the page and the kit (not the tests), as paths under `src` (the kit's as `kit/...`). */
-function sources(dir = SRC, root = SRC, as = ""): string[] {
-  return readdirSync(dir, { withFileTypes: true }).flatMap((d) => {
-    const p = join(dir, d.name);
-    return d.isDirectory() ? sources(p, root, as) : d.name.endsWith(".ts") && !d.name.endsWith(".test.ts") ? [as + relative(root, p)] : [];
-  });
+/** A canvas made while the test draws as a browser would: it draws nothing, and its id says which it is. */
+const canvasIds = new WeakMap<object, number>();
+let canvases = 0;
+const NOWHERE = new Proxy({ canvas: { width: 4096, height: 4096 } } as Record<string, unknown>, { get: (t, k) => (k in t ? t[k as string] : () => undefined), set: () => true });
+function fakeCanvas() {
+  const c = { width: 0, height: 0, getContext: () => NOWHERE };
+  canvasIds.set(c, ++canvases);
+  return c;
 }
-const pathOf = (file: string) => (file.startsWith("kit/") ? join(KIT, file.slice(4)) : join(SRC, file));
+/**
+ * Draws as the page does in a browser (kept pieces, stamps and outlined shapes made once and copied), on canvases that draw
+ * nothing: a copy is recorded by which piece it copies. Outside it the test's other drawings are as before.
+ */
+function asInBrowser<T>(run: () => T): T {
+  const g = globalThis as { document?: unknown };
+  const was = g.document;
+  g.document = { createElement: fakeCanvas };
+  try {
+    return run();
+  } finally {
+    if (was === undefined) delete g.document;
+    else g.document = was;
+  }
+}
+
+/** A context that draws nothing and keeps a fingerprint of every call made to it, and of the lights registered meanwhile. */
+function recorder(w: number, h: number) {
+  let print = 0x811c9dc5;
+  const mix = (s: string) => {
+    for (let i = 0; i < s.length; i++) print = Math.imul(print ^ s.charCodeAt(i), 16777619);
+  };
+  let style: unknown = "#000000";
+  const key = (s: unknown) => (typeof s === "string" ? s : s && typeof s === "object" && "stops" in s ? `g${(s as { stops: string[] }).stops.join()}` : String(s));
+  type Self = { globalAlpha: number; globalCompositeOperation: string };
+  const base: Record<string, unknown> = {
+    globalAlpha: 1,
+    globalCompositeOperation: "source-over",
+    canvas: { width: w, height: h },
+    get fillStyle() {
+      return style;
+    },
+    set fillStyle(v: unknown) {
+      style = v;
+    },
+    createLinearGradient: (...at: number[]) => {
+      const stops: string[] = [at.join()];
+      return { stops, addColorStop: (o: number, c: string) => stops.push(`${o}:${c}`) };
+    },
+    fillRect(this: Self, x: number, y: number, rw: number, rh: number) {
+      mix(`R${key(style)}|${this.globalAlpha}|${this.globalCompositeOperation}|${x},${y},${rw},${rh}`);
+    },
+    drawImage(this: Self, src: object, ...at: number[]) {
+      mix(`I${canvasIds.get(src) ?? "?"}|${at.join()}|${this.globalAlpha}|${this.globalCompositeOperation}`);
+    },
+    translate: (x: number, y: number) => mix(`T${x},${y}`),
+    setTransform: (...m: number[]) => mix(`S${m.join()}`),
+    fillText(this: Self, text: string, x: number, y: number) {
+      mix(`X${text}|${x},${y}|${key(style)}|${this.globalAlpha}`);
+    }
+  };
+  const g = new Proxy(base, {
+    get: (t, k) => (k in t ? t[k as string] : () => undefined),
+    set: (t, k, v) => ((t[k as string] = v), true)
+  });
+  return {
+    ctx: g as unknown as CanvasRenderingContext2D,
+    done() {
+      mix(JSON.stringify(lights));
+      lights.length = 0;
+      return print >>> 0;
+    }
+  };
+}
+
+/** The recordings of `draw(t)` at each clock in `clocks` (after one drawing at the first, unrecorded, so what is made once is made). */
+function recordings(draw: (t: number) => void, clocks: number[], w: number, h: number): number[] {
+  const was = ctx();
+  try {
+    target(recorder(w, h).ctx);
+    freshRings();
+    draw(clocks[0]);
+    lights.length = 0;
+    return clocks.map((t) => {
+      const rec = recorder(w, h);
+      target(rec.ctx);
+      freshRings();
+      draw(t);
+      return rec.done();
+    });
+  } finally {
+    target(was);
+    lights.length = 0;
+  }
+}
+
+/** Whether a run of recordings comes back to one it left: A, then B, then A again. */
+function comesBack(prints: number[]): boolean {
+  const left = new Set<number>();
+  for (let i = 1; i < prints.length; i++)
+    if (prints[i] !== prints[i - 1]) {
+      left.add(prints[i - 1]);
+      if (left.has(prints[i])) return true;
+    }
+  return false;
+}
+
+/** Twenty-four steps and one: anything that turns on and off two and a half times a second or faster comes back in it. */
+const DENSE = Array.from({ length: 25 }, (_, k) => k);
+/** Steps at which to look for any change at all, cheaply: a blink of any period changes at one of them. */
+const SPARSE = [0, 1, 3, 7, 13, 21];
+
+const W = 320;
+const H = 200;
+/** A view of `w` x `h` with reduced motion (or not), its camera at (x, y). */
+function withView<T>(reduced: boolean, run: () => T, at?: { x: number; y: number; w: number; h: number }): T {
+  const was = { ...view };
+  Object.assign(view, { w: at?.w ?? W, h: at?.h ?? H, k: 1, reduced });
+  if (at) Object.assign(view, { camX: at.x, camXf: at.x, camY: at.y, camYf: at.y });
+  try {
+    return run();
+  } finally {
+    Object.assign(view, was);
+  }
+}
+
+/** The page's view of a play at clock `t`, the camera on him. */
+function viewOf(def: LevelDef, p: Play, t: number): View {
+  view.camX = view.camXf = Math.max(0, Math.round(p.body.x - W / 2));
+  view.camY = view.camYf = Math.round(p.body.y - (H * 2) / 3);
+  return { sky: skyOf(def, "day"), t, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: p.body.x + 5, y: p.body.y + 7 }, flourish: null, facing: p.body.facing, troll: p.troll, flags: [], enemies: p.enemies, boss: p.boss?.state ?? null, cleared: [], runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
+}
+
+const routeOf = (id: string): Move[] => (id === "encore" ? ENCORE_ROUTE : (ROUTES as unknown as Record<string, Move[]>)[`${id.toUpperCase()}_ROUTE`]);
+const optsFor = (def: LevelDef) => ({ pole: def.id === "encore" || ORDER.indexOf(def.id) > ORDER.indexOf("holmenkollen"), shield: SHIELD_RULES, hasShield: def.id === "encore" || def.rune > 10 });
+const phaseOf = (p: Play) => (p.troll as { phase?: string } | null)?.phase ?? (p.boss?.state as { phase?: string } | undefined)?.phase ?? "";
+
+/** Every level to watch: the sixteen, the encore, and the line map with no runes and with every rune. */
+async function everyLevel(): Promise<{ name: string; def: LevelDef }[]> {
+  const all: Progress = { ...fresh(), cleared: [...ORDER], best: Object.fromEntries(ORDER.map((id) => [id, 60000])) };
+  const out = [];
+  for (const st of BUILT) out.push({ name: st.id, def: await loadLevel(st.id) });
+  out.push({ name: "encore", def: await loadLevel("encore") });
+  out.push({ name: "kart", def: kartDef(fresh(), kartArt) }, { name: "kart (every rune)", def: kartDef(all, kartArt) });
+  return out;
+}
+
+/**
+ * A level's scenery across the whole of it, view by view, each path watched alone: which paths change, where, and whether
+ * one that changes comes back within 24 steps. The play stands at its start.
+ */
+function scenery(name: string, def: LevelDef) {
+  const p = newPlay(def, optsFor(def));
+  const map = p.map;
+  const sky = skyOf(def, "day");
+  const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: p.troll, flags: [], enemies: p.enemies, boss: p.boss?.state ?? null, cleared: [], runeAt: null, grounds: p.grounds?.state ?? null };
+  const art = def.art;
+  const horizon = map.height - 4 * TILE - 34;
+  const paths: [string, (t: number) => void][] = [
+    ["sky", (t) => drawSky(sky, t, horizon)],
+    ["far", () => art.far?.(v)],
+    ["mid", () => art.mid?.(v)],
+    ["near", () => art.near?.(v)],
+    ["back", () => art.back(v)],
+    ["invasion", (t) => invasion(def.id, t)],
+    ["water", (t) => drawWater(map, t)],
+    ["tiles", () => drawTiles(map, art, sky, def.underground)],
+    ["front", () => art.front?.(v)],
+    ["night", () => art.night?.(v, p.body, [], map)]
+  ];
+  const changed = new Map<string, { at: string; back: boolean }>();
+  let n = 0;
+  // Views four times a phone's: fewer of them to cover the level, and the same drawing.
+  const [w, h] = [2 * W, 2 * H];
+  for (let y = -h; y < map.height + h / 2; y += h)
+    for (let x = 0; x < map.width; x += w) {
+      const t0 = 600 + ((n++ * 37) % 500);
+      withView(
+        true,
+        () => {
+          v.him = { x: x + w / 2, y: y + h / 2 };
+          for (const [path, draw] of paths) {
+            const at = (t: number) => ((v.t = t), draw(t));
+            const sparse = recordings(at, SPARSE.map((k) => t0 + k), w, h);
+            if (sparse.every((r) => r === sparse[0])) continue;
+            const key = `${name} ${path}`;
+            const dense = recordings(at, DENSE.map((k) => t0 + k), w, h);
+            const was = changed.get(key);
+            changed.set(key, { at: was?.at ?? `${x},${y}`, back: (was?.back ?? false) || comesBack(dense) });
+          }
+        },
+        { x, y, w, h }
+      );
+    }
+  return changed;
+}
+
+/** The things of a level, each alone as the play has it now: a name and how to draw it at clock `t` (null where its world does not stand still from `t0` to `t1`). */
+function thingsOf(def: LevelDef, p: Play, t0: number, t1: number): [string, ((t: number, v: View) => void) | null][] {
+  const art = def.art;
+  const snow = skyOf(def, "day").snow;
+  const out: [string, ((t: number, v: View) => void) | null][] = [];
+  const still = <T>(f: (t: number) => T) => {
+    const a = JSON.stringify(f(t0));
+    for (let t = t0 + 1; t <= t1; t++) if (JSON.stringify(f(t)) !== a) return false;
+    return true;
+  };
+  def.carriers.forEach((d, i) => {
+    const at = carrierDrawn(d, p.t, 1);
+    // The level's own drawing is given where the carrier is; the kit's reads it from the clock, so only while it stands.
+    // (A carrier on a timetable comes and goes as the clock says, a train at a tunnel's mouth: only while it stays.)
+    const shown = still((t) => carrierShown(d, t));
+    out.push([`carrier ${i}`, !shown ? null : art.carrier ? (_t, v) => art.carrier!(i, at, v) : still((t) => carrierDrawn(d, t, 1)) ? (t) => drawCarrier(d, t, 1, snow, STAND_LEDGE) : null]);
+    out.push([`carrier ${i}'s paint`, (t) => standTop(at.x, at.y, d.w, "moves", false, t)]);
+  });
+  def.timed.forEach((l, i) => {
+    const same = still((t) => timedPhase(t, l));
+    out.push([`ledge ${i}`, same ? (t, v) => (art.timed ? art.timed(i, v) : drawTimed(l, t, snow, STAND_LEDGE)) : null]);
+    out.push([`ledge ${i}'s paint`, same ? (t) => timedPhase(t, l) !== "off" && standTop(l.x, l.y, l.w, "gives", timedPhase(t, l) === "warn") : null]);
+  });
+  // What happened to a thing (fired, drummed, raised) is held at its age, as the bosses' moves are.
+  p.cannons.forEach((l, i) => out.push([`cannon ${i}`, (t, v) => (art.cannon ? art.cannon(i, l, -999, p.firedAt[i] + t - p.t, v) : drawCannon(l, t, -999, p.firedAt[i] + t - p.t))]));
+  p.drums.forEach((l, i) => out.push([`drum ${i}`, (t, v) => (art.drum ? art.drum(i, l, p.drummedAt[i] + t - p.t, v) : drawDrum(l, t, p.drummedAt[i] + t - p.t))]));
+  p.flags.forEach((f, i) => {
+    const up = p.raisedAt[i];
+    out.push([`flag ${i}`, (t, v) => void (art.flag?.(i, f, up === null ? null : up + t - p.t, v) || (LOOKS.flag ?? drawCheckpoint)(f, up === null ? null : up + t - p.t, t, def.id))]);
+  });
+  p.benches.forEach((s, i) => out.push([`bench ${i}`, () => drawBench(s.x, s.bottom, false)]));
+  p.sheep.forEach((s, i) => out.push([`sheep ${i}`, () => outlined(() => drawSheep(s), undefined, ROLES.calm)]));
+  p.skilling.forEach((s, i) => s.at === null && out.push([`skilling ${i}`, (t) => drawSkilling(s.box.x + 1, s.box.y + 1, t, i)]));
+  if (p.cheese && p.cheese.at === null) out.push(["cheese", (t) => drawCheese(p.cheese!.box.x, p.cheese!.box.y - 2, t)]);
+  // A jumper leaps on its beat as the clock says (a salmon, the track rat, the Angry Boy): only while its leap stands still.
+  p.enemies.forEach((e, i) => {
+    if (!e.alive) return;
+    const draw = (_t: number, v: View) => outlined(() => void (art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning);
+    out.push([`enemy ${i} (${e.def.look ?? e.def.kind})`, e.def.kind !== "jumper" || still((t) => leap(e, t)) ? draw : null]);
+  });
+  p.shots.forEach((s, i) => out.push([`shot ${i}`, (_t, v) => outlined(() => void (art.shot?.(s, v) || drawShot(s)))]));
+  (def.hazards ?? []).forEach((h, i) => out.push([`hazard ${i}`, (t) => hazardEdge(h, t)]));
+  if (p.bracteate && p.bracteateAt === null) out.push(["bracteate", (t) => drawBracteate(p.bracteate!.x, p.bracteate!.y, t)]);
+  if (p.rune && p.runeAt === null && def.rune >= 0) out.push(["rune", (t) => drawRune(p.rune!.x, p.rune!.y, RUNE_CHARS[def.rune], "lit", t, def.rune)]);
+  return out;
+}
+
+/** A level's things along its scripted route, every five seconds: which come back to a recording they left within 24 steps. */
+function things(name: string, def: LevelDef): string[] {
+  const p = newPlay(def, optsFor(def));
+  const pilot = autopilot(routeOf(def.id) ?? []);
+  const found: string[] = [];
+  for (let s = 0; s < 60 * 300 && p.runeAt === null; s++) {
+    if (s % 300 === 0)
+      for (const [thing, draw] of thingsOf(def, p, p.t, p.t + DENSE.length - 1)) {
+        if (!draw) continue;
+        const prints = withView(true, () => {
+          const v = viewOf(def, p, p.t);
+          return recordings((t) => ((v.t = t), draw(t, v)), DENSE.map((k) => p.t + k), W, H);
+        });
+        if (comesBack(prints)) found.push(`${name} at step ${s}: ${thing}`);
+      }
+    const keys = pilot(p);
+    if (!keys) break;
+    stepPlay(p, keys);
+  }
+  return found;
+}
 
 /** The colours a drawing paints and the area each covers. */
 function painted(draw: () => void): Map<string, number> {
@@ -93,29 +373,6 @@ function flashing(draw: (t: number) => void, t0: number, steps = 32): string[] {
   });
 }
 
-const W = 320;
-const H = 200;
-function withView<T>(reduced: boolean, run: () => T): T {
-  const was = { ...view };
-  Object.assign(view, { w: W, h: H, k: 1, reduced });
-  try {
-    return run();
-  } finally {
-    Object.assign(view, was);
-  }
-}
-
-/** The page's view of a play at clock `t`, the camera on him. */
-function viewOf(def: LevelDef, p: Play, t: number): View {
-  view.camX = view.camXf = Math.max(0, Math.round(p.body.x - W / 2));
-  view.camY = view.camYf = Math.round(p.body.y - (H * 2) / 3);
-  return { sky: skyOf(def, "day"), t, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: p.body.x + 5, y: p.body.y + 7 }, flourish: null, facing: p.body.facing, troll: p.troll, flags: [], enemies: p.enemies, boss: p.boss?.state ?? null, cleared: [], runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
-}
-
-const routeOf = (id: string): Move[] => (id === "encore" ? ENCORE_ROUTE : (ROUTES as unknown as Record<string, Move[]>)[`${id.toUpperCase()}_ROUTE`]);
-const optsFor = (def: LevelDef) => ({ pole: def.id === "encore" || ORDER.indexOf(def.id) > ORDER.indexOf("holmenkollen"), shield: SHIELD_RULES, hasShield: def.id === "encore" || def.rune > 10 });
-const phaseOf = (p: Play) => (p.troll as { phase?: string } | null)?.phase ?? (p.boss?.state as { phase?: string } | undefined)?.phase ?? "";
-
 /** A boss level's route played; twenty steps into each of the boss's moves it is drawn alone, its state and its age in the move held, its clock running. */
 async function boss(id: string, reduced: boolean): Promise<string[]> {
   const def = await loadLevel(id);
@@ -146,29 +403,34 @@ async function boss(id: string, reduced: boolean): Promise<string[]> {
   return out;
 }
 
-describe("with reduced motion nothing flashes (order 30)", () => {
-  test("every place the drawing reads the clock to turn something on and off holds still with reduced motion, or is an idle or a cycle named here", () => {
-    const blink = /Math\.floor\(([^;]*?)\)\s*%\s*\d+|>>\s*\d+\)\s*%\s*\d+/;
-    const unheld: string[] = [];
-    const used = new Set<(typeof ALLOWED)[number]>();
-    for (const file of [...sources(), ...sources(KIT, KIT, "kit/")]) {
-      const text = readFileSync(pathOf(file), "utf8");
-      const held = /\btt = view\.reduced \? 0 :/.test(text);
-      text.split("\n").forEach((line, i) => {
-        const m = blink.exec(line);
-        if (!m || line.includes("reduced") || line.trim().startsWith("//")) return;
-        const read = m[1] ?? line;
-        // What it reads: a clock (t, the age of something, steps), not a place (an x, a column) or a count.
-        if (!/\b(t|tt|age|a|pa|now|step|steps|time)\b|\.t\b/.test(read) || /\.x\b|\/ TILE/.test(read)) return;
-        if (held && /\btt\b/.test(read)) return;
-        const named = ALLOWED.find((a) => a.file === file && line.includes(a.has));
-        if (named) used.add(named);
-        else unheld.push(`${file}:${i + 1}: ${line.trim()}`);
-      });
-    }
-    expect(unheld).toEqual([]);
+describe("with reduced motion nothing flashes (orders 30 and 31)", () => {
+  test("every level's scenery and every prop in it, across the whole level, draws the same at every step of the clock but the world's own motion named here, which never comes back within 24 steps", async () => {
+    const changed = new Map<string, { at: string; back: boolean }>();
+    for (const { name, def } of await everyLevel()) for (const [k, c] of asInBrowser(() => scenery(name, def))) changed.set(k, c);
+    const named = (k: string) => MOVES.find((m) => k === `${m.level} ${m.path}`);
+    console.log(`What changes as the clock runs with reduced motion: ${[...changed].map(([k, c]) => `${k} (first at ${c.at}${c.back ? ", comes back" : ""})`).join("; ") || "nothing"}`);
+    expect([...changed.keys()].filter((k) => !named(k))).toEqual([]);
+    expect([...changed].filter(([, c]) => c.back).map(([k]) => k)).toEqual([]);
     // And every name still names something.
-    expect(ALLOWED.filter((a) => !used.has(a)).map((a) => `${a.file}: ${a.has}`)).toEqual([]);
+    expect(MOVES.filter((m) => !changed.has(`${m.level} ${m.path}`)).map((m) => `${m.level} ${m.path}`)).toEqual([]);
+  }, 300_000);
+
+  test("every thing in every level, held as the scripted route finds it every five seconds (carriers, ledges, cannons, drums, flags, benches, sheep, skilling, cheese, every enemy, what is thrown, what hurts, the bracteate, the rune, the paint), never comes back within 24 steps of the clock", async () => {
+    const found: string[] = [];
+    for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => things(name, def)));
+    expect(found).toEqual([]);
+  }, 300_000);
+
+  test("the cards: every animation and transition in the page's styles is on a class the page sets only without reduced motion", () => {
+    const css = ["styles.css", "../../../packages/pixelkit/src/chrome.css"].map((f) => readFileSync(resolve(SRC, f), "utf8")).join("\n");
+    const main = readFileSync(resolve(SRC, "main.ts"), "utf8");
+    /** A selector with motion, and the line of the page that sets its class, which must not set it with reduced motion. */
+    const HELD: { selector: string; set: RegExp }[] = [{ selector: ".card.auto .primary::after", set: /finishEl\.classList\.toggle\("auto", [^;]*&& !view\.reduced\)/ }];
+    const moving: string[] = [];
+    for (const m of css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g))
+      if (/(^|;)\s*(animation|transition)(-[a-z-]+)?\s*:/.test(m[2]) && !/(animation|transition)[a-z-]*\s*:\s*none/.test(m[2])) moving.push(m[1].trim());
+    expect(moving.filter((sel) => !HELD.some((h) => h.selector === sel))).toEqual([]);
+    for (const h of HELD) expect(main).toMatch(h.set);
   });
 
   test("every boss, held at each of its moves (its tell, its hit, its daze or pose), draws the same at every step of the clock", async () => {

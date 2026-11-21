@@ -1,18 +1,25 @@
 # Roadmap
 
-As of 21 November 2026, after order 30 was built. Change this file in the same change that makes it wrong.
+As of 21 November 2026, after order 31 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 21 November 2026 |
-| Last live | Order 30, small debts (ADR 0053), PR #78; before it orders 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 31, loose ends and a second look, PR #79; before it orders 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Order 31, loose ends and a second look, branch `loose-ends` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 2 % used when order 30 was reviewed (the week reset on 21 November); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
-| Paused? | No. Lars asked for a status on 18 November through another session, so he may be back: nothing new is started until he has had a chance to comment on orders 27 to 30 |
+| Weekly allowance | About 6 % used when order 31 was reviewed on 21 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Paused? | No |
 
 ## In flight
+
+**Order 31, loose ends and a second look** (`orders/31-loose-ends-and-a-second-look.md`), built on branch `loose-ends`, not yet reviewed:
+what order 30 found and left (the cards under the header with a mouse, Slottet's first pigeon, Nordmarka's invaders in the dark, the
+reduced-motion test that read the source), Stortinget's shafts (idea 5), the Norwegian (idea 11), and a second walk for flat things
+(the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn). Each item, done or not, with its measures:
+`apps/viking/tools/review/o31/after.md`. Nothing in it waits on Lars: no story words, no change to the encore's fight, no difficulty.
 
 **Order 30, small debts** (`orders/30-small-debts.md`, ADR 0053), is live (PR #78).
 Each debt, paid or not, with its measures: `apps/viking/tools/review/o30/after.md`.
@@ -37,10 +44,9 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Order 30 paid the small debts (once it is reviewed and live). What it found and left is in its `after.md` ("Found and not
-fixed"): a narrow desktop window (not a touch phone) can put the card's top under the header; Slottet's pigeon walks into the
-parade at the start, where the children's flags cross it; under Nordmarka's dark the invaders are their glow, not their outline.
-The planner's next candidate is idea 2 or 3 below: a person's playtest is still the biggest gap.
+Order 31 took up what order 30 left (once it is reviewed and live); what it found and left is in its `after.md` ("Found and not
+fixed"). The planner's next candidate is idea 2 or 3 below: a person's playtest is still the biggest gap. The second walk's table
+(`apps/viking/tools/review/o31/before.md`) lists what was looked at and left, with reasons, for a later round.
 
 ## After that: ideas in rough order of value
 
@@ -61,7 +67,8 @@ None of these is decided. Each has a reason.
      distraction; is the "!" on every thrower too much; does the edge arrow help.
    - Sound: nobody has heard any of it.
 4. **The camera's jump on notched phones** (order 21's one "partly").
-5. **Stortinget's escalator shafts**: 3,600 of its 9,950 rectangles a frame.
+5. ~~**Stortinget's escalator shafts**: 3,600 of its 9,950 rectangles a frame.~~ Done in order 31: kept and copied, the shafts' places
+   1,363 to 2,947 rectangles a frame at 390 x 844 where they were 4,259 to 6,630.
 6. **Way 1 for him alone** (GRAIN.md): only if he still reads as a blob on a phone after way 3.
 7. **The 240-pixel upright view** (ADR 0019): at 200 everything is a fifth larger. A question
    for Lars with two pictures, not a thing to decide for him.
@@ -71,8 +78,9 @@ None of these is decided. Each has a reason.
    there, that is a decision to unfreeze it (new references, an ADR).
 10. **More frames where order 23 stopped**: no climbing or hanging poses exist because the game
     has no such states.
-11. **Norwegian.** ADR 0016 says both languages; check that orders 21 to 27 added both for
-    every new line (the touch notes, the story).
+11. ~~**Norwegian.** ADR 0016 says both languages; check that orders 21 to 27 added both for
+    every new line (the touch notes, the story).~~ Done in order 31: every word kept by language has both (`game/words.test.ts`), and
+    each line orders 21 to 30 added was seen at 360 wide in both (`apps/viking/tools/review/o31/words.md`).
 
 ## Questions waiting for Lars
 
@@ -84,7 +92,8 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite takes about three minutes alone and over five when two implementers run;
+- The viking suite takes about four minutes alone since order 31 (the reduced-motion test draws every level, about 50 s) and more
+  when two implementers run;
   the deploy runs it too. One slow hook has a ten-minute timeout for that reason.
 - `tools/pictures.ts` retakes LEVELS.html's pictures; a hit in the first steps blanks a
   headless picture (HANDOVER, "The harness").

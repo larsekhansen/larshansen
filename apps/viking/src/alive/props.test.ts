@@ -1,11 +1,12 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { DOORWAY, ENEMY, FACADE, GLASS, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, PARADE, ROLES, WHITE } from "@larshansen/pixelkit/palette";
+import { DOORWAY, ENEMY, FACADE, GLASS, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, PARADE, ROLES, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { mix } from "@larshansen/pixelkit/paint";
 import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import * as V from "@larshansen/pixelkit/swatches/park";
 import * as SITE from "@larshansen/pixelkit/swatches/site";
+import * as K from "@larshansen/pixelkit/swatches/sledge";
 import { BUILT, loadLevel } from "../levels/index";
 import { areaRecorder, deltaE, levelPaint, parseColour } from "../render/fields";
 import { target } from "@larshansen/pixelkit/paint";
@@ -26,9 +27,10 @@ const EXPECTED: Record<string, string[]> = {
   radhuset: ["lamp square", "rail bars", "ferry", "gondola"],
   slottet: ["barrier", "baluster", "rail tube"],
   holmenkollen: ["post"],
-  ekeberg: ["rail tube", "lamp old"],
-  nabolaget: ["lamp old", "plank wall", "rail bars", "post"],
-  vigelandsparken: ["lamp park"],
+  ekeberg: ["rail tube", "lamp old", "tram"],
+  nabolaget: ["lamp old", "plank wall", "rail bars", "post", "tram"],
+  vigelandsparken: ["lamp park", "gate pillar", "gate lantern"],
+  korketrekkeren: ["light pole"],
   bjorvika: ["site fence", "container"],
   gamlebyen: ["lamp old"]
 };
@@ -41,6 +43,8 @@ const EXPECTED: Record<string, string[]> = {
  */
 const tar = [PAINT.tar, mix(PAINT.tar, INK, 0.35), mix(PAINT.tar, INK, 0.5), mix(PAINT.tar, WHITE, 0.15), mix(PAINT.tar, P.water, 0.5), INK, METAL.brass, P.woodDark, LAMP, METAL.pipe, METAL.pipeCap];
 const lamp = [METAL.lampPost, METAL.lampHat, METAL.lampGlass];
+/** The blue tram as it was drawn a column at a time before order 31 (Ekeberg's and Vålerenga's): its body, skirt, roof's edge and lamp-yellow windows. */
+const tram = [TRAM.body, TRAM.skirt, mix(TRAM.body, WHITE, 0.3), LAMP];
 const OLD: Record<string, string[]> = {
   langkaia: [PAINT.red, PAINT.redLine, PAINT.ochre, PAINT.ochreLine, PAINT.trim, ...tar, mix(P.woodDark, WHITE, 0.15), FACADE.marbleWall, WHITE, FACADE.marbleSeam, METAL.rail, P.wood, mix(P.wood, WHITE, 0.3)],
   akershus: [METAL.lampPost, mix(METAL.lampPost, WHITE, 0.3)],
@@ -48,9 +52,10 @@ const OLD: Record<string, string[]> = {
   slottet: [P.iron, PARADE.russ, INK, mix(MASONRY.worn, INK, 0.1), MASONRY.worn, METAL.castIron],
   holmenkollen: [METAL.lampPost],
   stortinget: [PAINT.shopDoor, PAINT.shopDoorPanel, METAL.brass, DOORWAY.wood],
-  ekeberg: [HILL.rail, ...lamp, LAMP],
-  nabolaget: [...lamp, LAMP, PAINT.red, PAINT.redLine, PAINT.trim, PAINT.ochre, PAINT.ochreLine, PAINT.homeDoor, PAINT.homeDoorPanel, METAL.brass, DOORWAY.wood],
-  vigelandsparken: [V.iron, mix(P.sail, WHITE, 0.3), P.sailStripe],
+  ekeberg: [HILL.rail, ...lamp, LAMP, ...tram],
+  nabolaget: [...lamp, LAMP, ...tram, PAINT.red, PAINT.redLine, PAINT.trim, PAINT.ochre, PAINT.ochreLine, PAINT.homeDoor, PAINT.homeDoorPanel, METAL.brass, DOORWAY.wood],
+  vigelandsparken: [V.iron, mix(P.sail, WHITE, 0.3), P.sailStripe, V.granite, V.graniteLight, V.graniteShade],
+  korketrekkeren: [METAL.lampPost, INK, K.lantern],
   bjorvika: [SITE.fence, WHITE, mix(SITE.fence, SITE.shore, 0.25), SITE.graniteDark, SITE.hut, SITE.hutDark, SITE.hutLight],
   gamlebyen: [METAL.lampPost]
 };

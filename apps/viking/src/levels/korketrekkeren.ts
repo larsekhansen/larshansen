@@ -18,6 +18,7 @@ import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
+import { CAST, box as pbox, dot, prop, tone, type Stuff } from "../alive/props";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -503,15 +504,43 @@ function branchArt(h: Hazard, dusk: boolean) {
   for (let k = 0; k < h.w; k += 3) R(h.x + k, h.y - 4, 2, 1, K.bank);
 }
 
-/** The trees at dusk: lanterns on posts along the run, their light on the snow. */
+/** The lit trail's poles (order 31): tarred wood, as the restaurant's logs are, darkest first. */
+const POLE_TAR: Stuff = { name: "lit-trail pole", ramp: [mix(K.logs, INK, 0.35), K.logs, K.logsLight, mix(K.logsLight, WHITE, 0.12)] };
+
+/**
+ * A pole of the lit trail (order 31; ADR 0051): Oslo's ski trails and sledge runs are lit by lamps on tarred wooden poles, an
+ * arm out at the top with a brace under it and a small iron hood over the lamp. 9 x 36, the pole where the old post stood;
+ * the lamp's lens is registered as a lamp's light. It was a grey post with a square box on top.
+ */
+function lightPole(x: number, y: number) {
+  prop("light pole", [POLE_TAR, CAST], "", 9, 36, x - 2, y - 36, (g) => {
+    const W = (i: number) => tone(POLE_TAR, i);
+    const I = (i: number) => tone(CAST, i);
+    for (let r = 2; r < 36; r++) {
+      dot(g, 2, r, r % 9 === 4 ? W(2) : W(3));
+      dot(g, 3, r, r % 11 === 7 ? W(0) : W(1));
+    }
+    dot(g, 2, 2, W(2));
+    pbox(g, 3, 2, 4, 1, W(1));
+    dot(g, 3, 3, W(1));
+    dot(g, 4, 3, W(0));
+    dot(g, 3, 4, W(0));
+    pbox(g, 4, 2, 5, 1, I(1));
+    dot(g, 4, 2, I(2));
+    pbox(g, 4, 3, 5, 1, I(0));
+    pbox(g, 5, 4, 3, 1, K.lantern);
+    dot(g, 6, 5, K.lantern);
+    pbox(g, 2, 34, 2, 2, W(0));
+  });
+  light(x + 3, y - 32, 3, 2, "lamp");
+}
+
+/** The trees at dusk: the lit trail's poles along the run, their light on the snow. */
 function lanterns(t: number) {
   for (let c = 198; c < 236; c += 6) {
     const x = c * TILE + 4;
     const y = trackY(x)!;
-    R(x, y - 30, 2, 30, METAL.lampPost);
-    R(x - 2, y - 36, 6, 6, INK);
-    R(x - 1, y - 35, 4, 4, K.lantern);
-    light(x - 1, y - 35, 4, 4, "lamp");
+    lightPole(x, y);
     const glow = view.reduced ? 0 : Math.round(Math.sin(t * 0.05 + c));
     R(x - 8, y - 1, 18 + glow, 1, mix(K.lantern, K.run, 0.4));
   }

@@ -2,7 +2,7 @@ import { box } from "@larshansen/pixelkit/backdrop";
 import { carrierAt, carrierShown, pathPeriod, stopAt, untilStop, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
-import { kept, seen, stamp } from "@larshansen/pixelkit/kept";
+import { kept, keptStrips, seen, stamp } from "@larshansen/pixelkit/kept";
 import { R, layerOrigin, layerX, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import { panelDoor } from "../alive/props";
@@ -426,23 +426,32 @@ function hall(v: View) {
   tbaneDoor(v.doors.get("tbane"));
 }
 
-/** The escalator shafts: a sloping ceiling of lamps over each, steel sides, steps that move at the belt's speed. */
+/**
+ * The escalator shafts: a sloping ceiling of lamps over each, steel sides, steps that move at the belt's speed. What never
+ * changes (the truss, the glass balustrade, the handrail, the steps) is drawn once into kept strips and copied (order 31,
+ * ADR 0036, 0041); the steps' ridges, the lamps (which light) and the comb plates are drawn every frame, after it, as before.
+ */
 function escalator(ramp: { points: [number, number][] }, belt: number, t: number) {
   const [, [x0, y0], [x1, y1]] = ramp.points;
   const tt = view.reduced ? 0 : t;
   if (!seen(x0 - 4, x1 + 4)) return;
+  const at = (x: number) => Math.round(y0 + ((x - x0) / (x1 - x0)) * (y1 - y0));
+  const top = Math.min(y0, y1) - 14;
+  keptStrips(`st-escalator ${x0}`, x0, top, x1 + 1 - x0, Math.max(y0, y1) + 11 - top, () => {
+    for (let x = x0; x <= x1; x++) {
+      const y = at(x);
+      // The truss under the steps, and the glass balustrade with the black handrail over them.
+      R(x, y + 1, 1, 9, METRO.steel);
+      R(x, y + 9, 1, 2, METRO.steelDark);
+      R(x, y - 13, 1, 12, mix(METRO.tile, WHITE, 0.4));
+      R(x, y - 14, 1, 2, METRO.handrail);
+      // The steps: dark.
+      R(x, y, 1, 2, METRO.steps);
+    }
+  });
+  // Their ridges, moving the way the belt runs (a column's ridge is on a row nothing kept of its column covers).
   const [a, b] = onCanvas(x0, x1 + 1);
-  for (let x = a; x < b; x++) {
-    const y = Math.round(y0 + ((x - x0) / (x1 - x0)) * (y1 - y0));
-    // The truss under the steps, and the glass balustrade with the black handrail over them.
-    R(x, y + 1, 1, 9, METRO.steel);
-    R(x, y + 9, 1, 2, METRO.steelDark);
-    R(x, y - 13, 1, 12, mix(METRO.tile, WHITE, 0.4));
-    R(x, y - 14, 1, 2, METRO.handrail);
-    // The steps: dark, their ridges moving the way the belt runs.
-    R(x, y, 1, 2, METRO.steps);
-    if ((((x - Math.floor(tt * belt)) % 5) + 5) % 5 === 0) R(x, y - 1, 1, 1, METRO.steelDark);
-  }
+  for (let x = a; x < b; x++) if ((((x - Math.floor(tt * belt)) % 5) + 5) % 5 === 0) R(x, at(x) - 1, 1, 1, METRO.steelDark);
   // The lamps along the shaft's sloping ceiling.
   for (let x = x0 + 12; x < x1; x += 40) {
     const y = Math.round(y0 + ((x - x0) / (x1 - x0)) * (y1 - y0)) - 64;
@@ -452,17 +461,28 @@ function escalator(ramp: { points: [number, number][] }, belt: number, t: number
   for (const [x, y] of [[x0, y0], [x1, y1]] as const) R(x - 3, y, 6, 2, METRO.steelDark);
 }
 
-/** The shafts' back walls: a band of tiles going down with the escalators, the rock above. */
+/** Where a shaft's back wall stands in a column: the ramp under it. */
+const shaftRamp = (x: number) => Math.round(rampHeight([ESC1, ESC2], x) ?? M * TILE);
+/** The shafts' back walls, from the concrete over the highest column to the ramp under the lowest. */
+const SHAFT_TOP = Math.min(...Array.from({ length: 26 * TILE }, (_, i) => shaftRamp(34 * TILE + i) - 74));
+const SHAFT_BOTTOM = Math.max(...Array.from({ length: 26 * TILE }, (_, i) => shaftRamp(34 * TILE + i)));
+
+/**
+ * The shafts' back walls: a band of tiles going down with the escalators, the rock above. They never change: drawn once into
+ * kept strips and copied (order 31: about 3,600 rectangles a frame at 390 x 844 were these and the escalators, ADR 0036, 0041).
+ */
 function shaft() {
-  const [a, b] = onCanvas(34 * TILE, 60 * TILE);
-  for (let x = a; x < b; x++) {
-    const ramp = Math.round(rampHeight([ESC1, ESC2], x) ?? M * TILE);
-    const top = ramp - 70;
-    R(x, top - 4, 1, 4, METRO.concrete);
-    R(x, top - 1, 1, 1, METRO.concreteDark);
-    R(x, top, 1, ramp - top, x % 8 === 7 ? METRO.tileLine : METRO.tile);
-    for (let y = top + ((8 - (top % 8)) % 8); y < ramp; y += 8) R(x, y, 1, 1, METRO.tileLine);
-  }
+  if (!seen(34 * TILE, 60 * TILE)) return;
+  keptStrips("st-shaft", 34 * TILE, SHAFT_TOP, 26 * TILE, SHAFT_BOTTOM - SHAFT_TOP, () => {
+    for (let x = 34 * TILE; x < 60 * TILE; x++) {
+      const ramp = shaftRamp(x);
+      const top = ramp - 70;
+      R(x, top - 4, 1, 4, METRO.concrete);
+      R(x, top - 1, 1, 1, METRO.concreteDark);
+      R(x, top, 1, ramp - top, x % 8 === 7 ? METRO.tileLine : METRO.tile);
+      for (let y = top + ((8 - (top % 8)) % 8); y < ramp; y += 8) R(x, y, 1, 1, METRO.tileLine);
+    }
+  });
 }
 
 /** A platform's back wall: a band of tiles, the blue band with the station's name in white blocks, posters, roundels; the track's dark gap along its foot, where the trains stand. */

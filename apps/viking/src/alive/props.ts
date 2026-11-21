@@ -1,7 +1,7 @@
 import type { Door } from "@larshansen/pixelkit/doors";
 import { shakeX } from "@larshansen/pixelkit/doors";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { DOORWAY, FACADE, INK, LAMP, METAL, PAINT, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
+import { DOORWAY, FACADE, INK, LAMP, METAL, PAINT, PALETTE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { TEXTURED } from "../render/tiles";
 import { custom, drawProp, hash, type Piece } from "./ground";
@@ -583,6 +583,56 @@ TEXTURED.prop = (kind, a, b, c = 0, d = 0, e = 0) => {
   }
   return false;
 };
+
+// --- The blue tram ---------------------------------------------------------------------------------------------------
+
+/** The tram's blue (order 31): its skirt, a shade, its body, the light on it, darkest first. */
+export const TRAM_BLUE: Stuff = { name: "tram blue", ramp: [TRAM.skirt, mix(TRAM.body, TRAM.skirt, 0.3), TRAM.body, mix(TRAM.body, WHITE, 0.16)] };
+/** Its windows by day: the glass, dark with the sky in it, and a glint. They are lit after dark (the caller registers each). */
+const TRAM_GLASS = [mix(TRAM.glass, TRAM.skirt, 0.62), mix(TRAM.glass, TRAM.skirt, 0.42), mix(TRAM.glass, TRAM.skirt, 0.35)];
+
+/**
+ * The side of Oslo's blue tram (order 31; ADR 0051), Ekeberg's and Vålerenga's, `w` x `h` at (x, y), its windows' band
+ * `winTop` rows down and `winH` tall: two cars joined by bellows at the middle, a door with its glass in each, windows framed
+ * with their pillars between, glass by day with the sky's glint in its corner, the roof's edge lit, its lit end and its
+ * shaded end, a belt line, panel joints, the dark skirt. One piece, copied: it was a blue box with lamp-yellow windows
+ * by day, drawn a column at a time. The page paints his yellow on its roof as on anything that carries him. Returns its
+ * panes, in the world, for the caller to light after dark (as far as they show).
+ */
+export function tramSide(x: number, y: number, w: number, h: number, winTop: number, winH: number): { x: number; y: number; w: number; h: number }[] {
+  const mid = w / 2;
+  const door = (dx: number) => (dx >= mid - 16 && dx < mid - 10) || (dx >= w - 16 && dx < w - 10);
+  const pane = (dx: number) => dx > 2 && dx < w - 3 && dx % 8 < 6 && Math.abs(dx - mid + 0.5) > 1.5 && !door(dx);
+  const skirt = h - 4;
+  put("tram", [TRAM_BLUE], `${w}|${h}|${winTop}|${winH}`, w, h, Math.round(x), Math.round(y), (g) => {
+    const B = (i: number) => T(TRAM_BLUE, i);
+    for (let dx = 0; dx < w; dx++) {
+      const bellows = Math.abs(dx - mid + 0.5) <= 1.5;
+      for (let r = 0; r < h; r++) {
+        let c: string | null = r < 2 ? (r === 0 ? mix(TRAM.body, WHITE, 0.3) : B(3)) : dx === 0 ? B(3) : dx === w - 1 ? B(1) : B(2);
+        if ((dx === 0 || dx === w - 1) && r === 0) c = null;
+        if (bellows && r >= 1) c = r >= skirt ? B(0) : r % 3 === 0 ? mix(B(0), INK, 0.4) : B(0);
+        else if (r >= skirt) c = r === skirt ? B(1) : B(0);
+        else if (door(dx) && r >= winTop - 1) {
+          const edge = dx === mid - 16 || dx === mid - 11 || dx === w - 16 || dx === w - 11;
+          const glass = r >= winTop && r < winTop + winH && !edge;
+          c = edge || r === winTop - 1 ? B(0) : glass ? TRAM_GLASS[r === winTop ? 2 : 0] : B(1);
+        } else if (r === winTop - 1 || r === winTop + winH) c = dx > 1 && dx < w - 2 && !bellows ? B(1) : c;
+        else if (r >= winTop && r < winTop + winH && pane(dx)) c = r === winTop && dx % 8 === 0 ? TRAM_GLASS[2] : r === winTop + winH - 1 ? TRAM_GLASS[0] : TRAM_GLASS[dx % 8 === 0 || r === winTop ? 1 : 0];
+        else if (r === winTop + winH + 3 && dx > 0 && dx < w - 1) c = B(1);
+        else if (r > winTop + winH + 3 && r < skirt && dx > 0 && dx < w - 1 && dx % 16 === 7) c = B(1);
+        dot(g, dx, r, c);
+      }
+    }
+  });
+  const panes: { x: number; y: number; w: number; h: number }[] = [];
+  for (let dx = 3; dx < w - 3; dx++) if (pane(dx) && !pane(dx - 1)) {
+    let n = 1;
+    while (pane(dx + n)) n++;
+    panes.push({ x: Math.round(x) + dx, y: Math.round(y) + winTop, w: n, h: winH });
+  }
+  return panes;
+}
 
 /** For a level's own props: a kept piece painted pixel by pixel (`prop`), and the grid's pen (`dot`, `box`) and a material's tone (`tone`). */
 export { put as prop, dot, box, T as tone, type Grid };

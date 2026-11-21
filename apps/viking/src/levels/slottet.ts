@@ -559,12 +559,23 @@ export function paradeKidBody(x: number, ground: number, i: number, t: number) {
   paint(kidFrame(i, [0, 1, 3, 2][step], wave), x - 1, ground - 16, 1, 0);
 }
 
-/** The parade between the banners: children walking up the street, a step behind his line. */
+/**
+ * Where the first pigeon walks (columns 10 to 17), the first enemy he meets: the parade starts past it and the crowd waves no
+ * flag over it, so it is seen on plain street (order 31). Drawing only: the pigeon, the banners and the rules are as they were.
+ */
+const FIRST_FOE = [9 * TILE, 18 * TILE] as const;
+
+/**
+ * The parade between the banners: children walking up the street, a step behind his line. They join it past the first
+ * pigeon's stretch, each pair rising out of the crowd over its first steps as the banners do (it was there at once before).
+ */
 function parade(t: number) {
   const span = 46;
   const shift = view.reduced ? 0 : (t * BANNER_SPEED) % span;
   for (let x = 8 * TILE + shift; x < 196 * TILE; x += span) {
-    const g = streetY(x);
+    // Where they walked before order 31, each pair as before; none over the first pigeon's stretch.
+    if (x < FIRST_FOE[1]) continue;
+    const g = streetY(x) + Math.max(0, Math.round(16 - (x - FIRST_FOE[1]) / 2));
     paradeKid(Math.round(x), g - 1, Math.floor(x / span), t);
     paradeKid(Math.round(x) + 14, g - 1, Math.floor(x / span) + 2, t);
   }
@@ -708,7 +719,7 @@ function crowd(t: number) {
     const head = g - 6 - (tall % 3);
     // Drawn as frames since order 25 (`person` in alive/things.ts), each copied: shaded, and fewer rectangles.
     person(x, head - 1, [PARADE.bunadBlue, PAINT.ochre, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5], [P.woodDark, INK, PARADE.fringe, P.earth][k % 4], false, k % 5 === 1);
-    if (k % 3 === 0) crowdFlag(x + 5, head - 9, view.reduced ? 0 : Math.floor((t + k * 11) / 9) % 2);
+    if (k % 3 === 0 && (x + 12 < FIRST_FOE[0] || x + 5 > FIRST_FOE[1])) crowdFlag(x + 5, head - 9, view.reduced ? 0 : Math.floor((t + k * 11) / 9) % 2);
   }
 }
 

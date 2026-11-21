@@ -93,3 +93,9 @@ stands); the front page is byte-identical. A desktop with a mouse is unchanged.
 - A menu button for the site's links during a level: the order folds them away and brings them back on the map and
   the cards, where a player looks up.
 - Letting the camera go past a level's ends so he never stands over a button: it would show what the levels do not draw.
+
+## Amended by order 31 (21 November 2026)
+"A card ... never goes under the bar" held on a touch screen only, because only the pad gave CSS the bar's height (`--bar`). With
+a mouse in a window as narrow as a phone the header wraps its runes to two rows and covered a card's top. The page's camera now
+sets `--bar` every frame on any screen, and the game's own cards (a level's end, Game over, the opening, the loading board) keep
+below it and scroll if the window is too short. Touch screens and wide windows are byte-identical to before.
