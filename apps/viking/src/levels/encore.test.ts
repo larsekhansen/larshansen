@@ -19,7 +19,7 @@ import { areaRecorder, deltaE, parseColour, skyOf } from "../render/fields";
 import { PLAIN, lokiFrames } from "../render/loki";
 import { ENCORE, FLOOR, STAGE } from "./encore";
 import { BUILT, ENCORE_STOP, LINE, ORDER } from "./index";
-import { ENCORE_COL, ENCORE_COLS, KART_COLS, kartDef, kartMap, lineTwoOpen } from "./kart";
+import { ENCORE_COL, ENCORE_COLS, KART_COLS, ahead, kartDef, kartMap, lineTwoOpen } from "./kart";
 import { kartArt } from "./kartArt";
 import type { View } from "./types";
 import { ENCORE_ROUTE } from "./routes/encore";
@@ -52,6 +52,17 @@ describe("the stop", () => {
     expect(def.map[10][ENCORE_COL]).toBe("E");
     expect(def.map[11][ENCORE_COL]).toBe("O");
     for (const row of def.map) expect(row.length).toBe(ENCORE_COLS);
+  });
+
+  test("its file is fetched ahead, when the page is idle, only with every rune (order 30)", () => {
+    for (const missing of ORDER) {
+      const next = ahead({ ...all(), cleared: ORDER.filter((id) => id !== missing) });
+      expect(next.idle).toEqual([]);
+      expect(next.now).not.toContain(ENCORE_STOP.id);
+    }
+    expect(ahead(fresh())).toEqual({ now: ["langkaia"], idle: [] });
+    expect(ahead(all()).idle).toEqual([ENCORE_STOP.id]);
+    expect(ahead(all()).now).toEqual(ORDER);
   });
 
   test("its neon keeps its light after dark, with a glow of its own, until the encore is seen (order 30)", () => {

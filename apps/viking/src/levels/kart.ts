@@ -53,6 +53,14 @@ export function kartMap(open: boolean, encore = false): string[] {
 /** The station's x on the line (its door's middle). */
 export const stationX = (i: number) => STATIONS[i] * TILE + TILE / 2;
 
+/**
+ * What the map fetches while he walks: the open levels' files at once (so going in is quick), and with every rune the
+ * encore's file when the page is idle (order 30), so its first visit has no board; with a rune missing, nothing of it.
+ */
+export function ahead(progress: Progress): { now: string[]; idle: string[] } {
+  return { now: LINE.filter((l, i) => l.built && isOpen(progress, ORDER, i)).map((l) => l.id), idle: allRunes(progress, ORDER) ? [ENCORE_STOP.id] : [] };
+}
+
 /** Line 2 is open once Nabolaget, the end of line 1, is cleared. */
 export const lineTwoOpen = (p: Progress) => isOpen(p, ORDER, LINE_2_AT);
 

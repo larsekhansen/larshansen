@@ -62,7 +62,7 @@ import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
-import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
+import { ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
@@ -352,14 +352,18 @@ function openScene(id: string, at?: string) {
   firstClear = null;
   layout();
   hud();
-  // On the map, the open levels' code is fetched while he walks, so going in is quick.
-  if (scene.map)
-    for (const [i, l] of LINE.entries())
-      if (l.built && isOpen(progress, ORDER, i)) {
-        void loadLevel(l.id).catch(() => undefined);
-        if (wantsShield(l.id)) void loadShield().catch(() => undefined);
-      }
+  // On the map, the open levels' code is fetched while he walks, so going in is quick; with every rune, the encore's when the page is idle.
+  if (scene.map) {
+    const next = ahead(progress);
+    for (const id of next.now) {
+      void loadLevel(id).catch(() => undefined);
+      if (wantsShield(id)) void loadShield().catch(() => undefined);
+    }
+    for (const id of next.idle) idle(() => void loadLevel(id).catch(() => undefined));
+  }
 }
+/** When the page has nothing else to do (or soon, where the browser cannot say). */
+const idle = (f: () => void) => ("requestIdleCallback" in window ? requestIdleCallback(f) : setTimeout(f, 300));
 
 // ---------------------------------------------------------------------------------------------
 // Where he is: the address says which scene, so Back and Forward move between them.
