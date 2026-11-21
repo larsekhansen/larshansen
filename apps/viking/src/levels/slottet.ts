@@ -237,8 +237,8 @@ function balloons(i: number, t: number) {
     R(bx + 1, top, 4, 7, c);
     R(bx + 1, top + 1, 1, 2, WHITE);
   });
-  // About to go: the warning blink every ledge on a beat has.
-  if (phase === "warn" && Math.floor(t / 8) % 2 === 0) {
+  // About to go: the warning blink every ledge on a beat has (lit and still, with reduced motion: order 30).
+  if (phase === "warn" && (view.reduced || Math.floor(t / 8) % 2 === 0)) {
     R(l.x - 2, y - 2, l.w + 4, 1, WHITE);
     R(l.x - 2, y + 7, l.w + 4, 1, WHITE);
   }

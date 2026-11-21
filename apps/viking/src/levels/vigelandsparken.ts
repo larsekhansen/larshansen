@@ -509,7 +509,8 @@ function jetArt(at: { x: number; y: number }, t: number) {
   const w = 2 * TILE;
   for (let yy = y + 4; yy < FLOOR + 4; yy++) {
     const wob = view.reduced ? 0 : Math.round(Math.sin(yy * 0.4 + t * 0.3));
-    R(x + 4 + wob, yy, w - 8, 1, (yy + Math.floor(t / 2)) % 5 ? V.jet : V.jetShade);
+    // Its streaks run up with the water (still, with reduced motion: order 30).
+    R(x + 4 + wob, yy, w - 8, 1, (yy + (view.reduced ? 0 : Math.floor(t / 2))) % 5 ? V.jet : V.jetShade);
   }
   // The stand at the top: foam he can stand on.
   R(x, y, w, 4, V.jet);

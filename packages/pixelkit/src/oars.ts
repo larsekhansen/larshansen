@@ -1,5 +1,5 @@
 import { TILE } from "./config";
-import { R, mix } from "./paint";
+import { R, mix, view } from "./paint";
 import { INK, PALETTE, SHIMMER, WHITE } from "./palette";
 import { timedPhase, type Beat, type TimedLedge } from "./timed";
 
@@ -57,7 +57,8 @@ export function drawOar(o: Oar, step: number, wood: string = PALETTE.wood) {
   R(o.x, o.y, o.w, 2, mix(wood, WHITE, 0.25));
   R(o.x, o.y + 2, o.w, 2, wood);
   R(o.x, o.y + 4, o.w, 1, dark);
-  if (phase === "warn" && Math.floor(step / 8) % 2 === 0) {
+  // With reduced motion the warning holds still instead of blinking, as a ledge's does (order 30).
+  if (phase === "warn" && (view.reduced || Math.floor(step / 8) % 2 === 0)) {
     R(o.x - 2, o.y - 2, o.w + 4, 2, SHIMMER);
     R(o.x - 2, o.y + 5, o.w + 4, 2, SHIMMER);
     R(o.x - 2, o.y - 2, 2, 9, SHIMMER);
