@@ -1285,7 +1285,10 @@ const look = (): Look => {
  * with ground under him (the bottom of the map goes on down), not at the very bottom under a tall sky.
  */
 function camera(elapsedMs: number, snap: boolean) {
-  const bar = (header.getBoundingClientRect().height * view.dpr) / view.k;
+  const hb = header.getBoundingClientRect();
+  // Where the bar ends, for the cards, which keep below it with a mouse as on a touch screen (`--bar`, order 31).
+  if (Math.round(hb.bottom) !== barAt) document.body.style.setProperty("--bar", `${(barAt = Math.round(hb.bottom))}px`);
+  const bar = (hb.height * view.dpr) / view.k;
   const p = scene.play;
   const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
   // On the sledge the camera looks well ahead, so he is drawn left of the middle and sees what comes.
@@ -1305,7 +1308,8 @@ function camera(elapsedMs: number, snap: boolean) {
   aim({ x: at.x + shake.x, y: at.y + shake.y });
 }
 const shake = { x: 0, y: 0 };
-const lookAt = debug ? params.get("look")?.split(",").map(Number) : null;
+let barAt = -1;
+const lookAt =debug ? params.get("look")?.split(",").map(Number) : null;
 
 function layout() {
   kit.resize();
