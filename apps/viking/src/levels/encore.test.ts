@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { TILE } from "@larshansen/pixelkit/config";
+import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { placeBody } from "@larshansen/pixelkit/physics";
 import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
 import { playMoves } from "../game/bot";
@@ -14,12 +15,13 @@ import { SHIELD_RULES } from "../game/shield";
 import { ENCORE as WORDS, STORY } from "../game/story";
 import { TROLL_STEPS } from "../game/troll";
 import { newPlay, stepPlay } from "../game/play";
-import { deltaE, parseColour } from "../render/fields";
+import { areaRecorder, deltaE, parseColour, skyOf } from "../render/fields";
 import { PLAIN, lokiFrames } from "../render/loki";
 import { ENCORE, FLOOR, STAGE } from "./encore";
 import { BUILT, ENCORE_STOP, LINE, ORDER } from "./index";
 import { ENCORE_COL, ENCORE_COLS, KART_COLS, kartDef, kartMap, lineTwoOpen } from "./kart";
 import { kartArt } from "./kartArt";
+import type { View } from "./types";
 import { ENCORE_ROUTE } from "./routes/encore";
 
 // The encore (order 29, ADR 0052): a stop that is there only once every rune of both lines is held, and that changes
@@ -50,6 +52,32 @@ describe("the stop", () => {
     expect(def.map[10][ENCORE_COL]).toBe("E");
     expect(def.map[11][ENCORE_COL]).toBe("O");
     for (const row of def.map) expect(row.length).toBe(ENCORE_COLS);
+  });
+
+  test("its neon keeps its light after dark, with a glow of its own, until the encore is seen (order 30)", () => {
+    const lit = (p: Progress) => {
+      const def = kartDef(p, kartArt);
+      const was = { ...view, g: ctx() };
+      target(areaRecorder().ctx);
+      Object.assign(view, { w: 320, h: 200, k: 1, reduced: true, camX: ENCORE_COL * TILE - 160, camY: 0 });
+      lights.length = 0;
+      const v: View = { sky: skyOf(def, "night"), t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 23), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: p.cleared, runeAt: null, grounds: null };
+      def.art.back(v);
+      const out = lights.map((l) => l.color ?? "");
+      lights.length = 0;
+      target(was.g);
+      Object.assign(view, { w: was.w, h: was.h, k: was.k, camX: was.camX, camY: was.camY, reduced: was.reduced });
+      return out;
+    };
+    const unseen = lit(all());
+    for (const c of [ENEMY.hotPink, ENEMY.lime]) expect(unseen).toContain(c);
+    // The glow: three rings round the tubes in its first neon, a fifth of it each (as an invader's: one neon, never the paint's yellow).
+    const pink = `rgba(${[1, 3, 5].map((i) => parseInt(ENEMY.hotPink.slice(i, i + 2), 16)).join(", ")}, 0.2)`;
+    expect(unseen.filter((c) => c === pink).length).toBe(3);
+    expect(unseen.filter((c) => c.endsWith(", 0.2)")).length).toBe(3);
+    const seen = lit({ ...all(), best: { ...all().best, encore: 41000 } });
+    for (const c of [ENEMY.hotPink, ENEMY.lime]) expect(seen).not.toContain(c);
+    expect(seen.filter((c) => c.endsWith(", 0.2)")).length).toBe(0);
   });
 
   test("gives no rune and changes no total: not a station of either line, its best time kept and nothing else", () => {

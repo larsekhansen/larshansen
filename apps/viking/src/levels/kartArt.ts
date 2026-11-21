@@ -2,7 +2,7 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { box } from "@larshansen/pixelkit/backdrop";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, COIN, DOORWAY, FACADE, FLAG, FOOD, HAT_RED, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, COIN, DOORWAY, ENEMY, FACADE, FLAG, FOOD, HAT_RED, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
@@ -626,7 +626,15 @@ const STAGE_H = 52;
 function encoreStop(seen: boolean, t: number) {
   const x = ENCORE_COL * TILE + TILE / 2;
   drawProp(custom(`kart encore ${seen ? 1 : 0}`, STAGE_W, STAGE_H, encoreCell(seen)), x - STAGE_W / 2, LINE_Y - STAGE_H, STAGE_W);
-  if (!seen) mirrorBall(x, LINE_Y - 36, t);
+  if (seen) return;
+  mirrorBall(x, LINE_Y - 36, t);
+  // After dark its neon keeps its light, with a soft glow of its first neon round the tubes, as an invader's (order 30,
+  // `glows` in `alive/glamour.ts`: one neon, the shape grown by three, four and five pixels, a fifth of it each); the tubes over it.
+  const nx = x - STAGE_W / 2 + 10;
+  const ny = LINE_Y - STAGE_H + 21;
+  for (const by of [3, 4, 5]) light(nx - by, ny - by, 40 + 2 * by, 3 + 2 * by, "window", "rgba(255, 45, 149, 0.2)");
+  light(nx, ny, 40, 1, "window", ENEMY.hotPink);
+  light(nx, ny + 2, 40, 1, "window", ENEMY.lime);
 }
 function encoreCell(seen: boolean) {
   let a: (string | null)[] | null = null;
@@ -654,8 +662,8 @@ function encoreCell(seen: boolean) {
       }
       // The neon round its mouth under the glamour; plain, its lights warm white.
       if (!seen) {
-        fill(10, top + 5, 40, 1, "#ff2d95");
-        fill(10, top + 7, 40, 1, "#c8ff2a");
+        fill(10, top + 5, 40, 1, ENEMY.hotPink);
+        fill(10, top + 7, 40, 1, ENEMY.lime);
       } else for (let k = 0; k < 5; k++) dot(14 + k * 8, top + 5, "#fff4dc");
       // Speaker stacks at the sides, black with grilles.
       for (const sx of [11, 42]) {
