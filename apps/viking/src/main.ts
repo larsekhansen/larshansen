@@ -1922,6 +1922,7 @@ if (debugging)
         return maze;
       },
       progress: () => progress,
-      fresh
+      fresh,
+      card: showCard
     })
   );

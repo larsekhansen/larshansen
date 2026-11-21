@@ -2,7 +2,7 @@
 // a change. Chromium cannot render headless on the Pi; Firefox can draw Canvas 2D but fires no
 // animation frames, so the pages are opened with `?debug&steps=N` (see packages/pixelkit/src/harness.ts).
 //
-//   bun tools/shots.ts [--size=390x844] [--wait=<ms>] <outDir> <url>...
+//   bun tools/shots.ts [--size=390x844] [--wait=<ms>] [--lang=nb-NO] <outDir> <url>...
 //
 // The window is 1280 x 800 unless `--size` says otherwise (an upright phone: 390x844); a shot at
 // another size has the size at the end of its name. Each file is named after the address's path and query. Every run gets a fresh Firefox profile,
@@ -14,8 +14,11 @@
 // address is opened in an `<iframe>` filling the window of a small wrapper page served from a local
 // port, beside an image from that port's `/slow` route, which answers only after the wait. The
 // picture is then of the wrapper, which shows nothing but the page.
+//
+// `--lang=<tag>` has the fresh profile ask for that language first (`nb-NO`: the viking game speaks Norwegian); the
+// file's name ends with it.
 
-import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -63,8 +66,9 @@ function serveWrapper(wait: number) {
   });
 }
 
-async function shoot(url: string, file: string, size = "1280,800"): Promise<boolean> {
+async function shoot(url: string, file: string, size = "1280,800", lang?: string): Promise<boolean> {
   const profile = mkdtempSync(join(tmpdir(), "shots-"));
+  if (lang) writeFileSync(join(profile, "user.js"), `user_pref("intl.accept_languages", "${lang}");\nuser_pref("intl.locale.requested", "${lang}");\n`);
   try {
     const proc = Bun.spawn(["firefox", "--headless", "--no-remote", "--profile", profile, `--window-size=${size}`, "--screenshot", file, url], {
       stdout: "ignore",
@@ -94,20 +98,22 @@ if (import.meta.main) {
     process.exit(2);
   }
   const wait = waitMatch ? Number(waitMatch[1]) : 0;
-  const [outDir, ...urls] = args.filter((a) => a !== sizeArg && a !== waitArg);
+  const langArg = args.find((a) => a.startsWith("--lang="));
+  const lang = langArg?.slice(7) || undefined;
+  const [outDir, ...urls] = args.filter((a) => a !== sizeArg && a !== waitArg && a !== langArg);
   if (!outDir || urls.length === 0) {
-    console.error("usage: bun tools/shots.ts [--size=390x844] [--wait=<ms>] <outDir> <url>...");
+    console.error("usage: bun tools/shots.ts [--size=390x844] [--wait=<ms>] [--lang=nb-NO] <outDir> <url>...");
     process.exit(2);
   }
   mkdirSync(outDir, { recursive: true });
   const server = wait > 0 ? serveWrapper(wait) : null;
   let failed = 0;
   for (const url of urls) {
-    const file = join(outDir, `${nameFor(url)}${size ? `_${size[1]}x${size[2]}` : ""}.png`);
+    const file = join(outDir, `${nameFor(url)}${size ? `_${size[1]}x${size[2]}` : ""}${lang ? `_${lang}` : ""}.png`);
     rmSync(file, { force: true });
     const started = performance.now();
     const opened = server ? `http://localhost:${server.port}/?u=${encodeURIComponent(url)}` : url;
-    const ok = await shoot(opened, file, size ? `${size[1]},${size[2]}` : undefined);
+    const ok = await shoot(opened, file, size ? `${size[1]},${size[2]}` : undefined, lang);
     const secs = ((performance.now() - started) / 1000).toFixed(1);
     console.log(`${ok ? "ok    " : "FAILED"} ${secs.padStart(5)} s  ${file}`);
     if (!ok) failed++;
