@@ -995,8 +995,8 @@ function ploughBody(p: Plough, v: View) {
     panel(0, 32, y0 + 20, 3, SNOW_TONES, 1);
     panel(32, 40, g - 18, 18, [WINTER.bladeDark, mix(WINTER.blade, INK, 0.5), mix(WINTER.blade, INK, 0.35)], 1);
     for (const wx of [-22, 18]) wheel(at(wx), g - 6, 6, false);
-    // Parked, its engine ticks over: a wisp from the stack every other second (order 23).
-    if (Math.floor(v.t / 60) % 2) plain(() => R(at(-34) - 1, y0 - 4, 3, 2, "rgba(70, 66, 62, 0.35)"));
+    // Parked, its engine ticks over: a wisp from the stack every other second (order 23; none with reduced motion, order 30).
+    if (!view.reduced && Math.floor(v.t / 60) % 2) plain(() => R(at(-34) - 1, y0 - 4, 3, 2, "rgba(70, 66, 62, 0.35)"));
     return;
   }
   const beaten = p.phase === "beaten";

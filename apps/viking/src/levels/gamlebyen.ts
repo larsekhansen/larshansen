@@ -1110,8 +1110,9 @@ function serpentArt(s: Serpent, v: View) {
     const d = s.dir;
     const hx = h.x + h.w / 2 - d * 2;
     const bx = hx - d * 18;
-    // Dazed, its head rocks on the planks (order 24): lifted a pixel and back, groggily, its tongue in and out.
-    const rock = s.phase === "dazed" ? [0, 0, 1, 0, 0, -1][Math.floor(t / 12) % 6] : 0;
+    // Dazed, its head rocks on the planks (order 24): lifted a pixel and back, groggily, its tongue in and out (held still
+    // with reduced motion, as anything that shakes is: order 30).
+    const rock = s.phase === "dazed" && !view.reduced ? [0, 0, 1, 0, 0, -1][Math.floor(t / 12) % 6] : 0;
     outlined(() => {
       for (let y = floor - 9; y < base; y++) {
         const f = (y - floor + 9) / (base - floor + 9);

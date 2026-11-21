@@ -151,9 +151,25 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
       (e) => (help.textContent = `on: ${e}`)
     );
   if (params.has("where")) where(params.get("where") ?? "");
+  if (params.has("card")) card();
   // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
   if (params.has("grain"))
     void import("./grain/study").then((m) => m.study(params.get("grain") || "3", (window as unknown as { __game: Parameters<typeof m.study>[1] }).__game, params.has("count") ? help : undefined)).catch((e) => (help.textContent = `grain: ${e}`));
+}
+
+/**
+ * `?debug&card` (order 30): the level's card at its end, as taking its rune (or, at the encore, his leaving) shows it, over the
+ * level as it starts, with the progress pretended: the tenth rune's (both languages' lines, and the story's end of line 1) on a
+ * level of line 1 when every rune of line 1 is held, line 2 opened on Vålerenga's, the story's end of line 2 on Gamlebyen's
+ * with every rune of line 2. As `&told` and `&seen`, for a picture of a moment the screenshot's wait cannot reach.
+ */
+function card() {
+  const g = (window as unknown as { __game: Game }).__game;
+  const id = g.play.def.id;
+  const progress = g.progress();
+  const one = ORDER.slice(0, 10);
+  const all = g.play.skilling.length;
+  g.card({ ms: progress.best[id] ?? 61230, newBest: true, gold: progress.bracteates.includes(id), found: all, total: all, clean: true, pole: false, home: one.includes(id) && one.every((l) => progress.cleared.includes(l)), opened: id === "nabolaget" });
 }
 
 /** The page as `window.__game` has it, for the strip. */
@@ -166,6 +182,8 @@ interface Game {
   still(): void;
   sfx?: { play(name: string, n?: number): void; voice?(v: unknown): void };
   feel?: { sounds?: string[] };
+  progress(): Progress;
+  card(r: { ms: number; newBest: boolean; gold: boolean; found: number; total: number; clean: boolean; pole: boolean; home: boolean; opened: boolean }): void;
 }
 
 /**

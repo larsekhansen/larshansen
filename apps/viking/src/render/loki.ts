@@ -445,10 +445,15 @@ export function lokiFrame(s: Loki, t: number): Frame {
 
 const PROP: Record<string, string> = { k: E.line, H: E.hotPink, h: E.magenta, L: E.lime, g: E.poison, J: E.poisonLight, V: ROLES.now, W: E.white };
 const prop = (name: string, rows: string[]) => frame(name, PROP, [rows]);
-/** The troll's club in his neon: a long haft, the head knobbed; raised, its head in the violet of a tell. */
-const CLUB = prop("Loki's club", [".hHH.", "hHLHH", "hHHHh", ".hHh.", "..k..", "..k..", "..k..", "..k..", "..k..", "..k..", "..k.."]);
-const CLUB_UP = prop("Loki's club raised", [".VVV.", "VVWVV", "VVVVV", ".VVV.", "..k..", "..k..", "..k..", "..k..", "..k..", "..k..", "..k.."]);
-const CLUB_DOWN = prop("Loki's club down", ["kkkkkkk.hhh.", "kkkkkkkhHLHh", ".......hHHHh", "........hhh."]);
+/**
+ * The troll's club in his neon: a haft three pixels thick, the head knobbed, seven across. Raised, all of it is the violet of a
+ * tell, as the troll's raised club is: it reads at a phone's size as the troll's does (order 30; drawing only, the tell's length
+ * and the blow's box are the rules').
+ */
+const HAFT = "..hhk..";
+const CLUB = prop("Loki's club", ["..hHH..", ".hHHHH.", "hHHLHHH", "hHHHHHh", ".hHHHh.", "..hHh..", HAFT, HAFT, HAFT, HAFT, HAFT, HAFT, HAFT, HAFT, HAFT, "..kkk.."]);
+const CLUB_UP = prop("Loki's club raised", ["..VVV..", ".VVVVV.", "VVWVVVV", "VVVVVVV", "VVVVVVV", ".VVVVV.", ...Array<string>(10).fill("..VVV..")]);
+const CLUB_DOWN = prop("Loki's club down", ["..........hHHh..", ".........hHHHHh.", "hhhhhhhhhhHHLHHh", "hhhhhhhhhhHHHHHh", "kkkkkkkkkhHHHHHh", ".........hHHHHh.", "..........hhhh.."]);
 /** The plough's blade as a guitar held out in front of him: an angled body, a neck, the strings' glint. */
 const GUITAR = prop("Loki's guitar", ["......hH", ".....hHH", "kkkkhHHL", "kkkkhHHh", ".....hHh", "......hh"]);
 
@@ -465,10 +470,11 @@ function body(s: Loki, t: number) {
   const age = t - s.since;
   if (s.phase === "club") {
     // The club over his head, raised a full second: its head the tell's violet.
-    paint(CLUB_UP, Math.min(at(13), at(18)) - 0, y - 3, 1, 5);
+    // Its grip just over his hands, its head eight pixels over the frame's top (the troll's comes to the same height over the floor).
+    paint(CLUB_UP, Math.min(at(12), at(19)), y - 8, 1, 7);
   }
-  if (s.phase === "slam") paint(CLUB_DOWN, s.dir > 0 ? at(22) : at(22) - 12, s.def.floor - 4, s.dir, 12);
-  if (s.phase === "strut" && s.attack === "club") paint(CLUB, s.dir > 0 ? at(20) : at(24), y + 22, 1, 5);
+  if (s.phase === "slam") paint(CLUB_DOWN, s.dir > 0 ? at(22) : at(22) - 16, s.def.floor - 7, s.dir, 16);
+  if (s.phase === "strut" && s.attack === "club") paint(CLUB, s.dir > 0 ? at(19) : at(25), y + 22, 1, 7);
   if (s.phase === "rev" || s.phase === "charge") paint(GUITAR, s.dir > 0 ? at(20) : at(28), s.def.floor - 16, s.dir, 8);
   // Revving: beacons on his shoulder pads, the plough's: in the tell's violet, flashing twice a second (lit, still, with
   // reduced motion).

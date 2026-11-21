@@ -524,6 +524,17 @@ body {
   font-weight: 600;
 }
 
+/*
+ * The card at a level's end as wide as its lines want, up to the screen less a margin (order 30). Placed at left: 50%, a card
+ * that sets no width can never be wider than half the screen: on an upright phone line 2's ending card wrapped two or three
+ * words a line and its title broke after the rune. On a wide screen it is as wide as before (half the screen at most).
+ */
+#finish {
+  width: max-content;
+  max-width: max(50%, min(36em, calc(100% - 32px)));
+  box-sizing: border-box;
+}
+
 #finish-more.home:not([hidden]) {
   display: flex;
   flex-direction: column;

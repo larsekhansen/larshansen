@@ -62,7 +62,7 @@ import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
-import { kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
+import { BARE, ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
@@ -301,7 +301,6 @@ const loadKart = () =>
     }
   ));
 void loadKart().catch(() => undefined);
-const BARE: KartArt = () => ({ back() {}, ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }), ledges: {} });
 const theMap = () => kartDef(progress, kartArt ?? BARE);
 
 /** Opens the line map or a level. `at`: a door to stand at on arrival (on the map, a station or the mound). */
@@ -352,14 +351,18 @@ function openScene(id: string, at?: string) {
   firstClear = null;
   layout();
   hud();
-  // On the map, the open levels' code is fetched while he walks, so going in is quick.
-  if (scene.map)
-    for (const [i, l] of LINE.entries())
-      if (l.built && isOpen(progress, ORDER, i)) {
-        void loadLevel(l.id).catch(() => undefined);
-        if (wantsShield(l.id)) void loadShield().catch(() => undefined);
-      }
+  // On the map, the open levels' code is fetched while he walks, so going in is quick; with every rune, the encore's when the page is idle.
+  if (scene.map) {
+    const next = ahead(progress);
+    for (const id of next.now) {
+      void loadLevel(id).catch(() => undefined);
+      if (wantsShield(id)) void loadShield().catch(() => undefined);
+    }
+    for (const id of next.idle) idle(() => void loadLevel(id).catch(() => undefined));
+  }
 }
+/** When the page has nothing else to do (or soon, where the browser cannot say). */
+const idle = (f: () => void) => ("requestIdleCallback" in window ? requestIdleCallback(f) : setTimeout(f, 300));
 
 // ---------------------------------------------------------------------------------------------
 // Where he is: the address says which scene, so Back and Forward move between them.
@@ -479,7 +482,8 @@ const mazeUi = {
 };
 const mazeShown = { name: "", level: "", clock: "", best: "", deaths: "" };
 let mazeText: { deaths(n: number): string; best(time: string): string; formatTime(ms: number): string } | null = null;
-const fjordHelp = { text: "", hidden: false };
+/** What the help line said and whether it was hidden, for after the mound (`hidden` as the DOM types it: newer libraries add "until-found"). */
+const fjordHelp: { text: string; hidden: HTMLElement["hidden"] } = { text: "", hidden: false };
 /** The feather the maze reported, for the moment at the mound's stop once the map is back. */
 let featherPending: "plain" | "gold" | null = null;
 /** The level he went into the mound from (Nordmarka's door to Jernhaugen), to come back out into, as he left it. */
@@ -1918,6 +1922,7 @@ if (debugging)
         return maze;
       },
       progress: () => progress,
-      fresh
+      fresh,
+      card: showCard
     })
   );

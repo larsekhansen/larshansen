@@ -535,8 +535,8 @@ function dawnShaft(v: View) {
     const edge = Math.min(x - d[0], d[1] - 1 - x);
     const a = (edge < 3 ? 0.08 : 0.16) + pulse * 0.1;
     R(x, top, 1, G * TILE - top, `rgba(255, 190, 110, ${a.toFixed(3)})`);
-    // A slant of rays across it, as light through branches falls.
-    if ((x + Math.floor(v.t / 30)) % 9 < 2) R(x, top, 1, G * TILE - top, "rgba(255, 210, 150, 0.07)");
+    // A slant of rays across it, as light through branches falls (still, with reduced motion: order 30).
+    if ((x + (view.reduced ? 0 : Math.floor(v.t / 30))) % 9 < 2) R(x, top, 1, G * TILE - top, "rgba(255, 210, 150, 0.07)");
   }
   // The pool of light on the floor, and its edges, where it has to stand.
   R(d[0] - 6, G * TILE - 3, d[1] - d[0] + 12, 3, `rgba(255, 200, 120, ${(0.35 + pulse * 0.35).toFixed(3)})`);

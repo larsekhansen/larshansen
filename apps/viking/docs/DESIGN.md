@@ -71,7 +71,9 @@ Line 2, VIKING (ADR 0025, 0030), opened by clearing Vålerenga; all six built:
 
 The encore (order 29, ADR 0052): once every rune of both lines is held, a seventeenth stop appears past the longship at the end
 of line 2, **Middelalderparken**, a small festival stage on the water. It has no rune, opens nothing and counts in no total; it
-keeps a best time (`best.encore`). Loki, the Neon Invaders' front man, plays one more song there (see the rules below).
+keeps a best time (`best.encore`). Loki, the Neon Invaders' front man, plays one more song there (see the rules below). Until
+it is seen its stop's neon keeps its light after dark, with a glow of its first neon round the tubes, as an invader's (order
+30); and with every rune the map fetches its file when the page is idle, so its first visit has no board.
 
 ## The rules
 
@@ -312,8 +314,9 @@ the textured set. For anyone adding a prop to a level:
    glamour's family, and every material in order 26's band. Add the level's old prop colours to its `OLD` and what it must draw
    to `EXPECTED` there.
 5. **Cheap.** One copy a prop a frame; a long railing is a span copied along. Never texture a prop per frame in rectangles.
-6. **Langkaia is in the first script**: it reaches the kit through `TEXTURED.prop` and `TEXTURED.walls` (`render/tiles.ts`); any
-   level fetched later imports the kit directly.
+6. **Langkaia is in the first script**: it reaches the kit through `TEXTURED.prop` and `TEXTURED.walls` (`render/tiles.ts`), and
+   draws each prop plainly (flat rectangles where it stands) if `feel`'s file never comes (order 30, ADR 0053: `TEXTURED.prop?.(…) ||
+   R(…)`); any level fetched later imports the kit directly, and `feel`'s file with it.
 
 What the invaders throw is theirs and is not a prop: each shot trails three pixels of its level's first neon behind it, fading
 (`trails` in `render/feel.ts`): none once the shield has spent it, none inside the rune's ring, none with reduced motion. The
@@ -356,7 +359,9 @@ never wait for them. For anyone adding an event or a level:
 7. **Things done stay done in the picture.** A raised flag's tick pops in; a bench he has sat on keeps a tick; a
    cleared station's stone arrives with a flourish the first time only, and the station it opened answers.
 8. **Reduced motion.** No shake, no hold, nothing flying, nothing blinking three times a second (the ledges'
-   warning holds still); every event still has a still answer: a ring that stands, a tick, a held pose.
+   warning holds still); every event still has a still answer: a ring that stands, a tick, a held pose. A drawing that
+   reads the clock to turn something on and off holds it with `view.reduced` on the same line (or reads `tt =
+   view.reduced ? 0 : t`), or is an idle or a cycle named in `render/reduced.test.ts` with why (order 30).
 9. **Cheap.** Forty particles at most, plain rectangles, from pools made once; nothing new made in a frame.
 10. **A sound for every event**, from the kit's synth (`VOICES`, `SOUND_OF` in `feel.ts`), each its own; a hit, a
     stomp, a block and a dud stomp told apart with eyes shut (the test holds them apart by register, direction
@@ -405,4 +410,4 @@ and 932 x 430 at a pixel ratio of 3 (`tools/review/o21/`), and where a test can 
 missing and present with all; no rune, no total; the floor flat; every attack's tell at least as long as the shortest of the three
 bosses' (60 steps) and seen that long in play; the scripted player's win and the sloppy player's on fresh seeds; the story's lines
 above the encore's block byte for byte; Loki's colours (the enemy palette under the glamour, plain ones off every neon and role).
-Since order 28, `alive/props.test.ts` holds that every level draws its lamp posts, railings, walls, doors and boats from the props kit (and none the kit's flat lamp post or panel door), that no prop is neon, that every prop material keeps the band, and that no level's props come nearer any role than its flat props did (or than 10); and `render/palette.test.ts` that the lane's ground keeps a band of its own (its saturation and the spread of its value by area, and every material's neighbouring pixels at most a sixth of the figures' contrast apart).
+Since order 28, `alive/props.test.ts` holds that every level draws its lamp posts, railings, walls, doors and boats from the props kit (and none the kit's flat lamp post or panel door), that no prop is neon, that every prop material keeps the band, and that no level's props come nearer any role than its flat props did (or than 10); and `render/palette.test.ts` that the lane's ground keeps a band of its own (its saturation and the spread of its value by area, and every material's neighbouring pixels at most a sixth of the figures' contrast apart). Since order 30, `levels/lazy.test.ts` holds that only Langkaia can be drawn without `feel`'s file and that, there and on the bare map, every hook's thing and every solid tile is drawn plainly without it (ADR 0053); `render/reduced.test.ts` that nothing blinks with reduced motion (every clock-driven blink in the app and the kit held or named as an idle or a cycle; every boss at each of its moves, every ledge's warning and the map drawn with the clock running); and `levels/encore.test.ts` that the encore's stop glows after dark until seen and that its file is fetched ahead only with every rune.

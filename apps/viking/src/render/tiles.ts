@@ -217,7 +217,8 @@ function drawTile(t: string, c: number, r: number, x: number, y: number, map: Ti
     crate(x, y, edgesOf(map.tileAt, c, r), !map.isSolid(c, r - 1), sky.snow);
     if (!map.isSolid(c, r - 1)) tileTop(x, y, map.tileAt(c - 1, r) !== "B" || map.isSolid(c - 1, r - 1), map.tileAt(c + 1, r) !== "B" || map.isSolid(c + 1, r - 1));
   }
-  else if (t === "L") line(x, y);
+  // Line 1's deck; line 2's too, on the map without its look (ADR 0053), which draws both its own way.
+  else if (t === "L" || t === "O") line(x, y);
   // Every one-way ledge in the platform palette (order 18): the level's own look gives only its letter.
   else if (art.ledges[t]) {
     const first = map.tileAt(c - 1, r) !== t;

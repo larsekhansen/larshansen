@@ -1,20 +1,21 @@
 # Roadmap
 
-As of the night of 17 November 2026. Change this file in the same change that makes it wrong.
+As of 21 November 2026, after order 30 was built. Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
-| Date | 17 November 2026, about 03:30 |
-| Last live | Order 29, the encore (ADR 0052), PR #77; before it orders 28 (PR #76) and 27 (PR #74) |
+| Date | 21 November 2026 |
+| Last live | Order 30, small debts (ADR 0053), PR #78; before it orders 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 72 % used when order 29 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
-| Paused? | Yes, by the planner's choice, until the weekly reset: three rounds landed in one night and the next would end at or over 75 %. The six-hourly check still runs |
+| Weekly allowance | 2 % used when order 30 was reviewed (the week reset on 21 November); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Paused? | No. Lars asked for a status on 18 November through another session, so he may be back: nothing new is started until he has had a chance to comment on orders 27 to 30 |
 
 ## In flight
 
-Nothing.
+**Order 30, small debts** (`orders/30-small-debts.md`, ADR 0053), is live (PR #78).
+Each debt, paid or not, with its measures: `apps/viking/tools/review/o30/after.md`.
 
 **Order 29, the encore** (ADR 0052) is live (PR #77). Loki met once, at a stage
 on the water in Middelalderparken that appears past the longship only with every rune of both lines. Measures and what was left:
@@ -36,11 +37,10 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-After the reset on Saturday 21 November, the planner's candidate is **small debts in one round**: the encore's four "not fixed"
-items (`apps/viking/tools/review/o29/after.md`: the stop's neon does not glow at night, the club is small, nothing photographed under
-reduced motion, no prefetch from the map), Langkaia's missing fallback, and a reduced-motion picture of every boss. Idea 1 below (meet
-Loki) is done. Known small debt from order 28: with feel's file missing, Langkaia's cabins, walls,
-tower, boat and posts have no fallback drawing (the decks still draw).
+Order 30 paid the small debts (once it is reviewed and live). What it found and left is in its `after.md` ("Found and not
+fixed"): a narrow desktop window (not a touch phone) can put the card's top under the header; Slottet's pigeon walks into the
+parade at the start, where the children's flags cross it; under Nordmarka's dark the invaders are their glow, not their outline.
+The planner's next candidate is idea 2 or 3 below: a person's playtest is still the biggest gap.
 
 ## After that: ideas in rough order of value
 

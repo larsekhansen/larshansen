@@ -37,6 +37,7 @@ All on `/viking/` with `?debug`. HANDOVER, "Checking", has the full account.
 | `&perf` (`&on=<event>&skip=6`) | Count rectangles and copies in a frame |
 | `&steps=0&on=<event>&skip=N` | A picture of the moment: stepped to the event (`stomp`, `rune`, `hurt`, `boss:hit` ...) and N steps on (order 27) |
 | `&reduced` | Reduced motion |
+| `&card` | The level's card at its end over it, as its rune would show it, with the progress pretended (`&cleared=…`): line 1's ending on Vålerenga with every rune of line 1, line 2's on Gamlebyen with all, the encore's (order 30) |
 | `&touch` | Show the touch pad without a touch screen (order 21) |
 | `&where=x,y` / `&look=x,y` / `&strip` | Camera and crop helpers |
 | `&grain=0\|1\|2\|3\|depth` | The pixel study (order 22); a chunk of its own |
@@ -47,7 +48,7 @@ Level ids: `langkaia`, `akershus`, `radhuset`, `slottet`, `holmenkollen`, `akers
 `nordmarka`, `stortinget`, `ekeberg`, `nabolaget` (shown as Vålerenga, ADR 0038), `bygdoy`,
 `vigelandsparken`, `korketrekkeren`, `ostensjovannet`, `bjorvika`, `gamlebyen`.
 
-Pictures: `bun tools/shots.ts [--size=390x844] [--wait=5000] <out-dir> <url>…` from the root,
+Pictures: `bun tools/shots.ts [--size=390x844] [--wait=5000] [--lang=nb-NO] <out-dir> <url>…` from the root (`--lang`: the game in Norwegian, order 30),
 against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the front page).
 
 ## Tools in the repository
@@ -62,6 +63,9 @@ against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the fro
 | `apps/viking/tools/glance/` | Contact sheets (`sheet.py`, `enemyshots.ts`, `platformshots.ts`), the level walk (`walk.ts`, `strips.ts`), `perf.ts`, `flat.py` (flat places), `frames.ts` and `framesheet.py` (frame sheets: since order 27 each figure glammed, natural and its ending), `stomp.ts` (a stomp's strip of frames), `invasion.ts` (where the invaders' scenery may stand), `tones.ts` (which tones pass the palette test), `yellows.ts`, `hand.ts` (phone states), `haze.ts`, `fore.ts` |
 | `apps/viking/src/render/palette.test.ts` | The colour rules as a test |
 | `apps/viking/src/game/frame.test.ts` | He is never under a touch button, all routes, five sizes |
+| `apps/viking/src/render/reduced.test.ts` | Nothing blinks with reduced motion: every clock-driven blink held or named; bosses, ledges' warnings and the map with the clock running (order 30) |
+| `apps/viking/src/levels/lazy.test.ts` | What the first script draws without `feel`'s file (ADR 0053) |
+| `apps/viking/tools/glance/leanplaces.ts` | Every enemy kind met in more than one level: where, its level's two neons and how far each is from that level's fields, by day and under its sky; the addresses of the pictures in place (order 30) |
 | [`scripts/review.sh`](scripts/review.sh), [`frontgate.sh`](scripts/frontgate.sh), [`cmpfront.py`](scripts/cmpfront.py) | The planner's review of a hand-back. They carry one session's scratch path in `S`: change it |
 
 ## Reference games and what was taken from them

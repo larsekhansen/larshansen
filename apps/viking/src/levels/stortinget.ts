@@ -569,8 +569,8 @@ function board(c: number, y: number, until: number, line: number, t: number) {
     digit(x + 52, y + 4, s % 10, METRO.led);
     R(x + 57, y + 7, 2, 2, METRO.led);
   } else if (view.reduced || Math.floor(t / 15) % 2 === 0) for (let k = 0; k < 4; k++) R(x + 44 + k * 4, y + 4, 3, 5, METRO.led);
-  // The second row: a dim scroll of what is said on every platform.
-  for (let k = 0; k < 18; k++) R(x + 3 + k * 3, y + 12, 2, 2, (k + Math.floor(t / 8)) % 6 === 0 ? METRO.led : METRO.ledDim);
+  // The second row: a dim scroll of what is said on every platform (still, with reduced motion: order 30).
+  for (let k = 0; k < 18; k++) R(x + 3 + k * 3, y + 12, 2, 2, (k + (view.reduced ? 0 : Math.floor(t / 8))) % 6 === 0 ? METRO.led : METRO.ledDim);
   light(x + 2, y + 2, 4 * TILE - 4, 14, "soft");
 }
 

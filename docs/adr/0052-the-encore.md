@@ -74,3 +74,10 @@ encore. Nothing that exists may depend on it, be gated by it or change because o
   (`levels/encore.ts`, `game/loki.ts`, `render/loki.ts`) is fetched only when he goes in. The first script grew by about 0.27 kB
   (59.07 to 59.34).
 - The review's tools play it (`tools/review/common.ts`: with the pole and the shield); `tools/glance/loki.ts` draws his sheet.
+
+## Amended by order 30 (21 November 2026)
+Three of the encore's "found and not fixed", drawing and fetching only, nothing of it with a rune missing: its stop on the map
+keeps its neon's light after dark, with a glow of its first neon round the tubes, until the encore is seen; Loki's club is drawn
+at the troll's size (a knobbed head seven pixels across, a haft three thick; raised, all of it the tell's violet), its tell's
+length and the blow's box as they were; and with every rune the map fetches the encore's file when the page is idle, so its first
+visit has no board (`ahead` in `levels/kart.ts`, held by `levels/encore.test.ts`).

@@ -32,6 +32,9 @@ Run everything from this folder.
 `bun sloppy.ts ks=0` must print `clear 1/1` for all sixteen levels: at k = 0 the harness reproduces the
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
+`o30/` holds order 30's (small debts): each debt paid or not, and the measures (`after.md`); every enemy kind met in more than one level, its
+level's two neons and how far each is from that level's fields (`leans.tsv`, from `../glance/leanplaces.ts`); the rectangles a frame against
+order 29's places and four more, on the branch and on `origin/main` (`perf-390.tsv`, `perf-390-before.tsv`, `places.tsv`).
 `o29/` holds order 29's (the encore): the sloppy and hesitating players at the encore, the run files of four levels byte-identical,
 the tells against the bosses', the map's pictures with runes missing byte-identical (`map.md`, `mapurls.sh`) and the arena's rectangles a
 frame (`after.md`, `perf-390.tsv`, `perf-1280.tsv`, `places.tsv`). The encore is in `common.ts`'s levels (with the pole and the shield).
