@@ -45,7 +45,8 @@ export function drawNight(def: LevelDef, v: View, shown: Body, boards: readonly 
   art.overDark?.(v);
 }
 
-const NIGHT = "4, 6, 18";
+/** The night's colour under the trees (its darkness is the level's `dark`); the palette test measures the outline over it. */
+export const NIGHT = "4, 6, 18";
 /** How deep into the soil under his feet the headlamp reaches: the ground's top edge, not a disc of earth. */
 const LAMP_SOIL = 6;
 

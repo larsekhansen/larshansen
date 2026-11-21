@@ -1,5 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { target, view } from "@larshansen/pixelkit/paint";
+import { TILE } from "@larshansen/pixelkit/config";
 import { ENEMY, ROLES, STAND } from "@larshansen/pixelkit/palette";
 import { TINT } from "@larshansen/pixelkit/paint";
 import type { Phase } from "@larshansen/pixelkit/oslo";
@@ -626,5 +627,50 @@ describe("the lane's ground keeps a band of its own (order 28)", () => {
     }
     console.log(`The materials' local contrast (mean L* between neighbours; at most a sixth of the figures' ${figures.toFixed(1)}):\n  ${table.sort().reverse().slice(0, 12).join("\n  ")}`);
     expect(busy).toEqual([]);
+  }, 120_000);
+});
+
+// Order 31 (item 3): in Nordmarka the level's own dark comes after the night's tint and covers everything but the lamp's
+// circle; the invaders showed there as their glow round a dark shape, not their red outline. The outline is now copied again
+// over the dark (`RING_OVER_DARK`), on its own pixels only. Measured as the fields are measured above: the outline as it is
+// seen against each of the level's fields as it is seen, by day (the red over the field) and under the trees (the field under
+// the level's twilight tint, the outline over it at the strength `afterDark` gives it, the dark of every depth the level has
+// over both, and the outline once more over that).
+describe("under Nordmarka's dark the red outline reads as clearly as by day (order 31)", () => {
+  test("the least distance of the outline from the forest's fields under its dark is at least the least by day", async () => {
+    const def = await loadLevel("nordmarka");
+    const f = levelFields(def, "day", FIELD_SHARE, await paintedOf("nordmarka"));
+    const { NIGHT } = await import("./night");
+    const { RING_OVER_DARK } = await import("../levels/nordmarka");
+    const night = NIGHT.split(",").map(Number) as Rgb;
+    const red = rgb(ENEMY.red);
+    const phase = def.sky as Phase;
+    // The outline's strength over the tint (`afterDark` in main.ts): 0.9 at night, 0.8 under any other tint.
+    const overTint = phase === "night" ? 0.9 : 0.8;
+    // Every depth of the dark along the level, as `drawNight` rounds it.
+    const v = { troll: null, flourish: null } as unknown as View;
+    const depths = new Set<number>();
+    for (let x = 0; x < def.map[0].length * TILE; x += 4) depths.add(Math.round(Math.max(0, Math.min(1, def.dark!(x, v))) * 20) / 20);
+    depths.delete(0);
+    let day = Infinity;
+    let before = Infinity;
+    let after = Infinity;
+    const worst: string[] = [];
+    for (const field of f.keys()) {
+      const F = rgb(field);
+      day = Math.min(day, deltaE(red, F));
+      const T = tinted(F, phase);
+      for (const d of depths) {
+        const bg = mixRgb(T, night, d);
+        const was = mixRgb(mixRgb(T, red, overTint), night, d);
+        const now = mixRgb(was, red, RING_OVER_DARK);
+        before = Math.min(before, deltaE(was, bg));
+        const a = deltaE(now, bg);
+        if (a < after) worst[0] = `${field} at a dark of ${d}`;
+        after = Math.min(after, a);
+      }
+    }
+    console.log(`The red outline against Nordmarka's fields: by day ${day.toFixed(1)} at the least; under its dark (${[...depths].sort().join(", ")}) ${before.toFixed(1)} without the outline over the dark, ${after.toFixed(1)} with it (${worst[0]})`);
+    expect(after).toBeGreaterThanOrEqual(day);
   }, 120_000);
 });
