@@ -8,7 +8,9 @@ import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { newPlay } from "../game/play";
 import { skyOf } from "../render/fields";
 import { TEXTURED, drawTiles } from "../render/tiles";
-import { BUILT, loadLevel } from "./index";
+import { fresh, type Progress } from "../game/progress";
+import { BUILT, ORDER, loadLevel } from "./index";
+import { BARE, kartDef } from "./kart";
 import { LANGKAIA } from "./langkaia";
 import type { LevelDef, View } from "./types";
 
@@ -129,8 +131,8 @@ describe("without feel's file (order 30)", () => {
     expect(alone).toEqual(["langkaia"]);
     // The first script itself (the page) does not reach it: it is fetched, as the page starts.
     expect(reachesFeel(join(SRC, "main.ts"))).toBe(false);
-    // The map's look imports it too (the mirror balls, the story's sign, the textured piers): without feel's file the map
-    // does not open but says its train did not come, with "Try again", as a level fetched later does.
+    // The map's look imports it too (the mirror balls, the story's sign, the textured piers): without feel's file the map is
+    // its bare self at the page's start (`BARE`, below), and going to it later says its train did not come, with "Try again".
     expect(reachesFeel(join(SRC, "levels", "kartArt.ts"))).toBe(true);
   });
 
@@ -162,21 +164,24 @@ describe("without feel's file (order 30)", () => {
     expect([...short].map(([k, n]) => `${k}: ${n} pixels with nothing drawn`)).toEqual([]);
   }, 120_000);
 
-  test("every solid tile and everything he is carried on in Langkaia is drawn without feel's file", () => {
-    const { hit, map } = drawn(LANGKAIA, {});
+  test("every solid tile and everything he is carried on, in Langkaia and on the map without its look, is drawn without feel's file", () => {
+    const all: Progress = { ...fresh(), cleared: [...ORDER], best: Object.fromEntries(ORDER.map((id) => [id, 60000])) };
     const bare: string[] = [];
-    for (let r = 0; r < map.rows; r++)
-      for (let c = 0; c < map.cols; c++) {
-        if (!map.isSolid(c, r) && !map.isOneWay(c, r)) continue;
+    for (const def of [LANGKAIA, kartDef(fresh(), BARE), kartDef(all, BARE)]) {
+      const { hit, map } = drawn(def, {});
+      for (let r = 0; r < map.rows; r++)
+        for (let c = 0; c < map.cols; c++) {
+          if (!map.isSolid(c, r) && !map.isOneWay(c, r)) continue;
+          let n = 0;
+          for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) n += hit[(r * TILE + y) * map.width + c * TILE + x];
+          if (n < (TILE * TILE) / 8) bare.push(`${def.id}: "${map.tileAt(c, r)}" at ${c},${r}`);
+        }
+      for (const [i, d] of def.carriers.entries()) {
+        const at = carrierDrawn(d, 0, 1);
         let n = 0;
-        for (let y = 0; y < TILE; y++) for (let x = 0; x < TILE; x++) n += hit[(r * TILE + y) * map.width + c * TILE + x];
-        if (n < (TILE * TILE) / 8) bare.push(`"${map.tileAt(c, r)}" at ${c},${r}`);
+        for (let x = Math.round(at.x); x < at.x + d.w; x++) for (let y = Math.round(at.y); y < at.y + 4; y++) n += hit[y * map.width + x];
+        if (n < d.w * 2) bare.push(`${def.id}: carrier ${i}`);
       }
-    for (const [i, d] of LANGKAIA.carriers.entries()) {
-      const at = carrierDrawn(d, 0, 1);
-      let n = 0;
-      for (let x = Math.round(at.x); x < at.x + d.w; x++) for (let y = Math.round(at.y); y < at.y + 4; y++) n += hit[y * map.width + x];
-      if (n < d.w * 2) bare.push(`carrier ${i}`);
     }
     expect(bare).toEqual([]);
   });

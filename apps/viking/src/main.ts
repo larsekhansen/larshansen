@@ -62,7 +62,7 @@ import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
 import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
-import { ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
+import { BARE, ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
@@ -301,7 +301,6 @@ const loadKart = () =>
     }
   ));
 void loadKart().catch(() => undefined);
-const BARE: KartArt = () => ({ back() {}, ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }), ledges: {} });
 const theMap = () => kartDef(progress, kartArt ?? BARE);
 
 /** Opens the line map or a level. `at`: a door to stand at on arrival (on the map, a station or the mound). */

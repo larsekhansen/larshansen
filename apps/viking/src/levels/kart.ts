@@ -1,4 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
+import { R } from "@larshansen/pixelkit/paint";
+import { PALETTE } from "@larshansen/pixelkit/palette";
 import { allRunes, isOpen, type Progress } from "../game/progress";
 import { mapBuilder } from "./build";
 import { ENCORE_STOP, LINE, LINE_2_AT, ORDER } from "./index";
@@ -72,6 +74,16 @@ export const LINE_2_SIGN = (open: boolean): SignDef => ({
 
 /** How the map is drawn, from `kartArt.ts`: fetched on its own. */
 export type KartArt = (progress: Progress, open: boolean) => Art;
+/**
+ * The map without its look, until `kartArt.ts` comes or if it never does (it comes with `feel`'s file, ADR 0053): its ground,
+ * the lines' decks (the shared letter's red band, `render/tiles.ts`), and line 2's gate as plain boards.
+ */
+export const BARE: KartArt = () => ({
+  back() {},
+  ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }),
+  ledges: {},
+  tile: (t, _c, _r, x, y) => t === "F" && (R(x + 3, y, 10, TILE, PALETTE.woodDark), true)
+});
 
 export function kartDef(progress: Progress, art: KartArt): LevelDef {
   const open = lineTwoOpen(progress);
