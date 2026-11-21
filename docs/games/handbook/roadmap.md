@@ -7,14 +7,14 @@ As of 21 November 2026, after order 30 was built. Change this file in the same c
 | | |
 |---|---|
 | Date | 21 November 2026 |
-| Last live | Order 29, the encore (ADR 0052), PR #77; before it orders 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 30, small debts (ADR 0053), PR #78; before it orders 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 72 % used when order 29 was reviewed; resets Saturday 21 November 11:00. No new round above 75 %, nothing heavy at 80 % |
-| Paused? | No: the weekly allowance reset on 21 November and order 30 was built that day |
+| Weekly allowance | 2 % used when order 30 was reviewed (the week reset on 21 November); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Paused? | No. Lars asked for a status on 18 November through another session, so he may be back: nothing new is started until he has had a chance to comment on orders 27 to 30 |
 
 ## In flight
 
-**Order 30, small debts** (`orders/30-small-debts.md`, ADR 0053), built on branch `small-debts`, waiting for the planner's review.
+**Order 30, small debts** (`orders/30-small-debts.md`, ADR 0053), is live (PR #78).
 Each debt, paid or not, with its measures: `apps/viking/tools/review/o30/after.md`.
 
 **Order 29, the encore** (ADR 0052) is live (PR #77). Loki met once, at a stage
