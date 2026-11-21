@@ -72,3 +72,13 @@ the glamour's family; every material in order 26's band; and no level's props ne
 - A level author adds a prop from the kit (`lamp`, `railing`, `plankWall`, `panelDoor`, `post`, `ladder`, `leg`, `rowboat`) or
   draws one with `prop` in its file: DESIGN's "Props at arm's length".
 - Rectangles a frame fell where the props were (each one copy); see `apps/viking/tools/review/o28/perf.md`.
+
+## A second look (order 31, 21 November 2026)
+Order 31 walked every level, the encore and the map again at both sizes by day and under each one's own sky, with the same three
+questions (`apps/viking/tools/review/o31/before.md`), and drew the three things that most let their surroundings down: the blue tram
+at Ekeberg and Vålerenga (it was a blue box with lamp-yellow windows by day; now one piece from the kit, `tramSide`, glass by day and
+lit after dark, its doors, bellows and panel joints, held to what shows of it where it goes in under the ground or rises out of its
+slot), Vigelandsparken's main gate (granite pillars in courses under a moulded cap, and wrought-iron lanterns where grey slabs and
+dark boxes stood) and Korketrekkeren's lanterns (a grey post with a box on top; now the lit trail's tarred wooden pole with an arm
+and a hood, as Oslo lights its ski trails). The rules above held: no neon, no lit band on a cap, nothing nearer a role than what it
+replaced (`alive/props.test.ts`, whose table of the old drawings now has the tram's colours).

@@ -32,6 +32,10 @@ Run everything from this folder.
 `bun sloppy.ts ks=0` must print `clear 1/1` for all sixteen levels: at k = 0 the harness reproduces the
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
+`o31/` holds order 31's (loose ends and a second look): each item done or not, and the measures (`after.md`); the words orders 21 to 30
+added, in both languages, where each was seen at 360 wide (`words.md`); the second look's table of flat things (`before.md`); the rectangles a
+frame at 390 x 844 on `origin/main`, after items 1 to 5 and on the branch's last build, at order 30's places, the walk's and the shafts'
+(`perf.md`, `perf-390-before.tsv`, `perf-390-after5.tsv`, `perf-390-final.tsv`, `places.tsv`).
 `o30/` holds order 30's (small debts): each debt paid or not, and the measures (`after.md`); every enemy kind met in more than one level, its
 level's two neons and how far each is from that level's fields (`leans.tsv`, from `../glance/leanplaces.ts`); the rectangles a frame against
 order 29's places and four more, on the branch and on `origin/main` (`perf-390.tsv`, `perf-390-before.tsv`, `places.tsv`).

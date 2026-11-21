@@ -1,6 +1,6 @@
 # Start here
 
-State as of 21 November 2026, after order 30 was built (not yet reviewed or live). Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 21 November 2026, after order 31 was built (not yet reviewed or live). Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -47,6 +47,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 28 the last flat things | #76 | Props of their place (ADR 0051): lamp posts, railings, plank walls, doors, rafts, the boat, the ferry; the line map drawn as a level; a neon trail behind what the invaders throw; the ground's own band |
 | 29 the encore | #77 | Loki met once (ADR 0052): with every rune, a stage on the water in Middelalderparken past the longship; he borrows the three bosses' moves and tells, poses between them, loses his hair, shades and jacket to three stomps and walks off plain with a thermos; no rune, no total, gates nothing |
 | 30 small debts | #78 | What 27 to 29 left: plain drawings without `feel`'s file (ADR 0053); the encore's stop glows after dark, Loki's club at the troll's size, the encore fetched ahead; reduced motion photographed and held by a test (seven things still ran); a debug card at a level's end and the card as wide as its lines on a phone; shared kinds looked at in every level; `tsc` from the root |
+| 31 loose ends and a second look | (branch `loose-ends`) | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
 phone before going live. The Pi cannot run the game in a headless browser (HANDOVER,

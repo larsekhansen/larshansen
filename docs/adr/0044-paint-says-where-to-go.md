@@ -63,3 +63,11 @@ nothing else) stands; the colours of three roles change, and one role is added.
 - A red outline with no dark line inside: tried; it read worse at phone size.
 - Natural browns and greys for bodies: the fields test does not allow them, and the copper coin is brown.
 - Dropping the teal under the paint: the paint alone on a level's own material reads as a stripe on a wall.
+
+## Amended by order 31 (21 November 2026)
+"Outlines keep their light after dark" did not reach under Nordmarka's own dark, which comes after the night's tint and covers
+everything but the lamp's circle: there the invaders were their glow round a dark shape. The red outline alone is now copied again
+over that dark (`overDark` in `levels/nordmarka.ts`, at 0.9 of its strength, as over the night's tint), on its own pixels only, so
+the dark round it is as dark as before. Measured as the palette test measures fields, the outline against the forest's fields
+under every depth of its dark: at the least 6.7 before, 33.8 after, against 29.2 by day (`render/palette.test.ts` holds it). The
+calm outline is not copied over the dark: what cannot hurt him there (the moose, the troll asleep) stays the dark's.

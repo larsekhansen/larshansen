@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, and by order 30's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, and by order 31's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -84,6 +84,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-17 | Lars away, with a standing instruction: "keep looking for more assets that should have increased details. and consider them with the rest of the game. interaction, fit, thematics, etc. ... remember to write docs too btw." Order 28: the last flat things, each asked what he does with it, whether it fits its place and whether the glamour should touch it (ADR 0051). The props kit (lamp posts of their place, railings, plank walls, panel doors, posts, a ladder, concrete legs, the rowing boat, the sauna rafts), the ferry and the gondola at Rådhuset, Bjørvika's fence and hut; the line map drawn as a level (a skyline a station, piers in the water, decks, station marks, the mirror balls' brackets); a neon trail behind what the invaders throw; the ground's own band, the fortress and Gamlebyen's planks quietened for it | `orders/28-the-last-flat-things.md`, branch `the-last-flat-things` |
 | 2026-11-17 | Order 29: the encore (ADR 0052). With every rune of both lines held, a stop past the longship: a small festival stage on the water in Middelalderparken, where Loki, the Invaders' front man, plays one more song. He borrows the three bosses' moves (the troll's club, the plough's charge, the serpent's bite) with their own tells and answers, poses between them (the opening), loses his hair, shades and jacket to three stomps and walks off a thin man in a wool sweater with a thermos. Extra: no rune, no total, a best time only; the map with any rune missing is as it was | `orders/29-the-encore.md`, branch `the-encore` |
 | 2026-11-21 | Order 30: small debts, the things orders 27 to 29 found and left. Langkaia's props drawn plainly if `feel`'s file never comes (ADR 0053), and the bare map's line 2; the encore's stop glowing after dark until seen; Loki's club at the troll's size; the encore's file fetched ahead from the map with every rune; reduced motion photographed and held by a test (the oars' and Slottet's banners' warnings and five other things were still running); a debug card at a level's end, and the card as wide as its lines on a phone; every kind met in several levels looked at in each; `tsc` from the root | `orders/30-small-debts.md`, branch `small-debts` |
+| 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
 Branches worth knowing: `main` (live), `iron-maze-original` (the maze as it was before any
@@ -197,8 +198,9 @@ place (copied coins, the fjords as planes of copied strips, Bjørvika's most 14,
 11,618: `tools/review/o23/perf.md`). Order 26 drew fewer again at every place (a solid tile is one copy of a textured piece where it
 was two to eighteen rectangles; Rådhuset's most 11,105 to 3,758; the heaviest now Holmenkollen, 10,141, copies up to 1,361 a frame at
 Stortinget: `tools/review/o26/perf.md`). Next in line: the far
-layers' one rectangle per column, colours set on every rectangle, the five stacked canvases, Stortinget's escalator
-shafts (3,600 of its worst place). No one has measured on a real
+layers' one rectangle per column, colours set on every rectangle, the five stacked canvases. Order 31 kept Stortinget's escalator shafts
+(their back walls whole, and the escalators' truss, glass, handrail and steps) as strips copied: at the shafts 1,363 to 2,947 rectangles a
+frame at 390 x 844 where it was 4,259 to 6,630 (`tools/review/o31/perf.md`), the pictures byte-identical. No one has measured on a real
 phone: the numbers are the Pi's software renderer.
 
 ## Line 2: what is built, what order 17 owes
@@ -260,7 +262,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.55 kB gzipped after order 30 (the plain drawings without `feel`'s file, the bare map's line 2, the encore's
+- **First script**: 59.59 kB gzipped after order 31 (the camera giving `--bar` to CSS; the rest is the chunks' names it carries).
+  59.55 kB gzipped after order 30 (the plain drawings without `feel`'s file, the bare map's line 2, the encore's
   file fetched ahead, `?debug&card`'s hook). 59.34 kB gzipped after order 29 (the encore's stop on the map with every rune, its route in the page, its card
   and best time, `Boss.ends`; the encore itself is a chunk of its own, 8.6 kB gzipped, and its words are in `feel`'s file). 59.07 kB gzipped after order 28 (Langkaia's sauna rafts, club hut, diving tower, boat and posts moved to the props kit in
   `feel`'s file behind one hook, `TEXTURED.prop`, and the shed walls behind `TEXTURED.walls`; the kit's flat lamp post and panel door, which no
@@ -606,6 +609,34 @@ nothing new. What to know:
   say `hidden` may be `"until-found"`: `handbook/lessons.md`. Both are clean.
 - **Unplayed**: none of it has been seen on a phone or at speed; reduced motion has been seen only in still pictures.
 
+## Order 31: loose ends and a second look
+
+Order 31 (`orders/31-loose-ends-and-a-second-look.md`; each item done or not, with its measures, in
+`apps/viking/tools/review/o31/after.md`). It touched nothing that waits on Lars: no story words, no fight, no difficulty. What to know:
+- **The cards with a mouse.** The page's camera gives the header's height to CSS (`--bar`) every frame on any screen, so the game's
+  own cards keep below the header in a narrow window too (ADR 0043 amended). Touch screens and wide windows are byte-identical.
+- **Slottet's first pigeon** is seen on plain street: the parade joins past its stretch (each pair rising out of the crowd as the
+  banners do) and the crowd waves no flag over it. Drawing only; the pigeon where it was, every run file identical.
+- **Nordmarka's dark**: the invaders keep their red outline over it (the ring alone, copied again on its own pixels), measured
+  against the forest's fields under every depth of the dark (ADR 0044 amended; `render/palette.test.ts`).
+- **Reduced motion is held by drawing** (`render/reduced.test.ts`): every level's scenery across the whole level and every thing
+  in it as the scripted route finds it, recorded call by call at several steps of the clock with the world held, as in a browser
+  (a stand-in `document`, so kept pieces and outlined shapes are made once and copied). What a level draws across itself that moves
+  with the clock is the world's own motion, named in `MOVES` with why; a thing never comes back to a recording within 24 steps. It
+  found Ekeberg's fjord glints drifting with reduced motion (held now). `hazardEdge` moved from `main.ts` to `render/stand.ts` for it.
+  Its limits are in `o31/after.md` (what reads the world from the clock is watched only where it stands still; `main.ts`'s own
+  drawing, the banner and the flying rune, is not drawn by it).
+- **Stortinget's escalator shafts** are kept strips (roadmap idea 5): 1,363 to 2,947 rectangles a frame at the shafts at 390 x 844
+  where they were 4,259 to 6,630, the pictures byte-identical.
+- **Both languages** (roadmap idea 11): `game/words.test.ts` looks through every module and every level for words kept by language
+  (387 places) and holds both there; nothing was missing. Every line orders 21 to 30 added was seen at 360 wide in both
+  (`o31/words.md`); nothing ran out of its box.
+- **The second look** (`o31/before.md`): the blue tram at Ekeberg and Vålerenga (`tramSide` in the props kit: one piece held by a
+  clip, glass by day and lit after dark), Vigelandsparken's main gate (granite pillars, wrought-iron lanterns) and Korketrekkeren's
+  lit trail (tarred poles) redrawn by ADR 0051's rules; the rest looked at and left, with reasons (the logs and the chairlift's
+  chairs are the next candidates).
+- **Unplayed**: none of it has been seen on a phone or at speed.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -646,14 +677,15 @@ reorder this list.
 7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
-8. **Margins.** The first script is 59.55 kB gzipped of a 60 kB budget, and the build fails over it
+8. **Margins.** The first script is 59.59 kB gzipped of a 60 kB budget, and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
-   130 s of a three-and-a-half-minute budget, nearly
-   all of it the reach and dead-end searches in sixteen workers on four cores (Gamlebyen's, eight searches
-   in one worker, is the slowest).
+   250 s alone since order 31 (212 s after order 30): most of it the reach and dead-end searches in sixteen workers on four
+   cores (Gamlebyen's, eight searches in one worker, is the slowest), and about 50 s the reduced-motion test, which draws every
+   level.
 9. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)). Since order 21 on a touch phone it is the run alone during a
-   level (two rows upright, one on its side, ADR 0043); with a mouse on a narrow window it still wraps as before.
+   level (two rows upright, one on its side, ADR 0043); with a mouse on a narrow window it still wraps as before, and since
+   order 31 the game's cards keep below it however many rows it wraps to (the maze's own cards keep their own place).
 10. **The maze's words** keep the original game's taunting voice, one exclamation mark included;
    order 13 read the viking game's lines, not the maze's.
 11. **Line 2 is unplayed too.** Bygdøy, Vigelandsparken, Korketrekkeren, Østensjøvannet, Bjørvika,
