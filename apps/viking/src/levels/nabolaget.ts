@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
-import { kept, keptStrips } from "@larshansen/pixelkit/kept";
+import { kept, keptStrips, seen } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, ctx, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
@@ -1302,9 +1302,10 @@ export const NABOLAGET: LevelDef = {
       pi(v);
     },
     overDark: (v) => {
-      // In the lane's dark the invaders keep their glow and their red outline, as under Nordmarka's trees (orders 31, 32).
-      overTheDark(ctx(), (x) => dark(x, v) > 0);
-      for (const e of v.enemies) if (e.alive && dark(e.x, v) > 0) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
+      // In the lane's dark the invaders keep their glow and their red outline, as under Nordmarka's trees (orders 31, 32); and the
+      // eyes shine. Only what is on the screen (the lane's three are drawn wherever he is).
+      overTheDark(ctx(), (x) => dark(x, v) > 0 && seen(x - 32, x + 32));
+      for (const e of v.enemies) if (e.alive && dark(e.x, v) > 0 && seen(e.x - 16, e.x + 16)) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
       cranes(v.t);
       pi(v);
     },
