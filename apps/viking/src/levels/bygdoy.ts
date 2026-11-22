@@ -7,7 +7,7 @@ import { keptStrips, seen } from "@larshansen/pixelkit/kept";
 import { drawOar, oarBank, type Oar } from "@larshansen/pixelkit/oars";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
-import { lampPool, type LedgeLook } from "@larshansen/pixelkit/props";
+import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
@@ -16,6 +16,7 @@ import { tbaneDoor } from "../render/furniture";
 import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, turned, type Piece } from "../alive/frames";
 import { tile as textured, type Grain } from "../alive/ground";
+import { pool } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
@@ -979,7 +980,7 @@ export const BYGDOY: LevelDef = {
     },
     front(v) {
       // After dark the pier's lamp lights the planks under it (order 32, ADR 0054).
-      lampPool(34 * TILE + 10, FLOOR);
+      pool(34 * TILE + 10, FLOOR);
       DECKS.forEach((d) => deckArt(d, v.t));
       const s = v.grounds as Ground | null;
       if (s) PADS.forEach((p, i) => bundle(p, s.pads[i], v.t));

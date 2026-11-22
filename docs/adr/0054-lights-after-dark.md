@@ -24,11 +24,13 @@ not been drawn since order 15 moved the night out of `main.ts` and gave it to No
 - **A thing that gives light is its own colour over the dark.** A lamp, a lantern, a torch, a lit window, a tram's, a train's or a
   ferry's windows, a sign lit from inside, a stage's lights, a fire basket, a stove: its glass, flame or pane is registered as a
   light (`light()`), so after dusk it is drawn in its own colour over the night's tint, in the pass of the frame where nothing drawn
-  after it dims it. What stands in front of it may hide it, as by day. A level's own dark (Nordmarka's forest, Vålerenga's lane)
-  lets its lights through (`Art.lights`).
+  after it dims it. What stands in front of it may hide it, as by day. A level's own dark (Nordmarka's forest) lets its lights through
+  (`Art.lights`).
 - **A small warm pool where it helps the player see the lane.** A lamp that stands at the lane lays its light on the ground under
-  it: the kit's `lampPool` on flat ground, `poolAlong` (the props kit) on a slope (Korketrekkeren's run), registered in the level's
-  `front`, after the tiles. Where a level's own dark lies over the lane, the lamp's ring through the dark is its pool.
+  it: `pool` (the props kit: the kit's `lampPool`, only while it is on the screen) on flat ground, `poolAlong` on a slope
+  (Korketrekkeren's run), registered in the level's `front`, after the tiles. A pool is a rectangle a column after dusk and a light is
+  drawn whether it is on the screen or not, so a level registers only the pools in view. Where a level's own dark lies over the lane,
+  the lamp's ring through the dark is its pool.
 - **Nothing else glows.** What gives no light in the place (a sign board, a door, a coin, a prop, the paint) keeps only the light its
   role already has after dark (ADR 0023, 0040, 0044). An invader's light after dark is its own neon glow (`glows`, ADR 0050), not a
   lamp's warm light: the braziers and the grills lost theirs.
@@ -40,7 +42,9 @@ not been drawn since order 15 moved the night out of `main.ts` and gave it to No
   a little yellower for it (they came within 8 of the laser orange).
 - **Reduced motion** holds a light's flicker still, as every flicker (order 30, 31): the reduced-motion test records every light a
   path registers.
-- **Cheap.** A light is one rectangle after dusk; a pool a few. No place more than 150 rectangles a frame over before.
+- **Cheap.** A light is one rectangle after dusk; a pool one a column (two on a slope). No place more than 150 rectangles a frame over
+  before: the encore's beams were tried as lights and cost too much for a haze (their lenses are the lights), and Vålerenga's lane's
+  dark (above) is left for a decision.
 
 ## How it is held
 `src/render/lights.test.ts`, on `src/render/lightcensus.ts` (every scene drawn as a browser draws it, at night and under its own sky):
@@ -49,9 +53,9 @@ street dims it; a pool never lies under the tiles; a light's colour is off the g
 uses, but by name. `tools/glance/lights.ts` prints the census as a table.
 
 ## Consequences
-- Vålerenga has its night again (`Art.night`), and `render/night.ts` goes with the kit's dark into the chunk Nordmarka and the maze's
-  dark level fetch (`vite.config.ts`), not the first script; the invaders in its lane keep their glow and red outline over the dark
-  (`overTheDark` in `alive/glamour.ts`), as Nordmarka's do.
+- Vålerenga's Pi and its light and the paper cranes are drawn again (its `Art.night`). Its lane's own dark is not: drawn again it costs
+  about 1,580 rectangles a frame there, over this order's limit, and it is left for a decision (`apps/viking/tools/review/o32/after.md`).
+  Nordmarka's dark draws its invaders with `overTheDark` (`alive/glamour.ts`), which a second level's dark can share.
 - A level author adding a light: register the lit part as a light where it is drawn; if it stands at the lane, give it a pool in the
   level's `front`; then add its row to `lights.test.ts`. DESIGN's "Lights after dark".
 

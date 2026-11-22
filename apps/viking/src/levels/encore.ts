@@ -5,8 +5,7 @@ import { ENEMY, INK, LAND, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/pa
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { DECK, tile as textured, type Grain } from "../alive/ground";
 import { mirrorBall } from "../alive/invasion";
-import { STEEL, lamp, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
-import { lampPool } from "@larshansen/pixelkit/props";
+import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
 import { ENCORE as WORDS } from "../game/story";
 import { LOKI_STEPS, lokiBoss, type Loki, type LokiDef } from "../game/loki";
 import { drawOsloHills } from "../render/backdrop";
@@ -195,13 +194,12 @@ function lights(v: View) {
     R(x - 1, y + 4, 3, 2, colour);
     // The beam: a slow sweep (none with reduced motion, nor once the stage is plain or before the show), down to the deck.
     if (waiting()) return;
-    // After dark the lens is lit, its own colour over the dark (order 32, ADR 0054), and so is its beam.
+    // After dark the lens is lit, its own colour over the dark (order 32, ADR 0054).
     light(x - 1, y + 4, 3, 2, "window", colour);
     const swing = p > 0 || view.reduced ? 0 : Math.sin(v.t * 0.012 + k * 1.3) * 34;
-    const a = 0.16 + 0.04 * p;
-    const beam = `rgba(${[1, 3, 5].map((i) => parseInt(colour.slice(i, i + 2), 16)).join(", ")}, ${a.toFixed(2)})`;
-    // Light adds to what it falls on: the beam brightens the curtain and the deck under it.
-    g.globalAlpha = a;
+    // Light adds to what it falls on: the beam brightens the curtain and the deck under it. (Its light after dark is the lens's: the
+    // beam as lights, a rectangle a slice, cost over a hundred rectangles a frame for a haze.)
+    g.globalAlpha = 0.16 + 0.04 * p;
     g.globalCompositeOperation = "lighter";
     for (let s = 0; s < 10; s++) {
       const yy = y + 6 + s * ((ground - y - 6) / 10);
@@ -209,8 +207,6 @@ function lights(v: View) {
       const cx = x + 0.5 + (swing * s) / 10;
       const [bx, by, bw] = [Math.round(cx - w / 2), Math.round(yy), Math.round(w)];
       R(bx, by, bw, Math.ceil((ground - y - 6) / 10), colour);
-      // Its light, the slices end to end, and not over the speaker stacks, which stand in front of it.
-      beamLight(bx, by, bw, Math.round(y + 6 + (s + 1) * ((ground - y - 6) / 10)) - by, beam);
     }
     g.globalCompositeOperation = "source-over";
     g.globalAlpha = 1;
@@ -363,7 +359,7 @@ export const ENCORE: LevelDef = {
     },
     front() {
       // After dark the park's lamp lights the path under it (order 32, ADR 0054).
-      lampPool(6 * TILE + 3, ground);
+      pool(6 * TILE + 3, ground);
       stageFront();
     },
     ground: () => ({ top: mix(PALETTE.grass, "#b8a888", 0.6), dot: PALETTE.grassDark, fill: PALETTE.earth, kind: "gravel" }),

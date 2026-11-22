@@ -4,7 +4,7 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
-import { lampPool, type LedgeLook } from "@larshansen/pixelkit/props";
+import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as V from "@larshansen/pixelkit/swatches/park";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { leap, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
@@ -21,7 +21,7 @@ import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
-import { box as pbox, dot, lamp, prop, tone, type Stuff } from "../alive/props";
+import { box as pbox, dot, lamp, pool, prop, tone, type Stuff } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 
 // Level 12, rune I: Vigelandsparken, by day, eerie and funny. Its one idea: the statues move only while
@@ -832,7 +832,7 @@ export const VIGELANDSPARKEN: LevelDef = {
     front(v) {
       slab(v.t);
       // After dark the bridge's lamps light the deck under them (order 32, ADR 0054).
-      for (const x of BRIDGE_LAMPS) lampPool(x + 1, FLOOR);
+      for (const x of BRIDGE_LAMPS) pool(x + 1, FLOOR);
     },
     ground: (c) => (c < 35 || (c > 82 && c < 89) || c > 103 ? { top: V.gravel, dot: V.gravelDark, fill: mix(P.earth, INK, 0.35) } : { top: V.graniteLight, dot: V.graniteShade, fill: V.graniteShade }),
     tile(t, c, r, x, y, map) {

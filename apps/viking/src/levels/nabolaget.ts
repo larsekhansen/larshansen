@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
-import { keptStrips } from "@larshansen/pixelkit/kept";
+import { kept, keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, ctx, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
@@ -18,11 +18,9 @@ import type { EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
-import { overTheDark } from "../alive/glamour";
 import { frame } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
-import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
@@ -244,9 +242,8 @@ function surfaceRow(c: number) {
 /** The yellow house: its left end, its width, its walls' top, the door, and the Pi's window. */
 const HOME = { x: 211 * TILE, w: 8 * TILE, top: S * TILE - 64, window: { x: 216 * TILE + 4, y: S * TILE - 30, w: 22, h: 20 } };
 
-/** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. None by day (the T key's sky). */
+/** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. */
 function dark(x: number, v: View) {
-  if (v.sky.phase === "day") return 0;
   const c = x / TILE;
   const n = c < 80 ? 0 : c < 84 ? ((c - 80) / 4) * 0.72 : c < 110 ? 0.72 : c < 116 ? 0.72 - ((c - 110) / 6) * 0.72 : 0;
   return v.flourish !== null ? n * Math.max(0, 1 - v.flourish / 60) : n;
@@ -255,7 +252,7 @@ function dark(x: number, v: View) {
 /** What shows through the dark: the church's windows, the lamps in the lane, the flag and the bench. */
 function lights(v: View): Light[] {
   const out: Light[] = [];
-  for (const w of CHURCH_WINDOWS) out.push({ rect: { x: w.x - 1, y: w.y - 1, w: 8, h: 20 }, dark: 0 }, { x: w.x + 3, y: w.y + 12, rings: [[22, 0.5], [14, 0.25]] });
+  for (const w of CHURCH_WINDOWS) out.push({ rect: { x: w.x - 1, y: w.y - 1, w: 8, h: 18 }, dark: 0 }, { x: w.x + 3, y: w.y + 12, rings: [[22, 0.5], [14, 0.25]] });
   for (const x of LANE_LAMPS) out.push({ x, y: S * TILE - 40, rings: [[34, 0.45], [24, 0.2], [10, 0]] });
   for (const f of v.flags) if (f.x > 80 * TILE && f.x < 112 * TILE) out.push({ x: f.x, y: f.bottom - 20, rings: [[14, 0.4]] });
   return out;
@@ -704,12 +701,18 @@ const CRANE_THREAD = mix(LAMP, INK, 0.36);
 
 /** The paper cranes on threads in the upstairs window, drawn over the night as the Pi is, so they keep their paper's colours in the lit window; each thread sways a pixel on the level's clock. */
 function cranes(t: number) {
+  const sways = CRANE_THREADS.map((_th, k) => (view.reduced ? 0 : Math.round(Math.sin(t * 0.045 + k * 2.3))));
+  // Kept, one piece for each way the threads hang (order 32: drawn a pixel at a time they were about 180 rectangles a frame), and
+  // copied only while the window is on the screen.
+  kept(`cranes ${sways.join()}`, hallX(0), HALL.y, HALL.w, 30, () => cranesAt(sways));
+}
+function cranesAt(sways: number[]) {
   const x = hallX(0);
   const y = HALL.y;
   const inGlass = (dx: number, dy: number) => dx > 0 && dx < HALL.w - 1 && dy > 7 && dy < 29 && !hallBar(dx, dy);
   let n = 0;
   CRANE_THREADS.forEach((th, k) => {
-    const s = view.reduced ? 0 : Math.round(Math.sin(t * 0.045 + k * 2.3));
+    const s = sways[k];
     const last = th.at[th.at.length - 1];
     for (let dy = 8; dy < last; dy++) {
       const dx = th.dx + (dy < 10 ? 0 : s);
@@ -902,6 +905,7 @@ function home(v: View) {
  */
 function pi(v: View) {
   const pw = HOME.window;
+  if (pw.x + pw.w + 8 < view.camX || pw.x - 8 > view.camX + view.w) return;
   const bx = pw.x + 3;
   const by = pw.y + pw.h - 13;
   R(bx, by, 15, 7, PI_BOARD);
@@ -1282,14 +1286,17 @@ export const NABOLAGET: LevelDef = {
     },
     shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     lights: (v) => lights(v),
-    // The lane's dark behind the church, with the church's windows and the lane's lamps through it, and what is drawn over the
-    // night (the cats' eyes, the paper cranes, the Pi and its light). Not drawn from order 15, when the night left `main.ts` for
-    // Nordmarka's file and only Nordmarka was given it, until order 32 (ADR 0054).
-    night: (v, him, boards, map) => drawNight(NABOLAGET, v, him, boards, map),
+    // What is drawn over the night's tint: the paper cranes in Kruttverket's window and the Pi on the yellow house's sill with its
+    // light. From order 15, when the night left `main.ts` for Nordmarka's file behind `Art.night`, nothing called `overDark` here, and
+    // they were not drawn at all; order 32 draws them again. The lane's own dark (`dark`, `lights`, the rest of `overDark`) is still
+    // not drawn: drawn again, it costs about 1,580 rectangles a frame in the lane at 390 x 844 (`render/night.ts`), over the order's
+    // limit; it waits on a decision (`tools/review/o32/after.md`).
+    night: (v) => {
+      cranes(v.t);
+      pi(v);
+    },
     overDark: (v) => {
-      // In the lane's dark the invaders keep their glow and their red outline, as under Nordmarka's trees (order 32).
-      overTheDark(ctx(), (x) => dark(x, v) > 0);
-      for (const e of v.enemies) if (e.alive && dark(e.x, v) > 0) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
+      for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
       cranes(v.t);
       pi(v);
     },

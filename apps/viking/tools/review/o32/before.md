@@ -55,14 +55,14 @@ Looked at on `origin/main` at `0e17455` (after order 31), built and served by `v
 | The lamp posts along the park's paths | Ekeberg's near layer | yes | yes | no (behind the lane) | keep |
 | The tram's windows | Ekeberg, Vålerenga | yes (order 31) | yes | no | keep |
 | The houses' windows along the roofs | Vålerenga | yes | yes | no | keep |
-| The lane's lanterns behind the church | Vålerenga | the glass yes; their light through the lane's dark no | yes | should: a ring through the lane's dark (`lights` in `nabolaget.ts`) | **the lane's dark has not been drawn since order 15** (see below): draw it again, with them |
-| The church's arched windows | Vålerenga | the glass yes; through the dark no | yes | should: a ring each | as the lane's lanterns |
+| The lane's lanterns behind the church | Vålerenga | the glass yes; their light through the lane's dark no | yes | should: a ring through the lane's dark (`lights` in `nabolaget.ts`) | **the lane's dark has not been drawn since order 15** (see below); drawn again it costs about 1,580 rectangles a frame there, over the order's limit: left for a decision |
+| The church's arched windows | Vålerenga | the glass yes; through the dark no (there is none) | yes | would: a ring each, with the dark | as the lane's lanterns |
 | The yellow house: its windows, the door lamp, the lamp's light on its walls | Vålerenga, home | yes | yes | yes: on its walls | keep |
 | The Pi on the sill, its light (red, blinking, until the rune is taken; then green, the window taking its glow) | Vålerenga, home | **not drawn at all** since order 15 | yes: DESIGN says it is there | its green glow in the window | draw it again (see below) |
 | The paper cranes in Kruttverket's upstairs window | Vålerenga | **not drawn** since order 15 | yes (ADR 0014) | no | draw them again (see below) |
 | Kværnertoppen's plate: its white rule and letters | Vålerenga | yes (soft: they catch the street's light, as a sign's white paint does) | yes, as they are | no | keep |
 | Kruttverket's arched windows, its door lamp | Vålerenga | yes | yes | no | keep |
-| The eyes over the lane's dark | Vålerenga | the eye-shine every enemy has after dark, yes; the eyes over the lane's dark, no (there was no dark) | yes | no | drawn again with the dark |
+| The eyes over the lane's dark | Vålerenga | the eye-shine every enemy has after dark, yes; the eyes over the lane's dark, no (there is no dark) | with the dark | no | with the dark, if it comes back |
 | The ticket kiosk at Rådhusbrygga, the museums' halls | Bygdøy | yes | yes | no | keep |
 | The ferry's wheelhouse | Bygdøy, the ferry | no | yes: as Rådhuset's ferry | no | light its three windows |
 | The pier's lamp | Bygdøy | yes | yes | no | a pool on the planks under it |
@@ -119,7 +119,9 @@ window, the Pi on the yellow house's sill and its red and green light) has not b
 Pi's light in the yellow house's window is red until Nabolaget's rune is taken, then green." The before picture at the home
 (`night-390/nabolaget-c212.png`) shows the window lit and the sill empty.
 
-Decision: give Vålerenga its `night` again, as Nordmarka has it. `render/night.ts` then serves two levels, so it goes with the kit's
-dark into the chunk Nordmarka already fetches (`vite.config.ts`: `render/night` with `dark`), not into the first script. The invaders
-in the lane keep their glow and their red outline over its dark, as under Nordmarka's trees (`overTheDark` in `alive/glamour.ts`,
-which both levels now call).
+Decision: draw the Pi and its light and the paper cranes again (Vålerenga's `night` hook now draws them, over the night's tint, by
+night and by day, as before order 15: a few rectangles at two windows). The lane's own dark is not drawn again in this order: built and
+measured, it cost about 1,580 rectangles a frame in the lane at 390 x 844 (6,711 in all, against 5,131), over the order's limit of 150 a
+place, and the lane has been as light as the street on the live site since 15 November. It is for the planner and Lars: the code is
+there (`dark`, `lights`, `overDark` in `nabolaget.ts`; `drawNight` would have to come with Vålerenga too, so `render/night.ts` would go
+with the kit's dark into a chunk both fetch, and the lane's invaders would keep their red outline over the dark with `overTheDark`).

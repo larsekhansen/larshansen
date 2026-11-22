@@ -76,6 +76,5 @@ calm outline is not copied over the dark: what cannot hurt him there (the moose,
 Over a level's own dark the invader's glow lay right against the red outline, its brightest band in the pixel next to it, and an
 orange glow came within 22.7 of the red (16.8 at the worst depth of Nordmarka's dark, by the palette test's measure). There the glow
 now starts a pixel further out and the pixel next to the outline is the night's own colour (`overTheDark`, `DARK_GAP` in
-`alive/glamour.ts`): the red stands 44.3 off it, against 29.2 off the forest's fields by day, and the dark is no lighter. The same
-over Vålerenga's lane, whose dark is drawn again since order 32 ([0054](0054-lights-after-dark.md)). After dusk elsewhere the glow is
-as it was.
+`alive/glamour.ts`): the red stands 44.3 off it, against 29.2 off the forest's fields by day, and the dark is no lighter. Any other
+level's own dark would draw its invaders the same way. After dusk elsewhere the glow is as it was.

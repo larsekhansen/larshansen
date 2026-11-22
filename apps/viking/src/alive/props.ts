@@ -2,7 +2,7 @@ import type { Door } from "@larshansen/pixelkit/doors";
 import { shakeX } from "@larshansen/pixelkit/doors";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { DOORWAY, FACADE, INK, LAMP, METAL, PAINT, PALETTE, TRAM, WHITE } from "@larshansen/pixelkit/palette";
-import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
+import { STOVE_SMOKE, lampPool, smoke } from "@larshansen/pixelkit/props";
 import { TEXTURED } from "../render/tiles";
 import { custom, drawProp, hash, type Piece } from "./ground";
 
@@ -287,6 +287,14 @@ export function poolAlong(cx: number, half: number, under: (x: number) => number
     if (t <= 0 || y === null) continue;
     light(x, y, step, rows, "soft", `rgba(255, 186, 96, ${(0.34 * t * t).toFixed(3)})`);
   }
+}
+
+/**
+ * A lamp's light on flat ground under it (order 32): the kit's `lampPool` (26 wide, a rectangle a column after dusk), registered
+ * only while it is on the screen, as a light is drawn whether it is or not.
+ */
+export function pool(x: number, ground: number) {
+  if (x + 13 >= view.camX && x - 13 <= view.camX + view.w) lampPool(x, ground);
 }
 
 /** A park's lamp posts, painted the dark green of park iron. */

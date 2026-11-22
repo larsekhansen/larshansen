@@ -474,9 +474,11 @@ const TORCHES: [number[], number][] = [
  * lane, the tiles covered it); a torch gone out at dawn has none.
  */
 function pools() {
-  for (const c of STREET_LAMPS) light(c * TILE + 8 - 14, STREET * TILE, 30, 4, "pool");
-  for (const [cs, row] of TORCHES) for (const c of cs) if (!isOut(c)) light(c * TILE + 6 - 16, row * TILE, 34, 4, "pool");
-  light(191 * TILE + 50, MARKET * TILE, 50, 4, "pool");
+  // Each a rectangle a column after dusk, so only those on the screen (a light is drawn whether it is or not).
+  const pool = (x: number, y: number, w: number) => x + w >= view.camX && x <= view.camX + view.w && light(x, y, w, 4, "pool");
+  for (const c of STREET_LAMPS) pool(c * TILE + 8 - 14, STREET * TILE, 30);
+  for (const [cs, row] of TORCHES) for (const c of cs) if (!isOut(c)) pool(c * TILE + 6 - 16, row * TILE, 34);
+  pool(191 * TILE + 50, MARKET * TILE, 50);
 }
 
 /**

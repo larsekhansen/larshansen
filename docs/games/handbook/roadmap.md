@@ -17,7 +17,7 @@ As of 22 November 2026, after order 32 was built (not yet reviewed or live). Cha
 
 **Order 32, lights after dark** (`orders/32-lights-after-dark.md`, ADR 0054), built on branch `lights-after-dark`, not yet reviewed:
 every light in every level, the encore and the map asked after dusk (the table and its decisions: `apps/viking/tools/review/o32/before.md`),
-one rule held by `render/lights.test.ts`; Vålerenga's night drawn again (missing since order 15); then order 31's leftovers (the logs and
+one rule held by `render/lights.test.ts`; Vålerenga's Pi and paper cranes drawn again (missing since order 15; the lane's dark, missing too, left for a decision); then order 31's leftovers (the logs and
 the chairs, the outline against its glow in the dark, the reduced-motion test's blind spots, the last Norwegian words at 360). Each item,
 done or not, with its measures: `apps/viking/tools/review/o32/after.md`. Nothing in it waits on Lars.
 
@@ -51,7 +51,8 @@ whether figures stand out there on a phone is still for Lars.
 ## Next
 
 Order 32 took up order 31's leftovers (once it is reviewed and live); what it found and left is in `o32/after.md` ("Found and not
-fixed"), among them Vålerenga's lane being dark again after a week without it, which Lars should see. The planner's next candidate is idea 2 or 3 below: a person's playtest is still the biggest gap. The second walk's table
+fixed"), among them Vålerenga's lane behind the church, whose dark has not been drawn since order 15: bringing it back costs about
+1,580 rectangles a frame there (`o32/before.md`, the end), a choice for the planner and Lars. The planner's next candidate is idea 2 or 3 below: a person's playtest is still the biggest gap. The second walk's table
 (`apps/viking/tools/review/o31/before.md`) lists what was looked at and left, with reasons, for a later round.
 
 ## After that: ideas in rough order of value

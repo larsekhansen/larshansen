@@ -7,7 +7,6 @@ import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import { pulseAge, pulsePhase } from "@larshansen/pixelkit/timed";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import type { Zone } from "@larshansen/pixelkit/zone";
-import { lampPool } from "@larshansen/pixelkit/props";
 import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
@@ -17,7 +16,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
-import { lamp, railing as rail, tramSide, type Stuff } from "../alive/props";
+import { lamp, pool, railing as rail, tramSide, type Stuff } from "../alive/props";
 
 // Level 9, rune E: Ekeberg. Always evening, under the banded sky of The Scream, which Munch set on
 // this hillside. Up from Gamlebyen on the tram's roof as it climbs its trestle to the top of the
@@ -713,7 +712,7 @@ export const EKEBERG: LevelDef = {
     front() {
       railing();
       // After dark the viewpoint's old lamp lights the deck under it (order 32, ADR 0054).
-      lampPool(VIEW_LAMP + 1, T * TILE);
+      pool(VIEW_LAMP + 1, T * TILE);
     },
     ground: () => ({ top: HILL.grass, dot: HILL.grassDark, fill: HILL.soil }),
     tile(t, c, r, x, y, m) {

@@ -192,8 +192,8 @@ const LIT: Record<string, Record<string, string>> = {
     "lampPool props": "its light on the path",
     "neon levels/encore": "the stage's neon (the glamour's own)",
     "tube levels/encore": "the lightning bolts' tubes",
-    // The census draws the stage before the show: the lenses on the truss and their beams come on with it (`lights` in encore.ts).
-    "beamLight levels/encore": "the cold spot on him before the show (not over the speaker stacks in front); the beams in the show"
+    // The census draws the stage before the show: the lenses on the truss come on with it (`lights` in encore.ts).
+    "beamLight levels/encore": "the cold spot on him before the show (not over the speaker stacks in front of it)"
   },
   kart: {
     "lit backdrop": "the city's windows",

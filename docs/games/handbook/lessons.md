@@ -93,13 +93,22 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 
 - **A hook given to one of two users** (found in order 32): order 15 moved the night out of `main.ts` behind `Art.night` and gave the
   hook to Nordmarka, the level it was moved for; Vålerenga also had a `dark`, and for a week nothing drew its lane's dark, the Pi in
-  its window or the paper cranes. The pictures were byte-identical where they were compared (Nordmarka's). *When code moves behind a
+  its window or the paper cranes (order 32 drew the Pi and the cranes again; the lane's dark, at 1,580 rectangles a frame, waits on a
+  decision). The pictures were byte-identical where they were compared (Nordmarka's). *When code moves behind a
   hook, list every caller of the old path (`grep` the condition it ran on: here `def.dark`) and give each the hook.*
 - **Light added is not light taken away** (order 32): a census that counted every see-through fill over a light as dimming it named
   Østensjøvannet's sunrise, which is drawn `lighter` (it adds). *Read the composite, not only the alpha.*
 - **The harness's keys hold one action a step** (`r`, `j`, `n`...): a jump with a direction held cannot be scripted, so a stomp on
   Loki was found from a speaker stack (a short hop, then right), by a search in a script first. *Search a key script outside the
   page, then check it in the page: the page's input differs (one timing that missed the wave in the script was hit in the page).*
+
+- **A light is drawn whether it is on the screen or not** (order 32): the kit draws every registered light after dusk, and a pool is a
+  rectangle a column, so six bridge lanterns' pools cost 156 rectangles a frame wherever he stood. *Register what is costly only while
+  it is in view (the props kit's `pool`); measure by night as well as by day.*
+- **A cache that starts over in the middle of a recording** (order 32): the reduced-motion watch fingerprints a copy by which canvas it
+  copies; the outlined shapes' cache holds 800 and starts over when full, so in the whole suite (after other tests had filled it) the
+  Angry Boy's leap was "drawn two ways at one place" though it was not, and alone the file passed. *A test that fingerprints cached
+  pieces clears the cache first (`forgetShapes`); when a test fails only in company, suspect shared state before the code.*
 
 ## What worked and should be kept
 
