@@ -263,7 +263,7 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.59 kB gzipped after order 32 (59,590 bytes by Node's zlib, 9 fewer than after order 31: only the chunks' names it
+- **First script**: 59.60 kB gzipped after order 32, as after order 31 (59,594 bytes by GNU gzip, 2 fewer: only the chunks' names it
   carries changed). 59.59 kB gzipped after order 31 (the camera giving `--bar` to CSS; the rest is the chunks' names it carries).
   59.55 kB gzipped after order 30 (the plain drawings without `feel`'s file, the bare map's line 2, the encore's
   file fetched ahead, `?debug&card`'s hook). 59.34 kB gzipped after order 29 (the encore's stop on the map with every rune, its route in the page, its card
@@ -703,10 +703,10 @@ reorder this list.
 7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
-8. **Margins.** The first script is 59.59 kB gzipped of a 60 kB budget (after order 32 as after order 31), and the build fails over it
+8. **Margins.** The first script is 59.60 kB gzipped of a 60 kB budget (after order 32 as after order 31), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
-   250 s alone since order 31 (212 s after order 30; after order 32, 396 to 430 s with pictures being taken beside it, the new lights
-   test 13 s and the reduced-motion file's two new parts about 12 s of it): most of it the reach and dead-end searches in sixteen workers on four
+   250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
+   two new parts about 12 s of it): most of it the reach and dead-end searches in sixteen workers on four
    cores (Gamlebyen's, eight searches in one worker, is the slowest), and about 50 s the reduced-motion test, which draws every
    level.
 9. **The viking header is solid cream,** not the front page's frosted bar
