@@ -78,3 +78,17 @@ orange glow came within 22.7 of the red (16.8 at the worst depth of Nordmarka's 
 now starts a pixel further out and the pixel next to the outline is the night's own colour (`overTheDark`, `DARK_GAP` in
 `alive/glamour.ts`): the red stands 44.3 off it, against 29.2 off the forest's fields by day, and the dark is no lighter. Any other
 level's own dark would draw its invaders the same way. After dusk elsewhere the glow is as it was.
+
+## Amended by order 33 (22 November 2026): harmless things keep off the warning red
+"No body is that red" held the enemies' bodies; nothing held a harmless thing. Order 32's chairlift chairs had a back of red slats
+6.1 from the warning red (CIEDE2000), a field that read as "this hurts". Now: what carries him, the ledges on a beat, cannons,
+drums, flags and what stands in front, drawn as the page draws them with the paint over what he stands on, may fill no more than
+12 pixels of a view (320 x 200) within 10 of the warning red, and every prop of the props kit no more than 12 of its own pixels,
+but by name (`render/warning.test.ts`, `alive/props.test.ts`). What the rule found and was a field took a shade of its own red,
+10 or more off the warning red and every role: the chairs' backs (the frame's painted steel), Rådhuset's and Bygdøy's ferries'
+bands and funnels, Stortinget's trains' stripe, the lift cage's rail at Holmenkollen, Slottet's red balloon (the flag's own red)
+and the shirt on Vålerenga's washing. Named as dots: the spectators' jackets at Holmenkollen's outrun and the russ's overalls at
+Slottet (a few pixels a person), and the crossing's barrier at Korketrekkeren (it hurts). The scenery and the ground are not held:
+the kit's red (`#c8302b`, his hat's, 6.1 off the warning red) is also Stortinget's walls and kiosk, Holmenkollen's rails on the ice
+and its jump, and near it are Vålerenga's stained glass and Frognerseteren's walls (`apps/viking/tools/review/o33/after.md` lists
+them with their areas): a decision for the planner and Lars.

@@ -41,3 +41,12 @@ was its yellow paint over nothing.
 - A new hook from the first script into `feel`'s file comes with its plain drawing in the same change; `lazy.test.ts` names
   any that has none.
 - The first script: 59.34 to about 59.42 kB gzipped for this (see `apps/viking/tools/review/o30/after.md` for all of order 30).
+
+## Amended by order 33 (22 November 2026): more goes with feel's file
+To make room in the first script (59.60 to 57.94 kB gzipped), three more things come with `feel`'s file, which the first scene
+waits for (so no picture changes): the kit's synth (`sfx.ts`; the page keeps a stand-in that forwards to it, and the site's sound
+switch, `mute.ts`, stays in the first script so the header's button is as it was); the page's drawing after dusk (`afterDark`:
+what moves, what he takes, what hurts and the paint keeping their light) and of the rune's flight to the header
+(`render/dusk.ts`); and, with the maze, the maze's feather drawing (the page's plain one was only a fallback). Without `feel`'s
+file the page is therefore silent, nothing keeps its light after dusk, and the rune lands in the header without flying: every
+level still starts and every solid thing is drawn plainly, which is what this record holds (`levels/lazy.test.ts`).
