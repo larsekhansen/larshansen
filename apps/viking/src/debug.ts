@@ -8,6 +8,7 @@ import { parseKeys } from "@larshansen/pixelkit/harness";
 import { view } from "@larshansen/pixelkit/paint";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { sx, sy } from "@larshansen/pixelkit/text";
+import { browserLang } from "@larshansen/pixelkit/i18n";
 
 // What only `?debug` needs, fetched when it is asked for: no visitor's first script carries it.
 
@@ -152,6 +153,10 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
     );
   if (params.has("where")) where(params.get("where") ?? "");
   if (params.has("card")) card();
+  // `?debug&note=pole|shield|sledge` and `?debug&say=<key>` (order 33): words that come only at a moment the harness cannot reach
+  // (the pole is given under Holmenkollen's card; the encore's bite needs two hits first), shown as the page shows them.
+  if (params.has("note")) void note(params.get("note") ?? "", help).then(frame, (e) => (help.textContent = `note: ${e}`));
+  if (params.has("say")) say(params.get("say") ?? "", frame);
   // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
   if (params.has("grain"))
     void import("./grain/study").then((m) => m.study(params.get("grain") || "3", (window as unknown as { __game: Parameters<typeof m.study>[1] }).__game, params.has("count") ? help : undefined)).catch((e) => (help.textContent = `grain: ${e}`));
@@ -170,6 +175,32 @@ function card() {
   const one = ORDER.slice(0, 10);
   const all = g.play.skilling.length;
   g.card({ ms: progress.best[id] ?? 61230, newBest: true, gold: progress.bracteates.includes(id), found: all, total: all, clean: true, pole: false, home: one.includes(id) && one.every((l) => progress.cleared.includes(l)), opened: id === "nabolaget" });
+}
+
+/**
+ * `?debug&touch&note=pole|shield|sledge` (order 33): the help line's note on a touch screen of what just changed (the pole given, the
+ * shield given, the sledge mounted), as the page says it when it changes (`keysLine` in `main.ts`): the pad's words, for five
+ * seconds, placed by the pad where it covers neither him nor the ground ahead. For a picture at 360 wide in both languages.
+ */
+async function note(which: string, help: HTMLElement) {
+  const { noteFor } = await import("./render/pad");
+  const was = { pole: false, shield: false, riding: false };
+  const now = { ...was, pole: which === "pole", shield: which === "shield", riding: which === "sledge" };
+  const said = noteFor(browserLang(), was, now);
+  if (!said) throw new Error(`no note for ${which}`);
+  const g = (window as unknown as { __game: Game & { state: { helpUntil: number } } }).__game;
+  help.textContent = said;
+  help.hidden = false;
+  g.state.helpUntil = g.state.steps + 300;
+}
+
+/** `?debug&say=<key>` (order 33): the level's boss says that line of its words (a hint after a miss: `missBite`), in its bubble beside it. */
+function say(key: string, frame: () => void) {
+  const g = (window as unknown as { __game: Game & { state: { bossLine: { lines: string[]; until: number } | null } } }).__game;
+  const words = g.play.def.bossWords?.[key];
+  if (!words) return;
+  g.state.bossLine = { lines: words[browserLang()].split("\n"), until: g.state.steps + 300 };
+  frame();
 }
 
 /** The page as `window.__game` has it, for the strip. */
