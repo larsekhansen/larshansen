@@ -16,7 +16,7 @@ A side-view game built the way the front page is built. The reasons (one cloth f
 | `src/game/enemies.ts` | The five kinds of enemy as small pure rules: walker, spiky, flyer, thrower, jumper. |
 | `src/game/plough.ts` | The snow plough in Nabolaget, the last boss, in the troll's shape: parked, waking, driving at him, revving for a second before every charge, stuck in the bank or turning; three hits on its cab (from the washing line, with the dash, from the tram's roof), and it parks. It comes with its level, through the level's boss slot (`LevelDef.boss`), which `play.ts` runs. |
 | `src/game/serpent.ts` | The sea serpent at Gamlebyen's quay, the third boss (ADR 0027, 0031): a ring of foam, it rises, rears for its tell, spits a ball of brine along the quay at the height he stands at; the shield sends it back and dazes it, a stomp on its dazed head is a hit; its tail lashes along the quay; after the first hit it rises twice a round, and its tail comes after each ball; three hits, then the dawn. It comes with its level through the boss slot. |
-| `src/game/loki.ts`, `src/levels/encore.ts`, `src/render/loki.ts` | The encore (order 29, ADR 0052): Loki's rules in the boss slot (three borrowed moves, each with its boss's tell; his pose the opening; three hits; plain, he leaves and `ends()`), the stage in Middelalderparken (its map, its lights, its neon, its mirror ball) and Loki drawn (a rig of parts built into per-pixel frames at each stage of losing his glamour, plain; the club, the guitar, the ring, the jaws, the wave). One chunk of its own, fetched when he goes in. |
+| `src/game/loki.ts`, `src/levels/encore.ts`, `src/render/loki.ts`, `src/game/tune.ts` | The encore (order 29, ADR 0052): Loki's rules in the boss slot (three borrowed moves, each with its boss's tell; his pose the opening; three hits; plain, he leaves and `ends()`), the stage in Middelalderparken (its map, its lights, its neon, its mirror ball) and Loki drawn (a rig of parts built into per-pixel frames at each stage of losing his glamour, plain; the club, the guitar, the ring, the jaws, the wave); since order 34 his tune (`tune.ts`: an original glam-rock tune as data, a sequencer over the kit's synth that follows the fight, and which shouted line is up: ADR 0055). One chunk of its own, fetched when he goes in. |
 | `src/game/troll.ts` | The troll of Nordmarka, the first boss, as a small pure rule: asleep, waking, walking, the club raised for a second before every slam, the wave, the dawn and the headlamp, three hits to stone. |
 | `src/game/progress.ts` | `localStorage["viking.progress"]`: levels cleared, best time per level, bracteates found, most skilling per level, levels cleared without losing a heart, and a version mark (`v`). Forgiving of missing, old or broken data. A save without the mark (from before the first three levels were lengthened) keeps its runes and bracteates but loses the first three levels' best times, skilling and clean marks, once. Line 2's levels are stored by id beside line 1's; `hasShield` is Bygdøy cleared. |
 | `src/game/shield.ts` | The shield (ADR 0024): its rules (`ShieldRules`, run by `play.ts` through `Play.shield`) and its drawing, a chunk of its own fetched when he has the shield or goes to Bygdøy or beyond. |
@@ -124,7 +124,13 @@ it is seen its stop's neon keeps its light after dark, with a glow of its first 
   let go by). After the third hit he is a thin man in a grey wool sweater with a thermos; he shrugs, says his line, walks off by the
   nearer wing, and the level is over (the boss slot's `ends`): the card with the time, the best and the ending line. Going back
   off the stage, or a lost life, sends him back to his mark with his hits kept; the bench before the stage is where a lost life
-  or a Game over puts him (ADR 0017, 0033).
+  or a Game over puts him (ADR 0017, 0033). **His tune** (order 34, ADR 0055, `game/tune.ts`): as he wakes a bar of intro, then a
+  sixteen-bar glam-rock loop of the game's own (chorus, verse, solo) by the whole band while he is glammed; the wig takes the lead with it,
+  the shades the riff, the jacket the drums and the bass; a beat after the stage goes plain six plain notes, once. It is the page's
+  sound: the sound switch, the first key or touch, silent on a card, gone with him, still while the page is hidden; muted it schedules
+  nothing (`LevelDef.music`, asked once a frame). **He shouts** while he struts or poses, in time with it, one of four lines of the
+  game's own in a bubble beside him (`shout1` to `shout4` in the encore's block of `game/story.ts`), never during a tell and never over
+  a line or hint of his. `?debug&music=band|drums|bass|riff|lead|intro|plain` plays the loop at once, a part at a time.
 - **The gold bracteate**: one per level, only reachable with the feather. Kept once found, counted in the header.
 - **Belts** (Stortinget): the escalators and a walkway carry him along, or against him, as he walks.
 - **Trains** (Stortinget): carriers on a timetable that stand at the platforms, five locals on the line, so the wait for one he can still get onto is never much over five seconds; a board counts down to the next. Their roofs are the only way through the tunnels; a low beam sweeps a rider off at the next platform. In the cavern the express passes over the local, which goes down to the depot.
@@ -203,9 +209,12 @@ neon and out to hurt him; a stomp breaks it and the creature is itself again and
   two-neon stripe and stage lights, the serpent a neon crest and shades; each loses its glam in its last frames. Every tell is
   where it was, and no glam is the "now" violet.
 - **Harmless stays natural**: what moves and cannot hurt him (sheep, the moose, the heron, the parade) uses no neon.
-- **Loki, the front man** (order 29, ADR 0052), is met once, at the encore: under the glamour all of him is the enemy palette (pink and
-  magenta hair, wraparound shades, an acid-green jacket with white pads, spandex, white boots, stage make-up); each hit knocks a piece off,
-  and plain he is natural colours held off every neon and role. The stage's neon, beams and mirror ball are his glamour and go plain with him.
+- **Loki, the front man** (order 29, ADR 0052), is met once, at the encore: under the glamour all of him is the enemy palette; since order
+  34 (ADR 0055) at the far end of late-1980s glam metal in general and nobody real: hot pink and magenta hair teased as high as the frame
+  allows under his pose's stars, a lime headband, wraparound shades with purple shadow over them, a leopard-print jacket in amber with
+  white pads and a studded belt, split neon spandex (pink and acid green, tiger-striped), scarves at his wrists, a pointed guitar slung
+  behind him, white boots, stage make-up; the wig, the shades and the jacket (with the rest) knocked off by the three hits, and plain he
+  is natural colours held off every neon and role. The stage's neon, beams and mirror ball are his glamour and go plain with him.
 
 **Adding an enemy** (or a level with one): draw it from the enemy palette as frames, as before; give it one or two glam marks
 as `mark` pieces that suit the animal (never more than two pixels over the head he lands on: the palette test; never a

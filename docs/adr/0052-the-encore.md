@@ -81,3 +81,18 @@ keeps its neon's light after dark, with a glow of its first neon round the tubes
 at the troll's size (a knobbed head seven pixels across, a haft three thick; raised, all of it the tell's violet), its tell's
 length and the blow's box as they were; and with every rune the map fetches the encore's file when the page is idle, so its first
 visit has no board (`ahead` in `levels/kart.ts`, held by `levels/encore.test.ts`).
+
+## Amended by order 34 (22 November 2026): music, a more extreme outfit, shouted lines
+Lars, of the encore: keep it, "leave it as it is", "Middelalderparken is right"; "But the music has to be something like glam rock. And
+Lokis outfit should be Poison's most extreme neon glam era. And some fitting, thematic, glammy song or just glsmmy text. But ideally there
+should be music". The fight is unchanged (its run files byte-identical). What was added, all drawing and sound
+([0055](0055-what-lars-said.md) has it in full): an original glam-rock tune in the game's own synth that follows the fight (an intro as he
+wakes, the band while he is glammed, a layer fewer with each piece knocked off, a few plain notes as the stage goes plain), in the
+encore's chunk (`game/tune.ts`); Loki at the far end of late-1980s glam metal in general (teased hair as high as the frame allows, a
+headband, shades over his eyes with the make-up showing, leopard print, split neon spandex, a studded belt, scarves, a pointed guitar slung
+behind him); and four shouted lines of the game's own, added to the encore's block with an alternative each.
+
+The limits above stand, restated: Loki is nobody real; no real band's or performer's likeness, costume, face, logo, album art, pose, song,
+riff, lyric or nameable melody (Lars named one band; it is read as "the general style", and anything nearer one band waits for his direct
+word); the man who paid is not named again, drawn or quoted; nothing above the encore's block in `game/story.ts` changes (its hash test
+holds); nobody dies.

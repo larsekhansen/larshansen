@@ -7,10 +7,14 @@ import { outlined, plain } from "./sprite";
 // Loki, drawn (order 29, ADR 0052): the trickster of the old stories as an 80s front man, nobody real. Way 3 (ADR 0045):
 // per-pixel frames with a ramp of tones a material and a lit side (the light from the top left), built from a small rig of
 // parts so every pose is the same man: his head (a thin man's, his own thin hair), his wool sweater, his arms and legs, and
-// over them the glamour's pieces, which his hits knock off one by one: the hair (a wig of hot pink and magenta, teased into
-// two upswept points, a mullet down his back), the wraparound shades, the jacket (acid green with white shoulder pads, a
-// magenta shirt in its open front, a sequin's glint) and with it the rest of the glam (spandex, white boots, the stage
-// make-up). After the third he is plain: a thin man in a grey wool sweater with a thermos.
+// over them the glamour's pieces, which his hits knock off one by one. Since order 34 (Lars: "Lokis outfit should be ...
+// [the] most extreme neon glam era") he is the far end of late-1980s glam metal in general, and still nobody real: the hair
+// (a wig of hot pink and magenta teased as high as the frame allows under the stars of his pose, spiked, a lime streak, a
+// lime headband knotted at the back, a mullet down his back), the wraparound shades over his eyes (the purple shadow on his
+// lids shows over them), the jacket (leopard print in amber with black rosettes, white shoulder pads, a magenta shirt in its
+// open front, a studded belt), and with it the rest of the glam: neon spandex, one leg hot pink and one acid green, tiger
+// striped; scarves at his wrists; a pointed guitar slung behind him; white boots; the stage make-up. After the third he is
+// plain: a thin man in a grey wool sweater with a thermos.
 //
 // His own neons are hot pink and acid green, the glamour's (`ROLES.glamour`), the magenta and lime as accents; no tell is
 // in them: every tell is the bosses' "now" violet (the club raised, the beacons while he revs, the ring), and the opening
@@ -51,7 +55,17 @@ const GLAM: Record<string, string> = {
   O: E.poison,
   o: E.line,
   I: E.whiteShade,
-  i: E.line
+  i: E.line,
+  // Order 34: the eye make-up (the shadow on his lids, the liner), the leopard print (its amber, its orange shade), the
+  // spandex's far leg in acid green, and the guitar slung behind him.
+  Z: E.purple,
+  z: E.line,
+  A: E.amber,
+  a: E.orange,
+  X: E.poison,
+  x: E.line,
+  V: E.hotPink,
+  n: E.magenta
 };
 /** His natural self, plain (held 8 or more off every neon and 10 off every role by `levels/encore.test.ts`). */
 export const PLAIN: Record<string, string> = {
@@ -87,7 +101,10 @@ export const PLAIN: Record<string, string> = {
   O: "#4a6e52",
   o: "#35503b",
   I: "#b8bcc0",
-  i: "#8a8e92"
+  i: "#8a8e92",
+  // The make-up is gone with the glamour: his lids and the corner of his eye are skin again.
+  Z: "#d8bcae",
+  z: "#d8bcae"
 };
 
 // --- The rig ------------------------------------------------------------------------------------------------------------
@@ -118,6 +135,8 @@ interface Pose {
   legs: [Leg, Leg];
   /** What the front hand holds: the mic, the thermos, nothing. */
   holds?: "mic" | "thermos";
+  /** His hands are on his guitar (revving, sliding): it is not slung behind him then. */
+  guitar?: boolean;
 }
 
 class Grid {
@@ -159,13 +178,19 @@ function limb(g: Grid, a: Pt, b: Pt, lit: string, mid: string, shade: string) {
   for (const [x, y] of along(a, b)) g.set(x, y, lit);
 }
 
-/** A leg three pixels wide from the hip by the knee to the ankle, and its boot: lit along its front edge, its back edge in shade (the far leg darker). */
-function leg(g: Grid, l: Leg, back: boolean) {
+/**
+ * A leg three pixels wide from the hip by the knee to the ankle, and its boot: lit along its front edge, its back edge in shade
+ * (the far leg darker). Under the glamour (order 34) neon spandex: the near leg hot pink, the far one acid green, tiger-striped
+ * across every fourth row.
+ */
+function leg(g: Grid, l: Leg, back: boolean, glam = false) {
   for (const [p, q] of [[l.hip, l.knee], [l.knee, l.ankle]] as const)
     for (const [x, y] of along(p, q)) {
-      g.set(x - 1, y, back ? "t" : "T");
-      g.set(x, y, "T");
-      g.set(x + 1, y, back ? "t" : "U");
+      const stripe = glam && Math.round(y) % 4 === 0;
+      const [lit, mid, shade] = !glam ? [back ? "t" : "T", "T", back ? "t" : "U"] : back ? ["X", "X", "x"] : ["V", "V", "n"];
+      g.set(x - 1, y, stripe ? "x" : lit);
+      g.set(x, y, stripe ? "x" : mid);
+      g.set(x + 1, y, shade);
     }
   const [ax, ay] = l.ankle;
   if (l.toe) {
@@ -177,46 +202,65 @@ function leg(g: Grid, l: Leg, back: boolean) {
 }
 
 /** His head, facing right: his own thin hair, an ear, a brow, the eye, a long nose, a mouth, the chin over his neck. */
-const HEAD = [".rrrrr..", "rRrrrfff", "RRFfffff", "RGFffyyf", "GGFffeff", ".GFffffF", ".GFfFmmf", "..GFfff.", "...FFG.."];
-/** The wraparound shades over his eyes: the arm back to the ear, the dark lens, its glint at the front. */
-const SHADES = ["...Nkkkk", "....kkek"];
-/** The wig: teased into two upswept points over his crown, a fringe, the volume at the back, a mullet down to his shoulders. */
+const HEAD = [".rrrrr..", "rRrrrfff", "RRFfffff", "RGFfZyyf", "GGFfZezf", ".GFffffF", ".GFfFmmf", "..GFfff.", "...FFG.."];
+/** The wraparound shades over his eyes: the arm back to the ear, the dark lens one row high, its glint at the front (over his eye's row since order 34; before, two rows at his hairline). */
+const SHADES = ["...Nkkek"];
+/**
+ * The wig (order 34): teased as high as the frame allows under the stars of his pose, spiked, wide behind his head, a lime headband over his brow knotted at the back with its ends hanging, the fringe over his forehead, a mullet down his back
+ * to his shoulder blades. Laid at his head less nine across and seven down.
+ */
 const WIG = [
-  "...H......H...",
-  "...HH....HH...",
-  "..HhH...HhH...",
-  "..HhhHHHhhH...",
-  ".HhhhhhhhhhHH.",
-  "HhhdhhhhhhhhhH",
-  "HhddhhhhhhHHL.",
-  "HhdddhhH......",
-  "Hhddddhh......",
-  "Hhddddhd......",
-  ".hhdddhd......",
-  ".Hhddhd.......",
-  "..hhdhd.......",
-  "..Hhhd........",
-  "..hhdd........",
-  "...hdd........",
-  "...hd.........",
-  "....d........."
+  "......H...H...H...H..",
+  ".....HH..HhH.HhH.HH..",
+  "....HhHHHhhHHhhHHhH..",
+  "...HhhhhhhhhhhhhhhhH.",
+  "..HhhhhhhhhhhhhhhhhH.",
+  "..HhhdhhhhhhhhhhhhhH.",
+  ".HhhddhhhhhhhhhhhhH..",
+  ".HhdddLLLLLLLLLLLL...",
+  "LHhddHhhhhhhhhhhh....",
+  "LLhddddhhhhhHhh......",
+  ".LHddddhhhhH.........",
+  ".LHhdddhhh...........",
+  "..Hhdddhhh...........",
+  "..Hhddhhh............",
+  "..HhddhhL............",
+  "...Hhdhhh............",
+  "...Hhddhh............",
+  "...HhddhH............",
+  "....hdhhh............",
+  "....Hhdh.............",
+  ".....hdh.............",
+  ".....Hd..............",
+  ".....hd..............",
+  "......d.............."
 ];
 /** His wool sweater: the collar, the shoulders, a cable down its front, the ribbed hem. */
 const SWEATER = ["..wWWWWw..", ".wWWWWWWw.", "vwWWvWWWwv", "vwWWvWWWwv", "vwWvWvWWwv", "vwWWvWWWwv", "vwWWvWWWwv", ".wWvWvWWw.", ".wWWvWWWw.", ".vwwwwwwv.", ".vvvvvvvv."];
-/** The jacket over it: white shoulder pads, the open front with the magenta shirt, a sequin's glint; the belt and its buckle. */
+/**
+ * The jacket over it (order 34): leopard print, amber with black rosettes and an orange shade on its far side, white shoulder pads
+ * as wide as they go, the magenta shirt in its open front; the studded belt and its lime buckle.
+ */
 const JACKET = [
   ".QQq....qQQ.",
-  "QQQQgJJgQQQq",
-  "qQJJgMMgJJgq",
-  ".gJJJMMkJJg.",
-  ".gJJJkMkJJg.",
-  ".gJQJJkJJgg.",
-  ".gJJJJkJJgg.",
-  ".gJJJgkJQgg.",
-  ".gJJJgkJJgg.",
-  ".gJJJgkJJgk.",
-  ".kkkkkkYkkk."
+  "QQQQAkAaQQQq",
+  "qQAkAMMaAkaq",
+  ".AAAkMMkAAa.",
+  ".AkaAMMAkAa.",
+  ".AAAAkMAAka.",
+  ".AkAAkMAAaa.",
+  ".AAakAkAkaa.",
+  ".AAAAAkAAaa.",
+  ".AkAaAkAAka.",
+  ".kQkQkLkQkQ."
 ];
+/** A scarf tied at each wrist (order 34): its knot and two ends, one hot pink, one lime. */
+const SCARF = ["VL", "n.", "V."];
+/**
+ * A pointed guitar slung behind him (order 34), when his hands are not on one: its body, pointed top and bottom, behind his hip; its
+ * neck up behind his back to a headstock over his shoulder; the strap across his chest. Nobody's own model: a sharp body in his neon.
+ */
+const SLUNG = ["..V...", ".VVn..", "VVVVn.", "VVLVVn", ".VVVn.", "..Vn..", "...n.."];
 /** In his front hand: the mic (its grille lit), or the thermos (the cup on top, its band). */
 const MIC = ["ss", "sk", ".k", ".k"];
 const THERMOS = ["iII", "IIi", "OOo", "OOo", "kkk", "OOo", "OOo", "ooo"];
@@ -227,21 +271,32 @@ const THERMOS = ["iII", "IIi", "OOo", "OOo", "kkk", "OOo", "OOo", "ooo"];
  */
 function build(p: Pose, stage: number): Frame {
   const g = new Grid(LOKI_FRAME.w, LOKI_FRAME.h);
-  const sleeve = stage < 3 ? (["g", "g", "k"] as const) : (["w", "w", "v"] as const);
-  const front = stage < 3 ? (["J", "g", "k"] as const) : (["W", "w", "v"] as const);
+  const glam = stage < 3;
+  const sleeve = glam ? (["A", "A", "a"] as const) : (["w", "w", "v"] as const);
+  const front = glam ? (["A", "A", "a"] as const) : (["W", "w", "v"] as const);
   const arm = (a: Arm, s: readonly [string, string, string]) => {
     limb(g, a.sh, a.el, s[0], s[1], s[2]);
     limb(g, a.el, a.ha, s[0], s[1], s[2]);
     g.put(["fF", "FG"], a.ha[0], a.ha[1]);
+    if (glam) g.put(SCARF, a.ha[0] - 1, a.ha[1] - 1);
   };
+  // The guitar on his back, when his hands are not on it (revving and sliding he holds it out in front: `GUITAR`).
+  if (glam && !p.guitar) {
+    const [tx, ty] = p.torso;
+    for (const [x, y] of along([tx - 2, ty + 6], [tx - 6, ty - 6])) (g.set(x, y, "x"), g.set(x + 1, y, "L"));
+    g.put(["kk", "kk", ".k"], tx - 7, ty - 8);
+    g.put(SLUNG, tx - 6, ty + 5);
+  }
   arm(p.back, sleeve);
-  leg(g, p.legs[0], true);
-  leg(g, p.legs[1], false);
-  if (stage < 3) g.put(JACKET, p.torso[0] - 1, p.torso[1] - 1);
+  leg(g, p.legs[0], true, glam);
+  leg(g, p.legs[1], false, glam);
+  if (glam) g.put(JACKET, p.torso[0] - 1, p.torso[1] - 1);
   else g.put(SWEATER, p.torso[0], p.torso[1]);
+  // The strap across his chest, from his front shoulder down to the guitar behind his hip.
+  if (glam && !p.guitar) for (const [x, y] of along([p.torso[0] + 8, p.torso[1] + 1], [p.torso[0] + 2, p.torso[1] + 7])) g.set(x, y, "k");
   g.put(HEAD, p.head[0], p.head[1]);
-  if (stage < 2) g.put(SHADES, p.head[0], p.head[1]);
-  if (stage < 1) g.put(WIG, p.head[0] - 5, p.head[1] - 5);
+  if (stage < 2) g.put(SHADES, p.head[0], p.head[1] + 4);
+  if (stage < 1) g.put(WIG, p.head[0] - 9, p.head[1] - 7);
   arm(p.front, front);
   if (p.holds === "mic") g.put(MIC, p.front.ha[0], p.front.ha[1] - 3);
   if (p.holds === "thermos") g.put(THERMOS, p.front.ha[0] + 1, p.front.ha[1] - 5);
@@ -315,6 +370,7 @@ const POSES = {
   // floor, its shin flat behind; the near foot planted, its knee up. And sliding on both knees, leaning back, an arm flung up.
   rev: {
     name: "on one knee, revving",
+    guitar: true,
     head: [11, 19],
     torso: [10, 28],
     back: { sh: [11, 30], el: [15, 34], ha: [20, 34] },
@@ -326,6 +382,7 @@ const POSES = {
   } as Pose,
   charge: {
     name: "sliding on his knees",
+    guitar: true,
     head: [8, 20],
     torso: [8, 29],
     back: { sh: [9, 31], el: [6, 25], ha: [3, 19] },

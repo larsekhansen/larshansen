@@ -157,6 +157,12 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
   // (the pole is given under Holmenkollen's card; the encore's bite needs two hits first), shown as the page shows them.
   if (params.has("note")) void note(params.get("note") ?? "", help).then(frame, (e) => (help.textContent = `note: ${e}`));
   if (params.has("say")) say(params.get("say") ?? "", frame);
+  // `?debug&music=band|drums,bass|riff|lead|intro|plain` (order 34): the level's music at once, whatever its boss does, with only
+  // those parts, for listening to each layer (the encore's tune: `game/tune.ts`). Sound starts with the first key or touch.
+  if (params.has("music")) {
+    const music = (window as unknown as { __game: { play: Play } }).__game.play.def.music;
+    if (music) music.audition = params.get("music") || "band";
+  }
   // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
   if (params.has("grain"))
     void import("./grain/study").then((m) => m.study(params.get("grain") || "3", (window as unknown as { __game: Parameters<typeof m.study>[1] }).__game, params.has("count") ? help : undefined)).catch((e) => (help.textContent = `grain: ${e}`));
