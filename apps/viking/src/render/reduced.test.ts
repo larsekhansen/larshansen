@@ -27,7 +27,7 @@ import { drawBracteate, drawRune, drawSheep } from "./actors";
 import { createFeel } from "./feel";
 import { areaRecorder, skyOf } from "./fields";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./pickups";
-import { freshRings, outlined } from "./sprite";
+import { forgetShapes, freshRings, outlined } from "./sprite";
 import { STAND_LEDGE, hazardEdge, standTop } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
 
@@ -433,9 +433,15 @@ function movers(name: string, def: LevelDef): string[] {
           const v = viewOf(def, p, t0);
           const was = ctx();
           try {
+            // Every step drawn once unrecorded first, so what is made once (its shapes, as it leaps) is made before it is recorded;
+            // the shapes other tests made forgotten first, so the cache does not start over in the middle (it holds 800).
+            forgetShapes();
             target(recorder(W, H).ctx);
-            freshRings();
-            draw(t0, v);
+            for (const k of DENSE) {
+              v.t = t0 + k;
+              freshRings();
+              draw(t0 + k, v);
+            }
             lights.length = 0;
             return DENSE.map((k) => {
               const t = t0 + k;

@@ -158,6 +158,11 @@ export function outlined(draw: () => void, who?: object, rim: string = ENEMY.war
 }
 
 /** A new frame: the outlines noted so far are forgotten. */
+/** For the tests (order 32): the shapes made so far forgotten, so a recording that copies them is not cut by the cache starting over. */
+export function forgetShapes() {
+  kept.clear();
+}
+
 export function freshRings() {
   drawnCount = 0;
 }
