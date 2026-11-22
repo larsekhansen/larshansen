@@ -72,6 +72,15 @@ Line 2, VIKING (ADR 0025, 0030), opened by clearing Gamle Oslo; all six built:
 | Bjørvika | N | crane hooks he chooses when to leave, a hoist, rebar and a welder's sparks, sliding sheets over shafts in gusts; riveters who throw bolts along a girder (the shield) | built (order 16) |
 | Gamlebyen | G | stones that rise as he passes and walls that close behind him, guards that were statues, a tower that builds itself; archers on the wall (the shield); the sea serpent | built (order 16) |
 
+**Difficulty and enemies follow the place** (order 34, ADR 0055). Lars: "keep line 2 harder". "Keep the difficulty thematic. Is it a
+touch part of town? Hard. Big event? Can also be hard. Less so, lean easy. Also keep enemies thematic." (read: "tough"). A level is as
+hard as its place is: a tough part of town or a big event may be hard; a calm place leans easy; line 2 stays harder than line 1. Its
+enemies belong to where they are met: what lives there, works there or comes to its event, glammed (in a winter level nothing that
+sleeps through the winter; at a station what is found at a station). When a level is tuned, it is tuned toward its place.
+`tools/review/o34/thematic.md` holds every level against this rule (the place, what it is in Oslo, how hard the sloppy player finds it,
+its enemies and whether each belongs) with proposals where they disagree, made before Lars had played: nothing was retuned or moved for
+it.
+
 The encore (order 29, ADR 0052): once every rune of both lines is held, a seventeenth stop appears past the longship at the end
 of line 2, **Middelalderparken**, a small festival stage on the water. It has no rune, opens nothing and counts in no total; it
 keeps a best time (`best.encore`). Loki, the Neon Invaders' front man, plays one more song there (see the rules below). Until

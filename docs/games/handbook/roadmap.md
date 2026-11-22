@@ -1,6 +1,6 @@
 # Roadmap
 
-As of 22 November 2026, after order 33 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
+As of 22 November 2026, after order 34 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
 
 ## Status
 
@@ -8,15 +8,22 @@ As of 22 November 2026, after order 33 was built (not yet reviewed or live). Cha
 |---|---|
 | Date | 22 November 2026 |
 | Last live | Order 33, the lane behind the church, PR #81; before it orders 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 33, the lane behind the church, and room to breathe, branch `the-lane` |
-| Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
+| Built, waiting for review | Order 34, what Lars said, branch `what-lars-said` |
+| Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | 16 % used when order 33 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 33, the lane behind the church, and room to breathe** (`orders/33-the-lane-behind-the-church.md`), built on branch `the-lane`, not
-yet reviewed: Vålerenga's lane behind the church dark again after dusk (missing since order 15), drawn by `drawNightKept`, the same pixels
+**Order 34, what Lars said** (`orders/34-what-lars-said.md`, ADR 0055), built on branch `what-lars-said`, not yet reviewed: his answers
+recorded (`conversations.md`); the tenth station shown as Gamle Oslo, its words an ode to Oslo with no "home"; scenery and ground off the
+warning red (ADR 0044 amended); the encore's original glam-rock tune in the game's own synth, following the fight, with an audition
+(`?debug&music=`), Loki at the far end of late-1980s glam in general, four shouted lines in time with it; the rule that difficulty and
+enemies follow the place, and a table of every level against it with proposals only (`apps/viking/tools/review/o34/thematic.md`). Each item,
+done or not, with its measures: `apps/viking/tools/review/o34/after.md`. Waiting for Lars in person, not built: a new line for the opening
+card, anything nearer one real band's look than the general style, deleting `landing-game-polish`.
+
+**Order 33, the lane behind the church, and room to breathe** (`orders/33-the-lane-behind-the-church.md`), live (PR #81): Vålerenga's lane behind the church dark again after dusk (missing since order 15), drawn by `drawNightKept`, the same pixels
 as `drawNight` at path fills where drawing it so cost about 1,580 rectangles a frame; harmless things held off the warning red (ADR 0044
 amended; the chairlift's chairs, the ferries' bands, the trains' stripe, Holmenkollen's lift cage, a balloon, a shirt recoloured, and the
 scenery in the kit's red listed for a decision); the first script from 59.60 to 57.94 kB gzipped (ADR 0053 amended); `main.ts`'s drawing
@@ -59,11 +66,10 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Order 33 brought Vålerenga's lane's dark back and made room in the first script (once it is reviewed and live); what it found and left
-is in `o33/after.md` ("Found and not fixed"): the scenery and ground in the kit's red near the warning red (Stortinget's walls, Holmenkollen's
-rails), whether the rune should fly with reduced motion, and whether the coins in the lane's dark are bright enough. The planner's next
-candidate is idea 2 or 3 below: a person's playtest is still the biggest gap. The second walk's table
-(`apps/viking/tools/review/o31/before.md`) lists what was looked at and left, with reasons, for a later round.
+Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
+deletion of `landing-game-polish` (in the planner's own session), and his play notes. When he has played, the proposals in
+`apps/viking/tools/review/o34/thematic.md` (difficulty and enemies by place) become an order; until then idea 2 below (tune by play) is the
+biggest gap, and idea 3's checklist now has the tune on it: nobody has heard it.
 
 ## After that: ideas in rough order of value
 
@@ -82,7 +88,7 @@ None of these is decided. Each has a reason.
    - Motion (orders 23 to 25): does his run read as running; is the idle fidgety; is the
      landing felt; do the strips of water read as depth or shimmer; are things in front a
      distraction; is the "!" on every thrower too much; does the edge arrow help.
-   - Sound: nobody has heard any of it.
+   - Sound: nobody has heard any of it, the encore's tune included (order 34; how to hear it: [`resources.md`](resources.md)).
 4. **The camera's jump on notched phones** (order 21's one "partly").
 5. ~~**Stortinget's escalator shafts**: 3,600 of its 9,950 rectangles a frame.~~ Done in order 31: kept and copied, the shafts' places
    1,363 to 2,947 rectangles a frame at 390 x 844 where they were 4,259 to 6,630.

@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, and by order 33's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, and by order 34's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -38,17 +38,18 @@ page is published as a private artifact on Lars's claude.ai account.
   viking game; it is deliberately not in the header.
 - **Vikingfjorden** (`apps/viking`, served at `/viking/`): a T-bane line map with two lines.
   Line 1 has ten levels, one per rune of LARS HANSEN: Langkaia, Akershus festning, Rådhuset,
-  Slottet, Holmenkollen, Akerselva, Nordmarka, Stortinget, Ekeberg, Vålerenga (shown so since order 18;
-  its id is still `nabolaget`, ADR 0038). Each is 220 to 280
+  Slottet, Holmenkollen, Akerselva, Nordmarka, Stortinget, Ekeberg, Gamle Oslo (shown as Vålerenga from order 18
+  to 33, as Gamle Oslo since order 34; its id is still `nabolaget`, ADR 0038, 0055). Each is 220 to 280
   columns with enemies, three hearts, lives, pits, benches, skilling, secrets and a gold bracteate.
-  Two bosses: the troll in Nordmarka and the snow plough in Vålerenga. Clearing Holmenkollen gives
+  Two bosses: the troll in Nordmarka and the snow plough in Gamle Oslo. Clearing Holmenkollen gives
   the ski pole (a dash). With all ten runes the helmet turns gold. Line 2 (orange, VIKING, ADR 0025)
-  leaves at Stortinget and opens when Vålerenga is cleared: Bygdøy (order 14) gives the shield (ADR
+  leaves at Stortinget and opens when Gamle Oslo is cleared: Bygdøy (order 14) gives the shield (ADR
   0024); Vigelandsparken, Korketrekkeren (the sledge he cannot stop, ADR 0026) and Østensjøvannet came
   with order 15, Bjørvika (crane hooks) and Gamlebyen (the ruins that rise as he passes, ADR 0028; the sea
   serpent, ADR 0027) with order 16. All sixteen are built; with all six of line 2 the header's VIKING is gold,
   and with all sixteen the map gets a longship at anchor at the end of the line and lanterns (ADR 0030, 0031), and since order
   29 one more stop past it: the encore at Middelalderparken, where Loki is met once (ADR 0052). It is extra: no rune, no total.
+  Since order 34 it has a tune of its own (ADR 0055).
 - **Jernhaugen** (`packages/maze`; alone at maze.larshansen.dev through `apps/iron-maze`, and
   inside the viking game at `#jernhaugen`): seven maze levels. It is a bonus stop on the line and
   is never required. Clearing its level 3 gives the raven's feather (a double jump); all seven
@@ -86,6 +87,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-21 | Order 30: small debts, the things orders 27 to 29 found and left. Langkaia's props drawn plainly if `feel`'s file never comes (ADR 0053), and the bare map's line 2; the encore's stop glowing after dark until seen; Loki's club at the troll's size; the encore's file fetched ahead from the map with every rune; reduced motion photographed and held by a test (the oars' and Slottet's banners' warnings and five other things were still running); a debug card at a level's end, and the card as wide as its lines on a phone; every kind met in several levels looked at in each; `tsc` from the root | `orders/30-small-debts.md`, branch `small-debts` |
 | 2026-11-21 | Order 32: lights after dark (ADR 0054). Every light in every level, the encore and the map asked whether it is lit after dusk and whether anything glows that should not (a census of every light each scene registers, and what is drawn over it); one rule held by a test. Korketrekkeren's lit trail over the dusk with pools on the run, Gamlebyen's pools on the cobbles, the encore's stage, the invaders' neon signs, the T sign, Bygdøy's ferry, the map's windows; the braziers' and grills' warm light gone; Vålerenga's Pi and its light and the paper cranes drawn again, missing since order 15 with the lane's dark (which is left for a decision: about 1,580 rectangles a frame). Then order 31's leftovers: the logs and the chairlift's chairs redrawn, a dark pixel between the red outline and the glow over a level's dark, the reduced-motion test watching what moves by the clock and what feel draws, the last Norwegian words seen at 360 wide | `orders/32-lights-after-dark.md`, branch `lights-after-dark` |
 | 2026-11-22 | Order 33: the lane behind the church, and room to breathe. Vålerenga's lane behind the church dark again (missing since order 15), kept: the same pixels as `drawNight` draws, at a few path fills a frame where drawing it so cost about 1,580 rectangles; harmless things held off the warning red (the chairlift's chairs, the ferries' bands, the trains' stripe, a balloon, a shirt, a cage's rail recoloured); the first script from 59.60 to 57.94 kB gzipped (the synth, the page's drawing after dusk and of the rune's flight, the maze's feather into lazy files); that drawing held with reduced motion; debug ways to the pole's note and the encore's bite hint | `orders/33-the-lane-behind-the-church.md`, branch `the-lane` |
+| 2026-11-22 | Lars answers the questions that waited for him (relayed by his other session; `handbook/conversations.md`). Order 34: what Lars said. The tenth station is Gamle Oslo and its words lose "home" (an ode to Oslo); scenery and ground off the warning red (Stortinget's walls and kiosk, Holmenkollen's padding, Vålerenga's stained glass, Bygdøy's kiosk, a red hire sledge); the encore gets an original glam-rock tune in the game's own synth that follows the fight, Loki at the far end of late-1980s glam in general, and four shouted lines of the game's own; the rule that a level's difficulty and enemies follow its place, with proposals only (ADR 0055) | `orders/34-what-lars-said.md`, branch `what-lars-said` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -264,7 +266,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 57.94 kB gzipped after order 33 (57,903 bytes by GNU gzip, 1,691 fewer than order 32's build): the kit's synth, the page's
+- **First script**: 58.08 kB gzipped after order 34 (the page asks a level's own music once a frame and shows its shouted line: 0.14 kB; the
+  tune itself is in the encore's chunk, 8.6 to 11.2 kB gzipped). 57.94 kB gzipped after order 33 (57,903 bytes by GNU gzip, 1,691 fewer than order 32's build): the kit's synth, the page's
   drawing after dusk and of the rune's flight (`render/dusk.ts`) went into `feel`'s file, which the first scene waits for, and the maze's
   feather drawing with the maze (ADR 0053, amended: without `feel`'s file the page is silent and nothing keeps its light after dusk).
   59.60 kB gzipped after order 32, as after order 31 (59,594 bytes by GNU gzip, 2 fewer: only the chunks' names it
@@ -698,6 +701,39 @@ Order 33 (`orders/33-the-lane-behind-the-church.md`; each item done or not, with
 - **Debug ways**: `?debug&touch&note=pole|shield|sledge` shows the pad's note of what just changed as the page shows it;
   `?debug&say=<key>` has a level's boss say a line of its words in its bubble (`missBite` at the encore).
 - **Unplayed**: none of it has been seen on a phone or at speed.
+
+## Order 34: what Lars said
+
+Order 34 (`orders/34-what-lars-said.md`, ADR 0055; each item done or not, with its measures and pictures' places, in
+`apps/viking/tools/review/o34/after.md`). Lars answered the waiting questions on 22 November (`handbook/conversations.md`). What to know:
+- **The tenth station is Gamle Oslo** (ADR 0055, superseding 0038's name): the station, banner, cards, gate sign, header and the page's
+  description say so; the id is still `nabolaget`. Its own words lose "home" and the claim that a house is his: an ode to Oslo (the banner's
+  "A winter night on the east side", the plough's "a quiet evening", "The street is clear, for once", the tenth rune's "Oslo, end to end"),
+  with two other ways beside each in `conversations.md`. The doors labelled Hjem lead to the site's front page and keep the label. Code
+  calls the house the yellow house (`YELLOW`, `yellowHouse`). Vålerenga is still a place in it (the first sign, the church, the lane).
+- **Scenery and ground off the warning red** (ADR 0044 amended): `render/warning.test.ts` now also draws each view's far layers (washed by
+  their haze), the street's backdrop, the water and the tiles; at most 24 pixels of a view within 10 of the warning red, but by name (the
+  third rail's cover, which hurts). Recoloured in the levels' own files (the kit's palette is the front page's and unchanged): Stortinget's
+  brick red-orange tiles' stripe, posters and kiosk sign, its kiosk and ticket machines red-brown, its far signs the trains' red;
+  Holmenkollen's padded rails and the jump's lip markers blue; Vålerenga's stained glass ruby; Bygdøy's kiosk sign the ferry's red; the red
+  hire sledge at Frognerseteren wine (the order thought Frognerseteren's walls were red: they are tarred logs; the red was the sledge).
+- **The encore's tune** (`game/tune.ts`, in the encore's chunk): an original glam-rock tune written down as data and played through the kit's
+  `voice` (no change to the kit): a bar of intro as he wakes, a sixteen-bar loop (chorus, verse, solo) by drums, bass, a power-chord riff and a
+  lead; the wig takes the lead with it, the shades the riff, the jacket the drums and the bass; six plain notes once the stage goes plain. The
+  page asks it once a frame (`LevelDef.music`) with its sound, or none on a card, hidden or gone; muted it schedules nothing; time lost is
+  skipped. `game/tune.test.ts` holds it (deterministic, whole bars, ranges and volumes, the layers, the plain notes, silence when muted, the
+  shouts). **Nobody has heard it**: headless Firefox plays no sound. `?debug&told&cleared=all#encore` plays the encore with it;
+  `?debug&told&level=encore&music=band|drums|bass|riff|lead|intro|plain#encore` plays a part at once.
+- **Loki's outfit** (`render/loki.ts`): late-1980s glam metal at its far end, in general (teased hair to under his pose's stars, a headband,
+  shades over his eyes with purple shadow, leopard print, split neon spandex, a studded belt, scarves, a pointed guitar slung behind him).
+  The shades were two rows at his hairline (hidden by the wig while glammed); they are one row over his eyes now. Every box, tell and timing
+  as it was; the sloppy player's run file for the encore byte-identical.
+- **He shouts** in time with the tune: four lines of the game's own (`shout1` to `shout4` in the encore's block of `game/story.ts`, an
+  alternative each), in a bubble beside him while he struts or poses, never during a tell and never over his lines or hints. Under the
+  harness (`?debug&steps=…`) the page draws one frame and the music never saw him wake, so no shout shows there: `&say=shout1` shows one.
+- **The thematic rule** (DESIGN, "The levels"; ADR 0055): difficulty and enemies follow the place; `tools/review/o34/thematic.md` holds every
+  level against it with proposals, none carried out (he has not played).
+- **Unplayed and unheard**: none of it has been seen at speed or on a phone, and nobody has heard the tune.
 
 ## Known weak spots, as of order 16
 

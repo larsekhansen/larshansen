@@ -126,6 +126,23 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   maze's drawing in it stayed in the first script because the maze's chunk imported it from there. *Read the first script's module
   list (a build with a stats plugin), not only its size.*
 
+- **An order's description of a thing can be wrong** (order 34): it named "Frognerseteren's walls" as near the warning red, from order 33's
+  table; the walls are tarred logs, and the red was a hire sledge leaning on the shed (`frognerseteren < back`, the test's own words). *Read
+  which function the test names before recolouring what the order names.*
+- **A one-frame picture cannot show what needs the frames before it** (order 34): the encore's music learns when Loki woke by watching every
+  frame; under `?debug&steps=…` the page steps the rules and draws once, so the music has never seen him wake and no shouted line shows.
+  The timing was held by tests (`game/tune.test.ts`, the scripted fight step by step) and the bubble photographed with `&say=shout1`. *Say
+  which a picture can show and which a test holds.*
+- **A scheduler that learns of a moment late misses its first beat** (order 34): it schedules a quarter of a second ahead, so a phrase that
+  begins the step the stage goes plain had its first note already behind it. The plain notes begin a beat later. *Start what follows an
+  event at least the lookahead after it; the wake's intro works because nothing is scheduled while he waits.*
+- **A drawing that hides behind another is not seen at four times** (found in order 34): Loki's shades were laid at his hairline in order
+  29 and hidden under the wig while he was glammed; the sheet at four times showed his brow and eye and nobody noticed. *Look at one frame of
+  a figure at eight or twelve times, part by part.*
+- **Words relayed by another session** (order 34): Lars's answers came through his other session and a review page; the order quoted
+  them, with the relaying session's reading of a typo beside them, and kept back the three that needed him in person. *Build what is plain
+  and safe; keep what is not for his direct word, and say which.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

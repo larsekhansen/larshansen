@@ -88,6 +88,10 @@ easy. Also keep enemies thematic." (The relaying session reads "touch" as "tough
 - **The rule** (DESIGN, "The levels"): a level is as hard as its place is. A tough part of town or a big event may be hard; a calm place
   leans easy. Its enemies belong to where they are met: what lives there, works there or comes to its event, glammed. Line 2 stays harder
   than line 1.
+- **Measured for it** (the sloppy player, seeds 201 to 260, ±4): line 2 is not harder today: line 1's ten average 1.32 hearts a run, line
+  2's six 1.12 (order 17's numbers, on which the question to him was asked, had line 2 harder). Its hardest is a calm park
+  (Vigelandsparken, 2.32), its finale is in its middle (Gamlebyen, 1.07); on line 1 the biggest event is the easiest level (Slottet, 0.32)
+  and a calm forest is among the hardest (Nordmarka, 2.00, the troll); Holmenkollen's hedgehog is out of its season.
 - **Nothing is retuned and no enemy moved now**: he has not played. `apps/viking/tools/review/o34/thematic.md` holds every level against
   the rule (the place, what it is in Oslo, how hard the reviews say it is, its enemies and whether each belongs), with proposals where they
   disagree, for after he has played.

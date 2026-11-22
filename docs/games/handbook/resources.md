@@ -44,14 +44,27 @@ All on `/viking/` with `?debug`. HANDOVER, "Checking", has the full account.
 | `&fall=<steps>` | The falling feather (order 25) |
 | `&shield` | Give him the shield |
 | `&touch&note=pole\|shield\|sledge` | The pad's note of what just changed on the help line, as the page shows it (order 33): the pole's comes under Holmenkollen's card otherwise |
-| `&say=<key>` | The level's boss says that line of its words in its bubble (order 33): `missBite` at the encore, which needs two hits otherwise |
+| `&say=<key>` | The level's boss says that line of its words in its bubble (order 33): `missBite` at the encore, which needs two hits otherwise; `shout1` to `shout4` his shouted lines (order 34: under the harness the music never saw him wake, so they show only so) |
+| `&music=band\|drums\|bass\|riff\|lead\|intro\|plain` (or a list, `drums,bass`) | The level's music at once, whatever its boss does, only those parts (order 34: the encore's tune). Sound starts with the first key or touch; headless Firefox plays none |
 
 Level ids: `langkaia`, `akershus`, `radhuset`, `slottet`, `holmenkollen`, `akerselva`,
-`nordmarka`, `stortinget`, `ekeberg`, `nabolaget` (shown as Vålerenga, ADR 0038), `bygdoy`,
+`nordmarka`, `stortinget`, `ekeberg`, `nabolaget` (shown as Gamle Oslo, ADR 0055; Vålerenga from order 18 to 33), `bygdoy`,
 `vigelandsparken`, `korketrekkeren`, `ostensjovannet`, `bjorvika`, `gamlebyen`.
 
 Pictures: `bun tools/shots.ts [--size=390x844] [--wait=5000] [--lang=nb-NO] <out-dir> <url>…` from the root (`--lang`: the game in Norwegian, order 30),
 against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the front page).
+
+## Hearing the encore's tune (order 34)
+
+Nobody can hear anything on the Pi: headless Firefox plays no sound. For Lars, on a phone or a computer with sound on (the header's
+speaker button), after a first tap or key (browsers allow sound only then):
+
+- The encore as it plays, with every rune pretended: https://larshansen.dev/viking/?debug&told&cleared=all#encore (walk onto the stage:
+  the intro as Loki wakes, the band, a layer fewer with each hit, the plain notes at the end).
+- The loop at once, a part at a time: https://larshansen.dev/viking/?debug&told&level=encore&music=band#encore, and `music=drums`, `bass`,
+  `riff`, `lead`, `intro`, `plain`, or a list such as `music=drums,bass`.
+
+The notes are written out in `apps/viking/src/game/tune.ts` and in `apps/viking/tools/review/o34/after.md`.
 
 ## Tools in the repository
 
@@ -68,7 +81,8 @@ against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the fro
 | `apps/viking/src/render/reduced.test.ts` | Nothing blinks with reduced motion (order 30; since order 31 by drawing, not by reading the source): every level's scenery across the whole level and every thing in it as the route finds it, recorded call by call at several steps of the clock with the world held, as in a browser; bosses, ledges' warnings, the map; the cards' CSS; since order 32 jumpers and the kit's carriers recorded where they are, and what `render/feel.ts` draws |
 | `apps/viking/src/render/lights.test.ts`, `lightcensus.ts`; `apps/viking/tools/glance/lights.ts` | After dark every light is lit and nothing else glows (order 32, ADR 0054): a census of every light every scene registers, by the function that registers it, and what a later pass draws over it; `bun tools/glance/lights.ts [--sky=night\|evening\|twilight\|own] [--levels=a,b] [--json]` prints it |
 | `apps/viking/src/render/night.test.ts` | Vålerenga's lane's dark, kept as paths, against `drawNight` pixel by pixel in a stand-in canvas that fills rectangles, paths and clips; the lane's night still with reduced motion (order 33) |
-| `apps/viking/src/render/warning.test.ts` | Harmless things keep off the warning red: every view of every level, what he meets with the paint on top, no more than 12 pixels within 10 of it but by name (order 33; the props piece by piece in `alive/props.test.ts`) |
+| `apps/viking/src/render/warning.test.ts` | Harmless things keep off the warning red: every view of every level, what he meets with the paint on top, no more than 12 pixels within 10 of it but by name (order 33; the props piece by piece in `alive/props.test.ts`); since order 34 the scenery and the ground too, each far layer washed by its haze, no more than 24 pixels a view |
+| `apps/viking/src/game/tune.test.ts` | The encore's tune (order 34, ADR 0055): deterministic, whole bars, every note's range and volume, a layer fewer a hit, the plain notes after the third, silence muted or with no sound, the audition, the shouted lines only while he struts or poses |
 | `apps/viking/src/game/words.test.ts` | Every word kept by language, in every module and every level, in both languages with the same keys, lines and arguments (order 31, ADR 0016) |
 | `apps/viking/src/levels/lazy.test.ts` | What the first script draws without `feel`'s file (ADR 0053) |
 | `apps/viking/tools/glance/leanplaces.ts` | Every enemy kind met in more than one level: where, its level's two neons and how far each is from that level's fields, by day and under its sky; the addresses of the pictures in place (order 30) |
