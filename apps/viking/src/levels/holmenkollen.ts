@@ -10,6 +10,8 @@ import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilema
 import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
+import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
+import { frame, type Piece } from "../alive/frames";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
 import { crowdFlag, flagFlying, person } from "../alive/things";
@@ -204,8 +206,35 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 145, r: 10, range: 3, rise: 6, period: 180 },
   { kind: "thrower", look: "kid", c: J + 22, r: 24, period: 190, offset: 120 },
   { kind: "spiky", look: "grill", c: J + 8, r: 24, speed: 0, w: 12, h: 12 },
-  { kind: "spiky", look: "hedgehog", c: J + 30, r: 24, range: 3 }
+  { kind: "spiky", look: "hare", c: J + 30, r: 24, range: 3 }
 ];
+
+// --- The mountain hare (order 35): where the hedgehog was, which sleeps through the winter. The same box, speed, behaviour and
+// frames as the hedgehog (15 x 10, its snout on the right, an idle of two and a walk of four). In its white winter coat, black
+// ear tips, its ears laid back along its back; glammed, neon spikes stand up along its spine (it hurts from above, as the
+// hedgehog's spines did) and shades over its eye. Drawing only.
+const piece = (rows: readonly string[], dx = 0, dy = 0): Piece => [rows, dx, dy];
+const HARE_BODY = [
+  ".......ll......",
+  "........wW.....",
+  ".........wW....",
+  "....wwWWWWWWW..",
+  "..wWWWWWWWWleWW",
+  ".wWWWWWWWWWWWWp",
+  "wWWWWWWWWWWWw..",
+  "wWWWWwwWWWWw...",
+  ".wwWWWwWWww...."
+];
+/** Its feet: the long hind feet behind, the fore paws under its chest, as it gathers and stretches. */
+const HARE_LEGS = [[".wwwww....ww..."], ["..wwww....ww..."], ["...wwwww.ww...."]];
+const hare = (dy: number): Piece[] => [piece(HARE_BODY, 0, dy), mark(["N.N.N", "n.n.n"], 4, 2 + dy), mark(SHADES, 9, 4 + dy)];
+const makeHare = (name: string, ...pieces: Piece[]) => frame(name, FOE_INK, ...pieces);
+export const HARE: Looks = {
+  w: 15,
+  h: 10,
+  idle: [makeHare("hare, still", ...hare(0), piece(HARE_LEGS[1], 0, 9)), makeHare("hare, breathing", ...hare(1), piece(HARE_LEGS[1], 0, 9))],
+  move: [0, 1, 2, 1].map((k, i) => makeHare(`hare, hopping ${i + 1}`, ...hare(k === 1 ? 0 : 1), piece(HARE_LEGS[k], 0, 9)))
+};
 
 // --- Art ----------------------------------------------------------------------------------------------------
 const P = PALETTE;
@@ -668,7 +697,7 @@ export const HOLMENKOLLEN: LevelDef = {
       }
       return false;
     },
-    enemy: (e, v) => e.alive && drawLook(e, v.t),
+    enemy: (e, v) => e.alive && (e.def.look === "hare" ? (drawFoe(e, foeFrame(e, v.t, HARE), HARE.w, HARE.h), true) : drawLook(e, v.t)),
     shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     ledges: {
       "=": { body: P.wood, top: SNOW.lying, edge: P.woodDark, joint: P.woodDark },

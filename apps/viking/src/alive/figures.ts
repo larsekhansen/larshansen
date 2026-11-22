@@ -47,6 +47,7 @@ export const FIGURE_NAMES: Record<string, Words> = {
   "enemy-fox": n("fox", "rev"),
   "enemy-grill": n("disposable grill", "engangsgrill"),
   "enemy-hedgehog": n("hedgehog", "pinnsvin"),
+  "enemy-hare": n("mountain hare", "fjellhare"),
   "enemy-salmon": n("salmon", "laks"),
   "enemy-duck": n("mallard", "stokkand"),
   "enemy-coot": n("coot", "sothøne"),

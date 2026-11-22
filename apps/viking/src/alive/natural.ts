@@ -52,6 +52,7 @@ export const NATURAL: Record<string, Natural> = {
   dog: { ink: { ...BROWN_FUR, [E.plum]: "#7a5a40", [E.plumLight]: "#9a7656" }, leave: "run" },
   fox: { ink: { [E.orange]: "#c8642a", [E.orangeLight]: "#d07040" }, leave: "run" },
   cat: { ink: { [E.orange]: "#c87a3a", [E.orangeLight]: "#d8b060", [E.pink]: "#e0a0a0" }, leave: "run" },
+  hare: { ink: { [E.white]: "#f4f4f0", [E.whiteShade]: "#c4cad2", [E.pink]: "#d89a9a" }, leave: "run" },
   hedgehog: { ink: { [E.plum]: "#6b5646", [E.plumDark]: "#4a3a2e", [E.plumLight]: "#9a8470", [E.orange]: "#b89070", [E.orangeLight]: "#d4b494", [E.pink]: "#d8a090" }, leave: "run" },
   squirrel: { ink: { [E.orange]: "#b85a2a", [E.orangeLight]: "#d07a40", [E.plum]: "#704a30", [E.plumDark]: "#5a3a24", [E.plumLight]: "#8a6040" }, leave: "run" },
   crab: { ink: { [E.orangeLight]: "#a85a3a", [E.orange]: "#7a3e2a", [E.pink]: "#c08070" }, leave: "run" },
