@@ -1,6 +1,6 @@
 # Start here
 
-State as of 22 November 2026, after order 35 was built (not yet reviewed or live); order 34 is live. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 22 November 2026, after order 36 was built (not yet reviewed or live); order 35 is live. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -15,7 +15,7 @@ Lars's personal monorepo, self-hosted on a Raspberry Pi 5 (8 GB) at his home, pu
   (VIKING), three bosses, and with every rune an encore where Loki is met (with a tune of its own since order 34). Reached by the secret door at the top of the Opera on
   the front page.
 - **Jernhaugen** (`packages/maze`, `apps/iron-maze`, maze.larshansen.dev): a maze, also playable
-  inside the viking game.
+  inside the viking game; drawn in the viking game's grain since order 36 (ADR 0056).
 
 Lars plays on his phone. He comments on the live site in short, fast, misspelt messages, and
 means them. He does not read code.
@@ -51,6 +51,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 33 the lane behind the church | #81 | Vålerenga's lane dark again (missing since order 15), kept as paths at the same pixels; harmless things off the warning red (ADR 0044 amended: chairs, ferries, trains, a balloon, a shirt recoloured); the first script 59.60 to 57.94 kB (the synth and the page's drawing after dusk into `feel`'s file, ADR 0053 amended); that drawing held with reduced motion |
 | 34 what Lars said | #82 | Lars's answers of 22 November: the tenth station is Gamle Oslo, its words an ode to Oslo with no "home" (ADR 0055); scenery and ground off the warning red (ADR 0044 amended); the encore's original glam-rock tune in the game's own synth, following the fight, Loki at the far end of late-80s glam in general, four shouted lines; the rule that difficulty and enemies follow the place, with proposals only |
 | 35 housekeeping and the figures | #83 | The viking suite under 300 s on the Pi with nothing it held lost; a sheet of every figure the game draws with `figures.json` naming each in both languages (`apps/viking/tools/figures.ts`); the encore's shouts under the harness; blank harness pictures found and named; perf at every place in one browser; Bjørvika's crane lights held by name; Holmenkollen's hedgehog a mountain hare |
+| 36 the maze catches up | #84 | The maze in the game's grain (ADR 0056): him from the fjord's own sheet with a torch, the mound redrawn as its own iron-bound place, adders in the warning red, the key and the door with the kit's read; the help line says what a finger does on a phone; nothing blinks with reduced motion; one stepped harness for both pages; the joins held; the figures' bosses outlined and the maze on the page of every figure. The maze's rules unchanged |
 | 31 loose ends and a second look | #79 | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real

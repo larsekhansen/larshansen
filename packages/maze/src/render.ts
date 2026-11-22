@@ -1,25 +1,27 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { TORCH, drawDark as drawNight, type Light } from "@larshansen/pixelkit/dark";
-import { R, ctx, light, mix, stoneColumn, target, view, wdisc } from "@larshansen/pixelkit/paint";
-import { LAMP, PALETTE, STONE } from "@larshansen/pixelkit/palette";
-import { playerPixels, TOP_SIZE } from "@larshansen/pixelkit/person";
+import { R, ctx, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
+import { LAMP, PALETTE, ROLES } from "@larshansen/pixelkit/palette";
+import { inked, pixels as pixelsOf, type Frame as HimFrame } from "@larshansen/pixelkit/frames";
+import { HIM, HIM_INK, STRIDE } from "@larshansen/pixelkit/him";
 import { snap, sx, sy, unit, textCtx } from "@larshansen/pixelkit/text";
-import { COLS, LEVELS, ROWS, findTiles, finishOf, isWall, mapInfo, ravenTile, startCentre, startOf, type Cell, type LevelDef, type Portal } from "./levels";
+import { COLS, LEVELS, ROWS, findTiles, finishOf, isWall, mapInfo, ravenTile, startCentre, type Cell, type LevelDef, type Portal } from "./levels";
+import { ENTRANCE, FACE, FRAME, VOID, faceAt, hasTorch, hash, liningAt, stillPixels } from "./look";
 import { drawFeather } from "./feather";
-import { FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, type Stone } from "./rules";
+import { DWELLER, KEY, RAVEN, STONES, STONE_H, STONE_RUNE, STONE_W, drawAdder, put } from "./figures";
+import { BODY, FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, type Stone } from "./rules";
 
-// Drawing the mound, top down, in the front page's pixels. Everything is whole art pixels, made of
-// the kit's rectangle helpers and anchored to the tile map. The still parts (floor, stone walls,
-// the start pad) are drawn once per level onto a canvas the size of the map, and the parts that
-// move or glow (the curse line, torches, stones, snakes, the raven) are drawn over it every frame.
+// Drawing the mound, seen from above with its walls' faces showing, in the viking game's grain (order 36, ADR 0056). Everything is
+// whole art pixels, anchored to the tile map. The still parts (`look.ts`: the floor, the lining and its faces, the hill, the pad,
+// the doorways) are a grid of colours made once a level and put on a canvas the size of the map; what moves or glows (the curse's
+// line, the torches' flames, the stones, the adders, the raven, the key, the gate, the sliding walls) is drawn over it every frame,
+// a figure as a frame of the kit's (`figures.ts`) or a piece kept and copied; him and his ghost from the viking game's own sheet
+// (`@larshansen/pixelkit/him`) on the sharp canvas.
 
 const P = PALETTE;
-/** The colour of the void outside the map and behind the glow. */
-export const VOID = "#14110f";
-/** The front face of a wall that has floor below it, and how tall it is. */
-const FACE = 5;
-const FACE_DARK = mix(STONE.dark, "#000000", 0.34);
-const PAD_STONE = { base: mix(STONE.base, "#ffffff", 0.3), light: mix(STONE.light, "#ffffff", 0.3), dark: mix(STONE.dark, "#ffffff", 0.3) };
+const shade = (c: string, k: number) => mix(c, "#141018", k);
+const lit = (c: string, k: number) => mix(c, "#ffffff", k);
+export { VOID };
 
 interface Seg {
   x: number;
@@ -30,7 +32,8 @@ interface Seg {
 
 interface Art {
   def: LevelDef;
-  still: HTMLCanvasElement;
+  /** The still layer on a canvas of its own; null where there is no page (the tests read `stillPixels` itself). */
+  still: HTMLCanvasElement | null;
   /** One-pixel lines on the floor side of every wall. */
   curse: Seg[];
   torches: Cell[];
@@ -45,165 +48,55 @@ interface Art {
   crumbles: Cell[];
 }
 
-/** A small, fixed hash of a tile and a number, 0 to 1: the same earth on every visit. */
-function hash(c: number, r: number, k: number) {
-  let n = Math.imul(c + 101, 374761393) + Math.imul(r + 211, 668265263) + Math.imul(k + 7, 1274126177);
-  n = Math.imul(n ^ (n >>> 13), 1274126177);
-  return ((n ^ (n >>> 16)) >>> 0) / 4294967296;
-}
-
-function drawFloor(c: number, r: number) {
-  const x = c * TILE;
-  const y = r * TILE;
-  R(x, y, TILE, TILE, P.moundEarth);
-  for (let i = 0; i < 12; i++) {
-    const px = Math.floor(hash(c, r, i) * (TILE - 1));
-    const py = Math.floor(hash(c, r, i + 40) * (TILE - 1));
-    R(x + px, y + py, i % 3 === 0 ? 2 : 1, 1, i % 2 ? P.moundEarthDark : P.moundEarthLight);
-  }
-  // Sparse, subtle flagstones: about one tile in seven has one.
-  if (hash(c, r, 99) < 0.15) {
-    const w = 5 + Math.floor(hash(c, r, 100) * 3);
-    const h = 3 + Math.floor(hash(c, r, 101) * 2);
-    const fx = x + 2 + Math.floor(hash(c, r, 102) * (TILE - w - 4));
-    const fy = y + 2 + Math.floor(hash(c, r, 103) * (TILE - h - 4));
-    R(fx, fy + h, w, 1, mix(P.moundEarth, "#000000", 0.3));
-    R(fx, fy, w, h, mix(P.moundEarth, "#9a9488", 0.45));
-    R(fx, fy, w, 1, mix(P.moundEarth, "#ffffff", 0.3));
-  }
-}
-
-/** A wall tile with floor anywhere around it (eight ways) is the stone lining of a tunnel. */
-function lined(map: readonly string[], c: number, r: number) {
-  for (let dr = -1; dr <= 1; dr++) for (let dc = -1; dc <= 1; dc++) if (!isWall(map, c + dc, r + dr)) return true;
-  return false;
-}
-
-/** The rest of the mound is solid dark earth: one flat colour with a pebble now and then. */
-function drawEarth(c: number, r: number) {
-  const x = c * TILE;
-  const y = r * TILE;
-  R(x, y, TILE, TILE, P.moundDeep);
-  if (hash(c, r, 7) < 0.33) R(x + Math.floor(hash(c, r, 8) * 15), y + Math.floor(hash(c, r, 9) * 15), 1, 1, P.moundDeepSpeck);
-}
-
-function drawWall(map: readonly string[], c: number, r: number) {
-  if (!lined(map, c, r)) return drawEarth(c, r);
-  const x = c * TILE;
-  const y = r * TILE;
-  for (let i = 0; i < TILE; i++) stoneColumn(x + i, y, y + TILE);
-  if (isWall(map, c, r + 1)) return;
-  // Floor below: the wall shows its front, darker, with two iron studs.
-  const top = y + TILE - FACE;
-  R(x, top, TILE, 1, STONE.light);
-  R(x, top + 1, TILE, FACE - 1, FACE_DARK);
-  for (let i = 3; i < TILE; i += 8) R(x + i, top + 1, 1, FACE - 1, STONE.mortar);
-  R(x + 4, top + 2, 1, 1, P.iron);
-  R(x + 11, top + 2, 1, 1, P.iron);
-}
-
-/** The carved start pad: flagstones with a ring cut into them. */
-function drawPad(map: readonly string[]) {
-  const s = startOf(map);
-  const x = s.c * TILE;
-  const y = s.r * TILE;
-  R(x, y, TILE * 2, TILE * 2, STONE.mortar);
-  for (let by = 0; by < 4; by++)
-    for (let bx = 0; bx < 4; bx++) {
-      const v = hash(s.c * 4 + bx, s.r * 4 + by, 5);
-      R(x + bx * 8 + 1, y + by * 8 + 1, 7, 7, v < 0.4 ? PAD_STONE.dark : v < 0.8 ? PAD_STONE.base : PAD_STONE.light);
-    }
-  const ring = mix(STONE.dark, "#000000", 0.45);
-  for (let dy = -TILE; dy < TILE; dy++)
-    for (let dx = -TILE; dx < TILE; dx++) {
-      const d = Math.hypot(dx + 0.5, dy + 0.5);
-      if ((d >= 11 && d < 12.2) || (d >= 5 && d < 6)) R(x + TILE + dx, y + TILE + dy, 1, 1, ring);
-    }
-}
-
-/** Stonework laid as a block, in the kit's stone. */
-function stoneBlock(x: number, y: number, w: number, h: number) {
-  for (let i = 0; i < w; i++) stoneColumn(x + i, y, y + h);
+/** "#rrggbb" as its three numbers, worked out once a colour. */
+const rgbOf = new Map<string, [number, number, number]>();
+function rgb(c: string): [number, number, number] {
+  let v = rgbOf.get(c);
+  if (!v) rgbOf.set(c, (v = [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)]));
+  return v;
 }
 
 /**
- * The entrance on the first level: a doorway in the left wall of the start room, two jambs and a
- * lintel of stone round an opening of 9 x 24 art pixels. Returns the opening's top left corner.
+ * A level's still layer (`look.ts`: the floor, the lining, the hill, the pad, the doorways) painted once onto a canvas the
+ * size of the map, pixel by pixel in one go; and what the frames draw over it, found once: the curse's lines and the torches.
  */
-const ENTRANCE = { x: 3, y: 16 * TILE + 5, w: 9, h: 23 };
-function drawEntrance() {
-  stoneBlock(1, 16 * TILE + 1, 13, 4); // lintel
-  stoneBlock(1, 16 * TILE + 1, 2, 30); // left jamb
-  stoneBlock(12, 16 * TILE + 1, 2, 30); // right jamb
-  stoneBlock(1, 17 * TILE + 12, 13, 3); // sill
-  R(ENTRANCE.x, ENTRANCE.y, ENTRANCE.w, ENTRANCE.h, VOID);
-}
-
-/** A square stone frame round the 2 x 2 finish; the opening is 26 x 26. */
-const FRAME = 3;
-function drawFinish(f: Cell, daylight: boolean) {
-  const x = f.c * TILE;
-  const y = f.r * TILE;
-  stoneBlock(x, y, TILE * 2, FRAME);
-  stoneBlock(x, y + TILE * 2 - FRAME, TILE * 2, FRAME);
-  stoneBlock(x, y + FRAME, FRAME, TILE * 2 - 2 * FRAME);
-  stoneBlock(x + TILE * 2 - FRAME, y + FRAME, FRAME, TILE * 2 - 2 * FRAME);
-  R(x + FRAME, y + FRAME, TILE * 2 - 2 * FRAME, TILE * 2 - 2 * FRAME, daylight ? VOID : "#0b0910");
-  if (!daylight) {
-    // Darkness inside, with a torch on the lintel's inner edge: it leads deeper.
-    R(x + 15, y + 7, 2, 1, P.iron);
-    R(x + 15, y + 8, 1, 2, P.woodDark);
-  }
-}
-
 function build(def: LevelDef): Art {
   const { map } = def;
-  const still = document.createElement("canvas");
-  still.width = COLS * TILE;
-  still.height = ROWS * TILE;
-  // Draw onto the canvas of the whole map, at its own origin, then put the kit's target back.
-  const outer = ctx();
-  const camX = view.camX;
-  const camY = view.camY;
-  target(still.getContext("2d")!);
-  view.camX = 0;
-  view.camY = 0;
+  let still: HTMLCanvasElement | null = null;
+  if (typeof document !== "undefined") {
+    const pixels = stillPixels(def);
+    still = document.createElement("canvas");
+    still.width = pixels.w;
+    still.height = pixels.h;
+    const g = still.getContext("2d")!;
+    const data = g.createImageData(pixels.w, pixels.h);
+    pixels.px.forEach((c, i) => {
+      if (!c) return;
+      const [r, gg, b] = rgb(c);
+      data.data[i * 4] = r;
+      data.data[i * 4 + 1] = gg;
+      data.data[i * 4 + 2] = b;
+      data.data[i * 4 + 3] = 255;
+    });
+    g.putImageData(data, 0, 0);
+  }
 
-  const daylightFinish = def === LEVELS[LEVELS.length - 1];
   const curse: Seg[] = [];
   const torches: Cell[] = [];
   for (let r = 0; r < ROWS; r++)
     for (let c = 0; c < COLS; c++) {
-      if (!isWall(map, c, r)) {
-        drawFloor(c, r);
-        continue;
-      }
-      drawWall(map, c, r);
+      if (!isWall(map, c, r)) continue;
       const x = c * TILE;
       const y = r * TILE;
       if (!isWall(map, c, r + 1)) curse.push({ x, y: y + TILE - 1, w: TILE, h: 1 });
       if (r > 0 && !isWall(map, c, r - 1)) curse.push({ x, y, w: TILE, h: 1 });
       if (c > 0 && !isWall(map, c - 1, r)) curse.push({ x, y, w: 1, h: TILE });
       if (c < COLS - 1 && !isWall(map, c + 1, r)) curse.push({ x: x + TILE - 1, y, w: 1, h: TILE });
-      // A torch on every sixth lining wall with floor below it. (The order asked for column and row both
-      // multiples of 6, but no wall in the three maps matches that, so the rule is column plus row a multiple of 6.)
-      if ((c + r) % 6 === 0 && !isWall(map, c, r + 1)) {
-        torches.push({ c, r });
-        R(x + 7, y + 6, 1, 3, P.woodDark);
-        R(x + 6, y + 8, 3, 1, P.iron);
-      }
+      if (hasTorch(map, c, r)) torches.push({ c, r });
     }
-  drawPad(map);
-  if (def === LEVELS[0]) drawEntrance();
-  drawFinish(finishOf(map), daylightFinish);
-
-  target(outer);
-  view.camX = camX;
-  view.camY = camY;
-
   const raven = ravenTile(map);
   const key = findTiles(map, "k")[0] ?? null;
-  return { def, still, curse, torches, raven, key, gates: findTiles(map, "g"), crumbles: findTiles(map, "c"), ravenFacing: startCentre(map).x < raven.c * TILE + TILE / 2 ? -1 : 1, daylightFinish };
+  return { def, still, curse, torches, raven, key, gates: findTiles(map, "g"), crumbles: findTiles(map, "c"), ravenFacing: startCentre(map).x < raven.c * TILE + TILE / 2 ? -1 : 1, daylightFinish: def === LEVELS[LEVELS.length - 1] };
 }
 
 const arts = new Map<LevelDef, Art>();
@@ -222,7 +115,8 @@ export interface Frame {
   x: number;
   y: number;
   stones: readonly Stone[];
-  snakes: readonly { x: number; y: number; flat: boolean; dir: 1 | -1 }[];
+  /** Each snake's centre, whether it lies along x, which way it goes, and its own clock (its wave and its tongue). */
+  snakes: readonly { x: number; y: number; flat: boolean; dir: 1 | -1; t: number }[];
   cursed: boolean;
   /** The level clock in steps, which the sliders run on. */
   clock: number;
@@ -253,32 +147,17 @@ function curseColor(f: Frame) {
   return mix(P.curse, P.curseBright, 0.5 + 0.5 * Math.sin(f.t * 0.045));
 }
 
-/** A standing stone is 8 x 12 in its tile; the rune is one stroke on it. */
-const STONE_W = 8;
-const STONE_H = 12;
-const STONE_RUNE: [number, number][] = [[3, 3], [3, 4], [3, 5], [3, 6], [3, 7], [3, 8], [4, 4], [5, 3], [4, 7], [5, 6]];
 const stoneOrigin = (s: Stone) => ({ x: s.c * TILE + 4, y: s.r * TILE + 2 });
-
-const RAVEN = ["..kkk..", ".kkkebb", "kkkkkb.", "kkkkkk.", ".kkkk..", "..f.f.."];
-
-/** The raven's head is its first three rows: it turns toward him, while the body keeps facing the start pad. */
-const RAVEN_HEAD = 3;
 
 function drawRaven(a: Art, f: Frame) {
   const x = a.raven.c * TILE + 4;
   const y = a.raven.r * TILE + 2;
-  const blink = f.t % 200 < 7;
+  const blink = f.t % 200 < 7 && !view.reduced;
   // It looks at him once he is more than a few pixels to one side; straight below, it keeps its pose.
   const dx = f.x - (x + 3.5);
   const head = dx > 6 ? 1 : dx < -6 ? -1 : a.ravenFacing;
-  RAVEN.forEach((row, ry) => {
-    const facing = ry < RAVEN_HEAD ? head : a.ravenFacing;
-    for (let cx = 0; cx < 7; cx++) {
-      const ch = row[facing > 0 ? cx : 6 - cx];
-      if (ch === ".") continue;
-      R(x + cx, y + ry, 1, 1, ch === "e" ? (blink ? P.raven : P.ravenEye) : ch === "b" ? P.ravenBeak : ch === "f" ? P.ravenBeak : P.raven);
-    }
-  });
+  put(blink ? RAVEN.blink : RAVEN.head, x, y, head);
+  put(RAVEN.body, x, y + 3, a.ravenFacing);
 }
 
 /** Where the raven's bubble hangs from, in world art pixels: above its head. */
@@ -287,40 +166,12 @@ export function ravenAnchor(level: number) {
   return { x: a.raven.c * TILE + TILE / 2, y: a.raven.r * TILE + 1 };
 }
 
-const SNAKE_OUTLINE = "#14260f";
-
-function drawSnake(s: Frame["snakes"][number], t: number) {
-  const L = 12;
-  const grid: string[][] = Array.from({ length: 6 }, () => Array<string>(L).fill("."));
-  for (let i = 0; i < L; i++) {
-    // Counted from the tail, so the head is at the end the snake is going toward.
-    const k = s.dir > 0 ? i : L - 1 - i;
-    const w = Math.sin(t * 0.22 - k * 0.85);
-    const off = w > 0.45 ? 1 : w < -0.45 ? -1 : 0;
-    const rows = k >= L - 2 ? [1, 2, 3, 4] : [1, 2, 3, 4].slice(k < 2 ? 1 : 0, k < 2 ? 3 : 4); // thinner tail, fuller head
-    const band = k % 4 < 2 ? "g" : "p";
-    for (const row of rows) grid[row + off][i] = band;
-  }
-  const headI = s.dir > 0 ? L - 1 : 0;
-  grid[2][headI] = "e";
-  const tongue = Math.floor(t / 7) % 3 !== 0;
-  const colors: Record<string, string> = { g: P.snakeGreen, p: P.snakePurple, e: "#f3e6a0", t: P.tongue };
-  const left = Math.round(s.x - (s.flat ? 6 : 3));
-  const top = Math.round(s.y - (s.flat ? 3 : 6));
-  // A snake that runs up and down is the same snake turned on its side.
-  const put = (c: number, r: number, w: number, color: string, grow = 0) => (s.flat ? R(left + c - grow, top + r - grow, w + 2 * grow, 1 + 2 * grow, color) : R(left + r - grow, top + c - grow, 1 + 2 * grow, w + 2 * grow, color));
-  for (let r = 0; r < 6; r++) for (let c = 0; c < L; c++) if (grid[r][c] !== ".") put(c, r, 1, SNAKE_OUTLINE, 1);
-  if (tongue) put(headI + s.dir, 3, 1, SNAKE_OUTLINE, 1);
-  for (let r = 0; r < 6; r++) for (let c = 0; c < L; c++) if (grid[r][c] !== ".") put(c, r, 1, colors[grid[r][c]]);
-  if (tongue) put(headI + s.dir, 3, 1, colors.t);
-}
-
 /** The mound, in one pass of the kit at night, so its lights glow. */
 export function drawWorld(f: Frame) {
   const def = levelDef(f.level);
   const a = artFor(def);
   const g = ctx();
-  g.drawImage(a.still, -view.camX, -view.camY);
+  if (a.still) g.drawImage(a.still, -view.camX, -view.camY);
 
   // The curse along the walls.
   const color = curseColor(f);
@@ -404,6 +255,8 @@ export function drawBright(f: Frame) {
     wedge(0, (fin.r + 2) * TILE, "y", 26, (fin.c + 1) * TILE);
   }
   drawDoorGlow(a, f);
+  // The way on is a door: its corners marked in the "use" cyan, as every door in the viking game is (ADR 0039, order 19).
+  corners(fin.c * TILE - 1, fin.r * TILE - 1, TILE * 2 + 2, TILE * 2 + 2);
 
   drawFeatures(a, f);
 
@@ -412,18 +265,14 @@ export function drawBright(f: Frame) {
     const age = f.stoneFlash.get(i);
     // A stone just lit flares white for a few steps before its rune settles to blue.
     const flare = age !== undefined && age < 6 && !view.reduced;
-    R(o.x + 1, o.y + STONE_H, STONE_W - 1, 1, mix(P.moundEarth, "#000000", 0.4)); // its shadow
-    R(o.x, o.y + 1, STONE_W, STONE_H - 1, flare ? "#f4f1ea" : "#b7b2a8");
-    R(o.x + 1, o.y, STONE_W - 2, 1, flare ? "#ffffff" : "#d0cbc0");
-    R(o.x, o.y + 1, 1, STONE_H - 1, flare ? "#ffffff" : "#d0cbc0");
-    R(o.x + STONE_W - 1, o.y + 1, 1, STONE_H - 1, "#8d887f");
-    R(o.x, o.y + STONE_H - 1, STONE_W, 1, "#8d887f");
-    for (const [dx, dy] of STONE_RUNE) R(o.x + dx, o.y + dy, 1, 1, s.lit ? P.runeGlow : STONE.mortar);
+    R(o.x + 1, o.y + STONE_H, STONE_W, 1, shade(P.moundEarth, 0.45)); // its shadow, down and to the right of it
+    R(o.x + STONE_W, o.y + 3, 1, STONE_H - 3, shade(P.moundEarth, 0.3));
+    kept(flare ? STONES.flare : s.lit ? STONES.lit : STONES.unlit, o.x, o.y);
     if (age !== undefined && !view.reduced) ring(o.x + STONE_W / 2, o.y + STONE_H / 2, 5 + age * 0.7, age / FLASH.stone, "159, 227, 255");
   });
 
   drawRaven(a, f);
-  for (const s of f.snakes) drawSnake(s, f.t);
+  for (const s of f.snakes) drawAdder(s.x, s.y, s.flat, s.dir, s.t);
   if (f.level === LEVELS.length) drawChamber(f);
 }
 
@@ -432,23 +281,43 @@ export function drawBright(f: Frame) {
 
 const OUTLINE = "#0c0a10";
 
-/** A small picture from a text grid, with a one-pixel dark outline so it stands out from the floor. */
-function sprite(x: number, y: number, rows: readonly string[], colors: Record<string, string>, outline = OUTLINE) {
-  const at = (cx: number, cy: number) => rows[cy]?.[cx] ?? ".";
-  rows.forEach((row, ry) => {
-    for (let cx = 0; cx < row.length; cx++) {
-      if (row[cx] === ".") continue;
-      for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) if (at(cx + dx, ry + dy) === ".") R(x + cx + dx, y + ry + dy, 1, 1, outline);
-    }
-  });
-  rows.forEach((row, ry) => {
-    for (let cx = 0; cx < row.length; cx++) if (row[cx] !== ".") R(x + cx, y + ry, 1, 1, colors[row[cx]]);
-  });
+/** The corners of a thing to use, three pixels each way, in the "use" cyan (the viking game's `corners`). */
+function corners(x: number, y: number, w: number, h: number) {
+  const c = ROLES.use;
+  R(x, y, 3, 1, c);
+  R(x, y, 1, 3, c);
+  R(x + w - 3, y, 3, 1, c);
+  R(x + w - 1, y, 1, 3, c);
+  R(x, y + h - 1, 3, 1, c);
+  R(x, y + h - 3, 1, 3, c);
+  R(x + w - 3, y + h - 1, 3, 1, c);
+  R(x + w - 1, y + h - 3, 1, 3, c);
 }
 
-/** The rune key: an iron key, five pixels across, with a glowing rune in its bow. */
-const KEY = [".hhh.", "hh.hh", "hrrrh", "hh.hh", ".hhh.", "..s..", "..s..", "..sss", "..s..", "..ssg"];
-const KEY_COLORS = { h: "#c3ccd6", s: "#9aa5b2", g: "#e8d27a", r: P.runeGlow };
+/** A figure's frame with a one-pixel dark line round it, so it stands out from the floor (a thing to take, the dweller): kept as a piece. */
+const outlinedGrids = new Map<HimFrame, string[][]>();
+function outlinedFrame(f: HimFrame, x: number, y: number) {
+  let grid = outlinedGrids.get(f);
+  if (!grid) {
+    const w = f.x1 + 2;
+    const h = f.y1 + 2;
+    grid = Array.from({ length: h }, () => Array<string>(w).fill(""));
+    pixelsOf(f, 1, f.x1, (c, r, colour) => (grid![r + 1][c + 1] = colour));
+    for (let r = 0; r < h; r++)
+      for (let c = 0; c < w; c++)
+        if (!grid[r][c] && [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => grid![r + dy]?.[c + dx] && grid![r + dy][c + dx] !== OUTLINE)) grid[r][c] = OUTLINE;
+    outlinedGrids.set(f, grid);
+  }
+  const g = grid;
+  piece(`outlined:${f.name}`, x - 1, y - 1, g[0].length, g.length, (px, py) => g[py][px]);
+}
+
+/** A figure's frame kept as a piece and copied (facing right). */
+function kept(f: HimFrame, x: number, y: number) {
+  const cells = new Map<string, string>();
+  pixelsOf(f, 1, f.x1, (c, r, colour) => cells.set(`${c},${r}`, colour));
+  piece(`frame:${f.name}`, x, y, f.x1, f.y1, (px, py) => cells.get(`${px},${py}`) ?? "");
+}
 
 /**
  * A square ring of light round (cx, cy), its corners left out, fading as `done` goes from 0 to 1:
@@ -505,7 +374,7 @@ const PORTAL_RUNES = [
 ];
 
 /** A teleport stone: a round flat stone set in the floor, a blue rune, a faint glow while it works, a shimmer when it sends him. */
-function drawPortal(p: Portal, f: Frame) {
+export function drawPortal(p: Portal, f: Pick<Frame, "portalCool" | "portalFlash" | "t">) {
   const cx = p.c * TILE + TILE / 2;
   const cy = p.r * TILE + TILE / 2;
   const ready = f.portalCool === 0;
@@ -518,10 +387,18 @@ function drawPortal(p: Portal, f: Frame) {
     wdisc(cx, cy, 8, `rgba(111, 195, 255, ${pulse})`);
     g.globalCompositeOperation = "source-over";
   }
-  wdisc(cx, cy + 1, 6, mix(P.moundEarth, "#000000", 0.45)); // its shadow on the floor, as the standing stones have
-  wdisc(cx, cy, 6, P.portalRim);
-  wdisc(cx, cy, 5, P.portalStone);
-  R(cx - 3, cy - 4, 4, 1, mix(P.portalStone, "#ffffff", 0.35));
+  // The stone itself, round and flat in the floor, lit on its top left and shaded to its foot, its shadow down and to the right.
+  piece("portal", cx - 7, cy - 7, 15, 15, (px, py) => {
+    const dx = px - 7;
+    const dy = py - 7;
+    const d = Math.hypot(dx, dy);
+    const ds = Math.hypot(dx - 1, dy - 1);
+    if (d > 6.3) return ds <= 6.3 ? shade(P.moundEarth, 0.45) : "";
+    if (d > 5.2) return dx + dy < -4 ? mix(P.portalRim, P.portalStone, 0.5) : dx + dy > 3 ? shade(P.portalRim, 0.3) : P.portalRim;
+    if (dx + dy < -5) return lit(P.portalStone, 0.35);
+    if (dx + dy > 5) return shade(P.portalStone, 0.18);
+    return P.portalStone;
+  });
   const rune = flash !== null && flash < 8 ? "#ffffff" : ready ? P.portalGlow : mix(P.portalRim, P.portalGlow, 0.3);
   PORTAL_RUNES[p.pair % PORTAL_RUNES.length].forEach((row, ry) => {
     for (let rx = 0; rx < 5; rx++) if (row[rx] === "x") R(cx - 2 + rx, cy - 2 + ry, 1, 1, rune);
@@ -649,7 +526,41 @@ function drawCrumble(c: number, r: number, age: number) {
   drawCracks(sx0, y, c, r, stage);
 }
 
-/** A sliding wall: a groove in the floor while it sleeps, a blinking outline before it wakes, and stone while it is wall. */
+/** A piece painted once onto a canvas of its own and copied (no page, as in the tests: painted where it stands). */
+const pieces = new Map<string, HTMLCanvasElement>();
+function piece(key: string, x: number, y: number, w: number, h: number, colour: (px: number, py: number) => string, clip?: { x: number; y: number; w: number; h: number }) {
+  const c = clip ?? { x: 0, y: 0, w, h };
+  if (typeof document === "undefined") {
+    for (let py = c.y; py < c.y + c.h; py++)
+      for (let px = c.x; px < c.x + c.w; px++) {
+        const col = colour(px, py);
+        if (col) R(x + px, y + py, 1, 1, col);
+      }
+    return;
+  }
+  let can = pieces.get(key);
+  if (!can) {
+    can = document.createElement("canvas");
+    can.width = w;
+    can.height = h;
+    const g = can.getContext("2d")!;
+    for (let py = 0; py < h; py++)
+      for (let px = 0; px < w; px++) {
+        const col = colour(px, py);
+        if (!col) continue;
+        g.fillStyle = col;
+        g.fillRect(px, py, 1, 1);
+      }
+    pieces.set(key, can);
+  }
+  if (c.w > 0 && c.h > 0) ctx().drawImage(can, c.x, c.y, c.w, c.h, x + c.x - view.camX, y + c.y - view.camY, c.w, c.h);
+}
+
+/**
+ * A sliding wall: a groove in the floor while it sleeps, an outline that shimmers before it wakes (steady with reduced
+ * motion: it says the same, and nothing blinks), and while it is wall the lining's stone with its iron-banded face,
+ * the curse along its edge. Its stone is a piece painted once and copied, rising out of the groove from its middle.
+ */
 function drawSlider(d: LevelDef["sliders"][number], f: Frame) {
   const x = d.at[0] * TILE;
   const y = d.at[1] * TILE;
@@ -658,7 +569,7 @@ function drawSlider(d: LevelDef["sliders"][number], f: Frame) {
   const rise = sliderRise(d, f.clock);
   const solid = sliderSolid(d, f.clock);
   if (rise < 1) {
-    // The groove it slides out of.
+    // The groove it slides out of: a dark rim, an earthen bed lit on its far edge, the joints of its stones.
     R(x, y, w, h, "#2b2017");
     R(x + 1, y + 1, w - 2, h - 2, "#58422f");
     R(x + 1, y + 1, w - 2, 1, "#7a5f43");
@@ -666,7 +577,7 @@ function drawSlider(d: LevelDef["sliders"][number], f: Frame) {
     for (let i = 8; i < w - 3; i += 8) R(x + i, y + 3, 1, h - 6, "#2b2017");
     for (let i = 8; i < h - 3; i += 8) R(x + 3, y + i, w - 6, 1, "#2b2017");
   }
-  if (!solid && sliderWarning(d, f.clock) && Math.floor(f.clock / 8) % 2 === 0) {
+  if (!solid && sliderWarning(d, f.clock) && (view.reduced || Math.floor(f.clock / 8) % 2 === 0)) {
     const c = "#e7f3ff";
     R(x, y, w, 2, c);
     R(x, y + h - 2, w, 2, c);
@@ -675,26 +586,15 @@ function drawSlider(d: LevelDef["sliders"][number], f: Frame) {
   }
   if (rise > 0) {
     const inset = Math.round((1 - rise) * 6);
-    const ix = x + inset;
-    const iy = y + inset;
-    const iw = w - 2 * inset;
-    const ih = h - 2 * inset;
-    R(ix + 1, iy + ih, iw, 2, "rgba(0, 0, 0, 0.45)");
-    for (let i = 0; i < iw; i++) stoneColumn(ix + i, iy, iy + ih);
-    // Its front, darker, with iron studs, as on the walls of the tunnel.
-    const top = iy + ih - FACE;
-    R(ix, top, iw, 1, STONE.light);
-    R(ix, top + 1, iw, FACE - 1, FACE_DARK);
-    for (let i = 4; i < iw - 2; i += 8) {
-      R(ix + i, top + 2, 1, 1, P.iron);
-      R(ix + i + 4, top + 1, 1, FACE - 1, STONE.mortar);
-    }
+    R(x + inset + 1, y + h - inset, w - 2 * inset, 2, "rgba(0, 0, 0, 0.45)");
+    // The stone: the lining's courses over its face (FACE rows at its foot), drawn where it stands in the world.
+    piece(`slider${x},${y},${w},${h}`, x, y, w, h, (px, py) => (py >= h - FACE ? faceAt(x + px, py - (h - FACE)) : liningAt(x + px, y + py)), { x: inset, y: inset, w: w - 2 * inset, h: h - 2 * inset });
     if (rise >= 1) {
       const color = curseColor(f);
-      R(ix, iy, iw, 1, color);
-      R(ix, iy + ih - 1, iw, 1, color);
-      R(ix, iy, 1, ih, color);
-      R(ix + iw - 1, iy, 1, ih, color);
+      R(x, y, w, 1, color);
+      R(x, y + h - 1, w, 1, color);
+      R(x, y, 1, h, color);
+      R(x + w - 1, y, 1, h, color);
     }
   }
 }
@@ -721,16 +621,14 @@ function drawFeatures(a: Art, f: Frame) {
     wdisc(kx + 2, ky + 4, 5, "rgba(159, 227, 255, 0.14)");
     g.globalCompositeOperation = "source-over";
     R(kx, a.key.r * TILE + 14, 5, 1, "rgba(0, 0, 0, 0.35)");
-    sprite(kx, ky, KEY, KEY_COLORS);
+    outlinedFrame(KEY, kx, ky);
   } else if (a.key && f.keyFly !== null && f.keyFly < FLASH.key && !view.reduced && f.keyFly % 6 < 4) {
     // Taken: the key flies up out of its tile, blinking, and is gone.
-    sprite(a.key.c * TILE + 5, a.key.r * TILE + 3 - Math.round(f.keyFly * 0.7), KEY, KEY_COLORS);
+    outlinedFrame(KEY, a.key.c * TILE + 5, a.key.r * TILE + 3 - Math.round(f.keyFly * 0.7));
   }
 }
 
 /** The mound-dweller on his stone seat above the last finish, and the raven's feather floating over it. */
-const SEATED = ["..ggggg..", ".ggggggg.", "ggdddddgg", "ggdddddgg", ".gdddddg.", ".ggggggg.", "ggggggggg", "ggGgggGgg", "ggGgggGgg", "ggGgggGgg", "gGGgggGGg", "GGG...GGG"];
-const SEATED_COLORS = { g: "#a3a9a6", G: "#7f8582", d: "#1b1c22" };
 function drawChamber(f: Frame) {
   const fin = finishOf(levelDef(f.level).map);
   const cx = (fin.c + 1) * TILE;
@@ -748,7 +646,7 @@ function drawChamber(f: Frame) {
   // The figure, seated, 9 x 12, with eyes that follow him.
   const fx = cx - 4;
   const fy = top + 2;
-  sprite(fx, fy, SEATED, SEATED_COLORS);
+  outlinedFrame(DWELLER, fx, fy);
   const look = f.x < cx - 6 ? -1 : f.x > cx + 6 ? 1 : 0;
   const eye = "#b39a4a";
   R(fx + 3 + look, fy + 3, 1, 1, eye);
@@ -761,7 +659,7 @@ function drawChamber(f: Frame) {
   g.globalCompositeOperation = "lighter";
   wdisc(cx, ay + 4, 9, "rgba(159, 227, 255, 0.10)");
   g.globalCompositeOperation = "source-over";
-  drawFeather(ax, ay, undefined, undefined, undefined, true); // the prize of all seven: the gold one
+  drawFeather(ax, ay, true); // the prize of all seven: the gold one
 }
 
 /**
@@ -782,58 +680,97 @@ export function drawDark(f: Frame) {
   drawNight(lights);
 }
 
-const STILL_BODY: Parameters<typeof playerPixels>[0] = { x: 0, y: 0, vx: 0, vy: 0, onGround: true, facing: 1, coyote: 0, buffer: 0, cutReady: false, airJumps: 0 };
+// --- him, from the viking game's own sheet (order 36) ------------------------------------------------------------------
+
+/** His figure's box (the viking game's 10 x 14); in the mound his feet stand at the foot of his body, his head over it. */
+const HIM_W = 10;
+const HIM_H = 14;
+/** How he stands just now: moving (and how far he has come, for the run's frames), which way he faces, and the clock. */
+export interface Pose {
+  moving: boolean;
+  /** Art pixels walked so far in the level: the run's frame changes every `STRIDE` of them, so his feet hold. */
+  dist: number;
+  facing: 1 | -1;
+  t: number;
+}
+
+/** The torch in his front hand: its stick, and where the flame stands over it (from his box's top left, facing right). */
+const TORCH_STICK = { x: 9, y: 5, h: 4 };
+const HAND = { x: 9, y: 8 };
+const recoloured = new Map<string, Map<HimFrame, HimFrame>>();
+/** A frame with every colour moved toward `to` by `k` (the curse's rust, the ghost's pale), made once a frame and look. */
+function toward(f: HimFrame, to: string, k: number): HimFrame {
+  const key = `${to}${k}`;
+  let m = recoloured.get(key);
+  if (!m) recoloured.set(key, (m = new Map()));
+  let d = m.get(f);
+  if (!d) m.set(f, (d = inked(f, (c) => mix(c, to, k))));
+  return d;
+}
+
+/** His frame for a pose: the run by the distance he has come, or standing with his breath and a blink now and then. */
+export function himPose(p: Pose): HimFrame {
+  if (p.moving) return HIM.run[Math.floor(p.dist / STRIDE) % 4];
+  const breath = Math.floor(p.t / 30) % 2 === 1;
+  const k = p.t % 360;
+  const blink = (k >= 205 && k < 211) || k >= 354;
+  return breath ? (blink ? HIM.breathBlink : HIM.breath) : blink ? HIM.blink : HIM.stand;
+}
+
+/** Paints a frame's runs on the sharp canvas at screen (ox, oy), mirrored about his box when he faces left. */
+function runs(u: CanvasRenderingContext2D, f: HimFrame, ox: number, oy: number, n: number, facing: number) {
+  const r = f.runs;
+  for (let i = 0; i < r.length; i += 4) {
+    const x = facing > 0 ? r[i] : HIM_W - r[i] - r[i + 2];
+    u.fillStyle = f.ink[r[i + 3]];
+    u.fillRect(ox + x * n, oy + r[i + 1] * n, r[i + 2] * n, n);
+  }
+}
 
 /**
- * Him from above, 10 x 10, on the sharp canvas, brighter than anything else; `x` and `y` are his
- * centre in world pixels. `tick` makes his torch flicker: a second flame pixel above the first, now
- * and then, leaning one way or the other.
+ * Him, standing on the mound's floor as the walls stand, the same man as in the fjord: the viking game's own frames
+ * (`@larshansen/pixelkit/him`), on the sharp canvas, brighter than anything else; `x` and `y` are his body's centre in
+ * world pixels. He carries a torch in his front hand; `tick` makes its flame flicker (held still with reduced motion).
  */
-export function drawHim(x: number, y: number, walk: number, heading: { x: number; y: number }, cursed: boolean, alpha = 1, tick = 0) {
+export function drawHim(x: number, y: number, pose: Pose, cursed: boolean, alpha = 1, tick = 0) {
   const u = textCtx();
   const n = unit();
-  const ox = snap(sx(x - TOP_SIZE / 2));
-  const oy = snap(sy(y - TOP_SIZE / 2));
-  const flame = { c: -99, r: -99 };
+  const ox = snap(sx(x - HIM_W / 2));
+  const oy = snap(sy(y + BODY / 2 - HIM_H));
+  const base = himPose(pose);
+  const f = cursed ? toward(base, P.curseBright, 0.8) : base;
   u.globalAlpha = alpha;
-  playerPixels(
-    STILL_BODY,
-    walk,
-    "day",
-    (c, r, color) => {
-      if (color === LAMP) Object.assign(flame, { c, r });
-      u.fillStyle = color;
-      u.fillRect(ox + c * n, oy + r * n, n, n);
-    },
-    { outfit: "viking", view: "top", heading, cursed }
-  );
-  const k = Math.floor(tick / 4) % 6;
-  if (flame.c > -99 && !cursed && !view.reduced && k < 3) {
-    u.fillStyle = k === 0 ? "#fff2c4" : LAMP;
-    u.fillRect(ox + (flame.c + [0, -1, 1][k]) * n, oy + (flame.r - 1) * n, n, n);
+  runs(u, f, ox, oy, n, pose.facing);
+  // The torch: a stick of dark wood in his front hand, and its flame (none while the curse has him).
+  const lift = base === HIM.run[1] || base === HIM.run[3] ? -1 : 0;
+  const col = (c: number) => ox + (pose.facing > 0 ? c : HIM_W - 1 - c) * n;
+  const wood = cursed ? mix(P.woodDark, P.curseBright, 0.8) : P.woodDark;
+  u.fillStyle = wood;
+  u.fillRect(col(TORCH_STICK.x), oy + (TORCH_STICK.y + lift) * n, n, TORCH_STICK.h * n);
+  u.fillStyle = cursed ? mix(HIM_INK.S, P.curseBright, 0.8) : HIM_INK.S;
+  u.fillRect(col(HAND.x), oy + (HAND.y + lift) * n, n, n);
+  if (!cursed) {
+    const k = view.reduced ? 3 : Math.floor(tick / 4) % 6;
+    u.fillStyle = LAMP;
+    u.fillRect(col(TORCH_STICK.x), oy + (TORCH_STICK.y - 1 + lift) * n, n, n);
+    if (k < 3) {
+      u.fillStyle = k === 0 ? "#fff2c4" : LAMP;
+      u.fillRect(col(TORCH_STICK.x + [0, -1, 1][k] * pose.facing), oy + (TORCH_STICK.y - 2 + lift) * n, n, n);
+    }
   }
   u.globalAlpha = 1;
 }
 
 /**
- * The ghost of his best run: the same person from above, pale and half see-through, under him. No
- * glow, no trail: it only shows where he was at this moment of the clock.
+ * The ghost of his best run: the same man, pale and half see-through, under him. No glow, no torch, no trail: it only
+ * shows where he was at this moment of the clock.
  */
-export function drawGhost(x: number, y: number, walk: number, heading: { x: number; y: number }) {
+export function drawGhost(x: number, y: number, pose: Pose) {
   const u = textCtx();
   const n = unit();
-  const ox = snap(sx(x - TOP_SIZE / 2));
-  const oy = snap(sy(y - TOP_SIZE / 2));
+  const ox = snap(sx(x - HIM_W / 2));
+  const oy = snap(sy(y + BODY / 2 - HIM_H));
   u.globalAlpha = 0.45;
-  playerPixels(
-    STILL_BODY,
-    walk,
-    "day",
-    (c, r, color) => {
-      u.fillStyle = mix(color, P.ghost, 0.62);
-      u.fillRect(ox + c * n, oy + r * n, n, n);
-    },
-    { outfit: "viking", view: "top", heading }
-  );
+  runs(u, toward(himPose(pose), P.ghost, 0.62), ox, oy, n, pose.facing);
   u.globalAlpha = 1;
 }

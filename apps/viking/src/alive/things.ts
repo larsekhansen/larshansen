@@ -1,5 +1,6 @@
 import { COIN, FEATHER, FIRE, FLAG, FOOD, GHOST, INK, METAL, PALETTE, PARADE, SKIN, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { POLE, HOIST_STEPS, type Flag } from "@larshansen/pixelkit/checkpoint";
+import { FEATHERS } from "@larshansen/pixelkit/feather";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { runeCells, type RuneChar } from "../game/runes";
 import { SHEEP, type Sheep } from "../game/sheep";
@@ -297,11 +298,7 @@ export function skiPole(x: number, top: number, h: number) {
   R(x, top + h, 1, 1, INK);
 }
 
-/** The raven's feather, 5 x 9: its vane black with a blue sheen lit along its leading edge, a pale quill; gold after all seven of the maze's levels. */
-const FEATHER_ROWS = ["...Bq", "..kbB", "..kbk", ".kkbk", ".kbk.", ".kbk.", "kbk..", "kq...", "q...."];
-const FEATHER_INK = { k: FEATHER.vane, b: shade(FEATHER.sheen, 0.45), B: FEATHER.sheen, q: lit(FEATHER.vane, 0.55) };
-const GOLD_FEATHER_INK = { k: P.featherGold, b: P.featherGoldDark, B: P.featherGoldSheen, q: P.featherGoldDark };
-const FEATHERS = { black: frame("feather", FEATHER_INK, [FEATHER_ROWS]), gold: frame("feather, gold", GOLD_FEATHER_INK, [FEATHER_ROWS]) };
+// The raven's feather, 5 x 9 (`FEATHERS`): the kit's since order 36, so the maze draws the same feather over its last finish.
 
 /** The feather with its top left at (x, y), with a pale halo round it as it falls onto him. */
 export function feather(x: number, y: number, gold: boolean) {

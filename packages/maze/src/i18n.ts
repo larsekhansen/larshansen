@@ -24,6 +24,8 @@ const STRINGS = {
     end: "Haugbonden gir seg. Ravnefjæra er din: hopp en gang til i lufta.",
     endStandalone: "Fjæra venter i Vikingfjorden.",
     help: "Musa, fingeren eller piltastene for å styre, Shift for små skritt, Esc for å gå ut.",
+    // On a touch screen the help line names no key (order 36, as order 21 did for the fjord): it says what a finger does.
+    helpTouch: "Dra en finger hvor som helst for å styre. Slipp, så står han.",
     blurb: "Styr gjennom den forbannede haugen uten å røre veggene.",
     endTitle: "Haugen er din",
     back: "Vikingfjorden",
@@ -72,6 +74,7 @@ const STRINGS = {
     end: "The mound-dweller yields. The raven's feather is yours: jump once more in mid-air.",
     endStandalone: "The feather waits in Vikingfjorden.",
     help: "Mouse, finger or arrow keys to steer, Shift for small steps, Esc to leave.",
+    helpTouch: "Drag a finger anywhere to steer. Let go and he stands.",
     blurb: "Steer through the cursed mound without touching the walls.",
     endTitle: "The mound is yours",
     back: "Vikingfjorden",
@@ -105,4 +108,9 @@ export type Strings = (typeof STRINGS)["en"];
 
 export function strings(lang: Lang): Strings {
   return STRINGS[lang];
+}
+
+/** The help line for the device in the hand: on a touch screen what a finger does, never a key; otherwise the keys. */
+export function helpFor(t: Strings, touch: boolean): string {
+  return touch ? t.helpTouch : t.help;
 }

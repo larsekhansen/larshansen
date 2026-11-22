@@ -49,7 +49,7 @@ import { readMuted, saveMuted } from "@larshansen/pixelkit/mute";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
-import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
+import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, wrapLines, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
@@ -506,6 +506,8 @@ let moundFrom: Scene | null = null;
 
 function showMazeHud() {
   if (!maze || !mazeText) return;
+  // The help line goes at his first move, as on the maze's own page (it stayed up through the mound before order 36).
+  if (maze.state.started && !help.hidden) help.hidden = true;
   const h = maze.hud();
   const next = { name: h.name, level: `${h.level} / ${h.of}`, clock: mazeText.formatTime(h.ms), best: h.best === null ? "" : mazeText.best(mazeText.formatTime(h.best)), deaths: mazeText.deaths(h.deaths) };
   for (const key of Object.keys(next) as (keyof typeof next)[]) {
@@ -535,6 +537,11 @@ async function enterMaze() {
     if (!loading || location.hash !== MAZE_HASH) throw new Error("left before the mound opened");
     input.clear();
     const level = Number(params.get("level"));
+    // `?debug`: the maze's own checking aids (`@larshansen/maze/debug`, order 36), fetched only then: the scripted player
+    // or a walk steering him, made-up records, a ghost; with `steps=N`, stepped and drawn once as its own page is.
+    const aids = debug ? await import("@larshansen/maze/debug") : null;
+    const first = Number.isFinite(level) && level > 0 ? Math.min(7, Math.round(level)) : undefined;
+    const steer = aids?.debugSteer(params, first ?? 1, mod);
     maze = mod.createMaze(
       {
         stage: kit,
@@ -543,27 +550,31 @@ async function enterMaze() {
         lang,
         el: stage,
         say,
+        touch,
         topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
         // Only a feather newly won (or newly gold) gets the moment; a level cleared again does not.
         onLeave: (r) => leaveMaze(r.feather ?? null)
       },
-      { level: Number.isFinite(level) && level > 0 ? level : undefined }
+      { level: first, steer }
     );
     mode = "maze";
     loading = false;
     document.body.classList.add("in-maze");
-    document.body.classList.remove("touch", "on-map");
+    // On a touch screen the page keeps its touch styles in the mound (order 36: the bar's targets, the cards' buttons);
+    // only the pad goes, since the maze is steered by a finger anywhere.
+    document.body.classList.remove("on-map");
     pad.hidden = true;
     fjordHelp.text = help.textContent ?? "";
     fjordHelp.hidden = help.hidden;
-    help.textContent = mt.help;
+    help.textContent = words.helpFor(mt, touch);
     help.hidden = false;
     stage.style.cursor = "";
     mazeShown.name = mazeShown.level = mazeShown.clock = mazeShown.best = mazeShown.deaths = "";
     showMazeHud();
     layout();
-    // A stepped page has no frames to come: the mound is drawn once as it opens.
-    if (harness) maze.render(1, 0);
+    // A stepped page has no frames to come: the mound is stepped as asked and drawn once as it opens.
+    // Stepped as asked, and drawn once; `&out` comes back out (order 36): `?debug`'s own code.
+    if (harness && aids && debugging) await (await debugging).mazeStepped(aids, maze, steer, params, { input, stage, help, step: stepOnce, still, hud: showMazeHud, inMaze: () => mode === "maze" });
   } catch {
     // The maze did not load (or he left first): back to the map, standing at the mound, or to the level he came from.
     loading = false;
@@ -611,10 +622,7 @@ function leaveMazeNow() {
   mode = "scene";
   loading = false;
   document.body.classList.remove("in-maze");
-  if (touch) {
-    document.body.classList.add("touch");
-    pad.hidden = !padKit;
-  }
+  if (touch) pad.hidden = !padKit;
   help.textContent = fjordHelp.text || help.textContent;
   help.hidden = fjordHelp.text ? fjordHelp.hidden : help.hidden;
   readFeather();
@@ -1553,7 +1561,7 @@ function render(alpha: number) {
   if (sung && sungAt) bubble = { x: sungAt.x, y: sungAt.y, lines: sung };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
-  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [kartWords?.featherLine ?? ""] };
+  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: wrapLines(kartWords?.featherLine ?? "", view.cssW - 24) };
   // Where the level teaches the shield (Bygdøy's passage), its key over him while he has it there.
   const at = scene.def.shieldLesson;
   const lesson = at && p.shield?.has && cx > at[0] && cx < at[1];
@@ -1846,7 +1854,8 @@ async function start() {
 
   launch({ stage, layout, still, loop, harness, input, step: () => (mode === "maze" && maze ? maze.step() : stepOnce()) });
   // `?debug&perf` (how much one frame draws) and `?debug&where` (where a world point is on the screen), once drawn.
-  if (debugging) void debugging.then((d) => d.afterStart(params, still, help));
+  // In the mound the maze's own aids say when its picture is drawn (order 36).
+  if (debugging && location.hash !== MAZE_HASH) void debugging.then((d) => d.afterStart(params, still, help));
   if (location.hash === MAZE_HASH) sync();
 }
 void start();

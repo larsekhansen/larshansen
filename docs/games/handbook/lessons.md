@@ -165,6 +165,21 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   sometimes too short for the encore's files on this Pi), not by the harness. Now the page says when its picture is drawn and the picture is
   taken then; a blank one is named. *Wait for the thing, not for a time; and look for empty pictures by machine, not by eye.*
 
+- **A navigation while the page loads replaces its history entry** (order 36): a stepped page that walked him through Nordmarka's mound
+  door at load changed its address to `#jernhaugen` before the load event, which the HTML standard makes a replacement, not a new entry;
+  the maze's way out (Back, `history.back()`) then had nowhere to go and the picture stayed in the mound. No player is at a door while the
+  page loads, so the page is right; the harness walks in after load (`?debug&walkin`). *A stepped picture can only show what happens after
+  load if it waits for the load; when a path goes through history, check `history.length`.*
+- **A picture at step 0 of a scene that fades in is black** (order 36): the maze's first pictures at `steps=0` were named BLANK by
+  `tools/shots.ts`; the level fades in over 24 steps. *Take a scene's opening a second in.*
+- **One drawing of him, not two** (order 36): the maze could draw the viking game's own sheet once his frames and their machinery were
+  moved into the kit and the viking build told to keep them in `feel`'s file (`vite.config.ts`); moving them changed nothing in the first
+  script. *When two packages need one drawing, give it to the package both import, and say in the bundler where it goes.*
+- **A file a debug module shares with the page's chunk splits the chunk** (order 36): the maze's harness imported the ghost's recorder
+  and the records' keys from modules the maze's scene also imports, and the viking build split them into small files of their own, a
+  fetch more for every visitor; handed in from the scene's module (and the keys as strings), nothing split. *Read the chunks' list
+  after adding a lazy module that imports from another.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

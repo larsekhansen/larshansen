@@ -57,7 +57,8 @@ import { drawTiles, drawWater } from "./tiles";
 //    at every step (order 30).
 // 4. The cards (order 31): the only motion a card has is CSS, and every animation in the page's styles is on a class the page
 //    sets only without reduced motion.
-// 5. What moves by the clock (order 32): every carrier the kit draws wherever the clock puts it, and every jumper in its leap,
+// 5. What moves by the clock (order 32): every jumper in its leap (and until order 36 every carrier the kit drew, which no
+//    level does any more: a level's own carriers are part 1's),
 //    each recorded relative to where it is: at a place it is drawn one way (a leap's own named cycle, as many as its frames), and
 //    a drawing it left never comes back elsewhere. (A level's own carriers take their place from the page, so part 1 draws them
 //    held where they are with the clock running, whether they stand or move.)
@@ -446,21 +447,16 @@ function movers(name: string, def: LevelDef): string[] {
   const p = newPlay(def, optsFor(def));
   const pilot = autopilot(routeOf(def.id) ?? []);
   const art = def.art;
-  const snow = skyOf(def, "day").snow;
   const found: string[] = [];
   for (let s = 0; s < 60 * 300 && p.runeAt === null; s++) {
     if (s % 300 === 0) {
       const t0 = p.t;
       const list: [string, (t: number) => { x: number; y: number; key: string }, (t: number, v: View) => void][] = [];
-      def.carriers.forEach((d, i) => {
-        if (art.carrier) return;
-        const at = (t: number) => {
-          const a = carrierDrawn(d, t, 1);
-          const b = carrierDrawn(d, t + 1, 1);
-          return { x: Math.round(a.x), y: Math.round(a.y), key: `${carrierShown(d, t)}|${Math.sign(b.x - a.x)},${Math.sign(b.y - a.y)}` };
-        };
-        list.push([`carrier ${i}`, at, (t) => drawCarrier(d, t, 1, snow, STAND_LEDGE)]);
-      });
+      // The kit's carriers wherever the clock puts them were watched here (order 32); since every level draws its own
+      // (`art.carrier`), no level draws one with the kit's `drawCarrier`, and the watch watched nothing (order 35 found it: a
+      // blink planted there passed). It is gone (order 36): a level's own carrier is drawn by part 1 where it is with the
+      // clock running, and a blink planted in one fails it (Langkaia's rafts, `tools/review/o36/after.md`); a carrier the kit
+      // draws for a level with no drawing of its own is part 1's too, where it stands still.
       p.enemies.forEach((e, i) => {
         if (!e.alive || e.def.kind !== "jumper") return;
         const at = (t: number) => {
@@ -691,7 +687,7 @@ describe("with reduced motion nothing flashes (orders 30 and 31)", () => {
     expect(found).toEqual([]);
   }, 300_000);
 
-  test("every moving thing in every level (every carrier the kit draws, wherever the clock puts it; every jumper in its leap), drawn as the route finds it every five seconds: its drawing at a place never depends on the clock otherwise", async () => {
+  test("every moving thing in every level (every jumper in its leap), drawn as the route finds it every five seconds: its drawing at a place never depends on the clock otherwise", async () => {
     const found: string[] = [];
     for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => movers(name, def)));
     expect(found).toEqual([]);

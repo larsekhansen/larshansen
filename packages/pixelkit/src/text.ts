@@ -81,6 +81,27 @@ export function drawPlayer(world: World, b: Body, walk: number, alpha: number, p
   u.globalAlpha = 1;
 }
 
+/**
+ * A line of words split into lines no wider than `max` CSS pixels in the bubbles' font, each with a bubble's padding, for
+ * bubbles stacked one over another (order 36: the maze's raven and the feather's moment ran off a phone's edge).
+ */
+export function wrapLines(text: string, max: number): string[] {
+  u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;
+  const fits = (t: string) => u.measureText(t).width + 18 <= max;
+  if (fits(text)) return [text];
+  const out: string[] = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && !fits(next)) {
+      out.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
 /** A speech bubble with its bottom edge at y, centred on x (or starting at x with `align: "left"`) and kept on screen. Screen CSS pixels. */
 export function bubble(x: number, y: number, text: string, align: "center" | "left" = "center") {
   u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;

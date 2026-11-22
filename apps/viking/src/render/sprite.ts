@@ -70,8 +70,11 @@ export function calm() {
  * drew kept for `eyes`. `rim`: the outline's colour, the warning red unless given (`ROLES.calm` for what cannot
  * hurt him); the drawing may say it is calm itself (`calm()`). Outside a browser it just draws.
  */
+/** Where there is no page, a tool may be handed each shape outlined and its rim, to outline it as the page does (`tools/figures.ts`, order 36). */
+export const noPage: { outline?: (draw: () => void, rim: string) => void } = {};
+
 export function outlined(draw: () => void, who?: object, rim: string = ENEMY.warning) {
-  if (typeof document === "undefined" || onto) return draw();
+  if (typeof document === "undefined" || onto) return !onto && noPage.outline ? noPage.outline(draw, rim) : draw();
   onto = ctx();
   rimNow = rim;
   rects.length = 0;

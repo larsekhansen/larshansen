@@ -1,4 +1,6 @@
+import { pixels } from "@larshansen/pixelkit/frames";
 import { PALETTE, STONE } from "@larshansen/pixelkit/palette";
+import { GRANITE, STONES } from "./figures";
 import type { Strings } from "./i18n";
 import { formatTime } from "./rules";
 import { markCount, marksOf, type Marks, type Records } from "./records";
@@ -72,6 +74,17 @@ const CSS = `
 .mz-marks li.new { font-weight: 700; }
 .mz-done .mz-line { max-width: 26em; margin-top: 8px; font-style: italic; }
 .mz-done .mz-line:empty { display: none; }
+/* The screen's safe areas, read by the scene through this hidden element's padding (the raven's words keep clear of a notch). */
+.mz-safe { position: absolute; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+/* On a touch screen (order 36, as the fjord's cards since order 21): the cards' buttons and the level list's rows are targets a
+   thumb finds, 56 tall and 8 apart; nothing on the stage selects, calls out or scrolls the page; a card scrolls if it must. */
+.mz-touch .mz-done .actions button,
+.mz-touch .mz-levels .mz-row { min-height: 56px; }
+.mz-touch .mz-done .actions button { min-width: 56px; padding: 6px 20px; white-space: nowrap; }
+.mz-touch .mz-levels .mz-close { min-width: 56px; min-height: 56px; top: 0; right: 0; }
+.mz-touch .mz-levels .mz-row + .mz-row { margin-top: 2px; }
+.mz-touch .mz-levels, .mz-touch .mz-done { max-height: calc(100% - 24px - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.mz-touch .stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 `;
 
 function addStyles() {
@@ -107,17 +120,17 @@ export function markStone(marks: Marks, scale: number, label: string): HTMLCanva
     g.fillStyle = color;
     g.fillRect(x, y, w, h);
   };
-  // The stone as the maze draws it, with its shadow.
-  R(2, 13, 7, 1, "rgba(31, 26, 23, 0.25)");
-  R(1, 2, 8, 11, "#b7b2a8");
-  R(2, 1, 6, 1, "#d0cbc0");
-  R(1, 2, 1, 11, "#d0cbc0");
-  R(8, 2, 1, 11, "#8d887f");
-  R(1, 12, 8, 1, "#8d887f");
+  // The stone as the maze draws it (`figures.ts`), lit from the top left, with its shadow down and to the right.
+  R(2, 13, 8, 1, "rgba(31, 26, 23, 0.25)");
+  pixels(STONES.unlit, 1, STONES.unlit.x1, (x, y, colour) => {
+    // Its carved rune makes way for the notches.
+    if (colour !== PALETTE.moundDeep) R(1 + x, 1 + y, 1, 1, colour);
+    else R(1 + x, 1 + y, 1, 1, GRANITE[2]);
+  });
   marks.forEach((on, i) => {
     const y = 4 + i * 3;
     R(2, y, 6, 1, on ? PALETTE.runeGlow : STONE.mortar);
-    R(2, y + 1, 6, 1, on ? "#5fa9c9" : "#9a958c"); // the notch's lower lip
+    R(2, y + 1, 6, 1, on ? "#5fa9c9" : GRANITE[3]); // the notch's lower lip, lit
   });
   return c;
 }

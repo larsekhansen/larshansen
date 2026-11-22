@@ -11,7 +11,8 @@
 // - every enemy: a row for each state it is drawn in (still, moving, winding up, its glamour breaking), glammed in the lean of
 //   each level it is met in (levels with the same lean share their rows), then its natural self and its glam marks alone; what
 //   can hurt him with the page's outline (the near-black line and the warning red), its natural self in the calm pale;
-// - every boss in every state its sheet has (the troll, the plough, the serpent), and Loki at each of his four stages through
+// - every boss in every state its sheet has (the troll, the plough, the serpent), with the outline the page gives it in that
+//   state (the warning red while it can hurt, the calm pale while it cannot: order 36), and Loki at each of his four stages through
 //   every move and tell, drawn by the encore's own art (his club, his beacons, the ring of foam and the jaws, his stars);
 // - each level's carriers, a row each (alike ones once), at four moments of its round;
 // - what each thrower throws, in flight in its two frames and spent;
@@ -24,7 +25,7 @@ import { join } from "node:path";
 import { TILE } from "@larshansen/pixelkit/config";
 import { carrierDrawn, carrierPeriod, carrierShown, drawCarrier } from "@larshansen/pixelkit/carrier";
 import { skyFor } from "@larshansen/pixelkit/oslo";
-import { target, view } from "@larshansen/pixelkit/paint";
+import { ctx, target, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, PAINT, ROLES } from "@larshansen/pixelkit/palette";
 import { writePng } from "../../../tools/png";
 import { census } from "../src/alive/census";
@@ -39,6 +40,10 @@ import { ENCORE, LOKI_DEF } from "../src/levels/encore";
 import type { LevelDef, View } from "../src/levels/types";
 import { levelPaint } from "../src/render/fields";
 import { drawShot } from "../src/render/pickups";
+import * as mazeFigures from "@larshansen/maze/figures";
+import * as mazeArt from "@larshansen/maze/render";
+import { textTarget } from "@larshansen/pixelkit/text";
+import { noPage } from "../src/render/sprite";
 import { STAND_LEDGE } from "../src/render/stand";
 import { bossSheets } from "./glance/bosses";
 import { frameSheets } from "./glance/frames";
@@ -63,6 +68,41 @@ interface Row {
   state: string;
   frames: Grid[];
 }
+
+// --- The page's outline, where there is no page (order 36) -----------------------------------------------------------------
+// The bosses and Loki choose their rim by their phase inside their own drawing (`outlined(…, rim)`): the warning red while they
+// can hurt, the calm pale while they cannot. With no page, `outlined` only draws; here it is handed each shape and its rim, and the
+// shape is drawn into a recorder of its own and painted back outlined as the page outlines it (the near-black line, then the rim).
+noPage.outline = (draw, rim) => {
+  const was = ctx();
+  const inner: Rect[] = [];
+  const rec = {
+    fillStyle: "" as unknown,
+    globalAlpha: 1,
+    fillRect(x: number, y: number, w: number, h: number) {
+      if (typeof rec.fillStyle === "string" && !rec.fillStyle.startsWith("rgba") && rec.globalAlpha >= 0.99) inner.push({ x, y, w, h, c: rec.fillStyle });
+    }
+  };
+  const any = new Proxy(rec, { get: (t, k) => (k in t ? (t as Record<string | symbol, unknown>)[k] : () => undefined), set: (t, k, v) => (((t as Record<string | symbol, unknown>)[k] = v), true) });
+  target(any as unknown as CanvasRenderingContext2D);
+  try {
+    draw();
+  } finally {
+    target(was);
+  }
+  if (!inner.length) return;
+  const x0 = Math.floor(Math.min(...inner.map((r) => r.x)));
+  const y0 = Math.floor(Math.min(...inner.map((r) => r.y)));
+  const [g] = grids([inner]);
+  const out = outline(g, rim);
+  out.forEach((row, y) =>
+    row.forEach((c, x) => {
+      if (!c) return;
+      was.fillStyle = c;
+      was.fillRect(x0 + x - 2, y0 + y - 2, 1, 1);
+    })
+  );
+};
 
 // --- Grids -----------------------------------------------------------------------------------------------------------------
 
@@ -412,6 +452,66 @@ async function props(): Promise<{ rows: Map<string, Row[]>; used: Record<string,
   return { rows, used };
 }
 
+/**
+ * What the maze draws (order 36), by the maze's own drawing (`@larshansen/maze`): him in the mound with his torch (standing and
+ * breathing, running by distance, both ways) and his ghost, an adder along its wave (lying along a corridor and up one, both
+ * ways, its tongue in and out), the raven (its head turned each way, blinking), a standing stone (unlit, lit, flaring), the rune
+ * key, a teleport stone (ready, cooling, sending him), the mound-dweller.
+ */
+function maze(): Map<string, Row[]> {
+  wide();
+  const out = new Map<string, Row[]>();
+  // On the sharp canvas, as the maze draws him; the ghost is half see-through there and is drawn here as its colours.
+  const text = (draw: () => void) => {
+    const rects: Rect[] = [];
+    const rec = {
+      fillStyle: "" as unknown,
+      globalAlpha: 1,
+      fillRect(x: number, y: number, w: number, h: number) {
+        if (typeof rec.fillStyle === "string" && !rec.fillStyle.startsWith("rgba")) rects.push({ x, y, w, h, c: rec.fillStyle });
+      }
+    };
+    textTarget(new Proxy(rec, { get: (t, k) => (k in t ? (t as Record<string | symbol, unknown>)[k] : () => undefined), set: (t, k, v) => (((t as Record<string | symbol, unknown>)[k] = v), true) }) as unknown as CanvasRenderingContext2D);
+    draw();
+    return rects;
+  };
+  Object.assign(view, { k: 1, dpr: 1, camX: 0, camY: 0, camXf: 0, camYf: 0 });
+  const pose = (moving: boolean, dist: number, facing: 1 | -1, t: number) => ({ moving, dist, facing, t });
+  const himRow = (state: string, poses: ReturnType<typeof pose>[]) => ({ state, frames: grids(poses.map((p) => text(() => mazeArt.drawHim(40, 40, p, false, 1, 4)))).map(pad) });
+  out.set("maze-him", [
+    himRow("standing, breathing, blinking", [pose(false, 0, 1, 0), pose(false, 0, 1, 30), pose(false, 0, 1, 206)]),
+    himRow("running", [0, 3, 6, 9].map((d) => pose(true, d, 1, 0))),
+    himRow("running the other way", [0, 3, 6, 9].map((d) => pose(true, d, -1, 0))),
+    { state: "cursed", frames: grids([text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0), true, 1, 0))]).map(pad) }
+  ]);
+  out.set("maze-ghost", [{ state: "running", frames: grids([0, 3, 6, 9].map((d) => text(() => mazeArt.drawGhost(40, 40, pose(true, d, 1, 0))))).map(pad) }]);
+  out.set("maze-adder", [
+    { state: "along a corridor, its wave", frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, 1, t)))) },
+    { state: "the other way", frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, -1, t)))) },
+    { state: "up and down a corridor", frames: grids([0, 7, 14].map((t) => record(() => mazeFigures.drawAdder(40, 40, false, 1, t)))) }
+  ]);
+  const frameRow = (state: string, fs: Frame[]) => ({ state, frames: fs.map((f) => pad(frameGrid(f, f.x1, f.y1))) });
+  out.set("maze-raven", [
+    frameRow("its head toward him, the other way, blinking", [mazeFigures.RAVEN.head, mazeFigures.RAVEN.blink]),
+    frameRow("its body", [mazeFigures.RAVEN.body])
+  ]);
+  out.set("maze-stone", [frameRow("unlit, lit, lighting", [mazeFigures.STONES.unlit, mazeFigures.STONES.lit, mazeFigures.STONES.flare])]);
+  out.set("maze-key", [frameRow("lying", [mazeFigures.KEY])]);
+  const portal = { c: 2, r: 2, twin: { c: 0, r: 0 }, pair: 0 };
+  out.set("maze-portal", [
+    {
+      state: "ready, cooling, sending him",
+      frames: grids([
+        record(() => mazeArt.drawPortal(portal, { t: 0, portalCool: 0, portalFlash: null })),
+        record(() => mazeArt.drawPortal(portal, { t: 0, portalCool: 30, portalFlash: null })),
+        record(() => mazeArt.drawPortal(portal, { t: 0, portalCool: 60, portalFlash: { pair: 0, age: 2 } }))
+      ]).map(pad)
+    }
+  ]);
+  out.set("maze-dweller", [frameRow("seated", [mazeFigures.DWELLER])]);
+  return out;
+}
+
 // --- The run ---------------------------------------------------------------------------------------------------------------
 
 mkdirSync(dir, { recursive: true });
@@ -420,6 +520,7 @@ sheets.set("him", him());
 for (const [look, rows] of await enemies()) sheets.set(`enemy-${look}`, rows);
 for (const [boss, rows] of bosses()) sheets.set(`boss-${boss}`, rows);
 sheets.set("boss-loki", loki());
+for (const [file, rows] of maze()) sheets.set(file, rows);
 const throws = new Map<string, { level: string; frames: Grid[] }[]>();
 for (const st of BUILT) {
   const def = await loadLevel(st.id);
