@@ -4,6 +4,76 @@ body {
   background: #14110f;
 }
 
+/* A room of the same house as larshansen.dev/viking/ (order 36): the header is Vikingfjorden's solid cream bar (ADR 0015),
+   not the front page's frosted one, so the mound under it does not show through as a grey haze. */
+.bar {
+  background: rgb(255, 252, 246);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* The help line: on one line where it fits, wrapped and centred on a narrow screen, never off its edges (as Vikingfjorden's),
+   and clear of the home bar. It goes at his first move. */
+.help {
+  width: max-content;
+  max-width: calc(100% - 24px);
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  white-space: normal;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+/* On a touch screen (the maze marks the page, order 36): every target in the bar 56 x 56 with its look in the middle, as
+   Vikingfjorden's bar has them since order 21; the finish card's link a thumb's target. */
+.mz-touch .apps a,
+.mz-touch .run button.level {
+  position: relative;
+  z-index: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 56px;
+  height: 56px;
+  margin: -14px 0;
+  padding: 0 10px;
+  border: 0;
+  background: none;
+}
+
+.mz-touch .apps a::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  right: 0;
+  top: 14px;
+  bottom: 14px;
+  border: 1px solid rgba(31, 26, 23, 0.14);
+  border-radius: 99px;
+  background: #fff;
+}
+
+.mz-touch .run button.level {
+  border-bottom: 0;
+  text-decoration: underline dotted;
+}
+
+.mz-touch .tool {
+  width: 56px;
+  height: 56px;
+  margin: -12px -8px;
+  border: 0;
+  background: radial-gradient(circle at 50% 50%, #fff 0 14px, rgba(31, 26, 23, 0.16) 14.5px 15.5px, transparent 16px);
+}
+
+.mz-touch .card .actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 56px;
+  padding: 0 20px;
+  box-sizing: border-box;
+}
+
 /* The level, in the header bar: its name, how far, the clock, the curses, and the mute button. */
 .run .name {
   font-weight: 700;

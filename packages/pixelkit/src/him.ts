@@ -1,10 +1,11 @@
-import { TILE } from "@larshansen/pixelkit/config";
-import { GOLD, METAL, PALETTE, ROLES } from "@larshansen/pixelkit/palette";
-import { mix } from "@larshansen/pixelkit/paint";
-import type { Body } from "@larshansen/pixelkit/physics";
+import { TILE } from "./config";
+import { GOLD, METAL, PALETTE, ROLES } from "./palette";
+import { mix } from "./paint";
+import type { Body } from "./physics";
 import { frame, inked, lit, shade, type Frame, type Piece } from "./frames";
 
-// Him, drawn as frames (order 23, section 1; way 3 of `docs/games/GRAIN.md`): his 10 x 14 box as before, a ramp of
+// Him, drawn as frames (order 23, section 1; way 3 of `docs/games/GRAIN.md`; in the kit since order 36, so the viking game
+// and the maze draw the same man from one sheet, and the front page keeps its own person, `person.ts`): his 10 x 14 box as before, a ramp of
 // tones per material (a lit helmet and a shaded rim, a lit face and the shaded back of the head, the tunic lit at the
 // front, the cape behind, trousers and boots with a lit edge), and a frame for every state the game already has:
 // standing and breathing, a blink, a run of four frames timed to the distance he covers, rising, the top of a jump,

@@ -4,7 +4,7 @@ import type { Lang } from "@larshansen/pixelkit/i18n";
 import { S, target, view } from "@larshansen/pixelkit/paint";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
 import type { Stage } from "@larshansen/pixelkit/stage";
-import { bubble, fontPx, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
+import { FONT, bubble, fontPx, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { createFx } from "./fx";
 import { createRecorder, ghostAt, loadGhost, saveGhost, type GhostPoints } from "./ghost";
 import { strings } from "./i18n";
@@ -13,6 +13,9 @@ import { createLevelCard, createLevelPanel, type Cleared } from "./panel";
 import { betterFeather, browserStore, featherWon, loadFeather, loadRecords, loadReached, marksOf, recordClear, saveFeather, saveReached, type Feather, type Marks, type Records } from "./records";
 import { FLASH, VOID, drawBright, drawDark, drawGhost, drawHim, drawWorld, ravenAnchor, type Frame } from "./render";
 import { CURSE_STEPS, SPEED, gateProgress, levelDef, limit, newState, onStartPad, snakeAt, snakeHeading, snakeFlat, stepMaze, type Intent, type MazeEvents, type MazeState } from "./rules";
+
+/** For the checking aids (`debug.ts`), which reach the ghost through the scene. */
+export { createRecorder, saveGhost };
 
 // The maze as a scene. The host page owns the canvases, the loop and the header; this wires the
 // rules, the steering, the drawing and the sound, and is driven by `step` and `render`.
@@ -35,6 +38,11 @@ export interface MazeHost {
   topInset?(): number;
   /** True on the maze's own page, where the feather cannot be kept for the fjord. */
   standalone?: boolean;
+  /**
+   * A touch screen (the kit's `isTouch`, or `?debug&touch`): the maze marks the page (`mz-touch` on the body) while it is
+   * open, so its cards' buttons and level rows are targets a thumb finds and nothing else moves the page (order 36).
+   */
+  touch?: boolean;
 }
 
 export interface Maze {
@@ -63,6 +71,39 @@ export interface Maze {
 export interface Steer {
   next(state: MazeState): Intent;
   after(ev: MazeEvents): void;
+  /** Only watching: the visitor's own steering (keys, a pointer, a finger) moves him, and this is told what each step did. */
+  watch?: boolean;
+}
+
+/** A line of words split into lines no wider than `max` CSS pixels in the bubbles' font (each with the bubble's padding). */
+function wrapped(text: string, max: number): string[] {
+  const u = textCtx();
+  u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;
+  const fits = (t: string) => u.measureText(t).width + 18 <= max;
+  if (fits(text)) return [text];
+  const out: string[] = [];
+  let line = "";
+  for (const word of text.split(" ")) {
+    const next = line ? `${line} ${word}` : word;
+    if (line && !fits(next)) {
+      out.push(line);
+      line = word;
+    } else line = next;
+  }
+  if (line) out.push(line);
+  return out;
+}
+
+/** The screen's safe areas (a notch, the home bar) in CSS pixels, read from a hidden probe the maze's styles pad by them. */
+function safeArea(el: HTMLElement): { top: number; right: number; bottom: number; left: number } {
+  let probe = el.querySelector<HTMLElement>(".mz-safe");
+  if (!probe) {
+    probe = document.createElement("div");
+    probe.className = "mz-safe";
+    el.appendChild(probe);
+  }
+  const cs = getComputedStyle(probe);
+  return { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 };
 }
 
 /** How long the raven's lines stay up, in steps. A start line stays until a second after he first moves, if that is later. */
@@ -97,6 +138,9 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   let prev = { x: state.x, y: state.y };
   let walk = 0;
   let heading = { x: 1, y: 0 };
+  /** How far he has walked in the level (his run's frames go by it) and which way he faces (the last way he went sideways). */
+  let dist = 0;
+  let facing: 1 | -1 = 1;
   let hissCool = 0;
   let left = false;
   let fade = 1;
@@ -116,6 +160,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   /** The ghost of the best run on this level, and the run being recorded. */
   let ghost: GhostPoints | null = loadGhost(first, store);
   let ghostHeading = { x: 1, y: 0 };
+  let ghostFacing: 1 | -1 = 1;
   const rec = createRecorder();
   /** Teleport stones say something the first time they send him on a level. */
   let toldTeleport = false;
@@ -134,6 +179,8 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   let shift = false;
 
   const cam = { x: 0, y: 0, set: false };
+  /** The screen's safe areas, read again on a resize. */
+  let insets: ReturnType<typeof safeArea> | null = null;
 
   function speak(text: string, kind: "start" | "line" | "stay" = "line") {
     words = { text, since: tick, until: kind === "stay" ? Infinity : tick + (kind === "start" ? START_STEPS : LINE_STEPS), start: kind === "start" };
@@ -182,6 +229,8 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     }
     gateSoundAt = -1;
     Object.assign(state, newState(level, 0));
+    dist = 0;
+    facing = 1;
     prev = { x: state.x, y: state.y };
     clearSteering();
     walk = 0;
@@ -249,6 +298,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   const onBlur = () => (shift = false);
   const touchAction = el.style.touchAction;
   el.style.touchAction = "none";
+  if (host.touch) document.body.classList.add("mz-touch");
   el.addEventListener("pointerdown", onDown);
   el.addEventListener("pointermove", onMove);
   el.addEventListener("pointerup", onUp);
@@ -373,9 +423,12 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     if (state.phase === "play") {
       // Leaving: up or enter on the first level's start pad, before the first move.
       if (state.level === 1 && !state.started && onStartPad(state) && (input.pressed("enter") || input.pressed("up")) && !opts?.steer) return leave();
-      const intent = opts?.steer ? opts.steer.next(state) : steer();
+      const intent = opts?.steer && !opts.steer.watch ? opts.steer.next(state) : steer();
       const moved = intent.dx !== 0 || intent.dy !== 0;
       if (moved) heading = { x: intent.dx, y: intent.dy };
+      dist += Math.hypot(intent.dx, intent.dy);
+      if (intent.dx > 0.05) facing = 1;
+      else if (intent.dx < -0.05) facing = -1;
       walk = moved ? walk + 1 : 0;
       if (walk > 0 && walk % 14 === 7) sfx.play("step");
       // Dust at his feet, kicked up behind him.
@@ -532,7 +585,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
       snakes: state.snakes.map((s) => {
         const at = snakeAt(s.def, s.t + alpha);
         const flat = snakeFlat(s.def);
-        return { x: at.x, y: at.y, flat, dir: snakeHeading(s.def, s.t) };
+        return { x: at.x, y: at.y, flat, dir: snakeHeading(s.def, s.t), t: s.t + alpha };
       }),
       cursed: state.phase === "cursed",
       clock: state.steps,
@@ -575,20 +628,26 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
         const b = ghostAt(ghost, gi + 1);
         const moving = !!a && !!b && (a.x !== b.x || a.y !== b.y);
         if (moving && a && b && Math.hypot(b.x - a.x, b.y - a.y) < 3) ghostHeading = { x: b.x - a.x, y: b.y - a.y };
-        drawGhost(g.x, g.y, moving ? k + 7 : 0, ghostHeading);
+        if (ghostHeading.x > 0.05) ghostFacing = 1;
+        else if (ghostHeading.x < -0.05) ghostFacing = -1;
+        drawGhost(g.x, g.y, { moving, dist: k * 1.4, facing: ghostFacing, t: tick });
       }
     }
-    drawHim(x, y, walk, heading, state.phase === "cursed", 1, tick);
+    drawHim(x, y, { moving: walk > 0, dist, facing, t: tick }, state.phase === "cursed", 1, tick);
     if (wordsShown() && words) {
       const a = ravenAnchor(state.level);
       const n = unit();
       const h = Math.max(24, fontPx() + 12);
-      const top = inset() * n + h + 8;
+      const safe = (insets ??= safeArea(el));
+      // On a narrow screen a long line is two or more bubbles, one over another, as the fjord's lines are (order 36: they ran
+      // off the screen's edge at 390 wide), clear of a notch on its side.
+      const lines = wrapped(words.text, view.cssW - 12 - safe.left - safe.right);
+      const top = inset() * n + h * lines.length + 8;
       const bx = sx(a.x);
       const by = sy(a.y) - 4;
       // Over the raven's head while it is in view; otherwise small, at the top left under the header.
-      if (by >= top && bx > 20 && bx < view.cssW - 20 && by < view.cssH) bubble(bx, by, words.text);
-      else bubble(8, top, words.text, "left");
+      const over = by >= top && bx > 20 && bx < view.cssW - 20 && by < view.cssH;
+      lines.forEach((line, i) => (over ? bubble(bx, by - (lines.length - 1 - i) * h, line) : bubble(8 + safe.left, top - (lines.length - 1 - i) * h, line, "left")));
     } else if (!wordsShown()) words = null;
     if (state.phase === "cursed" && !view.reduced) {
       // A rust-red frame round the whole view that fades as the curse runs out.
@@ -612,6 +671,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     render,
     resize() {
       cam.set = false;
+      insets = null;
     },
     destroy() {
       panel.destroy();
@@ -625,6 +685,8 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
       window.removeEventListener("keyup", onKey);
       window.removeEventListener("blur", onBlur);
       el.style.touchAction = touchAction;
+      document.body.classList.remove("mz-touch");
+      el.querySelector(".mz-safe")?.remove();
     },
     hud: () => ({
       level: state.level,

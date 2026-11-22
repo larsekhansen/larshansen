@@ -1,6 +1,6 @@
-import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, mix, view } from "./paint";
 
-// Frames as data (order 23): a drawing is rows of letters, one letter a pixel, each letter a colour from a named ramp
+// Frames as data (order 23; in the kit since order 36, so the maze draws him from the same sheet as the viking game): a drawing is rows of letters, one letter a pixel, each letter a colour from a named ramp
 // of three to five tones per material (a shade, a middle, a light, a highlight). This is way 3 of `docs/games/GRAIN.md`:
 // the same grain, better drawn. A frame keeps no size of its own beyond its letters, so it survives either answer to
 // the grain: drawn twice as fine, a frame is the same data at a different scale.
