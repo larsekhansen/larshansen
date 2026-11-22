@@ -27,6 +27,17 @@ export function aheadOf(him: { x: number; y: number }, facing: number, more = 0)
 }
 
 /**
+ * He, the two tiles under his feet and six ahead whichever way he turns (order 37): what the camera makes room for before it
+ * must, so a turn finds the six tiles the other way already clear and the camera does not jump (it did, up to 76 px in a
+ * frame, on a phone on its side with a notch, where the pad stands further in). `more` widens it by that many pixels each way.
+ */
+export function eitherWay(him: { x: number; y: number }, more = 0): Rect {
+  const right = aheadOf(him, 1, more);
+  const left = aheadOf(him, -1, more);
+  return { x: left.x, y: right.y, w: right.x + right.w - left.x, h: right.h };
+}
+
+/**
  * The least camera y (the top of the view, world pixels), from `camY` up, at which `r` (world pixels) is under no
  * button, with the camera's left at `camX`: wherever it is under one, he is lifted until it is just above it, and
  * looked at again (it may then meet one higher up). A button wholly above him or beside him asks nothing. `buttons`
@@ -87,8 +98,9 @@ export function roomy(at: { x: number; y: number }, cam: { x: number; y: number 
     }
   }
   // The camera eases, so a falling man is a step's fall times its time constant below where it means him to be: it
-  // looks that much further down, and is there when he is.
-  const early = aheadOf(room.him, room.facing, EARLY);
+  // looks that much further down, and is there when he is. It eases for the ground ahead either way (order 37), so that
+  // turning round does not lift it all at once where a button stands behind him.
+  const early = eitherWay(room.him, EARLY);
   early.h += Math.max(0, room.vy ?? 0) * (EASE_MS / (1000 / 60));
   const lifted = roomFor(early, at.x, at.y, room.unit, room.buttons);
   if (lifted > at.y) {

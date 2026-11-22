@@ -1769,6 +1769,9 @@ function still(whole = false) {
 /** Where he arrives, the level's code if it is not here yet, and then the game runs. */
 async function start() {
   if (debugging) {
+    // `?debug&safe=…` (order 37): a pretended notch and home bar, which no browser here has, set before the first scene lays
+    // out its pad, its bar and its cards.
+    (await debugging).pretendSafe(params.get("safe"));
     pretend = (await debugging).debugProgress(params);
     if (pretend) progress = pretend;
     readFeather();

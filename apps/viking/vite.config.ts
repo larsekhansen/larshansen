@@ -52,7 +52,8 @@ export default defineConfig({
           const route = ROUTE.exec(id);
           if (route) return route[1] === "common" ? "routes" : `${route[1]}-route`;
           if (/\/src\/game\/bot\.ts$/.test(id)) return "routes";
-          if (/\/src\/debug\.ts$/.test(id)) return "debug";
+          // What only `?debug` needs, and the kit's pretended notch (order 37), which only it sets.
+          if (/\/src\/debug\.ts$/.test(id) || /\/packages\/pixelkit\/src\/safe\.ts$/.test(id)) return "debug";
           // The grain study (order 22, part B): only under `?debug&grain`.
           if (/\/src\/grain\//.test(id)) return "grain";
           // Walking carefully to a clicked spot in a level (order 22): fetched with the first click.

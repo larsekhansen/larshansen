@@ -79,6 +79,8 @@ let over = false;
 let maze: scene.Maze;
 /** The maze itself, once the checking aids (under `?debug`) are here: they may steer him from his first step. */
 function start(aids: Aids | null) {
+  // `?debug&safe=…` (order 37): a pretended notch and home bar, set before the maze first reads the safe areas.
+  aids?.pretendSafe(params.get("safe"));
   const steer = aids ? aids.debugSteer(params, startLevel, scene) : undefined;
   maze = scene.createMaze(
     {

@@ -4,7 +4,7 @@ import type { Lang } from "@larshansen/pixelkit/i18n";
 import { S, target, view } from "@larshansen/pixelkit/paint";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
 import type { Stage } from "@larshansen/pixelkit/stage";
-import { bubble, fontPx, sx, sy, textCtx, unit, wrapLines as wrapped } from "@larshansen/pixelkit/text";
+import { bubble, fontPx, safeSides, sx, sy, textCtx, unit, wrapLines as wrapped } from "@larshansen/pixelkit/text";
 import { createFx } from "./fx";
 import { createRecorder, ghostAt, loadGhost, saveGhost, type GhostPoints } from "./ghost";
 import { ghostWalk, newHeading, turn, type GhostWalk } from "./heading";
@@ -625,6 +625,8 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
       const n = unit();
       const h = Math.max(24, fontPx() + 12);
       const safe = (insets ??= safeArea(el));
+      // Every bubble keeps off the safe sides (order 37: over the raven's head, its words ran under a notch).
+      Object.assign(safeSides, { left: safe.left, right: safe.right });
       // On a narrow screen a long line is two or more bubbles, one over another, as the fjord's lines are (order 36: they ran
       // off the screen's edge at 390 wide), clear of a notch on its side.
       const lines = wrapped(words.text, view.cssW - 12 - safe.left - safe.right);

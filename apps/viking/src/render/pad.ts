@@ -1,7 +1,7 @@
 import type { Action, Input } from "@larshansen/pixelkit/input";
 import type { Lang } from "@larshansen/pixelkit/i18n";
 import { view } from "@larshansen/pixelkit/paint";
-import { sx, sy, unit } from "@larshansen/pixelkit/text";
+import { safeSides, sx, sy, unit } from "@larshansen/pixelkit/text";
 import type { Bounds, Focus } from "@larshansen/pixelkit/camera";
 import { aheadOf, roomy } from "../game/frame";
 import { DASH_REST, type Play } from "../game/play";
@@ -296,6 +296,8 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
     const s = getComputedStyle(probe);
     const px = (v: string) => parseFloat(v) || 0;
     slots = padLayout(innerWidth, innerHeight, { top: px(s.paddingTop), right: px(s.paddingRight), bottom: px(s.paddingBottom), left: px(s.paddingLeft) });
+    // The bubbles (a sign's words, a boss's lines) keep off a notch at the side too (order 37).
+    Object.assign(safeSides, { left: px(s.paddingLeft), right: px(s.paddingRight) });
     for (const c of Object.keys(controls) as Control[]) {
       const r = slots[c];
       Object.assign(controls[c].style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
