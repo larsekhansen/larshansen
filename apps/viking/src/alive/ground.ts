@@ -1,6 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Sky } from "@larshansen/pixelkit/oslo";
-import { R, ctx, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, DOORWAY, FACADE, INK, MASONRY, PAINT, PALETTE, SNOW, STAND, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Door } from "@larshansen/pixelkit/doors";
 import type { Board } from "@larshansen/pixelkit/text";
@@ -959,6 +959,10 @@ function tbane(d: Door): boolean {
   wdisc(px, py, 5, PAINT.tbane);
   R(px - 3, py - 3, 7, 2, WHITE);
   R(px, py - 1, 1, 5, WHITE);
+  // Oslo's T sign is lit from inside: after dark its white T is a light (order 32, ADR 0054). Its blue is not: lit, it would
+  // come within 6 of his tunic.
+  light(px - 3, py - 3, 7, 2, "window", WHITE);
+  light(px, py - 1, 1, 5, "window", WHITE);
   return true;
 }
 

@@ -14,7 +14,7 @@ import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
 import { crowdFlag, flagFlying, person } from "../alive/things";
 import { tile as textured, type Grain } from "../alive/ground";
-import { CAST, post } from "../alive/props";
+import { CAST, box as pbox, dot, post, prop, tone, type Stuff } from "../alive/props";
 import type { LevelDef, View } from "./types";
 
 // Level 5, rune H: Holmenkollen. Winter, snowing. Off the train at the top, along a path where the
@@ -388,14 +388,54 @@ function chairlift() {
   }
 }
 
-/** A chair: a bar up to the cable, a seat (what he stands on), a footrest. */
+/** The chairs' frame: steel painted the cable's dark grey, darkest first (order 32). */
+const CHAIR_FRAME: Stuff = { name: "chair frame", ramp: [mix(METAL.wire, INK, 0.4), METAL.wire, mix(METAL.wire, WHITE, 0.12), mix(METAL.wire, WHITE, 0.2)] };
+/** Their seats and backs: slats painted the ski arena's red, darkest first. */
+const CHAIR_RED: Stuff = { name: "chair red", ramp: [mix(ICY.rail, INK, 0.4), mix(ICY.rail, INK, 0.18), ICY.rail, mix(ICY.rail, WHITE, 0.18)] };
+
+/**
+ * A chair of the chairlift, drawn as the props kit draws a thing (order 32; ADR 0051): the grip clamped on the cable, the hanger
+ * down from it (a tube, lit on its left), the frame bending under the seat, the back of two red slats on its uprights, the seat
+ * of slats (its top where it was: the page paints it yellow, he stands on it), a footrest on two rods. One piece, copied; the
+ * chairs run level on their cable, so the hanger is always as long. 32 x 38 from the grip; its box is the seat as before.
+ */
 function chair(at: { x: number; y: number }) {
-  R(at.x + 15, CHAIR_Y - 30, 2, at.y - CHAIR_Y + 30, METAL.wire);
-  R(at.x, at.y, 2 * TILE, 3, ICY.rail);
-  R(at.x, at.y, 2 * TILE, 1, mix(ICY.rail, WHITE, 0.4));
-  R(at.x + 2, at.y - 9, 2, 9, METAL.wire);
-  R(at.x + 2, at.y - 10, 2 * TILE - 4, 2, METAL.wire);
-  R(at.x + 4, at.y + 6, 2 * TILE - 8, 1, METAL.wire);
+  const x = Math.round(at.x);
+  const hang = Math.round(at.y) - CHAIR_Y;
+  prop("chair", [CHAIR_FRAME, CHAIR_RED], `${hang}`, 2 * TILE, 38 + hang, x, CHAIR_Y - 31, (g) => {
+    const F = (i: number) => tone(CHAIR_FRAME, i);
+    const S = (i: number) => tone(CHAIR_RED, i);
+    const seat = 31 + hang;
+    // The grip on the cable: a clamp over it and under it, its bolt lit.
+    pbox(g, 13, 0, 6, 1, F(2));
+    pbox(g, 13, 2, 6, 1, F(0));
+    dot(g, 13, 1, F(1));
+    dot(g, 18, 1, F(1));
+    dot(g, 15, 0, F(3));
+    // The hanger: a tube two wide, lit on its left, down to the back's top rail.
+    for (let r = 3; r < seat - 10; r++) dot(g, 15, r, F(2)), dot(g, 16, r, F(0));
+    // The back: a rail across, its two uprights, two slats between, lit on their tops.
+    pbox(g, 2, seat - 10, 28, 1, F(2));
+    dot(g, 15, seat - 10, F(3));
+    for (const c of [2, 29]) for (let r = seat - 9; r < seat; r++) dot(g, c, r, c === 2 ? F(2) : F(0));
+    for (const r of [seat - 8, seat - 5]) {
+      pbox(g, 3, r, 26, 1, S(3));
+      pbox(g, 3, r + 1, 26, 1, S(1));
+      for (let c = 5; c < 29; c += 6) dot(g, c, r + 1, S(0));
+    }
+    // The seat: three rows of slats, its front edge rounded, shaded under; the frame under it.
+    pbox(g, 0, seat, 32, 1, S(3));
+    pbox(g, 0, seat + 1, 32, 1, S(2));
+    pbox(g, 0, seat + 2, 32, 1, S(1));
+    dot(g, 0, seat + 2, S(0));
+    dot(g, 31, seat + 2, S(0));
+    for (let c = 4; c < 31; c += 6) dot(g, c, seat + 1, S(1));
+    pbox(g, 1, seat + 3, 30, 1, F(1));
+    // The footrest on two rods.
+    for (const c of [5, 26]) dot(g, c, seat + 4, F(1)), dot(g, c, seat + 5, F(1));
+    pbox(g, 4, seat + 6, 24, 1, F(2));
+    dot(g, 4, seat + 6, F(3));
+  });
 }
 
 /** The lift's cage: a steel floor he stands on, a rail round it, the cable up to the top of the shaft. */

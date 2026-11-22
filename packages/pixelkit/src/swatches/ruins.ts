@@ -20,7 +20,8 @@ export const rope = "#c9a46a";
 // Lamps and torches.
 export const lampPost = "#2f3438";
 export const torch = "#6a4a2a";
-export const flame = "#ffb347";
+/** A torch's flame: its light after dark (order 32: a little yellower than it was, #ffb347, which came within 8 of the glamour's laser orange). */
+export const flame = "#ffbd55";
 export const flameHot = "#fff0b0";
 // The medieval town: tarred timber, the hall's shingles, its dragon heads; thatch; the market's cloth.
 export const timber = "#5a3d26";

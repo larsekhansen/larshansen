@@ -632,7 +632,7 @@ describe("the lane's ground keeps a band of its own (order 28)", () => {
 
 // Order 31 (item 3): in Nordmarka the level's own dark comes after the night's tint and covers everything but the lamp's
 // circle; the invaders showed there as their glow round a dark shape, not their red outline. The outline is now copied again
-// over the dark (`RING_OVER_DARK`), on its own pixels only. Measured as the fields are measured above: the outline as it is
+// over the dark (`RING_OVER_DARK`, `overTheDark` in `alive/glamour.ts`), on its own pixels only. Measured as the fields are measured above: the outline as it is
 // seen against each of the level's fields as it is seen, by day (the red over the field) and under the trees (the field under
 // the level's twilight tint, the outline over it at the strength `afterDark` gives it, the dark of every depth the level has
 // over both, and the outline once more over that).
@@ -641,7 +641,7 @@ describe("under Nordmarka's dark the red outline reads as clearly as by day (ord
     const def = await loadLevel("nordmarka");
     const f = levelFields(def, "day", FIELD_SHARE, await paintedOf("nordmarka"));
     const { NIGHT } = await import("./night");
-    const { RING_OVER_DARK } = await import("../levels/nordmarka");
+    const { RING_OVER_DARK } = await import("../alive/glamour");
     const night = NIGHT.split(",").map(Number) as Rgb;
     const red = rgb(ENEMY.red);
     const phase = def.sky as Phase;
@@ -671,6 +671,52 @@ describe("under Nordmarka's dark the red outline reads as clearly as by day (ord
       }
     }
     console.log(`The red outline against Nordmarka's fields: by day ${day.toFixed(1)} at the least; under its dark (${[...depths].sort().join(", ")}) ${before.toFixed(1)} without the outline over the dark, ${after.toFixed(1)} with it (${worst[0]})`);
+    expect(after).toBeGreaterThanOrEqual(day);
+  }, 120_000);
+
+  // Order 32 (item 5): next to the red outline over the dark lay the invader's own glow, its brightest band (the shape grown by
+  // three, four and five pixels, a fifth each: the pixel just outside the outline has all three), and an orange glow came within
+  // 22.7 of the red. Over the dark the glow now starts a pixel further out and the pixel next to the outline is the dark's own
+  // colour (`overTheDark`, `DARK_GAP` in `alive/glamour.ts`). Measured for every neon a glow can be, over every field and every
+  // depth of the dark: the outline as above against the pixel next to it, before and after.
+  test("against an invader's own glow under the dark, the red outline stands at least as far off as it does against the fields by day", async () => {
+    const def = await loadLevel("nordmarka");
+    const f = levelFields(def, "day", FIELD_SHARE, await paintedOf("nordmarka"));
+    const { NIGHT } = await import("./night");
+    const { RING_OVER_DARK, DARK_GAP } = await import("../alive/glamour");
+    const night = NIGHT.split(",").map(Number) as Rgb;
+    expect(rgb(DARK_GAP)).toEqual(night);
+    const red = rgb(ENEMY.red);
+    const phase = def.sky as Phase;
+    const overTint = phase === "night" ? 0.9 : 0.8;
+    const v = { troll: null, flourish: null } as unknown as View;
+    const depths = new Set<number>();
+    for (let x = 0; x < def.map[0].length * TILE; x += 4) depths.add(Math.round(Math.max(0, Math.min(1, def.dark!(x, v))) * 20) / 20);
+    depths.delete(0);
+    // The glow's three layers, a fifth each, over the pixel just outside the outline.
+    const three = 1 - 0.8 ** 3;
+    let day = Infinity;
+    let before = Infinity;
+    let after = Infinity;
+    let worst = "";
+    for (const field of f.keys()) {
+      const F = rgb(field);
+      day = Math.min(day, deltaE(red, F));
+      const T = tinted(F, phase);
+      for (const d of depths) {
+        const ring = mixRgb(mixRgb(mixRgb(T, red, overTint), night, d), red, RING_OVER_DARK);
+        for (const neon of ROLES.glamour) {
+          const N = rgb(neon);
+          // After dusk the glow is drawn under the outline (`afterDark`), then the dark over both, then (before) the glow again.
+          const under = mixRgb(mixRgb(T, N, overTint * three), night, d);
+          const was = mixRgb(under, N, 0.8 * three);
+          if (deltaE(ring, was) < before) [before, worst] = [deltaE(ring, was), `${neon} over ${field} at a dark of ${d}`];
+          after = Math.min(after, deltaE(ring, night));
+        }
+      }
+    }
+    console.log(`The red outline against its own glow under Nordmarka's dark: by day against the fields ${day.toFixed(1)}; the pixel next to it before ${before.toFixed(1)} (${worst}), now the dark's own ${after.toFixed(1)}`);
+    expect(before).toBeLessThan(day);
     expect(after).toBeGreaterThanOrEqual(day);
   }, 120_000);
 });

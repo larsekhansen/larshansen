@@ -15,7 +15,8 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { NEON_B, glam } from "../alive/glamour";
-import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
+import { EDGE, edgesAt, hash, tile as textured, type Grain } from "../alive/ground";
+import { dot, prop, tone, type Grid, type Stuff } from "../alive/props";
 
 // Level 6, rune A: Akerselva. A summer's day, down the river from Nydalen to Vaterland, the only
 // level that goes downhill all the way: three terraces, each a stretch of river with a fall at its
@@ -875,25 +876,52 @@ function reeds(t: number) {
   }
 }
 
-/** A log: bark with a lighter top, the cut ends with their rings; only what is above the water shows as it comes up and goes under. */
-function drawLog(at: { x: number; y: number }, water: number) {
-  const { x, y } = at;
-  const shown = Math.max(0, Math.min(6, water + FLOAT - y));
+/** A log's bark, darkest first: wet under, shaded, its face, lit along its top (order 32: the props kit's way, ADR 0051). */
+const BARK: Stuff = { name: "log bark", ramp: [mix(RIVER.log, INK, 0.42), mix(RIVER.log, INK, 0.2), RIVER.log, RIVER.logLight] };
+/** Its sawn ends: the rings, the wood between them, the cut face lit. */
+const SAWN: Stuff = { name: "log end", ramp: [RIVER.logRing, mix(RIVER.logRing, RIVER.logEnd, 0.5), RIVER.logEnd] };
+
+/**
+ * A log of the river's timber, as the props kit draws a thing (order 32; ADR 0051): round, so lit along its top row and shaded
+ * down to its wet underside; bark in long fissures along it with a knot or two; each end sawn, its face lit with a ring or two
+ * and the bark's rim round it, the left end in the log's own shadow. Three logs a variant, by the carrier. Its top row is
+ * where it was (the page paints it yellow: he stands on it), and so is its box; only what is above the water shows as it comes
+ * up and goes under, and the foam round it as before.
+ */
+function drawLog(at: { x: number; y: number }, water: number, k: number) {
+  const x = Math.round(at.x);
+  const y = Math.round(at.y);
+  const shown = Math.max(0, Math.min(6, water + FLOAT - at.y));
   if (shown <= 0) return;
-  if (shown < 6) {
-    R(x + 1, y, 2 * TILE - 2, shown, RIVER.log);
-    R(x + 1, y, 2 * TILE - 2, 1, RIVER.logLight);
-    R(x - 2, y + shown, 2 * TILE + 4, 1, P.foam);
-    return;
+  const rows = Math.ceil(shown);
+  prop("log", [BARK, SAWN], `${k % 3}|${rows}`, 2 * TILE, rows, x, y, (g) => logPixels(g, k % 3, rows));
+  R(x - 2, y + (rows < 6 ? rows : 5), 2 * TILE + 4, 1, P.foam);
+}
+function logPixels(g: Grid, k: number, rows: number) {
+  const W = 2 * TILE;
+  const B = (i: number) => tone(BARK, i);
+  // Row by row from its top: lit, its upper side, its face, shaded, wet (under the foam when it floats).
+  const SHADE = [3, 2, 2, 2, 1, 0];
+  for (let r = 0; r < rows; r++)
+    for (let c = 2; c < W - 2; c++) {
+      let i = SHADE[r];
+      // Fissures in the bark along the log, a few pixels long, darker; on its lit top, a lighter fleck now and then.
+      if (r > 0 && r < 4 && hash(k, c >> 2, r, 7) < 0.22 && (c & 3) !== 0) i = Math.max(0, i - 1);
+      if (r === 0 && hash(k, c, 0, 9) < 0.12) i = 2;
+      dot(g, c, r, B(i));
+    }
+  // A knot or two: a dark eye in the bark with its lit lip.
+  for (const kx of k === 0 ? [11] : k === 1 ? [7, 22] : [18]) {
+    if (rows > 2) dot(g, kx, 2, B(0)), dot(g, kx + 1, 2, B(1)), dot(g, kx, 1, B(3));
   }
-  R(x + 1, y, 2 * TILE - 2, 6, RIVER.log);
-  R(x + 1, y, 2 * TILE - 2, 1, RIVER.logLight);
-  for (let k = 4; k < 2 * TILE - 4; k += 6) R(x + k, y + 2, 3, 1, mix(RIVER.log, INK, 0.25));
-  R(x, y + 1, 2, 4, RIVER.logEnd);
-  R(x + 2 * TILE - 2, y + 1, 2, 4, RIVER.logEnd);
-  R(x + 2 * TILE - 2, y + 2, 1, 2, RIVER.logRing);
-  // The water round it.
-  R(x - 2, y + 5, 2 * TILE + 4, 1, P.foam);
+  // The sawn ends, two pixels each, as wide as before: the cut face lighter than the bark, its outer edge a shade darker, a ring
+  // in it; the bark's rim over and under it.
+  for (const [outer, inner, ring] of [[0, 1, 2], [W - 1, W - 2, 3]] as const)
+    for (let r = 0; r < rows; r++) {
+      const rim = r === 0 || r === 5;
+      dot(g, outer, r, rim ? B(1) : tone(SAWN, 1));
+      dot(g, inner, r, rim ? B(2) : r === ring ? tone(SAWN, 0) : tone(SAWN, 2));
+    }
 }
 
 /** The flourish: the salmon run, leaping up the pool one after another, and a rainbow in the last fall's spray. */
@@ -1025,7 +1053,7 @@ export const AKERSELVA: LevelDef = {
     carrier(i, at, v) {
       const d = CARRIERS[i];
       if (d.kind === "orbit") bucket(at);
-      else if (carrierShown(d, v.t)) drawLog(at, (i < FIRST_BUCKET ? T1 : POOL) * TILE);
+      else if (carrierShown(d, v.t)) drawLog(at, (i < FIRST_BUCKET ? T1 : POOL) * TILE, i);
     },
     enemy(e, v) {
       if (!e.alive) return false;

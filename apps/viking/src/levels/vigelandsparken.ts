@@ -21,7 +21,7 @@ import { mapBuilder } from "./build";
 import type { BellLedge, LevelDef, LevelRules, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
-import { box as pbox, dot, lamp, prop, tone, type Stuff } from "../alive/props";
+import { box as pbox, dot, lamp, pool, prop, tone, type Stuff } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 
 // Level 12, rune I: Vigelandsparken, by day, eerie and funny. Its one idea: the statues move only while
@@ -378,6 +378,10 @@ function gate(v: View) {
 
 /** The bridge's wrought iron. */
 const BRIDGE_IRON: Stuff = { name: "bridge iron", ramp: [mix(V.iron, INK, 0.35), V.iron, mix(V.iron, WHITE, 0.07), mix(V.iron, WHITE, 0.12)] };
+
+/** The bridge's lamps on its far parapet (x of each), as `bridge` places them: a lamp every third post, none by the broken span. */
+const BRIDGE_LAMPS: number[] = [];
+for (let px = 35 * TILE + 8, i = 0; px < 83 * TILE - 8; px += 36, i++) if (!(px > 55 * TILE && px < 61 * TILE) && i % 3 === 1) BRIDGE_LAMPS.push(px + 22);
 
 /** The bridge: granite parapets with a bronze figure on every post, lamps between, the pond under it. */
 function bridge() {
@@ -827,6 +831,8 @@ export const VIGELANDSPARKEN: LevelDef = {
     },
     front(v) {
       slab(v.t);
+      // After dark the bridge's lamps light the deck under them (order 32, ADR 0054).
+      for (const x of BRIDGE_LAMPS) pool(x + 1, FLOOR);
     },
     ground: (c) => (c < 35 || (c > 82 && c < 89) || c > 103 ? { top: V.gravel, dot: V.gravelDark, fill: mix(P.earth, INK, 0.35) } : { top: V.graniteLight, dot: V.graniteShade, fill: V.graniteShade }),
     tile(t, c, r, x, y, map) {

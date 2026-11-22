@@ -14,7 +14,7 @@ import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
 import { flame, lampFlicker } from "../alive/things";
-import { eyes, invaders, outlined, plain } from "../render/sprite";
+import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
 import { drawNight } from "../render/night";
 import { mapBuilder } from "./build";
@@ -22,7 +22,8 @@ import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { plankDoor as plankDoor2, tile as textured, type Grain } from "../alive/ground";
 import { STORY } from "../game/story";
-import { glows } from "../alive/glamour";
+import { overTheDark } from "../alive/glamour";
+import { signBoards } from "../alive/invasion";
 
 // Level 7, rune N: Nordmarka. A summer night in the forest north of the city, from the end of line
 // 5 at Sognsvann. Under the spruces the dark shows only what his headlamp lights; lit windows, the
@@ -238,6 +239,7 @@ function dark(x: number, v: View) {
 const blazeY = (f: { bottom: number }) => f.bottom - 22;
 
 /** What shows through the dark: the blue marks (brighter once raised), the hut's window, the mound's door, fireflies, the dawn, the rune. */
+const SIGN_BOARDS = signBoards("nordmarka");
 function lights(v: View): Light[] {
   const out: Light[] = [];
   for (const f of v.flags) out.push({ x: f.x, y: blazeY(f), rings: f.raisedAt === null ? [[7, 0.45], [4, 0]] : [[18, 0.55], [13, 0.3], [8, 0]] });
@@ -248,6 +250,8 @@ function lights(v: View): Light[] {
   out.push({ x: HUT.x + 55, y: HUT.g - 52, rings: [[28, 0.55], [20, 0.3]] });
   const door = v.doors.get("maze");
   if (door) out.push({ x: door.x + door.w / 2, y: door.bottom - 10, rings: [[16, 0.5], [10, 0.2]] });
+  // The invaders' neon sign: its tubes are lit after dark (order 32), so its board shows through, with a little light round it.
+  for (const b of SIGN_BOARDS) out.push({ rect: b, dark: 0 }, { x: b.x + b.w / 2, y: b.y + b.h / 2, rings: [[9, 0.55], [6, 0.35]] });
   for (const f of fireflies(v.t)) out.push({ x: f.x, y: f.y, rings: [[3, 0.3]] });
   const t = v.troll;
   if (t) {
@@ -847,23 +851,14 @@ function troll(t: Troll, v: View) {
   outlined(() => trollBody(t, v), undefined, t.phase === "walk" || t.phase === "windup" ? ENEMY.warning : ROLES.calm);
 }
 
-/** How much of its light the red outline keeps over the dark (order 31): as much as over the night's tint. */
-export const RING_OVER_DARK = 0.9;
-
 /** Over the dark: the invaders' glow and red outline, eyes that shine, the troll's eyes, the fireflies, the wave of the troll's slam in the dust. */
 function overDark(v: View) {
   dawnShaft(v);
   sunrise(v);
-  // The invaders' neon glows through the dark (order 27): neon is the one thing that looks better at night.
-  const g = ctx();
-  const a = g.globalAlpha;
-  g.globalAlpha = a * 0.8;
-  glows(g);
-  // What hurts keeps its red outline over the dark (order 31), as clear as by day: the ring alone, on its own pixels, so the
-  // dark round it is as dark as before (`render/palette.test.ts` measures it against the forest under the dark).
-  g.globalAlpha = a * RING_OVER_DARK;
-  invaders((s, x, y) => g.drawImage(s.ring, x, y));
-  g.globalAlpha = a;
+  // The invaders' neon glows through the dark (order 27): neon is the one thing that looks better at night. What hurts keeps
+  // its red outline over the dark (order 31), as clear as by day: the ring alone, on its own pixels, so the dark round it is as
+  // dark as before (`render/palette.test.ts` measures it against the forest under the dark).
+  overTheDark(ctx());
   for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, CREATURE.eye);
   for (const f of fireflies(v.t)) if (f.on) R(f.x, f.y, 1, 1, LAMP);
   const t = v.troll;

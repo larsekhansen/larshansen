@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
-import { keptStrips } from "@larshansen/pixelkit/kept";
+import { kept, keptStrips } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, ctx, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
@@ -701,12 +701,18 @@ const CRANE_THREAD = mix(LAMP, INK, 0.36);
 
 /** The paper cranes on threads in the upstairs window, drawn over the night as the Pi is, so they keep their paper's colours in the lit window; each thread sways a pixel on the level's clock. */
 function cranes(t: number) {
+  const sways = CRANE_THREADS.map((_th, k) => (view.reduced ? 0 : Math.round(Math.sin(t * 0.045 + k * 2.3))));
+  // Kept, one piece for each way the threads hang (order 32: drawn a pixel at a time they were about 180 rectangles a frame), and
+  // copied only while the window is on the screen.
+  kept(`cranes ${sways.join()}`, hallX(0), HALL.y, HALL.w, 30, () => cranesAt(sways));
+}
+function cranesAt(sways: number[]) {
   const x = hallX(0);
   const y = HALL.y;
   const inGlass = (dx: number, dy: number) => dx > 0 && dx < HALL.w - 1 && dy > 7 && dy < 29 && !hallBar(dx, dy);
   let n = 0;
   CRANE_THREADS.forEach((th, k) => {
-    const s = view.reduced ? 0 : Math.round(Math.sin(t * 0.045 + k * 2.3));
+    const s = sways[k];
     const last = th.at[th.at.length - 1];
     for (let dy = 8; dy < last; dy++) {
       const dx = th.dx + (dy < 10 ? 0 : s);
@@ -899,6 +905,7 @@ function home(v: View) {
  */
 function pi(v: View) {
   const pw = HOME.window;
+  if (pw.x + pw.w + 8 < view.camX || pw.x - 8 > view.camX + view.w) return;
   const bx = pw.x + 3;
   const by = pw.y + pw.h - 13;
   R(bx, by, 15, 7, PI_BOARD);
@@ -1279,6 +1286,15 @@ export const NABOLAGET: LevelDef = {
     },
     shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     lights: (v) => lights(v),
+    // What is drawn over the night's tint: the paper cranes in Kruttverket's window and the Pi on the yellow house's sill with its
+    // light. From order 15, when the night left `main.ts` for Nordmarka's file behind `Art.night`, nothing called `overDark` here, and
+    // they were not drawn at all; order 32 draws them again. The lane's own dark (`dark`, `lights`, the rest of `overDark`) is still
+    // not drawn: drawn again, it costs about 1,580 rectangles a frame in the lane at 390 x 844 (`render/night.ts`), over the order's
+    // limit; it waits on a decision (`tools/review/o32/after.md`).
+    night: (v) => {
+      cranes(v.t);
+      pi(v);
+    },
     overDark: (v) => {
       for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
       cranes(v.t);

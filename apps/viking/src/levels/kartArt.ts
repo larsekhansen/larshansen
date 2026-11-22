@@ -43,22 +43,29 @@ const JOIN = (LINE_1_END + 1) * TILE;
 const SKY_W = 76;
 const SKY_H = 56;
 function skyline(i: number, x: number, g: number) {
-  drawProp(custom(`kart skyline ${i}`, SKY_W, SKY_H, skyCell(i)), x - SKY_W / 2, g - SKY_H, SKY_W);
+  drawProp(custom(`kart skyline ${i}`, SKY_W, SKY_H, (px, py) => skyPixels(i).a[py * SKY_W + px]), x - SKY_W / 2, g - SKY_H, SKY_W);
+  // After dark about half its windows are lit, the same ones every night (order 32, ADR 0054), as a level's windows are.
+  skyPixels(i).panes.forEach((p, n) => hash(i, n, 3, 17) < 0.5 && light(x + p.dx, g - p.to, p.w, p.to - p.from + 1, "window"));
 }
-function skyCell(i: number) {
-  let a: (string | null)[] | null = null;
-  return (px: number, py: number) => {
-    if (!a) {
-      a = new Array<string | null>(SKY_W * SKY_H).fill(null);
-      paintSkyline(i, a);
-    }
-    return a[py * SKY_W + px];
-  };
+/** A skyline's pixels, painted once, and its windows (dx from the station's middle, w wide, rows from..to up from the ground). */
+interface Pane {
+  dx: number;
+  w: number;
+  from: number;
+  to: number;
+}
+const SKIES: { a: (string | null)[]; panes: Pane[] }[] = [];
+function skyPixels(i: number) {
+  if (!SKIES[i]) {
+    SKIES[i] = { a: new Array<string | null>(SKY_W * SKY_H).fill(null), panes: [] };
+    paintSkyline(i, SKIES[i].a, SKIES[i].panes);
+  }
+  return SKIES[i];
 }
 /** A tone between a colour and toward white (k > 0) or toward the dark (k < 0). */
 const lit = (c: string, k = 0.22) => mix(c, WHITE, k);
 const dim = (c: string, k = 0.22) => mix(c, INK, k);
-function paintSkyline(i: number, a: (string | null)[]) {
+function paintSkyline(i: number, a: (string | null)[], panes: Pane[]) {
   // dx from the station's middle, up from the ground (1 is the row on the ground).
   const dot = (dx: number, up: number, c: string | null) => {
     const px = dx + SKY_W / 2;
@@ -80,8 +87,13 @@ function paintSkyline(i: number, a: (string | null)[]) {
       if (from === 1) dot(dx + k, 1, dim(c, 0.15));
     }
   };
+  /** A window: its glass, and noted, so it can be lit after dark. */
+  const pane = (dx: number, w: number, h: number, c: string, from = 1) => {
+    fill(dx, w, h, c, from);
+    panes.push({ dx, w, from, to: h });
+  };
   const windows = (dx: number, w: number, u0: number, u1: number, sx: number, sy: number, ww: number, wh: number, c: string) => {
-    for (let k = 1; k + ww <= w - 1; k += sx) for (let u = u0; u + wh - 1 <= u1; u += sy) fill(dx + k, ww, u + wh - 1, c, u);
+    for (let k = 1; k + ww <= w - 1; k += sx) for (let u = u0; u + wh - 1 <= u1; u += sy) pane(dx + k, ww, u + wh - 1, c, u);
   };
   const courses = (dx: number, w: number, h: number, c: string, every: number, from = 2) => {
     for (let u = from; u < h; u += every) for (let k = 1; k < w - 1; k++) if ((k + Math.floor(u / every) * 3) % 7 !== 0) dot(dx + k, u, c);
@@ -160,7 +172,7 @@ function paintSkyline(i: number, a: (string | null)[]) {
     case 3: {
       // Slottet: the palace, pale yellow, its rows of windows, the portico's columns and pediment, the flag on the roof.
       block(-24, 48, 18, FACADE.palace);
-      for (const u of [4, 11]) for (let k = -22; k < 22; k += 4) if (k < -6 || k > 4) fill(k, 2, u + 3, mix(GLASS_DARK, FACADE.palace, 0.25), u);
+      for (const u of [4, 11]) for (let k = -22; k < 22; k += 4) if (k < -6 || k > 4) pane(k, 2, u + 3, mix(GLASS_DARK, FACADE.palace, 0.25), u);
       fill(-24, 48, 18, lit(FACADE.palace, 0.4), 18);
       fill(-24, 48, 17, dim(FACADE.palace, 0.12), 17);
       for (let k = -6; k <= 5; k += 3) fill(k, 1, 15, PAINT.trim, 2), fill(k + 1, 1, 15, dim(FACADE.palace, 0.18), 2);
@@ -196,7 +208,7 @@ function paintSkyline(i: number, a: (string | null)[]) {
       // Akerselva: the brick mill with its rows of arched windows and a chimney, the fall white over the rocks beside it.
       block(-22, 18, 20, BRICK.red);
       courses(-22, 18, 20, BRICK.course, 3);
-      for (const u of [4, 11]) for (let k = -20; k < -6; k += 4) fill(k, 2, u + 4, BRICK.kruttverketWindow, u), dot(k, u + 4, dim(BRICK.red, 0.3)), dot(k + 1, u + 4, dim(BRICK.red, 0.3));
+      for (const u of [4, 11]) for (let k = -20; k < -6; k += 4) pane(k, 2, u + 4, BRICK.kruttverketWindow, u), dot(k, u + 4, dim(BRICK.red, 0.3)), dot(k + 1, u + 4, dim(BRICK.red, 0.3));
       block(-8, 4, 30, BRICK.kruttverketChimney, 18);
       fill(-9, 6, 31, BRICK.kruttverketCap, 30);
       for (let k = 0; k < 8; k++) for (let u = 1; u <= 14; u++) dot(k, u, u > 12 ? PALETTE.foam : (k + u) % 4 === 0 ? PALETTE.foam : k < 2 ? lit(PALETTE.water, 0.2) : PALETTE.water);
@@ -214,13 +226,13 @@ function paintSkyline(i: number, a: (string | null)[]) {
     case 7: {
       // Stortinget: the yellow brick wings and windows, the round hall in the middle with its cornice and tall windows.
       block(-26, 52, 16, FACADE.storting);
-      for (const u of [4, 10]) for (let k = -24; k < 24; k += 4) if (k < -9 || k > 7) fill(k, 2, u + 3, mix(GLASS_DARK, FACADE.storting, 0.2), u);
+      for (const u of [4, 10]) for (let k = -24; k < 24; k += 4) if (k < -9 || k > 7) pane(k, 2, u + 3, mix(GLASS_DARK, FACADE.storting, 0.2), u);
       for (let k = 0; k < 18; k++) {
         const dx = -9 + k;
         const h = 22 + Math.round(Math.sin((k / 17) * Math.PI) * 3);
         for (let u = 1; u <= h; u++) dot(dx, u, k < 5 ? lit(FACADE.stortingDark, 0.15) : k > 13 ? dim(FACADE.stortingDark, 0.15) : FACADE.stortingDark);
         dot(dx, h, lit(FACADE.storting, 0.35));
-        if (k % 4 === 1) fill(dx, 2, 17, mix(GLASS_DARK, FACADE.stortingDark, 0.2), 6);
+        if (k % 4 === 1) pane(dx, 2, 17, mix(GLASS_DARK, FACADE.stortingDark, 0.2), 6);
       }
       return;
     }
@@ -233,8 +245,8 @@ function paintSkyline(i: number, a: (string | null)[]) {
         for (let u = 2; u < h - 2; u++) if (hash(k, u, 8, 61) < 0.08) dot(k, u, dim(LAND.forest, 0.3));
       }
       block(-4, 15, 30, FACADE.marbleWall, 20);
-      fill(-3, 13, 27, mix(GLASS_DARK, FACADE.marbleWall, 0.35), 25);
-      fill(-3, 13, 23, mix(GLASS_DARK, FACADE.marbleWall, 0.5), 22);
+      pane(-3, 13, 27, mix(GLASS_DARK, FACADE.marbleWall, 0.35), 25);
+      pane(-3, 13, 23, mix(GLASS_DARK, FACADE.marbleWall, 0.5), 22);
       fill(-4, 15, 30, WHITE, 30);
       return;
     }
@@ -242,7 +254,7 @@ function paintSkyline(i: number, a: (string | null)[]) {
       // Vålerenga: small wooden houses, plank by plank, under their roofs; the church's spire behind.
       // Vålerenga kirke's tower and its spire, behind the houses.
       block(20, 6, 28, MASONRY.churchTower);
-      fill(22, 2, 22, MASONRY.churchWindow, 18);
+      pane(22, 2, 22, MASONRY.churchWindow, 18);
       for (let k = 0; k < 18; k++) {
         const half = Math.max(0, Math.round(3 - k / 6));
         for (let j = -half; j <= half; j++) dot(23 + j, 29 + k, j < 0 ? lit(ROOF.churchSlate, 0.15) : j > 0 ? dim(ROOF.churchSlate) : ROOF.churchSlate);
@@ -253,7 +265,7 @@ function paintSkyline(i: number, a: (string | null)[]) {
         const H = h as number;
         block(X, W, H, c as string);
         for (let k = 2; k < W - 1; k += 3) fill(X + k, 1, H - 1, line as string, 2);
-        fill(X + 3, 3, 8, mix(GLASS_DARK, c as string, 0.2), 5);
+        pane(X + 3, 3, 8, mix(GLASS_DARK, c as string, 0.2), 5);
         for (let k = 0; k <= Math.ceil(W / 2); k++) for (let j = k; j < W - k; j++) dot(X + j, H + 1 + k, j === k ? lit(ROOF.red, 0.15) : j === W - k - 1 ? dim(ROOF.red) : ROOF.red);
       });
       return;
@@ -313,7 +325,7 @@ function paintSkyline(i: number, a: (string | null)[]) {
       // Bjørvika: a tower going up in floors of concrete and glass, its top floors bare; the crane's lattice over it.
       block(-24, 18, 26, lit(STONE.light, 0.15));
       for (let u = 3; u < 24; u += 5) fill(-23, 16, u, STONE.base, u);
-      for (let u = 4; u < 17; u += 5) for (let k = -22; k < -8; k += 3) fill(k, 2, u + 2, mix(GLASS_DARK, WHITE, 0.35), u);
+      for (let u = 4; u < 17; u += 5) for (let k = -22; k < -8; k += 3) pane(k, 2, u + 2, mix(GLASS_DARK, WHITE, 0.35), u);
       for (const k of [-24, -16, -8]) fill(k, 1, 32, STONE.base, 26);
       // The crane's mast to the right of the rune stone, its lattice; the jib over the tower, its hook down to a beam.
       for (let u = 1; u <= 40; u++) {

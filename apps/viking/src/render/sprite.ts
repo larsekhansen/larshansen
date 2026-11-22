@@ -38,6 +38,9 @@ export interface Sprite {
   shape: HTMLCanvasElement;
   key: string;
   glow?: HTMLCanvasElement;
+  /** Over a level's own dark (order 32): the glow a pixel further out, and the dark's own pixel between it and the outline. */
+  glowFar?: HTMLCanvasElement;
+  gap?: HTMLCanvasElement;
 }
 const kept = new Map<string, Sprite>();
 const KEPT_MOST = 800;
@@ -155,6 +158,11 @@ export function outlined(draw: () => void, who?: object, rim: string = ENEMY.war
 }
 
 /** A new frame: the outlines noted so far are forgotten. */
+/** For the tests (order 32): the shapes made so far forgotten, so a recording that copies them is not cut by the cache starting over. */
+export function forgetShapes() {
+  kept.clear();
+}
+
 export function freshRings() {
   drawnCount = 0;
 }

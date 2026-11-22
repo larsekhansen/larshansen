@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
-import { DOORWAY, ENEMY, FACADE, GLASS, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, PARADE, ROLES, TRAM, WHITE } from "@larshansen/pixelkit/palette";
+import { DOORWAY, ENEMY, FACADE, GLASS, ICY, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, PARADE, RIVER, ROLES, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { mix } from "@larshansen/pixelkit/paint";
 import * as HILL from "@larshansen/pixelkit/swatches/hill";
 import * as V from "@larshansen/pixelkit/swatches/park";
@@ -26,7 +26,8 @@ const EXPECTED: Record<string, string[]> = {
   akershus: ["fire basket"],
   radhuset: ["lamp square", "rail bars", "ferry", "gondola"],
   slottet: ["barrier", "baluster", "rail tube"],
-  holmenkollen: ["post"],
+  holmenkollen: ["post", "chair"],
+  akerselva: ["log"],
   ekeberg: ["rail tube", "lamp old", "tram"],
   nabolaget: ["lamp old", "plank wall", "rail bars", "post", "tram"],
   vigelandsparken: ["lamp park", "gate pillar", "gate lantern"],
@@ -50,7 +51,10 @@ const OLD: Record<string, string[]> = {
   akershus: [METAL.lampPost, mix(METAL.lampPost, WHITE, 0.3)],
   radhuset: [...lamp, METAL.castIron, PAINT.ferryWhite, PAINT.ferryShade, PAINT.ferryRed, GLASS.pane, WHITE, INK, METAL.pipe, mix(METAL.pipe, WHITE, 0.35), METAL.rail, PAINT.tbane, mix(PAINT.tbane, WHITE, 0.4)],
   slottet: [P.iron, PARADE.russ, INK, mix(MASONRY.worn, INK, 0.1), MASONRY.worn, METAL.castIron],
-  holmenkollen: [METAL.lampPost],
+  // The chairlift's chairs as they were before order 32: a red seat lit on top, the hanger, back and footrest in the cable's grey.
+  holmenkollen: [METAL.lampPost, ICY.rail, mix(ICY.rail, WHITE, 0.4), METAL.wire],
+  // The river's logs as they were before order 32: bark lit on its top, darker fissures, the sawn ends and a ring.
+  akerselva: [RIVER.log, RIVER.logLight, mix(RIVER.log, INK, 0.25), RIVER.logEnd, RIVER.logRing],
   stortinget: [PAINT.shopDoor, PAINT.shopDoorPanel, METAL.brass, DOORWAY.wood],
   ekeberg: [HILL.rail, ...lamp, LAMP, ...tram],
   nabolaget: [...lamp, LAMP, ...tram, PAINT.red, PAINT.redLine, PAINT.trim, PAINT.ochre, PAINT.ochreLine, PAINT.homeDoor, PAINT.homeDoorPanel, METAL.brass, DOORWAY.wood],
