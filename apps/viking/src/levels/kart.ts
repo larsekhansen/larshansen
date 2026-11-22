@@ -11,7 +11,7 @@ import type { Art, LevelDef, SignDef } from "./types";
 // `kartArt.ts`, which the page fetches on its own, so the first script does not carry it.
 //
 // Line 1 runs on a viaduct, thick and red, with a station for each of its ten levels; a branch dips
-// under it to Jernhaugen, the burial mound with the maze; Hjem, the door home, is at the far left.
+// under it to Jernhaugen, the burial mound with the maze; Hjem, the door to the site's front page, is at the far left.
 // Line 2, orange, leaves at Stortinget: it runs under line 1 on a low deck and comes up beside its
 // end, where its own viaduct carries on with six stations. Until Nabolaget is cleared a gate stands
 // across it, with a sign.
@@ -69,7 +69,7 @@ export const lineTwoOpen = (p: Progress) => isOpen(p, ORDER, LINE_2_AT);
 /** The sign by line 2's gate, which says when it opens, and once open, where it goes. */
 export const LINE_2_SIGN = (open: boolean): SignDef => ({
   label: { nb: "Linje 2", en: "Line 2" },
-  lines: open ? { nb: ["Seks stopp, fra Stortinget."], en: ["Six stops, from Stortinget."] } : { nb: ["Åpner når du har klart Vålerenga."], en: ["Opens once Vålerenga is cleared."] }
+  lines: open ? { nb: ["Seks stopp, fra Stortinget."], en: ["Six stops, from Stortinget."] } : { nb: ["Åpner når du har klart Gamle Oslo."], en: ["Opens once Gamle Oslo is cleared."] }
 });
 
 /** How the map is drawn, from `kartArt.ts`: fetched on its own. */

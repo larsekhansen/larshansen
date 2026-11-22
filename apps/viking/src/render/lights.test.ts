@@ -124,7 +124,7 @@ const LIT: Record<string, Record<string, string>> = {
     "lamp alive/props": "the lane's lanterns behind the church",
     "church levels/nabolaget": "the church's arched windows",
     "street levels/nabolaget": "the terrace house's windows",
-    "home levels/nabolaget": "the yellow house: its windows, its door lamp and that lamp's light on its walls",
+    "yellowHouse levels/nabolaget": "the yellow house: its windows, its door lamp and that lamp's light on its walls",
     "streetSign levels/nabolaget": "the street plate's white rule, catching the street's light",
     "letters levels/nabolaget": "the plate's white letters, catching it",
     "tram levels/nabolaget": "the tram's windows",

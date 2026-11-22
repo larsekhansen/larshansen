@@ -54,7 +54,7 @@ const STRINGS = {
     dash: "Rykk",
     locked: "kommer snart",
     runesLeft: (n: number) => (n >= 10 ? "Ti av ti runer." : `${NB_COUNT[n] ?? n} av ti runer. Resten ligger langs linja.`),
-    homeLine: "Ti av ti runer: LARS HANSEN. Velkommen hjem."
+    homeLine: "Ti av ti runer: LARS HANSEN. Oslo, fra ende til annen."
   },
   en: {
     ...SCENE_WORDS.en,
@@ -99,7 +99,7 @@ const STRINGS = {
     dash: "Dash",
     locked: "coming soon",
     runesLeft: (n: number) => (n >= 10 ? "Ten of ten runes." : `${EN_COUNT[n] ?? n} of ten runes. The rest are along the line.`),
-    homeLine: "Ten of ten runes: LARS HANSEN. Welcome home."
+    homeLine: "Ten of ten runes: LARS HANSEN. Oslo, end to end."
   }
 };
 

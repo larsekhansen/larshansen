@@ -23,7 +23,7 @@ Lars before reversing one of his.
 | [0011](0011-levels-on-demand-60kb.md) | Levels load on demand; the first script stays under 60 kB gzipped | planner | holds; enforced by 0035 |
 | [0012](0012-saved-progress.md) | What is saved, under which keys, and how old saves are treated | planner | holds |
 | [0013](0013-plan-implement-review.md) | One session plans and reviews, Opus implements, each batch merges and deploys | Lars | holds |
-| [0014](0014-personal-details-discreetly.md) | Personal details go in quietly; no addresses, nothing explained | Lars | holds |
+| [0014](0014-personal-details-discreetly.md) | Personal details go in quietly; no addresses, nothing explained | Lars | holds; amended by 0055 (no "home" in the tenth level's words) |
 | [0015](0015-solid-header-in-viking.md) | The viking game's header is solid, not frosted | implementer, accepted by planner | holds; Lars has not seen it |
 | [0016](0016-two-languages-dry-voice.md) | Norwegian and English, in a dry voice | earlier work, kept | holds |
 | [0017](0017-game-over-at-a-boss.md) | Game over at a boss goes on from its bench, three lives, the boss whole again | planner (order 12) | holds; adjusts 0008; adjusted by 0033 |
@@ -47,7 +47,7 @@ Lars before reversing one of his.
 | [0035](0035-the-budget-enforced.md) | The build fails if the first script is over 60 kB gzipped | planner (order 17) | holds; enforces 0011 |
 | [0036](0036-drawn-once-and-copied.md) | Stonework and other unchanging drawing is drawn once and copied; `?debug&perf` measures a frame | planner | holds; amended by 0041 |
 | [0037](0037-out-to-the-map-after-a-level.md) | After a level the card has one action, to the map, at the station just cleared; any key, a tap, or six seconds | planner (order 18) | holds |
-| [0038](0038-valerenga.md) | The tenth station is shown as Vålerenga; its id stays `nabolaget` | planner (order 18) | holds |
+| [0038](0038-valerenga.md) | The tenth station is shown as Vålerenga; its id stays `nabolaget` | planner (order 18) | its name superseded by 0055 (Gamle Oslo); the id holds |
 | [0039](0039-colour-says-what-a-thing-is.md) | Colour says what a thing is: roles and their palettes (enemies outlined and a quarter larger, platforms' standing tops, pickups, him, the bosses' "now"), held by a test | planner, Lars (order 18) | holds; adjusts 0023; amended by 0044 (the outline red, the paint yellow, the calm pale) |
 | [0040](0040-felt-at-a-glance.md) | Every event answers at once, where it happened, in its role's colour, with a sound and a still answer under reduced motion; the hold after a hit is the picture's only; things to use marked in one cyan; his rim after dusk | planner (order 19) | holds; builds on 0039 |
 | [0041](0041-off-the-screen-is-not-drawn.md) | What is off the screen is not drawn; the dark in rectangles, not rows; large unchanging pieces kept as strips, alike shapes stamped; scenery added is drawn so | planner (order 20) | holds; amends 0036 |
@@ -64,6 +64,7 @@ Lars before reversing one of his.
 | [0052](0052-the-encore.md) | The encore: with every rune of both lines, one more stop (a stage on the water in Middelalderparken) where Loki is met once; he borrows the three bosses' moves with their tells and answers and poses between them; three hits knock his glamour off and he leaves plain; it gives no rune, counts nothing and gates nothing | planner (order 29) | holds; amends 0050; amended by order 30 (the stop's glow, the club's size, its file fetched ahead) |
 | [0053](0053-without-feels-file.md) | Without `feel`'s file the first script still draws everything in its place, plainly: every hook into `feel`'s file has a plain drawing where its thing stands (Langkaia's props, the bare map's line 2); levels fetched later bring `feel`'s file with them | implementer (order 30) | holds; within 0011, 0035, 0049, 0051 |
 | [0054](0054-lights-after-dark.md) | After dark a thing that gives light is its own colour over the dark (registered as a light where nothing drawn after it dims it), a small warm pool under a lamp at the lane, nothing else glows (an invader's light is its neon glow), light colours warm and off the neon and the roles but by name; held by a census of every scene's lights | planner (order 32) | holds; within 0023, 0044, 0050, 0051 |
+| [0055](0055-what-lars-said.md) | Lars's answers of 22 November: the tenth station is Gamle Oslo and its words lose "home"; the encore has an original glam-rock tune in the game's own synth, Loki at the far end of late-1980s glam in general, and shouted lines of the game's own; a level's difficulty and enemies follow its place | Lars (relayed), carried out in order 34 | holds; supersedes 0038's name; amends 0052 within its limits |
 
 To add one: copy the shape of an existing file, take the next number, add the row here. To
 reverse one: write a new record that says "supersedes 00NN" and mark the old row "superseded by".

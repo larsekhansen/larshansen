@@ -20,3 +20,8 @@ Lars, 2026-11-14, answering the plan page's "You, in the game" questions.
 ## Still open
 The 3D printer in Verkstedet, sign lines of his own, and a use for the old longhouse and stave
 tower were asked on the plan page and not answered.
+
+## Amended by 0055 (order 34, 22 November 2026)
+The tenth level is shown as Gamle Oslo and its words no longer say "home" or that a house is his: Lars asked for no references
+to home, "more of an ode to Oslo" ([0055](0055-what-lars-said.md)). What is drawn (the yellow house, the Pi, the cranes, the
+place names on plates) is as it was, with no new words about it.
