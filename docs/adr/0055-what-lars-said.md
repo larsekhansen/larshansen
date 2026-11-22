@@ -113,3 +113,5 @@ Of the proposals in `apps/viking/tools/review/o34/thematic.md`, one is a drawing
 its back, which say it hurts from above as the spines did, and shades; its natural self white with black ear tips, in the calm outline).
 The hedgehog is as it was at Akerselva, Nordmarka and Ekeberg; Holmenkollen's run files are byte-identical. It waits for Lars's word
 like the rest of the table, and is one word to undo (`look: "hare"`). Nothing else was retuned or moved.
+
+**Reversed in review, the same day.** The planner did not accept it in review: at the game's size it read as a pale blob, and its small spikes said "hurts from above" less clearly than the hedgehog's spines. The hare was taken out again before the merge (the commit and its revert are in the history); Holmenkollen keeps its hedgehog until a hare can be drawn that reads.

@@ -196,7 +196,9 @@ The far cranes' red light at each jib's tip (`#ff5a44`, registered as a lamp's l
 holds every light every level registers: none within 10 of the warning red, and any within 12 named with why (`NAMED_LIGHTS`: "real crane
 lights are red, a pixel each, far off, on a thing that does not hurt"). The hue is kept. ADR 0044 amended.
 
-### 3e. Holmenkollen's hedgehog is a mountain hare: done
+### 3e. Holmenkollen's hedgehog is a mountain hare: built, then taken out in review
+
+The planner did not accept it in review: at the game's size it read as a pale blob, and its small spikes said "hurts from above" less clearly than the hedgehog's spines. The hare was taken out again before the merge (the commit and its revert are in the history); Holmenkollen keeps its hedgehog until a hare can be drawn that reads. What follows describes what was built.
 
 In the hedgehog's place at column 222 (`levels/holmenkollen.ts`): `look: "hare"`, the same kind (spiky), box, patrol, speed and behaviour
 (the def is otherwise as it was), and the same frames (15 x 10, an idle of two, a hop of four, legs on the last row as the hedgehog's were).

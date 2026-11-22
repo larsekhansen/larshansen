@@ -758,8 +758,8 @@ It retunes nothing. What to know:
   before the page had drawn, and `tools/shots.ts --wait` now waits for the page to say it has drawn and names blank pictures; `?debug&perf`
   measures a whole frame while a hit holds the picture; `tools/glance/perf.ts` measures every place in one browser.
 - **Lights near the warning red** are named in the warning test (Bjørvika's crane lights, ADR 0044 amended).
-- **Holmenkollen's hare**: a mountain hare in its winter coat where the hedgehog was, a drawing only (ADR 0055 amended); the planner's
-  reading, waiting for Lars's word with the rest of `o34/thematic.md`.
+- **Holmenkollen's hare**: order 35 drew a mountain hare where the hedgehog was; the planner took it out again in review (it read as
+  a pale blob and its spikes warned less clearly). The hedgehog stands there; the proposal waits with the rest of `o34/thematic.md`.
 - **Unplayed**: none of it has been seen on a phone or at speed.
 
 ## Known weak spots, as of order 16

@@ -193,6 +193,8 @@ of its place: Holmenkollen's hedgehog, which sleeps through the winter. Order 35
 planner's reading, not his word, and a drawing only: the hedgehog is as it was at Akerselva, Nordmarka and Ekeberg, and putting it back at
 Holmenkollen is one word (`look: "hare"` to `"hedgehog"` in `levels/holmenkollen.ts`). Nothing else in that table was carried out.
 
+The planner did not accept it in review: at the game's size it read as a pale blob, and its small spikes said "hurts from above" less clearly than the hedgehog's spines. The hare was taken out again before the merge (the commit and its revert are in the history); Holmenkollen keeps its hedgehog until a hare can be drawn that reads.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.

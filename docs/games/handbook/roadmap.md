@@ -7,10 +7,10 @@ As of 22 November 2026, after order 35 was built (not yet reviewed or live). Cha
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 34, what Lars said (ADR 0055), PR #82; before it orders 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 35, housekeeping and the figures, PR #83; before it orders 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Order 35, housekeeping and the figures, branch `housekeeping` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | 19 % used when order 34 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 23 % used when order 35 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
@@ -21,7 +21,7 @@ test shown to fail on a planted fault; `apps/viking/tools/figures.ts`, a sheet o
 `figures.json` naming each in both languages (the page of every figure, unpublished since order 27, can be rebuilt from it); the encore's
 shouts in a still picture without `&say`; the blank harness pictures found (taken before the page had drawn) and named by `tools/shots.ts`;
 perf at all 275 places in one browser; Bjørvika's crane lights held by name in the warning test; Holmenkollen's hedgehog drawn as a
-mountain hare in its winter coat (the planner's reading of "Also keep enemies thematic", drawing only, easy to undo). Each item, done or
+mountain hare in its winter coat, which the planner took out again in review (it read worse than the hedgehog; the hedgehog stands). Each item, done or
 not, with its measures: `apps/viking/tools/review/o35/after.md`.
 
 **Order 34, what Lars said** (`orders/34-what-lars-said.md`, ADR 0055), live (PR #82): his answers
@@ -79,7 +79,7 @@ Order 34 answered what Lars had said. What is still his: a line for the opening 
 deletion of `landing-game-polish` (in the planner's own session), and his play notes. When he has played, the proposals in
 `apps/viking/tools/review/o34/thematic.md` (difficulty and enemies by place) become an order; until then idea 2 below (tune by play) is the
 biggest gap, and idea 3's checklist now has the tune on it: nobody has heard it. Order 35 carried out one proposal of that table that is a
-drawing only (Holmenkollen's hedgehog, out of its season, is a mountain hare); the rest wait. The page of every figure (resources.md) can
+drawing only (a mountain hare for Holmenkollen's hedgehog) and it was taken out again in review; all of the table waits. The page of every figure (resources.md) can
 be published again from `apps/viking/tools/figures.ts`'s sheets: one sheet a figure, named in both languages, for Lars to comment on.
 
 ## After that: ideas in rough order of value

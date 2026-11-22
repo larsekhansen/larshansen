@@ -80,8 +80,8 @@ enemies belong to where they are met: what lives there, works there or comes to 
 sleeps through the winter; at a station what is found at a station). When a level is tuned, it is tuned toward its place.
 `tools/review/o34/thematic.md` holds every level against this rule (the place, what it is in Oslo, how hard the sloppy player finds it,
 its enemies and whether each belongs) with proposals where they disagree, made before Lars had played: nothing was retuned or moved for
-it. Since order 35 Holmenkollen's one enemy out of its season, a hedgehog in the snow, is a mountain hare in its white winter coat (the
-same box, speed, behaviour and frames: a drawing only; glammed, neon spikes along its back say it hurts from above, as the spines did).
+it. Order 35 tried a mountain hare in its winter coat in place of Holmenkollen's hedgehog (out of its season); the planner took it out
+again in review because it read worse than the hedgehog and signalled "hurts from above" less clearly. A swap must read at least as well.
 
 The encore (order 29, ADR 0052): once every rune of both lines is held, a seventeenth stop appears past the longship at the end
 of line 2, **Middelalderparken**, a small festival stage on the water. It has no rune, opens nothing and counts in no total; it
