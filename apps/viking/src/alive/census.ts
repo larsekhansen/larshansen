@@ -44,8 +44,12 @@ const at = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day"), 
  */
 export const lookName = (e: Enemy, level = "") => naturalName(e.def.look, e.def.kind, level);
 
-/** Every look in every built level, each in every state (the first enemy of each look, in the first level it is met). */
-export async function census(): Promise<Record<string, Census>> {
+/**
+ * Every look in every built level, each in every state (the first enemy of each look, in the first level it is met). With
+ * `everyLevel` (order 35, the figures' page), each look in every level it is met in, in that level's lean, keyed
+ * `<look>@<level>`.
+ */
+export async function census(everyLevel = false): Promise<Record<string, Census>> {
   const out: Record<string, Census> = {};
   const was = { ...view };
   Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 4000, h: 4000, reduced: false });
@@ -55,7 +59,8 @@ export async function census(): Promise<Record<string, Census>> {
       const p = newPlay(def, { shield: SHIELD_RULES, hasShield: def.rune > 10 });
       for (const e0 of p.enemies) {
         const name = lookName(e0, def.id);
-        if (out[name]) continue;
+        const key = everyLevel ? `${name}@${def.id}` : name;
+        if (out[key]) continue;
         // Where it starts in its level (a jumper's water, a thrower's perch), facing right, not calm.
         const e: Enemy = { ...e0, def: { ...e0.def }, prevY: e0.y, dir: 1, calm: undefined, n: e0.def.look === "swan" ? 0 : e0.def.look === "guard" ? 1 : e0.n };
         const home = { x: e.x, y: e.y };
@@ -147,7 +152,7 @@ export async function census(): Promise<Record<string, Census>> {
           drawBreak(broken, age, false);
           return { name: `${name}, ${["hit", "turned", "leaving"][k]}`, rects };
         });
-        out[name] = { level: def.id, kind: e.def.kind, idle, move, windup, death, natural, marks: marked.rects.length ? marked : null, glammed: glammedStill };
+        out[key] = { level: def.id, kind: e.def.kind, idle, move, windup, death, natural, marks: marked.rects.length ? marked : null, glammed: glammedStill };
       }
     }
   } finally {

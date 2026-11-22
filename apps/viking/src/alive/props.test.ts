@@ -10,6 +10,7 @@ import * as K from "@larshansen/pixelkit/swatches/sledge";
 import { BUILT, loadLevel } from "../levels/index";
 import { areaRecorder, deltaE, levelPaint, parseColour } from "../render/fields";
 import { target } from "@larshansen/pixelkit/paint";
+import { FIGURE_NAMES, figureKinds } from "./figures";
 import { PROPS, panelDoor, type Stuff } from "./props";
 
 // Order 28 (ADR 0051): the last flat things. Every prop at arm's length that a level draws is a textured piece of the props
@@ -99,9 +100,13 @@ async function drawEveryLevel() {
   return used;
 }
 
+/** The walk over every level, made by whichever test asks first (order 35: the tests after the first read what it found, and asked alone they found nothing and passed). */
+let walking: ReturnType<typeof drawEveryLevel> | null = null;
+const walked = () => (walking ??= drawEveryLevel());
+
 describe("the last flat things (order 28)", () => {
   test("every level draws its lamp posts, railings, walls, doors and boats from the props kit, and no level draws the kit's flat lamp post or panel door", async () => {
-    const used = await drawEveryLevel();
+    const used = await walked();
     const missing: string[] = [];
     for (const [id, kinds] of Object.entries(EXPECTED)) for (const k of kinds) if (!used[id]?.has(k)) missing.push(`${id}: ${k}`);
     expect(missing).toEqual([]);
@@ -113,13 +118,15 @@ describe("the last flat things (order 28)", () => {
     expect(flat).toEqual([]);
   }, 120_000);
 
-  test("every level that draws a prop has its old drawing's colours to stand against", () => {
+  test("every level that draws a prop has its old drawing's colours to stand against", async () => {
+    await walked();
     const drawing = Object.entries(inksOf).filter(([, inks]) => inks.size).map(([id]) => id);
     expect(drawing.length).toBeGreaterThanOrEqual(11);
     expect(drawing.filter((id) => !OLD[id])).toEqual([]);
   });
 
-  test("no prop is neon: every colour a prop is drawn in stands 8 or more off the glamour's family", () => {
+  test("no prop is neon: every colour a prop is drawn in stands 8 or more off the glamour's family", async () => {
+    await walked();
     const neon: string[] = [];
     for (const [kind, inks] of Object.entries(inksOf))
       for (const c of inks)
@@ -130,7 +137,8 @@ describe("the last flat things (order 28)", () => {
     expect(neon).toEqual([]);
   });
 
-  test("no level's props come nearer any role's colours than its flat props did, or than 10", () => {
+  test("no level's props come nearer any role's colours than its flat props did, or than 10", async () => {
+    await walked();
     const near: string[] = [];
     const table: string[] = [];
     for (const [id, inks] of Object.entries(inksOf)) {
@@ -160,7 +168,8 @@ describe("the last flat things (order 28)", () => {
   // chairs had a back of red slats 6.1 from it). Every piece of every prop, wherever it stands, counted from its own pixels: no more
   // than a few within 10 of the warning red. What carries him is held as the page shows it, with the paint over its top, by
   // `render/warning.test.ts` (the chair's seat is red under the paint).
-  test("no prop fills more than a few pixels within 10 of the warning red (what carries him: render/warning.test.ts)", () => {
+  test("no prop fills more than a few pixels within 10 of the warning red (what carries him: render/warning.test.ts)", async () => {
+    await walked();
     const CARRIES = new Set(["chair", "ferry", "gondola", "rowboat", "log", "tram", "pontoons", "sauna cabin"]);
     const wrong: string[] = [];
     const table: string[] = [];
@@ -174,7 +183,8 @@ describe("the last flat things (order 28)", () => {
     expect(wrong).toEqual([]);
   });
 
-  test("every material is three to five tones of one hue, its contrast below the figures' (order 26's band)", () => {
+  test("every material is three to five tones of one hue, its contrast below the figures' (order 26's band)", async () => {
+    await walked();
     const figures = Math.min(...[ENEMY.plum, ENEMY.orange, ENEMY.poison, ENEMY.pink, ENEMY.white].map((b) => deltaE(rgb(b), rgb(ENEMY.line))), deltaE(rgb(ROLES.him.tunic), rgb(ROLES.him.skin)));
     const wrong: string[] = [];
     const table: string[] = [];
@@ -187,5 +197,16 @@ describe("the last flat things (order 28)", () => {
     }
     console.log(`The props' materials (the figures' contrast ${figures.toFixed(1)}):\n  ${table.sort().join("\n  ")}`);
     expect(wrong).toEqual([]);
+  });
+
+  // Order 35: every figure on one page. `tools/figures.ts` draws a sheet of every prop kind a level draws, named as a player would
+  // say it in both languages (`alive/figures.ts`); a kind drawn with no name would come out unnamed.
+  test("every prop kind a level draws has its name in both languages for the figures' page", async () => {
+    const used = await walked();
+    const kinds = await figureKinds(used);
+    const unnamed = kinds.filter((f) => f.group === "prop" && !FIGURE_NAMES[f.file]?.en).map((f) => `${f.kind} (${f.levels.join(", ")})`);
+    expect(unnamed).toEqual([]);
+    // And the doors drawn from the scene's doors, which the walk has none of.
+    expect(FIGURE_NAMES["prop-panel door"]).toBeDefined();
   });
 });

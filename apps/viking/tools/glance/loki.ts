@@ -6,17 +6,22 @@
 import { pixels } from "../../src/alive/frames";
 import { LOKI_FRAME, lokiFrames } from "../../src/render/loki";
 
-const fs = lokiFrames();
-const w = LOKI_FRAME.w;
-const h = LOKI_FRAME.h;
-const grid = (f: (typeof fs)[number]) => {
-  const px = Array.from({ length: h }, () => Array<string>(w).fill(""));
-  pixels(f, 1, w, (c, r, colour) => {
-    if (r >= 0 && r < h && c >= 0 && c < w) px[r][c] = colour;
-  });
-  return px;
-};
-const stage = (n: string) => (n.endsWith("plain") || n.includes(", plain") || n.startsWith("Loki, plain") ? "plain" : n.split(", ").at(-1)!);
-const out: Record<string, { name: string; w: number; h: number; x0: number; y0: number; px: string[][] }[]> = {};
-for (const f of fs) (out[`Loki, ${stage(f.name)}`] ??= []).push({ name: f.name.replace(/^Loki, /, ""), w, h, x0: 0, y0: 0, px: grid(f) });
-console.log(JSON.stringify(out));
+/** Loki's frames by stage, as the sheets have them. */
+export function lokiSheets(): Record<string, { name: string; w: number; h: number; x0: number; y0: number; px: string[][] }[]> {
+  const fs = lokiFrames();
+  const w = LOKI_FRAME.w;
+  const h = LOKI_FRAME.h;
+  const grid = (f: (typeof fs)[number]) => {
+    const px = Array.from({ length: h }, () => Array<string>(w).fill(""));
+    pixels(f, 1, w, (c, r, colour) => {
+      if (r >= 0 && r < h && c >= 0 && c < w) px[r][c] = colour;
+    });
+    return px;
+  };
+  const stage = (n: string) => (n.endsWith("plain") || n.includes(", plain") || n.startsWith("Loki, plain") ? "plain" : n.split(", ").at(-1)!);
+  const out: Record<string, { name: string; w: number; h: number; x0: number; y0: number; px: string[][] }[]> = {};
+  for (const f of fs) (out[`Loki, ${stage(f.name)}`] ??= []).push({ name: f.name.replace(/^Loki, /, ""), w, h, x0: 0, y0: 0, px: grid(f) });
+  return out;
+}
+
+if (import.meta.main) console.log(JSON.stringify(lokiSheets()));
