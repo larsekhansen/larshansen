@@ -147,20 +147,63 @@ Then the reason for it all:
   (vanity, sulking, prizes, money), never at looks, health, family or supporters. He was told
   the site and repository are public and that every line will come back as a list to reword.
 
+## Lars's answers, 22 November 2026 (relayed by his other session)
+
+He answered the questions below through a review page and another session that relayed his text. Order 34
+([`../orders/34-what-lars-said.md`](../orders/34-what-lars-said.md)) built the answers that were plain and safe to build.
+His words as typed:
+
+| Question | He said | What came of it |
+|---|---|---|
+| Edge forgiveness (10, 6 or the rule) | "planner's call" | Stays at 10 until he has played. |
+| "just take me out again" | "no Again; To the map only (as built)" | Closed: ADR 0037 stands. |
+| The tenth station | "rename it Gamle Oslo". "I don't want references to home. It's more of an ode to Oslo. Oslo is my home. Not just gamle Oslo." | Order 34: the level is shown as Gamle Oslo; its words lose "home" (ADR 0055). Its id stays `nabolaget`. |
+| `post/` | "leave post/ out of the repository" | Closed: it stays untracked. |
+| `landing-game-polish` | "delete" | Still open: it waits for his word in the planner's own session. |
+| Line 2's difficulty | "keep line 2 harder". "Keep the difficulty thematic. Is it a touch part of town? Hard. Big event? Can also be hard. Less so, lean easy. Also keep enemies thematic." (The relaying session reads "touch" as "tough".) | Order 34: the rule is in DESIGN and ADR 0055; a table of every level against it, with proposals only, is `apps/viking/tools/review/o34/thematic.md`. Nothing retuned until he has played. |
+| The opening card | "as live". "I do like the live one. Missing some kind of reason why loki put a glamour on them, and the wordplay." | Still open: he suggested a line, but who speaks it is unclear, so it waits for him. The card is as live. |
+| The encore | Keep it; difficulty "leave it as it is"; "Middelalderparken is right". "But the music has to be something like glam rock. And Lokis outfit should be Poison's most extreme neon glam era. And some fitting, thematic, glammy song or just glsmmy text. But ideally there should be music" | Order 34: an original glam-rock tune in the game's own synth, Loki pushed to the far end of late-1980s glam in general, and shouted lines of the game's own (ADR 0052 amended, ADR 0055). Anything closer to one real band's look than "the general style" waits for a word from him directly, and is not built. |
+| Vålerenga's lane | "restore the dark" | Done in order 33. |
+| The Pi and the cranes | "keep them" | As drawn. |
+| Harmless things in the warning red | Chairs: "painted steel". "Scenery in the kit's red: move it off the red too" | The chairs were done in order 33; the scenery in order 34 (ADR 0044 amended). |
+| The rune's flight with reduced motion | "let it fly (as live)" | Closed: it flies. |
+| The next rounds | "carry on as planned" | As the roadmap says. |
+| His play notes | not answered | He has not played yet. |
+
+### The tenth station's new lines, and two others beside each (order 34)
+
+Each line is the level's own (`apps/viking/src/levels/nabolaget.ts`, and the card's line in `apps/viking/src/game/i18n.ts`);
+the story's lines in `game/story.ts` above the encore's block did not change. Shown first, then two others to choose from.
+
+| Where | As built | Other way 1 | Other way 2 |
+|---|---|---|---|
+| The banner's second line (was "Homeward through Gamle Oslo") | "A winter night on the east side" / "Vinternatt på østkanten" | "Over the roofs of the old east side" / "Over takene på den gamle østkanten" | "An evening walk over the hill" / "Kveldstur over bakken" |
+| Where in Oslo (was "From Vålerenga home to Kværnertoppen") | "From Vålerenga's wooden houses over the hill" / "Fra trehusene på Vålerenga, over bakken" | "From Vålerenga over the church to Kværnerdalen" / "Fra Vålerenga over kirka til Kværnerdalen" | "Rooftops, a spire and Kruttverket" / "Tak, et tårn og Kruttverket" |
+| The plough wakes (was "The last thing between you and the door home.") | "The last thing between you and a quiet evening." / "Det siste mellom deg og en rolig kveld." | "The last thing between you and the end of line 1." / "Det siste mellom deg og enden av linje 1." | "The last thing still standing on the east side." / "Det siste som står igjen på østkanten." |
+| The plough beaten (was "The way home is clear.") | "The plough parks. The street is clear, for once." / "Brøytebilen parkerer. Gata er fri, for en gangs skyld." | "The plough parks. Gamle Oslo is clear." / "Brøytebilen parkerer. Gamle Oslo er fri." | "The plough parks. Someone will have to dig it out tomorrow." / "Brøytebilen parkerer. Noen får måke den fram i morgen." |
+| The card with the tenth rune (was "Welcome home.") | "Ten of ten runes: LARS HANSEN. Oslo, end to end." / "Ti av ti runer: LARS HANSEN. Oslo, fra ende til annen." | "… The name runs right across Oslo." / "… Navnet går tvers over Oslo." | "… Oslo, every stop of it." / "… Oslo, hvert eneste stopp." |
+
+The doors at the level's end and at the line map's far left keep the label "Hjem" / "Home": they lead to the site's front page.
+
 ## Questions waiting for Lars
 
-1. Edge forgiveness: 10, 6, or the rule (above).
-2. "just take me out again": remove Again (built) or add it?
-3. Vålerenga, or "Gamle Oslo"?
-4. Commit `post/gemini-gamedesign-nov-16-2026` or leave it out of the repository?
-5. `landing-game-polish`: a local branch not merged into `main`, from before this work. Keep or
-   delete?
-6. Line 2's difficulty: the reviews think it is harder than line 1 by more than intended.
+1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.
+2. ~~"just take me out again": remove Again (built) or add it?~~ Answered: "no Again; To the map only (as built)".
+3. ~~Vålerenga, or "Gamle Oslo"?~~ Answered: "rename it Gamle Oslo" (order 34).
+4. ~~Commit `post/gemini-gamedesign-nov-16-2026` or leave it out of the repository?~~ Answered: "leave post/ out of the
+   repository".
+5. `landing-game-polish`: a local branch not merged into `main`, from before this work. He said "delete" (22 November,
+   relayed); it waits for his word in the planner's own session before anyone deletes it.
+6. ~~Line 2's difficulty: the reviews think it is harder than line 1 by more than intended.~~ Answered: "keep line 2 harder",
+   with the rule that difficulty and enemies follow the place (DESIGN, ADR 0055; the proposals in
+   `apps/viking/tools/review/o34/thematic.md` wait until he has played).
 7. The glamour's wording: every line is in `apps/viking/src/game/story.ts` (both languages, with two or three other openings
    and endings beside them) and in order 27's hand-back. The man who paid is named twice (the opening card, the map's sign).
+   22 November: the card "as live", but "Missing some kind of reason why loki put a glamour on them, and the wordplay". He
+   suggested a line; who speaks it is unclear, so it waits for him.
 8. Everything in each hand-back's "for Lars to judge" list (orders 21 to 25): they are
-   collected in [`roadmap.md`](roadmap.md).
-9. The encore's words (order 29, ADR 0052): every line is in the encore's block at the end of
+   collected in [`roadmap.md`](roadmap.md). Not answered: he has not played yet.
+9. The encore's words (order 29, ADR 0052): 22 November: keep it, "leave it as it is", "Middelalderparken is right". Every line is in the encore's block at the end of
    `apps/viking/src/game/story.ts`, both languages, with one or two other ways beside each (`ENCORE_ALTERNATIVES`). As shown:
    - Banner: "Loki has one more song" / "Loke har ett nummer til".
    - As he wakes: "Good evening, Oslo! / One more, then you can all go home." / "God kveld, Oslo! / Ett nummer til, så kan dere
@@ -174,4 +217,9 @@ Then the reason for it all:
      igjen. Oslo går hjem, vanlig og ganske fornøyd."
    The man who paid is not named, and neither the invoice nor the client is mentioned. Also for him: the place (Middelalderparken,
    because the park held the summer festival for years and the water mirror is the old shore), and whether the encore should
-   be easier or harder (the sloppy player wins it every time).
+   be easier or harder (the sloppy player wins it every time). Answered 22 November: the place and the difficulty stay; the
+   words are kept, and he wants glam-rock music, a more extreme glam outfit and glammy words (order 34, items 10 and 11).
+10. The tenth station's new lines (order 34): the table above, one built and two others beside each.
+11. The encore's music, Loki's outfit and the shouted lines (order 34): how to hear the tune is in
+    `apps/viking/tools/review/o34/after.md` and [`resources.md`](resources.md); the shouted lines and their alternatives are
+    in the encore's block of `game/story.ts` (`ENCORE`, `ENCORE_ALTERNATIVES`) and in the same `after.md`.
