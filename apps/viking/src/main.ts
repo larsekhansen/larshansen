@@ -577,6 +577,19 @@ async function enterMaze() {
       aids.stepped(maze, params, input, { driver: steer, el: stage });
       showMazeHud();
       if (params.has("perf")) aids.perf(maze, help, params);
+      // `&out[&after=N]` (order 36): then out of the mound by its own way out (Esc), and N steps of what he comes back to,
+      // drawn once: the way back to the map or into Nordmarka, and the feather's moment, in a picture.
+      if (params.has("out")) {
+        window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape", key: "Escape" }));
+        // Gone in through a door, the way out is the browser's Back, which answers later (or, in a frame that cannot go
+        // back, never: the line says so).
+        if (mode === "maze") {
+          const back = await Promise.race([new Promise<boolean>((done) => window.addEventListener("hashchange", () => setTimeout(() => done(true), 0), { once: true })), new Promise<boolean>((done) => setTimeout(() => done(false), 3000))]);
+          if (!back) help.textContent = `out: Back did not answer (history ${history.length}, ${location.hash})`;
+        }
+        for (let i = Number(params.get("after")) || 0; i > 0; i--) stepOnce();
+        still();
+      }
       aids.drawn();
     }
   } catch {

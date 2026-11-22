@@ -135,6 +135,24 @@ export function afterStart(params: URLSearchParams, frame: (whole?: boolean) => 
 }
 
 function begin(params: URLSearchParams, frame: (whole?: boolean) => void, help: HTMLElement): Promise<unknown> | void {
+  // `?debug&walkin=<steps>` (order 36): once the page has loaded, he holds up for that many steps where he stands, as a player
+  // at a door would, long after the page came: through Nordmarka's mound into the maze, whose own aids (`steps`, `out`,
+  // `after`) say when the picture is drawn. (Gone through at load, the address's change replaces the page's entry in the
+  // history, so the maze's way out, Back, has nowhere to go: no player is at a door then.)
+  if (params.has("walkin"))
+    return new Promise<never>(() => {
+      const go = () => {
+        const g = (window as unknown as { __game: Game }).__game;
+        for (let i = Number(params.get("walkin")) || 0; i > 0; i--) {
+          g.input.hold("up", true);
+          g.step();
+        }
+        g.input.hold("up", false);
+        g.input.endStep();
+      };
+      if (document.readyState === "complete") setTimeout(go, 0);
+      else window.addEventListener("load", () => setTimeout(go, 0), { once: true });
+    });
   if (params.has("strip")) return strip(params, help).catch((e) => (help.textContent = `strip: ${e}`));
   // `?debug&fall=<steps>[&gold]` (order 25): the maze's feather floating down onto him, that many steps into its fall (of
   // a hundred), for a picture of a moment that otherwise comes only on the way out of the maze.

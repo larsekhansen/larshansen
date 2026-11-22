@@ -265,7 +265,7 @@ export function drawBright(f: Frame) {
     const flare = age !== undefined && age < 6 && !view.reduced;
     R(o.x + 1, o.y + STONE_H, STONE_W, 1, shade(P.moundEarth, 0.45)); // its shadow, down and to the right of it
     R(o.x + STONE_W, o.y + 3, 1, STONE_H - 3, shade(P.moundEarth, 0.3));
-    put(flare ? STONES.flare : s.lit ? STONES.lit : STONES.unlit, o.x, o.y);
+    kept(flare ? STONES.flare : s.lit ? STONES.lit : STONES.unlit, o.x, o.y);
     if (age !== undefined && !view.reduced) ring(o.x + STONE_W / 2, o.y + STONE_H / 2, 5 + age * 0.7, age / FLASH.stone, "159, 227, 255");
   });
 
@@ -292,15 +292,29 @@ function corners(x: number, y: number, w: number, h: number) {
   R(x + w - 1, y + h - 3, 1, 3, c);
 }
 
-/** A figure's frame with a one-pixel dark line round it, so it stands out from the floor (a thing to take, the dweller). */
+/** A figure's frame with a one-pixel dark line round it, so it stands out from the floor (a thing to take, the dweller): kept as a piece. */
+const outlinedGrids = new Map<HimFrame, string[][]>();
 function outlinedFrame(f: HimFrame, x: number, y: number) {
-  const cells = new Set<string>();
-  pixelsOf(f, 1, f.x1, (c, r) => cells.add(`${c},${r}`));
-  for (const k of cells) {
-    const [c, r] = k.split(",").map(Number);
-    for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) if (!cells.has(`${c + dx},${r + dy}`)) R(x + c + dx, y + r + dy, 1, 1, OUTLINE);
+  let grid = outlinedGrids.get(f);
+  if (!grid) {
+    const w = f.x1 + 2;
+    const h = f.y1 + 2;
+    grid = Array.from({ length: h }, () => Array<string>(w).fill(""));
+    pixelsOf(f, 1, f.x1, (c, r, colour) => (grid![r + 1][c + 1] = colour));
+    for (let r = 0; r < h; r++)
+      for (let c = 0; c < w; c++)
+        if (!grid[r][c] && [[-1, 0], [1, 0], [0, -1], [0, 1]].some(([dx, dy]) => grid![r + dy]?.[c + dx] && grid![r + dy][c + dx] !== OUTLINE)) grid[r][c] = OUTLINE;
+    outlinedGrids.set(f, grid);
   }
-  put(f, x, y);
+  const g = grid;
+  piece(`outlined:${f.name}`, x - 1, y - 1, g[0].length, g.length, (px, py) => g[py][px]);
+}
+
+/** A figure's frame kept as a piece and copied (facing right). */
+function kept(f: HimFrame, x: number, y: number) {
+  const cells = new Map<string, string>();
+  pixelsOf(f, 1, f.x1, (c, r, colour) => cells.set(`${c},${r}`, colour));
+  piece(`frame:${f.name}`, x, y, f.x1, f.y1, (px, py) => cells.get(`${px},${py}`) ?? "");
 }
 
 /**
