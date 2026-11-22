@@ -7,15 +7,15 @@ As of 22 November 2026, after order 36 was built (not yet reviewed or live). Cha
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 35, housekeeping and the figures, PR #83 (built, reviewed and merged on 22 November); before it orders 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 36, the maze catches up, PR #84 (built, reviewed and merged on 22 November); before it orders 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Order 36, the maze catches up, branch `the-maze-catches-up` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 23 % used when order 35 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 27 % used when order 36 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 36, the maze catches up** (`orders/36-the-maze-catches-up.md`, ADR 0056), built on branch `the-maze-catches-up`, not yet reviewed.
+**Order 36, the maze catches up** (`orders/36-the-maze-catches-up.md`, ADR 0056), built on branch `the-maze-catches-up`, reviewed by the planner on 22 November (pictures looked at, all checks run again) and merged as PR #84.
 Idea 8: the maze in the game's grain and in the hand, its rules unchanged step for step. Looked at first (`apps/viking/tools/review/o36/before.md`);
 one stepped harness for both pages; him from the fjord's own sheet (moved into the kit) standing on the mound's floor with a torch; the mound
 redrawn as its own iron-bound place (lining with an iron band on every face, packed earth, the dark hill, the pad, the doorways, the stones,
