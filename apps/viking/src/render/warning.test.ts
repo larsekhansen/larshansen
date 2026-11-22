@@ -53,6 +53,16 @@ const NAMED_SCENERY: Record<string, string> = {
 };
 
 type Ink = { hex: string; near: boolean } | null;
+/**
+ * The lights the levels register within this of the warning red (CIEDE2000) must be named here, and none may come within
+ * `NEAR` (order 35: Bjørvika's crane lights stood 10.3 off it, outside the test by luck; now by name). After dusk a light is its
+ * own colour over the dark (ADR 0054), so a red light reads as red as any fill.
+ */
+const CLOSE = 12;
+const NAMED_LIGHTS: Record<string, string> = {
+  "bjorvika #ff5a44": "the red light at each far crane's jib tip: real crane lights are red, a pixel each, far off, on a thing that does not hurt (10.3 off the warning red: the hue kept, order 35)"
+};
+
 /** Each fill colour once, under each haze: its hex as drawn, and whether it is within 10 of the warning red as seen (null: see-through, not counted). */
 const INKS = new Map<string, Map<string, Ink>>();
 /** The wash over what is drawn now: how far toward the air, and the air (order 34; the page's `pass` with a haze); and its colours (order 35: looked up once a wash, not a key built on every fill). */
@@ -152,6 +162,8 @@ function both(a: ReturnType<typeof raster>, b: ReturnType<typeof raster>): Canva
 }
 
 type Most = Map<string, { n: number; at: string; who: Set<string> }>;
+/** The lights a level registers within `CLOSE` of the warning red: by colour, how far off, and how many places register one. */
+type Lit = Map<string, { d: number; n: number }>;
 
 /**
  * Every view of a level by day, walked once for both tests (order 35; each walked it on its own before): the most pixels a
@@ -159,7 +171,7 @@ type Most = Map<string, { n: number; at: string; who: Set<string> }>;
  * the ground behind and under what he meets, washed by its layer's haze, what he meets only covering it (`scenery`). What he
  * meets is drawn once, onto both.
  */
-function nearRed(def: LevelDef): { things: Most; scenery: Most } {
+function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit } {
   const play = newPlay(def, {});
   const map = play.map;
   const sky = skyOf(def, "day");
@@ -167,7 +179,7 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most } {
   Object.assign(view, { w: 320, h: 200, k: 1, reduced: true });
   const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
   const art = def.art;
-  const most = { things: new Map() as Most, scenery: new Map() as Most };
+  const most = { things: new Map() as Most, scenery: new Map() as Most, lights: new Map() as Lit };
   const horizon = map.height - 4 * TILE - 34;
   const haze = hazeOf(def);
   const air = parseColour(airOf(def, "day"))!.rgb;
@@ -229,6 +241,16 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most } {
         met.counting(false);
         def.carriers.forEach((d) => carrierShown(d, 0) && standTop(carrierDrawn(d, 0, 1).x, carrierDrawn(d, 0, 1).y, d.w, "moves", false, 0));
         def.timed.forEach((l) => timedPhase(0, l) !== "off" && standTop(l.x, l.y, l.w, "gives", false));
+        // The lights the view registered, by their own colour (a lamp's yellow or a window's when they have none).
+        for (const l of lights) {
+          const c = l.color && parseColour(l.color);
+          if (!c) continue;
+          const d = deltaE(c.rgb, RED);
+          if (d >= CLOSE) continue;
+          const key = `#${c.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+          const had = most.lights.get(key) ?? most.lights.set(key, { d, n: 0 }).get(key)!;
+          had.n++;
+        }
         lights.length = 0;
         add(most.scenery, behind, `${x},${y}`);
         add(most.things, met, `${x},${y}`);
@@ -287,5 +309,19 @@ describe("harmless things keep off the warning red (order 33)", () => {
     console.log(`Scenery and ground within ${NEAR} of the warning red, the most of each colour in a view of 320 x 200:\n  ${table.join("\n  ")}`);
     expect(wrong).toEqual([]);
     expect(Object.keys(NAMED_SCENERY).filter((k) => !used.has(k))).toEqual([]);
+  }, 300_000);
+
+  test(`no light a level registers is within ${NEAR} of the warning red, and those within ${CLOSE} are named (order 35)`, async () => {
+    const wrong: string[] = [];
+    const used = new Set<string>();
+    for (const st of [...BUILT, { id: "encore" }])
+      for (const [c, l] of (await walked(st.id)).lights) {
+        const key = `${st.id} ${c}`;
+        if (l.d < NEAR) wrong.push(`${key}: ${l.d.toFixed(1)} from the warning red`);
+        else if (NAMED_LIGHTS[key]) used.add(key);
+        else wrong.push(`${key}: ${l.d.toFixed(1)} from the warning red, and not named`);
+      }
+    expect(wrong).toEqual([]);
+    expect(Object.keys(NAMED_LIGHTS).filter((k) => !used.has(k))).toEqual([]);
   }, 300_000);
 });
