@@ -841,8 +841,11 @@ function street(v: View, p: Plough | null) {
   home(v);
 }
 
-/** The shirt on the line (order 33): the kit's washing red, darker, 13.4 off the warning red (it was 7.7: ADR 0044, `render/warning.test.ts`). */
-const SHIRT = mix(WINTER.shirt, INK, 0.3);
+/**
+ * The shirt on the line (order 33): the kit's washing red, lighter, 14.5 off the warning red (it was 7.7: ADR 0044,
+ * `render/warning.test.ts`) and further off the red house's planks behind it (19.8; a darker red vanished against them).
+ */
+const SHIRT = mix(WINTER.shirt, WHITE, 0.2);
 /** Washing on the line: a shirt, a sheet, two socks, swinging a little. */
 function washing(x: number, y: number, t: number) {
   const s = view.reduced ? 0 : Math.round(Math.sin(t * 0.05));
