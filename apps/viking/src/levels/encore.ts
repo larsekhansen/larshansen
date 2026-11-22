@@ -8,6 +8,7 @@ import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
 import { ENCORE as WORDS } from "../game/story";
 import { LOKI_STEPS, lokiBoss, type Loki, type LokiDef } from "../game/loki";
+import { encoreMusic } from "../game/tune";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLoki, drawRing, drawWave } from "../render/loki";
@@ -342,8 +343,15 @@ export const ENCORE: LevelDef = {
     miss: { nb: WORDS.nb.miss, en: WORDS.en.miss },
     missClub: { nb: WORDS.nb.missClub, en: WORDS.en.missClub },
     missCharge: { nb: WORDS.nb.missCharge, en: WORDS.en.missCharge },
-    missBite: { nb: WORDS.nb.missBite, en: WORDS.en.missBite }
+    missBite: { nb: WORDS.nb.missBite, en: WORDS.en.missBite },
+    // Shouted while he struts, in time with the music (order 34): the page shows the one `music` says is up.
+    shout1: { nb: WORDS.nb.shout1, en: WORDS.en.shout1 },
+    shout2: { nb: WORDS.nb.shout2, en: WORDS.en.shout2 },
+    shout3: { nb: WORDS.nb.shout3, en: WORDS.en.shout3 },
+    shout4: { nb: WORDS.nb.shout4, en: WORDS.en.shout4 }
   },
+  // His tune (order 34, ADR 0055): `game/tune.ts`.
+  music: encoreMusic(),
   // The ending card's line (order 29): no runes to count here.
   cardLine: { nb: () => WORDS.nb.ending, en: () => WORDS.en.ending },
   art: {

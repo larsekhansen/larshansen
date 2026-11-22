@@ -232,12 +232,19 @@ function surfaceRow(c: number) {
 /** Ice: a glassy blue sheet with streaks of light and a crack, over snow (order 26). */
 const ICE_SHEET: Grain = { name: "hk-ice", kind: "ice", ramp: [ICY.iceDark, mix(ICY.ice, ICY.iceDark, 0.4), ICY.ice, ICY.iceLight], accent: { snow: mix(SNOW.lying, ICY.groove, 0.4), snowShade: ICY.groove } };
 
-/** A red rail: the padded fence of a ski course, as high as a tile, that stops a slide. */
+/**
+ * The ski course's padding (order 34; ADR 0044 amended, Lars: "Scenery in the kit's red: move it off the red too"): blue, as a
+ * course's padded fences often are, where it was the kit's red, 6.1 from the warning red. Its tones leaning a little to teal, off
+ * his tunic: the face 14.7 off every role, its lit top 13.6, its shade 12.8 (`render/warning.test.ts`, `render/palette.test.ts`).
+ */
+const PADDING = { face: "#3384b0", lit: "#7fb0cc", shade: "#2a6a8c" };
+
+/** A padded rail: the fence of a ski course, as high as a tile, that stops a slide. */
 function railTile(x: number, y: number) {
-  R(x + 1, y + 2, 14, 13, ICY.rail);
-  R(x + 1, y + 2, 14, 1, mix(ICY.rail, WHITE, 0.4));
+  R(x + 1, y + 2, 14, 13, PADDING.face);
+  R(x + 1, y + 2, 14, 1, PADDING.lit);
   for (let k = 0; k < 14; k += 4) R(x + 1 + k, y + 7, 2, 4, WHITE);
-  R(x + 1, y + 14, 14, 1, mix(ICY.rail, INK, 0.35));
+  R(x + 1, y + 14, 14, 1, PADDING.shade);
   R(x + 2, y + 15, 2, 1, ICY.steelDark);
   R(x + 12, y + 15, 2, 1, ICY.steelDark);
 }
@@ -348,10 +355,10 @@ function jump(v: View) {
     if (x % 40 < 3) R(x, y + 8, 1, foot - y - 8, ICY.steelShade);
     if (x % 40 === 20) for (let k = y + 8; k < foot; k += 2) R(x + Math.floor((k - y) / 4) % 20 - 10, k, 1, 1, ICY.steelShade);
   }
-  R(KIDS_LIP.x - 3, KIDS_LIP.y - 1, 4, 6, ICY.rail);
-  // The lip, marked in red, and the green of the take-off table's edge.
-  R(LIP.x - 3, LIP.y - 1, 4, 9, ICY.rail);
-  R(LIP.x - 3, LIP.y - 1, 4, 1, mix(ICY.rail, WHITE, 0.4));
+  R(KIDS_LIP.x - 3, KIDS_LIP.y - 1, 4, 6, PADDING.face);
+  // The lip, marked in the padding's blue (it was the kit's red), and the green of the take-off table's edge.
+  R(LIP.x - 3, LIP.y - 1, 4, 9, PADDING.face);
+  R(LIP.x - 3, LIP.y - 1, 4, 1, PADDING.lit);
   // The landing hill and the rise at the end of the outrun: packed snow along the slope.
   for (const ramp of [DOWN, HILL, RISE]) {
     const xs = ramp.points.map((p) => p[0]);

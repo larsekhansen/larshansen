@@ -133,6 +133,15 @@ export interface EncoreWords {
   missBite: string;
   /** The ending card's line, after the time. */
   ending: string;
+  /**
+   * Shouted while he struts, in time with the music (order 34: Lars wanted "some fitting, thematic, glammy song or just glsmmy
+   * text"): what a glam front man shouts at a crowd, about hair, lights and the night, and Oslo's weather spoiling it. A line
+   * at a time, in turn, on a bar's downbeat (`game/tune.ts`), never over a tell. Words of the game's own, sung to no real song.
+   */
+  shout1: string;
+  shout2: string;
+  shout3: string;
+  shout4: string;
 }
 
 export const ENCORE: Record<"nb" | "en", EncoreWords> = {
@@ -147,7 +156,11 @@ export const ENCORE: Record<"nb" | "en", EncoreWords> = {
     missClub: "The troll's club, in neon.\nJump as it comes down.",
     missCharge: "The plough's charge, on his knees.\nGet up on a speaker while he revs.",
     missBite: "The serpent's ring of foam.\nBe out of it before it bites.",
-    ending: "The stage lights are just lights again. Oslo walks home, plain and quite content."
+    ending: "The stage lights are just lights again. Oslo walks home, plain and quite content.",
+    shout1: "Higher hair, Oslo!\nMind the wind!",
+    shout2: "Neon tonight!\nSleet tomorrow!",
+    shout3: "Louder, Oslo!\nThe neighbours can take it!",
+    shout4: "Glitter, Oslo!\nIt's only drizzle!"
   },
   nb: {
     arrival: "Loke har ett nummer til",
@@ -160,7 +173,11 @@ export const ENCORE: Record<"nb" | "en", EncoreWords> = {
     missClub: "Trollets klubbe, i neon.\nHopp når den kommer ned.",
     missCharge: "Brøytebilens rush, på knærne.\nOpp på en høyttaler mens han turer opp.",
     missBite: "Sjøormens ring av skum.\nVær ute av den før den biter.",
-    ending: "Scenelysene er bare lys igjen. Oslo går hjem, vanlig og ganske fornøyd."
+    ending: "Scenelysene er bare lys igjen. Oslo går hjem, vanlig og ganske fornøyd.",
+    shout1: "Høyere hår, Oslo!\nPass på vinden!",
+    shout2: "Neon i kveld!\nSludd i morgen!",
+    shout3: "Høyere, Oslo!\nNaboene tåler det!",
+    shout4: "Glitre, Oslo!\nDet er bare yr!"
   }
 };
 
@@ -187,5 +204,10 @@ export const ENCORE_ALTERNATIVES = {
   ending: [
     ["The mirror ball has stopped. Oslo puts its hat back on and goes home.", "Diskokula har stoppet. Oslo tar på seg lua og går hjem."],
     ["Oslo is itself again: grey, calm, and a little pleased with itself.", "Oslo er seg selv igjen: grå, rolig og litt fornøyd med seg selv."]
-  ]
+  ],
+  // The shouted lines (order 34): one other way beside each.
+  shout1: [["Tease it up, Oslo!\nThe fog won't.", "Tuper det, Oslo!\nTåka gjør det ikke."]],
+  shout2: [["The night is young!\nThe last tram is not!", "Natta er ung!\nSiste trikk er ikke det!"]],
+  shout3: [["Hands in the air!\nGloves on is fine!", "Hendene i været!\nMed votter går fint!"]],
+  shout4: [["Lights up, Oslo!\nMind the slush!", "Lys på, Oslo!\nPass deg for sørpa!"]]
 };

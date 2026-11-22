@@ -293,7 +293,8 @@ function radhusbrygga(v: View) {
   R(x + 15, top + 8, 1, 10, PAINT.trim);
   light(x + 6, top + 8, 20, 10);
   R(x + 4, top - 14, 26, 9, PAINT.ferryWhite);
-  R(x + 6, top - 12, 22, 2, PAINT.ferryRed);
+  // Its sign's band in the ferry's own red, the shade of order 33's band (order 34: it was the kit's, 6.1 from the warning red).
+  R(x + 6, top - 12, 22, 2, FERRY_BAND);
   R(x + 6, top - 9, 14, 2, INK);
   for (const bx of [5 * TILE + 6, 11 * TILE + 8]) {
     R(bx, FLOOR - 7, 6, 7, METAL.lampPost);

@@ -29,17 +29,17 @@ import { spedX } from "../alive/depth";
 import { EDGE, edgesAt, tile as textured, CRATE, type Grain } from "../alive/ground";
 import { STORY } from "../game/story";
 
-// Level 10, rune N: Nabolaget. A winter night over Vålerenga and Kampen, the northern lights up,
-// snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
+// Level 10, rune N: Gamle Oslo (its id and file are still `nabolaget`: ADR 0038, 0055). A winter night
+// over Vålerenga and Kampen, the northern lights up, snow falling. Nothing new: everything from the nine levels before, once each. Up onto the roofs of
 // the front page's wooden houses, icy, from above the eaves; roof to roof over the back yards on
 // washing lines that throw him (launchers) and the warm air over a chimney that lifts him (a zone);
 // down into the lane behind Vålerenga kirke, dark but for the church's windows and his headlamp; up
 // the tower by its ledges, the spire the last climb; down the snow on its far side into Kværnerdalen,
 // past Kruttverket, the old gunpowder works, into the street. There, past a flag and a bench, the snow
-// plough: the last thing between him and home. A bounce on the washing line, a jump and the dash from
+// plough: the last thing in his way. A bounce on the washing line, a jump and the dash from
 // a roof, and a ride on the tram's roof: three times on its cab, and it parks for good. Then the
 // yellow house on Kværnertoppen, with a Raspberry Pi in the window serving the game; its light turns
-// green when the rune is taken. The door Hjem leads to the front page.
+// green when the rune is taken. The door Hjem leads to the site's front page.
 //
 //   #  the street   R  a house (drawn behind)   H  a chimney   B  a snow bank   W  a woodshed
 //   T  the church tower   K  a gravestone   =  a stone ledge   d  a washing line   v  the tram's slot
@@ -242,7 +242,13 @@ function surfaceRow(c: number) {
   return ROWS;
 }
 /** The yellow house: its left end, its width, its walls' top, the door, and the Pi's window. */
-const HOME = { x: 211 * TILE, w: 8 * TILE, top: S * TILE - 64, window: { x: 216 * TILE + 4, y: S * TILE - 30, w: 22, h: 20 } };
+const YELLOW = { x: 211 * TILE, w: 8 * TILE, top: S * TILE - 64, window: { x: 216 * TILE + 4, y: S * TILE - 30, w: 22, h: 20 } };
+
+/**
+ * The church's stained glass (order 34; ADR 0044 amended): a deep ruby where it was the kit's stained red, 6.3 from the warning red;
+ * 17.3 off it now. The paper cranes keep their tint of the old glass, as drawn.
+ */
+const STAINED = "#9a2433";
 
 /** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. */
 function dark(x: number, v: View) {
@@ -431,7 +437,7 @@ function church() {
   for (const win of CHURCH_WINDOWS) {
     R(win.x - 1, win.y - 3, 8, 22, MASONRY.lintel);
     for (let k = 0; k < 3; k++) R(win.x + k, win.y - 3 + k, 6 - k * 2, 1, MASONRY.lintel);
-    R(win.x, win.y, 6, 18, WINTER.stained);
+    R(win.x, win.y, 6, 18, STAINED);
     R(win.x, win.y + 6, 6, 4, WINTER.stainedBlue);
     R(win.x + 2, win.y, 2, 18, WINTER.stainedGold);
     light(win.x, win.y, 6, 18, "soft");
@@ -774,7 +780,7 @@ function letters(s: string, x: number, y: number, color: string) {
 function streetSign() {
   const g = S * TILE;
   const w = textWidth(PLATE_TEXT) + 10;
-  const px = HOME.x + HOME.w + 8;
+  const px = YELLOW.x + YELLOW.w + 8;
   const py = g - 34;
   for (const x of [px + 6, px + w - 8]) {
     R(x, py + 13, 2, g - py - 13, METAL.lampPost);
@@ -838,7 +844,7 @@ function street(v: View, p: Plough | null) {
     R(c * TILE - 2, g, 2, 2 * TILE, GROUND.cobbleDot);
     R((c + n) * TILE, g, 2, 2 * TILE, GROUND.cobbleDot);
   }
-  home(v);
+  yellowHouse(v);
 }
 
 /**
@@ -863,8 +869,8 @@ function washing(x: number, y: number, t: number) {
  * snow, windows lit, the door Hjem. In the window right of the door, on the sill, a Raspberry Pi:
  * a small green board, its light red until the rune is taken, then green.
  */
-function home(v: View) {
-  const { x, w, top } = HOME;
+function yellowHouse(v: View) {
+  const { x, w, top } = YELLOW;
   const g = S * TILE;
   plankWall(x, top, w, PAINT.ochre, PAINT.ochreLine, g);
   // Its roof under snow, as the front page draws it in winter, the slate showing at the eaves.
@@ -898,7 +904,7 @@ function home(v: View) {
     for (const [wx, wy] of [[x + 10, top + 8], [x + w - 26, top + 8], [x + 10, top + 34]] as const) light(wx - 4, wy + 15, 24, 5, "pool");
   }
   // The Pi's window: warm inside, the board on the sill, its light.
-  const pw = HOME.window;
+  const pw = YELLOW.window;
   R(pw.x - 1, pw.y - 1, pw.w + 2, pw.h + 2, PAINT.trim);
   R(pw.x, pw.y, pw.w, pw.h, GLASS.farWindow);
   light(pw.x, pw.y, pw.w, pw.h - 6);
@@ -912,7 +918,7 @@ function home(v: View) {
  * rune is taken, then green, and the window takes on its glow.
  */
 function pi(v: View) {
-  const pw = HOME.window;
+  const pw = YELLOW.window;
   if (pw.x + pw.w + 8 < view.camX || pw.x - 8 > view.camX + view.w) return;
   const bx = pw.x + 3;
   const by = pw.y + pw.h - 13;
@@ -1119,11 +1125,11 @@ function flourish(age: number) {
   const k = Math.min(1, age / 60);
   for (let i = 0; i < 5; i++) {
     const y = 4 * TILE + i * 6 + Math.round(Math.sin(age * 0.05 + i) * 4);
-    R(HOME.x - 40, y, HOME.w + 80, 2, `rgba(125, 255, 170, ${(0.18 * k * (1 - i / 6)).toFixed(3)})`);
+    R(YELLOW.x - 40, y, YELLOW.w + 80, 2, `rgba(125, 255, 170, ${(0.18 * k * (1 - i / 6)).toFixed(3)})`);
   }
   for (let i = 0; i < 8; i++) {
     const t = (age + i * 15) % 90;
-    R(HOME.window.x + 10 + Math.round(Math.sin(i) * 20), HOME.window.y - t * 1.2, 1, 1, `rgba(125, 255, 138, ${(1 - t / 90).toFixed(2)})`);
+    R(YELLOW.window.x + 10 + Math.round(Math.sin(i) * 20), YELLOW.window.y - t * 1.2, 1, 1, `rgba(125, 255, 138, ${(1 - t / 90).toFixed(2)})`);
   }
 }
 
@@ -1166,10 +1172,10 @@ function line(l: Launcher, firedAt: number, v: View) {
 export const NABOLAGET: LevelDef = {
   id: "nabolaget",
   rune: 9,
-  // The name a player reads (ADR 0038): the id stays "nabolaget" for stored progress, addresses and files.
-  name: "Vålerenga",
-  landmark: { nb: "Hjemover gjennom Gamle Oslo", en: "Homeward through Gamle Oslo" },
-  place: { nb: "Fra Vålerenga hjem til Kværnertoppen", en: "From Vålerenga home to Kværnertoppen" },
+  // Shown as Gamle Oslo since order 34 (ADR 0055; Vålerenga, a neighbourhood in it, from order 18): "rename it Gamle Oslo".
+  name: "Gamle Oslo",
+  landmark: { nb: "Vinternatt på østkanten", en: "A winter night on the east side" },
+  place: { nb: "Fra trehusene på Vålerenga, over bakken", en: "From Vålerenga's wooden houses over the hill" },
   sky: "winter",
   // The air in the snow: after dusk the far layers fade into the night lightened by the snow's grey-white (order 22).
   air: "#e6ebef",
@@ -1185,9 +1191,9 @@ export const NABOLAGET: LevelDef = {
   boss: ploughBoss(PLOUGH_DEF),
   bossWords: {
     // Its arrival (order 27): the story's line for it (`game/story.ts`).
-    wake: { nb: `Brøytebilen våkner.\nDet siste mellom deg og døra hjem.\n${STORY.nb.boss.plough}`, en: `The snow plough wakes.\nThe last thing between you and the door home.\n${STORY.en.boss.plough}` },
+    wake: { nb: `Brøytebilen våkner.\nDet siste mellom deg og en rolig kveld.\n${STORY.nb.boss.plough}`, en: `The snow plough wakes.\nThe last thing between you and a quiet evening.\n${STORY.en.boss.plough}` },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
-    beaten: { nb: "Brøytebilen parkerer. Veien hjem er fri.", en: "The plough parks. The way home is clear." },
+    beaten: { nb: "Brøytebilen parkerer.\nGata er fri, for en gangs skyld.", en: "The plough parks.\nThe street is clear, for once." },
     // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.
     miss1: { nb: "Den setter seg fast i brøytekanten ved klessnora.\nSnora kaster deg høyere enn et hopp.", en: "It sticks in the bank by the washing line.\nThe line throws you higher than a jump." },
     miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },

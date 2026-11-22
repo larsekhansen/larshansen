@@ -92,3 +92,20 @@ Slottet (a few pixels a person), and the crossing's barrier at Korketrekkeren (i
 the kit's red (`#c8302b`, his hat's, 6.1 off the warning red) is also Stortinget's walls and kiosk, Holmenkollen's rails on the ice
 and its jump, and near it are Vålerenga's stained glass and Frognerseteren's walls (`apps/viking/tools/review/o33/after.md` lists
 them with their areas): a decision for the planner and Lars.
+
+## Amended by order 34 (22 November 2026): the scenery and the ground keep off the warning red too
+Lars, of order 33's list: "Scenery in the kit's red: move it off the red too." `render/warning.test.ts` now also draws every view of every
+level and the encore with its scenery and ground as the page draws them (the far, mid and near layers, the street's backdrop, the water and
+the tiles, each layer's colours washed toward the level's air by its haze, with what he meets and the paint over them): what is left within
+10 of the warning red may fill no more than 24 pixels of a view (a rear light, a postbox, a door's knob), but by name. Named: the third
+rail's cover at Stortinget, which hurts and is the warning red itself. What it found took a shade of its own, true to the place, in the
+level's own file (the kit's palette, which the front page shares, is unchanged), each 10 or more off the warning red and every role:
+Stortinget's walls' stripe, posters and kiosk sign the station's brick red-orange (`#9c3a30`, 14.3 off), the kiosk and the ticket machines
+a deeper red-brown with a lit top (`#8a3329`, `#aa4a3a`), the signs past the end (no entry, the buffer stop, the cabinet's lamp) the
+trains' shade of red; Holmenkollen's padded rails and the jump's lip markers blue, as a course's padding often is (`#3384b0`, lit
+`#7fb0cc`, shade `#2a6a8c`, each 12.8 or more off every role, leaning a little to teal away from his tunic; orange was tried and every
+orange came within 10 of the invaders' orange, the coin's copper or his skin); Vålerenga's church windows a deep ruby (`#9a2433`, 17.3
+off), the paper cranes keeping their tint as drawn; Bygdøy's ticket kiosk's sign the ferry's own shade of red (order 33's band); and at
+Korketrekkeren the red plastic sledge among the hire sledges leaning on Frognerseteren's shed a deep wine red (`#8a2030`, 20.7 off; the
+red there was the sledge, not the walls, which are tarred logs already). His hat keeps the kit's red (he is the hero, not scenery); what
+hurts keeps its own. Before and after at four times: `apps/viking/tools/review/o34/after.md`.

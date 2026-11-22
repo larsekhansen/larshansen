@@ -34,8 +34,8 @@ export const LINE: Station[] = [
   one("nordmarka", 6, "Nordmarka"),
   one("stortinget", 7, "Stortinget"),
   one("ekeberg", 8, "Ekeberg"),
-  // Shown as Vålerenga (ADR 0038); the id stays.
-  one("nabolaget", 9, "Vålerenga"),
+  // Shown as Gamle Oslo (ADR 0055; as Vålerenga from order 18 to 33, ADR 0038); the id stays.
+  one("nabolaget", 9, "Gamle Oslo"),
   two("bygdoy", 10, "Bygdøy", true),
   two("vigelandsparken", 11, "Vigelandsparken", true, "Vigeland"),
   two("korketrekkeren", 12, "Korketrekkeren", true),

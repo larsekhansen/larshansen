@@ -406,8 +406,8 @@ function hall(v: View) {
   }
   // Ticket machines: red boxes with a screen.
   for (const x of [9 * TILE, 10 * TILE + 6]) {
-    R(x, g - 26, 12, 26, METRO.kiosk);
-    R(x, g - 26, 12, 1, METRO.kioskLight);
+    R(x, g - 26, 12, 26, KIOSK_RED);
+    R(x, g - 26, 12, 1, KIOSK_LIT);
     R(x + 2, g - 22, 8, 6, METRO.board);
     R(x + 3, g - 21, 6, 1, METRO.led);
     R(x + 4, g - 12, 4, 2, INK);
@@ -499,7 +499,7 @@ function platformWall(c0: number, c1: number, floor: number, seed: number) {
     const k = (Math.floor(x / 160) + seed) % 3;
     R(x - 1, floor - 41, 30, 22, METRO.steelDark);
     R(x, floor - 40, 28, 20, METRO.poster);
-    R(x + 3, floor - 37, 10 + k * 4, 8, [METRO.trainStripe, PAINT.tbane, PLANT_GREEN][k]);
+    R(x + 3, floor - 37, 10 + k * 4, 8, [TILE_RED, PAINT.tbane, PLANT_GREEN][k]);
     R(x + 3, floor - 26, 20, 2, INK);
     R(x + 3, floor - 23, 14, 1, INK);
   }
@@ -512,7 +512,7 @@ function platformWall(c0: number, c1: number, floor: number, seed: number) {
   if (ceiling > 0) {
     for (let x = x0 + 8; x < x1 - 14; x += 48) tube(x, ceiling + 2, 14);
     R(x0, ceiling + 9, x1 - x0, 2, METRO.steelDark);
-    R(x0, ceiling + 8, x1 - x0, 1, METRO.trainStripe);
+    R(x0, ceiling + 8, x1 - x0, 1, TILE_RED);
     R(x0, ceiling + 7, x1 - x0, 1, mix(METRO.steelDark, INK, 0.3));
     for (let x = x0 + 4; x < x1; x += 32) R(x, ceiling, 1, 11, METRO.steelDark);
   }
@@ -540,6 +540,17 @@ function stationName(x: number, y: number) {
 }
 const PLANT_GREEN = PALETTE.grassDark;
 
+/**
+ * Stortinget's own reds (order 34; ADR 0044 amended, Lars: "Scenery in the kit's red: move it off the red too"). The kit's red
+ * (his hat's) was 6.1 from the warning red, which is what hurts. The station's tile is a brick red-orange (the stripe along the
+ * walls, the posters' blocks, the kiosk's sign); the kiosk and the ticket machines a deeper red-brown with a lit top; the signs
+ * past the end (no entry, the buffer stop, the cabinet's lamp) the trains' shade of red. Each 10 or more off the warning red and
+ * every role (`render/warning.test.ts`, `render/palette.test.ts`).
+ */
+const TILE_RED = "#9c3a30";
+const KIOSK_RED = "#8a3329";
+const KIOSK_LIT = "#aa4a3a";
+
 /** The kiosk on platform 1: red, its shutter half down, magazines in the window; its door is Quintle's, padlocked until it is out. */
 function kiosk(v: View) {
   const x = 67 * TILE;
@@ -547,20 +558,20 @@ function kiosk(v: View) {
   if (!seen(x - 4, x + 5 * TILE + 4) && !(d0 && seen(d0.x - 4, d0.x + d0.w + 4))) return;
   const g = P * TILE;
   const top = 16 * TILE + 4;
-  R(x, top, 5 * TILE, g - top, METRO.kiosk);
-  R(x, top, 5 * TILE, 2, METRO.kioskLight);
+  R(x, top, 5 * TILE, g - top, KIOSK_RED);
+  R(x, top, 5 * TILE, 2, KIOSK_LIT);
   // The window: magazines in rows, a fridge's glow.
   R(x + 4, top + 6, 30, 16, METRO.board);
-  for (let k = 0; k < 7; k++) R(x + 6 + k * 4, top + 8 + (k % 2) * 7, 3, 6, [METRO.poster, PAINT.tbane, LAMP, WHITE, METRO.kioskLight, PLANT_GREEN, METRO.poster][k]);
+  for (let k = 0; k < 7; k++) R(x + 6 + k * 4, top + 8 + (k % 2) * 7, 3, 6, [METRO.poster, PAINT.tbane, LAMP, WHITE, KIOSK_LIT, PLANT_GREEN, METRO.poster][k]);
   light(x + 4, top + 6, 30, 16, "soft");
   // The shutter, half down.
   R(x + 2, top + 3, 34, 4, METRO.steel);
   for (let k = 0; k < 4; k += 2) R(x + 2, top + 3 + k, 34, 1, METRO.steelDark);
   R(x + 38, top + 8, 12, 14, METRO.poster);
-  R(x + 40, top + 10, 8, 3, METRO.trainStripe);
+  R(x + 40, top + 10, 8, 3, TILE_RED);
   const d = v.doors.get("quintle");
   if (d) {
-    R(d.x - 2, d.bottom - d.h - 2, d.w + 4, d.h + 2, METRO.kioskLight);
+    R(d.x - 2, d.bottom - d.h - 2, d.w + 4, d.h + 2, KIOSK_LIT);
     panelDoor(d, PAINT.shopDoor, PAINT.shopDoorPanel);
   }
 }
@@ -662,15 +673,15 @@ function pastTheEnd(v: View) {
   }
   for (const x of [247 * TILE + 2, 251 * TILE + 12]) R(x, (U - 2) * TILE + 4, 2, 2 * TILE - 4, METRO.steelDark);
   // A no-entry sign on the gate's post.
-  wdisc(237 * TILE + 8, g - 30, 6, METRO.trainStripe);
+  wdisc(237 * TILE + 8, g - 30, 6, TRAIN_STRIPE);
   R(237 * TILE + 3, g - 31, 11, 3, WHITE);
   R(237 * TILE + 7, g - 24, 2, 8, METRO.steelDark);
   // The cabinet's lamps blink green and red.
   const on = view.reduced || Math.floor(v.t / 30) % 2 === 0;
   R(269 * TILE + 6, (U - 3) * TILE + 6, 3, 3, on ? PLANT_GREEN : METRO.board);
-  R(269 * TILE + 12, (U - 3) * TILE + 6, 3, 3, on ? METRO.board : METRO.trainStripe);
+  R(269 * TILE + 12, (U - 3) * TILE + 6, 3, 3, on ? METRO.board : TRAIN_STRIPE);
   // The siding's end: a buffer stop, red and white.
-  R(263 * TILE - 6, P * TILE - 12, 6, 12, METRO.trainStripe);
+  R(263 * TILE - 6, P * TILE - 12, 6, 12, TRAIN_STRIPE);
   R(263 * TILE - 6, P * TILE - 8, 6, 2, WHITE);
 }
 const P_WOOD = PALETTE.woodDark;

@@ -1465,7 +1465,12 @@ function skiPole(v: View) {
   void v;
 }
 
+/** What the level's music says is shouted now (order 34: the encore's), a key of its `bossWords`. */
+let shout: string | null = null;
+
 function render(alpha: number) {
+  // The level's own music (order 34: the encore's), once a frame while it is played; given no sound on a card or hidden, it stops.
+  shout = scene.def.music?.(state.mode === "play" && !state.finished && !document.hidden ? sfx : null, scene.play.boss?.state ?? null, scene.play.t) ?? null;
   // A hit holds the picture a moment (not the rules, which go on stepping).
   feel?.at(state.steps);
   if (feel?.held(state.steps)) return;
@@ -1533,6 +1538,10 @@ function render(alpha: number) {
   // A boss's line or hint, beside it, while nothing else is speaking.
   const boss = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? bossBubbleAt(p, state.bossLine.lines) : null;
   if (!bubble && boss && state.bossLine) bubble = { x: boss.x, y: boss.y, lines: state.bossLine.lines };
+  // What he shouts in time with his tune (order 34), while nothing else is speaking.
+  const sung = !bubble && !boss && shout && state.mode === "play" ? p.def.bossWords?.[shout]?.[lang].split("\n") : null;
+  const sungAt = sung && bossBubbleAt(p, sung);
+  if (sung && sungAt) bubble = { x: sungAt.x, y: sungAt.y, lines: sung };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
   if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [kartWords?.featherLine ?? ""] };

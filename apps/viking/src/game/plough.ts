@@ -2,7 +2,7 @@ import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Boss } from "../levels/types";
 
-// The snow plough in Nabolaget: the last boss, the last thing between him and home, as a small pure
+// The snow plough in Nabolaget: the last boss, the last thing in his way, as a small pure
 // rule over the step count, in the troll's shape. It comes with its level (play.ts runs it through
 // the level's boss slot), so the page does not carry it until Nabolaget is fetched.
 //

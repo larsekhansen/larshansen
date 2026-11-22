@@ -1,15 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import { carrierDrawn, carrierShown, drawCarrier } from "@larshansen/pixelkit/carrier";
+import { TILE } from "@larshansen/pixelkit/config";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { ENEMY } from "@larshansen/pixelkit/palette";
+import { drawSky } from "@larshansen/pixelkit/sky";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { newPlay } from "../game/play";
 import { BUILT, loadLevel } from "../levels/index";
 import type { LevelDef, View } from "../levels/types";
-import { deltaE, parseColour, skyOf } from "./fields";
+import { deltaE, mixRgb, parseColour, skyOf, type Rgb } from "./fields";
+import { airOf, backHazeOf, hazeOf } from "./haze";
 import { STAND_LEDGE, standTop } from "./stand";
+import { drawTiles, drawWater } from "./tiles";
+// The textured set and the props kit draw the tiles and the props, as they do in the page once feel's file has come.
+import "../alive/ground";
+import "../alive/props";
 
 // Harmless things keep off the warning red (order 33, item 2; ADR 0044). The warning red outlines what hurts and moves and
 // stripes what hurts and is not an enemy; a harmless thing filled with a red near it says "this hurts" where nothing does.
@@ -17,10 +24,18 @@ import { STAND_LEDGE, standTop } from "./stand";
 // things he meets (what carries him, the ledges on a beat, cannons, drums, flags, what stands in front), with the paint the page
 // puts on what he stands on over them; what is left of them within 10 of the warning red may fill no more than a few pixels of
 // a view, or it is named here with why (a dot, or what hurts). The props of the street's backdrop are held piece by piece in
-// `alive/props.test.ts`. The scenery and the ground are not held (the table in `tools/review/o33/after.md` lists what is near).
+// `alive/props.test.ts`.
+//
+// Since order 34 (Lars: "Scenery in the kit's red: move it off the red too") the scenery and the ground are held as well: the
+// far, mid and near layers, the street's backdrop, the water and the tiles, drawn as the page draws them, each layer's colours
+// washed toward the level's air by its haze as the page washes them (`render/haze.ts`), with what he meets and the paint over
+// them; what is left within 10 of the warning red may fill no more than `FEW_SCENERY` pixels of a view, or it is named with
+// why. His hat keeps the kit's red (he is not drawn here); what hurts keeps its own (named).
 
 /** A few pixels: a light, a fleck, a mark. */
 const FEW = 12;
+/** A few pixels of scenery in a view: a rear light, a postbox, a door's knob, a stripe on a far sign. */
+const FEW_SCENERY = 24;
 /** The distance (CIEDE2000) within which a colour reads as the warning red. */
 const NEAR = 10;
 
@@ -32,15 +47,24 @@ const NAMED: Record<string, string> = {
   "korketrekkeren #c8332b": "the crossing's barrier: it hurts when it is down (a hazard, ADR 0044)"
 };
 
-/** Each fill colour once: its hex, and whether it is within 10 of the warning red (null: see-through, not counted). */
+/** The scenery that may come within 10 of the warning red over more than a few pixels of a view, by level and colour as drawn, and why. */
+const NAMED_SCENERY: Record<string, string> = {
+  "stortinget #e8262e": "the third rail's cover: it hurts, and is the warning red itself (ADR 0044)"
+};
+
+/** Each fill colour once, under a haze: its hex as drawn, and whether it is within 10 of the warning red as seen (null: see-through, not counted). */
 const INKS = new Map<string, { hex: string; near: boolean } | null>();
+/** The wash over what is drawn now: how far toward the air, and the air (order 34; the page's `pass` with a haze). */
+const HAZED: { k: number; air: Rgb } = { k: 0, air: [0, 0, 0] };
 function inkOf(style: unknown) {
   if (typeof style !== "string") return null;
-  let ink = INKS.get(style);
+  const key = HAZED.k ? `${style}|${HAZED.k}|${HAZED.air.join()}` : style;
+  let ink = INKS.get(key);
   if (ink === undefined) {
     const p = parseColour(style);
-    ink = !p || p.a < 0.6 ? null : { hex: `#${p.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`, near: deltaE(p.rgb, RED) < NEAR };
-    INKS.set(style, ink);
+    const seen = p && HAZED.k ? mixRgb(p.rgb, HAZED.air, HAZED.k) : p?.rgb;
+    ink = !p || !seen || p.a < 0.6 ? null : { hex: `#${p.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`, near: deltaE(seen, RED) < NEAR };
+    INKS.set(key, ink);
   }
   return ink;
 }
@@ -112,8 +136,11 @@ function caller(): string {
     .join(" < ");
 }
 
-/** Every view of a level by day: the most pixels a near-red colour of its harmless things fills in one, and who drew it. */
-function nearRed(def: LevelDef) {
+/**
+ * Every view of a level by day: the most pixels a near-red colour of its harmless things fills in one, and who drew it. With
+ * `scenery` (order 34), what is counted is the scenery and the ground behind and under what he meets, washed by its layer's haze.
+ */
+function nearRed(def: LevelDef, scenery = false) {
   const play = newPlay(def, {});
   const map = play.map;
   const sky = skyOf(def, "day");
@@ -122,6 +149,10 @@ function nearRed(def: LevelDef) {
   const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
   const art = def.art;
   const most = new Map<string, { n: number; at: string; who: Set<string> }>();
+  const horizon = map.height - 4 * TILE - 34;
+  const haze = hazeOf(def);
+  const air = parseColour(airOf(def, "day"))!.rgb;
+  const wash = (k: number) => Object.assign(HAZED, { k, air });
   try {
     for (let y = -view.h; y < map.height + view.h / 2; y += view.h)
       for (let x = 0; x < map.width; x += view.w) {
@@ -129,9 +160,27 @@ function nearRed(def: LevelDef) {
         v.him = { x: x + view.w / 2, y: y + view.h / 2 };
         const r = raster(view.w, view.h);
         target(r.ctx);
+        if (scenery) {
+          // The sky, then the far layers, the street's backdrop, the water and the tiles, as the page's passes draw them
+          // (`main.ts`, `render/haze.ts`): each washed toward the air by its haze.
+          r.counting(false);
+          drawSky(sky, 0, horizon);
+          r.counting(true);
+          wash(haze[0]);
+          art.far?.(v);
+          wash(haze[1]);
+          art.mid?.(v);
+          wash(haze[2]);
+          art.near?.(v);
+          wash(backHazeOf(def));
+          art.back(v);
+          wash(0);
+          drawWater(map, 0);
+          drawTiles(map, art, sky, def.underground);
+        }
         // The things he meets, as the page draws them at the start (`drawThings` in main.ts), what is in front, and the paint.
-        // (The props of the street's backdrop are held piece by piece in `alive/props.test.ts`.)
-        r.counting(true);
+        // (The props of the street's backdrop are held piece by piece in `alive/props.test.ts`.) Over the scenery they only cover it.
+        r.counting(!scenery);
         def.carriers.forEach((d, i) => {
           if (!carrierShown(d, 0)) return;
           const at = carrierDrawn(d, 0, 1);
@@ -155,6 +204,7 @@ function nearRed(def: LevelDef) {
         }
       }
   } finally {
+    wash(0);
     target(was.g);
     Object.assign(view, { w: was.w, h: was.h, k: was.k, camX: was.camX, camY: was.camY, camXf: was.camXf, camYf: was.camYf, reduced: was.reduced });
   }
@@ -181,5 +231,25 @@ describe("harmless things keep off the warning red (order 33)", () => {
     expect(wrong).toEqual([]);
     // A name no longer needed is taken out.
     expect(Object.keys(NAMED).filter((k) => !used.has(k))).toEqual([]);
+  }, 300_000);
+
+  test("the scenery and the ground, washed by their haze as the page draws them, fill no more than a few pixels of a view within 10 of the warning red, but by name (order 34)", async () => {
+    const wrong: string[] = [];
+    const table: string[] = [];
+    const used = new Set<string>();
+    for (const st of [...BUILT, { id: "encore" }]) {
+      const def = await loadLevel(st.id);
+      for (const [c, m] of nearRed(def, true)) {
+        const key = `${st.id} ${c}`;
+        const line = `${key} (${deltaE(parseColour(c)!.rgb, RED).toFixed(1)} from it as drawn): ${m.n} pixels at the most in a view (at ${m.at}), by ${[...m.who].join("; ")}`;
+        table.push(line);
+        if (m.n <= FEW_SCENERY) continue;
+        if (NAMED_SCENERY[key]) used.add(key);
+        else wrong.push(line);
+      }
+    }
+    console.log(`Scenery and ground within ${NEAR} of the warning red, the most of each colour in a view of 320 x 200:\n  ${table.join("\n  ")}`);
+    expect(wrong).toEqual([]);
+    expect(Object.keys(NAMED_SCENERY).filter((k) => !used.has(k))).toEqual([]);
   }, 300_000);
 });

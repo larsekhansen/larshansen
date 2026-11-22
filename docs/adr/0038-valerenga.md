@@ -30,3 +30,7 @@ Gamlebyen, and Ekeberg's banner says "above Gamle Oslo".
 - "Gamle Oslo": it would be the third thing of that name on one screen (the header's link to the front page,
   Ekeberg's banner), and Gamlebyen is level 16.
 - Renaming the id: it would lose stored progress for everyone who has cleared it, for no gain a player sees.
+
+## Superseded in its name by 0055 (order 34, 22 November 2026)
+Lars: "rename it Gamle Oslo". The station and the level are shown as **Gamle Oslo**; the id stays `nabolaget` for the reasons
+above, and the level's words no longer say "home" ([0055](0055-what-lars-said.md)). Vålerenga stays a place in the level.
