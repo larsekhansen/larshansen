@@ -30,7 +30,8 @@ interface Seg {
 
 interface Art {
   def: LevelDef;
-  still: HTMLCanvasElement;
+  /** The still layer on a canvas of its own; null where there is no page (the tests read `stillPixels` itself). */
+  still: HTMLCanvasElement | null;
   /** One-pixel lines on the floor side of every wall. */
   curse: Seg[];
   torches: Cell[];
@@ -59,21 +60,24 @@ function rgb(c: string): [number, number, number] {
  */
 function build(def: LevelDef): Art {
   const { map } = def;
-  const pixels = stillPixels(def);
-  const still = document.createElement("canvas");
-  still.width = pixels.w;
-  still.height = pixels.h;
-  const g = still.getContext("2d")!;
-  const data = g.createImageData(pixels.w, pixels.h);
-  pixels.px.forEach((c, i) => {
-    if (!c) return;
-    const [r, gg, b] = rgb(c);
-    data.data[i * 4] = r;
-    data.data[i * 4 + 1] = gg;
-    data.data[i * 4 + 2] = b;
-    data.data[i * 4 + 3] = 255;
-  });
-  g.putImageData(data, 0, 0);
+  let still: HTMLCanvasElement | null = null;
+  if (typeof document !== "undefined") {
+    const pixels = stillPixels(def);
+    still = document.createElement("canvas");
+    still.width = pixels.w;
+    still.height = pixels.h;
+    const g = still.getContext("2d")!;
+    const data = g.createImageData(pixels.w, pixels.h);
+    pixels.px.forEach((c, i) => {
+      if (!c) return;
+      const [r, gg, b] = rgb(c);
+      data.data[i * 4] = r;
+      data.data[i * 4 + 1] = gg;
+      data.data[i * 4 + 2] = b;
+      data.data[i * 4 + 3] = 255;
+    });
+    g.putImageData(data, 0, 0);
+  }
 
   const curse: Seg[] = [];
   const torches: Cell[] = [];
@@ -165,7 +169,7 @@ export function drawWorld(f: Frame) {
   const def = levelDef(f.level);
   const a = artFor(def);
   const g = ctx();
-  g.drawImage(a.still, -view.camX, -view.camY);
+  if (a.still) g.drawImage(a.still, -view.camX, -view.camY);
 
   // The curse along the walls.
   const color = curseColor(f);
