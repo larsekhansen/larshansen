@@ -143,6 +143,28 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   them, with the relaying session's reading of a typo beside them, and kept back the three that needed him in person. *Build what is plain
   and safe; keep what is not for his direct word, and say which.*
 
+- **A proxy round a test's recorder is asked on every call** (order 35): the stand-in contexts the tests draw into were `new Proxy(base, …)`,
+  so every `fillRect` and every `fillStyle =` went through a trap, and the area recorder parsed and printed a colour's hex on every fill.
+  Drawing every level for the fields took 25 s; with the recorder's methods its own (anything else falls to a prototype that is a proxy:
+  `ANY_METHOD` in `render/fields.ts`) and a colour worked out once, 7.6 s, the same areas to the last digit. That alone took the suite from
+  363 s to 280. *Measure a test before trimming what it holds; look at what every call costs.*
+- **Sixteen workers on four cores** (order 35): the reach searches are CPU-bound, about 400 core-seconds; started all at once, sixteen
+  threads shared four cores and the suite waited for the last. A pool of four, the costliest first, Gamlebyen's nine searches each a job,
+  a worker taking job after job, saved some twenty seconds; the floor is the CPU (Akershus's search alone is 52 s, nearly all of it the
+  kit's physics). *Count the core-seconds before scheduling; no order of jobs beats their sum over the cores.*
+- **The three slowest test files** after order 35 (each file's seconds in the suite's JUnit report, the mean of three runs alone): `levels/levels.test.ts` 106.6 s (the reach searches: CPU-bound on four cores), `render/reduced.test.ts` 70.9 s (every level drawn and recorded at many steps of the clock), `render/palette.test.ts` 20.3 s (every level walked for its fields).
+  Before it, `levels.test.ts` 125.9 s, `render/reduced.test.ts` 99.1 s, `render/palette.test.ts` 38.4 s. Look there first.
+- **A test that reads what another made passes alone** (found in order 35): `alive/props.test.ts`'s "no prop is neon" read the inks the
+  first test's walk had gathered; asked alone (`-t`), it found none and passed. A planted neon prop showed it. *Each test draws what it
+  reads (a walk made once, by whichever asks first).*
+- **A planted fault the test cannot reach proves nothing** (order 35): a blink planted in the kit's `drawCarrier` passed the reduced-motion
+  test's watch of the kit's carriers, because no level draws its carriers with the kit any more; a light dimmed earlier in its own pass
+  is no dimming at all (a pass's lights are drawn at its end). *Plant the fault where the test looks, and when it passes, find out why
+  before planting another.*
+- **A fixed wait is a guess** (order 35): the blank pictures of orders 32 and 34 were taken before the page had drawn (`--wait=5000` was
+  sometimes too short for the encore's files on this Pi), not by the harness. Now the page says when its picture is drawn and the picture is
+  taken then; a blank one is named. *Wait for the thing, not for a time; and look for empty pictures by machine, not by eye.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

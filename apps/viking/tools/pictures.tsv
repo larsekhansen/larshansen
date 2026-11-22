@@ -1,6 +1,6 @@
 # The pictures in docs/games/LEVELS.html (docs/games/shots/<name>.png), each with the address it is taken from,
 # at 1280 x 800, against a built page: `bun tools/pictures.ts http://localhost:5181 [name ...]` takes them again.
-# A third column `wait` takes it with --wait=5000 (a page under ?debug&auto fetches its route after the load event).
+# A third column `wait` takes it with --wait=30000 (a page under ?debug&auto fetches its route after the load event; since order 35 the picture is taken as soon as the page says it has drawn, the wait the most it waits).
 01-langkaia	/viking/?debug&steps=2&level=langkaia&x=2046#langkaia
 02-akershus	/viking/?debug&steps=2&level=akershus&x=1006#akershus
 03-radhuset	/viking/?debug&steps=2&level=radhuset&x=782#radhuset

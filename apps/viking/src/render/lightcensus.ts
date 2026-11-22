@@ -10,6 +10,7 @@ import { newPlay } from "../game/play";
 import { SHIELD_RULES } from "../game/shield";
 import { ORDER } from "../levels/index";
 import type { LevelDef, View } from "../levels/types";
+import { ANY_METHOD, NO_METHOD } from "./fields";
 import { STAND_LEDGE } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
 
@@ -62,10 +63,16 @@ interface Fill {
   pass: number;
   path: string;
 }
+/** A colour's alpha, worked out once a colour (order 35: it was read on every fill). */
+const ALPHA = new Map<string, number>();
 const alphaOf = (s: unknown) => {
   if (typeof s !== "string") return 1;
-  const m = /^rgba\(([^)]+)\)$/.exec(s.trim());
-  return m ? Number(m[1].split(",")[3]) : 1;
+  let a = ALPHA.get(s);
+  if (a === undefined) {
+    const m = /^rgba\(([^)]+)\)$/.exec(s.trim());
+    ALPHA.set(s, (a = m ? Number(m[1].split(",")[3]) : 1));
+  }
+  return a;
 };
 
 /** A recording context: every fill and copy, with whether it is see-through. */
@@ -93,7 +100,7 @@ function recorder(fills: Fill[], where: { pass: number; path: string }) {
       if (w && h) fills.push({ x, y, w, h, clear: this.globalAlpha < 1 || this.globalCompositeOperation !== "source-over", ...where });
     }
   };
-  return new Proxy(base, { get: (t, k) => (k in t ? t[k as string] : () => undefined), set: (t, k, v) => ((t[k as string] = v), true) }) as unknown as CanvasRenderingContext2D;
+  return Object.setPrototypeOf(base, ANY_METHOD) as unknown as CanvasRenderingContext2D;
 }
 
 /** The function that called `light()`, and its file, from the stack: the first named function of ours above it. */
@@ -109,7 +116,7 @@ function caller(): string {
 }
 
 /** A canvas made while the census draws as a browser would: it draws nothing. */
-const NOWHERE = new Proxy({ canvas: { width: 4096, height: 4096 } } as Record<string, unknown>, { get: (t, k) => (k in t ? t[k as string] : () => undefined), set: () => true });
+const NOWHERE = Object.setPrototypeOf({ canvas: { width: 4096, height: 4096 } }, NO_METHOD) as Record<string, unknown>;
 
 /** Every light `def` registers under `sky`, drawn across its whole length, and what a later pass on the street draws over each. */
 export function census(name: string, def: LevelDef, sky: Sky): Lit[] {

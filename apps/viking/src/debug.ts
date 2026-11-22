@@ -79,7 +79,7 @@ let manual = false;
  * `?debug&perf`: draws the frame fifty times and writes on the help line how many rectangles and
  * images one frame takes and how long it took here, so a change to the drawing can be measured.
  */
-export function perf(frame: () => void, help: HTMLElement) {
+export function perf(frame: (whole?: boolean) => void, help: HTMLElement) {
   const proto = CanvasRenderingContext2D.prototype;
   const count = { fillRect: 0, drawImage: 0, fillStyle: 0 };
   const { fillRect, drawImage } = proto;
@@ -108,7 +108,7 @@ export function perf(frame: () => void, help: HTMLElement) {
   });
   const N = 50;
   const t0 = performance.now();
-  for (let i = 0; i < N; i++) frame();
+  for (let i = 0; i < N; i++) frame(true);
   const ms = (performance.now() - t0) / N;
   proto.fillRect = fillRect;
   proto.drawImage = drawImage;
@@ -126,8 +126,16 @@ function sent(params: URLSearchParams, help: HTMLElement) {
 }
 
 /** What `?debug` does once the page has started and drawn its first frame: `perf`, `where`, `strip`. */
-export function afterStart(params: URLSearchParams, frame: () => void, help: HTMLElement) {
-  if (params.has("strip")) return void strip(params, help).catch((e) => (help.textContent = `strip: ${e}`));
+export function afterStart(params: URLSearchParams, frame: (whole?: boolean) => void, help: HTMLElement) {
+  // In a frame (`tools/shots.ts --wait`, order 35), the page tells the frame round it once its picture is drawn, so the picture
+  // is taken then, not after a guess of how long the level's files take to come (a guess too short gave blank pictures).
+  void Promise.resolve(begin(params, frame, help))
+    .catch(() => undefined)
+    .then(() => window.parent !== window && window.parent.postMessage("viking:drawn", "*"));
+}
+
+function begin(params: URLSearchParams, frame: (whole?: boolean) => void, help: HTMLElement): Promise<unknown> | void {
+  if (params.has("strip")) return strip(params, help).catch((e) => (help.textContent = `strip: ${e}`));
   // `?debug&fall=<steps>[&gold]` (order 25): the maze's feather floating down onto him, that many steps into its fall (of
   // a hundred), for a picture of a moment that otherwise comes only on the way out of the maze.
   if (params.has("fall")) {
@@ -137,7 +145,7 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
   }
   // `?debug&perf&on=<event>[&skip=N]`: measured with what answers the event in the air (order 19).
   if (params.has("perf") && params.has("on"))
-    return void reach(params, (window as unknown as { __game: Game }).__game).then(
+    return reach(params, (window as unknown as { __game: Game }).__game).then(
       () => (perf(frame, help), sent(params, help)),
       (e) => (help.textContent = `perf: ${e}`)
     );
@@ -147,7 +155,7 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
   }
   // `?debug&steps=0&on=<event>[&skip=N]` alone (order 27): a picture of the moment, stepped to the event and N steps on.
   if (params.has("on") && !params.has("perf"))
-    return void reach(params, (window as unknown as { __game: Game }).__game).then(
+    return reach(params, (window as unknown as { __game: Game }).__game).then(
       () => frame(),
       (e) => (help.textContent = `on: ${e}`)
     );
@@ -155,7 +163,7 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
   if (params.has("card")) card();
   // `?debug&note=pole|shield|sledge` and `?debug&say=<key>` (order 33): words that come only at a moment the harness cannot reach
   // (the pole is given under Holmenkollen's card; the encore's bite needs two hits first), shown as the page shows them.
-  if (params.has("note")) void note(params.get("note") ?? "", help).then(frame, (e) => (help.textContent = `note: ${e}`));
+  const noted = params.has("note") ? note(params.get("note") ?? "", help).then(() => frame(), (e) => (help.textContent = `note: ${e}`)) : undefined;
   if (params.has("say")) say(params.get("say") ?? "", frame);
   // `?debug&music=band|drums,bass|riff|lead|intro|plain` (order 34): the level's music at once, whatever its boss does, with only
   // those parts, for listening to each layer (the encore's tune: `game/tune.ts`). Sound starts with the first key or touch.
@@ -165,7 +173,8 @@ export function afterStart(params: URLSearchParams, frame: () => void, help: HTM
   }
   // `?debug&grain=<way>` (order 22, part B): the grain study, a chunk of its own, drawn over the frame.
   if (params.has("grain"))
-    void import("./grain/study").then((m) => m.study(params.get("grain") || "3", (window as unknown as { __game: Parameters<typeof m.study>[1] }).__game, params.has("count") ? help : undefined)).catch((e) => (help.textContent = `grain: ${e}`));
+    return import("./grain/study").then((m) => m.study(params.get("grain") || "3", (window as unknown as { __game: Parameters<typeof m.study>[1] }).__game, params.has("count") ? help : undefined)).catch((e) => (help.textContent = `grain: ${e}`));
+  return noted;
 }
 
 /**

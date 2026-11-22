@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, and by order 34's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, and by order 35's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -88,6 +88,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-21 | Order 32: lights after dark (ADR 0054). Every light in every level, the encore and the map asked whether it is lit after dusk and whether anything glows that should not (a census of every light each scene registers, and what is drawn over it); one rule held by a test. Korketrekkeren's lit trail over the dusk with pools on the run, Gamlebyen's pools on the cobbles, the encore's stage, the invaders' neon signs, the T sign, Bygdøy's ferry, the map's windows; the braziers' and grills' warm light gone; Vålerenga's Pi and its light and the paper cranes drawn again, missing since order 15 with the lane's dark (which is left for a decision: about 1,580 rectangles a frame). Then order 31's leftovers: the logs and the chairlift's chairs redrawn, a dark pixel between the red outline and the glow over a level's dark, the reduced-motion test watching what moves by the clock and what feel draws, the last Norwegian words seen at 360 wide | `orders/32-lights-after-dark.md`, branch `lights-after-dark` |
 | 2026-11-22 | Order 33: the lane behind the church, and room to breathe. Vålerenga's lane behind the church dark again (missing since order 15), kept: the same pixels as `drawNight` draws, at a few path fills a frame where drawing it so cost about 1,580 rectangles; harmless things held off the warning red (the chairlift's chairs, the ferries' bands, the trains' stripe, a balloon, a shirt, a cage's rail recoloured); the first script from 59.60 to 57.94 kB gzipped (the synth, the page's drawing after dusk and of the rune's flight, the maze's feather into lazy files); that drawing held with reduced motion; debug ways to the pole's note and the encore's bite hint | `orders/33-the-lane-behind-the-church.md`, branch `the-lane` |
 | 2026-11-22 | Lars answers the questions that waited for him (relayed by his other session; `handbook/conversations.md`). Order 34: what Lars said. The tenth station is Gamle Oslo and its words lose "home" (an ode to Oslo); scenery and ground off the warning red (Stortinget's walls and kiosk, Holmenkollen's padding, Vålerenga's stained glass, Bygdøy's kiosk, a red hire sledge); the encore gets an original glam-rock tune in the game's own synth that follows the fight, Loki at the far end of late-1980s glam in general, and four shouted lines of the game's own; the rule that a level's difficulty and enemies follow its place, with proposals only (ADR 0055) | `orders/34-what-lars-said.md`, branch `what-lars-said` |
+| 2026-11-22 | Order 35: housekeeping, and every figure on one page. The viking suite from about 363 s to under 300 on a quiet Pi with nothing it held lost (the tests' recorders without a proxy a call, the reach searches on four workers the costliest first, one walk for the warning tests; every changed test shown to fail on a planted fault); `tools/figures.ts`, a sheet of every figure the game draws and `figures.json` naming each in both languages; the encore's shouts under the harness; blank harness pictures found (taken before the page drew) and named by `tools/shots.ts`; perf at every place in one browser; Bjørvika's crane lights held by name; Holmenkollen's hedgehog a mountain hare in its winter coat (drawing only) | `orders/35-housekeeping-and-the-figures.md`, branch `housekeeping` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -159,12 +160,16 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   fresh seeds (101 to 200). Measure on fresh seeds, not the ones a level was tuned on. Remember what the
   sloppy player is: the route's plan with a person's timing. It never finds a better line, and
   "off route" and "gave up" mostly mean it fell somewhere the route never goes.
-- **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame (if he is hit in those
-  steps the page holds its picture, so nothing is drawn: a picture or `?debug&perf` there shows the frame before or
-  nothing at all, and whether the first frame came first is a race with `feel.ts`'s chunk; use `steps=0` there);
+- **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame (if he is hit in the last
+  four of those steps the page holds its picture; since order 35 a frame over canvases a resize has just emptied is drawn
+  whatever holds, and `?debug&perf` measures a whole frame there, where it measured nothing); the level's music hears every
+  stepped step (order 35), so the encore's shouted lines show in a still picture;
   `?debug&auto&steps=N` plays the scripted route in the page; `bun tools/shots.ts <dir> <url>…`
-  takes the pictures with headless Firefox (`--size=390x844` for an upright phone; `--wait=5000`
-  for a built page under `?debug&auto`, which fetches after the load event the picture is taken at; `--lang=nb-NO` in Norwegian).
+  takes the pictures with headless Firefox (`--size=390x844` for an upright phone; `--wait=30000`
+  for a built page under `?debug&auto`, which fetches after the load event the picture is taken at: since order 35 the page
+  says when its picture is drawn and it is taken then, the wait the most it waits; `--lang=nb-NO` in Norwegian). A picture
+  with nothing drawn in its middle (the page's own background) is named BLANK and the run ends with 3: the blank pictures of
+  orders 32 and 34 were taken before the page had drawn, five seconds being too short for the encore's files on this Pi.
   `?debug&card` puts the level's card at its end over it, as its rune would (order 30), as `&told` and `&seen` set the story's
   card read and the encore seen.
 - **The front page gate**: 28 reference screenshots of the front page, taken before any of this
@@ -205,7 +210,8 @@ Stortinget: `tools/review/o26/perf.md`). Next in line: the far
 layers' one rectangle per column, colours set on every rectangle, the five stacked canvases. Order 31 kept Stortinget's escalator shafts
 (their back walls whole, and the escalators' truss, glass, handrail and steps) as strips copied: at the shafts 1,363 to 2,947 rectangles a
 frame at 390 x 844 where it was 4,259 to 6,630 (`tools/review/o31/perf.md`), the pictures byte-identical. No one has measured on a real
-phone: the numbers are the Pi's software renderer.
+phone: the numbers are the Pi's software renderer. Since order 35 `tools/glance/perf.ts` measures every place in one browser (about two
+seconds a place, where a browser a place took five; `--each` is the old way), so all of a round's places are measured, not a sample.
 
 ## Line 2: what is built, what order 17 owes
 
@@ -266,7 +272,8 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 58.08 kB gzipped after order 34 (the page asks a level's own music once a frame and shows its shouted line: 0.14 kB; the
+- **First script**: 58.14 kB gzipped after order 35 (the stepped page's music asked every step, a frame over emptied canvases:
+  0.06 kB). 58.08 kB gzipped after order 34 (the page asks a level's own music once a frame and shows its shouted line: 0.14 kB; the
   tune itself is in the encore's chunk, 8.6 to 11.2 kB gzipped). 57.94 kB gzipped after order 33 (57,903 bytes by GNU gzip, 1,691 fewer than order 32's build): the kit's synth, the page's
   drawing after dusk and of the rune's flight (`render/dusk.ts`) went into `feel`'s file, which the first scene waits for, and the maze's
   feather drawing with the maze (ADR 0053, amended: without `feel`'s file the page is silent and nothing keeps its light after dusk).
@@ -735,6 +742,26 @@ Order 34 (`orders/34-what-lars-said.md`, ADR 0055; each item done or not, with i
   level against it with proposals, none carried out (he has not played).
 - **Unplayed and unheard**: none of it has been seen at speed or on a phone, and nobody has heard the tune.
 
+## Order 35: housekeeping, and every figure on one page
+
+Order 35 (`orders/35-housekeeping-and-the-figures.md`; each item done or not, with its measures, in `apps/viking/tools/review/o35/after.md`).
+It retunes nothing. What to know:
+- **The suite's time** is under 300 s on a quiet Pi (it was about 363 s): the tests' stand-in contexts keep their methods as their own (a
+  proxy round them was asked on every call; `ANY_METHOD`, `NO_METHOD` in `render/fields.ts`) and work a colour out once; the reduced-motion
+  recorder mixes numbers into its fingerprint; the warning tests share one walk; the reach searches run on a pool of workers, the
+  costliest first (`game/reachlevel.ts`). Every changed test was shown to fail on a planted fault (the table in `after.md`). A new test that
+  draws every level should use those recorders, or the walk another test has made.
+- **Every figure on one page**: `bun tools/figures.ts <dir>` in `apps/viking` writes a sheet of every figure the game draws and
+  `figures.json` naming each in both languages, from the game's tables (`src/alive/figures.ts`; `alive/figures.test.ts`). Nothing it writes is
+  committed; the page of every figure (handbook, resources) can be rebuilt from it.
+- **The harness**: the stepped page's music hears every step, so the encore's shouts show in a still picture; the blank pictures were taken
+  before the page had drawn, and `tools/shots.ts --wait` now waits for the page to say it has drawn and names blank pictures; `?debug&perf`
+  measures a whole frame while a hit holds the picture; `tools/glance/perf.ts` measures every place in one browser.
+- **Lights near the warning red** are named in the warning test (Bjørvika's crane lights, ADR 0044 amended).
+- **Holmenkollen's hare**: order 35 drew a mountain hare where the hedgehog was; the planner took it out again in review (it read as
+  a pale blob and its spikes warned less clearly). The hedgehog stands there; the proposal waits with the rest of `o34/thematic.md`.
+- **Unplayed**: none of it has been seen on a phone or at speed.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -779,9 +806,9 @@ reorder this list.
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
    two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour; after order 34, 370.5 s against 335.0 s for
-   `origin/main` the same hour, over the 360 its order set: its scenery walk in `render/warning.test.ts` about 18 s, `o34/after.md` says what could be trimmed): most of it the reach and dead-end searches in sixteen workers on four
-   cores (Gamlebyen's, eight searches in one worker, is the slowest), and about 50 s the reduced-motion test, which draws every
-   level.
+   `origin/main` the same hour, over the 360 its order set: its scenery walk in `render/warning.test.ts` about 18 s, `o34/after.md` says what could be trimmed;
+   after order 35 under 300 s, its three runs in `o35/after.md`): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
+   Akershus's alone takes 52 s), and about 70 s the reduced-motion test, which draws every level.
 9. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)). Since order 21 on a touch phone it is the run alone during a
    level (two rows upright, one on its side, ADR 0043); with a mouse on a narrow window it still wraps as before, and since

@@ -20,9 +20,10 @@ for (const line of readFileSync(join(here, "pictures.tsv"), "utf8").split("\n"))
   const [name, path, how] = line.split("\t");
   if (only.length && !only.includes(name)) continue;
   const dir = mkdtempSync(join(tmpdir(), "pictures-"));
-  const proc = Bun.spawn(["bun", join(here, "../../../tools/shots.ts"), ...(how === "wait" ? ["--wait=5000"] : []), dir, `${base}${path}`], { stdout: "ignore", stderr: "inherit" });
+  const proc = Bun.spawn(["bun", join(here, "../../../tools/shots.ts"), ...(how === "wait" ? ["--wait=30000"] : []), dir, `${base}${path}`], { stdout: "ignore", stderr: "inherit" });
   await proc.exited;
-  const got = readdirSync(dir).find((f) => f.endsWith(".png"));
+  // A blank picture (shots.ts ends with 3: nothing drawn in its middle) is not put on the page.
+  const got = proc.exitCode === 3 ? undefined : readdirSync(dir).find((f) => f.endsWith(".png"));
   if (got) copyFileSync(join(dir, got), join(shots, `${name}.png`));
   else failed++;
   console.log(`${got ? "ok    " : "FAILED"} ${name}`);
