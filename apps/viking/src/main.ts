@@ -1217,6 +1217,9 @@ function play() {
   const intent: PlayIntent = (!held && scripted) || { ...keys, sit: bench !== null && (input.pressed("up") || input.pressed("enter")), dash: !held && input.pressed("dash"), shield: !held && input.held.down };
   feel?.before(p, state.steps);
   const ev = stepPlay(p, intent);
+  // Stepped (`?debug&steps`), the level's music hears every step, without sound, so it knows when the encore's Loki woke and a
+  // shouted line can show in a still picture (order 35); a page that runs asks it once a frame, as it draws.
+  if (harness) p.def.music?.(null, p.boss?.state ?? null, p.t);
   if (p.riding !== keysRiding) keysLine(p);
   session.lives = p.lives;
   session.purse = p.purse;
@@ -1328,8 +1331,12 @@ const shake = { x: 0, y: 0 };
 let barAt = -1;
 const lookAt =debug ? params.get("look")?.split(",").map(Number) : null;
 
+/** The canvases were just laid out again, and so emptied: the next frame is drawn whatever holds (order 35). */
+let emptied = false;
+
 function layout() {
   kit.resize();
+  emptied = true;
   padKit?.layout();
   maze?.resize();
   if (!scene) return;
@@ -1471,9 +1478,11 @@ let shout: string | null = null;
 function render(alpha: number) {
   // The level's own music (order 34: the encore's), once a frame while it is played; given no sound on a card or hidden, it stops.
   shout = scene.def.music?.(state.mode === "play" && !state.finished && !document.hidden ? sfx : null, scene.play.boss?.state ?? null, scene.play.t) ?? null;
-  // A hit holds the picture a moment (not the rules, which go on stepping).
+  // A hit holds the picture a moment (not the rules, which go on stepping); not over canvases a resize has just emptied, which
+  // would stay empty (order 35: a stepped page hit in its last steps was photographed blank when the stage's first resize came).
   feel?.at(state.steps);
-  if (feel?.held(state.steps)) return;
+  if (feel?.held(state.steps) && !emptied) return;
+  emptied = false;
   const sky = scene.skies.sky;
   const art = scene.def.art;
   const p = scene.play;
@@ -1739,8 +1748,10 @@ if (levelParam && !debugLevel && location.hash !== MAZE_HASH) history.replaceSta
 let auto: ((p: Play) => PlayIntent | null) | null = null;
 
 /** One frame with nothing blended and the camera settled on him: what a stepped page shows. */
-function still() {
+function still(whole = false) {
   if (mode !== "scene" || !scene) return;
+  // `?debug&perf` measures a whole frame, also while a hit holds the picture (order 35: it measured nothing there).
+  if (whole) emptied = true;
   Object.assign(shown, scene.play.body);
   rideShown(scene.play.def.carriers, scene.play.t, 1, scene.play.body, shown);
   camera(0, true);
