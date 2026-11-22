@@ -4,11 +4,13 @@ import { R, ctx, light, mix, view, wdisc } from "@larshansen/pixelkit/paint";
 import { LAMP, PALETTE, ROLES } from "@larshansen/pixelkit/palette";
 import { inked, pixels as pixelsOf, type Frame as HimFrame } from "@larshansen/pixelkit/frames";
 import { HIM, HIM_INK, STRIDE } from "@larshansen/pixelkit/him";
+import { HIM_VIEWS } from "@larshansen/pixelkit/himviews";
 import { snap, sx, sy, unit, textCtx } from "@larshansen/pixelkit/text";
 import { COLS, LEVELS, ROWS, findTiles, finishOf, isWall, mapInfo, ravenTile, startCentre, type Cell, type LevelDef, type Portal } from "./levels";
 import { ENTRANCE, FACE, FRAME, VOID, faceAt, hasTorch, hash, liningAt, stillPixels } from "./look";
 import { drawFeather } from "./feather";
 import { DWELLER, KEY, RAVEN, STONES, STONE_H, STONE_RUNE, STONE_W, drawAdder, put } from "./figures";
+import type { View } from "./heading";
 import { BODY, FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, type Stone } from "./rules";
 
 // Drawing the mound, seen from above with its walls' faces showing, in the viking game's grain (order 36, ADR 0056). Everything is
@@ -16,7 +18,7 @@ import { BODY, FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, typ
 // the doorways) are a grid of colours made once a level and put on a canvas the size of the map; what moves or glows (the curse's
 // line, the torches' flames, the stones, the adders, the raven, the key, the gate, the sliding walls) is drawn over it every frame,
 // a figure as a frame of the kit's (`figures.ts`) or a piece kept and copied; him and his ghost from the viking game's own sheet
-// (`@larshansen/pixelkit/him`) on the sharp canvas.
+// (`@larshansen/pixelkit/him`), and going up or down a corridor from its front and back (`himviews`, order 37), on the sharp canvas.
 
 const P = PALETTE;
 const shade = (c: string, k: number) => mix(c, "#141018", k);
@@ -692,6 +694,8 @@ export interface Pose {
   dist: number;
   facing: 1 | -1;
   t: number;
+  /** His side (as before order 37), his back going away up a corridor, or his face coming toward down one (`heading.ts`). */
+  view?: View;
 }
 
 /** The torch in his front hand: its stick, and where the flame stands over it (from his box's top left, facing right). */
@@ -708,14 +712,24 @@ function toward(f: HimFrame, to: string, k: number): HimFrame {
   return d;
 }
 
-/** His frame for a pose: the run by the distance he has come, or standing with his breath and a blink now and then. */
+/**
+ * His frame for a pose: the run by the distance he has come (four frames whichever way he is seen, so his pace holds round a
+ * corner), or standing with his breath and a blink now and then (his back does not blink).
+ */
 export function himPose(p: Pose): HimFrame {
-  if (p.moving) return HIM.run[Math.floor(p.dist / STRIDE) % 4];
+  const away = p.view === "away";
+  const sheet = away ? HIM_VIEWS.away : p.view === "toward" ? HIM_VIEWS.toward : HIM;
+  if (p.moving) return sheet.run[Math.floor(p.dist / STRIDE) % 4];
   const breath = Math.floor(p.t / 30) % 2 === 1;
+  if (away) return breath ? HIM_VIEWS.away.breath : HIM_VIEWS.away.stand;
+  const face = sheet as typeof HIM_VIEWS.toward;
   const k = p.t % 360;
   const blink = (k >= 205 && k < 211) || k >= 354;
-  return breath ? (blink ? HIM.breathBlink : HIM.breath) : blink ? HIM.blink : HIM.stand;
+  return breath ? (blink ? face.breathBlink : face.breath) : blink ? face.blink : face.stand;
 }
+
+/** The run's frames a pixel higher (his foot passing under him): the torch rises with him. */
+const RAISED = new Set<HimFrame>([HIM.run[1], HIM.run[3], HIM_VIEWS.away.run[1], HIM_VIEWS.away.run[3], HIM_VIEWS.toward.run[1], HIM_VIEWS.toward.run[3]]);
 
 /** Paints a frame's runs on the sharp canvas at screen (ox, oy), mirrored about his box when he faces left. */
 function runs(u: CanvasRenderingContext2D, f: HimFrame, ox: number, oy: number, n: number, facing: number) {
@@ -742,7 +756,7 @@ export function drawHim(x: number, y: number, pose: Pose, cursed: boolean, alpha
   u.globalAlpha = alpha;
   runs(u, f, ox, oy, n, pose.facing);
   // The torch: a stick of dark wood in his front hand, and its flame (none while the curse has him).
-  const lift = base === HIM.run[1] || base === HIM.run[3] ? -1 : 0;
+  const lift = RAISED.has(base) ? -1 : 0;
   const col = (c: number) => ox + (pose.facing > 0 ? c : HIM_W - 1 - c) * n;
   const wood = cursed ? mix(P.woodDark, P.curseBright, 0.8) : P.woodDark;
   u.fillStyle = wood;

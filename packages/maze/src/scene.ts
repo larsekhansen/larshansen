@@ -7,6 +7,7 @@ import type { Stage } from "@larshansen/pixelkit/stage";
 import { bubble, fontPx, sx, sy, textCtx, unit, wrapLines as wrapped } from "@larshansen/pixelkit/text";
 import { createFx } from "./fx";
 import { createRecorder, ghostAt, loadGhost, saveGhost, type GhostPoints } from "./ghost";
+import { ghostWalk, newHeading, turn, type GhostWalk } from "./heading";
 import { strings } from "./i18n";
 import { COLS, LEVELS, ROWS, centreOf, finishOf, mapInfo, portalAt } from "./levels";
 import { createLevelCard, createLevelPanel, type Cleared } from "./panel";
@@ -119,9 +120,12 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   let prev = { x: state.x, y: state.y };
   let walk = 0;
   let heading = { x: 1, y: 0 };
-  /** How far he has walked in the level (his run's frames go by it) and which way he faces (the last way he went sideways). */
+  /**
+   * How far he has walked in the level (his run's frames go by it), and which of his drawings shows and which way he faces
+   * (his side, his back up a corridor, his face down one: `heading.ts`, order 37).
+   */
   let dist = 0;
-  let facing: 1 | -1 = 1;
+  let him = newHeading();
   let hissCool = 0;
   let left = false;
   let fade = 1;
@@ -140,8 +144,8 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   let leaving: number | null = null;
   /** The ghost of the best run on this level, and the run being recorded. */
   let ghost: GhostPoints | null = loadGhost(first, store);
-  let ghostHeading = { x: 1, y: 0 };
-  let ghostFacing: 1 | -1 = 1;
+  /** How far the ghost has walked at each of its steps, and its drawing there, worked out once a ghost (order 37). */
+  let ghostWay: GhostWalk | null = ghost && ghostWalk(ghost);
   const rec = createRecorder();
   /** Teleport stones say something the first time they send him on a level. */
   let toldTeleport = false;
@@ -211,7 +215,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     gateSoundAt = -1;
     Object.assign(state, newState(level, 0));
     dist = 0;
-    facing = 1;
+    him = newHeading();
     prev = { x: state.x, y: state.y };
     clearSteering();
     walk = 0;
@@ -228,6 +232,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     keyAt = finishAt = null;
     toldTeleport = false;
     ghost = loadGhost(level, store);
+    ghostWay = ghost && ghostWalk(ghost);
     rec.reset();
     speak(startLine(level), "start");
     movedAt = null;
@@ -408,8 +413,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
       const moved = intent.dx !== 0 || intent.dy !== 0;
       if (moved) heading = { x: intent.dx, y: intent.dy };
       dist += Math.hypot(intent.dx, intent.dy);
-      if (intent.dx > 0.05) facing = 1;
-      else if (intent.dx < -0.05) facing = -1;
+      turn(him, intent.dx, intent.dy);
       walk = moved ? walk + 1 : 0;
       if (walk > 0 && walk % 14 === 7) sfx.play("step");
       // Dust at his feet, kicked up behind him.
@@ -600,21 +604,22 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     u.clearRect(0, 0, view.cssW, view.cssH);
     u.textAlign = "center";
     u.textBaseline = "middle";
-    if (ghost && state.started && !done) {
+    if (ghost && ghostWay && state.started && !done) {
       const k = state.steps;
       const gi = Math.max(0, k - 1);
-      const g = ghostAt(ghost, gi, k === 0 ? 0 : alpha);
+      const blend = k === 0 ? 0 : alpha;
+      const g = ghostAt(ghost, gi, blend);
       if (g) {
         const a = ghostAt(ghost, gi);
         const b = ghostAt(ghost, gi + 1);
         const moving = !!a && !!b && (a.x !== b.x || a.y !== b.y);
-        if (moving && a && b && Math.hypot(b.x - a.x, b.y - a.y) < 3) ghostHeading = { x: b.x - a.x, y: b.y - a.y };
-        if (ghostHeading.x > 0.05) ghostFacing = 1;
-        else if (ghostHeading.x < -0.05) ghostFacing = -1;
-        drawGhost(g.x, g.y, { moving, dist: k * 1.4, facing: ghostFacing, t: tick });
+        // Its run by the distance it has walked, as his is (order 37: it went by the step count, so its feet could slide).
+        const w = ghostWay;
+        const next = Math.min(gi + 1, w.dist.length - 1);
+        drawGhost(g.x, g.y, { moving, dist: w.dist[gi] + (w.dist[next] - w.dist[gi]) * blend, facing: w.facing[gi] < 0 ? -1 : 1, view: w.view[gi], t: tick });
       }
     }
-    drawHim(x, y, { moving: walk > 0, dist, facing, t: tick }, state.phase === "cursed", 1, tick);
+    drawHim(x, y, { moving: walk > 0, dist, facing: him.facing, view: him.view, t: tick }, state.phase === "cursed", 1, tick);
     if (wordsShown() && words) {
       const a = ravenAnchor(state.level);
       const n = unit();

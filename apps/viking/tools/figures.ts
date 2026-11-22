@@ -476,15 +476,25 @@ function maze(): Map<string, Row[]> {
     return rects;
   };
   Object.assign(view, { k: 1, dpr: 1, camX: 0, camY: 0, camXf: 0, camYf: 0 });
-  const pose = (moving: boolean, dist: number, facing: 1 | -1, t: number) => ({ moving, dist, facing, t });
+  type View = "side" | "away" | "toward";
+  const pose = (moving: boolean, dist: number, facing: 1 | -1, t: number, view: View = "side") => ({ moving, dist, facing, t, view });
   const himRow = (state: string, poses: ReturnType<typeof pose>[]) => ({ state, frames: grids(poses.map((p) => text(() => mazeArt.drawHim(40, 40, p, false, 1, 4)))).map(pad) });
+  // His side, and since order 37 his back going up a corridor and his face coming down one, each standing and running (the
+  // same four frames of run, by distance), facing the way he last went sideways (his torch on that side).
   out.set("maze-him", [
     himRow("standing, breathing, blinking", [pose(false, 0, 1, 0), pose(false, 0, 1, 30), pose(false, 0, 1, 206)]),
     himRow("running", [0, 3, 6, 9].map((d) => pose(true, d, 1, 0))),
     himRow("running the other way", [0, 3, 6, 9].map((d) => pose(true, d, -1, 0))),
-    { state: "cursed", frames: grids([text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0), true, 1, 0))]).map(pad) }
+    himRow("going away, standing, breathing", [pose(false, 0, 1, 0, "away"), pose(false, 0, 1, 30, "away")]),
+    himRow("going away, running", [0, 3, 6, 9].map((d) => pose(true, d, 1, 0, "away"))),
+    himRow("going away, running, facing the other way", [0, 3, 6, 9].map((d) => pose(true, d, -1, 0, "away"))),
+    himRow("coming toward, standing, breathing, blinking", [pose(false, 0, 1, 0, "toward"), pose(false, 0, 1, 30, "toward"), pose(false, 0, 1, 206, "toward")]),
+    himRow("coming toward, running", [0, 3, 6, 9].map((d) => pose(true, d, 1, 0, "toward"))),
+    himRow("coming toward, running, facing the other way", [0, 3, 6, 9].map((d) => pose(true, d, -1, 0, "toward"))),
+    { state: "cursed", frames: grids([text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0), true, 1, 0)), text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0, "away"), true, 1, 0)), text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0, "toward"), true, 1, 0))]).map(pad) }
   ]);
-  out.set("maze-ghost", [{ state: "running", frames: grids([0, 3, 6, 9].map((d) => text(() => mazeArt.drawGhost(40, 40, pose(true, d, 1, 0))))).map(pad) }]);
+  const ghostRow = (state: string, view: View) => ({ state, frames: grids([0, 3, 6, 9].map((d) => text(() => mazeArt.drawGhost(40, 40, pose(true, d, 1, 0, view))))).map(pad) });
+  out.set("maze-ghost", [ghostRow("running", "side"), ghostRow("going away", "away"), ghostRow("coming toward", "toward")]);
   out.set("maze-adder", [
     { state: "along a corridor, its wave", frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, 1, t)))) },
     { state: "the other way", frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, -1, t)))) },
