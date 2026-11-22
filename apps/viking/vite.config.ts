@@ -62,8 +62,10 @@ export default defineConfig({
           if (/\/src\/render\/looks\.ts$/.test(id)) return "looks";
           // What answers events (order 19), and the frames, shadows and depth that keep the picture alive (order 23):
           // fetched as the page starts, alongside the map's look.
-          // The story's words (order 27) come with it.
-          if (/\/src\/(render\/feel|game\/story)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
+          // The story's words (order 27) come with it, and the page's drawing after dusk and of the rune's flight (order 33).
+          if (/\/src\/(render\/feel|render\/dusk|game\/story)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
+          // The kit's synth (order 33): the page's sounds come with feel's file, which the first scene waits for.
+          if (/\/packages\/pixelkit\/src\/sfx\.ts$/.test(id)) return "feel";
           // The touch pad and the camera's room for it (order 21): fetched on a touch screen only, with the first scene.
           if (/\/src\/(render\/pad|game\/frame)\.ts$/.test(id)) return "pad";
           // The shield's rules and drawing: fetched when he has it, or goes where it is given.
