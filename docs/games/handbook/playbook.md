@@ -37,7 +37,7 @@ prompt names the checkout, the branch, the order file's path, and the practical 
 
 - `post/` is Lars's own untracked file: do not add, commit or touch it.
 - Privacy (ADR 0014). The reference games are GPL: technique and numbers only.
-- Pictures: `bun tools/shots.ts [--size=390x844] [--wait=5000] <dir> <url>…` against a preview
+- Pictures: `bun tools/shots.ts [--size=390x844] [--wait=30000] <dir> <url>…` (since order 35 a waited picture is taken when the page says it has drawn; BLANK names an empty one) against a preview
   server; the debug addresses; preview ports 5184 to 5189, stopped by port; port 5180 is the
   front page gate's.
 - `/tmp` is RAM. Kill hung headless Firefox after each batch; bulky working files under

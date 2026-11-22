@@ -109,3 +109,9 @@ off), the paper cranes keeping their tint as drawn; Bygdøy's ticket kiosk's sig
 Korketrekkeren the red plastic sledge among the hire sledges leaning on Frognerseteren's shed a deep wine red (`#8a2030`, 20.7 off; the
 red there was the sledge, not the walls, which are tarred logs already). His hat keeps the kit's red (he is the hero, not scenery); what
 hurts keeps its own. Before and after at four times: `apps/viking/tools/review/o34/after.md`.
+
+## Amended by order 35 (22 November 2026): lights near the warning red are named
+After dusk a light is its own colour over the dark (ADR 0054), so a red light reads as red as a fill. Bjørvika's far cranes have a red
+light at each jib's tip (`#ff5a44`), 10.3 off the warning red: outside the test's 10 by luck. `render/warning.test.ts` now holds every light
+every level registers: none within 10 of the warning red, and any within 12 named with why. The crane lights are named: real crane lights
+are red, a pixel each, far off, on a thing that does not hurt. The hue is kept.

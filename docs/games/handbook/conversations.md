@@ -185,6 +185,14 @@ the story's lines in `game/story.ts` above the encore's block did not change. Sh
 
 The doors at the level's end and at the line map's far left keep the label "Hjem" / "Home": they lead to the site's front page.
 
+### Order 35: one enemy brought into its season (the planner's reading)
+
+Of Lars's "Also keep enemies thematic" (22 November), order 34's table (`apps/viking/tools/review/o34/thematic.md`) found one enemy out
+of its place: Holmenkollen's hedgehog, which sleeps through the winter. Order 35 drew a mountain hare in its white winter coat in its place
+(the same box, speed, behaviour and frames; glammed, neon spikes along its back say it hurts from above, as the spines did). It is the
+planner's reading, not his word, and a drawing only: the hedgehog is as it was at Akerselva, Nordmarka and Ekeberg, and putting it back at
+Holmenkollen is one word (`look: "hare"` to `"hedgehog"` in `levels/holmenkollen.ts`). Nothing else in that table was carried out.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.

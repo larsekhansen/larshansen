@@ -1,6 +1,6 @@
 # Roadmap
 
-As of 22 November 2026, after order 34 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
+As of 22 November 2026, after order 35 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
 
 ## Status
 
@@ -8,14 +8,23 @@ As of 22 November 2026, after order 34 was built (not yet reviewed or live). Cha
 |---|---|
 | Date | 22 November 2026 |
 | Last live | Order 34, what Lars said (ADR 0055), PR #82; before it orders 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 34, what Lars said, branch `what-lars-said` |
+| Built, waiting for review | Order 35, housekeeping and the figures, branch `housekeeping` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | 19 % used when order 34 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 34, what Lars said** (`orders/34-what-lars-said.md`, ADR 0055), built on branch `what-lars-said`, not yet reviewed: his answers
+**Order 35, housekeeping, and every figure on one page** (`orders/35-housekeeping-and-the-figures.md`), built on branch `housekeeping`,
+not yet reviewed. It retunes nothing (Lars has not played). The viking suite under 300 s on the Pi with nothing it held lost, every changed
+test shown to fail on a planted fault; `apps/viking/tools/figures.ts`, a sheet of every figure the game draws at four times and
+`figures.json` naming each in both languages (the page of every figure, unpublished since order 27, can be rebuilt from it); the encore's
+shouts in a still picture without `&say`; the blank harness pictures found (taken before the page had drawn) and named by `tools/shots.ts`;
+perf at all 275 places in one browser; Bjørvika's crane lights held by name in the warning test; Holmenkollen's hedgehog drawn as a
+mountain hare in its winter coat (the planner's reading of "Also keep enemies thematic", drawing only, easy to undo). Each item, done or
+not, with its measures: `apps/viking/tools/review/o35/after.md`.
+
+**Order 34, what Lars said** (`orders/34-what-lars-said.md`, ADR 0055), live (PR #82): his answers
 recorded (`conversations.md`); the tenth station shown as Gamle Oslo, its words an ode to Oslo with no "home"; scenery and ground off the
 warning red (ADR 0044 amended); the encore's original glam-rock tune in the game's own synth, following the fight, with an audition
 (`?debug&music=`), Loki at the far end of late-1980s glam in general, four shouted lines in time with it; the rule that difficulty and
@@ -69,7 +78,9 @@ whether figures stand out there on a phone is still for Lars.
 Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
 deletion of `landing-game-polish` (in the planner's own session), and his play notes. When he has played, the proposals in
 `apps/viking/tools/review/o34/thematic.md` (difficulty and enemies by place) become an order; until then idea 2 below (tune by play) is the
-biggest gap, and idea 3's checklist now has the tune on it: nobody has heard it.
+biggest gap, and idea 3's checklist now has the tune on it: nobody has heard it. Order 35 carried out one proposal of that table that is a
+drawing only (Holmenkollen's hedgehog, out of its season, is a mountain hare); the rest wait. The page of every figure (resources.md) can
+be published again from `apps/viking/tools/figures.ts`'s sheets: one sheet a figure, named in both languages, for Lars to comment on.
 
 ## After that: ideas in rough order of value
 
@@ -115,9 +126,8 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite takes about six minutes alone since order 34 (370.5 s, over order 34's 360: the scenery walk of the warning test about
-  18 s of it; `apps/viking/tools/review/o34/after.md` says what could be trimmed); order 33's 340 s (323 s after order 32; the reduced-motion test draws
-  every level, about 70 s) and more when two implementers run; order 33 had to make its own new tests cheaper to keep at 340;
-  the deploy runs it too. One slow hook has a ten-minute timeout for that reason.
-- `tools/pictures.ts` retakes LEVELS.html's pictures; a hit in the first steps blanks a
-  headless picture (HANDOVER, "The harness").
+- The viking suite: under 300 s alone since order 35 (`apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+  it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
+  alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
+  walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).
+- `tools/pictures.ts` retakes LEVELS.html's pictures; since order 35 it takes none that comes out blank (`tools/shots.ts` names them).

@@ -105,3 +105,11 @@ easy. Also keep enemies thematic." (The relaying session reads "touch" as "tough
 - **Renaming the id** to `gamleoslo`: it would lose everyone's stored progress for no gain a player sees (ADR 0038's reason).
 - **Taking "Hjem" off the doors**: they lead to the site's home page; "Hjem" there is the site's, not his.
 - **New words about the Pi, the cranes or the yellow house**: they stay as drawn, unexplained (ADR 0014).
+
+## Amended by order 35 (22 November 2026): one enemy brought into its season
+Of the proposals in `apps/viking/tools/review/o34/thematic.md`, one is a drawing only and was carried out on the planner's reading of
+"Also keep enemies thematic": Holmenkollen's hedgehog, which sleeps through the winter, is a mountain hare in its white winter coat
+(`HARE` in `levels/holmenkollen.ts`: the same box, speed, behaviour and frame count; glammed in the level's lean with neon spikes along
+its back, which say it hurts from above as the spines did, and shades; its natural self white with black ear tips, in the calm outline).
+The hedgehog is as it was at Akerselva, Nordmarka and Ekeberg; Holmenkollen's run files are byte-identical. It waits for Lars's word
+like the rest of the table, and is one word to undo (`look: "hare"`). Nothing else was retuned or moved.
