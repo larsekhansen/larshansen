@@ -323,8 +323,11 @@ function frognerseteren(v: View) {
   // The shed where the sledges are hired (its roof he can stand on), sledges leaning on it.
   R(29 * TILE, g - 2 * TILE, 3 * TILE, 2 * TILE, K.logsLight);
   for (let y = g - 2 * TILE; y < g; y += 4) R(29 * TILE, y + 3, 3 * TILE, 1, K.logs);
-  for (let k = 0; k < 3; k++) R(29 * TILE + 4 + k * 12, g - 18, 4, 18, k % 2 ? K.sledgeRed : K.sledgeWood);
+  for (let k = 0; k < 3; k++) R(29 * TILE + 4 + k * 12, g - 18, 4, 18, k % 2 ? SLEDGE_WINE : K.sledgeWood);
 }
+
+/** The red plastic sledge among the hire sledges (order 34; ADR 0044 amended): a deep wine red, 20.7 off the warning red where the kit's was 5.9. */
+const SLEDGE_WINE = "#8a2030";
 
 /** The run: packed snow along the stair of ledges, a groove from the runners, banks either side, the slope under it. */
 function theRun() {

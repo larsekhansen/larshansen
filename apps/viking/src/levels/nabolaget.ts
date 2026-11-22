@@ -244,6 +244,12 @@ function surfaceRow(c: number) {
 /** The yellow house: its left end, its width, its walls' top, the door, and the Pi's window. */
 const YELLOW = { x: 211 * TILE, w: 8 * TILE, top: S * TILE - 64, window: { x: 216 * TILE + 4, y: S * TILE - 30, w: 22, h: 20 } };
 
+/**
+ * The church's stained glass (order 34; ADR 0044 amended): a deep ruby where it was the kit's stained red, 6.3 from the warning red;
+ * 17.3 off it now. The paper cranes keep their tint of the old glass, as drawn.
+ */
+const STAINED = "#9a2433";
+
 /** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. */
 function dark(x: number, v: View) {
   const c = x / TILE;
@@ -431,7 +437,7 @@ function church() {
   for (const win of CHURCH_WINDOWS) {
     R(win.x - 1, win.y - 3, 8, 22, MASONRY.lintel);
     for (let k = 0; k < 3; k++) R(win.x + k, win.y - 3 + k, 6 - k * 2, 1, MASONRY.lintel);
-    R(win.x, win.y, 6, 18, WINTER.stained);
+    R(win.x, win.y, 6, 18, STAINED);
     R(win.x, win.y + 6, 6, 4, WINTER.stainedBlue);
     R(win.x + 2, win.y, 2, 18, WINTER.stainedGold);
     light(win.x, win.y, 6, 18, "soft");
