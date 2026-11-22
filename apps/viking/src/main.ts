@@ -576,7 +576,7 @@ async function enterMaze() {
     if (harness && aids) {
       aids.stepped(maze, params, input, { driver: steer, el: stage });
       showMazeHud();
-      if (params.has("perf")) aids.perf(maze, help);
+      if (params.has("perf")) aids.perf(maze, help, params);
       aids.drawn();
     }
   } catch {

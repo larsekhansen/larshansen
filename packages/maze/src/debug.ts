@@ -141,7 +141,7 @@ export function stepped(maze: Maze, params: URLSearchParams, input: Input, opts:
  * `perf` (with `steps`): draws the frame fifty times and writes on `line` how many rectangles, colours set and copies
  * one frame takes, and how long it took here, as the viking page's `?debug&perf` does for a level.
  */
-export function perf(maze: Maze, line: HTMLElement) {
+export function perf(maze: Maze, line: HTMLElement, params?: URLSearchParams) {
   const proto = CanvasRenderingContext2D.prototype;
   const count = { fillRect: 0, drawImage: 0, fillStyle: 0 };
   const { fillRect, drawImage } = proto;
@@ -170,6 +170,9 @@ export function perf(maze: Maze, line: HTMLElement) {
   Object.defineProperty(proto, "fillStyle", style);
   line.textContent = `perf: ${Math.round(count.fillRect / N)} rects, ${Math.round(count.fillStyle / N)} colours, ${Math.round(count.drawImage / N)} images, ${ms.toFixed(1)} ms a frame.`;
   line.hidden = false;
+  // `&post=<port>`: the line goes to a small server on this machine too, as the viking page's does (`tools/glance/perf.ts`).
+  const port = params?.get("post");
+  if (port) void fetch(`http://localhost:${port}/perf?name=${encodeURIComponent(location.search + location.hash)}`, { method: "POST", mode: "no-cors", headers: { "content-type": "text/plain" }, body: line.textContent });
 }
 
 /** Tells the frame round the page (`tools/shots.ts --wait`) that its picture is drawn. */

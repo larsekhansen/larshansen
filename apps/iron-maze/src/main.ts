@@ -177,7 +177,7 @@ if (debug) {
   // `steps=N` and the rest: `@larshansen/maze/debug`, shared with the maze inside Vikingfjorden (order 36).
   if (stepped(maze, params, input, { stop: () => over, beforeDraw: () => params.has("end") && showEnd(), driver: steer, el: stage })) {
     hud();
-    if (params.has("perf")) perf(maze, help);
+    if (params.has("perf")) perf(maze, help, params);
   }
   drawn();
 }
