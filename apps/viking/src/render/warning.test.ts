@@ -10,7 +10,7 @@ import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { newPlay } from "../game/play";
 import { BUILT, loadLevel } from "../levels/index";
 import type { LevelDef, View } from "../levels/types";
-import { deltaE, mixRgb, parseColour, skyOf, type Rgb } from "./fields";
+import { ANY_METHOD, deltaE, mixRgb, parseColour, skyOf, type Rgb } from "./fields";
 import { airOf, backHazeOf, hazeOf } from "./haze";
 import { STAND_LEDGE, standTop } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
@@ -52,19 +52,20 @@ const NAMED_SCENERY: Record<string, string> = {
   "stortinget #e8262e": "the third rail's cover: it hurts, and is the warning red itself (ADR 0044)"
 };
 
-/** Each fill colour once, under a haze: its hex as drawn, and whether it is within 10 of the warning red as seen (null: see-through, not counted). */
-const INKS = new Map<string, { hex: string; near: boolean } | null>();
-/** The wash over what is drawn now: how far toward the air, and the air (order 34; the page's `pass` with a haze). */
-const HAZED: { k: number; air: Rgb } = { k: 0, air: [0, 0, 0] };
+type Ink = { hex: string; near: boolean } | null;
+/** Each fill colour once, under each haze: its hex as drawn, and whether it is within 10 of the warning red as seen (null: see-through, not counted). */
+const INKS = new Map<string, Map<string, Ink>>();
+/** The wash over what is drawn now: how far toward the air, and the air (order 34; the page's `pass` with a haze); and its colours (order 35: looked up once a wash, not a key built on every fill). */
+const HAZED: { k: number; air: Rgb; inks: Map<string, Ink> } = { k: 0, air: [0, 0, 0], inks: new Map() };
+INKS.set("0", HAZED.inks);
 function inkOf(style: unknown) {
   if (typeof style !== "string") return null;
-  const key = HAZED.k ? `${style}|${HAZED.k}|${HAZED.air.join()}` : style;
-  let ink = INKS.get(key);
+  let ink = HAZED.inks.get(style);
   if (ink === undefined) {
     const p = parseColour(style);
     const seen = p && HAZED.k ? mixRgb(p.rgb, HAZED.air, HAZED.k) : p?.rgb;
     ink = !p || !seen || p.a < 0.6 ? null : { hex: `#${p.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`, near: deltaE(seen, RED) < NEAR };
-    INKS.set(key, ink);
+    HAZED.inks.set(style, ink);
   }
   return ink;
 }
@@ -101,9 +102,9 @@ function raster(w: number, h: number) {
       for (let yy = y0; yy < y1; yy++) hit.fill(id, yy * w + x0, yy * w + x1);
     }
   };
-  const g = new Proxy(base, { get: (t, k) => (k in t ? t[k as string] : () => undefined), set: (t, k, v) => ((t[k as string] = v), true) });
+  Object.setPrototypeOf(base, ANY_METHOD);
   return {
-    ctx: g as unknown as CanvasRenderingContext2D,
+    ctx: base as unknown as CanvasRenderingContext2D,
     /** Whether what is drawn from now on counts (the things he meets) or only covers (the paint on what he stands on). */
     counting(all: boolean) {
       mine = all;
@@ -136,11 +137,29 @@ function caller(): string {
     .join(" < ");
 }
 
+/** Two rasters drawn on at once: what is drawn once is laid on both, each counting it or only covering with it as it is told. */
+function both(a: ReturnType<typeof raster>, b: ReturnType<typeof raster>): CanvasRenderingContext2D {
+  const ga = a.ctx as unknown as Record<string, unknown>;
+  const gb = b.ctx as unknown as Record<string, unknown>;
+  const tee = {
+    canvas: ga.canvas,
+    fillRect: (x: number, y: number, w: number, h: number) => (a.ctx.fillRect(x, y, w, h), b.ctx.fillRect(x, y, w, h))
+  };
+  for (const k of ["fillStyle", "globalAlpha", "globalCompositeOperation"])
+    Object.defineProperty(tee, k, { get: () => ga[k], set: (v) => ((ga[k] = v), (gb[k] = v)) });
+  Object.setPrototypeOf(tee, ANY_METHOD);
+  return tee as unknown as CanvasRenderingContext2D;
+}
+
+type Most = Map<string, { n: number; at: string; who: Set<string> }>;
+
 /**
- * Every view of a level by day: the most pixels a near-red colour of its harmless things fills in one, and who drew it. With
- * `scenery` (order 34), what is counted is the scenery and the ground behind and under what he meets, washed by its layer's haze.
+ * Every view of a level by day, walked once for both tests (order 35; each walked it on its own before): the most pixels a
+ * near-red colour of its harmless things fills in one, and who drew it (`things`); and (order 34) the same of the scenery and
+ * the ground behind and under what he meets, washed by its layer's haze, what he meets only covering it (`scenery`). What he
+ * meets is drawn once, onto both.
  */
-function nearRed(def: LevelDef, scenery = false) {
+function nearRed(def: LevelDef): { things: Most; scenery: Most } {
   const play = newPlay(def, {});
   const map = play.map;
   const sky = skyOf(def, "day");
@@ -148,39 +167,54 @@ function nearRed(def: LevelDef, scenery = false) {
   Object.assign(view, { w: 320, h: 200, k: 1, reduced: true });
   const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
   const art = def.art;
-  const most = new Map<string, { n: number; at: string; who: Set<string> }>();
+  const most = { things: new Map() as Most, scenery: new Map() as Most };
   const horizon = map.height - 4 * TILE - 34;
   const haze = hazeOf(def);
   const air = parseColour(airOf(def, "day"))!.rgb;
-  const wash = (k: number) => Object.assign(HAZED, { k, air });
+  const wash = (k: number) => {
+    const key = k ? `${k}|${air.join()}` : "0";
+    let inks = INKS.get(key);
+    if (!inks) INKS.set(key, (inks = new Map()));
+    Object.assign(HAZED, { k, air, inks });
+  };
+  const add = (into: Most, r: ReturnType<typeof raster>, at: string) => {
+    for (const [c, o] of r.near()) {
+      const m = into.get(c) ?? { n: 0, at: "", who: new Set<string>() };
+      if (o.n > m.n) Object.assign(m, { n: o.n, at });
+      for (const w of o.who) m.who.add(w);
+      into.set(c, m);
+    }
+  };
   try {
     for (let y = -view.h; y < map.height + view.h / 2; y += view.h)
       for (let x = 0; x < map.width; x += view.w) {
         Object.assign(view, { camX: x, camXf: x, camY: y, camYf: y });
         v.him = { x: x + view.w / 2, y: y + view.h / 2 };
-        const r = raster(view.w, view.h);
-        target(r.ctx);
-        if (scenery) {
-          // The sky, then the far layers, the street's backdrop, the water and the tiles, as the page's passes draw them
-          // (`main.ts`, `render/haze.ts`): each washed toward the air by its haze.
-          r.counting(false);
-          drawSky(sky, 0, horizon);
-          r.counting(true);
-          wash(haze[0]);
-          art.far?.(v);
-          wash(haze[1]);
-          art.mid?.(v);
-          wash(haze[2]);
-          art.near?.(v);
-          wash(backHazeOf(def));
-          art.back(v);
-          wash(0);
-          drawWater(map, 0);
-          drawTiles(map, art, sky, def.underground);
-        }
-        // The things he meets, as the page draws them at the start (`drawThings` in main.ts), what is in front, and the paint.
-        // (The props of the street's backdrop are held piece by piece in `alive/props.test.ts`.) Over the scenery they only cover it.
-        r.counting(!scenery);
+        const behind = raster(view.w, view.h);
+        const met = raster(view.w, view.h);
+        // The sky, then the far layers, the street's backdrop, the water and the tiles, as the page's passes draw them
+        // (`main.ts`, `render/haze.ts`): each washed toward the air by its haze.
+        target(behind.ctx);
+        behind.counting(false);
+        drawSky(sky, 0, horizon);
+        behind.counting(true);
+        wash(haze[0]);
+        art.far?.(v);
+        wash(haze[1]);
+        art.mid?.(v);
+        wash(haze[2]);
+        art.near?.(v);
+        wash(backHazeOf(def));
+        art.back(v);
+        wash(0);
+        drawWater(map, 0);
+        drawTiles(map, art, sky, def.underground);
+        // The things he meets, as the page draws them at the start (`drawThings` in main.ts), what is in front, and the paint:
+        // counted on their own; over the scenery they only cover it. (The props of the street's backdrop are held piece by piece
+        // in `alive/props.test.ts`.)
+        target(both(behind, met));
+        behind.counting(false);
+        met.counting(true);
         def.carriers.forEach((d, i) => {
           if (!carrierShown(d, 0)) return;
           const at = carrierDrawn(d, 0, 1);
@@ -192,16 +226,12 @@ function nearRed(def: LevelDef, scenery = false) {
         play.drums.forEach((l, i) => (art.drum ? art.drum(i, l, play.drummedAt[i], v) : drawDrum(l, 0, play.drummedAt[i])));
         play.flags.forEach((f, i) => art.flag?.(i, f, null, v) || drawCheckpoint(f, null, 0));
         art.front?.(v);
-        r.counting(false);
+        met.counting(false);
         def.carriers.forEach((d) => carrierShown(d, 0) && standTop(carrierDrawn(d, 0, 1).x, carrierDrawn(d, 0, 1).y, d.w, "moves", false, 0));
         def.timed.forEach((l) => timedPhase(0, l) !== "off" && standTop(l.x, l.y, l.w, "gives", false));
         lights.length = 0;
-        for (const [c, o] of r.near()) {
-          const m = most.get(c) ?? { n: 0, at: "", who: new Set<string>() };
-          if (o.n > m.n) Object.assign(m, { n: o.n, at: `${x},${y}` });
-          for (const w of o.who) m.who.add(w);
-          most.set(c, m);
-        }
+        add(most.scenery, behind, `${x},${y}`);
+        add(most.things, met, `${x},${y}`);
       }
   } finally {
     wash(0);
@@ -211,14 +241,21 @@ function nearRed(def: LevelDef, scenery = false) {
   return most;
 }
 
+/** Each level's walk, made by whichever test asks first. */
+const WALKED = new Map<string, ReturnType<typeof nearRed>>();
+async function walked(id: string) {
+  let w = WALKED.get(id);
+  if (!w) WALKED.set(id, (w = nearRed(await loadLevel(id))));
+  return w;
+}
+
 describe("harmless things keep off the warning red (order 33)", () => {
   test("what carries him, the ledges, cannons, drums, flags, what stands in front and every prop fill no more than a few pixels of a view within 10 of the warning red, but by name", async () => {
     const wrong: string[] = [];
     const table: string[] = [];
     const used = new Set<string>();
     for (const st of [...BUILT, { id: "encore" }]) {
-      const def = await loadLevel(st.id);
-      for (const [c, m] of nearRed(def)) {
+      for (const [c, m] of (await walked(st.id)).things) {
         const key = `${st.id} ${c}`;
         const line = `${key} (${deltaE(parseColour(c)!.rgb, RED).toFixed(1)} from it): ${m.n} pixels at the most in a view (at ${m.at}), by ${[...m.who].join("; ")}`;
         table.push(line);
@@ -238,8 +275,7 @@ describe("harmless things keep off the warning red (order 33)", () => {
     const table: string[] = [];
     const used = new Set<string>();
     for (const st of [...BUILT, { id: "encore" }]) {
-      const def = await loadLevel(st.id);
-      for (const [c, m] of nearRed(def, true)) {
+      for (const [c, m] of (await walked(st.id)).scenery) {
         const key = `${st.id} ${c}`;
         const line = `${key} (${deltaE(parseColour(c)!.rgb, RED).toFixed(1)} from it as drawn): ${m.n} pixels at the most in a view (at ${m.at}), by ${[...m.who].join("; ")}`;
         table.push(line);

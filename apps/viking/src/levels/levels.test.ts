@@ -8,6 +8,7 @@ import { footOf } from "@larshansen/pixelkit/tilemap";
 import { pulsePhase as pulsePhaseOf, timedPhase } from "@larshansen/pixelkit/timed";
 import { benchesOf, bossAwake, cannonsOf, flagsOf, levelMap, newPlay, stepPlay, type Play, type PlayIntent } from "../game/play";
 import { neckX, type Serpent } from "../game/serpent";
+import { joinParts, partsOf, type Found } from "../game/reachlevel";
 import { fresh } from "../game/progress";
 import { MOVE } from "@larshansen/pixelkit/config";
 import { carrierAt, carrierPeriod } from "@larshansen/pixelkit/carrier";
@@ -328,20 +329,20 @@ for (const def of LEVELS) {
       expect(p.bracteateAt).not.toBeNull();
     });
 
-    test("without it the bracteate cannot be reached at all, with the ski pole or not (a search with every moving thing everywhere at once and every enemy a trampoline)", () => {
-      const r = reach.get(def.id)!;
+    test("without it the bracteate cannot be reached at all, with the ski pole or not (a search with every moving thing everywhere at once and every enemy a trampoline)", async () => {
+      const r = await reach.get(def.id)!;
       expect(r.bracteate).toBe(false);
       // The search plays from where he can stand, at walking speed: it finds the rune where no speed
       // is needed to get there. Holmenkollen's needs the inrun's speed, which the scripted player shows.
       if (def.id !== "holmenkollen") expect(r.rune).toBe(true);
-    });
+    }, 600_000);
 
-    test("no dead ends: from everywhere he can get to with what he is sure to have, the rune can be reached without a fall, and a fall at least puts him back", () => {
-      const r = reach.get(def.id)!;
+    test("no dead ends: from everywhere he can get to with what he is sure to have, the rune can be reached without a fall, and a fall at least puts him back", async () => {
+      const r = await reach.get(def.id)!;
       expect(r.reached).toBeGreaterThan(100);
       expect(r.dead).toEqual([]);
       expect(r.onlyByFalling).toEqual([]);
-    });
+    }, 600_000);
 
     test("no enemy's patrol comes within three tiles of where a route's jump over a pit or water takes off or lands, and no flyer's wave crosses its arc", () => {
       const near = jumpsOverGaps(def, ROUTE[def.id]).flatMap((j) =>
@@ -405,25 +406,50 @@ for (const def of LEVELS) {
   });
 }
 
-/** The reach searches, one worker per level, side by side: the slowest is what the suite waits for. */
-const reach = new Map<string, { rune: boolean; bracteate: boolean; spots: number; reached: number; dead: string[]; onlyByFalling: string[]; ms: number }>();
-beforeAll(async () => {
-  const results = await Promise.all(
-    LEVELS.map(
-      (def) =>
-        new Promise<{ id: string; rune: boolean; bracteate: boolean; spots: number; reached: number; dead: string[]; onlyByFalling: string[]; ms: number }>((resolve, reject) => {
-          const w = new Worker(new URL("../game/reach.worker.ts", import.meta.url).href);
-          w.onmessage = (e) => {
-            resolve(e.data);
-            w.terminate();
-          };
-          w.onerror = (e) => reject(e);
-          w.postMessage({ id: def.id, pole: POLE.has(def.id) });
-        })
-    )
-  );
-  for (const r of results) reach.set(r.id, r);
-}, 600000);
+/**
+ * The reach searches (order 35): every level's, Gamlebyen's eight each a job of its own, on as many workers as the Pi has cores,
+ * the costliest first; each level's result as it comes. They start before the first test and the tests go on beside them (the
+ * main thread is free while the workers search): a level's reach tests wait only for its own searches. Before order 35 the
+ * sixteen levels were sixteen workers at once and every test waited for the slowest.
+ */
+type Reach = ReturnType<typeof joinParts>;
+const reach = new Map<string, Promise<Reach>>();
+/** About how long each level's search takes, for the order they are started in (the costliest first, so none is left alone at the end). */
+const COST: Record<string, number> = { akershus: 16, slottet: 14, gamlebyen: 14, ekeberg: 12, nabolaget: 12, bjorvika: 11, radhuset: 11, akerselva: 11, stortinget: 10, holmenkollen: 9, langkaia: 8, bygdoy: 8, vigelandsparken: 6, korketrekkeren: 6, ostensjovannet: 5, nordmarka: 4 };
+beforeAll(() => {
+  const jobs = LEVELS.flatMap((def) => Array.from({ length: partsOf(def) }, (_, part) => ({ def, part, cost: (COST[def.id] ?? 12) / partsOf(def) + (part === 0 ? 1 : 0) })));
+  jobs.sort((a, b) => b.cost - a.cost);
+  const found = new Map<string, { parts: Found[]; done: (r: Reach) => void; failed: (e: unknown) => void }>();
+  for (const def of LEVELS) {
+    let done: (r: Reach) => void = () => undefined;
+    let failed: (e: unknown) => void = () => undefined;
+    const searched = new Promise<Reach>((resolve, reject) => ((done = resolve), (failed = reject)));
+    // A failed search fails its level's tests when they ask for it, not the run before them.
+    searched.catch(() => undefined);
+    reach.set(def.id, searched);
+    found.set(def.id, { parts: [], done, failed });
+  }
+  // A worker takes the next job when it has done one, and goes when there are none left.
+  const work = () => {
+    const w = new Worker(new URL("../game/reach.worker.ts", import.meta.url).href);
+    let job = jobs.shift();
+    const ask = () => (job ? w.postMessage({ id: job.def.id, pole: POLE.has(job.def.id), part: job.part }) : w.terminate());
+    w.onmessage = (e) => {
+      const f = found.get(job!.def.id)!;
+      f.parts[job!.part] = e.data;
+      if (f.parts.filter(Boolean).length === partsOf(job!.def)) f.done(joinParts(job!.def.id, f.parts));
+      job = jobs.shift();
+      ask();
+    };
+    w.onerror = (e) => {
+      found.get(job!.def.id)!.failed(e);
+      job = jobs.shift();
+      ask();
+    };
+    ask();
+  };
+  for (let k = 0; k < Math.max(1, Math.min(jobs.length, navigator.hardwareConcurrency || 4)); k++) work();
+});
 
 describe("what the levels promise", () => {
   test("Slottet: a banner carries him over Spikersuppa, and the bass drum throws him higher than any jump", () => {

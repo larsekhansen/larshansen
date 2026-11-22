@@ -27,7 +27,7 @@ import { drawBracteate, drawRune, drawSheep } from "./actors";
 import { bannerAlpha } from "./banner";
 import { afterDark, runeFlight } from "./dusk";
 import { createFeel } from "./feel";
-import { areaRecorder, skyOf } from "./fields";
+import { ANY_METHOD, NO_METHOD, areaRecorder, skyOf } from "./fields";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./pickups";
 import { forgetShapes, freshRings, outlined } from "./sprite";
 import { STAND_LEDGE, hazardEdge, standTop, standing } from "./stand";
@@ -91,7 +91,7 @@ const MOVES: { level: string; path: string; why: string }[] = [
 /** A canvas made while the test draws as a browser would: it draws nothing, and its id says which it is. */
 const canvasIds = new WeakMap<object, number>();
 let canvases = 0;
-const NOWHERE = new Proxy({ canvas: { width: 4096, height: 4096 } } as Record<string, unknown>, { get: (t, k) => (k in t ? t[k as string] : () => undefined), set: () => true });
+const NOWHERE = Object.setPrototypeOf({ canvas: { width: 4096, height: 4096 } }, NO_METHOD) as Record<string, unknown>;
 function fakeCanvas() {
   const c = { width: 0, height: 0, getContext: () => NOWHERE };
   canvasIds.set(c, ++canvases);
@@ -113,15 +113,36 @@ function asInBrowser<T>(run: () => T): T {
   }
 }
 
+/** A string's FNV-1a hash, worked out once a string (order 35: the recorder mixed a string it built on every call, char by char). */
+const HASHED = new Map<string, number>();
+function fnv(s: string, h = 0x811c9dc5): number {
+  for (let i = 0; i < s.length; i++) h = Math.imul(h ^ s.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+const hashOf = (s: string) => {
+  let h = HASHED.get(s);
+  if (h === undefined) HASHED.set(s, (h = fnv(s)));
+  return h;
+};
+const F64 = new Float64Array(1);
+const U32 = new Uint32Array(F64.buffer);
+
 /**
  * A context that draws nothing and keeps a fingerprint of every call made to it, and of the lights registered meanwhile; with
  * `at`, every place in it relative to that point (order 32: a moving thing recorded where it is, so only what changes in its
- * drawing besides its place changes the fingerprint).
+ * drawing besides its place changes the fingerprint). Each call mixes what it is (a fill, a copy, a move, a text), its colour
+ * and alpha and how it is laid, and every number it was given, exactly (both halves of each number's bits).
  */
 function recorder(w: number, h: number, at = { x: 0, y: 0 }) {
   let print = 0x811c9dc5;
-  const mix = (s: string) => {
-    for (let i = 0; i < s.length; i++) print = Math.imul(print ^ s.charCodeAt(i), 16777619);
+  const mix = (n: number) => {
+    print = Math.imul(print ^ n, 16777619);
+  };
+  const num = (n: number) => {
+    // Nought is nought whatever its sign, as it was written into the fingerprint's text before.
+    F64[0] = n === 0 ? 0 : n;
+    mix(U32[0]);
+    mix(U32[1]);
   };
   let style: unknown = "#000000";
   const key = (s: unknown) => (typeof s === "string" ? s : s && typeof s === "object" && "stops" in s ? `g${(s as { stops: string[] }).stops.join()}` : String(s));
@@ -145,27 +166,40 @@ function recorder(w: number, h: number, at = { x: 0, y: 0 }) {
       return { stops, addColorStop: (o: number, c: string) => stops.push(`${o}:${c}`) };
     },
     fillRect(this: Self, x: number, y: number, rw: number, rh: number) {
-      mix(`R${key(style)}|${this.globalAlpha}|${this.globalCompositeOperation}|${x - at.x},${y - at.y},${rw},${rh}`);
+      mix(1);
+      mix(hashOf(key(style)));
+      num(this.globalAlpha);
+      mix(hashOf(this.globalCompositeOperation));
+      num(x - at.x);
+      num(y - at.y);
+      num(rw);
+      num(rh);
     },
     drawImage(this: Self, src: object, ...a: number[]) {
       const d = a.length >= 8 ? 4 : 0;
-      const where = a.map((n, i) => (i === d ? n - at.x : i === d + 1 ? n - at.y : n));
-      mix(`I${canvasIds.get(src) ?? "?"}|${where.join()}|${this.globalAlpha}|${this.globalCompositeOperation}`);
+      mix(2);
+      mix(canvasIds.get(src) ?? -1);
+      mix(a.length);
+      for (let i = 0; i < a.length; i++) num(i === d ? a[i] - at.x : i === d + 1 ? a[i] - at.y : a[i]);
+      num(this.globalAlpha);
+      mix(hashOf(this.globalCompositeOperation));
     },
-    translate: (x: number, y: number) => mix(`T${x},${y}`),
-    setTransform: (...m: number[]) => mix(`S${m.join()}`),
+    translate: (x: number, y: number) => (mix(3), num(x), num(y)),
+    setTransform: (...m: number[]) => (mix(4), mix(m.length), m.forEach(num)),
     fillText(this: Self, text: string, x: number, y: number) {
-      mix(`X${text}|${x - at.x},${y - at.y}|${key(style)}|${this.globalAlpha}`);
+      mix(5);
+      mix(hashOf(text));
+      num(x - at.x);
+      num(y - at.y);
+      mix(hashOf(key(style)));
+      num(this.globalAlpha);
     }
   };
-  const g = new Proxy(base, {
-    get: (t, k) => (k in t ? t[k as string] : () => undefined),
-    set: (t, k, v) => ((t[k as string] = v), true)
-  });
+  Object.setPrototypeOf(base, ANY_METHOD);
   return {
-    ctx: g as unknown as CanvasRenderingContext2D,
+    ctx: base as unknown as CanvasRenderingContext2D,
     done() {
-      mix(JSON.stringify(lights.map((l) => ({ ...l, x: l.x - at.x - view.camX, y: l.y - at.y - view.camY }))));
+      mix(fnv(JSON.stringify(lights.map((l) => ({ ...l, x: l.x - at.x - view.camX, y: l.y - at.y - view.camY })))));
       lights.length = 0;
       return print >>> 0;
     }
@@ -173,14 +207,19 @@ function recorder(w: number, h: number, at = { x: 0, y: 0 }) {
 }
 
 /** The recordings of `draw(t)` at each clock in `clocks` (after one drawing at the first, unrecorded, so what is made once is made). */
-function recordings(draw: (t: number) => void, clocks: number[], w: number, h: number): number[] {
+function recordings(draw: (t: number) => void, clocks: number[], w: number, h: number, known = new Map<number, number>()): number[] {
   const was = ctx();
   try {
-    target(recorder(w, h).ctx);
-    freshRings();
-    draw(clocks[0]);
-    lights.length = 0;
+    if (!known.size) {
+      target(recorder(w, h).ctx);
+      freshRings();
+      draw(clocks[0]);
+      lights.length = 0;
+    }
     return clocks.map((t) => {
+      // A clock already recorded is not drawn again (order 35): the same drawing makes the same recording.
+      const had = known.get(t);
+      if (had !== undefined) return had;
       const rec = recorder(w, h);
       target(rec.ctx);
       freshRings();
@@ -283,7 +322,7 @@ function scenery(name: string, def: LevelDef) {
             const sparse = recordings(at, SPARSE.map((k) => t0 + k), w, h);
             if (sparse.every((r) => r === sparse[0])) continue;
             const key = `${name} ${path}`;
-            const dense = recordings(at, DENSE.map((k) => t0 + k), w, h);
+            const dense = recordings(at, DENSE.map((k) => t0 + k), w, h, new Map(SPARSE.map((k, i) => [t0 + k, sparse[i]])));
             const was = changed.get(key);
             changed.set(key, { at: was?.at ?? `${x},${y}`, back: (was?.back ?? false) || comesBack(dense) });
           }

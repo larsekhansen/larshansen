@@ -42,10 +42,35 @@ export function parseColour(c: unknown): { rgb: Rgb; a: number } | null {
 
 export const hex = (c: Rgb) => "#" + c.map((v) => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, "0")).join("");
 
+/** A colour as `areaRecorder` keys it (its hex), or null for what is not counted (not a colour, or see-through): worked out once a colour. */
+const AREA_KEY = new Map<unknown, string | null>();
+function areaKey(c: unknown): string | null {
+  let k = AREA_KEY.get(c);
+  if (k === undefined) {
+    const p = parseColour(c);
+    k = !p || p.a < 0.6 ? null : hex(p.rgb);
+    AREA_KEY.set(c, k);
+  }
+  return k;
+}
+
+/**
+ * Whatever a context has that a recorder does not need: a no-op for any method asked of it (order 35: the recorder's own
+ * properties are its own, found without a trap, where a proxy round the whole of it was asked on every fill).
+ */
+export const ANY_METHOD: object = new Proxy({}, { get: () => () => undefined, set: (_t, k, v, receiver) => (Object.defineProperty(receiver, k, { value: v, writable: true, configurable: true }), true) });
+
+/** The same for a context that keeps nothing either: a no-op for any method, and anything set on it forgotten (a canvas that draws nothing). */
+export const NO_METHOD: object = new Proxy({}, { get: () => () => undefined, set: () => true });
+
 /** A context that draws nothing and adds up the area each colour covers inside the view. */
 export function areaRecorder() {
   const area = new Map<string, number>();
   let style: unknown = "#000000";
+  const add = (c: unknown, a: number) => {
+    const key = areaKey(c);
+    if (key !== null) area.set(key, (area.get(key) ?? 0) + a);
+  };
   const base = {
     globalAlpha: 1,
     globalCompositeOperation: "source-over",
@@ -68,25 +93,14 @@ export function areaRecorder() {
       const y1 = Math.min(view.h, y + h);
       if (x1 <= x0 || y1 <= y0) return;
       const a = (x1 - x0) * (y1 - y0);
-      const add = (c: unknown, k: number) => {
-        const p = parseColour(c);
-        if (!p || p.a < 0.6) return;
-        const key = hex(p.rgb);
-        area.set(key, (area.get(key) ?? 0) + a * k);
-      };
       const g = style as { stops?: string[] };
-      if (g && typeof g === "object" && g.stops) g.stops.forEach((c) => add(c, 1 / g.stops!.length));
-      else add(style, 1);
+      if (typeof g === "string") add(g, a);
+      else if (g && typeof g === "object" && g.stops) g.stops.forEach((c) => add(c, a * (1 / g.stops!.length)));
+      else add(style, a);
     }
   };
-  const fake = new Proxy(base, {
-    get: (t, k) => (k in t ? (t as Record<string | symbol, unknown>)[k] : () => undefined),
-    set: (t, k, v) => {
-      (t as Record<string | symbol, unknown>)[k] = v;
-      return true;
-    }
-  });
-  return { ctx: fake as unknown as CanvasRenderingContext2D, area };
+  Object.setPrototypeOf(base, ANY_METHOD);
+  return { ctx: base as unknown as CanvasRenderingContext2D, area };
 }
 
 /** The sky a level is drawn under for a phase: its own pinned sky when it has one, at that phase. */
