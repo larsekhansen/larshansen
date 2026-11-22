@@ -2,8 +2,9 @@
 
 Measured on 22 November 2026 on branch `the-lane` (from `origin/main` at `7cc0b6b`, after order 32). Pictures (outside the repository)
 in `~/.cache/claude-scratch-larshansen/o33/shots/`, a folder an item: `1-lane/` (every stretch of the lane, 33 places, at 390 x 844
-and 1280 x 800, from `origin/main`'s build (`before-*`), the branch's (`after-*`), a build of the branch that draws the lane with
-`drawNight` (`ref-*`) and the commit before order 15, `fb2a898` (`o14-*`); `side-*/` the three side by side, a sheet a place;
+and 1280 x 800, from `origin/main`'s build (`before-*`), the branch's first (`after-*`, item 1 alone), a build of that which draws the
+lane with `drawNight` (`ref-*`), the branch's last (`final-*`: it differs from `after-*` only by the church window's foot, one row of
+eight pixels) and the commit before order 15, `fb2a898` (`o14-*`); `side-*/` origin/main, the last build and `fb2a898` side by side;
 `crops/` the lane at three times), `2-warning/` (the recoloured things, before and after), `3-same/` (every level's walk every 60
 columns, the encore and the map, by day and at night, at 390 x 844, both builds), `4-words/` (the pole's note and the bite's hint at
 360 x 640, English and Norwegian).
@@ -35,17 +36,33 @@ order 15's move left undrawn (`39f30f5`).
   in `../../../../../.cache/claude-scratch-larshansen/o33/exp/`, outside the repository).
 
 **Pixel-true.** `src/render/night.test.ts` draws both into a stand-in canvas that fills rectangles, paths and clips as a canvas does
-and keeps every pixel's fills in order (colour, alpha, how laid): at 124 places of the lane (an upright phone's screen at every 37
-columns on the street, on the ledges and on the church's roof, facing both ways, with boards; a desktop's every 83 columns without),
-every pixel identical (114 of them with the headlamp's pass over the dark). In Firefox: the 33 places at 390 x 844 and at 1280 x 800
+and keeps every pixel's fills in order (colour, alpha, how laid): at 48 places of the lane in the suite (an upright phone's screen every
+97 pixels of the lane, on the street, on the ledges and on the church's roof, facing both ways, with boards; a desktop's every 263
+without), every pixel identical (44 of them with the headlamp's pass over the dark); while it was built, at 696 places (every 23 pixels)
+and then 124, all identical, made fewer for the suite's time (the suite must stay under 340 s). In Firefox: the 33 places at 390 x 844 and at 1280 x 800
 from the branch and from a build of it that draws the lane with `drawNight`: 66 of 66 byte-identical. Without paths (the tests'
 stand-in canvases) or during the flourish (the lane is far off then) it is `drawNight`.
 
-**The cost** at 390 x 844 (`?debug&perf`, the same places on `origin/main`'s build and the branch's): in the lane at night PERF-LANE.
+**The cost** at 390 x 844 (`?debug&perf`, the same places on `origin/main`'s build and the branch's): in the lane at night 5,100 to 5,194
+rectangles a frame where `origin/main` draws 5,100 to 5,193 (+0 to +4: the eyes of the lane's invaders over the dark, when they are on
+the screen), 262 to 705 copies where it makes 262 to 696 (+9 at most: their glow, a dark pixel and their outline over the dark); away
+from the lane +0. Drawing the lane with `drawNight` measured 6,527 to 6,790 (+1,410 to +1,630).
 The kept dark makes no rectangles: `?debug&perf` counts `fillRect` and copies, not path fills or clips, so they were counted apart (a
 stand-in canvas, every 30 columns along the lane): 25 to 77 path fills a frame holding 2,500 to 3,800 rectangles, and 18 or 19 clips
 holding about 2,800, where `drawNight` made 830 to 1,450 rectangles (the dark and the lamp's pass). Working out `drawNight`'s rows took
-about 37 ms of JavaScript a frame in Bun; the kept dark's frame takes 0.7 ms there. The time a frame in Firefox on the Pi: MS-LANE.
+about 37 ms of JavaScript a frame in Bun; the kept dark's frame takes 0.7 ms there. The time a frame in Firefox on the Pi (`?debug&perf`, fifty frames,
+the median of three rounds, one browser at a time on a quiet machine, `timing-places.tsv`):
+
+| Place (night) | `origin/main` (no dark) | the kept dark | `drawNight` |
+|---|---|---|---|
+| the lane, column 84 (the first lantern, the bench) | 44.1 ms | 51.3 ms (+7.2) | 81.9 ms (+37.8) |
+| the lane, column 96 | 44.6 | 49.8 (+5.2) | 60.5 (+15.9) |
+| the lane, column 100 (the second lantern) | 44.5 | 51.1 (+6.6) | 75.6 (+31.1) |
+| the lane, column 108 (the church) | 42.9 | 50.5 (+7.6) | 87.9 (+45.0) |
+| the roofs, column 60 (no lane on the screen) | 39.8 | 39.8 (+0.0) | 45.2 (+5.4) |
+
+So the lane's dark costs the Pi five to eight milliseconds a frame where it is on the screen, and nothing elsewhere; drawn as before
+order 15 it cost sixteen to forty-five, and five even off the lane. A phone's numbers are its own; the ratio is the point.
 
 **As a place to play in** (`1-lane/side-*`, `crops/`; every stretch, both sizes, looked at):
 - *The invaders' red outline*: over the lane's dark each invader (the fox, the owl, the cat) is its glow, a dark pixel and its red
@@ -65,7 +82,8 @@ about 37 ms of JavaScript a frame in Bun; the kept dark's frame takes 0.7 ms the
   through the dark one row short of its pane's foot (as before order 15), so `render/lights.test.ts` found its last row dimmed: the
   hole reaches the foot now (`lights` in `nabolaget.ts`, a row taller). The census draws the lane's night as it is drawn (its canvases
   have no paths, so it draws as `drawNight`, the same pixels); the test holds it. With reduced motion the lane's night is still
-  (`night.test.ts`: the clock running, the world held, the kept dark and the plain one).
+  (`night.test.ts`: the clock running, every call the kept dark and what is drawn over it make recorded with its arguments; the same
+  record without reduced motion at the yellow house finds the Pi's light blinking).
 - *By day* (the T key's sky): no dark; Vålerenga by day is as on `origin/main` but for item 2's washing (item 3's pictures, below).
 
 **Beside the commit before order 15** (`fb2a898`, built in a worktree and served as it was; `1-lane/side-*`, third column): the lane
@@ -161,17 +179,26 @@ would then load a level's pieces one after another: a change of behaviour, not d
   biter.") beside Loki, with and without the pad: all inside the screen (the Norwegian bubble's right edge about 4 pixels from it).
 - **`main.ts`'s own drawing, moved where it can be tested and covered** (this also served item 3): after dusk (`afterDark`) and the rune's
   flight are `render/dusk.ts`, the banner's fade `render/banner.ts`, the paint `standing` in `render/stand.ts`. `render/reduced.test.ts`,
-  part 7: what keeps its light after dusk, along every route at night (every ten seconds), the world held and the clock running 25
+  part 7: what keeps its light after dusk, along every route at night (every twenty seconds), the world held and the clock running 25
   steps, never comes back. Found on the way: drawn together with the skilling (which turn on their own clock, a cycle part 2 holds alone)
-  every recording was new and the watch was blind; a blink planted with reduced motion was then found at 2 of 106 places. With the
-  skilling and the cheese left to part 2 and a jumper in its leap to part 5, and the world held, the planted blink is found at all 106,
+  every recording was new and the watch was blind; a blink planted with reduced motion was then found at 2 of 106 places (sampled every ten seconds). With the
+  skilling and the cheese left to part 2 and a jumper in its leap to part 5, and the world held, the planted blink is found at all 106 (and at all 55 now that it samples every twenty seconds, for the suite's time),
   and nothing real is. The rune's flight is one movement, never coming back; the banner with reduced motion is there and then gone at
   two and a half seconds (it fades otherwise).
 - **The rune still flies to the header with reduced motion**: left, a question for Lars (listed below).
 
 ## The measures
 
-TESTS. TSC. BUILD. SUITE-TIME.
+- **Tests**: pixelkit 153 pass, maze 211 pass, landing 18 pass, viking 474 pass (466 on `origin/main`; new: `render/night.test.ts`'s
+  three, `render/warning.test.ts`'s one, the palette test's third test of the darks, the props test's prop pieces, the reduced-motion
+  test's two of part 7), none failing.
+- **The viking suite's time**: 339.6 s on a quiet Pi, 340.6 s on a second run that began with the load at 3.9; `origin/main`'s, measured
+  in a worktree the same hour, 322.8 s. So it is at the order's 340, not under it with room. The new tests alone: `night.test.ts` 3.0 s
+  (18 s as first written: its stillness check rasterised 400 frames; it records the calls now, and the pixel-for-pixel check runs at 48
+  places, not 124), the warning test 1.0 s, part 7 of the reduced-motion test about 1.5 s (sampling every twenty seconds), the props
+  test's count 0.7 s; the rest of the difference between the two trees moved from run to run by several seconds.
+- **tsc** clean in all four packages, inside each (TypeScript 5.9.3) and from the root (`bunx tsc --noEmit -p <package>`, 7.0.2).
+  `bun run build` at the root clean.
 
 - **First script**: 57.94 kB gzipped (vite), 57,903 bytes by GNU gzip, 57,937 by Node's zlib; `origin/main` 59.60 kB, 59,594.
 - **The front page**: 28 of 28 byte-identical to `/tmp/shots-before-jernhaugen/` (the kit changed: `mute.ts` split from `sfx.ts`).
@@ -190,7 +217,31 @@ TESTS. TSC. BUILD. SUITE-TIME.
 - **The map with any rune missing**: byte-identical by day and at night (item 3's check: 24 of 24 map pictures).
 - **Perf** at 390 x 844 (`?debug&perf` through `../../glance/perf.ts`), `origin/main`'s build and the branch's at the same 275 places:
   order 32's (every level's walk by its own sky and at night, the encore, the map, Stortinget's shafts and order 32's places) and every
-  stretch of Vålerenga's lane by night and by day (`places.tsv`, `perf-390-before.tsv`, `perf-390-after.tsv`). PERF-RESULT
+  stretch of Vålerenga's lane by night and by day (`places.tsv`; `perf-390-before.tsv` on `origin/main`, `perf-390-after-lane.tsv` with item 1 alone at every place,
+  `perf-390-after.tsv` on the last build at 157 of them: Vålerenga, the levels item 2 recoloured, Langkaia and the map; items 2 and 3
+  change no counts, which these confirm). No place gains more than +4 rectangles; none draws over 15,000 (the most, 11,151, Akerselva at
+  night, as on `origin/main`). By level, the most rectangles a frame before and after:
+
+  | Level | places | most before | most after | most gained | least change |
+  |---|---|---|---|---|---|
+  | Langkaia | 10 | 7,251 | 7,251 | +0 | +0 |
+  | Akershus | 10 | 6,899 | 6,899 | +0 | +0 |
+  | Rådhuset | 8 | 4,954 | 4,954 | +0 | +0 |
+  | Slottet | 10 | 9,703 | 9,703 | +0 | +0 |
+  | Holmenkollen | 10 | 10,821 | 10,821 | +0 | +0 |
+  | Akerselva | 12 | 11,151 | 11,151 | +0 | +0 |
+  | Nordmarka | 8 | 4,597 | 4,597 | +0 | +0 |
+  | Stortinget | 24 | 4,289 | 4,289 | +0 | +0 |
+  | Ekeberg | 10 | 8,601 | 8,601 | +0 | +0 |
+  | Vålerenga | 80 | 9,552 | 9,552 | +4 | +0 |
+  | Bygdøy | 10 | 5,442 | 5,442 | +0 | +0 |
+  | Vigelandsparken | 10 | 6,825 | 6,825 | +0 | +0 |
+  | Korketrekkeren | 12 | 3,318 | 3,318 | +0 | +0 |
+  | Østensjøvannet | 10 | 10,054 | 10,054 | +0 | +0 |
+  | Bjørvika | 10 | 8,765 | 8,765 | +0 | +0 |
+  | Gamlebyen | 14 | 4,639 | 4,639 | +0 | +0 |
+  | The encore | 22 | 3,029 | 3,029 | +0 | +0 |
+  | The map | 5 | 5,110 | 5,110 | +0 | +0 |
 - **The contrast numbers**: the red outline under the lane's dark against Vålerenga's fields 34.5 (Nordmarka 33.8), against the pixel
   next to it 45.1 (44.3); the warning test's table above.
 

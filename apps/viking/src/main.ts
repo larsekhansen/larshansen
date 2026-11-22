@@ -1434,7 +1434,6 @@ function drawThings(v: View) {
   }
 }
 
-
 /**
  * An enemy in its look (the level's own, or one every level may meet), outlined: in the warning red, or in the
  * calm pale while it cannot hurt him (a watched statue, a guard still stone, a calm swan, a sledger pulled off:

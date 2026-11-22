@@ -683,8 +683,9 @@ Order 33 (`orders/33-the-lane-behind-the-church.md`; each item done or not, with
   to a build that draws the lane with `drawNight`. `render/night` now comes with the kit's dark, in a file both levels fetch.
 - **What it costs.** In the lane at 390 x 844 no more rectangles than on the live site (the dark makes none; `?debug&perf` does not count
   path fills): 25 to 77 path fills holding 2,500 to 3,800 rectangles and 18 or 19 clips a frame, where `drawNight` made 830 to 1,450
-  rectangles and spent about 37 ms of JavaScript a frame working out its rows (0.7 ms kept, in Bun). The time a frame in Firefox on
-  the Pi is in `o33/after.md`.
+  rectangles and spent about 37 ms of JavaScript a frame working out its rows (0.7 ms kept, in Bun). In Firefox on the Pi (fifty frames,
+  median of three, quiet) the lane costs 5 to 8 ms a frame over the live site's 43 to 45 where it is on the screen and nothing elsewhere;
+  `drawNight` cost 16 to 45 ms there and 5 off the lane (`o33/after.md`).
 - **Harmless things keep off the warning red** (ADR 0044, amended): `render/warning.test.ts` draws every view of every level as the page
   does, what carries him, ledges, cannons, drums, flags and what stands in front with the paint on top, and `alive/props.test.ts` every
   prop piece: no more than 12 pixels within 10 of the warning red but by name. Recoloured for it: the chairlift's chairs' backs (the
@@ -741,7 +742,7 @@ reorder this list.
 8. **Margins.** The first script is 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
-   two new parts about 12 s of it): most of it the reach and dead-end searches in sixteen workers on four
+   two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour): most of it the reach and dead-end searches in sixteen workers on four
    cores (Gamlebyen's, eight searches in one worker, is the slowest), and about 50 s the reduced-motion test, which draws every
    level.
 9. **The viking header is solid cream,** not the front page's frosted bar

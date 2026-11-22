@@ -133,8 +133,8 @@ describe("Vålerenga's lane is dark again, kept (order 33)", () => {
       // where he walks it, with no boards (as the light census draws it). Every place differs from the last in where the camera
       // and the lamp fall on the still dark's pieces.
       const places: [number, number, number, number, Board[]][] = [];
-      for (let x = 1236; x < 1900; x += 37) for (const y of [17, 13, 9]) places.push([240, 520, x, y * TILE - PLAYER.h, BOARDS]);
-      for (let x = 1240; x < 1900; x += 83) places.push([640, 400, x, 17 * TILE - PLAYER.h, []]);
+      for (let x = 1236; x < 1900; x += 97) for (const y of [17, 13, 9]) places.push([240, 520, x, y * TILE - PLAYER.h, BOARDS]);
+      for (let x = 1240; x < 1900; x += 263) places.push([640, 400, x, 17 * TILE - PLAYER.h, []]);
       for (const [w, h, x, y, boards] of places)
               for (const facing of [1, -1] as const) {
                 const { v, shown, p } = placed(x, y, facing, w, h);
@@ -173,28 +173,37 @@ describe("Vålerenga's lane is dark again, kept (order 33)", () => {
     const was = { view: { ...view }, ctx: ctx() };
     const P = globalThis as { Path2D?: unknown };
     const moving: string[] = [];
+    // A recorder of every call and its arguments (a path by the rectangles it holds), as the reduced-motion test keeps them.
+    const ids = new Map<string, number>();
+    const idOf = (x: object) => {
+      const k = x instanceof Rects ? x.rects.join() : JSON.stringify(x);
+      return ids.get(k) ?? (ids.set(k, ids.size + 1), ids.size);
+    };
+    let calls: string[] = [];
+    const rec = new Proxy({ canvas: { width: 240, height: 520 } } as Record<string, unknown>, {
+      get: (t, k) => (k in t ? t[k as string] : (...a: unknown[]) => void calls.push(`${String(k)}(${a.map((x) => (x && typeof x === "object" ? `#${idOf(x)}` : String(x))).join()})`)),
+      set: (t, k, v) => ((t[k as string] = v), calls.push(`${String(k)}=${String(v)}`), true)
+    }) as unknown as CanvasRenderingContext2D;
     try {
-      for (let x = 1240; x < 1900; x += 96)
-        for (const kept of [false, true]) {
-          const prints = new Set<string>();
-          for (let t = 900; t < 925; t++) {
-            const { v, shown, p } = placed(x, 17 * TILE - PLAYER.h, 1, 240, 520);
-            view.reduced = true;
-            v.t = t;
-            const s = stage(240, 520);
-            target(s.g);
-            if (kept) P.Path2D = Rects;
-            try {
-              NABOLAGET.art.night!(v, shown, BOARDS, p.map);
-            } finally {
-              delete P.Path2D;
-            }
-            let h = 0;
-            for (let i = 0; i < s.prints.length; i++) h = Math.imul(h ^ s.prints[i], 16777619);
-            prints.add(String(h >>> 0));
+      // The kept dark, which the page draws, at the lane's two lanterns and by the church.
+      for (const x of [1312, 1568, 1800]) {
+        const prints = new Set<string>();
+        for (let t = 900; t < 925; t++) {
+          const { v, shown, p } = placed(x, 17 * TILE - PLAYER.h, 1, 240, 520);
+          view.reduced = true;
+          v.t = t;
+          calls = [];
+          target(rec);
+          P.Path2D = Rects;
+          try {
+            NABOLAGET.art.night!(v, shown, BOARDS, p.map);
+          } finally {
+            delete P.Path2D;
           }
-          if (prints.size > 1) moving.push(`at ${x}${kept ? ", kept" : ""}: ${prints.size} different pictures in 25 steps`);
+          prints.add(calls.join(";"));
         }
+        if (prints.size > 1) moving.push(`at ${x}: ${prints.size} different drawings in 25 steps`);
+      }
     } finally {
       Object.assign(view, was.view);
       target(was.ctx);

@@ -538,7 +538,7 @@ function felt(name: string, def: LevelDef): string[] {
 
 /**
  * After dusk (`afterDark`, `render/dusk.ts`: `main.ts`'s until order 33): what moves drawn faint over its tinted self, the hazards'
- * edges, the paint, the outlines and the invaders' glow again, the eye-shine. Along each level's route every ten seconds, at night,
+ * edges, the paint, the outlines and the invaders' glow again, the eye-shine. Along each level's route every twenty seconds, at night,
  * the world held (where everything is, every ledge's phase) and the clock running 25 steps: it must never come back to a recording
  * it left. As part 2 holds them: the skilling and the cheese, which turn on their own clock (drawn here they would make every
  * recording new and hide a blink beside them), are left to part 2; a jumper in its leap to part 5 (`LEAP_CYCLES`).
@@ -549,7 +549,7 @@ function dusk(name: string, def: LevelDef): string[] {
   const found: string[] = [];
   const art = def.art;
   for (let s = 0; s < 60 * 300 && p.runeAt === null; s++) {
-    if (s % 600 === 300) {
+    if (s % 1200 === 300) {
       const held = { ...p, skilling: [], cheese: null, enemies: p.enemies.filter((e) => e.def.kind !== "jumper") } as Play;
       const page = {
         foe: (e: Enemy, v: View) => outlined(() => void (art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning),

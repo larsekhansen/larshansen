@@ -109,8 +109,8 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite takes about four minutes alone since order 31 (the reduced-motion test draws every level, about 50 s) and more
-  when two implementers run;
+- The viking suite takes about five and a half minutes alone since order 33 (340 s; 323 s after order 32; the reduced-motion test draws
+  every level, about 70 s) and more when two implementers run; order 33 had to make its own new tests cheaper to keep at 340;
   the deploy runs it too. One slow hook has a ten-minute timeout for that reason.
 - `tools/pictures.ts` retakes LEVELS.html's pictures; a hit in the first steps blanks a
   headless picture (HANDOVER, "The harness").
