@@ -7,10 +7,10 @@ As of 22 November 2026, after order 32 was built (not yet reviewed or live). Cha
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 31, loose ends and a second look, PR #79; before it orders 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 32, lights after dark (ADR 0054), PR #80; before it orders 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Order 32, lights after dark, branch `lights-after-dark` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | About 6 % used when order 31 was reviewed on 21 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | 11 % used when order 32 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
