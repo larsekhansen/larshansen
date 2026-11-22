@@ -7,10 +7,10 @@ As of 22 November 2026, after order 34 was built (not yet reviewed or live). Cha
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 33, the lane behind the church, PR #81; before it orders 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 34, what Lars said (ADR 0055), PR #82; before it orders 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Order 34, what Lars said, branch `what-lars-said` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | 16 % used when order 33 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | 19 % used when order 34 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
