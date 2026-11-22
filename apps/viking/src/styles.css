@@ -361,6 +361,18 @@ body.touch .mazehud .back:focus-visible::before {
   border-color: #541321;
 }
 
+/* In the mound on a phone the site's name gives its row to the mound's own: the way out, the level, the clock, the sound. */
+body.touch.in-maze .me {
+  display: none;
+}
+
+body.touch.in-maze .mazehud {
+  flex: 1 1 0;
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
 body.touch.in-maze .help {
   top: auto;
   bottom: calc(14px + env(safe-area-inset-bottom));
