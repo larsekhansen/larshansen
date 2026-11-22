@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, and by order 32's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, and by order 33's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -85,6 +85,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-17 | Order 29: the encore (ADR 0052). With every rune of both lines held, a stop past the longship: a small festival stage on the water in Middelalderparken, where Loki, the Invaders' front man, plays one more song. He borrows the three bosses' moves (the troll's club, the plough's charge, the serpent's bite) with their own tells and answers, poses between them (the opening), loses his hair, shades and jacket to three stomps and walks off a thin man in a wool sweater with a thermos. Extra: no rune, no total, a best time only; the map with any rune missing is as it was | `orders/29-the-encore.md`, branch `the-encore` |
 | 2026-11-21 | Order 30: small debts, the things orders 27 to 29 found and left. Langkaia's props drawn plainly if `feel`'s file never comes (ADR 0053), and the bare map's line 2; the encore's stop glowing after dark until seen; Loki's club at the troll's size; the encore's file fetched ahead from the map with every rune; reduced motion photographed and held by a test (the oars' and Slottet's banners' warnings and five other things were still running); a debug card at a level's end, and the card as wide as its lines on a phone; every kind met in several levels looked at in each; `tsc` from the root | `orders/30-small-debts.md`, branch `small-debts` |
 | 2026-11-21 | Order 32: lights after dark (ADR 0054). Every light in every level, the encore and the map asked whether it is lit after dusk and whether anything glows that should not (a census of every light each scene registers, and what is drawn over it); one rule held by a test. Korketrekkeren's lit trail over the dusk with pools on the run, Gamlebyen's pools on the cobbles, the encore's stage, the invaders' neon signs, the T sign, Bygdøy's ferry, the map's windows; the braziers' and grills' warm light gone; Vålerenga's Pi and its light and the paper cranes drawn again, missing since order 15 with the lane's dark (which is left for a decision: about 1,580 rectangles a frame). Then order 31's leftovers: the logs and the chairlift's chairs redrawn, a dark pixel between the red outline and the glow over a level's dark, the reduced-motion test watching what moves by the clock and what feel draws, the last Norwegian words seen at 360 wide | `orders/32-lights-after-dark.md`, branch `lights-after-dark` |
+| 2026-11-22 | Order 33: the lane behind the church, and room to breathe. Vålerenga's lane behind the church dark again (missing since order 15), kept: the same pixels as `drawNight` draws, at a few path fills a frame where drawing it so cost about 1,580 rectangles; harmless things held off the warning red (the chairlift's chairs, the ferries' bands, the trains' stripe, a balloon, a shirt, a cage's rail recoloured); the first script from 59.60 to 57.94 kB gzipped (the synth, the page's drawing after dusk and of the rune's flight, the maze's feather into lazy files); that drawing held with reduced motion; debug ways to the pole's note and the encore's bite hint | `orders/33-the-lane-behind-the-church.md`, branch `the-lane` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -263,7 +264,10 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 59.60 kB gzipped after order 32, as after order 31 (59,594 bytes by GNU gzip, 2 fewer: only the chunks' names it
+- **First script**: 57.94 kB gzipped after order 33 (57,903 bytes by GNU gzip, 1,691 fewer than order 32's build): the kit's synth, the page's
+  drawing after dusk and of the rune's flight (`render/dusk.ts`) went into `feel`'s file, which the first scene waits for, and the maze's
+  feather drawing with the maze (ADR 0053, amended: without `feel`'s file the page is silent and nothing keeps its light after dusk).
+  59.60 kB gzipped after order 32, as after order 31 (59,594 bytes by GNU gzip, 2 fewer: only the chunks' names it
   carries changed). 59.59 kB gzipped after order 31 (the camera giving `--bar` to CSS; the rest is the chunks' names it carries).
   59.55 kB gzipped after order 30 (the plain drawings without `feel`'s file, the bare map's line 2, the encore's
   file fetched ahead, `?debug&card`'s hook). 59.34 kB gzipped after order 29 (the encore's stop on the map with every rune, its route in the page, its card
@@ -652,8 +656,8 @@ Order 32 (`orders/32-lights-after-dark.md`, ADR 0054, DESIGN's "Lights after dar
 - **Vålerenga's night**: from order 15 (`39f30f5`, the night moved out of `main.ts` behind `Art.night`, given to Nordmarka alone),
   Vålerenga's lane behind the church has had no dark, and what its `overDark` draws (the Pi on the yellow house's sill and its red and
   green light, the paper cranes in Kruttverket's window, the eyes over the dark) was not drawn at all. Order 32 draws the Pi and the
-  cranes again (its `Art.night`). The lane's dark is still not drawn: built and measured, it cost about 1,580 rectangles a frame in the
-  lane at 390 x 844, over the order's limit. A decision for the planner and Lars; `o32/before.md` says what bringing it back takes.
+  cranes again (its `Art.night`). The lane's dark was still not drawn (about 1,580 rectangles a frame drawn as before); order 33 drew it
+  again, kept (below).
 - **Over a level's own dark** (`overTheDark` in `alive/glamour.ts`, Nordmarka's): each invader's glow a pixel further out, the night's
   own colour in the pixel next to the red outline (the red against its own orange glow was 22.7, measured 16.8 at the worst; now 44.3
   against 29.2 by day), then the outline.
@@ -661,6 +665,38 @@ Order 32 (`orders/32-lights-after-dark.md`, ADR 0054, DESIGN's "Lights after dar
 - **Reduced motion** (`render/reduced.test.ts`): jumpers in their leap and the kit's carriers are recorded where they are (a named leap
   cycle allowed its frames); what `render/feel.ts` draws (him, the answers, the marks of things to use, the shadows) is drawn with the
   world held. Still not drawn: `main.ts`'s own drawing (a test cannot import it).
+- **Unplayed**: none of it has been seen on a phone or at speed.
+
+## Order 33: the lane behind the church, and room to breathe
+
+Order 33 (`orders/33-the-lane-behind-the-church.md`; each item done or not, with its measures and pictures' places, in
+`apps/viking/tools/review/o33/after.md`). It touched nothing that waits on Lars. What to know:
+- **The lane's dark, kept.** Vålerenga's lane behind the church is dark again after dusk (by day, the T key's sky, it is not, as on the
+  live site since order 15), with its lanterns' and the church's first window's light through it, his headlamp, and the invaders' glow,
+  red outline and eyes over it. `drawNightKept` (`render/night.ts`) draws exactly what `drawNight` would: the still part of the dark is
+  worked out once, in world pixels, as one `Path2D` a darkness; his headlamp's rings once a facing; a frame fills each path once in
+  its own colour under clips, so every pixel gets the same fills in the same order. Found on the way, in headless Firefox: a path of
+  whole-pixel rectangles is filled byte for byte as `fillRect` fills it, also under even-odd clips and with destination-over; a copy
+  (`drawImage`) of a see-through piece is not (one or two levels off on opaque ground, more where the ground is see-through), so a
+  see-through drawing cannot be kept as copies and stay byte-identical. `render/night.test.ts` holds the kept dark to `drawNight`
+  pixel by pixel (a stand-in canvas that fills rectangles, paths and clips); the pictures of 33 places at both sizes are byte-identical
+  to a build that draws the lane with `drawNight`. `render/night` now comes with the kit's dark, in a file both levels fetch.
+- **What it costs.** In the lane at 390 x 844 no more rectangles than on the live site (the dark makes none; `?debug&perf` does not count
+  path fills): 25 to 77 path fills holding 2,500 to 3,800 rectangles and 18 or 19 clips a frame, where `drawNight` made 830 to 1,450
+  rectangles and spent about 37 ms of JavaScript a frame working out its rows (0.7 ms kept, in Bun). In Firefox on the Pi (fifty frames,
+  median of three, quiet) the lane costs 5 to 8 ms a frame over the live site's 43 to 45 where it is on the screen and nothing elsewhere;
+  `drawNight` cost 16 to 45 ms there and 5 off the lane (`o33/after.md`).
+- **Harmless things keep off the warning red** (ADR 0044, amended): `render/warning.test.ts` draws every view of every level as the page
+  does, what carries him, ledges, cannons, drums, flags and what stands in front with the paint on top, and `alive/props.test.ts` every
+  prop piece: no more than 12 pixels within 10 of the warning red but by name. Recoloured for it: the chairlift's chairs' backs (the
+  frame's steel), the ferries' bands at Rådhuset and Bygdøy, Stortinget's trains' stripe, Holmenkollen's lift cage rail, Slottet's red
+  balloon (the flag's own red), Vålerenga's washing. Not held, and listed in `o33/after.md`: scenery and ground in the kit's red (his
+  hat's), among them Stortinget's walls and Holmenkollen's rails.
+- **The first script**: 57.94 kB gzipped (see "First script" above).
+- **`main.ts`'s own drawing is tested**: after dusk, the rune's flight and the banner's fade are in modules the reduced-motion test
+  imports (part 7). The rune still flies with reduced motion: a question for Lars.
+- **Debug ways**: `?debug&touch&note=pole|shield|sledge` shows the pad's note of what just changed as the page shows it;
+  `?debug&say=<key>` has a level's boss say a line of its words in its bubble (`missBite` at the encore).
 - **Unplayed**: none of it has been seen on a phone or at speed.
 
 ## Known weak spots, as of order 16
@@ -703,10 +739,10 @@ reorder this list.
 7. **Untested paths.** Returning from the maze into Nordmarka; the ending from a real stored
    save; the feather moment after the maze; the touch dash button and the Sit button; the loading
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone.
-8. **Margins.** The first script is 59.60 kB gzipped of a 60 kB budget (after order 32 as after order 31), and the build fails over it
+8. **Margins.** The first script is 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
-   two new parts about 12 s of it): most of it the reach and dead-end searches in sixteen workers on four
+   two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour): most of it the reach and dead-end searches in sixteen workers on four
    cores (Gamlebyen's, eight searches in one worker, is the slowest), and about 50 s the reduced-motion test, which draws every
    level.
 9. **The viking header is solid cream,** not the front page's frosted bar

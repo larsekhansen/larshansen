@@ -13,8 +13,9 @@ const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 // Line 2's kit pieces come with the level that uses them (the rocking deck and the oars with Bygdøy); the
 // sinking pad, which Bygdøy and Østensjøvannet both use, is a small file of its own that both fetch; so is
 // `kept` (what is drawn once and copied, ADR 0036, 0041), which the levels that keep or stamp their drawing fetch,
-// and the kit's dark, which Nordmarka's night and the maze's dark level both draw with.
-const OWN: Record<string, string> = { "swatches/metro": "stortinget", kept: "kept", dark: "dark", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "swatches/ruins": "gamlebyen", "game/serpent": "gamlebyen", "game/plough": "nabolaget", "game/troll": "nordmarka", "game/loki": "encore", "render/loki": "encore", "render/night": "nordmarka", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
+// and the kit's dark, which Nordmarka's night and the maze's dark level both draw with; the night of a level's own
+// (`render/night`) goes with the kit's dark, since Nordmarka and Vålerenga both draw theirs with it (order 33).
+const OWN: Record<string, string> = { "swatches/metro": "stortinget", kept: "kept", dark: "dark", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "swatches/ruins": "gamlebyen", "game/serpent": "gamlebyen", "game/plough": "nabolaget", "game/troll": "nordmarka", "game/loki": "encore", "render/loki": "encore", "render/night": "dark", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
 const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|swatches\/park|swatches\/sledge|swatches\/lake|swatches\/site|swatches\/ruins|game\/serpent|game\/plough|game\/troll|game\/loki|render\/loki|render\/night|deck|sink|oars|kept|dark)\.ts$/;
 
 /**
@@ -61,8 +62,10 @@ export default defineConfig({
           if (/\/src\/render\/looks\.ts$/.test(id)) return "looks";
           // What answers events (order 19), and the frames, shadows and depth that keep the picture alive (order 23):
           // fetched as the page starts, alongside the map's look.
-          // The story's words (order 27) come with it.
-          if (/\/src\/(render\/feel|game\/story)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
+          // The story's words (order 27) come with it, and the page's drawing after dusk and of the rune's flight (order 33).
+          if (/\/src\/(render\/feel|render\/dusk|game\/story)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
+          // The kit's synth (order 33): the page's sounds come with feel's file, which the first scene waits for.
+          if (/\/packages\/pixelkit\/src\/sfx\.ts$/.test(id)) return "feel";
           // The touch pad and the camera's room for it (order 21): fetched on a touch screen only, with the first scene.
           if (/\/src\/(render\/pad|game\/frame)\.ts$/.test(id)) return "pad";
           // The shield's rules and drawing: fetched when he has it, or goes where it is given.

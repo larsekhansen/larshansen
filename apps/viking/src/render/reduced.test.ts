@@ -12,7 +12,7 @@ import { drawSky } from "@larshansen/pixelkit/sky";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { invasion } from "../alive/invasion";
 import { autopilot, type Move } from "../game/bot";
-import { leap } from "../game/enemies";
+import { leap, type Enemy, type Shot } from "../game/enemies";
 import { newPlay, stepPlay, type Play } from "../game/play";
 import { fresh, type Progress } from "../game/progress";
 import { RUNE_CHARS } from "../game/runes";
@@ -24,11 +24,13 @@ import * as ROUTES from "../levels/routes";
 import { ENCORE_ROUTE } from "../levels/routes/encore";
 import type { LevelDef, View } from "../levels/types";
 import { drawBracteate, drawRune, drawSheep } from "./actors";
+import { bannerAlpha } from "./banner";
+import { afterDark, runeFlight } from "./dusk";
 import { createFeel } from "./feel";
 import { areaRecorder, skyOf } from "./fields";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./pickups";
 import { forgetShapes, freshRings, outlined } from "./sprite";
-import { STAND_LEDGE, hazardEdge, standTop } from "./stand";
+import { STAND_LEDGE, hazardEdge, standTop, standing } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
 
 // With reduced motion nothing flashes (order 30, debt 5; order 31, item 4).
@@ -61,9 +63,11 @@ import { drawTiles, drawWater } from "./tiles";
 //    held where they are with the clock running, whether they stand or move.)
 // 6. What `render/feel.ts` draws (order 32): him, the answers to what just happened, the marks of things to use, the shadows,
 //    the world held a moment along every route and just after anything happens, the clock running: it never comes back.
-//    Not drawn here: `main.ts`'s own drawing, which a test cannot import (it starts the page): `afterDark` (it draws again what
-//    parts 1 and 6 draw, at fixed strengths), the rune's flight to the header and the banner's fade (each one movement, not a
-//    blink); and the maze.
+// 7. What `main.ts` drew itself until order 33 moved it where a test can reach it: after dusk what moves, what he takes, what hurts
+//    and what he stands on keeping their light (`afterDark`, `render/dusk.ts`), along every route at night, the world held and the
+//    clock running: it never comes back; the rune's flight to the header (`runeFlight`): one movement, never coming back (it still
+//    flies with reduced motion: a question for Lars); the banner's fade (`bannerAlpha`): with reduced motion there and then gone.
+//    Not drawn here: the maze.
 
 const SRC = resolve(dirname(import.meta.path), "..");
 
@@ -532,6 +536,40 @@ function felt(name: string, def: LevelDef): string[] {
   return found;
 }
 
+/**
+ * After dusk (`afterDark`, `render/dusk.ts`: `main.ts`'s until order 33): what moves drawn faint over its tinted self, the hazards'
+ * edges, the paint, the outlines and the invaders' glow again, the eye-shine. Along each level's route every twenty seconds, at night,
+ * the world held (where everything is, every ledge's phase) and the clock running 25 steps: it must never come back to a recording
+ * it left. As part 2 holds them: the skilling and the cheese, which turn on their own clock (drawn here they would make every
+ * recording new and hide a blink beside them), are left to part 2; a jumper in its leap to part 5 (`LEAP_CYCLES`).
+ */
+function dusk(name: string, def: LevelDef): string[] {
+  const p = newPlay(def, optsFor(def));
+  const pilot = autopilot(routeOf(def.id) ?? []);
+  const found: string[] = [];
+  const art = def.art;
+  for (let s = 0; s < 60 * 300 && p.runeAt === null; s++) {
+    if (s % 1200 === 300) {
+      const held = { ...p, skilling: [], cheese: null, enemies: p.enemies.filter((e) => e.def.kind !== "jumper") } as Play;
+      const page = {
+        foe: (e: Enemy, v: View) => outlined(() => void (art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning),
+        thrown: (sh: Shot, v: View) => outlined(() => void (art.shot?.(sh, v) || drawShot(sh))),
+        standing: (v: View) => standing(held, v.alpha)
+      };
+      const prints = withView(true, () => {
+        const v = viewOf(def, p, p.t);
+        v.sky = skyOf(def, "night");
+        return recordings((t) => afterDark(held, { ...v, t }, page), DENSE.map((k) => p.t + k), W, H);
+      });
+      if (comesBack(prints)) found.push(`${name} at step ${s}`);
+    }
+    const keys = pilot(p);
+    if (!keys) break;
+    stepPlay(p, keys);
+  }
+  return found;
+}
+
 /** The colours a drawing paints and the area each covers. */
 function painted(draw: () => void): Map<string, number> {
   const rec = areaRecorder();
@@ -625,6 +663,35 @@ describe("with reduced motion nothing flashes (orders 30 and 31)", () => {
     for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => felt(name, def)));
     expect(found).toEqual([]);
   }, 300_000);
+
+  test("after dusk, what keeps its light (main.ts's afterDark until order 33), held along every route at night, never comes back within 24 steps", async () => {
+    const found: string[] = [];
+    for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => dusk(name, def)));
+    expect(found).toEqual([]);
+  }, 300_000);
+
+  test("the rune's flight to the header is one movement, never coming back (it still flies with reduced motion: a question for Lars); the banner is there and then gone", () => {
+    const prints = withView(true, () =>
+      Array.from({ length: 51 }, (_, k) => {
+        const rec = recorder(W, H);
+        runeFlight(rec.ctx, k / 50, { x: 40, y: 150 }, { x: 300, y: 10 }, 3, 2);
+        return rec.done();
+      })
+    );
+    expect(comesBack(prints)).toBe(false);
+    expect(new Set(prints).size).toBeGreaterThan(40);
+    withView(true, () => {
+      const seen = Array.from({ length: 300 }, (_, age) => bannerAlpha(age));
+      expect([...new Set(seen)].sort()).toEqual([0, 1]);
+      expect(seen.findIndex((a) => a === 0)).toBe(150);
+      expect(seen.slice(150).every((a) => a === 0)).toBe(true);
+    });
+    // Without reduced motion it fades, and never comes back either.
+    withView(false, () => {
+      const seen = Array.from({ length: 300 }, (_, age) => bannerAlpha(age));
+      expect(seen.every((a, k) => k === 0 || a <= seen[k - 1])).toBe(true);
+    });
+  });
 
   test("the cards: every animation and transition in the page's styles is on a class the page sets only without reduced motion", () => {
     const css = ["styles.css", "../../../packages/pixelkit/src/chrome.css"].map((f) => readFileSync(resolve(SRC, f), "utf8")).join("\n");

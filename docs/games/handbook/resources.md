@@ -43,6 +43,8 @@ All on `/viking/` with `?debug`. HANDOVER, "Checking", has the full account.
 | `&grain=0\|1\|2\|3\|depth` | The pixel study (order 22); a chunk of its own |
 | `&fall=<steps>` | The falling feather (order 25) |
 | `&shield` | Give him the shield |
+| `&touch&note=pole\|shield\|sledge` | The pad's note of what just changed on the help line, as the page shows it (order 33): the pole's comes under Holmenkollen's card otherwise |
+| `&say=<key>` | The level's boss says that line of its words in its bubble (order 33): `missBite` at the encore, which needs two hits otherwise |
 
 Level ids: `langkaia`, `akershus`, `radhuset`, `slottet`, `holmenkollen`, `akerselva`,
 `nordmarka`, `stortinget`, `ekeberg`, `nabolaget` (shown as Vålerenga, ADR 0038), `bygdoy`,
@@ -65,6 +67,8 @@ against `bun run preview` of the built app (ports 5184 to 5189; 5180 for the fro
 | `apps/viking/src/game/frame.test.ts` | He is never under a touch button, all routes, five sizes |
 | `apps/viking/src/render/reduced.test.ts` | Nothing blinks with reduced motion (order 30; since order 31 by drawing, not by reading the source): every level's scenery across the whole level and every thing in it as the route finds it, recorded call by call at several steps of the clock with the world held, as in a browser; bosses, ledges' warnings, the map; the cards' CSS; since order 32 jumpers and the kit's carriers recorded where they are, and what `render/feel.ts` draws |
 | `apps/viking/src/render/lights.test.ts`, `lightcensus.ts`; `apps/viking/tools/glance/lights.ts` | After dark every light is lit and nothing else glows (order 32, ADR 0054): a census of every light every scene registers, by the function that registers it, and what a later pass draws over it; `bun tools/glance/lights.ts [--sky=night\|evening\|twilight\|own] [--levels=a,b] [--json]` prints it |
+| `apps/viking/src/render/night.test.ts` | Vålerenga's lane's dark, kept as paths, against `drawNight` pixel by pixel in a stand-in canvas that fills rectangles, paths and clips; the lane's night still with reduced motion (order 33) |
+| `apps/viking/src/render/warning.test.ts` | Harmless things keep off the warning red: every view of every level, what he meets with the paint on top, no more than 12 pixels within 10 of it but by name (order 33; the props piece by piece in `alive/props.test.ts`) |
 | `apps/viking/src/game/words.test.ts` | Every word kept by language, in every module and every level, in both languages with the same keys, lines and arguments (order 31, ADR 0016) |
 | `apps/viking/src/levels/lazy.test.ts` | What the first script draws without `feel`'s file (ADR 0053) |
 | `apps/viking/tools/glance/leanplaces.ts` | Every enemy kind met in more than one level: where, its level's two neons and how far each is from that level's fields, by day and under its sky; the addresses of the pictures in place (order 30) |

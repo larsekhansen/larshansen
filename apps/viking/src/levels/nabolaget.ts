@@ -2,7 +2,7 @@ import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, pathPeriod, type CarrierDef, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
-import { kept, keptStrips } from "@larshansen/pixelkit/kept";
+import { kept, keptStrips, seen } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
 import { R, ctx, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
 import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
@@ -18,9 +18,11 @@ import type { EnemyDef } from "../game/enemies";
 import { PLOUGH, lineHolds, ploughBoss, type Plough, type PloughDef } from "../game/plough";
 import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
+import { overTheDark } from "../alive/glamour";
 import { frame } from "../alive/frames";
 import { eyes, outlined, plain } from "../render/sprite";
 import { tbaneDoor } from "../render/furniture";
+import { drawNightKept } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
@@ -252,7 +254,8 @@ function dark(x: number, v: View) {
 /** What shows through the dark: the church's windows, the lamps in the lane, the flag and the bench. */
 function lights(v: View): Light[] {
   const out: Light[] = [];
-  for (const w of CHURCH_WINDOWS) out.push({ rect: { x: w.x - 1, y: w.y - 1, w: 8, h: 18 }, dark: 0 }, { x: w.x + 3, y: w.y + 12, rings: [[22, 0.5], [14, 0.25]] });
+  // Each window's pane clear to its foot (order 33: the hole stopped a row short, so its last row was dimmed; ADR 0054), and its ring.
+  for (const w of CHURCH_WINDOWS) out.push({ rect: { x: w.x - 1, y: w.y - 1, w: 8, h: 19 }, dark: 0 }, { x: w.x + 3, y: w.y + 12, rings: [[22, 0.5], [14, 0.25]] });
   for (const x of LANE_LAMPS) out.push({ x, y: S * TILE - 40, rings: [[34, 0.45], [24, 0.2], [10, 0]] });
   for (const f of v.flags) if (f.x > 80 * TILE && f.x < 112 * TILE) out.push({ x: f.x, y: f.bottom - 20, rings: [[14, 0.4]] });
   return out;
@@ -825,7 +828,7 @@ function street(v: View, p: Plough | null) {
   } else {
     R(l.x0, g - 4, 2, 4, METAL.lampPost);
     for (let k = 0; k < 20; k++) R(l.x0 + 2 + k, g - 4 - Math.floor(k / 3), 1, 1, METAL.lampPost);
-    R(l.x0 + 10, g - 3, 6, 3, WINTER.shirt);
+    R(l.x0 + 10, g - 3, 6, 3, SHIRT);
     R(l.x0 + 20, g - 3, 8, 3, WINTER.sheet);
   }
   // The tram's slots in the street: dark, with rails going down.
@@ -838,12 +841,17 @@ function street(v: View, p: Plough | null) {
   home(v);
 }
 
+/**
+ * The shirt on the line (order 33): the kit's washing red, lighter, 14.5 off the warning red (it was 7.7: ADR 0044,
+ * `render/warning.test.ts`) and further off the red house's planks behind it (19.8; a darker red vanished against them).
+ */
+const SHIRT = mix(WINTER.shirt, WHITE, 0.2);
 /** Washing on the line: a shirt, a sheet, two socks, swinging a little. */
 function washing(x: number, y: number, t: number) {
   const s = view.reduced ? 0 : Math.round(Math.sin(t * 0.05));
-  R(x + s, y, 9, 8, WINTER.shirt);
-  R(x - 2 + s, y, 3, 4, WINTER.shirt);
-  R(x + 8 + s, y, 3, 4, WINTER.shirt);
+  R(x + s, y, 9, 8, SHIRT);
+  R(x - 2 + s, y, 3, 4, SHIRT);
+  R(x + 8 + s, y, 3, 4, SHIRT);
   R(x + 15 + s, y, 12, 12, WINTER.sheet);
   R(x + 15 + s, y + 11, 12, 1, SNOW.shade);
   R(x + 31 + s, y, 3, 6, WINTER.sock);
@@ -1286,17 +1294,21 @@ export const NABOLAGET: LevelDef = {
     },
     shot: (s, v) => drawLookShot(s, v.enemies[s.by]?.def.look),
     lights: (v) => lights(v),
-    // What is drawn over the night's tint: the paper cranes in Kruttverket's window and the Pi on the yellow house's sill with its
-    // light. From order 15, when the night left `main.ts` for Nordmarka's file behind `Art.night`, nothing called `overDark` here, and
-    // they were not drawn at all; order 32 draws them again. The lane's own dark (`dark`, `lights`, the rest of `overDark`) is still
-    // not drawn: drawn again, it costs about 1,580 rectangles a frame in the lane at 390 x 844 (`render/night.ts`), over the order's
-    // limit; it waits on a decision (`tools/review/o32/after.md`).
-    night: (v) => {
+    // After dusk the lane's dark behind the church, with the church's window, the lane's lanterns and the flag through it and his
+    // headlamp, then what is drawn over it (the invaders' glow and red outline, the eyes, the paper cranes, the Pi and its light).
+    // From order 15, when the night left `main.ts` for Nordmarka's file behind `Art.night`, nothing called it here; order 32 drew the
+    // Pi and the cranes again, and order 33 the lane's dark, kept (`drawNightKept`: the same pixels as `drawNight`, at a few path
+    // fills a frame where `drawNight` took about 1,580 rectangles). By day (the T key's sky) there is no dark, as on the live site.
+    night: (v, him, boards, map) => {
+      if (v.sky.phase !== "day") return drawNightKept(NABOLAGET, v, him, boards, map);
       cranes(v.t);
       pi(v);
     },
     overDark: (v) => {
-      for (const e of v.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
+      // In the lane's dark the invaders keep their glow and their red outline, as under Nordmarka's trees (orders 31, 32); and the
+      // eyes shine. Only what is on the screen (the lane's three are drawn wherever he is).
+      overTheDark(ctx(), (x) => dark(x, v) > 0 && seen(x - 32, x + 32));
+      for (const e of v.enemies) if (e.alive && dark(e.x, v) > 0 && seen(e.x - 16, e.x + 16)) for (const [x, y] of eyes(e)) R(x, y, 1, 1, WINTER.catEye);
       cranes(v.t);
       pi(v);
     },

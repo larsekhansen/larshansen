@@ -32,6 +32,7 @@ Run everything from this folder.
 `bun sloppy.ts ks=0` must print `clear 1/1` for all sixteen levels: at k = 0 the harness reproduces the
 scripted clear exactly. If it does not, a route or the harness has drifted from the rules.
 
+`o33/` holds order 33's (the lane behind the church, and room to breathe): each item done or not, and the measures (`after.md`); the rectangles a frame at 390 x 844 at order 32's places and every stretch of Vålerenga's lane by night and by day (`places.tsv`) on `origin/main` (`perf-390-before.tsv`), on the branch with item 1 alone (`perf-390-after-lane.tsv`, every place) and on its last build (`perf-390-after.tsv`: Vålerenga, the levels item 2 recoloured, Langkaia and the map).
 `o32/` holds order 32's (lights after dark): the table of every light in every level, the encore and the map, and its decisions (`before.md`); each item done or not, and the measures (`after.md`); the rectangles a frame at 390 x 844 by day and at night on `origin/main` and the branch (`perf-390-before.tsv`, `perf-390-after.tsv`, `places.tsv`).
 `o31/` holds order 31's (loose ends and a second look): each item done or not, and the measures (`after.md`); the words orders 21 to 30
 added, in both languages, where each was seen at 360 wide (`words.md`); the second look's table of flat things (`before.md`); the rectangles a

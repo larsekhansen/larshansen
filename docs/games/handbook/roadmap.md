@@ -1,21 +1,30 @@
 # Roadmap
 
-As of 22 November 2026, after order 32 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
+As of 22 November 2026, after order 33 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 32, lights after dark (ADR 0054), PR #80; before it orders 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 32, lights after dark, branch `lights-after-dark` |
+| Last live | Order 33, the lane behind the church, PR #81; before it orders 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Order 33, the lane behind the church, and room to breathe, branch `the-lane` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md) |
-| Weekly allowance | 11 % used when order 32 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | 16 % used when order 33 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 32, lights after dark** (`orders/32-lights-after-dark.md`, ADR 0054), built on branch `lights-after-dark`, not yet reviewed:
+**Order 33, the lane behind the church, and room to breathe** (`orders/33-the-lane-behind-the-church.md`), built on branch `the-lane`, not
+yet reviewed: Vålerenga's lane behind the church dark again after dusk (missing since order 15), drawn by `drawNightKept`, the same pixels
+as `drawNight` at path fills where drawing it so cost about 1,580 rectangles a frame; harmless things held off the warning red (ADR 0044
+amended; the chairlift's chairs, the ferries' bands, the trains' stripe, Holmenkollen's lift cage, a balloon, a shirt recoloured, and the
+scenery in the kit's red listed for a decision); the first script from 59.60 to 57.94 kB gzipped (ADR 0053 amended); `main.ts`'s drawing
+after dusk, of the rune's flight and of the banner's fade held by the reduced-motion test; debug ways to the pole's note and the encore's
+bite hint, both photographed at 360 wide. Each item, done or not, with its measures: `apps/viking/tools/review/o33/after.md`. Nothing in
+it waits on Lars.
+
+**Order 32, lights after dark** (`orders/32-lights-after-dark.md`, ADR 0054), live (PR #80):
 every light in every level, the encore and the map asked after dusk (the table and its decisions: `apps/viking/tools/review/o32/before.md`),
 one rule held by `render/lights.test.ts`; Vålerenga's Pi and paper cranes drawn again (missing since order 15; the lane's dark, missing too, left for a decision); then order 31's leftovers (the logs and
 the chairs, the outline against its glow in the dark, the reduced-motion test's blind spots, the last Norwegian words at 360). Each item,
@@ -50,9 +59,10 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Order 32 took up order 31's leftovers (once it is reviewed and live); what it found and left is in `o32/after.md` ("Found and not
-fixed"), among them Vålerenga's lane behind the church, whose dark has not been drawn since order 15: bringing it back costs about
-1,580 rectangles a frame there (`o32/before.md`, the end), a choice for the planner and Lars. The planner's next candidate is idea 2 or 3 below: a person's playtest is still the biggest gap. The second walk's table
+Order 33 brought Vålerenga's lane's dark back and made room in the first script (once it is reviewed and live); what it found and left
+is in `o33/after.md` ("Found and not fixed"): the scenery and ground in the kit's red near the warning red (Stortinget's walls, Holmenkollen's
+rails), whether the rune should fly with reduced motion, and whether the coins in the lane's dark are bright enough. The planner's next
+candidate is idea 2 or 3 below: a person's playtest is still the biggest gap. The second walk's table
 (`apps/viking/tools/review/o31/before.md`) lists what was looked at and left, with reasons, for a later round.
 
 ## After that: ideas in rough order of value
@@ -99,8 +109,8 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite takes about four minutes alone since order 31 (the reduced-motion test draws every level, about 50 s) and more
-  when two implementers run;
+- The viking suite takes about five and a half minutes alone since order 33 (340 s; 323 s after order 32; the reduced-motion test draws
+  every level, about 70 s) and more when two implementers run; order 33 had to make its own new tests cheaper to keep at 340;
   the deploy runs it too. One slow hook has a ten-minute timeout for that reason.
 - `tools/pictures.ts` retakes LEVELS.html's pictures; a hit in the first steps blanks a
   headless picture (HANDOVER, "The harness").

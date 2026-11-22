@@ -3,6 +3,8 @@
 // water and wind, and a pentatonic set for pickups. Nothing plays before the first key or pointer
 // event (browsers refuse it anyway), and the mute is shared by all the games.
 
+import { readMuted, saveMuted } from "./mute";
+
 export type SfxName =
   | "step"
   | "jump"
@@ -31,22 +33,8 @@ export type SfxName =
   | "over"
   | "hurra";
 
-const MUTE_KEY = "larshansen.muted";
-const OLD_MUTE_KEY = "viking.muted"; // the viking game's own, read once as a fallback
 const PENTATONIC = [0, 2, 4, 7, 9, 12, 14, 16, 19, 21];
 const note = (semitones: number, base = 523) => base * 2 ** (semitones / 12);
-
-/** The visitor's choice if they have ever made one, otherwise the page's own default. */
-function readMuted(whenUnset: boolean): boolean {
-  try {
-    const own = localStorage.getItem(MUTE_KEY);
-    if (own !== null) return own === "1";
-    const old = localStorage.getItem(OLD_MUTE_KEY);
-    return old === null ? whenUnset : old === "1";
-  } catch {
-    return whenUnset;
-  }
-}
 
 /**
  * A sound given as its parts, for a game that has sounds of its own (the viking game's, order 19): a tone
@@ -245,11 +233,7 @@ export function createSfx(opts: { mutedUntilChosen?: boolean } = {}): Sfx {
     },
     toggleMute() {
       muted = !muted;
-      try {
-        localStorage.setItem(MUTE_KEY, muted ? "1" : "0");
-      } catch {
-        // storage refused: the mute lasts for this visit
-      }
+      saveMuted(muted);
       return muted;
     }
   };

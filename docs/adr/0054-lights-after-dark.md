@@ -64,3 +64,13 @@ uses, but by name. `tools/glance/lights.ts` prints the census as a table.
 - **Pools under every lamp**: a lamp far behind the lane or high on a wall lights nothing he needs to see.
 - **A warm light for the invaders' fire**: their fire is the glamour's; its neon glow is its light.
 - **A new colour for the kit's lamp light** (7.7 from the paint's yellow): the front page shares it, and ADR 0044 named it by shape.
+
+## Amended by order 33 (22 November 2026): Vålerenga's lane
+The lane behind the church is dark again (`drawNightKept` in `apps/viking/src/render/night.ts`: the same pixels as `drawNight`,
+kept as one path a darkness, a few path fills a frame where `drawNight` took about 1,580 rectangles). Its lights are as this record
+says a level's own dark has them: the two old-town lanterns' glass is lit (the props kit's `lamp`) and their rings through the dark
+are their pools; the church's first window (the one in the dark's fade) is lit, with a clear hole through the dark over its pane
+and a ring round it. The hole stopped a row short of the pane's foot (as it did before order 15), so its last row was dimmed by
+the ring: it reaches the foot now. `render/lights.test.ts` holds both on the census, which draws the lane's night as drawn before
+(its stand-in canvas has no paths, so `drawNightKept` draws as `drawNight` there, the same pixels); with reduced motion the lane's
+night is still (`render/night.test.ts`). By day (the T key's sky) there is no dark, as on the live site since order 15.

@@ -1,9 +1,11 @@
+import { carrierDrawn, carrierShown, type CarrierDef } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, STAND } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
-import { pulsePhase } from "@larshansen/pixelkit/timed";
+import { pulsePhase, timedPhase } from "@larshansen/pixelkit/timed";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
+import type { Play } from "../game/play";
 
 // What he stands on reads at a glance (order 18, section 5, ADR 0039; order 22, ADR 0044): its top edge is painted
 // yellow, two pixels thick and a little worn at the ends, the same on every ledge, raft, lift, deck and stone: the
@@ -76,4 +78,25 @@ export function hazardEdge(h: Hazard, t: number) {
   if (x1 <= x0) return;
   R(x0, h.y, x1 - x0, 1, ENEMY.warning);
   for (let x = h.x + 2; x < x1; x += 4) if (x + 2 > x0) R(x, h.y, 2, 1, ENEMY.line);
+}
+
+/**
+ * The tops of what he can stand on that the level draws its own way (order 18): rafts, lifts, logs, hooks
+ * and the like move; ledges on a beat, sinking pads and the like give way; a statue he watches holds. Drawn
+ * over the level's own drawing of each; `alpha` how far the clock is towards the next step; `leaving`, a lift or
+ * a train about to set off (its stripe flashes: `render/feel.ts`). The page's, here since order 33 so the
+ * reduced-motion test can draw it as the page does after dusk (`render/dusk.ts`).
+ */
+export function standing(p: Play, alpha: number, leaving?: (d: CarrierDef, t: number) => boolean) {
+  p.def.carriers.forEach((d) => {
+    if (!carrierShown(d, p.t)) return;
+    const at = carrierDrawn(d, p.t, alpha);
+    standTop(at.x, at.y, d.w, "moves", leaving?.(d, p.t), p.t);
+  });
+  for (const l of p.def.timed) {
+    const phase = timedPhase(p.t, l);
+    if (phase !== "off") standTop(l.x + (phase === "warn" ? shiver(p.t) : 0), l.y, l.w, "gives", phase === "warn");
+  }
+  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x + (s.soon ? shiver(p.t) : 0), s.y, s.w, s.how, s.soon, p.t);
+  for (const c of p.def.rules?.ground?.(p) ?? []) standTop(c.x, c.y, c.w, "holds");
 }

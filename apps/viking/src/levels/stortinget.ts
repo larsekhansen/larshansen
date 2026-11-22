@@ -789,6 +789,8 @@ function cabinetTile(c: number, r: number, x: number, y: number, m: TileMap) {
   for (let k = 5; k < TILE - 4; k += 3) R(x + 4, y + k, 8, 1, mix(METRO.steelDark, INK, 0.3));
 }
 
+/** The trains' red stripe (order 33): a shade darker than the line's red, 12.3 off the warning red (`render/warning.test.ts`). */
+const TRAIN_STRIPE = mix(METRO.trainStripe, INK, 0.18);
 /**
  * A train: two cars, pale grey with a dark band of windows, doors, a red stripe; the line's number on
  * its front; the roof is what he stands on. Where a platform runs in front of it, only what shows over
@@ -825,7 +827,8 @@ function train(at: { x: number; y: number }, line: number, clip: { x0: number; x
       col(7, 9, METRO.trainBand);
       if (lit && (seg % 7) > 1) col(8, 7, LAMP);
     }
-    col(23, 2, METRO.trainStripe);
+    // Its stripe a shade darker than the line's red on the walls (order 33: that red is 6.1 from the warning red, ADR 0044).
+    col(23, 2, TRAIN_STRIPE);
     col(28, 2, METRO.trainShade);
     // Bogies and wheels under each car.
     if (seg < 12 || seg > 52) col(30, 6, (dx % 6 < 4) ? METRO.trainBogie : INK);

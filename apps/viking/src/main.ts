@@ -1,7 +1,7 @@
 import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
 import { aim, follow } from "@larshansen/pixelkit/camera";
-import { carrierDrawn, carrierShown, drawCarrier, rideShown } from "@larshansen/pixelkit/carrier";
+import { carrierDrawn, drawCarrier, rideShown, type CarrierDef } from "@larshansen/pixelkit/carrier";
 import { HOIST_STEPS, POLE, drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { wireMute } from "@larshansen/pixelkit/chrome";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
@@ -11,7 +11,7 @@ import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, ctx, lights, target, view } from "@larshansen/pixelkit/paint";
-import { DUST, ENEMY, FEATHER, FOOD, INK, METAL, PALETTE, ROLES, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
+import { DUST, ENEMY, FOOD, INK, METAL, PALETTE, ROLES, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
 import { placeBody, type Body, type Intent } from "@larshansen/pixelkit/physics";
 import { drawBoards } from "@larshansen/pixelkit/props";
@@ -45,31 +45,32 @@ import {
   wirePointer,
   wireSkyKey
 } from "@larshansen/pixelkit/scene";
-import { createSfx } from "@larshansen/pixelkit/sfx";
+import { readMuted, saveMuted } from "@larshansen/pixelkit/mute";
+import type { Sfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
-import { FEATHER_H, FEATHER_W, drawFeather } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
 import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
 import { HEARTS, LIVES, againAtBoss, benchAt, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
 import type { Rect } from "./game/frame";
 import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
-import { RUNE_CHARS, RUNE_STROKES, runeCells, type RuneChar } from "./game/runes";
+import { RUNE_CHARS, RUNE_STROKES, type RuneChar } from "./game/runes";
 import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
 import { BARE, ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
-import { eyes, freshRings, outlined, ringCount, rings, ringsTo } from "./render/sprite";
-import { STAND_LEDGE, hazardEdge, shiver, standTop } from "./render/stand";
+import { freshRings, outlined } from "./render/sprite";
+import { STAND_LEDGE, hazardEdge, shiver, standing } from "./render/stand";
+import { bannerAlpha } from "./render/banner";
 import type { Feel } from "./render/feel";
 import type { Enemy, Shot } from "./game/enemies";
-import { TEXTURED, drawTiles, drawWater, standTops } from "./render/tiles";
+import { TEXTURED, drawTiles, drawWater } from "./render/tiles";
 import { airOf, backHazeOf, hazeOf } from "./render/haze";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
@@ -131,7 +132,20 @@ function saveProgress(p: Progress) {
 
 const links = readAppLinks();
 const input = createInput();
-const sfx = createSfx();
+/**
+ * The kit's synth comes with `feel`'s file (order 33, for the first script's budget), which the first scene waits for; until it has
+ * come, and if it never comes, the page is silent. The sound switch is the site's shared one, read and kept here meanwhile.
+ */
+let synth: Sfx | null = null;
+let quiet = readMuted(false);
+const sfx: Sfx = {
+  play: (name, n) => synth?.play(name, n),
+  voice: (parts) => synth?.voice(parts),
+  get muted() {
+    return synth ? synth.muted : quiet;
+  },
+  toggleMute: () => (synth ? synth.toggleMute() : (saveMuted((quiet = !quiet)), quiet))
+};
 wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 followReducedMotion();
 // `?debug&reduced`: reduced motion, for looking at it in a browser that cannot be asked for it.
@@ -236,6 +250,8 @@ const frozen = () => !!state.arrive && state.arrive.t < ARRIVE_STEPS;
 const STILL = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const FLIGHT_STEPS = 50;
 const FEATHER_FALL = 100;
+/** The raven's feather's size (`@larshansen/maze/feather`, which goes with the maze: order 33), for where it falls onto him. */
+const [FEATHER_W, FEATHER_H] = [5, 9];
 const FEATHER_SHOWN = 340;
 
 function doorSpots(def: LevelDef, play: Play): DoorSpot[] {
@@ -697,10 +713,12 @@ function showShieldButton(on: boolean) {
  * with a sound; the header's hearts breaking and filling. Fetched as the page starts, with the map's look.
  */
 let feel: Feel | null = null;
+/** Feel's file itself: the page's drawing after dusk and of the rune's flight (`render/dusk.ts`) and the synth come in it (order 33). */
+let feelFile: typeof import("./render/feel") | null = null;
 let feelLoading: Promise<void> | null = null;
 function loadFeel() {
   return (feelLoading ??= import("./render/feel").then(
-    (m) => void (feel = m.createFeel({ sfx, hearts, lives: livesEl, coins: coinsEl, gold: goldEl })),
+    (m) => void ((feelFile = m), (synth ??= m.createSfx()), (feel = m.createFeel({ sfx, hearts, lives: livesEl, coins: coinsEl, gold: goldEl }))),
     (e) => {
       feelLoading = null;
       throw e;
@@ -1417,26 +1435,6 @@ function drawThings(v: View) {
 }
 
 /**
- * The tops of what he can stand on that the level draws its own way (order 18): rafts, lifts, logs, hooks
- * and the like move; ledges on a beat, sinking pads and the like give way; a statue he watches holds. Drawn
- * over the level's own drawing of each.
- */
-function standing(v: View) {
-  const p = scene.play;
-  p.def.carriers.forEach((d) => {
-    if (!carrierShown(d, p.t)) return;
-    const at = carrierDrawn(d, p.t, v.alpha);
-    standTop(at.x, at.y, d.w, "moves", feel?.leaving(d, p.t), p.t);
-  });
-  for (const l of p.def.timed) {
-    const phase = timedPhase(p.t, l);
-    if (phase !== "off") standTop(l.x + (phase === "warn" ? shiver(p.t) : 0), l.y, l.w, "gives", phase === "warn");
-  }
-  if (p.grounds) for (const s of p.def.grounds?.stands?.(p.grounds.state, p.t) ?? []) standTop(s.x + (s.soon ? shiver(p.t) : 0), s.y, s.w, s.how, s.soon, p.t);
-  for (const c of p.def.rules?.ground?.(p) ?? []) standTop(c.x, c.y, c.w, "holds");
-}
-
-/**
  * An enemy in its look (the level's own, or one every level may meet), outlined: in the warning red, or in the
  * calm pale while it cannot hurt him (a watched statue, a guard still stone, a calm swan, a sledger pulled off:
  * order 22); once beaten, the squares it puffs into.
@@ -1451,44 +1449,10 @@ function foe(e: Enemy, v: View) {
 /** Something thrown, outlined as its thrower is. */
 const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)));
 
-/** Eye-shine: the one bright pixel that answers a light in the dark. */
-const EYE_SHINE = "#fff1c2";
-
-/**
- * After dusk the street layer has the night's tint over it, and a pigeon on dark planks is a dark shape on dark.
- * So what moves keeps the light of its outline (order 22: the warning red round what can hurt him, the calm pale
- * round what cannot), what can hurt him is a little lighter than its tinted self, with eye-shine where it has
- * eyes; the hazards get a lit edge; the skilling and the cheese shine nearly as by day; what he can stand on
- * keeps the light of its paint. In a level under the trees, the dark that comes after covers all of it but the
- * lamp's circle.
- */
-function afterDark(v: View) {
-  const p = scene.play;
-  const street = ctx();
-  // A little of their own light back: the shapes drawn again, faint, over their tinted selves.
-  street.globalAlpha = 0.25;
-  const noted = ringCount();
-  for (const e of p.enemies) if (e.alive) foe(e, v);
-  for (const s of p.shots) thrown(s, v);
-  ringsTo(noted);
-  street.globalAlpha = 0.8;
-  p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
-  if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);
-  street.globalAlpha = 0.85;
-  for (const h of p.def.hazards ?? []) hazardEdge(h, p.t);
-  // What he can stand on keeps the light of its paint.
-  standing(v);
-  standTops(p.map, scene.def.art);
-  // Every outline drawn on the street this frame, again, alone, over the tint.
-  street.globalAlpha = v.sky.phase === "night" ? 0.9 : 0.8;
-  // Each invader's glow of its own neon (order 27), under its outline.
-  feel?.glows(street);
-  rings(street);
-  street.globalAlpha = 1;
-  for (const e of p.enemies) if (e.alive) for (const [x, y] of eyes(e)) R(x, y, 1, 1, EYE_SHINE);
-  // What these drew of their own lights (a brazier's glow) has had its turn: it is not drawn twice.
-  lights.length = 0;
-}
+/** What `afterDark` (in feel's file) draws with of the page's own: an enemy, something thrown, the paint on what he stands on. */
+const PAGE = { foe, thrown, standing: (v: View) => standing(scene.play, v.alpha, leaving) };
+/** A lift or a train about to set off: its stripe flashes (`render/feel.ts`). */
+const leaving = (d: CarrierDef, t: number) => !!feel?.leaving(d, t);
 
 /** Once he has it, the ski pole goes with him everywhere: held at his side, its basket near the ground. */
 function skiPole(v: View) {
@@ -1528,10 +1492,11 @@ function render(alpha: number) {
     freshRings();
     drawThings(v);
     art.front?.(v);
-    if (!scene.map) standing(v);
+    if (!scene.map) standing(p, v.alpha, leaving);
   });
   target(street);
-  if (sky.phase !== "day") afterDark(v);
+  // After dusk what moves, what he takes, what hurts and what he stands on keep their light (`render/dusk.ts`, in feel's file).
+  if (sky.phase !== "day") feelFile?.afterDark(p, v, PAGE);
   // Under the trees at night: the level's own dark (Nordmarka's, with his headlamp), drawn by its file.
   art.night?.(v, shown, scene.boards, p.map);
   drawSparks(state.sparks);
@@ -1540,12 +1505,12 @@ function render(alpha: number) {
   if (state.feather) {
     const f = Math.min(1, (state.steps - state.feather.since) / FEATHER_FALL);
     if (f < 1) {
-      // The feather floats down, swaying, and comes to rest on his shoulder.
+      // The feather floats down, swaying, and comes to rest on his shoulder: drawn by feel's file, which the maze's way back waits
+      // for as every scene does (its plain drawing left the first script in order 33).
       const sway = view.reduced ? 0 : Math.round(Math.sin((state.steps - state.feather.since) * 0.11) * 5 * (1 - f));
       const fx = Math.round(shown.x + PLAYER.w / 2 - FEATHER_W / 2 + sway);
       const fy = Math.round(shown.y - 60 * (1 - f) + 2 - FEATHER_H / 2 + 6 * f);
-      if (LOOKS.feather) LOOKS.feather(fx, fy, state.feather.gold);
-      else drawFeather(fx, fy, FEATHER.vane, FEATHER.sheen, FEATHER.shine, state.feather.gold);
+      LOOKS.feather?.(fx, fy, state.feather.gold);
     }
   }
 
@@ -1635,7 +1600,7 @@ function plated(b: typeof state.banner) {
   drawn.banner = null;
   if (!b) return null;
   const age = state.steps - b.since;
-  const alpha = view.reduced ? (age < 150 ? 1 : 0) : Math.max(0, Math.min(1, (165 - age) / 30));
+  const alpha = bannerAlpha(age);
   if (alpha <= 0) return null;
   // Below the header, however many rows it has wrapped to; or, if something is there, right under it.
   const bar = header.getBoundingClientRect().bottom - stage.getBoundingClientRect().top;
@@ -1683,24 +1648,15 @@ function inHand(p: Play) {
   });
 }
 
-/** The rune on its way from the level to its slot in the header, on the text canvas. */
+/** The rune on its way from the level to its slot in the header, on the text canvas (`render/dusk.ts`, in feel's file). */
 function drawFlight() {
   const f = state.flight;
-  if (!f) return;
-  const u = textCtx();
-  const k = Math.min(1, (state.steps - f.since) / FLIGHT_STEPS);
-  const e = k * k * (3 - 2 * k);
+  if (!f || !feelFile) return;
   const slot = runeSlots[scene.def.rune]?.getBoundingClientRect();
   const st = stage.getBoundingClientRect();
-  const fx = sx(f.from.x);
-  const fy = sy(f.from.y);
-  const tx = slot ? slot.left + slot.width / 2 - st.left : fx;
-  const ty = slot ? slot.top + slot.height / 2 - st.top : fy;
-  const x = fx + (tx - fx) * e;
-  const y = fy + (ty - fy) * e - Math.sin(e * Math.PI) * 60;
-  const n = unit() * (1 - 0.5 * e);
-  u.fillStyle = PALETTE.runeGlow;
-  runeCells(RUNE_CHARS[scene.def.rune] as RuneChar, 9, 11).forEach((row, ry) => row.forEach((on, rx) => on && u.fillRect(x + (rx - 4.5) * n, y + (ry - 5.5) * n, Math.ceil(n), Math.ceil(n))));
+  const from = { x: sx(f.from.x), y: sy(f.from.y) };
+  const to = slot ? { x: slot.left + slot.width / 2 - st.left, y: slot.top + slot.height / 2 - st.top } : from;
+  feelFile.runeFlight(textCtx(), Math.min(1, (state.steps - f.since) / FLIGHT_STEPS), from, to, scene.def.rune, unit());
 }
 
 const loop = createLoop(

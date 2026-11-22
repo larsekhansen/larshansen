@@ -110,6 +110,22 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   Angry Boy's leap was "drawn two ways at one place" though it was not, and alone the file passed. *A test that fingerprints cached
   pieces clears the cache first (`forgetShapes`); when a test fails only in company, suspect shared state before the code.*
 
+- **A copy of a see-through piece is not the fill it copies** (order 33): in headless Firefox (Skia) a rectangle filled with `rgba(...)`
+  and the same colour drawn into a canvas and copied (`drawImage`) differ by a level or two on opaque ground and more on see-through
+  ground: solid fills and bitmaps take different paths. A `Path2D` of whole-pixel rectangles filled once, under even-odd clips, is byte
+  for byte the same as the rectangles; so is a copy laid destination-over. *Keep a see-through drawing as paths, not pieces, if its
+  pictures must stay byte-identical; test the premise in the browser first (a small page photographed by `tools/shots.ts`).*
+- **A counter counts what it counts** (order 33): `?debug&perf` counts `fillRect`, colours and copies, not path fills or clips; the lane's
+  kept dark showed +0 rectangles. *When a change moves work out of what is counted, count the new work too (fills, the rectangles in
+  their paths, clips) and time it.*
+- **A watch over a combined drawing can be blind** (order 33): the reduced-motion watch of what the page draws after dusk found nothing,
+  with reduced motion or without, because the skilling turns on its own clock and made every recording new; with them left to the part
+  that holds them alone it found the track rat's named leap and a hook turning at its landing (the watch had moved the world with the
+  clock). *Plant a blink and see the watch find it before trusting a clean result; hold the world as the other parts do.*
+- **A module two chunks share lands in the first script** (order 33): the page took two numbers from the maze's feather module, and the
+  maze's drawing in it stayed in the first script because the maze's chunk imported it from there. *Read the first script's module
+  list (a build with a stats plugin), not only its size.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

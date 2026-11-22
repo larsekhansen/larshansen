@@ -35,6 +35,10 @@ import { LAP } from "./tiles";
 import "../alive/ground";
 import "../alive/props";
 import { drawFore } from "../alive/fore";
+// The kit's synth comes in this file (order 33): the page's first script holds only a stand-in that forwards to it.
+export { createSfx } from "@larshansen/pixelkit/sfx";
+// The page's own drawing after dusk and of the rune's flight (order 33), where the reduced-motion test can draw it.
+export { afterDark, runeFlight } from "./dusk";
 
 // The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the
 // fjord's water is a plane that recedes.

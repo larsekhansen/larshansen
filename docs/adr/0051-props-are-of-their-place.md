@@ -89,3 +89,5 @@ round, lit along the top and shaded to the wet underside, bark in fissures with 
 face; only what is above the water shows as before) and Holmenkollen's chairlift chairs (the grip on the cable, the hanger tube, a back
 of two red slats on its uprights, the seat of slats, the frame, a footrest on two rods). Both keep their boxes and their tops, which the
 page paints yellow; `alive/props.test.ts` holds their colours against their old drawings'.
+Order 33 (22 November 2026): the chairs' back of slats is the frame's painted steel; in the arena's red it was a field 6.1 from the
+warning red, which is what hurts (ADR 0044, amended; `render/warning.test.ts`). The seat keeps its red, under the paint but for its foot.

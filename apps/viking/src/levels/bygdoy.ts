@@ -301,6 +301,8 @@ function radhusbrygga(v: View) {
   }
 }
 
+/** The ferry's red band and funnel (order 33): a shade darker than the kit's ferry red, 12.3 off the warning red (it was 6.1: ADR 0044, `render/warning.test.ts`). */
+const FERRY_BAND = mix(PAINT.ferryRed, INK, 0.18);
 /** The ferry: a white hull with a red band, the wheelhouse aft, its wake. Its deck (the carrier) is level with the quay. */
 function ferry(at: { x: number; y: number }, t: number) {
   const { x, y } = at;
@@ -311,7 +313,7 @@ function ferry(at: { x: number; y: number }, t: number) {
     const back = carrierAt(FERRY, t).x > carrierAt(FERRY, t - 1).x ? -1 : 1;
     for (let k = 0; k < 6; k++) R(back < 0 ? x - 6 - k * 5 : x + w + 2 + k * 5, y + 4 + (k % 2), 4, 1, P.foam);
   }
-  for (let i = 0; i < 9; i++) R(x + Math.round(i * 0.6), y + i, w - Math.round(i * 1.2), 1, i < 2 ? PAINT.ferryWhite : i < 4 ? PAINT.ferryRed : i < 7 ? PAINT.ferryShade : mix(PAINT.ferryShade, P.waterDeep, 0.4));
+  for (let i = 0; i < 9; i++) R(x + Math.round(i * 0.6), y + i, w - Math.round(i * 1.2), 1, i < 2 ? PAINT.ferryWhite : i < 4 ? FERRY_BAND : i < 7 ? PAINT.ferryShade : mix(PAINT.ferryShade, P.waterDeep, 0.4));
   R(x, y, w, 1, mix(PAINT.ferryWhite, WHITE, 0.6));
   // The wheelhouse, at the end that faces the pier: windows, a little funnel.
   const wh = x + w - 26;
@@ -320,7 +322,7 @@ function ferry(at: { x: number; y: number }, t: number) {
   for (let k = 0; k < 3; k++) R(wh + 2 + k * 7, y - 15, 5, 5, GLASS.pane);
   // After dark its wheelhouse is lit, as the ferry at Rådhuset's saloon is (order 32, ADR 0054).
   for (let k = 0; k < 3; k++) light(wh + 2 + k * 7, y - 15, 5, 5);
-  R(wh + 6, y - 24, 6, 6, PAINT.ferryRed);
+  R(wh + 6, y - 24, 6, 6, FERRY_BAND);
   R(wh + 6, y - 24, 6, 1, INK);
   R(x + 2, y - 6, 1, 6, METAL.rail);
   R(x + 2, y - 6, 30, 1, METAL.rail);
