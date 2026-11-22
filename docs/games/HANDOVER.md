@@ -264,7 +264,7 @@ phone: the numbers are the Pi's software renderer.
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 57.94 kB gzipped after order 33 (57,909 bytes by GNU gzip, 1,685 fewer than order 32's build): the kit's synth, the page's
+- **First script**: 57.94 kB gzipped after order 33 (57,903 bytes by GNU gzip, 1,691 fewer than order 32's build): the kit's synth, the page's
   drawing after dusk and of the rune's flight (`render/dusk.ts`) went into `feel`'s file, which the first scene waits for, and the maze's
   feather drawing with the maze (ADR 0053, amended: without `feel`'s file the page is silent and nothing keeps its light after dusk).
   59.60 kB gzipped after order 32, as after order 31 (59,594 bytes by GNU gzip, 2 fewer: only the chunks' names it
