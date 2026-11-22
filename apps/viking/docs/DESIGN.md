@@ -25,7 +25,7 @@ A side-view game built the way the front page is built. The reasons (one cloth f
 | `src/render/pad.ts` | The touch pad (order 21, ADR 0043): where each control goes on a screen (`padLayout`), each finger followed on its own (`createThumbs`, `wireThumbs`), what each control says and whether it has anything to do now, the bar's folding during a level, and the help line's notes in the pad's words. A chunk of its own, fetched on a touch screen only. |
 | `src/game/frame.ts` | Where the camera goes with room left under him for the pad's buttons (`roomy`, `roomFor`, `aheadOf`): pure, so the tests frame every route at every phone size as the page does. |
 | `src/game/card.ts` | The card at a level's end as pure rules: one action after a rune, which keys answer it, six seconds and it goes, where he arrives (ADR 0037). |
-| `src/alive/` | Order 23 (ADR 0045 to 0047), fetched with `render/feel.ts` in its file: frames as data (`frames.ts`: rows of letters, a colour a letter, kept as runs); his frames and how one is picked (`him.ts`); the enemies drawn as frames and how a look's frame is picked (`foes.ts`); `parts` and `stride`, how every other look is drawn with a cycle, a breath and a bob (`parts.ts`); a beaten enemy's death in three frames (`death.ts`); the skilling and the cheese, and since order 24 the bench, the bracteate, the rune on its stone, the sheep, the flag the game flies (three frames in its level's wind), the ski pole, the feather, a flame and an oil lamp, and since order 25 the people in a crowd and the flags they wave (`things.ts`); a shadow under everything that moves (`shadows.ts`); the receding plane, pieces of a far layer at a speed of their own and the water lapping at a quay's wall (`depth.ts`); things in front of him (`fore.ts`). For the tests and tools only: every look in every state (`census.ts`), where a thing in front may pass (`forecheck.ts`). |
+| `src/alive/` | Order 23 (ADR 0045 to 0047), fetched with `render/feel.ts` in its file: frames as data (`frames.ts`: rows of letters, a colour a letter, kept as runs); his frames and how one is picked (`him.ts`; both the kit's since order 36, `packages/pixelkit/src/frames.ts` and `him.ts`, re-exported here, so the maze draws the same man, and the raven's feather too, `pixelkit/feather.ts`; the build keeps them in `feel`'s file); the enemies drawn as frames and how a look's frame is picked (`foes.ts`); `parts` and `stride`, how every other look is drawn with a cycle, a breath and a bob (`parts.ts`); a beaten enemy's death in three frames (`death.ts`); the skilling and the cheese, and since order 24 the bench, the bracteate, the rune on its stone, the sheep, the flag the game flies (three frames in its level's wind), the ski pole, the feather, a flame and an oil lamp, and since order 25 the people in a crowd and the flags they wave (`things.ts`); a shadow under everything that moves (`shadows.ts`); the receding plane, pieces of a far layer at a speed of their own and the water lapping at a quay's wall (`depth.ts`); things in front of him (`fore.ts`). For the tests and tools only: every look in every state (`census.ts`), where a thing in front may pass (`forecheck.ts`). |
 | `src/alive/glamour.ts`, `natural.ts`, `invasion.ts` | The glamour (order 27, ADR 0050), in `feel`'s file: how a look is drawn just now (glammed, bare, its marks alone: `glam`, `glamFrame`), each level's lean of the glamour's neons (`LEANS`, applied as the page records a shape: `lean` in `render/sprite.ts`), the two-neon sheen on a glammed frame's lit top (`sheened`), the glow after dark (`glows`); every invader's natural self (`NATURAL`: a ramp of its real colours and how it leaves); what the invaders left in each level and the map's mirror balls (`invasion.ts`, its places held by `invasion.test.ts`, chosen with `tools/glance/invasion.ts`). A broken glamour is drawn by `alive/death.ts` (`drawBreak`). |
 | `src/game/story.ts` | The story of the glamour (order 27): every line, in both languages, in one file, in `feel`'s file; with other openings and endings for Lars to choose from. |
 | `src/render/sprite.ts` | `outlined`: what moves (an enemy, a shot, a boss, a sheep, the heron) drawn into a recorder, painted once per shape with its outline (a near-black line and the warning red, or the calm pale: ADR 0044) and copied after; the eyes it drew, for the shine after dark; every outline of a frame, copied again over the night's tint (`rings`). |
@@ -481,6 +481,30 @@ and 932 x 430 at a pixel ratio of 3 (`tools/review/o21/`), and where a test can 
 8. **Turning the phone** lets go of every finger, lays everything out again, and the level goes on.
 9. **The buttons are furniture**: greys and white, see-through, none of the roles' colours, nothing moving by itself
    (`pad.test.ts` reads the pad's styles).
+
+## Jernhaugen, the maze
+
+Order 36 (ADR 0056). The maze (`packages/maze`) runs inside this page at `#jernhaugen` and alone at maze.larshansen.dev; its rules are its
+own (ADR 0007) and order 36 changed none of them. For anyone drawing in it:
+
+1. **Him is the fjord's man**, from the kit's sheet (`pixelkit/him.ts`): the mound is seen from above with its walls' faces showing, so
+   he stands on its floor as the walls stand (his feet at the foot of his six-pixel body), faces the way he last went sideways, runs by
+   the distance he covers, and carries a torch; his ghost is the same man, pale.
+2. **The mound is its own place** (`look.ts`, `figures.ts`): iron and a dark hill, no glamour, no neon, no paint. Every material a ramp
+   of three to five tones of one hue, light from the top left, four variants a tile by a hash of its place; depth where the floor meets
+   a wall (the face's lip lit, its foot in shadow, the wall's shadow on the floor below and to the right). A level's still layer is a
+   grid of colours made once a level (`stillPixels`) and copied each frame; a figure is a frame of the kit's (`frame`) or a piece kept
+   and copied.
+3. **The kit's read where the maze has the thing**: what hurts and moves (an adder) has the near-black line and the warning red round
+   it; the walls' warning is the curse's rust-red line along them; what he takes (the rune key) is in the take-gold; the door on has its
+   corners in the use cyan. Nothing harmless within 10 of the warning red or the curse's reds (`packages/maze/src/warning.test.ts`).
+4. **Reduced motion**: nothing blinks or shakes (`reduced.test.ts`): a warning is steady, a tongue stays out, his breath and blink are idles.
+5. **In the hand**: on a touch screen the help line says what a finger does, never a key (`helpFor`), and goes at his first move; the
+   raven's words wrap at a narrow screen; the maze marks the page (`mz-touch`) for thumb-sized buttons; this page keeps its own touch
+   styles in the mound, its header two rows upright.
+6. **Checking**: `packages/maze/src/debug.ts` is both pages' stepped harness (`?debug&steps=N`, `bot=keys|pointer|finger`, `walk`,
+   `at`, `records`, `ghost`, `levels`, `perf`; in this page also `walkin`, `out`, `after`), `joins.test.ts` the joins between the maze
+   and its pages, `packages/maze/tools/runs.ts` the rules held step for step against another checkout.
 
 ## Checking
 

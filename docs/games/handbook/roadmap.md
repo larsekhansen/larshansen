@@ -1,22 +1,31 @@
 # Roadmap
 
-As of 22 November 2026, after order 35 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
+As of 22 November 2026, after order 36 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 35, housekeeping and the figures, PR #83; before it orders 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 35, housekeeping and the figures, branch `housekeeping` |
+| Last live | Order 35, housekeeping and the figures, PR #83 (built, reviewed and merged on 22 November); before it orders 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Order 36, the maze catches up, branch `the-maze-catches-up` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | About 23 % used when order 35 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 35, housekeeping, and every figure on one page** (`orders/35-housekeeping-and-the-figures.md`), built on branch `housekeeping`,
-not yet reviewed. It retunes nothing (Lars has not played). The viking suite under 300 s on the Pi with nothing it held lost, every changed
+**Order 36, the maze catches up** (`orders/36-the-maze-catches-up.md`, ADR 0056), built on branch `the-maze-catches-up`, not yet reviewed.
+Idea 8: the maze in the game's grain and in the hand, its rules unchanged step for step. Looked at first (`apps/viking/tools/review/o36/before.md`);
+one stepped harness for both pages; him from the fjord's own sheet (moved into the kit) standing on the mound's floor with a torch; the mound
+redrawn as its own iron-bound place (lining with an iron band on every face, packed earth, the dark hill, the pad, the doorways, the stones,
+the raven, the mound-dweller), adders outlined in the warning red, the key in the take-gold, the door's corners in the use cyan; on a phone
+the help line says what a finger does and goes at his first move, the raven's words wrap, thumb-sized targets, the viking page's touch styles
+kept in the mound; nothing blinks with reduced motion; the joins held by a test and stepped pictures; the figures' bosses and Loki outlined
+as the page outlines them and the maze on the page of every figure; the reduced-motion test's dead watch removed. Each item, done or not,
+with its measures: `apps/viking/tools/review/o36/after.md`.
+
+**Order 35, housekeeping, and every figure on one page** (`orders/35-housekeeping-and-the-figures.md`), live (PR #83). It retunes nothing (Lars has not played). The viking suite under 300 s on the Pi with nothing it held lost, every changed
 test shown to fail on a planted fault; `apps/viking/tools/figures.ts`, a sheet of every figure the game draws at four times and
 `figures.json` naming each in both languages (the page of every figure, unpublished since order 27, can be rebuilt from it); the encore's
 shouts in a still picture without `&say`; the blank harness pictures found (taken before the page had drawn) and named by `tools/shots.ts`;
@@ -75,7 +84,8 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
+Order 36 brings the maze up to the rest (idea 8); the page of every figure can be published again with the maze's figures on it
+(`apps/viking/tools/figures.ts`). Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
 deletion of `landing-game-polish` (in the planner's own session), and his play notes. When he has played, the proposals in
 `apps/viking/tools/review/o34/thematic.md` (difficulty and enemies by place) become an order; until then idea 2 below (tune by play) is the
 biggest gap, and idea 3's checklist now has the tune on it: nobody has heard it. Order 35 carried out one proposal of that table that is a
@@ -106,8 +116,10 @@ None of these is decided. Each has a reason.
 6. **Way 1 for him alone** (GRAIN.md): only if he still reads as a blob on a phone after way 3.
 7. **The 240-pixel upright view** (ADR 0019): at 200 everything is a fifth larger. A question
    for Lars with two pictures, not a thing to decide for him.
-8. **The maze** has had none of orders 18 to 27: its help line still names keys on touch; its
-   figures are in the old style; it knows nothing of the glamour.
+8. ~~**The maze** has had none of orders 18 to 27: its help line still names keys on touch; its
+   figures are in the old style; it knows nothing of the glamour.~~ Done in order 36 (ADR 0056), but for the glamour, which it keeps
+   out of on purpose (the mound is not Oslo). Left: whether the maze inside the viking page should be larger on an upright phone (it
+   shares the page's 240-pixel view, ADR 0019), and front and back views of him there (he faces the way he last went sideways).
 9. **The front page** is frozen by its 28 pictures. If Lars wants the new hero or the glamour
    there, that is a decision to unfreeze it (new references, an ADR).
 10. **More frames where order 23 stopped**: no climbing or hanging poses exist because the game

@@ -18,7 +18,7 @@
 |---|---|---|---|
 | The levels as built | https://claude.ai/artifact/6WbxEBdR12SnkGk3Ktoi7r | `docs/games/LEVELS.html` with `docs/games/shots/*.png` (20 files), root `docs/games` (absolute path) | Any level's picture or the legend changes |
 | The pixel study (three ways) | https://claude.ai/artifact/4QQTQh88FBinev3Z2MhRWP | `docs/games/GRAIN.md`'s content as a page, with `docs/games/shots/grain/*.png` | Not again: the choice is made (ADR 0045) |
-| Every figure, as redrawn | https://claude.ai/artifact/2zVH3Eq6cauR3qyigeijrf | Since order 35: `bun tools/figures.ts <dir>` in `apps/viking` (a sheet a figure and `figures.json` with each one's name in both languages, its levels and its states); before, the implementers' frame sheets | After every round that redraws figures (not republished since order 27) |
+| Every figure, as redrawn | https://claude.ai/artifact/2zVH3Eq6cauR3qyigeijrf | Since order 35 (and the maze's since order 36): `bun tools/figures.ts <dir>` in `apps/viking` (a sheet a figure and `figures.json` with each one's name in both languages, its levels and its states); before, the implementers' frame sheets | After every round that redraws figures (not republished since order 27) |
 
 To update a page from a later session, pass its address as `url` when publishing, after reading
 it once. The figures page was assembled by a small script from the hand-back folders; rebuild
@@ -45,6 +45,8 @@ All on `/viking/` with `?debug`. HANDOVER, "Checking", has the full account.
 | `&shield` | Give him the shield |
 | `&touch&note=pole\|shield\|sledge` | The pad's note of what just changed on the help line, as the page shows it (order 33): the pole's comes under Holmenkollen's card otherwise |
 | `&say=<key>` | The level's boss says that line of its words in its bubble (order 33): `missBite` at the encore, which needs two hits otherwise; `shout1` to `shout4` his shouted lines (order 34: under the harness the music never saw him wake, so they show only so) |
+| `&told&level=N&steps=S[&bot=keys\|pointer\|finger][&portals]#jernhaugen` | The maze inside the page, stepped (order 36): its own harness, `packages/maze/src/debug.ts` (also `walk`, `at`, `records`, `ghost`, `levels`, `perf&post`); the same on maze.larshansen.dev without `/viking/`, `told` or the hash. `bot=finger` plays the level with synthetic touches through the scene's own touch code. Step 0 is black (the fade): take 30 |
+| `&walkin=N`, `&out`, `&after=N` | Through a door once the page has loaded (N steps holding up), out of the maze by its own way out, and N steps of what he comes back to (order 36): `?debug&told&level=nordmarka&x=2372&steps=1&walkin=60&out&after=30#nordmarka` |
 | `&music=band\|drums\|bass\|riff\|lead\|intro\|plain` (or a list, `drums,bass`) | The level's music at once, whatever its boss does, only those parts (order 34: the encore's tune). Sound starts with the first key or touch; headless Firefox plays none |
 
 Level ids: `langkaia`, `akershus`, `radhuset`, `slottet`, `holmenkollen`, `akerselva`,
@@ -74,7 +76,9 @@ The notes are written out in `apps/viking/src/game/tune.ts` and in `apps/viking/
 |---|---|
 | `tools/shots.ts` | Headless Firefox screenshots; names blank ones (order 35) |
 | `tools/png.ts` | Reads and writes PNGs without a browser (order 35: `shots.ts` looks for blank pictures with it, `figures.ts` writes its sheets) |
-| `apps/viking/tools/figures.ts` | Every figure the game draws (order 35): a PNG sheet each at four times size, states in rows, no words in the pictures, and `figures.json` (each one's name in English and Norwegian, its levels, its states in row order), from the game's tables (`src/alive/figures.ts`; `alive/figures.test.ts` holds that every kind a level uses is listed and named). `bun tools/figures.ts <dir>`, about a minute and a half; nothing it writes is committed |
+| `apps/viking/tools/figures.ts` | Every figure the game draws (order 35): a PNG sheet each at four times size, states in rows, no words in the pictures, and `figures.json` (each one's name in English and Norwegian, its levels, its states in row order), from the game's tables (`src/alive/figures.ts`; `alive/figures.test.ts` holds that every kind a level uses is listed and named). Since order 36 the bosses and Loki have the outline the page gives them in each state, and the maze's figures are on it (`maze-*.png`, met in `jernhaugen`). `bun tools/figures.ts <dir>`, about a minute and a half; nothing it writes is committed |
+| `packages/maze/tools/runs.ts` | The maze's rules held step for step (order 36): the scripted player on every level of any checkout, both speeds, both ways where there are teleport stones, each run fingerprinted; `--ghosts=<file>` writes the ghosts, `--replay=<file>` reads another checkout's back. `bun packages/maze/tools/runs.ts [<checkout>]` |
+| `packages/maze/src/reduced.test.ts`, `warning.test.ts`, `joins.test.ts` | The maze (order 36): nothing blinks with reduced motion; nothing harmless in the warning red or the curse's reds; the joins with its two pages (the feather the fjord reads, records and ghosts per page, the mute) |
 | `apps/viking/tools/facts.ts` | Writes LEVELS.html's FACTS block from the levels |
 | `apps/viking/tools/pictures.ts`, `pictures.tsv` | Retakes LEVELS.html's pictures |
 | `apps/viking/tools/review/` | The sloppy and hesitating players, reach and dead-end checks, boss studies, `edgecmp.py`; one folder of results per order (`o18` … `o31`); a README |

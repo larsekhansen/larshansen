@@ -23,3 +23,4 @@ kart-line2	/viking/?debug&told&steps=30&sky=day&cleared=langkaia,akershus,radhus
 kart-end	/viking/?debug&told&steps=30&sky=day&cleared=all&x=1528#kart
 17-encore	/viking/?debug&told&level=encore&auto&steps=450#encore	wait
 kart-encore	/viking/?debug&told&steps=30&sky=day&cleared=all&x=1744#kart
+18-jernhaugen	/viking/?debug&told&level=2&bot=keys&steps=620#jernhaugen	wait
