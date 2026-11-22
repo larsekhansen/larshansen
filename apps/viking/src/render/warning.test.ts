@@ -161,6 +161,18 @@ function both(a: ReturnType<typeof raster>, b: ReturnType<typeof raster>): Canva
   return tee as unknown as CanvasRenderingContext2D;
 }
 
+/** A light's colour, its hex and how far it is from the warning red, if within `CLOSE`: worked out once a colour. */
+const CLOSE_OF = new Map<string, { key: string; d: number } | null>();
+function closeOf(colour: string) {
+  let c = CLOSE_OF.get(colour);
+  if (c === undefined) {
+    const p = parseColour(colour);
+    const d = p ? deltaE(p.rgb, RED) : Infinity;
+    CLOSE_OF.set(colour, (c = p && d < CLOSE ? { key: `#${p.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`, d } : null));
+  }
+  return c;
+}
+
 type Most = Map<string, { n: number; at: string; who: Set<string> }>;
 /** The lights a level registers within `CLOSE` of the warning red: by colour, how far off, and how many places register one. */
 type Lit = Map<string, { d: number; n: number }>;
@@ -243,12 +255,9 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit } {
         def.timed.forEach((l) => timedPhase(0, l) !== "off" && standTop(l.x, l.y, l.w, "gives", false));
         // The lights the view registered, by their own colour (a lamp's yellow or a window's when they have none).
         for (const l of lights) {
-          const c = l.color && parseColour(l.color);
+          const c = l.color && closeOf(l.color);
           if (!c) continue;
-          const d = deltaE(c.rgb, RED);
-          if (d >= CLOSE) continue;
-          const key = `#${c.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
-          const had = most.lights.get(key) ?? most.lights.set(key, { d, n: 0 }).get(key)!;
+          const had = most.lights.get(c.key) ?? most.lights.set(c.key, { d: c.d, n: 0 }).get(c.key)!;
           had.n++;
         }
         lights.length = 0;
