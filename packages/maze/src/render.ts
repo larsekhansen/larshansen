@@ -11,10 +11,12 @@ import { drawFeather } from "./feather";
 import { DWELLER, KEY, RAVEN, STONES, STONE_H, STONE_RUNE, STONE_W, drawAdder, put } from "./figures";
 import { BODY, FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, type Stone } from "./rules";
 
-// Drawing the mound, top down, in the front page's pixels. Everything is whole art pixels, made of
-// the kit's rectangle helpers and anchored to the tile map. The still parts (floor, stone walls,
-// the start pad) are drawn once per level onto a canvas the size of the map, and the parts that
-// move or glow (the curse line, torches, stones, snakes, the raven) are drawn over it every frame.
+// Drawing the mound, seen from above with its walls' faces showing, in the viking game's grain (order 36, ADR 0056). Everything is
+// whole art pixels, anchored to the tile map. The still parts (`look.ts`: the floor, the lining and its faces, the hill, the pad,
+// the doorways) are a grid of colours made once a level and put on a canvas the size of the map; what moves or glows (the curse's
+// line, the torches' flames, the stones, the adders, the raven, the key, the gate, the sliding walls) is drawn over it every frame,
+// a figure as a frame of the kit's (`figures.ts`) or a piece kept and copied; him and his ghost from the viking game's own sheet
+// (`@larshansen/pixelkit/him`) on the sharp canvas.
 
 const P = PALETTE;
 const shade = (c: string, k: number) => mix(c, "#141018", k);

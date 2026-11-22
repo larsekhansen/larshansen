@@ -373,6 +373,16 @@ body.touch.in-maze .mazehud {
   row-gap: 0;
 }
 
+/* With a mouse in a window as narrow as a phone too: the mound's header wraps beside the sound button, never off the edge. */
+@media (max-width: 419px) {
+  .in-maze .mazehud {
+    flex: 1 1 0;
+    min-width: 0;
+    flex-wrap: wrap;
+    row-gap: 0;
+  }
+}
+
 body.touch.in-maze .help {
   top: auto;
   bottom: calc(14px + env(safe-area-inset-bottom));
