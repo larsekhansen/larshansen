@@ -6,6 +6,7 @@ import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
+import { textTarget } from "@larshansen/pixelkit/text";
 import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
 import { drawSky } from "@larshansen/pixelkit/sky";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
@@ -23,7 +24,7 @@ import * as ROUTES from "../levels/routes";
 import { ENCORE_ROUTE } from "../levels/routes/encore";
 import type { LevelDef, View } from "../levels/types";
 import { drawBracteate, drawRune, drawSheep } from "./actors";
-import "./feel";
+import { createFeel } from "./feel";
 import { areaRecorder, skyOf } from "./fields";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./pickups";
 import { freshRings, outlined } from "./sprite";
@@ -54,6 +55,15 @@ import { drawTiles, drawWater } from "./tiles";
 //    at every step (order 30).
 // 4. The cards (order 31): the only motion a card has is CSS, and every animation in the page's styles is on a class the page
 //    sets only without reduced motion.
+// 5. What moves by the clock (order 32): every carrier the kit draws wherever the clock puts it, and every jumper in its leap,
+//    each recorded relative to where it is: at a place it is drawn one way (a leap's own named cycle, as many as its frames), and
+//    a drawing it left never comes back elsewhere. (A level's own carriers take their place from the page, so part 1 draws them
+//    held where they are with the clock running, whether they stand or move.)
+// 6. What `render/feel.ts` draws (order 32): him, the answers to what just happened, the marks of things to use, the shadows,
+//    the world held a moment along every route and just after anything happens, the clock running: it never comes back.
+//    Not drawn here: `main.ts`'s own drawing, which a test cannot import (it starts the page): `afterDark` (it draws again what
+//    parts 1 and 6 draw, at fixed strengths), the rune's flight to the header and the banner's fade (each one movement, not a
+//    blink); and the maze.
 
 const SRC = resolve(dirname(import.meta.path), "..");
 
@@ -99,8 +109,12 @@ function asInBrowser<T>(run: () => T): T {
   }
 }
 
-/** A context that draws nothing and keeps a fingerprint of every call made to it, and of the lights registered meanwhile. */
-function recorder(w: number, h: number) {
+/**
+ * A context that draws nothing and keeps a fingerprint of every call made to it, and of the lights registered meanwhile; with
+ * `at`, every place in it relative to that point (order 32: a moving thing recorded where it is, so only what changes in its
+ * drawing besides its place changes the fingerprint).
+ */
+function recorder(w: number, h: number, at = { x: 0, y: 0 }) {
   let print = 0x811c9dc5;
   const mix = (s: string) => {
     for (let i = 0; i < s.length; i++) print = Math.imul(print ^ s.charCodeAt(i), 16777619);
@@ -122,16 +136,22 @@ function recorder(w: number, h: number) {
       const stops: string[] = [at.join()];
       return { stops, addColorStop: (o: number, c: string) => stops.push(`${o}:${c}`) };
     },
-    fillRect(this: Self, x: number, y: number, rw: number, rh: number) {
-      mix(`R${key(style)}|${this.globalAlpha}|${this.globalCompositeOperation}|${x},${y},${rw},${rh}`);
+    createRadialGradient: (...at: number[]) => {
+      const stops: string[] = [`r${at.join()}`];
+      return { stops, addColorStop: (o: number, c: string) => stops.push(`${o}:${c}`) };
     },
-    drawImage(this: Self, src: object, ...at: number[]) {
-      mix(`I${canvasIds.get(src) ?? "?"}|${at.join()}|${this.globalAlpha}|${this.globalCompositeOperation}`);
+    fillRect(this: Self, x: number, y: number, rw: number, rh: number) {
+      mix(`R${key(style)}|${this.globalAlpha}|${this.globalCompositeOperation}|${x - at.x},${y - at.y},${rw},${rh}`);
+    },
+    drawImage(this: Self, src: object, ...a: number[]) {
+      const d = a.length >= 8 ? 4 : 0;
+      const where = a.map((n, i) => (i === d ? n - at.x : i === d + 1 ? n - at.y : n));
+      mix(`I${canvasIds.get(src) ?? "?"}|${where.join()}|${this.globalAlpha}|${this.globalCompositeOperation}`);
     },
     translate: (x: number, y: number) => mix(`T${x},${y}`),
     setTransform: (...m: number[]) => mix(`S${m.join()}`),
     fillText(this: Self, text: string, x: number, y: number) {
-      mix(`X${text}|${x},${y}|${key(style)}|${this.globalAlpha}`);
+      mix(`X${text}|${x - at.x},${y - at.y}|${key(style)}|${this.globalAlpha}`);
     }
   };
   const g = new Proxy(base, {
@@ -141,7 +161,7 @@ function recorder(w: number, h: number) {
   return {
     ctx: g as unknown as CanvasRenderingContext2D,
     done() {
-      mix(JSON.stringify(lights));
+      mix(JSON.stringify(lights.map((l) => ({ ...l, x: l.x - at.x - view.camX, y: l.y - at.y - view.camY }))));
       lights.length = 0;
       return print >>> 0;
     }
@@ -339,6 +359,173 @@ function things(name: string, def: LevelDef): string[] {
   return found;
 }
 
+/**
+ * Whether a moving thing's drawing changes with the clock but for its place (order 32): steps of it, each its place (and what
+ * else its world says, as whether it is shown) and its recording relative to that place. It blinks if at the same place it is
+ * drawn two ways, or if its drawing leaves one recording and comes back to it at another place (where its drawing is the same
+ * wherever it is, a toggle; where it is not, as a swinging bell's rope, it comes back only where its place does).
+ */
+function blinksWhileMoving(steps: { at: string; print: number }[], cycle = 0): boolean {
+  // A thing with a cycle of its own (`LEAP_CYCLES`) may be drawn as many ways at a place as its cycle has frames, and no more.
+  const byAt = new Map<string, Set<number>>();
+  for (const s of steps) {
+    const was = byAt.get(s.at) ?? new Set<number>();
+    was.add(s.print);
+    byAt.set(s.at, was);
+    if (was.size > Math.max(1, cycle)) return true;
+  }
+  if (cycle) return false;
+  const first = new Map<number, string>();
+  for (let i = 0; i < steps.length; i++) {
+    const s = steps[i];
+    if (i > 0 && s.print !== steps[i - 1].print && first.has(s.print) && first.get(s.print) !== s.at) return true;
+    if (!first.has(s.print)) first.set(s.print, s.at);
+  }
+  return false;
+}
+
+/**
+ * Jumpers whose leap has a cycle of its own, on its own clock, and why it is kept with reduced motion (it says what the thing is
+ * doing): watched only for the same place drawn two ways, not for coming back to a frame elsewhere.
+ */
+const LEAP_CYCLES: Record<string, { frames: number; why: string }> = {
+  salmon: { frames: 2, why: "its tail flicks between two frames as it leaps, every five steps (order 30: how a leap reads)" },
+  trackrat: { frames: 2, why: "falling, it kicks between two frames every four steps, its tail flying out (orders 26, 30)" }
+};
+
+/**
+ * A level's moving things along its scripted route every five seconds (order 32: the old watch saw them only where they stood
+ * still): every carrier the kit draws, wherever the clock puts it (a level's own carriers are drawn by the watch above wherever
+ * they are, the clock running, since their drawing takes their place), and every jumper in its leap, each drawn at 25 steps of
+ * the clock and recorded where it is.
+ */
+function movers(name: string, def: LevelDef): string[] {
+  const p = newPlay(def, optsFor(def));
+  const pilot = autopilot(routeOf(def.id) ?? []);
+  const art = def.art;
+  const snow = skyOf(def, "day").snow;
+  const found: string[] = [];
+  for (let s = 0; s < 60 * 300 && p.runeAt === null; s++) {
+    if (s % 300 === 0) {
+      const t0 = p.t;
+      const list: [string, (t: number) => { x: number; y: number; key: string }, (t: number, v: View) => void][] = [];
+      def.carriers.forEach((d, i) => {
+        if (art.carrier) return;
+        const at = (t: number) => {
+          const a = carrierDrawn(d, t, 1);
+          const b = carrierDrawn(d, t + 1, 1);
+          return { x: Math.round(a.x), y: Math.round(a.y), key: `${carrierShown(d, t)}|${Math.sign(b.x - a.x)},${Math.sign(b.y - a.y)}` };
+        };
+        list.push([`carrier ${i}`, at, (t) => drawCarrier(d, t, 1, snow, STAND_LEDGE)]);
+      });
+      p.enemies.forEach((e, i) => {
+        if (!e.alive || e.def.kind !== "jumper") return;
+        const at = (t: number) => {
+          const l = leap(e, t);
+          // Where it is in its leap, as its drawing reads it: rising, falling, or lying level at the top.
+          const top = Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 1;
+          return { x: Math.round(e.x), y: Math.round(e.y) - l.up, key: `${l.ripple}|${Math.sign(leap(e, t + 1).up - l.up)}|${top}` };
+        };
+        list.push([`jumper ${i} (${e.def.look ?? "jumper"})`, at, (_t, v) => outlined(() => void (art.enemy?.(e, v) || drawEnemy(e, v.t)), e, e.calm ? ROLES.calm : ENEMY.warning)]);
+      });
+      for (const [thing, at, draw] of list) {
+        const steps = withView(true, () => {
+          const v = viewOf(def, p, t0);
+          const was = ctx();
+          try {
+            target(recorder(W, H).ctx);
+            freshRings();
+            draw(t0, v);
+            lights.length = 0;
+            return DENSE.map((k) => {
+              const t = t0 + k;
+              v.t = t;
+              const a = at(t);
+              const rec = recorder(W, H, { x: a.x - view.camX, y: a.y - view.camY });
+              target(rec.ctx);
+              freshRings();
+              draw(t, v);
+              return { at: `${a.x},${a.y}|${a.key}`, print: rec.done() };
+            });
+          } finally {
+            target(was);
+            lights.length = 0;
+          }
+        });
+        const cycle = Object.entries(LEAP_CYCLES).find(([look]) => thing.endsWith(`(${look})`))?.[1].frames ?? 0;
+        if (blinksWhileMoving(steps, cycle)) found.push(`${name} at step ${s}: ${thing}`);
+      }
+    }
+    const keys = pilot(p);
+    if (!keys) break;
+    stepPlay(p, keys);
+  }
+  return found;
+}
+
+/**
+ * What `render/feel.ts` draws (order 32: not drawn by the watch before): him (his frame, his rim, his blink after a hit), the
+ * answers to what just happened (rings, ticks, the "!", what rises from where it lay, the rune's ring of daylight), the marks of
+ * things to use, the shadows under what moves. Along each level's route, every five seconds and a second after anything happens
+ * (a stomp, a hit, a flag, a skilling, a bench, the rune), the world is held and the clock runs 25 steps: feel's drawing must never
+ * come back to a recording it left (an idle of a second or slower, his breath, turns at most once).
+ */
+function felt(name: string, def: LevelDef): string[] {
+  const p = newPlay(def, optsFor(def));
+  const pilot = autopilot(routeOf(def.id) ?? []);
+  const feel = createFeel({ sfx: { voice: () => undefined } });
+  feel.reset(p);
+  const found: string[] = [];
+  let due = 300;
+  for (let s = 0; s < 60 * 300 && p.runeAt === null; s++) {
+    feel.at(s);
+    feel.before(p, s);
+    const keys = pilot(p);
+    if (!keys) break;
+    const ev = stepPlay(p, keys);
+    feel.react(p, ev);
+    feel.step(p, s);
+    if (ev.stomp !== null || ev.hurt || ev.flag !== null || ev.coin !== null || ev.bench !== null || ev.rune || ev.bracteate || ev.boss || ev.troll) due = Math.min(due, s + 2);
+    // And where his idle blinks his eyes (six steps at the end of every six seconds: `himFrame`), so the window holds one.
+    if (s < due && p.t % 360 !== 345) continue;
+    due = s + 300;
+    const body = { ...p.body };
+    const prints = withView(true, () => {
+      viewOf(def, p, p.t);
+      const draw = (k: number) => {
+        feel.at(s + k);
+        feel.world(p, p.t + k);
+        feel.use(p, [], [], false);
+        feel.shadows(p, body, 1);
+        feel.him({ ...p, t: p.t + k } as Play, body, 0, "day", {} as never, 1);
+      };
+      const was = ctx();
+      try {
+        const first = recorder(W, H);
+        target(first.ctx);
+        textTarget(first.ctx);
+        freshRings();
+        draw(0);
+        lights.length = 0;
+        return DENSE.map((k) => {
+          const rec = recorder(W, H);
+          target(rec.ctx);
+          textTarget(rec.ctx);
+          freshRings();
+          draw(k);
+          return rec.done();
+        });
+      } finally {
+        target(was);
+        lights.length = 0;
+      }
+    });
+    feel.at(s);
+    if (comesBack(prints)) found.push(`${name} at step ${s}`);
+  }
+  return found;
+}
+
 /** The colours a drawing paints and the area each covers. */
 function painted(draw: () => void): Map<string, number> {
   const rec = areaRecorder();
@@ -418,6 +605,18 @@ describe("with reduced motion nothing flashes (orders 30 and 31)", () => {
   test("every thing in every level, held as the scripted route finds it every five seconds (carriers, ledges, cannons, drums, flags, benches, sheep, skilling, cheese, every enemy, what is thrown, what hurts, the bracteate, the rune, the paint), never comes back within 24 steps of the clock", async () => {
     const found: string[] = [];
     for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => things(name, def)));
+    expect(found).toEqual([]);
+  }, 300_000);
+
+  test("every moving thing in every level (every carrier the kit draws, wherever the clock puts it; every jumper in its leap), drawn as the route finds it every five seconds: its drawing at a place never depends on the clock otherwise", async () => {
+    const found: string[] = [];
+    for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => movers(name, def)));
+    expect(found).toEqual([]);
+  }, 300_000);
+
+  test("what feel draws (him, the answers to what just happened, the marks of things to use, the shadows), the world held a moment along every route and a second after anything happens, never comes back within 24 steps", async () => {
+    const found: string[] = [];
+    for (const { name, def } of await everyLevel()) if (!name.startsWith("kart")) found.push(...asInBrowser(() => felt(name, def)));
     expect(found).toEqual([]);
   }, 300_000);
 
