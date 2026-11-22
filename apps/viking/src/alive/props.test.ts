@@ -69,12 +69,18 @@ const ROLE_NAMES = ["him", "enemy", "stand", "take", "now", "use", "calm"];
 
 /** Every level's lane drawn as the palette test draws it, with the props kit noting what it drew and in what colours, and the doors besides. */
 const inksOf: Record<string, Set<string>> = {};
+const nearestOf: Record<string, Map<string, number>> = {};
 async function drawEveryLevel() {
   PROPS.stuffs = new Set();
   const used: Record<string, Set<string>> = {};
+  // The warning red's own (order 33): within 10 of it reads as "this hurts".
+  const red = rgb(ENEMY.red);
+  const near = new Map<string, boolean>();
+  PROPS.near = (c) => near.get(c) ?? near.set(c, deltaE(rgb(c), red) < 10).get(c)!;
   for (const st of BUILT) {
     PROPS.used = new Set();
     PROPS.inks = new Map();
+    PROPS.nearest = nearestOf[st.id] = new Map();
     levelPaint(await loadLevel(st.id), "day");
     // Doors are drawn from the scene's doors, which the walk has none of: the kiosk's and the home's, shut and open.
     target(areaRecorder().ctx);
@@ -88,6 +94,8 @@ async function drawEveryLevel() {
   }
   PROPS.used = undefined;
   PROPS.inks = undefined;
+  PROPS.near = undefined;
+  PROPS.nearest = undefined;
   return used;
 }
 
@@ -146,6 +154,24 @@ describe("the last flat things (order 28)", () => {
     }
     console.log(`The props against the roles, level by level, the least distance of its flat props → of its props now (CIEDE2000):\n  ${table.join("\n  ")}`);
     expect(near).toEqual([]);
+  });
+
+  // Order 33 (item 2): a harmless prop filled with a red near the warning red says "this hurts" where nothing does (the chairlift's
+  // chairs had a back of red slats 6.1 from it). Every piece of every prop, wherever it stands, counted from its own pixels: no more
+  // than a few within 10 of the warning red. What carries him is held as the page shows it, with the paint over its top, by
+  // `render/warning.test.ts` (the chair's seat is red under the paint).
+  test("no prop fills more than a few pixels within 10 of the warning red (what carries him: render/warning.test.ts)", () => {
+    const CARRIES = new Set(["chair", "ferry", "gondola", "rowboat", "log", "tram", "pontoons", "sauna cabin"]);
+    const wrong: string[] = [];
+    const table: string[] = [];
+    for (const [id, kinds] of Object.entries(nearestOf))
+      for (const [kind, n] of kinds) {
+        if (!n) continue;
+        table.push(`${id} ${kind}: ${n} pixels`);
+        if (n > 12 && !CARRIES.has(kind)) wrong.push(`${id}: a ${kind} fills ${n} pixels within 10 of the warning red`);
+      }
+    console.log(`The props' pieces within 10 of the warning red, the most in one piece:\n  ${table.join("\n  ") || "none"}`);
+    expect(wrong).toEqual([]);
   });
 
   test("every material is three to five tones of one hue, its contrast below the figures' (order 26's band)", () => {

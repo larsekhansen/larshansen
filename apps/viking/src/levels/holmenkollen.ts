@@ -390,14 +390,16 @@ function chairlift() {
 
 /** The chairs' frame: steel painted the cable's dark grey, darkest first (order 32). */
 const CHAIR_FRAME: Stuff = { name: "chair frame", ramp: [mix(METAL.wire, INK, 0.4), METAL.wire, mix(METAL.wire, WHITE, 0.12), mix(METAL.wire, WHITE, 0.2)] };
-/** Their seats and backs: slats painted the ski arena's red, darkest first. */
+/** Their seats: slats painted the ski arena's red, darkest first (the backs are the frame's steel since order 33). */
 const CHAIR_RED: Stuff = { name: "chair red", ramp: [mix(ICY.rail, INK, 0.4), mix(ICY.rail, INK, 0.18), ICY.rail, mix(ICY.rail, WHITE, 0.18)] };
 
 /**
  * A chair of the chairlift, drawn as the props kit draws a thing (order 32; ADR 0051): the grip clamped on the cable, the hanger
- * down from it (a tube, lit on its left), the frame bending under the seat, the back of two red slats on its uprights, the seat
+ * down from it (a tube, lit on its left), the frame bending under the seat, the back of two slats on its uprights, the seat
  * of slats (its top where it was: the page paints it yellow, he stands on it), a footrest on two rods. One piece, copied; the
  * chairs run level on their cable, so the hanger is always as long. 32 x 38 from the grip; its box is the seat as before.
+ * Order 33: the back's slats are the frame's painted steel; in the red they were a field 6.1 from the warning red, which is
+ * what hurts (ADR 0044; `render/warning.test.ts`). The thin seat keeps its red, under the paint but for its foot.
  */
 function chair(at: { x: number; y: number }) {
   const x = Math.round(at.x);
@@ -414,14 +416,14 @@ function chair(at: { x: number; y: number }) {
     dot(g, 15, 0, F(3));
     // The hanger: a tube two wide, lit on its left, down to the back's top rail.
     for (let r = 3; r < seat - 10; r++) dot(g, 15, r, F(2)), dot(g, 16, r, F(0));
-    // The back: a rail across, its two uprights, two slats between, lit on their tops.
+    // The back: a rail across, its two uprights, two slats between in the frame's steel, lit on their tops.
     pbox(g, 2, seat - 10, 28, 1, F(2));
     dot(g, 15, seat - 10, F(3));
     for (const c of [2, 29]) for (let r = seat - 9; r < seat; r++) dot(g, c, r, c === 2 ? F(2) : F(0));
     for (const r of [seat - 8, seat - 5]) {
-      pbox(g, 3, r, 26, 1, S(3));
-      pbox(g, 3, r + 1, 26, 1, S(1));
-      for (let c = 5; c < 29; c += 6) dot(g, c, r + 1, S(0));
+      pbox(g, 3, r, 26, 1, F(3));
+      pbox(g, 3, r + 1, 26, 1, F(1));
+      for (let c = 5; c < 29; c += 6) dot(g, c, r + 1, F(0));
     }
     // The seat: three rows of slats, its front edge rounded, shaded under; the frame under it.
     pbox(g, 0, seat, 32, 1, S(3));
@@ -445,7 +447,8 @@ function liftCage(at: { x: number; y: number }) {
   R(at.x, at.y, LIFT.w, 1, ICY.steel);
   R(at.x, at.y - 12, LIFT.w, 1, ICY.steelDark);
   for (const x of [at.x, at.x + LIFT.w - 1]) R(x, at.y - 12, 1, 12, ICY.steelDark);
-  R(at.x + 4, at.y - 14, LIFT.w - 8, 2, ICY.rail);
+  // Its top rail a darker red than the arena's (order 33: the arena's is 6.1 from the warning red, which is what hurts).
+  R(at.x + 4, at.y - 14, LIFT.w - 8, 2, mix(ICY.rail, INK, 0.18));
 }
 
 /** A slab of ice over the gully: clear blue; cracking (lines across it, blinking) a second before it sinks; a faint ring of foam where it went down. */

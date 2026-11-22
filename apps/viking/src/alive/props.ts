@@ -51,8 +51,11 @@ export function painted(color: string, line: string): Stuff {
   return s;
 }
 
-/** For the tests: every prop kind drawn and every material it drew in. */
-export const PROPS: { used?: Set<string>; stuffs?: Set<Stuff>; inks?: Map<string, Set<string>> } = {};
+/**
+ * For the tests: every prop kind drawn and every material it drew in; and (order 33) with `near` set, the most pixels of any one
+ * piece of each kind whose colour `near` names (`nearest`: the warning red's, in `props.test.ts`).
+ */
+export const PROPS: { used?: Set<string>; stuffs?: Set<Stuff>; inks?: Map<string, Set<string>>; near?: (ink: string) => boolean; nearest?: Map<string, number> } = {};
 
 type Ink = string | null;
 interface Grid {
@@ -89,6 +92,11 @@ function put(kind: string, stuffs: Stuff[], key: string, w: number, h: number, x
     const set = PROPS.inks.get(kind) ?? new Set<string>();
     for (const c of p.ink) set.add(c);
     PROPS.inks.set(kind, set);
+  }
+  if (PROPS.near && PROPS.nearest) {
+    let n = 0;
+    for (let i = 0; i < p.runs.length; i += 4) if (PROPS.near(p.ink[p.runs[i + 3]])) n += p.runs[i + 2];
+    PROPS.nearest.set(kind, Math.max(PROPS.nearest.get(kind) ?? 0, n));
   }
   drawProp(p, x, y, w);
 }

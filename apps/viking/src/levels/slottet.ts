@@ -227,8 +227,9 @@ function balloons(i: number, t: number) {
   R(l.x, y, l.w, 1, mix(P.wood, WHITE, 0.3));
   R(l.x, y + 5, l.w, 1, P.woodDark);
   for (let x = l.x + 6; x < l.x + l.w - 2; x += 7) R(x, y + 1, 1, 4, P.woodDark);
-  // The strings, and the balloons in the flag's colours.
-  const colors = [PARADE.balloonRed, PARADE.balloonWhite, PARADE.balloonBlue];
+  // The strings, and the balloons in the flag's colours (the red the flag's own since order 33: the kit's balloon red is 3.4 from
+  // the warning red, which is what hurts; the flag's is 11.9: ADR 0044, `render/warning.test.ts`).
+  const colors = [FLAG.red, PARADE.balloonWhite, PARADE.balloonBlue];
   colors.forEach((c, k) => {
     const bx = l.x + 3 + k * 7;
     const top = y - 30 + (k % 2) * 5;

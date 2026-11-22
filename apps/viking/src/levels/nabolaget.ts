@@ -828,7 +828,7 @@ function street(v: View, p: Plough | null) {
   } else {
     R(l.x0, g - 4, 2, 4, METAL.lampPost);
     for (let k = 0; k < 20; k++) R(l.x0 + 2 + k, g - 4 - Math.floor(k / 3), 1, 1, METAL.lampPost);
-    R(l.x0 + 10, g - 3, 6, 3, WINTER.shirt);
+    R(l.x0 + 10, g - 3, 6, 3, SHIRT);
     R(l.x0 + 20, g - 3, 8, 3, WINTER.sheet);
   }
   // The tram's slots in the street: dark, with rails going down.
@@ -841,12 +841,14 @@ function street(v: View, p: Plough | null) {
   home(v);
 }
 
+/** The shirt on the line (order 33): the kit's washing red, darker, 13.4 off the warning red (it was 7.7: ADR 0044, `render/warning.test.ts`). */
+const SHIRT = mix(WINTER.shirt, INK, 0.3);
 /** Washing on the line: a shirt, a sheet, two socks, swinging a little. */
 function washing(x: number, y: number, t: number) {
   const s = view.reduced ? 0 : Math.round(Math.sin(t * 0.05));
-  R(x + s, y, 9, 8, WINTER.shirt);
-  R(x - 2 + s, y, 3, 4, WINTER.shirt);
-  R(x + 8 + s, y, 3, 4, WINTER.shirt);
+  R(x + s, y, 9, 8, SHIRT);
+  R(x - 2 + s, y, 3, 4, SHIRT);
+  R(x + 8 + s, y, 3, 4, SHIRT);
   R(x + 15 + s, y, 12, 12, WINTER.sheet);
   R(x + 15 + s, y + 11, 12, 1, SNOW.shade);
   R(x + 31 + s, y, 3, 6, WINTER.sock);

@@ -214,7 +214,7 @@ function ferry(at: { x: number; y: number }) {
     for (let r = 0; r < 14; r++) {
       const rake = Math.max(0, 6 - r);
       for (let i = 2 + rake; i < 98 - rake; i++) {
-        let c = r === 0 ? F(3) : r === 6 || r === 7 ? (r === 6 ? mix(PAINT.ferryRed, WHITE, 0.15) : PAINT.ferryRed) : r >= 12 ? F(1) : F(2);
+        let c = r === 0 ? F(3) : r === 6 || r === 7 ? (r === 6 ? BAND_LIT : BAND) : r >= 12 ? F(1) : F(2);
         if (r > 0 && r < 12 && r !== 6 && r !== 7 && (i - 2) % 16 === 0) c = F(1);
         if (r === 8) c = mix(PAINT.ferryRed, INK, 0.3);
         dot(g, i, 24 + r, c);
@@ -236,13 +236,17 @@ function ferry(at: { x: number; y: number }) {
     pbox(g, 18, 7, 64, 1, F(1));
     for (let rx = 20; rx < 80; rx += 6) pbox(g, rx, 8, 1, 4, F(1));
     // The funnel: red, its top black, lit on its left, a white band.
-    pbox(g, 70, 0, 6, 8, PAINT.ferryRed);
+    pbox(g, 70, 0, 6, 8, BAND);
     pbox(g, 70, 0, 6, 2, INK);
     pbox(g, 70, 2, 1, 6, mix(PAINT.ferryRed, WHITE, 0.25));
     pbox(g, 70, 4, 6, 1, F(2));
   });
   for (let wx = x + 6; wx < x + 58; wx += 8) light(wx, y + 5, 5, 4);
 }
+/** The ferry's red band and funnel (order 33): a shade darker than the kit's ferry red, with a lighter lit top, so they stand 12 and
+ * more off the warning red, which is what hurts (the kit's was 6.1 from it: ADR 0044, `render/warning.test.ts`). */
+const BAND = mix(PAINT.ferryRed, INK, 0.18);
+const BAND_LIT = mix(PAINT.ferryRed, WHITE, 0.3);
 /** The ferry's white paint. */
 const FERRY_WHITE: Stuff = { name: "ferry white", ramp: [mix(PAINT.ferryShade, INK, 0.25), PAINT.ferryShade, PAINT.ferryWhite, WHITE] };
 
