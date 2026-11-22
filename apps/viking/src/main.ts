@@ -53,7 +53,6 @@ import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
-import { FEATHER_H, FEATHER_W } from "@larshansen/maze/feather";
 import { strings } from "./game/i18n";
 import { arriveAfterClear, cardGoes, cardKey } from "./game/card";
 import { HEARTS, LIVES, againAtBoss, benchAt, cannonArc, elapsedMs, formatTime, leftToRight, newPlay, runeFree, stepPlay, type Events, type Play, type PlayIntent } from "./game/play";
@@ -251,6 +250,8 @@ const frozen = () => !!state.arrive && state.arrive.t < ARRIVE_STEPS;
 const STILL = { left: false, right: false, jumpHeld: false, jumpPressed: false };
 const FLIGHT_STEPS = 50;
 const FEATHER_FALL = 100;
+/** The raven's feather's size (`@larshansen/maze/feather`, which goes with the maze: order 33), for where it falls onto him. */
+const [FEATHER_W, FEATHER_H] = [5, 9];
 const FEATHER_SHOWN = 340;
 
 function doorSpots(def: LevelDef, play: Play): DoorSpot[] {
