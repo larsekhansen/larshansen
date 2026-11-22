@@ -372,7 +372,7 @@ const PORTAL_RUNES = [
 ];
 
 /** A teleport stone: a round flat stone set in the floor, a blue rune, a faint glow while it works, a shimmer when it sends him. */
-function drawPortal(p: Portal, f: Frame) {
+export function drawPortal(p: Portal, f: Pick<Frame, "portalCool" | "portalFlash" | "t">) {
   const cx = p.c * TILE + TILE / 2;
   const cy = p.r * TILE + TILE / 2;
   const ready = f.portalCool === 0;

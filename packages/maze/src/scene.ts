@@ -4,7 +4,7 @@ import type { Lang } from "@larshansen/pixelkit/i18n";
 import { S, target, view } from "@larshansen/pixelkit/paint";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
 import type { Stage } from "@larshansen/pixelkit/stage";
-import { FONT, bubble, fontPx, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
+import { bubble, fontPx, sx, sy, textCtx, unit, wrapLines as wrapped } from "@larshansen/pixelkit/text";
 import { createFx } from "./fx";
 import { createRecorder, ghostAt, loadGhost, saveGhost, type GhostPoints } from "./ghost";
 import { strings } from "./i18n";
@@ -73,25 +73,6 @@ export interface Steer {
   after(ev: MazeEvents): void;
   /** Only watching: the visitor's own steering (keys, a pointer, a finger) moves him, and this is told what each step did. */
   watch?: boolean;
-}
-
-/** A line of words split into lines no wider than `max` CSS pixels in the bubbles' font (each with the bubble's padding). */
-function wrapped(text: string, max: number): string[] {
-  const u = textCtx();
-  u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;
-  const fits = (t: string) => u.measureText(t).width + 18 <= max;
-  if (fits(text)) return [text];
-  const out: string[] = [];
-  let line = "";
-  for (const word of text.split(" ")) {
-    const next = line ? `${line} ${word}` : word;
-    if (line && !fits(next)) {
-      out.push(line);
-      line = word;
-    } else line = next;
-  }
-  if (line) out.push(line);
-  return out;
 }
 
 /** The screen's safe areas (a notch, the home bar) in CSS pixels, read from a hidden probe the maze's styles pad by them. */

@@ -49,7 +49,7 @@ import { readMuted, saveMuted } from "@larshansen/pixelkit/mute";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
-import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, type Board } from "@larshansen/pixelkit/text";
+import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, wrapLines, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
 import type { Maze } from "@larshansen/maze/scene";
@@ -573,25 +573,8 @@ async function enterMaze() {
     showMazeHud();
     layout();
     // A stepped page has no frames to come: the mound is stepped as asked and drawn once as it opens.
-    if (harness && aids) {
-      aids.stepped(maze, params, input, { driver: steer, el: stage });
-      showMazeHud();
-      if (params.has("perf")) aids.perf(maze, help, params);
-      // `&out[&after=N]` (order 36): then out of the mound by its own way out (Esc), and N steps of what he comes back to,
-      // drawn once: the way back to the map or into Nordmarka, and the feather's moment, in a picture.
-      if (params.has("out")) {
-        window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape", key: "Escape" }));
-        // Gone in through a door, the way out is the browser's Back, which answers later (or, in a frame that cannot go
-        // back, never: the line says so).
-        if (mode === "maze") {
-          const back = await Promise.race([new Promise<boolean>((done) => window.addEventListener("hashchange", () => setTimeout(() => done(true), 0), { once: true })), new Promise<boolean>((done) => setTimeout(() => done(false), 3000))]);
-          if (!back) help.textContent = `out: Back did not answer (history ${history.length}, ${location.hash})`;
-        }
-        for (let i = Number(params.get("after")) || 0; i > 0; i--) stepOnce();
-        still();
-      }
-      aids.drawn();
-    }
+    // Stepped as asked, and drawn once; `&out` comes back out (order 36): `?debug`'s own code.
+    if (harness && aids && debugging) await (await debugging).mazeStepped(aids, maze, steer, params, { input, stage, help, step: stepOnce, still, hud: showMazeHud, inMaze: () => mode === "maze" });
   } catch {
     // The maze did not load (or he left first): back to the map, standing at the mound, or to the level he came from.
     loading = false;
@@ -1578,7 +1561,7 @@ function render(alpha: number) {
   if (sung && sungAt) bubble = { x: sungAt.x, y: sungAt.y, lines: sung };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
-  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: [kartWords?.featherLine ?? ""] };
+  if (speaking) bubble = { x: cx, y: shown.y - 4, lines: wrapLines(kartWords?.featherLine ?? "", view.cssW - 24) };
   // Where the level teaches the shield (Bygdøy's passage), its key over him while he has it there.
   const at = scene.def.shieldLesson;
   const lesson = at && p.shield?.has && cx > at[0] && cx < at[1];

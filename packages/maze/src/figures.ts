@@ -69,24 +69,32 @@ export const ADDER_LINE = ENEMY.line;
 export const ADDER_EDGE = ENEMY.warning;
 
 const ADDER_L = 12;
-/** An adder's body in its own 12 x 6 box, lying along x, head toward `dir`, waving by its own clock `t` (not the page's). */
+/**
+ * An adder's body in its own 12 x 6 box, lying along x, head toward `dir`, waving by its own clock `t` (not the page's): a
+ * tail tapering to a point, a body three pixels thick lit along its back with the dark zigzag down it, a broad head with the
+ * dark mark on its crown and an eye.
+ */
 export function adderCells(t: number, dir: 1 | -1): string[][] {
   const grid: string[][] = Array.from({ length: 6 }, () => Array<string>(ADDER_L).fill("."));
   for (let i = 0; i < ADDER_L; i++) {
     // Counted from the tail, so the head is at the end the adder is going toward.
     const k = dir > 0 ? i : ADDER_L - 1 - i;
-    const w = Math.sin(t * 0.22 - k * 0.85);
-    const off = w > 0.45 ? 1 : w < -0.45 ? -1 : 0;
-    const rows = k >= ADDER_L - 2 ? [1, 2, 3, 4] : [1, 2, 3, 4].slice(k < 2 ? 1 : 0, k < 2 ? 3 : 4); // thinner tail, fuller head
+    const head = k >= ADDER_L - 3;
+    // The head holds its line; the body waves behind it, more toward the tail.
+    const w = head ? 0 : Math.sin(t * 0.22 - k * 0.85);
+    const off = w > 0.5 ? 1 : w < -0.5 ? -1 : 0;
+    const rows = head ? [1, 2, 3, 4] : k <= 1 ? [3] : k <= 3 ? [2, 3] : [1, 2, 3];
     rows.forEach((row, j) => {
-      // Lit along its back (the top row), its belly shaded, the zigzag down its middle.
-      const zig = k < ADDER_L - 2 && j === 1 + (k % 2);
-      grid[row + off][i] = j === 0 ? "t" : j === rows.length - 1 ? "b" : zig ? "z" : j === 1 ? "l" : "m";
+      const top = j === 0;
+      const foot = j === rows.length - 1 && rows.length > 1;
+      // The zigzag: dark on its back every third pixel, and on its flank the pixel after; on the head the crown's mark.
+      const zig = (top && k % 3 === 0) || (!top && !foot && k % 3 === 1);
+      grid[row + off][i] = head ? (top ? (k === ADDER_L - 2 ? "z" : "t") : foot ? "b" : "m") : zig ? "z" : top ? "l" : foot ? "b" : "m";
     });
   }
-  const headI = dir > 0 ? ADDER_L - 1 : 0;
-  const eyeRow = grid.findIndex((r) => r[headI] !== ".");
-  if (eyeRow >= 0) grid[eyeRow + 1][headI] = "e";
+  // The eye, on the side of its head, a pixel behind its snout.
+  const eyeAt = dir > 0 ? ADDER_L - 2 : 1;
+  grid[2][eyeAt] = "e";
   return grid;
 }
 
@@ -113,10 +121,10 @@ export function drawAdder(x: number, y: number, flat: boolean, dir: 1 | -1, t: n
   const lined = (c: number, r: number) => out[r]?.[c] === ADDER_LINE;
   for (let r = 0; r < H; r++) for (let c = 0; c < W; c++) if (!out[r][c] && near(c, r, lined)) out[r][c] = ADDER_EDGE;
   if (tongue) {
-    // Past the red, from the middle of its head.
+    // Past the red, from the middle of its snout, forked: two pixels.
     const head = dir > 0 ? ADDER_L - 1 : 0;
-    const rows = grid.map((r, i) => (r[head] !== "." ? i : -1)).filter((i) => i >= 0);
-    out[rows[Math.floor(rows.length / 2)] + OY][head + OX + dir * 3] = ADDER.tongue;
+    out[3 + OY][head + OX + dir * 3] = ADDER.tongue;
+    out[2 + OY][head + OX + dir * 3] = ADDER.tongue;
   }
   const left = Math.round(x - (flat ? W : H) / 2);
   const top = Math.round(y - (flat ? H : W) / 2);

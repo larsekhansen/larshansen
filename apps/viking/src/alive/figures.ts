@@ -10,7 +10,7 @@ import { lookName } from "./census";
 // listed by itself; only its name has to be written here (the tests say which is missing).
 
 /** What a figure is: him, an enemy's look, a boss, what carries him in a level, what a thrower throws, a pickup or a thing, a harmless mover, a prop. */
-export type FigureGroup = "him" | "enemy" | "boss" | "carrier" | "thrown" | "pickup" | "harmless" | "prop";
+export type FigureGroup = "him" | "enemy" | "boss" | "carrier" | "thrown" | "pickup" | "harmless" | "prop" | "maze";
 
 export interface FigureKind {
   /** The sheet's file, without `.png`: the group and the kind. */
@@ -28,6 +28,15 @@ const n = (en: string, nb: string): Words => ({ en, nb });
 /** Every figure's name as a player would say it, by its file. */
 export const FIGURE_NAMES: Record<string, Words> = {
   him: n("the viking", "vikingen"),
+  // The maze, Jernhaugen (order 36): what it draws, met in the mound (`jernhaugen`), drawn by `@larshansen/maze`.
+  "maze-him": n("the viking in the mound, with his torch", "vikingen i haugen, med fakkelen"),
+  "maze-ghost": n("the ghost of your best run", "gjenferdet av beste runde"),
+  "maze-adder": n("an adder", "en hoggorm"),
+  "maze-raven": n("the raven", "ravnen"),
+  "maze-stone": n("a standing stone", "en bautastein"),
+  "maze-key": n("the rune key", "runenøkkelen"),
+  "maze-portal": n("a teleport stone", "en flyttestein"),
+  "maze-dweller": n("the mound-dweller", "haugbonden"),
   // The enemies, by look (as the census names them).
   "enemy-pigeon": n("pigeon", "due"),
   "enemy-pigeonfly": n("pigeon in flight", "flygende due"),
@@ -167,6 +176,9 @@ const ALWAYS: [FigureGroup, string, (def: LevelDef) => boolean][] = [
   ["harmless", "heron", (d) => d.id === "ostensjovannet"]
 ];
 
+/** What the maze draws (order 36), met in the mound: drawn by `@larshansen/maze`, listed here so the page of every figure has it. */
+export const MAZE_FIGURES = ["him", "ghost", "adder", "raven", "stone", "key", "portal", "dweller"] as const;
+
 /** The boss of a level: its troll, or the boss its boss slot runs, by the level. */
 const BOSS_OF: Record<string, string> = { nordmarka: "troll", nabolaget: "plough", gamlebyen: "serpent", encore: "loki" };
 
@@ -194,6 +206,7 @@ export async function figureKinds(props: Record<string, Iterable<string>> = {}):
     for (const [group, kind, here] of ALWAYS) if (here(def)) add(group, kind, def.id);
     for (const kind of props[def.id] ?? []) add("prop", kind, def.id);
   }
+  for (const kind of MAZE_FIGURES) add("maze", kind, "jernhaugen");
   return [...out.values()];
 }
 

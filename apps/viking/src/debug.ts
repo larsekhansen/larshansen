@@ -38,6 +38,34 @@ export function debugProgress(params: URLSearchParams): Progress | null {
   return { cleared: list("cleared"), best, bracteates: list("gold"), skilling: {}, clean: list("clean") };
 }
 
+/**
+ * The maze inside the page under the harness (order 36): stepped as asked by its own aids, its frame measured with `perf`,
+ * and with `&out[&after=N]` out of the mound by its own way out (Esc) and N steps of what he comes back to, drawn once; the
+ * page then says its picture is drawn. Gone in through a door, the way out is the browser's Back, which answers later (in a
+ * page whose address changed while it loaded, never: the history had no entry to go back to, and the line says so).
+ */
+export async function mazeStepped(
+  aids: typeof import("@larshansen/maze/debug"),
+  maze: import("@larshansen/maze/scene").Maze,
+  steer: import("@larshansen/maze/scene").Steer | undefined,
+  params: URLSearchParams,
+  page: { input: import("@larshansen/pixelkit/input").Input; stage: HTMLElement; help: HTMLElement; step(): void; still(): void; hud(): void; inMaze(): boolean }
+) {
+  aids.stepped(maze, params, page.input, { driver: steer, el: page.stage });
+  page.hud();
+  if (params.has("perf")) aids.perf(maze, page.help, params);
+  if (params.has("out")) {
+    window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape", key: "Escape" }));
+    if (page.inMaze()) {
+      const back = await Promise.race([new Promise<boolean>((done) => window.addEventListener("hashchange", () => setTimeout(() => done(true), 0), { once: true })), new Promise<boolean>((done) => setTimeout(() => done(false), 3000))]);
+      if (!back) page.help.textContent = `out: Back did not answer (history ${history.length}, ${location.hash})`;
+    }
+    for (let i = Number(params.get("after")) || 0; i > 0; i--) page.step();
+    page.still();
+  }
+  aids.drawn();
+}
+
 /** `window.__game`, for driving a page by hand in a headless browser. */
 export function expose(game: object) {
   Object.assign(window, { __game: game });
