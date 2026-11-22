@@ -71,3 +71,11 @@ over that dark (`overDark` in `levels/nordmarka.ts`, at 0.9 of its strength, as 
 the dark round it is as dark as before. Measured as the palette test measures fields, the outline against the forest's fields
 under every depth of its dark: at the least 6.7 before, 33.8 after, against 29.2 by day (`render/palette.test.ts` holds it). The
 calm outline is not copied over the dark: what cannot hurt him there (the moose, the troll asleep) stays the dark's.
+
+## Amended by order 32 (21 November 2026)
+Over a level's own dark the invader's glow lay right against the red outline, its brightest band in the pixel next to it, and an
+orange glow came within 22.7 of the red (16.8 at the worst depth of Nordmarka's dark, by the palette test's measure). There the glow
+now starts a pixel further out and the pixel next to the outline is the night's own colour (`overTheDark`, `DARK_GAP` in
+`alive/glamour.ts`): the red stands 44.3 off it, against 29.2 off the forest's fields by day, and the dark is no lighter. The same
+over Vålerenga's lane, whose dark is drawn again since order 32 ([0054](0054-lights-after-dark.md)). After dusk elsewhere the glow is
+as it was.

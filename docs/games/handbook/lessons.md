@@ -91,7 +91,21 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   motion because their clock was read inside a sum (`(i * 53 + Math.floor(v.t / 30)) % w`), which the search's pattern did not match.
   Drawing every path with the clock running and the world held found it at once. *Hold behaviour by doing it, not by reading for it.*
 
+- **A hook given to one of two users** (found in order 32): order 15 moved the night out of `main.ts` behind `Art.night` and gave the
+  hook to Nordmarka, the level it was moved for; Vålerenga also had a `dark`, and for a week nothing drew its lane's dark, the Pi in
+  its window or the paper cranes. The pictures were byte-identical where they were compared (Nordmarka's). *When code moves behind a
+  hook, list every caller of the old path (`grep` the condition it ran on: here `def.dark`) and give each the hook.*
+- **Light added is not light taken away** (order 32): a census that counted every see-through fill over a light as dimming it named
+  Østensjøvannet's sunrise, which is drawn `lighter` (it adds). *Read the composite, not only the alpha.*
+- **The harness's keys hold one action a step** (`r`, `j`, `n`...): a jump with a direction held cannot be scripted, so a stomp on
+  Loki was found from a speaker stack (a short hop, then right), by a search in a script first. *Search a key script outside the
+  page, then check it in the page: the page's input differs (one timing that missed the wave in the script was hit in the page).*
+
 ## What worked and should be kept
+
+- **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what
+  is drawn over it turned "are the lights consistent?" into a table of 150 rows in a minute, found the two real faults (a dusk over the
+  lamps, pools under the cobbles) at once, and became the test.
 
 - **Drawing as in a browser, in a test** (order 31): with a stand-in `document` whose canvases draw nothing, `kept`, `stamp` and
   `outlined` take their browser path, so a kept piece is drawn once and copied, and the test records a copy by which piece it copies.

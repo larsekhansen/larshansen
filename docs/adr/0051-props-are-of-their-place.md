@@ -82,3 +82,10 @@ slot), Vigelandsparken's main gate (granite pillars in courses under a moulded c
 dark boxes stood) and Korketrekkeren's lanterns (a grey post with a box on top; now the lit trail's tarred wooden pole with an arm
 and a hood, as Oslo lights its ski trails). The rules above held: no neon, no lit band on a cap, nothing nearer a role than what it
 replaced (`alive/props.test.ts`, whose table of the old drawings now has the tram's colours).
+
+## The logs and the chairs (order 32, 21 November 2026)
+The two things order 31's second look named as the flattest left in the lane are drawn so too: Akerselva's logs (one piece a variant,
+round, lit along the top and shaded to the wet underside, bark in fissures with a knot or two, each end sawn with a ring in its lighter
+face; only what is above the water shows as before) and Holmenkollen's chairlift chairs (the grip on the cable, the hanger tube, a back
+of two red slats on its uprights, the seat of slats, the frame, a footrest on two rods). Both keep their boxes and their tops, which the
+page paints yellow; `alive/props.test.ts` holds their colours against their old drawings'.

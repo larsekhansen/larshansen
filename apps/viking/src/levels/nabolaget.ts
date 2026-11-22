@@ -244,8 +244,9 @@ function surfaceRow(c: number) {
 /** The yellow house: its left end, its width, its walls' top, the door, and the Pi's window. */
 const HOME = { x: 211 * TILE, w: 8 * TILE, top: S * TILE - 64, window: { x: 216 * TILE + 4, y: S * TILE - 30, w: 22, h: 20 } };
 
-/** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. */
+/** How dark it is at x: the lane behind the church and the churchyard; the rest of the night is the sky's. None by day (the T key's sky). */
 function dark(x: number, v: View) {
+  if (v.sky.phase === "day") return 0;
   const c = x / TILE;
   const n = c < 80 ? 0 : c < 84 ? ((c - 80) / 4) * 0.72 : c < 110 ? 0.72 : c < 116 ? 0.72 - ((c - 110) / 6) * 0.72 : 0;
   return v.flourish !== null ? n * Math.max(0, 1 - v.flourish / 60) : n;
