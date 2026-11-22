@@ -42,8 +42,9 @@ export function debugProgress(params: URLSearchParams): Progress | null {
 /**
  * The maze inside the page under the harness (order 36): stepped as asked by its own aids, its frame measured with `perf`,
  * and with `&out[&after=N]` out of the mound by its own way out (Esc) and N steps of what he comes back to, drawn once; the
- * page then says its picture is drawn. Gone in through a door, the way out is the browser's Back, which answers later (in a
- * page whose address changed while it loaded, never: the history had no entry to go back to, and the line says so).
+ * page then says its picture is drawn. Gone in through a door, the way out is the browser's Back, which answers later; in a
+ * page whose address changed while it loaded the history has no entry to go back to, and the way out goes to the line map itself
+ * (order 37, `game/wayout.ts`).
  */
 export async function mazeStepped(
   aids: typeof import("@larshansen/maze/debug"),
@@ -57,10 +58,11 @@ export async function mazeStepped(
   if (params.has("perf")) aids.perf(maze, page.help, params);
   if (params.has("out")) {
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape", key: "Escape" }));
-    if (page.inMaze()) {
-      const back = await Promise.race([new Promise<boolean>((done) => window.addEventListener("hashchange", () => setTimeout(() => done(true), 0), { once: true })), new Promise<boolean>((done) => setTimeout(() => done(false), 3000))]);
-      if (!back) page.help.textContent = `out: Back did not answer (history ${history.length}, ${location.hash})`;
-    }
+    // Out by Back (its hashchange) or, where the way in made no entry or Back does not answer, by the page itself (order 37):
+    // wait until he is out, however he got there.
+    for (let waited = 0; page.inMaze() && waited < 3000; waited += 50) await new Promise((done) => setTimeout(done, 50));
+    if (page.inMaze()) page.help.textContent = `out: still in the mound (history ${history.length}, ${location.hash})`;
+    else await new Promise((done) => setTimeout(done, 0));
     for (let i = Number(params.get("after")) || 0; i > 0; i--) page.step();
     page.still();
   }
