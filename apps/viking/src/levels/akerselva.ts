@@ -307,9 +307,10 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
       R(cx + 4 + out, water - 1, 4, 1, P.foam);
       R(cx - 5 - out, water - 2, 2, 1, mix(P.foam, P.water, 0.45));
       R(cx + 3 + out, water - 2, 2, 1, mix(P.foam, P.water, 0.45));
-      for (const [dx, up] of [[-6, 1], [6, 1], [-4, 2], [4, 2]]) {
+      // Drops: the two thrown highest a pair of pixels each, so they stand out from the river's own glints.
+      for (const [dx, up, size] of [[-6, 1, 1], [6, 1, 1], [-4, 2, 2], [4, 2, 2]]) {
         const dy = 2 + Math.round(up * (k * 0.6 - k * k * 0.035));
-        R(cx + Math.round(dx * (1 + k / 10)) - (dx < 0 ? 1 : 0), water - dy - 1, 1, 1, P.foam);
+        R(cx + Math.round(dx * (1 + k / 10)) - (dx < 0 ? size : 0), water - dy - size, size, size, P.foam);
       }
     });
 }
