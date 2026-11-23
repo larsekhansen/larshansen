@@ -774,7 +774,13 @@ describe("with reduced motion nothing flashes (orders 30 and 31)", () => {
               // The camera on it, as when he comes to it.
               const v = viewOf(def, { ...p, body: { ...p.body, x: e.x, y: e.y } } as Play, t0);
               const clocks = Array.from({ length: t1 - t0 + 1 }, (_, k) => t0 - 1 + k);
-              return recordings((t) => ((v.t = t), draw(t, v)), clocks, W, H).map((print, k) => ({ t: clocks[k], print, tell: leap(e, clocks[k]).ripple }));
+              try {
+                return recordings((t) => ((v.t = t), draw(t, v)), clocks, W, H).map((print, k) => ({ t: clocks[k], print, tell: leap(e, clocks[k]).ripple }));
+              } finally {
+                // The outlines noted while its stand-in document stood are forgotten with it: a later test's drawing over the
+                // dark would make their glow with no document (night.test.ts did, after this, in the whole suite).
+                freshRings();
+              }
             })
           );
         const steps = beat(true);
