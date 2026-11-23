@@ -203,7 +203,7 @@ export function glows(g: CanvasRenderingContext2D) {
   invaders((s, x, y, thrown) => {
     // What is thrown (order 39): small, and its own neon glow lay right against its red outline (in Bjørvika's evening the
     // bolt's outline stood 16.5 off its glow, CIEDE2000, against 52 by day). As over a level's own dark (order 32), a pixel
-    // of the dark between the outline and the glow, which starts a pixel further out: the red stands 43 off it.
+    // of the dark between the outline and the glow, which starts a pixel further out: the red stands 40 or more off it.
     if (thrown) {
       g.drawImage((s.gap ??= gapOf(s)), x - 1, y - 1);
       s.glowFar ??= farGlowOf(s);

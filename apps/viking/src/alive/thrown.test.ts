@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { R, target, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, target, view } from "@larshansen/pixelkit/paint";
 import { ENEMY } from "@larshansen/pixelkit/palette";
-import { THROWN, freshRings, invaders, outlined, type Sprite } from "../render/sprite";
+import { THROWN, forgetShapes, freshRings, invaders, outlined, type Sprite } from "../render/sprite";
 import { glows } from "./glamour";
 
 // Order 39, item 3: after dusk what an invader throws keeps a pixel of the dark between its red outline and its glow (as every
@@ -18,12 +18,19 @@ const canvas = () => {
 };
 
 describe("what is thrown after dusk (order 39)", () => {
+  const was = { target: ctx(), view: { ...view } };
   beforeAll(() => {
     (globalThis as Record<string, unknown>).document = { createElement: canvas };
     Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 320, h: 200 });
   });
   afterAll(() => {
+    // What this test outlined is forgotten with its stand-in document: a later test's drawing after dark would find these
+    // sprites noted and make their glow with no document (night.test.ts did, in the whole suite).
+    freshRings();
+    forgetShapes();
     delete (globalThis as Record<string, unknown>).document;
+    target(was.target);
+    Object.assign(view, was.view);
   });
 
   test("its glow keeps a dark pixel off its outline, a pixel further out; an enemy's glow is as it was", () => {

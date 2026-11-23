@@ -1215,7 +1215,8 @@ const guardFrame = (name: string, ink: Record<string, string>, legs: number, hal
   frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 8], halberd, ...(ink === WOKEN_GUARD ? [mark(["NN.....NN", "n.......n"], 1, 4 + dy)] : []));
 const GUARD_FRAMES = {
   stone: guardFrame("the bishop's guard as stone", STONE_GUARD, 0, [HALBERD.upright, 9, -4]),
-  walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 5, 2 + (k % 2)], k % 2 ? 0 : 1)),
+  // His halberd goes down with him as he steps (it crossed his face on the frames his body dropped a row).
+  walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 5, k % 2 ? 2 : 3], k % 2 ? 0 : 1)),
   still: [guardFrame("the bishop's guard, woken", WOKEN_GUARD, 0, [HALBERD.level, 5, 2]), guardFrame("the bishop's guard, woken, breathing", WOKEN_GUARD, 0, [HALBERD.level, 5, 3], 1)]
 };
 function guardArt(e: Enemy) {
