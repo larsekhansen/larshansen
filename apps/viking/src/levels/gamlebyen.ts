@@ -1185,41 +1185,48 @@ export function ballArt(s: Serpent, t: number) {
 // squashed to it: a pixel or two of head over the box at most, as before.
 
 /**
- * The bishop's guard, 13 x 9 with his halberd: a mail hood with an eye, a tabard with a pale cross lit across the
- * shoulders, mail on his legs. While he is a statue: grey stone with moss in its folds, his halberd upright beside him,
- * outlined in the calm pale (stone does not bite). Woken: a plum tabard over pink mail, walking in four frames by the
- * distance he covers, his halberd levelled at him (order 19: a change of outline), outlined in the warning red.
+ * The bishop's guard, 15 x 10 with his halberd (order 39, redrawn: order 38 found a round hood over a tabard, a blob with a
+ * spike at phone size). A kettle hat, its dome lit and its brim wider than his head; his face in its shadow with an eye; a
+ * tabard with the bishop's pale cross lit across the shoulders; mail on his legs. While he is a statue: grey stone with moss
+ * in its folds, his halberd upright beside him, outlined in the calm pale (stone does not bite). Woken: a plum tabard over pink
+ * mail, his hat steel (the white), walking in four frames by the distance he covers, his halberd levelled at him in both fists
+ * (order 19: a change of outline), its axe-blade across the shaft and its spike before it, outlined in the warning red. Told
+ * from Akershus's guard (a tall cap, his weapon upright) by the brim and the levelled halberd.
  */
 const GUARD_BODY = [
-  "....QPPQ....",
-  "...QPPPPQ...",
-  "...PPPPEP...",
-  "...QPPPPQ...",
-  "..HLLXLLBS..",
-  "..LBXXXBBS..",
-  "..LBBXBBBS..."
-].map((r) => r.slice(0, 12));
-const GUARD_LEGS = [["...QP..QP...", "..llQ..llQ.."], ["....QPQP....", "...llQlQ...."], ["..QP....QP..", ".llQ...llQ.."], ["....QPQP....", "...llQlQ...."]];
-const HALBERD = { upright: [".bc", "bbc", ".b.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F.", ".F."], level: [".......bb", "FFFFFFFbc", ".......b."] };
-const STONE_GUARD = { H: mix(G.statue, WHITE, 0.3), L: mix(G.statue, WHITE, 0.12), B: G.statue, S: mix(G.statue, INK, 0.25), P: mix(G.statue, WHITE, 0.08), Q: mix(G.statue, INK, 0.15), X: G.moss, E: mix(G.statue, INK, 0.45), l: mix(G.statue, INK, 0.4), F: mix(G.statue, INK, 0.1), b: mix(G.statue, WHITE, 0.2), c: mix(G.statue, INK, 0.3) };
-const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade, N: FOE_INK.N, n: FOE_INK.n };
-/** Woken, its glam (order 27): shoulder pads squared out past its mail in neon. */
+  "...KKKk....",
+  "..KKKKkk...",
+  ".kkkkkkkk..",
+  "...SOOE....",
+  "..LLXLLBS..",
+  "..LXXXBBS..",
+  "..LBXBBBS..",
+  "..QBBBBBS.."
+];
+const GUARD_LEGS = [["...QP..QP..", "..llQ..llQ."], ["....QPQP...", "...llQlQ..."], ["..QP....QP.", ".llQ...llQ."], ["....QPQP...", "...llQlQ..."]];
+const HALBERD = {
+  upright: [".b..", ".b..", "bbbb", ".Fbc", ".Fc.", ".F..", ".F..", ".F..", ".F..", ".F..", ".F..", ".F..", ".F..", ".F.."],
+  level: [".......b..", ".......bb.", "OFFOFFFbFb", ".......bb.", ".......bc.", "........c."]
+};
+const STONE_GUARD = { H: mix(G.statue, WHITE, 0.3), L: mix(G.statue, WHITE, 0.12), B: G.statue, S: mix(G.statue, INK, 0.25), P: mix(G.statue, WHITE, 0.08), Q: mix(G.statue, INK, 0.15), X: G.moss, E: mix(G.statue, INK, 0.45), l: mix(G.statue, INK, 0.4), F: mix(G.statue, INK, 0.1), b: mix(G.statue, WHITE, 0.2), c: mix(G.statue, INK, 0.3), K: mix(G.statue, WHITE, 0.3), k: mix(G.statue, WHITE, 0.08), O: mix(G.statue, WHITE, 0.12) };
+const WOKEN_GUARD = { H: ENEMY.plumLight, L: ENEMY.plumLight, B: ENEMY.plum, S: ENEMY.plumDark, P: ENEMY.pink, Q: ENEMY.plum, X: ENEMY.pale, E: ENEMY.eye, l: ENEMY.line, F: ENEMY.orange, b: ENEMY.pale, c: ENEMY.whiteShade, K: ENEMY.white, k: ENEMY.whiteShade, O: ENEMY.orangeLight, N: FOE_INK.N, n: FOE_INK.n };
+/** Woken, its glam (order 27): shoulder pads squared out past his tabard in neon. */
 const guardFrame = (name: string, ink: Record<string, string>, legs: number, halberd: Piece, dy = 0) =>
-  frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 7], halberd, ...(ink === WOKEN_GUARD ? [mark(["NN......NN", "n........n"], 1, 4 + dy)] : []));
+  frame(name, ink, [GUARD_BODY, 0, dy], [GUARD_LEGS[legs], 0, 8], halberd, ...(ink === WOKEN_GUARD ? [mark(["NN.....NN", "n.......n"], 1, 4 + dy)] : []));
 const GUARD_FRAMES = {
-  stone: guardFrame("the bishop's guard as stone", STONE_GUARD, 0, [HALBERD.upright, 10, -4]),
-  walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 8, 3 + (k % 2)], k % 2 ? 0 : 1)),
-  still: [guardFrame("the bishop's guard, woken", WOKEN_GUARD, 0, [HALBERD.level, 8, 3]), guardFrame("the bishop's guard, woken, breathing", WOKEN_GUARD, 0, [HALBERD.level, 8, 4], 1)]
+  stone: guardFrame("the bishop's guard as stone", STONE_GUARD, 0, [HALBERD.upright, 9, -4]),
+  walk: [0, 1, 2, 3].map((k) => guardFrame(`the bishop's guard, walking ${k + 1}`, WOKEN_GUARD, k, [HALBERD.level, 5, 2 + (k % 2)], k % 2 ? 0 : 1)),
+  still: [guardFrame("the bishop's guard, woken", WOKEN_GUARD, 0, [HALBERD.level, 5, 2]), guardFrame("the bishop's guard, woken, breathing", WOKEN_GUARD, 0, [HALBERD.level, 5, 3], 1)]
 };
 function guardArt(e: Enemy) {
   // Stone, it is calm: outlined in the calm pale (from the first frame, before the rules have said so); woken, in the
   // warning red (order 22).
   if (!e.n) {
     calmOutline();
-    return drawFoe(e, GUARD_FRAMES.stone, 13, 9, true);
+    return drawFoe(e, GUARD_FRAMES.stone, 13, 10, true);
   }
   const f = moving(e) ? GUARD_FRAMES.walk[step4(e)] : GUARD_FRAMES.still[Math.floor((clock.t + (e.def.offset ?? 0)) / 60) % 2];
-  drawFoe(e, f, 13, 9, true);
+  drawFoe(e, f, 13, 10, true);
 }
 
 /**
