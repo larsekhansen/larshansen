@@ -990,31 +990,34 @@ const umbrellaLooks = (ink: Record<string, string>): Looks => {
 const UMBRELLA = { plum: umbrellaLooks({ C: ENEMY.plumLight, c: ENEMY.plum, k: ENEMY.plumDark }), pink: umbrellaLooks({ C: ENEMY.pale, c: ENEMY.pink, k: ENEMY.plumLight }) };
 
 /**
- * A pigeon flying through the hall, 17 x 9 (order 25: fuller at real size, drawn for the box it keeps, not squashed to
- * it): a round plum body lit along its back, its breast orange, its neck's green sheen, an eye, a fanned tail with its dark
- * band, broad wings beating on its own clock.
+ * A pigeon flying through the hall, 17 wide (order 38, redrawn: order 25's was a lens with a beak, its wings two rows over its
+ * back). A feral pigeon as they cross the station's hall: a plump body lit along its back, its breast orange, its neck's green
+ * sheen, an eye, a fanned tail with its dark band; broad rounded wings with dark bars along the trailing edge and dark tips,
+ * beating through four shapes on its own clock (raised tall over its back, level with the tip over its tail, pressed down,
+ * half raised and bent at the wrist), its body sinking as they lift. Drawn from two rows over the box it keeps, so every
+ * frame's top is within two pixels of the box's top while the raised wing stands tall.
  */
 const PIGEON_BODY = [
   "...........MMm...",
-  "Mm...MMMMMgGmmea.",
+  "Mm...MMMMMgGmemal",
   "lmmMMmmmmmoOmm...",
   "ldmmmmmmmooo.....",
   "l..dddmmdd......."
 ];
 const PIGEON_WING: Record<string, readonly string[]> = {
-  up: ["...MMM.....", "..MMmmMM...", "..MmmmmmM..", "...ddmmmm.."],
-  high: ["...........", "..MMMMMM...", ".MMmmmmmMm.", "...ddddmm.."],
-  level: ["...........", "...........", "...........", "MMMMMMMmm.."],
-  down: ["...........", "...........", "...........", "..........."]
+  up: ["...ll............", "..llMM...........", "..ldMMM..........", "...ldmMM.........", "....ddmMMM.......", ".....ddmmMMM....."],
+  level: ["", "", "", "....MMMMMMM......", "lldddmmmMMMM.....", ".llddddmmm.......", "...lldddd........", ".....ll.........."],
+  down: ["", "", "", "", "", ".......ddmMMM....", "......ddmMMM.....", ".....lddmM.......", "....llddd........", "....lll.........."],
+  high: ["", "ll...............", ".lldMM...........", "...ldmMM.........", ".....ddmMMM......"]
 };
-const PIGEON_DOWN = ["..mmmmmm...", ".mmmmmM....", ".ddd......."];
-const pigeonFrame = (name: string, wing: string, dy = 0) =>
-  frame(name, FOE_INK, [PIGEON_WING[wing], 2, dy], [PIGEON_BODY, 0, 3 + dy], ...(wing === "down" ? [[PIGEON_DOWN, 3, 6 + dy] as [string[], number, number]] : []), mark(SHADES, 11, 4 + dy));
+const PIGEON_LIFT: Record<string, number> = { up: 5, level: 3, down: 2, high: 4 };
+const pigeonFrame = (name: string, wing: string, lift = PIGEON_LIFT[wing]) =>
+  frame(name, FOE_INK, [PIGEON_BODY, 0, lift], [PIGEON_WING[wing].map((r) => r || "................."), 0, 0], mark(SHADES, 11, lift + 1));
 const PIGEON_FLYING: Looks = {
   w: 17,
-  h: 9,
-  idle: [pigeonFrame("pigeon on the wing, gliding", "level"), pigeonFrame("pigeon on the wing, gliding, lower", "level", 1)],
-  move: [pigeonFrame("pigeon on the wing, wings up", "up"), pigeonFrame("pigeon on the wing, wings half up", "high"), pigeonFrame("pigeon on the wing, wings out", "level"), pigeonFrame("pigeon on the wing, wings down", "down", -1)]
+  h: 11,
+  idle: [pigeonFrame("pigeon on the wing, gliding", "level", 2), pigeonFrame("pigeon on the wing, gliding, lower", "level")],
+  move: [pigeonFrame("pigeon on the wing, wings up", "up"), pigeonFrame("pigeon on the wing, wings level", "level"), pigeonFrame("pigeon on the wing, wings down", "down"), pigeonFrame("pigeon on the wing, wings half up", "high")]
 };
 
 /** The flourish: the lamps along platform 3 come on bright one after another, the cabinet's lamps all go green, and the board over the end spells the rune. */
@@ -1164,7 +1167,7 @@ export const STORTINGET: LevelDef = {
       else if (e.def.look === "umbrella") {
         const l = e.def.c % 2 ? UMBRELLA.pink : UMBRELLA.plum;
         drawFoe(e, foeFrame(e, v.t, l), l.w, l.h);
-      } else if (e.def.look === "pigeonfly") drawFoe(e, foeFrame(e, v.t, PIGEON_FLYING), PIGEON_FLYING.w, PIGEON_FLYING.h, true);
+      } else if (e.def.look === "pigeonfly") drawFoe(e, foeFrame(e, v.t, PIGEON_FLYING), PIGEON_FLYING.w, e.h + 2, true);
       else return drawLook(e, v.t);
       return true;
     },
