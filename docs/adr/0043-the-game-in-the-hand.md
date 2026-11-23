@@ -99,3 +99,16 @@ stands); the front page is byte-identical. A desktop with a mouse is unchanged.
 a mouse in a window as narrow as a phone the header wraps its runes to two rows and covered a card's top. The page's camera now
 sets `--bar` every frame on any screen, and the game's own cards (a level's end, Game over, the opening, the loading board) keep
 below it and scroll if the window is too short. Touch screens and wide windows are byte-identical to before.
+
+## Amended by order 37 (23 November 2026): the camera on a phone with a notch
+"With a notch on its side ... a turn on landing beside the dash jumps the camera up to 72 px in a frame" (above) was a turn, standing as
+often as landing: the six tiles ahead flip to his other side and meet a button the notch has pushed in before the easing camera's x has
+followed, and the rule that they are never under a button lifts it at once. The camera now eases for the ground ahead either way
+(`eitherWay` in `game/frame.ts`), so a turn finds the other side clear already. Along every route (`game/frame.test.ts`, which now holds
+it with a notch on both sides and on one side, as Android phones report a cutout) the most the camera moves in a frame beyond where it
+would have gone without the buttons is 12 px (76 before); in the page, six turns that moved it 85, 72, 71, 57, 55 and 35 px in a frame
+move it at most 20, 13, 20, 18, 11 and 10 (`?debug&live`). What it costs: on its side he is lifted a little more often (without a notch 54
+to 57 % of a route's frames, with one 72 to 76 %; the most lift unchanged; upright unchanged), and moves of 9 to 12 px a frame, the camera
+starting to ease, are about twice as frequent on its side with a notch. A speech bubble keeps off the safe sides as the buttons do (the
+kit's `safeSides`, set by the pad; the maze's raven spoke under a left notch). No browser here has a notch: `?debug&safe=left|right|sides|
+upright` pretends one (every stylesheet reads a safe area as `var(--safe-*, env(safe-area-inset-*))`).

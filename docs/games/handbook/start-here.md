@@ -1,6 +1,6 @@
 # Start here
 
-State as of 22 November 2026, after order 36 was built (not yet reviewed or live); order 35 is live. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 23 November 2026, after order 37 was built (not yet reviewed or live); order 36 is live. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -52,6 +52,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 34 what Lars said | #82 | Lars's answers of 22 November: the tenth station is Gamle Oslo, its words an ode to Oslo with no "home" (ADR 0055); scenery and ground off the warning red (ADR 0044 amended); the encore's original glam-rock tune in the game's own synth, following the fight, Loki at the far end of late-80s glam in general, four shouted lines; the rule that difficulty and enemies follow the place, with proposals only |
 | 35 housekeeping and the figures | #83 | The viking suite under 300 s on the Pi with nothing it held lost; a sheet of every figure the game draws with `figures.json` naming each in both languages (`apps/viking/tools/figures.ts`); the encore's shouts under the harness; blank harness pictures found and named; perf at every place in one browser; Bjørvika's crane lights held by name; Holmenkollen's hedgehog a mountain hare |
 | 36 the maze catches up | #84 | The maze in the game's grain (ADR 0056): him from the fjord's own sheet with a torch, the mound redrawn as its own iron-bound place, adders in the warning red, the key and the door with the kit's read; the help line says what a finger does on a phone; nothing blinks with reduced motion; one stepped harness for both pages; the joins held; the figures' bosses outlined and the maze on the page of every figure. The maze's rules unchanged |
+| 37 up and down in the mound | #85 | In the maze his back going up a corridor and his face coming down one, a little sticky so a diagonal never flickers, his ghost's run by distance; the maze's reduced-motion test draws the scene itself; the maze page's first script 34.4 to 31.9 kB; a pretended notch and live frames in the harness, and the camera's jump on a notched phone gone (it eases for the ground ahead either way); bubbles off a notch; the maze's way out falls back where Back has nowhere to go; the figures' states in both languages |
 | 31 loose ends and a second look | #79 | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real

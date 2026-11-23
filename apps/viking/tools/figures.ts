@@ -30,7 +30,7 @@ import { ENEMY, PAINT, ROLES } from "@larshansen/pixelkit/palette";
 import { writePng } from "../../../tools/png";
 import { census } from "../src/alive/census";
 import { pixels, type Frame } from "../src/alive/frames";
-import { FIGURE_NAMES, figureKinds, type FigureKind } from "../src/alive/figures";
+import { ENEMY_STATES, FIGURE_NAMES, HIM_ROWS, LOKI_MOVES, LOKI_PLAIN, LOKI_STAGES, MAZE_STATES, THROWN_STATE, figureKinds, stateOfFrame, stateWords, thingState, type FigureKind } from "../src/alive/figures";
 import { HIM, MARGIN } from "../src/alive/him";
 import { PROPS, panelDoor } from "../src/alive/props";
 import { newPlay } from "../src/game/play";
@@ -67,6 +67,8 @@ type Grid = string[][];
 interface Row {
   state: string;
   frames: Grid[];
+  /** A prop's row: the keys of the pieces in it, as the props kit keeps them. */
+  pieces?: string[];
 }
 
 // --- The page's outline, where there is no page (order 36) -----------------------------------------------------------------
@@ -232,7 +234,7 @@ const wide = () => Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w
 function byName(frames: { name: string; px: Grid }[]): Row[] {
   const rows: Row[] = [];
   for (const f of frames) {
-    const state = f.name.split(/[,:]/)[0].replace(/ \d+$/, "").trim();
+    const state = stateOfFrame(f.name);
     const row = rows.find((r) => r.state === state) ?? rows[rows.push({ state, frames: [] }) - 1];
     row.frames.push(f.px);
   }
@@ -243,17 +245,7 @@ function byName(frames: { name: string; px: Grid }[]): Row[] {
 function him(): Row[] {
   const w = 10 + 2 * MARGIN;
   const h = 16 + 2 * MARGIN;
-  const ROWS: [string, (keyof typeof HIM)[]][] = [
-    ["standing", ["stand", "breath", "blink", "breathBlink"]],
-    ["running", ["run"]],
-    ["in the air", ["rise", "apex", "fall"]],
-    ["landing", ["land", "landDeep"]],
-    ["dashing", ["dash"]],
-    ["behind the shield", ["shield"]],
-    ["sitting", ["sit", "sitBack", "sitForward"]],
-    ["thrown back by a hit", ["hurt"]],
-    ["pushing into a door", ["push"]]
-  ];
+  const ROWS = HIM_ROWS.map(([state, keys]) => [state, keys as (keyof typeof HIM)[]] as [string, (keyof typeof HIM)[]]);
   const listed = new Set(ROWS.flatMap(([, ks]) => ks));
   // A frame his table gains comes in a row of its own.
   for (const k of Object.keys(HIM) as (keyof typeof HIM)[]) if (!listed.has(k)) ROWS.push([k, [k]]);
@@ -272,14 +264,14 @@ async function enemies(): Promise<Map<string, Row[]>> {
   for (const [look, seen] of looks) {
     // One grid for every frame of the look, so its frames line up from row to row.
     const states = (c: (typeof all)[string]) => [
-      ["still", c.idle, ENEMY.warning],
-      ["moving", c.move, ENEMY.warning],
-      ...(c.windup ? [["winding up", [c.windup], ENEMY.warning] as const] : []),
-      ["its glamour breaking", c.death, ""]
+      [ENEMY_STATES.still, c.idle, ENEMY.warning],
+      [ENEMY_STATES.moving, c.move, ENEMY.warning],
+      ...(c.windup ? [[ENEMY_STATES.windup, [c.windup], ENEMY.warning] as const] : []),
+      [ENEMY_STATES.breaking, c.death, ""]
     ] as const;
     const blocks = seen.map(([level, c]) => ({ level, states: states(c) }));
     const first = seen[0][1];
-    const rest = [["natural", first.natural, ROLES.calm], ...(first.marks ? [["its glam alone", [first.marks], ""] as const] : [])] as const;
+    const rest = [[ENEMY_STATES.natural, first.natural, ROLES.calm], ...(first.marks ? [[ENEMY_STATES.marks, [first.marks], ""] as const] : [])] as const;
     // Each state's frames on one grid, so they line up along the row.
     const take = (ds: readonly { rects: Rect[] }[], rim: string) => grids(ds.map((d) => d.rects)).map((g) => (rim ? outline(g, rim) : pad(g)));
     const rows: (Row & { levels: string[] })[] = [];
@@ -324,29 +316,32 @@ function loki(): Row[] {
     Object.assign(s, { phase, since: T - age, hits, x: LOKI_DEF.home, dir: -1, aim: LOKI_DEF.floor }, more);
     return record(() => ENCORE.art.boss!(s, viewAt(T, { boss: s })));
   };
-  const MOVES: [string, LokiPhase, number, Partial<Loki>?][] = [
-    ["waiting", "asleep", 10],
-    ["waking", "waking", 60],
-    ["strutting", "strut", 10, { x: LOKI_DEF.home }],
-    ["strutting", "strut", 10, { x: LOKI_DEF.home + 4 }],
-    ["strutting", "strut", 10, { x: LOKI_DEF.home + 8 }],
-    ["the club raised: its tell", "club", 30],
-    ["the slam and its wave", "slam", 8, { wave: { x: LOKI_DEF.home, at: T - 8 } }],
-    ["revving: its tell", "rev", 30],
-    ["the charge", "charge", 10],
-    ["the ring of foam: its tell", "ring", 30, { ring: { x: LOKI_DEF.home - 60, y: LOKI_DEF.floor, fixed: false } }],
-    ["the jaws", "bite", 10, { ring: { x: LOKI_DEF.home - 60, y: LOKI_DEF.floor, fixed: true } }],
-    ["posing: the opening", "pose", 10],
-    ["posing: the opening", "pose", 40],
-    ["reeling from the hit that takes the next piece", "reel", 5]
-  ];
-  const stages = ["glammed", "the wig knocked off", "the shades knocked off", "the jacket knocked off"];
+  // His moves in the order of `LOKI_MOVES` (their names, in both languages, are the figures' table's).
+  const MOVES: [string, LokiPhase, number, Partial<Loki>?][] = (
+    [
+      ["asleep", 10],
+      ["waking", 60],
+      ["strut", 10, { x: LOKI_DEF.home }],
+      ["strut", 10, { x: LOKI_DEF.home + 4 }],
+      ["strut", 10, { x: LOKI_DEF.home + 8 }],
+      ["club", 30],
+      ["slam", 8, { wave: { x: LOKI_DEF.home, at: T - 8 } }],
+      ["rev", 30],
+      ["charge", 10],
+      ["ring", 30, { ring: { x: LOKI_DEF.home - 60, y: LOKI_DEF.floor, fixed: false } }],
+      ["bite", 10, { ring: { x: LOKI_DEF.home - 60, y: LOKI_DEF.floor, fixed: true } }],
+      ["pose", 10],
+      ["pose", 40],
+      ["reel", 5]
+    ] as [LokiPhase, number, Partial<Loki>?][]
+  ).map(([phase, age, more], i) => [LOKI_MOVES[i], phase, age, more]);
+  const stages = LOKI_STAGES;
   // He reels from the hit that knocks off the next piece: drawn with that hit counted.
   const drawn = stages.map((_, hits) => MOVES.map(([, phase, age, more]) => at(phase, phase === "reel" ? Math.min(3, hits + 1) : hits, age, more)));
   const plain = [at("plain", 3, 10), at("plain", 3, 70), at("leave", 3, 20)];
   const gs = grids([...drawn.flat(), ...plain]);
   const rows: Row[] = stages.map((stage, i) => ({ state: `${stage}: ${MOVES.map(([m]) => m).join("; ")}`, frames: gs.slice(i * MOVES.length, (i + 1) * MOVES.length) }));
-  rows.push({ state: "plain: standing, shrugging, walking off", frames: gs.slice(stages.length * MOVES.length) });
+  rows.push({ state: LOKI_PLAIN, frames: gs.slice(stages.length * MOVES.length) });
   return rows;
 }
 
@@ -398,20 +393,21 @@ function thrown(def: LevelDef): Map<string, Grid[]> {
 /** The pickups and things every level has, and the sheep and the heron, from `glance/frames.ts`'s sheets. */
 async function things(): Promise<Map<string, Row[]>> {
   const f = await frameSheets(["things", "bench", "bracteate", "rune stone", "flag", "ski pole and feather", "shield", "sheep", "heron"]);
-  const rows = (frames: { name: string; px: Grid }[], state?: string): Row[] => (state ? [{ state, frames: frames.map((x) => x.px) }] : byName(frames));
+  // Each sheet's rows by the figures' table's rule for its frames' names (`thingState`), so the test can hold their words.
+  const rows = (sheet: string, frames: { name: string; px: Grid }[]): Row[] => byName(frames.map((x) => ({ ...x, name: thingState(sheet, x.name) })));
   const of = (name: string, pick: (n: string) => boolean = () => true) => (f[name] ?? []).filter((x) => pick(x.name));
   const out = new Map<string, Row[]>();
-  out.set("skilling", rows(of("things", (n) => n !== "cheese"), "turning"));
-  out.set("cheese", rows(of("things", (n) => n === "cheese"), "lying"));
-  out.set("bracteate", rows(of("bracteate"), "turning"));
-  out.set("rune", rows(of("rune stone").map((x) => ({ ...x, name: x.name.split(", ").at(-1)! }))));
-  out.set("pole", rows(of("ski pole and feather", (n) => n.startsWith("ski")), "standing"));
-  out.set("feather", rows(of("ski pole and feather", (n) => n.startsWith("feather")).map((x) => ({ ...x, name: x.name.includes("gold") ? "gold" : "as it falls" }))));
-  out.set("shield", rows(of("shield")));
-  out.set("bench", rows(of("bench")));
-  out.set("flag", rows(of("flag")));
-  out.set("sheep", rows(of("sheep").map((x) => ({ ...x, name: x.name.replace(/^sheep, /, "") }))));
-  out.set("heron", rows(of("heron").map((x) => ({ ...x, name: x.name.replace(/^heron, /, "").replace(/^heron$/, "standing") }))));
+  out.set("skilling", rows("skilling", of("things", (n) => n !== "cheese")));
+  out.set("cheese", rows("cheese", of("things", (n) => n === "cheese")));
+  out.set("bracteate", rows("bracteate", of("bracteate")));
+  out.set("rune", rows("rune stone", of("rune stone")));
+  out.set("pole", rows("pole", of("ski pole and feather", (n) => n.startsWith("ski"))));
+  out.set("feather", rows("feather", of("ski pole and feather", (n) => n.startsWith("feather"))));
+  out.set("shield", rows("shield", of("shield")));
+  out.set("bench", rows("bench", of("bench")));
+  out.set("flag", rows("flag", of("flag")));
+  out.set("sheep", rows("sheep", of("sheep")));
+  out.set("heron", rows("heron", of("heron")));
   return out;
 }
 
@@ -444,7 +440,7 @@ async function props(): Promise<{ rows: Map<string, Row[]>; used: Record<string,
     const seen: Grid[] = [];
     const kept = gs.filter(({ g }) => !seen.some((s) => sameGrid(s, g)) && seen.push(g));
     const r: Row[] = [];
-    for (let i = 0; i < kept.length; i += 8) r.push({ state: kept.slice(i, i + 8).map((p) => p.key).join("; "), frames: kept.slice(i, i + 8).map((p) => p.g) });
+    for (let i = 0; i < kept.length; i += 8) r.push({ state: i ? "its pieces, smallest first, continued" : "its pieces, smallest first", frames: kept.slice(i, i + 8).map((p) => p.g), pieces: kept.slice(i, i + 8).map((p) => p.key) });
     rows.set(kind, r);
   }
   PROPS.pieces = undefined;
@@ -476,31 +472,46 @@ function maze(): Map<string, Row[]> {
     return rects;
   };
   Object.assign(view, { k: 1, dpr: 1, camX: 0, camY: 0, camXf: 0, camYf: 0 });
-  const pose = (moving: boolean, dist: number, facing: 1 | -1, t: number) => ({ moving, dist, facing, t });
-  const himRow = (state: string, poses: ReturnType<typeof pose>[]) => ({ state, frames: grids(poses.map((p) => text(() => mazeArt.drawHim(40, 40, p, false, 1, 4)))).map(pad) });
-  out.set("maze-him", [
-    himRow("standing, breathing, blinking", [pose(false, 0, 1, 0), pose(false, 0, 1, 30), pose(false, 0, 1, 206)]),
-    himRow("running", [0, 3, 6, 9].map((d) => pose(true, d, 1, 0))),
-    himRow("running the other way", [0, 3, 6, 9].map((d) => pose(true, d, -1, 0))),
-    { state: "cursed", frames: grids([text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0), true, 1, 0))]).map(pad) }
-  ]);
-  out.set("maze-ghost", [{ state: "running", frames: grids([0, 3, 6, 9].map((d) => text(() => mazeArt.drawGhost(40, 40, pose(true, d, 1, 0))))).map(pad) }]);
-  out.set("maze-adder", [
-    { state: "along a corridor, its wave", frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, 1, t)))) },
-    { state: "the other way", frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, -1, t)))) },
-    { state: "up and down a corridor", frames: grids([0, 7, 14].map((t) => record(() => mazeFigures.drawAdder(40, 40, false, 1, t)))) }
-  ]);
-  const frameRow = (state: string, fs: Frame[]) => ({ state, frames: fs.map((f) => pad(frameGrid(f, f.x1, f.y1))) });
-  out.set("maze-raven", [
-    frameRow("its head toward him, the other way, blinking", [mazeFigures.RAVEN.head, mazeFigures.RAVEN.blink]),
-    frameRow("its body", [mazeFigures.RAVEN.body])
-  ]);
-  out.set("maze-stone", [frameRow("unlit, lit, lighting", [mazeFigures.STONES.unlit, mazeFigures.STONES.lit, mazeFigures.STONES.flare])]);
-  out.set("maze-key", [frameRow("lying", [mazeFigures.KEY])]);
+  type View = "side" | "away" | "toward";
+  const pose = (moving: boolean, dist: number, facing: 1 | -1, t: number, view: View = "side") => ({ moving, dist, facing, t, view });
+  const himRow = (poses: ReturnType<typeof pose>[]) => ({ frames: grids(poses.map((p) => text(() => mazeArt.drawHim(40, 40, p, false, 1, 4)))).map(pad) });
+  // His side, and since order 37 his back going up a corridor and his face coming down one, each standing and running (the
+  // same four frames of run, by distance), facing the way he last went sideways (his torch on that side).
+  // Each sheet's rows in the order of `MAZE_STATES`, whose names (both languages) are the figures' table's.
+  const named = (file: string, rows: Omit<Row, "state">[]): Row[] => rows.map((r, i) => ({ ...r, state: MAZE_STATES[file][i] }));
+  out.set(
+    "maze-him",
+    named("maze-him", [
+      himRow([pose(false, 0, 1, 0), pose(false, 0, 1, 30), pose(false, 0, 1, 206)]),
+      himRow([0, 3, 6, 9].map((d) => pose(true, d, 1, 0))),
+      himRow([0, 3, 6, 9].map((d) => pose(true, d, -1, 0))),
+      himRow([pose(false, 0, 1, 0, "away"), pose(false, 0, 1, 30, "away")]),
+      himRow([0, 3, 6, 9].map((d) => pose(true, d, 1, 0, "away"))),
+      himRow([0, 3, 6, 9].map((d) => pose(true, d, -1, 0, "away"))),
+      himRow([pose(false, 0, 1, 0, "toward"), pose(false, 0, 1, 30, "toward"), pose(false, 0, 1, 206, "toward")]),
+      himRow([0, 3, 6, 9].map((d) => pose(true, d, 1, 0, "toward"))),
+      himRow([0, 3, 6, 9].map((d) => pose(true, d, -1, 0, "toward"))),
+      { frames: grids([text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0), true, 1, 0)), text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0, "away"), true, 1, 0)), text(() => mazeArt.drawHim(40, 40, pose(false, 0, 1, 0, "toward"), true, 1, 0))]).map(pad) }
+    ])
+  );
+  const ghostRow = (view: View) => ({ frames: grids([0, 3, 6, 9].map((d) => text(() => mazeArt.drawGhost(40, 40, pose(true, d, 1, 0, view))))).map(pad) });
+  out.set("maze-ghost", named("maze-ghost", [ghostRow("side"), ghostRow("away"), ghostRow("toward")]));
+  out.set(
+    "maze-adder",
+    named("maze-adder", [
+      { frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, 1, t)))) },
+      { frames: grids([0, 4, 8, 12, 16, 20].map((t) => record(() => mazeFigures.drawAdder(40, 40, true, -1, t)))) },
+      { frames: grids([0, 7, 14].map((t) => record(() => mazeFigures.drawAdder(40, 40, false, 1, t)))) }
+    ])
+  );
+  const frameRow = (fs: Frame[]) => ({ frames: fs.map((f) => pad(frameGrid(f, f.x1, f.y1))) });
+  out.set("maze-raven", named("maze-raven", [frameRow([mazeFigures.RAVEN.head, mazeFigures.RAVEN.blink]), frameRow([mazeFigures.RAVEN.body])]));
+  out.set("maze-stone", named("maze-stone", [frameRow([mazeFigures.STONES.unlit, mazeFigures.STONES.lit, mazeFigures.STONES.flare])]));
+  out.set("maze-key", named("maze-key", [frameRow([mazeFigures.KEY])]));
   const portal = { c: 2, r: 2, twin: { c: 0, r: 0 }, pair: 0 };
   out.set("maze-portal", [
     {
-      state: "ready, cooling, sending him",
+      state: MAZE_STATES["maze-portal"][0],
       frames: grids([
         record(() => mazeArt.drawPortal(portal, { t: 0, portalCool: 0, portalFlash: null })),
         record(() => mazeArt.drawPortal(portal, { t: 0, portalCool: 30, portalFlash: null })),
@@ -508,7 +519,7 @@ function maze(): Map<string, Row[]> {
       ]).map(pad)
     }
   ]);
-  out.set("maze-dweller", [frameRow("seated", [mazeFigures.DWELLER])]);
+  out.set("maze-dweller", named("maze-dweller", [frameRow([mazeFigures.DWELLER])]));
   return out;
 }
 
@@ -534,7 +545,7 @@ for (const [look, seen] of throws) {
     if (same) same.levels.push(s.level);
     else rows.push({ state: "", frames: s.frames, levels: [s.level] });
   }
-  sheets.set(`thrown-${look}`, rows.map((r) => ({ state: `in flight, turning, spent (${r.levels.join(", ")})`, frames: r.frames })));
+  sheets.set(`thrown-${look}`, rows.map((r) => ({ state: `${THROWN_STATE.en} (${r.levels.join(", ")})`, frames: r.frames })));
 }
 for (const [kind, rows] of await things()) sheets.set(`${kind === "sheep" || kind === "heron" ? "harmless" : "pickup"}-${kind}`, rows);
 const { rows: propRows, used } = await props();
@@ -542,7 +553,9 @@ for (const [kind, rows] of propRows) sheets.set(`prop-${kind}`, rows);
 
 const kinds = await figureKinds(used);
 const listed = new Map<string, FigureKind>(kinds.map((k) => [k.file, k]));
-const json: { file: string; name: { en: string; nb: string } | null; levels: string[]; states: string[] }[] = [];
+const json: { file: string; name: { en: string; nb: string } | null; levels: string[]; states: { en: string; nb: string }[]; pieces?: string[][] }[] = [];
+/** States the figures' table has no words for (`stateWords`): said, and the run fails. */
+const unnamed: string[] = [];
 for (const [file, rows] of sheets) {
   const k = listed.get(file);
   if (!rows.length || !rows.some((r) => r.frames.length)) {
@@ -550,10 +563,14 @@ for (const [file, rows] of sheets) {
     continue;
   }
   writeFileSync(join(dir, `${file}.png`), sheet(rows));
-  json.push({ file: `${file}.png`, name: FIGURE_NAMES[file] ?? null, levels: k?.levels ?? [], states: rows.map((r) => r.state) });
+  // Each state in both languages (order 37, ADR 0016); a prop's rows keep the keys of their pieces beside them.
+  const states = rows.map((r) => stateWords(r.state) ?? (unnamed.push(`${file}: ${r.state}`), { en: r.state, nb: "" }));
+  json.push({ file: `${file}.png`, name: FIGURE_NAMES[file] ?? null, levels: k?.levels ?? [], states, ...(rows.some((r) => r.pieces) ? { pieces: rows.map((r) => r.pieces ?? []) } : {}) });
 }
 // What the tables list and nothing drew, and what was drawn with no name, are said, not left out.
 for (const k of kinds) if (!sheets.has(k.file)) console.log(`listed, not drawn: ${k.file}`);
 for (const j of json) if (!j.name) console.log(`drawn, no name: ${j.file}`);
+for (const u of unnamed) console.log(`a state with no words in STATE_WORDS: ${u}`);
 writeFileSync(join(dir, "figures.json"), JSON.stringify(json, null, 1) + "\n");
 console.log(`${json.length} sheets and figures.json in ${dir}`);
+if (unnamed.length) process.exit(1);

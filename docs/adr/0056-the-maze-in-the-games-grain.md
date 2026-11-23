@@ -65,3 +65,28 @@ speeds, both ways where there are teleport stones, are identical step for step w
   and on a touch screen, the wrapped feather line). The maze's own page's script from 29.3 to 34.4 kB gzipped.
 - Rectangles a frame on every level within 100 of before at 390 x 844 (`apps/viking/tools/review/o36/after.md`).
 - Unplayed: none of it has been touched on a phone or seen at speed.
+
+## Amended by order 37 (23 November 2026): his back and his face, and the maze page's first script
+Order 36 did not draw front and back views of him ("a second drawing again"); half of all the walking in a maze is up and down a
+corridor, where he ran sideways. Order 37 (`docs/games/orders/37-up-and-down-in-the-mound.md`) draws them, and that part of "Not
+chosen" is reversed:
+- **His back and his face** are the kit's `himviews.ts`: going away, the helmet's dome and rim, his nape in the skin's shade, the cape
+  from his shoulders to his belt (lit on the left, a fold, its hem), his heels; coming toward, his face under the rim with the helmet's
+  nose guard and his eyes, the tunic's knit, the belt and its buckle, his toes. Each stands (breathing; the face blinks) and runs in
+  four frames by the distance he covers at the side run's rhythm (a step, a pass a pixel higher, the other step, the other pass), so
+  his pace holds round a corner. His 10 x 14 box, his sheet's letters and ramps, lit from the top left, his torch hand held out on the
+  side he faces, mirrored with his facing as the side frames are. No beard: his side sheet has none. Only the maze imports the file;
+  the viking build leaves it to the maze's own (19.5 kB gzipped inside the viking page, 18.4 before), so neither the fjord's first
+  script nor `feel`'s file carries it.
+- **Which of his drawings shows** is `packages/maze/src/heading.ts`, drawing only: the way he moves smoothed over a few steps; his back
+  or his face once that way is steeper than 60 degrees, his side once it is flatter than 30, and between the two as he was (a steady
+  diagonal at any angle changes it at most once, with keys, a mouse or a jittering finger: `heading.test.ts`); he faces the way he goes
+  sideways whenever his move is no steeper than about 63 degrees; standing keeps the drawing he stopped in. His ghost's walk is worked out
+  once from its points (how far it has come and its drawing at each step), so its run goes by distance as his does. The ghost's stored
+  format did not change.
+- **The maze's own page** fetches its checking aids only under `?debug` (as the viking page does), and the kit's synth a moment after
+  the page through a stand-in that keeps the shared mute: its first script from 34.40 to 31.93 kB gzipped by GNU gzip, his views and their
+  heading (1.1 kB) in it. The aim was 31: not met by 0.9 kB.
+
+The rules did not change: the scripted player's runs on every level are identical with `origin/main`'s, and its ghosts replay to the
+same ends (`apps/viking/tools/review/o37/after.md`).

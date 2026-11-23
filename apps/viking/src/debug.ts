@@ -9,6 +9,7 @@ import { view } from "@larshansen/pixelkit/paint";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { sx, sy } from "@larshansen/pixelkit/text";
 import { browserLang } from "@larshansen/pixelkit/i18n";
+export { pretendSafe } from "@larshansen/pixelkit/safe";
 
 // What only `?debug` needs, fetched when it is asked for: no visitor's first script carries it.
 
@@ -41,8 +42,9 @@ export function debugProgress(params: URLSearchParams): Progress | null {
 /**
  * The maze inside the page under the harness (order 36): stepped as asked by its own aids, its frame measured with `perf`,
  * and with `&out[&after=N]` out of the mound by its own way out (Esc) and N steps of what he comes back to, drawn once; the
- * page then says its picture is drawn. Gone in through a door, the way out is the browser's Back, which answers later (in a
- * page whose address changed while it loaded, never: the history had no entry to go back to, and the line says so).
+ * page then says its picture is drawn. Gone in through a door, the way out is the browser's Back, which answers later; in a
+ * page whose address changed while it loaded the history has no entry to go back to, and the way out goes to the line map itself
+ * (order 37, `game/wayout.ts`).
  */
 export async function mazeStepped(
   aids: typeof import("@larshansen/maze/debug"),
@@ -56,10 +58,11 @@ export async function mazeStepped(
   if (params.has("perf")) aids.perf(maze, page.help, params);
   if (params.has("out")) {
     window.dispatchEvent(new KeyboardEvent("keydown", { code: "Escape", key: "Escape" }));
-    if (page.inMaze()) {
-      const back = await Promise.race([new Promise<boolean>((done) => window.addEventListener("hashchange", () => setTimeout(() => done(true), 0), { once: true })), new Promise<boolean>((done) => setTimeout(() => done(false), 3000))]);
-      if (!back) page.help.textContent = `out: Back did not answer (history ${history.length}, ${location.hash})`;
-    }
+    // Out by Back (its hashchange) or, where the way in made no entry or Back does not answer, by the page itself (order 37):
+    // wait until he is out, however he got there.
+    for (let waited = 0; page.inMaze() && waited < 3000; waited += 50) await new Promise((done) => setTimeout(done, 50));
+    if (page.inMaze()) page.help.textContent = `out: still in the mound (history ${history.length}, ${location.hash})`;
+    else await new Promise((done) => setTimeout(done, 0));
     for (let i = Number(params.get("after")) || 0; i > 0; i--) page.step();
     page.still();
   }
@@ -182,6 +185,25 @@ function begin(params: URLSearchParams, frame: (whole?: boolean) => void, help: 
       else window.addEventListener("load", () => setTimeout(go, 0), { once: true });
     });
   if (params.has("strip")) return strip(params, help).catch((e) => (help.textContent = `strip: ${e}`));
+  // `?debug&live=<frames>` (order 37): after the stepped start, that many frames as the page draws them when it runs, a sixtieth
+  // of a second each (the camera easing, as a stepped page's does not: it snaps), so what shows only from frame to frame can be
+  // photographed: the camera's jump on a phone on its side with a notch (`&touch&safe=right`). The help line lists how far the
+  // camera's top moved at each frame, in CSS pixels.
+  if (params.has("live")) {
+    const g = (window as unknown as { __game: Game }).__game;
+    const unit = view.k / view.dpr;
+    const moves: number[] = [];
+    // The loop's clock starts at nought without a step, and goes on a sixtieth of a second a frame.
+    g.frame(0);
+    for (let k = 1, was = view.camYf; k <= (Number(params.get("live")) || 0); k++, was = view.camYf) {
+      g.frame((k * 1000) / 60);
+      moves.push(Math.round((view.camYf - was) * unit));
+    }
+    help.textContent = `live: the camera's top moved ${moves.join(" ")} px a frame (the most ${Math.max(0, ...moves.map(Math.abs))})`;
+    help.hidden = false;
+    // On a touch screen the pad places the help line (or hides it) each frame: here it stands under the bar.
+    if (document.body.classList.contains("touch")) Object.assign(help.style, { visibility: "", top: "48px" });
+  }
   // `?debug&fall=<steps>[&gold]` (order 25): the maze's feather floating down onto him, that many steps into its fall (of
   // a hundred), for a picture of a moment that otherwise comes only on the way out of the maze.
   if (params.has("fall")) {
@@ -272,6 +294,8 @@ interface Game {
   input: { hold(a: string, on: boolean): void; endStep(): void };
   step(): void;
   still(): void;
+  /** The page's frame as it runs (`loop.frame`): steps by the time since the last and draws, the camera easing. */
+  frame(now: number): void;
   sfx?: { play(name: string, n?: number): void; voice?(v: unknown): void };
   feel?: { sounds?: string[] };
   progress(): Progress;

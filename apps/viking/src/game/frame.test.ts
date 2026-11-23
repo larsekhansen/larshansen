@@ -22,6 +22,8 @@ const SCREENS: [number, number][] = [
 ];
 const DPRS = [2, 2.625, 3];
 const notched = (w: number, h: number): Insets => (h > w ? { top: 47, right: 0, bottom: 34, left: 0 } : { top: 0, right: 47, bottom: 21, left: 47 });
+/** A notch on one side only, on its side (order 37: as many Android phones report it), left or right. */
+const oneSide = (w: number, h: number, side: "left" | "right"): Insets | null => (h > w ? null : { top: 0, right: side === "right" ? 47 : 0, bottom: 21, left: side === "left" ? 47 : 0 });
 const NONE: Insets = { top: 0, right: 0, bottom: 0, left: 0 };
 /** The bar's height during a level on a phone (CSS pixels): two rows upright, one thin row on its side. */
 const barOf = (w: number, h: number, safe: Insets) => safe.top + (h > w ? 80 : 40);
@@ -46,10 +48,11 @@ function shots(): Shot[] {
   const out: Shot[] = [];
   for (const [w, h] of SCREENS)
     for (const dpr of DPRS)
-      for (const safe of [NONE, notched(w, h)]) {
+      for (const [label, safe] of [["", NONE], [" notched", notched(w, h)], [" notch left", oneSide(w, h, "left")], [" notch right", oneSide(w, h, "right")]] as const) {
+        if (!safe) continue;
         const v = viewFor(w, h, dpr, 240);
         const unit = v.k / dpr;
-        out.push({ name: `${w}x${h}@${dpr}${safe === NONE ? "" : " notched"}`, view: { ...v, dpr }, unit, bar: (barOf(w, h, safe) * dpr) / v.k, slots: padLayout(w, h, safe), cam: null, lift: 0, jolt: 0, last: null });
+        out.push({ name: `${w}x${h}@${dpr}${label}`, view: { ...v, dpr }, unit, bar: (barOf(w, h, safe) * dpr) / v.k, slots: padLayout(w, h, safe), cam: null, lift: 0, jolt: 0, last: null });
       }
   return out;
 }
@@ -105,12 +108,12 @@ describe("the pad does not hide the game", () => {
       expect(p.runeAt).not.toBeNull();
       expect(bad).toEqual([]);
       // He is never pushed up so far that he is near the bar: at most half the view's height. And the camera eases there:
-      // in no frame does it move more than 24 CSS pixels beyond where it would have gone without the buttons. (Not held
-      // with a notch on its side, where the pad stands 59 px further in: there a turn on landing beside the dash, in a
-      // boss's fight most often, jumps it up to 72 px, 17 frames in all sixteen routes; order 21's hand-back.)
+      // in no frame does it move more than 24 CSS pixels beyond where it would have gone without the buttons, with a notch
+      // too (order 37: on its side with a notch, where the pad stands further in, a turn beside a button jumped it up to
+      // 76 px; the camera now makes room for the ground ahead either way before he turns, and the most is 12).
       for (const s of all) {
         expect(s.lift, s.name).toBeLessThan((s.view.h * s.unit) / 2);
-        if (!s.name.includes("notched")) expect(s.jolt, s.name).toBeLessThanOrEqual(24);
+        expect(s.jolt, s.name).toBeLessThanOrEqual(24);
       }
     });
 });

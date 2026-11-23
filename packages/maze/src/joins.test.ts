@@ -33,6 +33,7 @@ function clear(s: Store, level: number) {
 }
 
 const VIKING_MAIN = readFileSync(join(import.meta.dir, "../../../apps/viking/src/main.ts"), "utf8");
+const MAZE_MAIN = readFileSync(join(import.meta.dir, "../../../apps/iron-maze/src/main.ts"), "utf8");
 
 describe("the joins between the maze and its two pages", () => {
   test("inside Vikingfjorden the feather the maze gives is the one the fjord reads, under the same keys", () => {
@@ -88,16 +89,18 @@ describe("the joins between the maze and its two pages", () => {
   });
 
   test("muted, the maze is silent in both pages: it sounds only through the page's sfx, which the shared mute silences", () => {
-    // No module of the maze makes a sound of its own: every sound is `sfx.play` on the sfx the page gives it (the maze's
-    // own page the kit's `createSfx`, the viking page its stand-in that forwards to the same kit synth, and is quiet until
-    // it has come). `nomusic.test.ts` holds that a muted kit synth makes no sound for any of them.
+    // No module of the maze makes a sound of its own: every sound is `sfx.play` on the sfx the page gives it (each page a
+    // stand-in that forwards to the kit's synth and is quiet until it has come: the viking page's since order 33, the maze's
+    // own since order 37). `nomusic.test.ts` holds that a muted kit synth makes no sound for any of them.
     const src = join(import.meta.dir);
     for (const f of readdirSync(src).filter((f) => f.endsWith(".ts") && !f.endsWith(".test.ts"))) {
       const text = readFileSync(join(src, f), "utf8");
       expect({ f, own: /createSfx|AudioContext|new Audio|\.voice\(/.exec(text)?.[0] ?? null }).toEqual({ f, own: null });
       for (const m of text.matchAll(/(\w+)\.play\(/g)) expect({ f, on: m[1] }).toEqual({ f, on: "sfx" });
     }
-    expect(VIKING_MAIN).toMatch(/play: \(name, n\) => synth\?\.play\(name, n\)/);
-    expect(VIKING_MAIN).toMatch(/sfx,\s+lang,\s+el: stage,/);
+    for (const page of [VIKING_MAIN, MAZE_MAIN]) {
+      expect(page).toMatch(/play: \(name, n\) => synth\?\.play\(name, n\)/);
+      expect(page).toMatch(/sfx,\s+lang,\s+el: stage,/);
+    }
   });
 });

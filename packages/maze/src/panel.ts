@@ -75,7 +75,7 @@ const CSS = `
 .mz-done .mz-line { max-width: 26em; margin-top: 8px; font-style: italic; }
 .mz-done .mz-line:empty { display: none; }
 /* The screen's safe areas, read by the scene through this hidden element's padding (the raven's words keep clear of a notch). */
-.mz-safe { position: absolute; visibility: hidden; pointer-events: none; padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+.mz-safe { position: absolute; visibility: hidden; pointer-events: none; padding: var(--safe-top, env(safe-area-inset-top)) var(--safe-right, env(safe-area-inset-right)) var(--safe-bottom, env(safe-area-inset-bottom)) var(--safe-left, env(safe-area-inset-left)); }
 /* On a touch screen (order 36, as the fjord's cards since order 21): the cards' buttons and the level list's rows are targets a
    thumb finds, 56 tall and 8 apart; nothing on the stage selects, calls out or scrolls the page; a card scrolls if it must. */
 .mz-touch .mz-done .actions button,
@@ -83,7 +83,7 @@ const CSS = `
 .mz-touch .mz-done .actions button { min-width: 56px; padding: 6px 20px; white-space: nowrap; }
 .mz-touch .mz-levels .mz-close { min-width: 56px; min-height: 56px; top: 0; right: 0; }
 .mz-touch .mz-levels .mz-row + .mz-row { margin-top: 2px; }
-.mz-touch .mz-levels, .mz-touch .mz-done { max-height: calc(100% - 24px - env(safe-area-inset-bottom)); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.mz-touch .mz-levels, .mz-touch .mz-done { max-height: calc(100% - 24px - var(--safe-bottom, env(safe-area-inset-bottom))); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .mz-touch .stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 `;
 

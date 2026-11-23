@@ -1,6 +1,7 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import type { Input } from "@larshansen/pixelkit/input";
 import { view } from "@larshansen/pixelkit/paint";
+export { pretendSafe } from "@larshansen/pixelkit/safe";
 import { createBot, playLevel, type Bot, type BotSpeed } from "./bot";
 import type { createRecorder, saveGhost } from "./ghost";
 import type { Maze, Steer } from "./scene";

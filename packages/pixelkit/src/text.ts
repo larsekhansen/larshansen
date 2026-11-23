@@ -102,12 +102,19 @@ export function wrapLines(text: string, max: number): string[] {
   return out;
 }
 
-/** A speech bubble with its bottom edge at y, centred on x (or starting at x with `align: "left"`) and kept on screen. Screen CSS pixels. */
+/**
+ * The screen's safe areas at its sides (a notch on a phone on its side), in CSS pixels, which a bubble and the arrow to a door
+ * off the screen keep off (order 37: the maze's raven spoke under a notch). Nought unless a page sets them from its safe areas
+ * (the viking game's pad, the maze); the front page never does.
+ */
+export const safeSides = { left: 0, right: 0 };
+
+/** A speech bubble with its bottom edge at y, centred on x (or starting at x with `align: "left"`) and kept on screen, off its safe sides. Screen CSS pixels. */
 export function bubble(x: number, y: number, text: string, align: "center" | "left" = "center") {
   u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;
   const w = u.measureText(text).width + 18;
   const h = Math.max(24, fontPx() + 12);
-  const left = Math.max(6, Math.min(view.cssW - w - 6, align === "left" ? x : x - w / 2));
+  const left = Math.max(6 + safeSides.left, Math.min(view.cssW - w - 6 - safeSides.right, align === "left" ? x : x - w / 2));
   u.fillStyle = "rgba(255, 255, 255, 0.96)";
   u.beginPath();
   if (u.roundRect) u.roundRect(left, y - h, w, h, h / 2);
@@ -217,7 +224,7 @@ export function drawHighlight(d: { x: number; bottom: number; w: number; h: numb
   if (x + w < 0 || x > view.cssW) {
     // The door is off screen: point at it from the edge.
     const left = x + w < 0;
-    const ax = left ? 18 : view.cssW - 18;
+    const ax = left ? 18 + safeSides.left : view.cssW - 18 - safeSides.right;
     const ay = view.cssH * 0.55;
     u.fillStyle = "#ffd84d";
     u.beginPath();
@@ -225,7 +232,7 @@ export function drawHighlight(d: { x: number; bottom: number; w: number; h: numb
     u.lineTo(ax + (left ? 6 : -6), ay - 10);
     u.lineTo(ax + (left ? 6 : -6), ay + 10);
     u.fill();
-    bubble(left ? 80 : view.cssW - 80, ay - 16, d.sign === "?" ? "?" : d.sign);
+    bubble(left ? 80 + safeSides.left : view.cssW - 80 - safeSides.right, ay - 16, d.sign === "?" ? "?" : d.sign);
   }
 }
 

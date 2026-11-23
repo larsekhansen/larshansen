@@ -17,7 +17,7 @@ body {
 .help {
   width: max-content;
   max-width: calc(100% - 24px);
-  bottom: calc(14px + env(safe-area-inset-bottom));
+  bottom: calc(14px + var(--safe-bottom, env(safe-area-inset-bottom)));
   white-space: normal;
   text-align: center;
   box-sizing: border-box;

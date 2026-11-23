@@ -5,11 +5,11 @@ import { pickLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
 import { createStepper } from "@larshansen/pixelkit/loop";
 import { view } from "@larshansen/pixelkit/paint";
-import { createSfx } from "@larshansen/pixelkit/sfx";
+import { readMuted, saveMuted } from "@larshansen/pixelkit/mute";
+import type { Sfx } from "@larshansen/pixelkit/sfx";
 import { isTouch } from "@larshansen/pixelkit/scene";
 import { createStage } from "@larshansen/pixelkit/stage";
 import { textTarget } from "@larshansen/pixelkit/text";
-import { debugSteer, drawn, perf, stepped } from "@larshansen/maze/debug";
 import { helpFor, strings } from "@larshansen/maze/i18n";
 import { LEVELS } from "@larshansen/maze/levels";
 import { markStone } from "@larshansen/maze/panel";
@@ -45,7 +45,22 @@ const touch = isTouch() || (debug && params.has("touch"));
 // The help line names no key on a touch screen: it says what a finger does.
 help.textContent = helpFor(t, touch);
 const input = createInput();
-const sfx = createSfx();
+/**
+ * The kit's synth comes in a file of its own a moment after the page (order 37, for the first script's size, as Vikingfjorden's
+ * has since order 33): until it has come, and if it never comes, the maze is silent. The sound switch is the site's shared one,
+ * read and kept here meanwhile.
+ */
+let synth: Sfx | null = null;
+let quiet = readMuted(false);
+const sfx: Sfx = {
+  play: (name, n) => synth?.play(name, n),
+  voice: (parts) => synth?.voice(parts),
+  get muted() {
+    return synth ? synth.muted : quiet;
+  },
+  toggleMute: () => (synth ? synth.toggleMute() : (saveMuted((quiet = !quiet)), quiet))
+};
+void import("@larshansen/pixelkit/sfx").then((m) => (synth = m.createSfx()));
 const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
 view.reduced = reducedMotion.matches;
 reducedMotion.addEventListener("change", (e) => (view.reduced = e.matches));
@@ -56,27 +71,52 @@ const finishEl = $<HTMLElement>("finish");
 wireMute($<HTMLButtonElement>("mute"), sfx, soundWords(lang));
 
 const startLevel = Math.max(1, Math.min(LEVELS.length, Number(params.get("level")) || 1));
-const steer = debug ? debugSteer(params, startLevel, scene) : undefined;
+
+/** The checking aids (`@larshansen/maze/debug`, shared with the maze inside Vikingfjorden): fetched only under `?debug` (order 37). */
+type Aids = typeof import("@larshansen/maze/debug");
 
 let over = false;
-const maze = scene.createMaze(
-  {
-    stage: kit,
-    input,
-    sfx,
-    lang,
-    el: stage,
-    say: (text) => (announce.textContent = text),
-    standalone: true,
-    touch,
-    topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
-    onLeave({ cleared }) {
-      if (!cleared) return location.assign("https://larshansen.dev/viking/?from=maze");
-      showEnd();
+let maze: scene.Maze;
+/** The maze itself, once the checking aids (under `?debug`) are here: they may steer him from his first step. */
+function start(aids: Aids | null) {
+  // `?debug&safe=…` (order 37): a pretended notch and home bar, set before the maze first reads the safe areas.
+  aids?.pretendSafe(params.get("safe"));
+  const steer = aids ? aids.debugSteer(params, startLevel, scene) : undefined;
+  maze = scene.createMaze(
+    {
+      stage: kit,
+      input,
+      sfx,
+      lang,
+      el: stage,
+      say: (text) => (announce.textContent = text),
+      standalone: true,
+      touch,
+      topInset: () => (header.getBoundingClientRect().height * view.dpr) / view.k,
+      onLeave({ cleared }) {
+        if (!cleared) return location.assign("https://larshansen.dev/viking/?from=maze");
+        showEnd();
+      }
+    },
+    { level: startLevel, steer }
+  );
+  new ResizeObserver(layout).observe(stage);
+  layout();
+  hud();
+  requestAnimationFrame((now) => {
+    last = now;
+    requestAnimationFrame(frame);
+  });
+  if (aids) {
+    Object.assign(window, { __game: { maze, state: maze.state, view, input, frame } });
+    // `steps=N` and the rest: `@larshansen/maze/debug`, shared with the maze inside Vikingfjorden (order 36).
+    if (aids.stepped(maze, params, input, { stop: () => over, beforeDraw: () => params.has("end") && showEnd(), driver: steer, el: stage })) {
+      hud();
+      if (params.has("perf")) aids.perf(maze, help, params);
     }
-  },
-  { level: startLevel, steer }
-);
+    aids.drawn();
+  }
+}
 
 /** The end of the mound: a small card, since the feather cannot cross to larshansen.dev from here. */
 function showEnd() {
@@ -157,16 +197,7 @@ function frame(now: number) {
   requestAnimationFrame(frame);
 }
 
-new ResizeObserver(layout).observe(stage);
-layout();
-hud();
-requestAnimationFrame((now) => {
-  last = now;
-  requestAnimationFrame(frame);
-});
-
 if (debug) {
-  Object.assign(window, { __game: { maze, state: maze.state, view, input, frame } });
   // A screenshot cannot show the console: errors go in the help line instead.
   const showError = (message: string) => {
     help.hidden = false;
@@ -174,10 +205,9 @@ if (debug) {
   };
   window.addEventListener("error", (e) => showError(e.message));
   window.addEventListener("unhandledrejection", (e) => showError(String(e.reason)));
-  // `steps=N` and the rest: `@larshansen/maze/debug`, shared with the maze inside Vikingfjorden (order 36).
-  if (stepped(maze, params, input, { stop: () => over, beforeDraw: () => params.has("end") && showEnd(), driver: steer, el: stage })) {
-    hud();
-    if (params.has("perf")) perf(maze, help, params);
-  }
-  drawn();
-}
+  // Its aids come first, in a file of their own; if they cannot come, the maze opens without them and the line says why.
+  import("@larshansen/maze/debug").then(start, (e) => {
+    start(null);
+    showError(`the checking aids did not load (${e})`);
+  });
+} else start(null);

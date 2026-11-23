@@ -47,6 +47,7 @@ import {
 } from "@larshansen/pixelkit/scene";
 import { readMuted, saveMuted } from "@larshansen/pixelkit/mute";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
+import { makesEntry, wayOut } from "./game/wayout";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, wrapLines, type Board } from "@larshansen/pixelkit/text";
@@ -421,8 +422,10 @@ function needed(id: string): Promise<unknown> | null {
   }
   return waits.length ? Promise.all(waits) : null;
 }
-/** True when going back in history leaves the mound: false when the page was opened inside it. */
+/** True when going back in history leaves the mound: false when the page was opened inside it, or went in while it loaded. */
 let canGoBack = false;
+/** What the way in said of the history, for the address's change it makes (order 37): whether that made an entry there. */
+let entering: boolean | null = null;
 
 /** A level may be played once the one before it is cleared (and any, for checking under ?debug); the encore once every rune is held (order 29). */
 const levelOpen = (id: string) => debug || (id === ENCORE_STOP.id ? allRunes(progress, ORDER) : isOpen(progress, ORDER, ORDER.indexOf(id)));
@@ -471,7 +474,8 @@ function sync() {
   if (`#${want}` !== location.hash) history.replaceState(null, "", location.pathname + location.search + `#${want}`);
 }
 window.addEventListener("hashchange", () => {
-  if (location.hash === MAZE_HASH && mode === "scene" && !loading) canGoBack = true;
+  if (location.hash === MAZE_HASH && mode === "scene" && !loading) canGoBack = entering ?? true;
+  entering = null;
   sync();
 });
 
@@ -645,12 +649,18 @@ function leaveMaze(feather: "plain" | "gold" | null) {
     if (feather === "gold") abilities.gold = true;
     featherPending = feather;
   }
-  if (canGoBack && location.hash === MAZE_HASH) {
-    history.back(); // the hashchange that follows takes him out
-    return;
-  }
-  history.replaceState(null, "", location.pathname + location.search + (moundFrom ? `#${moundFrom.def.id}` : "#kart"));
-  leaveMazeNow();
+  // Back, whose hashchange takes him out; or, where the way in made no entry or Back does not answer, out to the line map
+  // (or the level whose door he took) at once (order 37: walked in while the page loaded, Back had nowhere to go).
+  wayOut({
+    canGoBack: canGoBack && location.hash === MAZE_HASH,
+    inMaze: () => mode === "maze" && location.hash === MAZE_HASH,
+    back: () => history.back(),
+    out: () => {
+      history.replaceState(null, "", location.pathname + location.search + (moundFrom ? `#${moundFrom.def.id}` : "#kart"));
+      leaveMazeNow();
+    },
+    wait: (ms, then) => void setTimeout(then, ms)
+  });
 }
 
 mazeUi.level.addEventListener("click", () => {
@@ -1059,7 +1069,9 @@ function tryEnter(d: Door) {
 }
 
 function intoMaze() {
-  canGoBack = true;
+  // While the page loads the address's change replaces its entry in the history instead of adding one (order 36): then Back
+  // would have nowhere of this page's to go, and the way out goes straight out (`game/wayout.ts`, order 37).
+  canGoBack = entering = makesEntry(document.readyState);
   location.hash = MAZE_HASH;
 }
 
@@ -1769,6 +1781,9 @@ function still(whole = false) {
 /** Where he arrives, the level's code if it is not here yet, and then the game runs. */
 async function start() {
   if (debugging) {
+    // `?debug&safe=…` (order 37): a pretended notch and home bar, which no browser here has, set before the first scene lays
+    // out its pad, its bar and its cards.
+    (await debugging).pretendSafe(params.get("safe"));
     pretend = (await debugging).debugProgress(params);
     if (pretend) progress = pretend;
     readFeather();
