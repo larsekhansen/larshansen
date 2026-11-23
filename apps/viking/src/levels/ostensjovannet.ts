@@ -721,6 +721,13 @@ export const OSTENSJOVANNET: LevelDef = {
       if (s) PADS.forEach((p, i) => lilyPad(p, s.pads[i], v.t, i));
       // The heron moves and cannot hurt him: outlined in the calm pale (order 22).
       outlined(() => heronArt(s, v.t), undefined, ROLES.calm);
+      // About to fly (order 41, as a lily pad about to sink since order 40): the water stirring round its legs, a glint at each and a
+      // broken line of them on the surface, for the whole of its last half second, still. It shifted its feet a pixel, and with
+      // reduced motion only the paint's dashes joined.
+      if (s && s.gone === null && heronSoon(s, v.t)) {
+        for (const lx of [HERON.x + 2, HERON.x + 7]) R(lx, FLOOR, 3, 1, L.glint);
+        for (let k = -4; k < HERON.w + 4; k += 3) R(HERON.x + k, FLOOR + 2, 2, 1, L.glint);
+      }
       mist(v);
       sunrise(v);
     },
