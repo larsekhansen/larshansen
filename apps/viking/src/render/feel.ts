@@ -6,7 +6,7 @@ import { COIN, DUST, ENEMY, FEATHER, FLAG, FOOD, LAMP, METAL, PALETTE, ROLES, ST
 import { playerPixels, type Look } from "@larshansen/pixelkit/person";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Sfx, Voice } from "@larshansen/pixelkit/sfx";
-import { FONT, fontPx, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
+import { FONT, fontPx, safeSides, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import type { Phase } from "@larshansen/pixelkit/oslo";
 import type { LevelDef } from "../levels/types";
@@ -956,7 +956,9 @@ export function createFeel(host: Host) {
           const e = p.enemies[alertIdx[k]];
           if (!e || !e.alive || e.calm) continue;
           x = e.x;
-          y = e.y - e.h - 4;
+          // Clear of its head (order 41): four pixels higher than it stood, where a crest or a hat's red outline met the "!"'s foot and
+          // the two read as one shape.
+          y = e.y - e.h - 8;
         } else if (alertKind[k] === 1) {
           const box = p.troll && p.def.trollRules?.box(p.troll);
           if (!box) continue;
@@ -984,7 +986,9 @@ export function createFeel(host: Host) {
           // How fast the gap closes: his run toward it, and a flyer's own way.
           const closing = Math.max(0, p.body.vx * dir) + (e.def.kind === "flyer" && e.dir === -dir ? e.def.speed ?? 0.5 : 0);
           if (off > closing * 60 || off > 6 * TILE) continue;
-          arrow(dir > 0 ? view.camX + view.w - 3 : view.camX + 2, Math.round(e.y - e.h / 2), dir);
+          // Clear of a notch on that side (order 41: with one on its side the arrow stood under it); the safe sides are CSS pixels.
+          const notch = Math.ceil((dir > 0 ? safeSides.right : safeSides.left) / unit());
+          arrow(dir > 0 ? view.camX + view.w - 3 - notch : view.camX + 2 + notch, Math.round(e.y - e.h / 2), dir);
         }
       // The rune stone glows when he is near it (order 23): a ring of its light, breathing, within four tiles.
       if (p.rune && runeFree(p) && p.runeAt === null && near(p, p.rune.x + 8, 4) && Math.abs(p.rune.y - p.body.y) < 4 * TILE) {
@@ -1472,7 +1476,7 @@ function brokenHeart(over: SVGSVGElement) {
         r.setAttribute("y", String(y));
         r.setAttribute("width", "1");
         r.setAttribute("height", "1");
-        r.setAttribute("fill", ch === "c" ? FOOD.waffleCrust : FOOD.waffleDough);
+        r.setAttribute("fill", ch === "c" ? FOOD.waffleCrust : ch === "o" ? FOOD.waffleShade : FOOD.waffleDough);
         (x < CRACK[y] ? left : right).appendChild(r);
       })
     );
@@ -1490,4 +1494,5 @@ function brokenHeart(over: SVGSVGElement) {
   bh0.svg.style.height = `${at.height}px`;
   return bh0;
 }
-const WAFFLE = [".cc.cc.", "cdcdcdc", "dcdcdcd", "cdcdcdc", ".cdcdc.", "..cdc..", "...c..."];
+/** The header's waffle heart (`WAFFLE_HEART` in main.ts), its edge the crust's shade (order 41). */
+const WAFFLE = [".oo.oo.", "odcocdo", "ocdcdco", "odcdcdo", ".ocdco.", "..odo..", "...o..."];

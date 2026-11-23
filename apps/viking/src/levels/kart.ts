@@ -63,6 +63,24 @@ export function ahead(progress: Progress): { now: string[]; idle: string[] } {
   return { now: LINE.filter((l, i) => l.built && isOpen(progress, ORDER, i)).map((l) => l.id), idle: allRunes(progress, ORDER) ? [ENCORE_STOP.id] : [] };
 }
 
+/**
+ * The rows of the boards under the map's stations, in order along the line, each its centre and width (order 41): a board hangs in
+ * the first of three rows where it comes no nearer than two pixels to the last board in that row (else in the row that ends first).
+ * With best times on them, or on a phone, Stortinget's, Ekeberg's and Gamle Oslo's ran into each other, three tiles apart.
+ */
+export function boardRows(boards: readonly { cx: number; w: number }[]): number[] {
+  const ends = [-1e9, -1e9, -1e9];
+  return boards.map(({ cx, w }) => {
+    let row = ends.findIndex((e) => cx - w / 2 >= e + 2);
+    if (row < 0) row = ends.indexOf(Math.min(...ends));
+    ends[row] = cx + w / 2;
+    return row;
+  });
+}
+
+/** Where a board `w` wide centred at `cx` hangs under every board it would meet (a line's added-up time under its last station). */
+export const under = (boards: readonly { cx: number; w: number; y: number }[], cx: number, w: number) => Math.max(...boards.filter((b) => Math.abs(b.cx - cx) < (b.w + w) / 2 + 2).map((b) => b.y)) + 16;
+
 /** Line 2 is open once Nabolaget, the end of line 1, is cleared. */
 export const lineTwoOpen = (p: Progress) => isOpen(p, ORDER, LINE_2_AT);
 

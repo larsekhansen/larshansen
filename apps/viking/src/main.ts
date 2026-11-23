@@ -62,7 +62,7 @@ import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, type RuneChar } from "./game/runes";
 import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
-import { BARE, ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
+import { BARE, ahead, boardRows, kartDef, lineTwoOpen, under, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
@@ -265,20 +265,25 @@ function doorSpots(def: LevelDef, play: Play): DoorSpot[] {
 /** Boards: over each door, on each sign post; on the map, under each station, with its best time. */
 function layoutBoards(s: Scene): Board[] {
   const boards: Board[] = [];
+  const stations: Board[] = [];
   for (const d of s.doors) {
     if (s.map && (ORDER.includes(d.id) || d.id === ENCORE_STOP.id)) {
       const best = progress.best[d.id];
       const text = best !== undefined ? `${d.sign} ${formatTime(best)}` : d.sign;
-      boards.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10, w: boardWidth(text) });
+      stations.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10, w: boardWidth(text) });
     } else boards.push(doorBoard(d, 13));
   }
+  // A station's board hangs a row lower where it would meet the one before it (order 41, `boardRows`).
+  boardRows(stations).forEach((row, i) => boards.push({ ...stations[i], y: stations[i].y + row * 13 }));
   // On the map, under the end of a line all cleared: its best times added up.
   if (s.map)
     [LINE_1, LINE_2].forEach((ids, n) => {
       const end = s.doors.find((d) => d.id === ids[ids.length - 1]);
       if (!end || ids.some((id) => progress.best[id] === undefined)) return;
       const text = kartWords?.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0))) ?? "";
-      boards.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
+      const cx = end.x + end.w / 2;
+      const w = boardWidth(text);
+      boards.push({ text, cx, y: under(boards, cx, w), w });
     });
   s.signs.forEach((sg) => {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
@@ -802,9 +807,10 @@ function pixelSvg(rows: string[], colors: Record<string, string>): SVGSVGElement
   );
   return svg;
 }
-// A waffle heart: crust and dough in a grid, as the waffle iron leaves it.
-const WAFFLE_HEART = [".cc.cc.", "cdcdcdc", "dcdcdcd", "cdcdcdc", ".cdcdc.", "..cdc..", "...c..."];
-const hearts = Array.from({ length: HEARTS }, () => heartsEl.appendChild(pixelSvg(WAFFLE_HEART, { c: FOOD.waffleCrust, d: FOOD.waffleDough })));
+// A waffle heart: crust and dough in a grid, as the waffle iron leaves it, its edge the crust's shade (order 41: a heart lost is
+// that edge alone, hollow, where it was the whole heart faint: `.hearts svg.gone` in styles.css).
+const WAFFLE_HEART = [".oo.oo.", "odcocdo", "ocdcdco", "odcdcdo", ".ocdco.", "..odo..", "...o..."];
+const hearts = Array.from({ length: HEARTS }, () => heartsEl.appendChild(pixelSvg(WAFFLE_HEART, { c: FOOD.waffleCrust, d: FOOD.waffleDough, o: FOOD.waffleShade })));
 // The helmet over the hat, with the pompom on top: one for the lives, with the number beside it.
 livesEl.appendChild(pixelSvg(["...w...", "..iii..", ".iiiii.", "iiiiiii", "rrrrrrr", ".s...s."], { w: WHITE, i: PALETTE.ironDark, r: PALETTE.iron, s: PALETTE.ironDark }));
 const livesN = livesEl.appendChild(document.createElement("span"));
