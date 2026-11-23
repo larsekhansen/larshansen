@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, and by order 36's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, and by order 37's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -54,7 +54,8 @@ page is published as a private artifact on Lars's claude.ai account.
   inside the viking game at `#jernhaugen`): seven maze levels. It is a bonus stop on the line and
   is never required. Clearing its level 3 gives the raven's feather (a double jump); all seven
   make it gold. The feather is what reaches the bracteates. Since order 36 (ADR 0056) it is drawn in the viking game's grain:
-  him from the fjord's own sheet, the mound its own iron-bound place, the maze in the hand on a phone.
+  him from the fjord's own sheet, the mound its own iron-bound place, the maze in the hand on a phone. Since order 37 he shows his back
+  going up a corridor and his face coming down one.
 - **The kit** (`packages/pixelkit`): everything the scenes share. Physics, person, sky, palette,
   tile maps, doors, camera, carriers, flags, launchers, ledges on a beat, surfaces, zones,
   hazards, the dark, sounds, the debug harness.
@@ -91,6 +92,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-22 | Lars answers the questions that waited for him (relayed by his other session; `handbook/conversations.md`). Order 34: what Lars said. The tenth station is Gamle Oslo and its words lose "home" (an ode to Oslo); scenery and ground off the warning red (Stortinget's walls and kiosk, Holmenkollen's padding, Vålerenga's stained glass, Bygdøy's kiosk, a red hire sledge); the encore gets an original glam-rock tune in the game's own synth that follows the fight, Loki at the far end of late-1980s glam in general, and four shouted lines of the game's own; the rule that a level's difficulty and enemies follow its place, with proposals only (ADR 0055) | `orders/34-what-lars-said.md`, branch `what-lars-said` |
 | 2026-11-22 | Order 35: housekeeping, and every figure on one page. The viking suite from about 363 s to under 300 on a quiet Pi with nothing it held lost (the tests' recorders without a proxy a call, the reach searches on four workers the costliest first, one walk for the warning tests; every changed test shown to fail on a planted fault); `tools/figures.ts`, a sheet of every figure the game draws and `figures.json` naming each in both languages; the encore's shouts under the harness; blank harness pictures found (taken before the page drew) and named by `tools/shots.ts`; perf at every place in one browser; Bjørvika's crane lights held by name; Holmenkollen's hedgehog a mountain hare in its winter coat (drawing only) | `orders/35-housekeeping-and-the-figures.md`, branch `housekeeping` |
 | 2026-11-22 | Order 36: the maze catches up (roadmap idea 8; ADR 0056). Looked at first (`o36/before.md`); one stepped harness for the maze in both pages; him in the mound from the viking game's own sheet (his frames and the feather moved into the kit) with a torch; the mound redrawn by the game's methods as its own iron-bound place (lining, faces, earth, hill, pad, doorways, stones, raven, dweller), adders in the warning red, the key in the take-gold, the door's corners in the use cyan; the help line says what a finger does on a phone, goes at his first move, wraps; the raven's words wrap; thumb-sized targets; nothing blinks with reduced motion; the joins held (a test and stepped pictures in and out of the mound); the figures' bosses outlined as the page outlines them and the maze on the page of every figure; the reduced-motion test's dead watch of the kit's carriers removed. The maze's rules unchanged, step for step | `orders/36-the-maze-catches-up.md`, branch `the-maze-catches-up` |
+| 2026-11-23 | Order 37: up and down in the mound, and the phone's notch. His back going up a corridor and his face coming down one in the maze (the kit's `himviews.ts`; which drawing shows a little sticky, `maze/heading.ts`), his ghost's run by distance; the maze's reduced-motion test draws the scene itself through a curse, a level's end and its card; the maze page's checking aids and synth out of its first script (34.40 to 31.93 kB); a pretended notch (`?debug&safe`) and live frames (`?debug&live`) in the harness, the camera's jump on a notched phone reproduced and gone (it eases for the ground ahead either way, ADR 0043 amended), bubbles off the safe sides; the maze's way out falls back where Back has nowhere to go; the figures' states in both languages | `orders/37-up-and-down-in-the-mound.md`, branch `up-and-down` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -174,12 +176,18 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   orders 32 and 34 were taken before the page had drawn, five seconds being too short for the encore's files on this Pi.
   `?debug&card` puts the level's card at its end over it, as its rune would (order 30), as `&told` and `&seen` set the story's
   card read and the encore seen.
-- **The maze's harness** (order 36): `packages/maze/src/debug.ts`, the same in both pages (the viking page fetches it only under
-  `?debug`): `?debug&level=N&steps=S` with `bot=keys|pointer|finger` (`portals`), `walk=dx,dy`, `at=c,r`, `records=demo|all`, `ghost`,
+- **The maze's harness** (order 36): `packages/maze/src/debug.ts`, the same in both pages (both fetch it only under `?debug`, the
+  maze's own page since order 37): `?debug&level=N&steps=S` with `bot=keys|pointer|finger` (`portals`), `walk=dx,dy`, `at=c,r`, `records=demo|all`, `ghost`,
   `levels`, `touch`, `reduced`, `perf[&post=<port>]`; inside the viking page `/viking/?debug&told&…#jernhaugen` (`told`, or the story's
   card covers it), and `walkin=N` (through a door once the page has loaded), `out` (out by the maze's own way, Esc) and `after=N` (steps
   of what he comes back to). A picture at step 0 is black (the level fades in for 24 steps): take it at 30. Addresses in
   `apps/iron-maze/README.md`; the maze's rules against another checkout: `bun packages/maze/tools/runs.ts`.
+- **A pretended notch and live frames** (order 37): no browser here has a notch or a home bar; `?debug&safe=left|right|sides|upright`
+  (or four numbers in CSS pixels, top, right, bottom, left) pretends them in both pages (every stylesheet reads a safe area as
+  `var(--safe-*, env(safe-area-inset-*))`; the kit's `safe.ts`, in the debug files). A stepped page snaps its camera, so what happens only
+  from frame to frame (the camera easing, and its jump on a turn) does not show in it: `?debug&live=<frames>` (viking page) runs that many
+  frames after the stepped start as the page runs them, a sixtieth of a second each, and lists on the help line how far the camera moved
+  in each: `/viking/?debug&told&touch&pole&safe=right&level=bygdoy&auto&steps=1923&live=80#bygdoy`.
 - **The front page gate**: 28 reference screenshots of the front page, taken before any of this
   work. After every kit change they must be byte-identical (`cmp`). The references live in
   `/tmp/shots-before-jernhaugen` (earlier `/tmp/shots-before`) with addresses in `/tmp/shots-urls.txt` (the `:5180` lines); `/tmp` does
@@ -280,7 +288,11 @@ seconds a place, where a browser a place took five; `--each` is the old way), so
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 58.32 kB gzipped after order 36 (58,292 bytes by GNU gzip, 169 more than order 35's): the maze's way in under `?debug`
+- **First script**: 58.52 kB gzipped after order 37 (58,502 bytes by GNU gzip, 215 more than order 36's): the maze's way out that falls
+  back where Back has nowhere to go (`game/wayout.ts` and its call, 0.13 kB), the kit's bubble keeping off the safe sides, the call that
+  sets a pretended notch under `?debug` (the kit's `safe.ts` itself is in `?debug`'s file: `vite.config.ts` says so, or it lands here).
+  His back and face (`pixelkit/himviews.ts`) are the maze's alone and go in its file (`vite.config.ts` leaves them to it): the maze's
+  scene file from 18.41 to 19.50 kB gzipped. 58.32 kB gzipped after order 36 (58,292 bytes by GNU gzip, 169 more than order 35's): the maze's way in under `?debug`
   (its harness fetched then), the maze told the page is a touch screen, the maze's help line for the device, and the feather's line at the
   mound wrapped at a narrow screen (the kit's `wrapLines`). The maze's own file grew (its scene chunk 14.7 to 18.4 kB gzipped); his frames
   and the feather, moved into the kit, are still in `feel`'s file. 58.14 kB gzipped after order 35 (the stepped page's music asked every step, a frame over emptied canvases:
@@ -389,8 +401,8 @@ this Pi. What to know:
   the controls (the same slots whatever is shown; the way in and the shield share one), `createThumbs`/`wireThumbs`
   follow each finger, `frame` folds the bar during a level, dims what has nothing to do and places the help line's
   note; `roomy` (`game/frame.ts`) stands him two thirds down the screen above the pad's bottom row and lifts him over a
-  button he would otherwise be under. On a notched phone on its side a turn on landing beside the dash can still jump
-  the camera (17 frames over 24 px in all sixteen routes).
+  button he would otherwise be under. On a notched phone on its side a turn beside a button the notch had pushed in jumped
+  the camera (up to 76 px in a frame); since order 37 the camera eases for the ground ahead either way and it does not (ADR 0043 amended).
   The pad's markup is the viking page's own (`index.html`); the kit's `wirePad` is the front page's alone now.
 - **The bar on a phone** is CSS (`styles.css`, "The bar on a phone") on the body's `touch` and `playing` classes; the
   cards read `--bar` to keep below it.
@@ -788,10 +800,32 @@ Order 36 (`orders/36-the-maze-catches-up.md`, ADR 0056, DESIGN's "Jernhaugen, th
 - **The joins** in stepped pictures: in from the map and out to it, in from Nordmarka's mound and back into Nordmarka, the feather's
   moment after the maze. Gone through a door while the page is loading, the address's change replaces the page's history entry (the
   HTML standard's rule for a navigation before load), so the maze's way out, Back, has nowhere to go: no player is at a door then, but
-  a stepped picture that walks him in at load shows the maze still (hence `walkin`, after load).
+  a stepped picture that walks him in at load showed the maze still (hence `walkin`, after load). Since order 37 the way out falls back
+  to where he came from when the way in made no history entry or Back does not answer (`game/wayout.ts`).
 - **The figures' page**: the bosses and Loki now have the outline the page gives them (`noPage.outline` in `render/sprite.ts` hands the
   figures tool each shape and its rim where there is no page), and the maze's figures are on it, named in both languages.
 - **Unplayed**: none of it has been touched on a phone or seen at speed; the finger is synthetic pointer events in a headless browser.
+
+## Order 37: up and down in the mound, and the phone's notch
+
+Order 37 (`orders/37-up-and-down-in-the-mound.md`; ADR 0056 and 0043 amended; each item done or not, with its measures, in
+`apps/viking/tools/review/o37/after.md`). It retunes nothing, in the fjord or in the maze. What to know:
+- **His back and his face in the maze**: `packages/pixelkit/src/himviews.ts` (`HIM_VIEWS.away`, `.toward`: standing and breathing, the
+  face blinking, a run of four by distance at the side run's rhythm), drawn by the maze's `render.ts` from `Pose.view`. Which shows is
+  `packages/maze/src/heading.ts` (smoothed way, 30/60 degrees with stickiness between, facing from a move no steeper than about 63 degrees,
+  standing keeps it), held by `heading.test.ts` (no steady diagonal changes it more than once). His ghost's walk is worked out once from its
+  points (`ghostWalk`). The figures tool draws all of it (`maze-him`, `maze-ghost`).
+- **The maze's reduced-motion test draws the scene itself** (`createMaze` in a stand-in page whose canvases record every call) through a
+  curse and a level's end, its card and the next level's start: no shake, nothing round the view's edge, the fade only darkening or clearing
+  a twentieth a step, the world and the sharp canvas held. Eight planted faults fail it.
+- **The maze's own page** fetches its aids only under `?debug` and the kit's synth a moment after the page (31.93 kB, from 34.40).
+- **The notch**: pretended by `?debug&safe`, the jump reproduced by `?debug&live` and gone (above, and ADR 0043 amended); with a notch on its
+  side the raven's words ran under it: every bubble keeps off the safe sides once a page sets them (the kit's `safeSides`; the pad and the
+  maze set them, the front page never does).
+- **The way out of the maze inside this page** falls back to where he came from where Back has nowhere to go (`game/wayout.ts`).
+- **`figures.json`'s states** are `{ en, nb }` (the figures' table, `src/alive/figures.ts`: `STATE_WORDS`, `stateWords`); a prop's rows keep
+  their pieces' keys in `pieces`. The page of every figure can be rebuilt from it in either language.
+- **Unplayed**: none of it has been touched on a phone or seen at speed; the notch is pretended, the finger synthetic.
 
 ## Known weak spots, as of order 16
 
@@ -834,7 +868,7 @@ reorder this list.
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone. Since order 36 the way into the maze from
    the map and back, from Nordmarka and back into it, and the feather moment after the maze are stepped pictures (`?debug&walkin`, `&out`,
    `&after`), and what each page remembers of the maze is a test (`packages/maze/src/joins.test.ts`): none of it by a person.
-8. **Margins.** The first script is 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
+8. **Margins.** The first script is 58.52 kB gzipped after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
    two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour; after order 34, 370.5 s against 335.0 s for

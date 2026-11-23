@@ -472,8 +472,11 @@ and 932 x 430 at a pixel ratio of 3 (`tools/review/o21/`), and where a test can 
    or hiding the page lets go of everything (`pad.test.ts`, synthetic pointer events).
 6. **The pad does not hide the game.** The buttons are see-through; he stands at most two thirds of the way down the
    screen above the pad's bottom row, and he, the two tiles under him and six ahead are never under a button: where
-   they would be (near a level's ends) the camera eases up from a tile and a half before (`game/frame.ts`;
-   `frame.test.ts` along every route at the five sizes, pixel ratios 2, 2.625 and 3, with and without a notch).
+   they would be (near a level's ends) the camera eases up from a tile and a half before, for the ground ahead either way
+   (order 37: so a turn does not jump it where a notch has pushed a button in) (`game/frame.ts`; `frame.test.ts` along every
+   route at the five sizes, pixel ratios 2, 2.625 and 3, without a notch, with one on both sides and with one on either side:
+   the camera never moves more than 24 px in a frame beyond where it would go without the buttons). A speech bubble keeps off
+   the screen's safe sides as the buttons do (the kit's `safeSides`, set by the pad).
 7. **Nothing else moves the page** while a level is on: no panning, zooming, double-tap, selection or callout, no
    300 ms delay. A card scrolls if it must and never goes under the bar; with a mouse too, in a window as narrow as a
    phone, where the header wraps its runes to two rows (order 31: the page's camera gives the header's height to CSS
@@ -488,8 +491,11 @@ Order 36 (ADR 0056). The maze (`packages/maze`) runs inside this page at `#jernh
 own (ADR 0007) and order 36 changed none of them. For anyone drawing in it:
 
 1. **Him is the fjord's man**, from the kit's sheet (`pixelkit/him.ts`): the mound is seen from above with its walls' faces showing, so
-   he stands on its floor as the walls stand (his feet at the foot of his six-pixel body), faces the way he last went sideways, runs by
-   the distance he covers, and carries a torch; his ghost is the same man, pale.
+   he stands on its floor as the walls stand (his feet at the foot of his six-pixel body), runs by the distance he covers, and carries a
+   torch; his ghost is the same man, pale. Since order 37 he shows his back going up a corridor and his face coming down one (the kit's
+   `himviews.ts`: the same box, letters and ramps, four run frames at the side run's rhythm), his side along one; which is a little
+   sticky (`heading.ts`: the way he moves smoothed, his back or face past 60 degrees, his side under 30, as he was between), so a
+   diagonal never flickers between two; he faces the way he goes sideways, his torch on that side; standing keeps the drawing.
 2. **The mound is its own place** (`look.ts`, `figures.ts`): iron and a dark hill, no glamour, no neon, no paint. Every material a ramp
    of three to five tones of one hue, light from the top left, four variants a tile by a hash of its place; depth where the floor meets
    a wall (the face's lip lit, its foot in shadow, the wall's shadow on the floor below and to the right). A level's still layer is a
@@ -503,8 +509,12 @@ own (ADR 0007) and order 36 changed none of them. For anyone drawing in it:
    raven's words wrap at a narrow screen; the maze marks the page (`mz-touch`) for thumb-sized buttons; this page keeps its own touch
    styles in the mound, its header two rows upright.
 6. **Checking**: `packages/maze/src/debug.ts` is both pages' stepped harness (`?debug&steps=N`, `bot=keys|pointer|finger`, `walk`,
-   `at`, `records`, `ghost`, `levels`, `perf`; in this page also `walkin`, `out`, `after`), `joins.test.ts` the joins between the maze
-   and its pages, `packages/maze/tools/runs.ts` the rules held step for step against another checkout.
+   `at`, `records`, `ghost`, `levels`, `perf`, since order 37 `safe`; in this page also `walkin`, `out`, `after`), fetched only under
+   `?debug` in both pages, `joins.test.ts` the joins between the maze and its pages, `reduced.test.ts` also the scene itself drawn
+   through a curse, a level's end and its card (since order 37), `packages/maze/tools/runs.ts` the rules held step for step against
+   another checkout.
+7. **The way out** inside this page is Back where the way in made a history entry, and straight to where he came from (the line map,
+   or the level whose door he took) where it did not (gone in while the page loaded) or Back does not answer (`game/wayout.ts`, order 37).
 
 ## Checking
 
@@ -516,4 +526,5 @@ Since order 28, `alive/props.test.ts` holds that every level draws its lamp post
 Since order 31, `render/reduced.test.ts` no longer reads the source for blink idioms: it draws every level's scenery across the whole level and every thing in it as the scripted route finds it (each enemy of every kind, carriers, ledges, cannons, drums, flags, benches, sheep, skilling, cheese, what is thrown, what hurts, the bracteate, the rune, the paint), and the map, into a recording canvas at several steps of the clock with the world held, as a browser would (kept pieces and outlined shapes made once and copied), and holds what it records the same, but the world's own motion it names; and it holds the cards' CSS (every animation on a class the page sets only without reduced motion). `game/words.test.ts` holds that every word kept by language, in every module of the page and every level, has both languages with the same keys, lines and arguments (ADR 0016); `render/palette.test.ts` that under Nordmarka's dark the red outline stands at least as far off the forest's fields as by day; and `alive/props.test.ts` that the tram, the main gate at Vigelandsparken and the lit trail's poles at Korketrekkeren are drawn from the props kit.
 Since order 32, `render/lights.test.ts` holds the lights after dark (ADR 0054, "Lights after dark" above) on a census of every scene (`render/lightcensus.ts`): each scene lights what its rows name, no light is dimmed by what is drawn after it, no pool lies under the tiles, the colours are off the neon and the roles but by name; `render/palette.test.ts` that over a level's own dark the red outline stands as far off what is next to it (the dark's own pixel, not its glow) as off the fields by day; `render/reduced.test.ts` the moving things and feel's drawing (above); and `alive/props.test.ts` the logs and the chairs.
 Since order 35, `alive/figures.test.ts` holds that every kind any level uses (enemies, what they throw, bosses, carriers; the props in `alive/props.test.ts`) is listed for the figures' page and named in both languages; `render/warning.test.ts` that no light a level registers is within 10 of the warning red and any within 12 is named (Bjørvika's crane lights); and the reach searches run on as many workers as there are cores, the costliest first, each level's tests waiting only for its own (`game/reachlevel.ts`).
+Since order 37, `game/frame.test.ts` holds the camera's ease with a notch too (on both sides and on either side) and `game/wayout.test.ts` the maze's way out on a stand-in history; `alive/figures.test.ts` that every state on the page of every figure has both languages; in the maze, `heading.test.ts` his drawings' stickiness and `reduced.test.ts` the scene itself; in the kit, `text.test.ts` that a bubble keeps off the safe sides. `?debug&safe=left|right|sides|upright` (or four numbers) pretends a notch and a home bar in both pages, and `?debug&live=<frames>` runs that many frames as the page runs them (the camera easing), which a stepped page, whose camera snaps, cannot show.
 Since order 33, `render/night.test.ts` holds Vålerenga's lane's dark, kept, against `drawNight` pixel by pixel at 48 places of the lane on a phone's and a desktop's screen (every pixel's fills in order, in a stand-in canvas that fills rectangles, paths and clips), and the lane's night still with reduced motion; `render/palette.test.ts` that the red outline reads under the lane's dark at least as well as under Nordmarka's trees; `render/warning.test.ts` and `alive/props.test.ts` that harmless things keep off the warning red (above); and `render/reduced.test.ts` the page's drawing after dusk, the rune's flight and the banner's fade.

@@ -180,6 +180,25 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   fetch more for every visitor; handed in from the scene's module (and the keys as strings), nothing split. *Read the chunks' list
   after adding a lazy module that imports from another.*
 
+- **A stepped picture snaps its camera** (order 37): the camera's jump on a notched phone (85 px in a frame) did not show in consecutive
+  stepped pictures at all, before or after the fix, because a stepped page places its camera where it means to be; the jump is the easing
+  camera's x lagging behind a turn. `?debug&live=<frames>` runs frames as the page runs them (the kit's loop takes the frame's time as given:
+  start it at nought, then a sixtieth of a second a call) and lists the camera's moves. *What exists only from frame to frame needs frames;
+  find the cause in a test (the frame test's walk) before photographing it.*
+- **A module the bundler is not told about lands in the first script** (order 37, again): the kit's `himviews.ts` (only the maze draws it) and
+  `safe.ts` (only `?debug` sets it) both went into the viking page's first script, 0.7 and 0.17 kB, because its `manualChunks` sends every
+  module it does not name to `index`. *After adding a kit module, build and read the first script's size; say in `vite.config.ts` where it goes.*
+- **A test's planted fault may miss a canvas** (order 37): the maze's scene draws its world's pass onto a scratch canvas and then its bursts
+  and its doorway's glow onto the street's own; the first watch recorded only the pass, and two planted faults (a burst with reduced motion,
+  a blinking glow) passed it. *Record every canvas a frame draws on; plant a fault on each.*
+- **The first frame of a curse is drawn a step behind** (order 37): the page draws each frame between the step before and the step after
+  (`alpha`), so the frame of the step the curse takes him on shows him where he was a step before. A watch that wants the world held must
+  start a frame later.
+- **A steady diagonal from a contradicting drawing** (order 37): with stickiness between two angles, a drawing that disagrees with the
+  way he sets off (his face as he walks up a diagonal) has to be resolved once, and an early, noisy estimate of the way resolved it wrongly
+  now and then; waiting for a steadier estimate only then fixed it. *Measure a sticky rule on every angle with noise before choosing its
+  numbers (a sweep took a minute).*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what
