@@ -19,7 +19,7 @@ import { drawLook } from "../render/looks";
 import { clock, moving, step4 } from "../alive/parts";
 import { drawFoe, FOE_INK, foeFrame, mark, SHADES, type Looks } from "../alive/foes";
 import { frame, paint, stamp as stampFrame, type Frame, type Piece } from "../alive/frames";
-import { calm as calmOutline, outlined } from "../render/sprite";
+import { THROWN, calm as calmOutline, outlined } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
@@ -1176,7 +1176,7 @@ export function ballArt(s: Serpent, t: number) {
   const x = Math.round(b.x);
   const y = Math.round(b.y);
   if (!view.reduced) for (let k = 1; k < 4; k++) R(x - Math.sign(b.vx) * k * 4, y - 1 + ((t + k) % 2), 2, 1, G.foam);
-  outlined(() => paint(BALL[view.reduced ? 0 : Math.floor(t / 4) % 2], x - 4, y - 4, 1, 8));
+  outlined(() => paint(BALL[view.reduced ? 0 : Math.floor(t / 4) % 2], x - 4, y - 4, 1, 8), THROWN);
   light(x - 4, y - 4, 8, 8, "soft", "rgba(190, 240, 120, 0.5)");
 }
 

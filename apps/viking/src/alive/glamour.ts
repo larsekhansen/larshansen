@@ -200,7 +200,15 @@ const GLOW = 5;
  * Its neon is the commonest of the glamour's colours in it; a white gull glows in its level's first neon.
  */
 export function glows(g: CanvasRenderingContext2D) {
-  invaders((s, x, y) => {
+  invaders((s, x, y, thrown) => {
+    // What is thrown (order 39): small, and its own neon glow lay right against its red outline (in Bjørvika's evening the
+    // bolt's outline stood 16.5 off its glow, CIEDE2000, against 52 by day). As over a level's own dark (order 32), a pixel
+    // of the dark between the outline and the glow, which starts a pixel further out: the red stands 43 off it.
+    if (thrown) {
+      g.drawImage((s.gap ??= gapOf(s)), x - 1, y - 1);
+      s.glowFar ??= farGlowOf(s);
+      return g.drawImage(s.glowFar, x - FAR + 2, y - FAR + 2);
+    }
     if (!s.glow) s.glow = glowOf(s);
     g.drawImage(s.glow, x - GLOW + 2, y - GLOW + 2);
   });
