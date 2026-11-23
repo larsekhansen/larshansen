@@ -39,7 +39,8 @@ export const NATURAL: Record<string, Natural> = {
   nester: { ink: WHITE_BIRD, leave: "fly" },
   goose: { ink: WHITE_BIRD, leave: "run" },
   swan: { ink: { ...WHITE_BIRD, [E.orange]: "#d8602a" }, leave: "swim" },
-  crow: { ink: { [E.plum]: "#33313a", [E.plumDark]: "#1f1d24", [E.plumLight]: "#4a4852" }, leave: "fly" },
+  // A hooded crow (order 38): grey mantle and belly, black head, wings and tail.
+  crow: { ink: { [E.plum]: "#33313a", [E.plumDark]: "#1f1d24", [E.plumLight]: "#8a8c92" }, leave: "fly" },
   magpie: { ink: { [E.plumDark]: "#1e2030", [E.plum]: "#2a2c40", [E.plumLight]: "#3a3e58", [E.white]: "#f0f0ea", [E.whiteShade]: "#c0c4c8", [E.poison]: "#2f5a52", [E.poisonLight]: "#4a7a70" }, leave: "fly" },
   coot: { ink: { [E.plumDark]: "#1e1e22", [E.plum]: "#2e2e34", [E.plumLight]: "#46464e", [E.white]: "#f0f0ea", [E.poison]: "#7a8a4a" }, leave: "swim" },
   duck: { ink: { [E.whiteShade]: "#a8a49c", [E.white]: "#d4d0c8", [E.poison]: "#2f6b3a", [E.poisonLight]: "#4f8f5a", [E.plum]: "#7a4a3a", [E.plumLight]: "#9a6450", [E.orange]: "#c87a3a", [E.orangeLight]: "#d0b048" }, leave: "run" },
@@ -56,7 +57,8 @@ export const NATURAL: Record<string, Natural> = {
   squirrel: { ink: { [E.orange]: "#b85a2a", [E.orangeLight]: "#d07a40", [E.plum]: "#704a30", [E.plumDark]: "#5a3a24", [E.plumLight]: "#8a6040" }, leave: "run" },
   crab: { ink: { [E.orangeLight]: "#a85a3a", [E.orange]: "#7a3e2a", [E.pink]: "#c08070" }, leave: "run" },
   salmon: { ink: { [E.pink]: "#c87f74", [E.plum]: "#5d6f7c", [E.plumLight]: "#8a98a4", [E.white]: "#d8dfe4", [E.whiteShade]: "#a8b4bc" }, leave: "dive" },
-  scooter: { ink: { [E.poison]: "#3a4046", [E.poisonLight]: "#5e666e", [E.plum]: "#1e1e22", [E.plumLight]: "#3a3a40", [E.pink]: "#c8c8c8" }, leave: "roll" },
+  // Its own colours (order 38): a deep petrol frame lit along its edges, graphite wheels; no hire company's.
+  scooter: { ink: { [E.poison]: "#2f6b78", [E.poisonLight]: "#3c7f8c", [E.plum]: "#2a2c30", [E.plumLight]: "#4a4e56", [E.plumDark]: "#2a2c30", [E.pink]: "#c8c8c8", [E.white]: "#e6ebe8", [E.orangeLight]: "#8a3a2a" }, leave: "roll" },
   trolley: { ink: { [E.pink]: "#b8bcc4", [E.plum]: "#6a6e78", [E.plumDark]: "#4a4e58", [E.plumLight]: "#9aa0aa", [E.orange]: "#b8403a", [E.orangeLight]: "#d06050" }, leave: "roll" },
   umbrella: { ink: { [E.pink]: "#3a4a6a", [E.plumLight]: "#5a6a8a", [E.plum]: "#2a3650", [E.orangeLight]: "#8a6a4a", [E.orange]: "#6a4e34" }, leave: "fly" },
   anthill: { ink: { [E.orangeLight]: "#a07a4a", [E.orange]: "#7a5a38" }, leave: "stay" },
