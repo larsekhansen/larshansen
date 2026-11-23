@@ -199,6 +199,21 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   now and then; waiting for a steadier estimate only then fixed it. *Measure a sticky rule on every angle with noise before choosing its
   numbers (a sweep took a minute).*
 
+- **A kept box squashes a drawing made for a grown one** (order 38): the gull, the crow and the scooter were drawn for the box a quarter
+  larger and drawn into the box seven levels keep, so `parts` moved every row in proportion and merged some: the gull's raised wing lost a
+  row, the scooter's wheels went under its deck. On the sheet at four times the gull was a lens; in place at phone size it was worse.
+  *A look met in kept boxes is drawn for that box (`fit`) or from its box's top (`above`); look at it in the level that keeps the box.*
+- **A sheet can draw what the page never does** (order 38): the census recorded a jumper's ripple and the track rat's ballast, which the
+  page draws plain inside the outline, and the figures tool outlined them with the rest, so the sheet showed "three dots" and "two rings" in
+  the warning red that no player sees. *Before judging a figure by its sheet, check the sheet draws it as the page does; when a tool
+  misleads, mend the tool (`noPage.plain`).*
+- **A beat can be measured** (order 38): "the wings do not read" became "two frames of the pigeon's beat are 5 pixels apart at their best
+  overlay", which found the wasp too and is now a test. *Overlay two frames the way that makes them most alike before counting: a bob of a
+  pixel otherwise counts as a whole silhouette's difference.*
+- **A script outside the repository that imports a workspace package by name** (`@larshansen/pixelkit/...`) made Bun look for it on the
+  npm registry (a 404; nothing was sent but the package's name). *From a scratch folder, import the repository's files by their path and run
+  `bun --no-install`.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

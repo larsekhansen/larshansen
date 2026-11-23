@@ -1,6 +1,6 @@
 # Start here
 
-State as of 23 November 2026, after order 37 was built (not yet reviewed or live); order 36 is live. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 23 November 2026, after order 38 was built (not yet reviewed or live); order 37 is live. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -53,6 +53,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 35 housekeeping and the figures | #83 | The viking suite under 300 s on the Pi with nothing it held lost; a sheet of every figure the game draws with `figures.json` naming each in both languages (`apps/viking/tools/figures.ts`); the encore's shouts under the harness; blank harness pictures found and named; perf at every place in one browser; Bjørvika's crane lights held by name; Holmenkollen's hedgehog a mountain hare |
 | 36 the maze catches up | #84 | The maze in the game's grain (ADR 0056): him from the fjord's own sheet with a torch, the mound redrawn as its own iron-bound place, adders in the warning red, the key and the door with the kit's read; the help line says what a finger does on a phone; nothing blinks with reduced motion; one stepped harness for both pages; the joins held; the figures' bosses outlined and the maze on the page of every figure. The maze's rules unchanged |
 | 37 up and down in the mound | #85 | In the maze his back going up a corridor and his face coming down one, a little sticky so a diagonal never flickers, his ghost's run by distance; the maze's reduced-motion test draws the scene itself; the maze page's first script 34.4 to 31.9 kB; a pretended notch and live frames in the harness, and the camera's jump on a notched phone gone (it eases for the ground ahead either way); bubbles off a notch; the maze's way out falls back where Back has nowhere to go; the figures' states in both languages |
+| 38 a third look | (waiting for review) | Every figure on one table: all 119 looked at on their sheets and every enemy in place, glammed and natural, marked and ranked; the e-scooter redrawn as a hire scooter, the gull, the crow and the pigeon on the wing beating through shapes, the salmon's water breaking, the maze's raven and mound-dweller with faces; a flyer's beat and every level's silhouettes held by a test (ADR 0046 amended). Drawing only |
 | 31 loose ends and a second look | #79 | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real

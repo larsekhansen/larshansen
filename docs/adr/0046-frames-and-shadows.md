@@ -58,3 +58,19 @@ order 23 implementer. Drawn at the grain Lars chose ([0045](0045-the-grain-same-
 - A shadow on the water: see above.
 - Redrawing every enemy as frames in this order: the scope Lars's choice set is him, the first three levels' enemies and the
   small things; the rest are listed in order 23's hand-back for later orders, a level at a time.
+
+## Amended by order 38 (23 November 2026): a beat is shapes, and every figure its own shape
+Order 38 laid every figure on one table (`apps/viking/tools/figures.ts`) and looked at each at four times and in place
+(`apps/viking/tools/review/o38/before.md`). A cycle of frames was not always a movement that reads: the gull on the wing, the crow
+(the gull's frames in plum) and Stortinget's pigeon beat their wings by a row or two over the back, squashed besides to the box
+their levels keep, so two frames of the pigeon's beat were 5 pixels apart at their best overlay; the scooter's wheels turned
+under its deck where nobody could see them. Decided, and held by `alive/frames.test.ts`:
+- **A flyer's beat is shapes.** Its wing goes up over its back, level, down under its belly and half up, bent at the wrist; its
+  body sinks as the wing lifts; any two of its frames 8 pixels or more apart at their best overlay (origin/main's pigeon and wasp
+  were 5).
+- **In every level each figure's silhouette is its own**: no two figures' still silhouettes within 12 pixels of each other.
+- **A look met in kept and grown boxes is drawn at its own height in both**: `fit` for the box its levels keep, or `above` (from
+  that many rows over whatever box it has), never squashed; its top within two pixels of the box's top as before.
+No box, speed or timing changed (the sloppy player's run files on seeds 201 to 260, every level and the encore, byte-identical).
+Redrawn: the e-scooter, the gull and the crow on the wing, the pigeon in flight, the salmon's water, the maze's raven and
+mound-dweller; the wasp's beat touched up (`apps/viking/tools/review/o38/after.md`).
