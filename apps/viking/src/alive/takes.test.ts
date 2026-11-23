@@ -5,7 +5,7 @@ import type { Phase } from "@larshansen/pixelkit/oslo";
 import { newPlay, type Play } from "../game/play";
 import { BUILT, loadLevel } from "../levels/index";
 import { deltaE, mixRgb, parseColour, tinted } from "../render/fields";
-import { bracteate, cheese, skilling, takeDark, takeLines } from "./things";
+import { RUNE_RIM, bracteate, cheese, runeRim, runeStone, skilling, takeDark, takeLines } from "./things";
 
 // Order 40, item 1 (ADR 0056 amended): after dusk what he takes has a line a pixel wide round it in the level's dark, as the maze's
 // rune key has; by day nothing changes. Order 39 measured the bracteate, the cheese and the skilling 14.5 to 18 off an evening's warm
@@ -132,5 +132,43 @@ describe("what he takes after dusk (order 40)", () => {
     expect(painted(() => takeLines(taken, "evening", false)).size).toBe(0);
     Object.assign(view, { camX: -10_000, camY: -10_000, w: 390, h: 844 });
     expect(painted(() => takeLines(p, "evening", false)).size).toBe(0);
+  });
+});
+
+// Order 41 (ADR 0044 amended, the planner's call): the rune's stone has a dark edge of its own, and on the night's dark ground it was dark on
+// dark (6.7 to 19.3 off what is round it at Langkaia's night and twilight, 13.5 at Østensjøvannet's). After dusk its lit side gets a pale
+// rim: the stone's own edge pixels on its top and left, where the light comes from, not a line all round; by day nothing (it is drawn in
+// `afterDark`, which the page calls under any sky but the day's).
+describe("the rune's stone after dusk (order 41)", () => {
+  test("its rim is its own edge's top and left pixels and no others, bobbing with the stone, with motion and without", () => {
+    for (const reduced of [false, true])
+      for (const t of [0, 20, 40, 63, 90]) {
+        view.reduced = reduced;
+        const stone = painted(() => runeStone(0, 0, "L", "lit", t, 0));
+        const rim = painted(() => runeRim(0, 0, t, 0));
+        view.reduced = false;
+        const ys = [...stone.keys()].map((k) => at(k)[1]);
+        const top = Math.min(...ys);
+        const left = Math.min(...[...stone.keys()].map((k) => at(k)[0]));
+        // Every rim pixel is one of the stone's own, on its top row or its left column.
+        for (const k of rim.keys()) {
+          expect(stone.has(k)).toBe(true);
+          const [x, y] = at(k);
+          expect(y === top || x === left).toBe(true);
+        }
+        // And all of them: its top row's and its left column's edge, twelve each.
+        expect(rim.size).toBe(24);
+      }
+  });
+
+  test("the rim stands 30 or more off the stone's own dark edge under every sky after dusk, and off the warning red and every role's colour", () => {
+    const rim = rgb(RUNE_RIM);
+    const stone = [...painted(() => runeStone(0, 0, "L", "lit", 0, 0)).entries()];
+    const top = Math.min(...stone.map(([k]) => at(k)[1]));
+    const edge = stone.find(([k]) => at(k)[1] === top)![1];
+    for (const phase of AFTER_DUSK) expect(deltaE(rim, tinted(rgb(edge), phase))).toBeGreaterThanOrEqual(30);
+    expect(deltaE(rim, rgb(ENEMY.red))).toBeGreaterThanOrEqual(30);
+    for (const [role, colours] of Object.entries(ROLES.COLOURS))
+      for (const c of colours) expect({ role, c, far: deltaE(rim, rgb(c)) >= 10 }).toEqual({ role, c, far: true });
   });
 });
