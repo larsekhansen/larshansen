@@ -723,7 +723,7 @@ const CLOSING = CLOSERS.map((c) => ({ c, foot: (Math.max(...STONES.filter((st) =
 /**
  * A wall about to close behind him: from the moment he is past it until it starts to rise (three tiles on),
  * the ground where it will stand trembles, cracks with its stones' tops showing through, and throws up dust
- * (order 20). Drawing only, in the time that is there; with reduced motion a still crack and the stones' tops.
+ * (order 20; larger since order 40). Drawing only, in the time that is there; with reduced motion a still crack and the stones' tops.
  */
 function closing(v: View) {
   const s = v.grounds as Ruins | null;
@@ -731,10 +731,17 @@ function closing(v: View) {
   for (const w of CLOSING) {
     if (v.him.x <= w.c * TILE + TILE / 2 || w.stones.some((i) => s.at[i] !== null || s.up[i])) continue;
     const x = w.c * TILE + shiver(v.t);
-    R(x + 1, w.foot - 1, TILE - 2, 1, mix(G.stoneDark, INK, 0.4));
-    R(x + 3, w.foot - 2, 4, 1, G.risen);
-    R(x + 9, w.foot - 2, 3, 1, G.risen);
-    if (!view.reduced) for (let k = 0; k < 4; k++) R(x + 2 + k * 4, w.foot - 3 - ((v.t + k * 5) % 7), 1, 1, G.risenLight);
+    // Order 40: the tops of its two stones showing through, two rows each, pale as a risen stone is (they were a pixel high and
+    // a few wide, the smallest tell in the game), a joint between them and the crack across the tile; the dust thrown higher.
+    const crack = mix(G.stoneDark, INK, 0.4);
+    R(x, w.foot - 1, TILE, 1, crack);
+    for (const sx of [1, 9]) {
+      R(x + sx, w.foot - 3, 6, 1, G.risenLight);
+      R(x + sx, w.foot - 2, 6, 1, G.risen);
+      R(x + sx + 5, w.foot - 2, 1, 1, G.stoneDark);
+    }
+    R(x + 7, w.foot - 3, 2, 2, crack);
+    if (!view.reduced) for (let k = 0; k < 6; k++) R(x + 1 + k * 3, w.foot - 4 - ((v.t + k * 5) % 9), 1, 1, G.risenLight);
   }
 }
 
