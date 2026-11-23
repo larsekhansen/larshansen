@@ -1,6 +1,6 @@
 # Roadmap
 
-As of 23 November 2026, after order 39 was reviewed and merged (PR #87). Change this file in the same change that makes it wrong.
+As of 23 November 2026, after order 40 was built (branch `takes-and-warns`, not yet reviewed). Change this file in the same change that makes it wrong.
 
 ## Status
 
@@ -8,12 +8,21 @@ As of 23 November 2026, after order 39 was reviewed and merged (PR #87). Change 
 |---|---|
 | Date | 23 November 2026 |
 | Last live | Order 39, the rest of the table, PR #87 (reviewed and merged on 23 November); before it orders 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 39, the rest of the table, branch `rest-of-the-table` |
+| Built, waiting for review | Order 40, what he takes, and what warns, branch `takes-and-warns` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | About 38 % used when order 39 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
+
+**Order 40, what he takes, and what warns** (`orders/40-what-he-takes-and-what-warns.md`, ADR 0044 amended), built on branch `takes-and-warns`,
+waiting for review. What order 39 left: after dusk a line of the level's dark round what he takes (the planner's call; the maze's rule; every
+skilling, cheese and bracteate met after dusk 31.6 or more off what is round it); every tell in order 39's table ranked in place by size,
+contrast and how long it stands (`apps/viking/tools/review/o40/tells.tsv`), and the four weakest made to read by drawing only (the track rat's
+snout over the third rail's cover, a closing wall's stones at Gamlebyen, the water stirring round a lily pad or a bundle about to sink, a gust's
+streaks at Ekeberg), held to a size by `render/tells.test.ts`; of the eight figures left at mark 2, five redrawn (the stove pipe, the pontoons,
+the post, Slottet's balusters, Akershus's fire baskets) and the track rat by its tell, the ski pole and the tube railing left with reasons. Each
+item, done or not, with its measures: `o40/after.md`.
 
 **Order 39, the rest of the table** (`orders/39-the-rest-of-the-table.md`, ADR 0040 amended), reviewed, merged and live
 (PR #87, 23 November). Nothing else is in flight. What order 38 left: the bishop's guard (a kettle hat, the halberd's blade), the coot (its white in the pale, which the glamour does not
@@ -109,10 +118,12 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Order 39 finished order 38's table (`apps/viking/tools/review/o39/`). What it left for a decision: what he takes against an evening sky is warm on
-warm (the bracteate and the cheese at Ekeberg and Langkaia, the skilling): the maze's own rule for a thing to take, a dark line round it, after
-dusk, would mend it and change every coin in every evening picture; and the track rat's tell (three dark stones on the third rail's red cover)
-is small with motion or without. The page of every figure is worth publishing again now: the figures orders 38 and 39 redrew are on it.
+Order 40 left (`apps/viking/tools/review/o40/after.md`): the fifth weakest tell, the welder's sparks at Bjørvika (18 pixels), and Bjørvika's own gust,
+the sinking stone at Gamlebyen and the heron, which share the giving-way tell order 40 mended for the pads and bundles; the rune's stone at night
+and twilight (its dark edge on the night's dark ground, 6.7 to 19.3; its rune is lit), which a dark line cannot help: a pale rim would be a
+decision about the look. The page of every figure is worth publishing again: five props and the track rat changed.
+
+Order 39 finished order 38's table (`apps/viking/tools/review/o39/`). What it left for a decision (what he takes against an evening sky, warm on warm; the track rat's small tell) order 40 took up: the maze's dark line round a thing to take after dusk, and the track rat's snout over the cover.
 
 Order 36 brought the maze up to the rest (idea 8) and order 37 gave him his back and his face there; the page of every figure can be published
 again with the maze's figures on it, in either language (`apps/viking/tools/figures.ts`: `figures.json` names every state in both since order 37). Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
@@ -171,7 +182,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

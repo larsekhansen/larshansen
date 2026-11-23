@@ -1,0 +1,37 @@
+tell	row of order 39's table	level	sky	steps it stands	pixels (motion)	contrast (motion)	pixels (reduced)	contrast (reduced)	score (motion)	score (reduced)	note
+wall-gamlebyen	a wall closing behind him	gamlebyen	night	25	13	14.1	10	6.0	0.8	0.2	
+jump-stortinget	the track rat's ballast	stortinget	day	60	40	4.8	40	4.8	1.9	1.9	a train passes behind it in this staging: the picture measure counts the train, not the stones (the stones: 6 pixels, dark on the red cover, on and off with motion)
+gives-pad	a lily pad about to sink	ostensjovannet	twilight	30	13	46.0	8	47.5	3.0	1.9	
+gust-ekeberg	a gust	ekeberg	evening	60	53	5.9	28	21.2	3.1	5.9	
+gives-bundle	a bundle about to sink	bygdoy	day	30	24	26.8	8	29.5	3.2	1.2	
+hazard-bjorvika	the welder's sparks	bjorvika	evening	60	18	20.1	17	20.1	3.6	3.4	
+jump-akerselva	the salmon's water	akerselva	day	60	28	20.1	24	30.9	5.6	7.4	
+boss-encore-ring	Loki's bite	encore	evening	90	75	8.5	25	42.9	6.4	10.7	Loki: the ring 251 pixels (order 39); the window missed most of it
+ledge-step	a ledge on a beat about to go (the plinth's step)	vigelandsparken	day	60	32	27.0	20	8.5	8.6	1.7	
+boss-nabolaget-windup	the plough revving	nabolaget	winter	60	216	5.6	69	9.3	12.1	6.4	boss: its window was not on it; its own drawing 522 to 1,912 pixels (order 39)
+slab	the loose slab	vigelandsparken	day	29	102	27.0	0	0.0	13.3	0.0	with reduced motion the slab does not shake (its cracks were there before)
+lean-sledger	a sledger about to set off	korketrekkeren	evening	65	135	15.1	133	15.4	20.4	20.5	him in the window (the route)
+boss-encore-rev	Loki's charge	encore	evening	60	248	8.5	314	67.4	21.1	211.6	Loki: his beacons 573 pixels (order 39); the motion picture caught a pose
+leave-lift	a lift about to leave	radhuset	day	40	44	80.3	14	80.3	23.6	7.5	
+leave-train	a train about to leave	stortinget	day	40	48	80.3	23	80.3	25.7	12.3	
+turn-swan	a swan turning	ostensjovannet	twilight	60	74	37.1	84	37.1	27.5	31.2	
+boss-nordmarka-windup	the troll's club	nordmarka	twilight	60	169	19.5	335	22.6	33.0	75.7	boss: its window was not on it (the measure is not its); its own drawing changes 779 pixels (order 39)
+windup-squirrel-nordmarka	a thrower's wind-up (squirrel)	nordmarka	twilight	60	138	26.2	138	26.2	36.2	36.2	
+windup-ringer-vigelandsparken	a thrower's wind-up (ringer)	vigelandsparken	day	60	76	52.7	70	52.7	40.1	36.9	
+boss-gamlebyen-tail	the serpent's tail	gamlebyen	night	148	401	10.3	0	0.0	41.3	0.0	its window was not on the fin; the fin 105 pixels (order 39)
+windup-squirrel-ekeberg	a thrower's wind-up (squirrel)	ekeberg	evening	60	256	19.3	250	19.0	49.4	47.5	
+windup-archer-gamlebyen	a thrower's wind-up (archer)	gamlebyen	night	60	265	18.7	254	15.8	49.6	40.1	
+windup-riveter-bjorvika	a thrower's wind-up (riveter)	bjorvika	evening	60	357	15.9	343	15.8	56.8	54.2	
+hazard-korketrekkeren	the crossing's barrier	korketrekkeren	evening	60	206	28.8	92	42.4	59.3	39.0	
+windup-gull-radhuset	a thrower's wind-up (gull)	radhuset	day	60	117	51.7	102	54.0	60.5	55.1	
+turn-guard	a guard waking	gamlebyen	night	40	485	18.9	485	18.9	61.1	61.1	him in the window as he passes
+jump-vigelandsparken	the Angry Boy's stamping	vigelandsparken	day	60	116	53.0	116	53.0	61.5	61.5	
+ledge-slottet	a ledge on a beat about to go (a banner)	slottet	17mai	50	437	18.7	54	17.3	68.1	7.8	the banners move with the crowd behind
+ledge-radhuset	a ledge on a beat about to go (a bell)	radhuset	day	60	363	19.6	236	17.5	71.1	41.3	
+windup-slinger-bygdoy	a thrower's wind-up (slinger)	bygdoy	day	60	172	43.7	168	43.7	75.2	73.4	
+boss-encore-club	Loki's club	encore	evening	60	476	20.2	442	67.4	96.2	297.9	Loki: his club 294 pixels (order 39)
+windup-kid-holmenkollen	a thrower's wind-up (kid)	holmenkollen	winterday	60	201	47.9	189	52.5	96.3	99.2	
+turn-statue	a statue walking	vigelandsparken	day	40	510	35.6	500	43.3	121.0	144.3	
+windup-nester-ostensjovannet	a thrower's wind-up (nester)	ostensjovannet	twilight	60	407	40.3	413	39.4	164.0	162.7	
+boss-gamlebyen-ring	the serpent's ring	gamlebyen	night	90	2898	82.2	2662	82.2	2382.2	2188.2	its window held more than the ring; the ring alone 355 to 373 pixels (order 39)
+boss-gamlebyen-rear	the serpent rearing	gamlebyen	night	90	3112	82.1	2662	82.2	2555.0	2188.2	its window held more than the throat; the throat 2,654 pixels (order 39)

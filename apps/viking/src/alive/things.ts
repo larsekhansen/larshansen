@@ -413,7 +413,7 @@ export function crowdFlag(x: number, y: number, k: number) {
 }
 
 // --- What he takes, after dusk (order 40, ADR 0044 amended) --------------------------------------------------------------
-// Order 39 measured what he takes in place: against an evening sky the bracteate, the cheese and the skilling stood 14.5 to 17
+// Order 39 measured what he takes in place: against an evening sky the bracteate, the cheese and the skilling stood 14.5 to 18
 // off what was round them, copper, amber and brown cheese on a warm evening ground. The maze's rule for a thing to take (its
 // rune key has a dark line round it, ADR 0056) carried here, after dusk only: a line a pixel wide round its shape, in the
 // level's dark. By day nothing changes. The rune's stone has a dark edge of its own and gets none.

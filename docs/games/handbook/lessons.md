@@ -235,6 +235,21 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   told by their role's mark (the paint, the cyan corners); a level pinned to day is never seen at night. *Rank by the sky it is met under, and
   say what the measure does not count.*
 
+- **A picture pair measures a tell only where nothing else moves through its window** (order 40): the track rat's tell measured 4.8 off
+  what was behind it because a train left the station behind it between the two pictures, and along a route he walks through the window
+  himself. What is exact is two builds' pictures at the same step (the world is the same, so every pixel that differs is the change), or the
+  drawing alone recorded in a test. *Stage a tell where its world is still, or compare builds, and look at the pair before believing it.*
+- **`?debug&look` on an upright phone puts the point two thirds down, and clamps at the level's edges** (order 40): a crop "round the middle" missed
+  the subject. `?debug&where=<wx>,<wy>` writes where the point is into the picture's two bottom-left pixels: read it, do not guess.
+- **By day nothing changed, so it need not be photographed three times** (order 40): `tools/shots.ts` starts a browser a picture (3 to 4 s on
+  the Pi); 648 pictures were cut to 372 by taking each place by day once. *Count the pictures before a batch, and take what cannot differ once.*
+- **A line round a shape is round its shape, not round everything drawn with it** (order 40): the skilling's glint, a star that crosses it six
+  steps in a hundred and fifty, sticks out of its frame; the line goes round the frame and the glint is drawn over it. The test found the
+  difference. *Say in the test what the shape is.*
+- **A tell that is state, not clock, needs the state before it to be drawn "a step before"** (order 40): a pad about to sink and a wall about to
+  close are on because of where he stands; drawing at `t - 1` with today's state shows the tell still. The test keeps a copy of the level's own
+  ground (`structuredClone`) and where he was, a step before it came on.
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

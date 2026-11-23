@@ -8,7 +8,7 @@ import { deltaE, mixRgb, parseColour, tinted } from "../render/fields";
 import { bracteate, cheese, skilling, takeDark, takeLines } from "./things";
 
 // Order 40, item 1 (ADR 0056 amended): after dusk what he takes has a line a pixel wide round it in the level's dark, as the maze's
-// rune key has; by day nothing changes. Order 39 measured the bracteate, the cheese and the skilling 14.5 to 17 off an evening's warm
+// rune key has; by day nothing changes. Order 39 measured the bracteate, the cheese and the skilling 14.5 to 18 off an evening's warm
 // ground; with the line each measured in place stands 30 or more off what is round it (`apps/viking/tools/review/o40/after.md`).
 
 type Px = Map<string, string>;

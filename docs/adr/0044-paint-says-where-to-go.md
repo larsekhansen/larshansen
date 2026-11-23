@@ -115,3 +115,20 @@ After dusk a light is its own colour over the dark (ADR 0054), so a red light re
 light at each jib's tip (`#ff5a44`), 10.3 off the warning red: outside the test's 10 by luck. `render/warning.test.ts` now holds every light
 every level registers: none within 10 of the warning red, and any within 12 named with why. The crane lights are named: real crane lights
 are red, a pixel each, far off, on a thing that does not hurt. The hue is kept.
+
+## Amended by order 40 (23 November 2026): what he takes has a dark line round it after dusk
+Decided by the planner on Lars's behalf ("carry on as planned"; a look, easy to undo). Order 39 measured what he takes in place: against an
+evening sky the bracteate, the cheese and the skilling stood 14.5 to 18 (CIEDE2000, its edge against the pixel beyond) off what was round them,
+copper, amber and brown cheese on the evening's warm ground (Langkaia, Ekeberg, Bjørvika). Now, under any sky but the day's, a thing he can still
+take has a line a pixel wide round its shape (every pixel beside it, left, right, above or below), the rule the maze's rune key has had since
+order 36 ([0056](0056-the-maze-in-the-games-grain.md)) and the means orders 32 and 39 used for what is thrown (a pixel of the dark round it). The
+line is **the level's dark**: the near-black of an enemy's inner line (`ENEMY.line`) as the sky's tint leaves it, a dark plum in the evening, an
+indigo at twilight, a navy at night, not black where the level is not. It is not the warning red (30 or more off it, and 10 or more off every
+role's colour), so a coin reads as treasure, not as something that hurts. Drawn in `afterDark` (`takeLines`, `alive/things.ts`, in `feel`'s file)
+round the skilling, the cheese and the bracteate on the screen; not round a bracteate found on an earlier visit (its pale ring hangs there: the page
+says so, `PAGE.owned`), and not round the rune's stone, whose own edge is a dark line already. By day nothing changes (the pictures are
+byte-identical). Measured in place as order 39 measured: every skilling, cheese and bracteate under every sky after dusk it is met under stands
+31.6 or more off what is round it (`apps/viking/tools/review/o40/after.md`); under Nordmarka's own dark everything outside his headlamp is covered,
+as before. The shadow side only (a line on the lower right) was tried as the lighter means and not chosen: it read as relief, but the cheese's lit
+top stayed warm on warm (27.9 at Ekeberg and Langkaia) and a skilling seen edge on became a dark stick. Held by `alive/takes.test.ts`. Undoing it is
+the call in `render/dusk.ts` and that test.
