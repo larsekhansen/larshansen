@@ -62,7 +62,7 @@ import type { Pad } from "./render/pad";
 import { PROGRESS_KEY, allRunes, clearLevel, findBracteate, fresh, furthestOpen, hasPole, hasProgress, hasShield, isOpen, readProgress, writeProgress, type Progress } from "./game/progress";
 import { RUNE_CHARS, RUNE_STROKES, type RuneChar } from "./game/runes";
 import { BUILT, ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER, loadLevel, loadedLevel } from "./levels/index";
-import { BARE, ahead, boardRows, kartDef, lineTwoOpen, under, type KartArt } from "./levels/kart";
+import { BARE, ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
@@ -273,18 +273,17 @@ function layoutBoards(s: Scene): Board[] {
       stations.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10, w: boardWidth(text) });
     } else boards.push(doorBoard(d, 13));
   }
-  // A station's board hangs a row lower where it would meet the one before it (order 41, `boardRows`).
-  boardRows(stations).forEach((row, i) => boards.push({ ...stations[i], y: stations[i].y + row * 13 }));
   // On the map, under the end of a line all cleared: its best times added up.
+  const lines: Board[] = [];
   if (s.map)
     [LINE_1, LINE_2].forEach((ids, n) => {
       const end = s.doors.find((d) => d.id === ids[ids.length - 1]);
       if (!end || ids.some((id) => progress.best[id] === undefined)) return;
       const text = kartWords?.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0))) ?? "";
-      const cx = end.x + end.w / 2;
-      const w = boardWidth(text);
-      boards.push({ text, cx, y: under(boards, cx, w), w });
+      lines.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
     });
+  // The map's look lays the stations' boards in rows so none meets another (order 41, `stationBoards`).
+  boards.push(...(stationBoards?.(stations, lines) ?? [...stations, ...lines]));
   s.signs.forEach((sg) => {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
@@ -307,6 +306,8 @@ const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
  * soon, so it is asked for as the page starts. Until it is here (or if it never comes) the map is bare.
  */
 let kartArt: KartArt | null = null;
+/** How the map's look lays the boards under its stations (order 41). */
+let stationBoards: (typeof import("./levels/kartArt"))["stationBoards"] | null = null;
 /** The map's words, which come with its look. */
 let kartWords: (typeof import("./levels/kartArt").KART_WORDS)["en"] | null = null;
 let kartLoading: Promise<void> | null = null;
@@ -315,6 +316,7 @@ const loadKart = () =>
     (m) => {
       kartArt = m.kartArt;
       kartWords = m.KART_WORDS[lang];
+      stationBoards = m.stationBoards;
     },
     (e) => {
       kartLoading = null;
