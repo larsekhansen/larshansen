@@ -248,10 +248,28 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
   // Drawn fifteen rows tall, to its box's height (it keeps the box it had before order 18).
   const y = Math.round(e.y) - e.h;
   const rowAt = (r: number) => Math.round((r * e.h) / 15);
-  if (l.ripple && !view.reduced && Math.floor(t / 6) % 2)
+  // Before it leaps the water over it swells and breaks (order 38: it was a line of foam blinking on and off, which read as a
+  // ring on the water): a hump of paler water ringed with foam, swelling and breaking on its own beat, its crest thrown up in
+  // drops every other beat. Drawn plain, as the water's, not the fish's: no outline.
+  if (l.ripple && !view.reduced)
     plain(() => {
-      R(Math.round(e.x - 6), Math.min(water, Math.round(e.y)) - 1, 12, 1, P.foam);
-      R(Math.round(e.x - 4), Math.min(water, Math.round(e.y)) - 2, 8, 1, mix(P.foam, P.water, 0.4));
+      const cx = Math.round(e.x);
+      const y = Math.min(water, Math.round(e.y));
+      const swell = mix(P.foam, P.water, 0.45);
+      if (Math.floor(t / 6) % 2) {
+        R(cx - 7, y - 1, 3, 1, P.foam);
+        R(cx - 4, y - 1, 8, 1, swell);
+        R(cx + 4, y - 1, 3, 1, P.foam);
+        R(cx - 3, y - 2, 6, 1, P.foam);
+        R(cx - 1, y - 3, 2, 1, swell);
+        R(cx - 5, y - 3, 1, 1, P.foam);
+        R(cx + 4, y - 3, 1, 1, P.foam);
+      } else {
+        R(cx - 6, y - 1, 2, 1, P.foam);
+        R(cx - 4, y - 1, 8, 1, swell);
+        R(cx + 4, y - 1, 2, 1, P.foam);
+        R(cx - 2, y - 2, 4, 1, P.foam);
+      }
     });
   if (l.up <= 0) return;
   // Past the top of its leap it turns over; at the top it lies level a moment, its nose the way it faces (order 23).
@@ -278,8 +296,22 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
       R(x + (e.dir > 0 ? c : 7 - c), yy, 1, 1, colors[ch]);
     })
   );
-  // The splash it leaves where it broke the surface.
-  if (water < Infinity && l.up < 14 && !view.reduced) plain(() => [-6, 5].forEach((dx) => R(Math.round(e.x) + dx, water - 2 - (l.up % 3), 2, 2, P.foam)));
+  // The splash it leaves where it broke the surface (order 38: two squares of foam, which read as rings): the water torn open
+  // either side of it in foam that spreads as it rises, and drops thrown up and out, falling back.
+  if (water < Infinity && l.up < 14 && !view.reduced)
+    plain(() => {
+      const cx = Math.round(e.x);
+      const k = l.up;
+      const out = k >> 2;
+      R(cx - 8 - out, water - 1, 4, 1, P.foam);
+      R(cx + 4 + out, water - 1, 4, 1, P.foam);
+      R(cx - 5 - out, water - 2, 2, 1, mix(P.foam, P.water, 0.45));
+      R(cx + 3 + out, water - 2, 2, 1, mix(P.foam, P.water, 0.45));
+      for (const [dx, up] of [[-6, 1], [6, 1], [-4, 2], [4, 2]]) {
+        const dy = 2 + Math.round(up * (k * 0.6 - k * k * 0.035));
+        R(cx + Math.round(dx * (1 + k / 10)) - (dx < 0 ? 1 : 0), water - dy - 1, 1, 1, P.foam);
+      }
+    });
 }
 
 // --- Art ------------------------------------------------------------------------------------------------
