@@ -1,10 +1,12 @@
-import { COIN, FEATHER, FIRE, FLAG, FOOD, GHOST, INK, METAL, PALETTE, PARADE, SKIN, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
+import { COIN, ENEMY, FEATHER, FIRE, FLAG, FOOD, GHOST, INK, METAL, PALETTE, PARADE, SKIN, STONE, WHITE, WOOL_SHADE } from "@larshansen/pixelkit/palette";
 import { POLE, HOIST_STEPS, type Flag } from "@larshansen/pixelkit/checkpoint";
 import { FEATHERS } from "@larshansen/pixelkit/feather";
-import { R, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, TINT, light, mix, view } from "@larshansen/pixelkit/paint";
+import type { Phase } from "@larshansen/pixelkit/oslo";
+import type { Play } from "../game/play";
 import { runeCells, type RuneChar } from "../game/runes";
 import { SHEEP, type Sheep } from "../game/sheep";
-import { frame, lit, paint, shade, stamp, type Frame } from "./frames";
+import { frame, lit, paint, pixels, shade, stamp, type Frame } from "./frames";
 
 // The small things, drawn as frames (orders 23 and 24; way 3 of `docs/games/GRAIN.md`, ADR 0045): a skilling that turns
 // in four frames and glints now and then, a slice of brown cheese with its cut face lit; and (order 24) the bench, the
@@ -22,10 +24,13 @@ export const SKILLING: Frame[] = [
   frame("skilling, its back", COPPER, [["..dc.", ".dcG.", ".dcc.", ".dcc.", "..d.."]])
 ];
 
+/** Which of its frames a skilling shows at `t` (each turns on its own clock, by `seed`). */
+const skillingFrame = (t: number, seed: number) => SKILLING[Math.floor((t + seed * 7) / 10) % 4];
+
 /** A skilling at (x, y), turning on the clock (each its own, by `seed`); now and then a glint crosses it. */
 export function skilling(x: number, y: number, t: number, seed: number) {
   const k = t + seed * 7;
-  stamp(SKILLING[Math.floor(k / 10) % 4], x, y);
+  stamp(skillingFrame(t, seed), x, y);
   // The glint: a four-pointed star at its top left, for six steps in every hundred and fifty, its own moment each.
   const g = (k * 3 + seed * 41) % 150;
   if (g < 6 && !view.reduced) {
@@ -38,9 +43,12 @@ const CHEESE_INK: Record<string, string> = { H: lit(FOOD.cheeseLight, 0.35), h: 
 /** A slice of brown cheese, 12 x 7: the cut face lit at its top, the slicer's grain across it, the rind darker. */
 export const CHEESE = frame("cheese", CHEESE_INK, [[".HHhhhhhhhh.", "Hhhhhhhhhhhh", "hccgccccgccc", "ccccccgccccd", "cgccccccccdd", "ccccgccccddd", "dDDDDDDDDDDD"]]);
 
+/** The top of the brown cheese drawn at (x, y): it bobs a pixel. */
+const cheeseTop = (y: number, t: number) => y + 2 + (view.reduced ? 0 : Math.round(Math.sin(t * 0.07)));
+
 /** The brown cheese at (x, y), bobbing a pixel: a life. */
 export function cheese(x: number, y: number, t: number) {
-  const top = y + 2 + (view.reduced ? 0 : Math.round(Math.sin(t * 0.07)));
+  const top = cheeseTop(y, t);
   stamp(CHEESE, x, top);
   light(x, top, 12, 7, "soft");
 }
@@ -95,12 +103,16 @@ const BRACTEATE_MAP = Array.from({ length: 12 }, (_, y) =>
   }).join("")
 );
 
+/** How wide the bracteate is drawn at `steps` (turning, narrower, then full) and how far it bobs. */
+function bracteateTurn(steps: number) {
+  const turn = view.reduced ? 1 : Math.abs(Math.cos(steps * 0.03));
+  return { w: Math.max(2, Math.round(12 * (0.35 + 0.65 * turn))), bob: view.reduced ? 0 : Math.round(Math.sin(steps * 0.06)) };
+}
+
 /** The bracteate at (x, y), turning slowly (narrower, then full), bobbing, a glint crossing it now and then. */
 export function bracteate(x: number, y: number, steps: number) {
-  const turn = view.reduced ? 1 : Math.abs(Math.cos(steps * 0.03));
-  const w = Math.max(2, Math.round(12 * (0.35 + 0.65 * turn)));
+  const { w, bob } = bracteateTurn(steps);
   const left = x + Math.floor((12 - w) / 2);
-  const bob = view.reduced ? 0 : Math.round(Math.sin(steps * 0.06));
   // The loop it hangs from.
   R(x + 5, y - 2 + bob, 2, 2, COIN.goldDark);
   R(x + 5, y - 2 + bob, 1, 1, GOLD_INK.L);
@@ -398,4 +410,90 @@ export const HAND_WAVES: readonly (readonly number[])[] = [
 const CROWD_FLAGS = HAND_WAVES.slice(0, 2).map((dip, k) => frame(k ? "a waved flag, dipping" : "a waved flag", CROWD_FLAG_INK, [Array(8).fill("p")], [handFlag(dip), 1, 0]));
 export function crowdFlag(x: number, y: number, k: number) {
   stamp(CROWD_FLAGS[k], x, y);
+}
+
+// --- What he takes, after dusk (order 40, ADR 0044 amended) --------------------------------------------------------------
+// Order 39 measured what he takes in place: against an evening sky the bracteate, the cheese and the skilling stood 14.5 to 17
+// off what was round them, copper, amber and brown cheese on a warm evening ground. The maze's rule for a thing to take (its
+// rune key has a dark line round it, ADR 0056) carried here, after dusk only: a line a pixel wide round its shape, in the
+// level's dark. By day nothing changes. The rune's stone has a dark edge of its own and gets none.
+
+/**
+ * Which sides of a thing the line goes round: all of it (chosen), or the shadow side only, its lower right, away from the light
+ * (tried in order 40 as the lighter means and not chosen: the cheese's lit top stayed warm on warm, 27.9 at Ekeberg and Langkaia).
+ */
+export const TAKE_LINE: { shadow: boolean } = { shadow: false };
+
+/**
+ * The level's dark under its sky: the near-black of an enemy's inner line (`ENEMY.line`) as the sky's tint leaves it, so a dark
+ * plum in the evening, an indigo at twilight, a navy at night: dark, and not black where the level is not black.
+ */
+export function takeDark(phase: Phase): string | null {
+  const tint = TINT[phase];
+  if (!tint) return null;
+  const [r, g, b, a] = tint.match(/[\d.]+/g)!.map(Number);
+  return mix(ENEMY.line, `#${[r, g, b].map((c) => c.toString(16).padStart(2, "0")).join("")}`, a);
+}
+
+const lines = new Map<string, Frame>();
+/**
+ * The line round a frame's shape in `colour`, from a pixel above and left of its origin: every pixel beside the shape (left,
+ * right, above or below it) that the shape does not paint; with `TAKE_LINE.shadow`, only those right of it and under it and
+ * the corner between. Made once a shape and colour, and copied (`stamp`).
+ */
+export function lineRound(f: Frame, colour: string): Frame {
+  const key = `${f.name}${colour}${TAKE_LINE.shadow}`;
+  let l = lines.get(key);
+  if (!l) {
+    const on = new Set<string>();
+    pixels(f, 1, f.x1, (c, r) => void on.add(`${c},${r}`));
+    const is = (c: number, r: number) => on.has(`${c},${r}`);
+    const beside = (c: number, r: number) => (TAKE_LINE.shadow ? is(c - 1, r) || is(c, r - 1) || is(c - 1, r - 1) : is(c - 1, r) || is(c + 1, r) || is(c, r - 1) || is(c, r + 1));
+    const rows: string[] = [];
+    for (let r = -1; r <= f.y1; r++) {
+      let row = "";
+      for (let c = -1; c <= f.x1; c++) row += !is(c, r) && beside(c, r) ? "k" : ".";
+      rows.push(row);
+    }
+    lines.set(key, (l = frame(`${f.name}, its line`, { k: colour }, [rows])));
+  }
+  return l;
+}
+
+const turned = new Map<number, Frame>();
+/** The bracteate's shape as drawn `w` wide, with the loop it hangs from, from the loop's top row and the disc's left. */
+function bracteateShape(w: number): Frame {
+  let f = turned.get(w);
+  if (!f) {
+    const loop = 5 - Math.floor((12 - w) / 2);
+    const rows = Array.from({ length: 14 }, (_, r) =>
+      Array.from({ length: Math.max(w, loop + 2) }, (_, c) => (r < 2 ? (c === loop || c === loop + 1 ? "g" : ".") : c < w && BRACTEATE_MAP[r - 2][Math.min(11, Math.floor((c * 12) / w))] !== "." ? "g" : ".")).join("")
+    );
+    turned.set(w, (f = frame(`bracteate, ${w} wide`, { g: COIN.gold }, [rows])));
+  }
+  return f;
+}
+
+/**
+ * After dusk, a line of the level's dark round everything he can still take that is on the screen: each skilling, the cheese and the
+ * bracteate (`owned`: found on an earlier visit, so only its pale ring hangs there, and it has none); where the drawing puts each, at
+ * this step (`render/dusk.ts` calls it, in `afterDark`). The rune's stone has a dark edge of its own all round already.
+ */
+export function takeLines(p: Play, phase: Phase, owned: boolean) {
+  const dark = takeDark(phase);
+  if (!dark) return;
+  const seen = (x: number, y: number) => x > view.camX - 24 && x < view.camX + view.w + 8 && y > view.camY - 24 && y < view.camY + view.h + 8;
+  const t = p.t;
+  p.skilling.forEach((s, i) => {
+    const x = s.box.x + 1;
+    const y = s.box.y + 1;
+    if (s.at === null && seen(x, y)) stamp(lineRound(skillingFrame(t, i), dark), x - 1, y - 1);
+  });
+  const c = p.cheese;
+  if (c && c.at === null && seen(c.box.x, c.box.y)) stamp(lineRound(CHEESE, dark), c.box.x - 1, cheeseTop(c.box.y - 2, t) - 1);
+  const b = p.bracteate;
+  if (b && p.bracteateAt === null && !owned && seen(b.x, b.y)) {
+    const { w, bob } = bracteateTurn(t);
+    stamp(lineRound(bracteateShape(w), dark), b.x + Math.floor((12 - w) / 2) - 1, b.y - 3 + bob);
+  }
 }

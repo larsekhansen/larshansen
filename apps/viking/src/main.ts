@@ -1476,8 +1476,8 @@ function foe(e: Enemy, v: View) {
 /** Something thrown, outlined as its thrower is. */
 const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)), THROWN);
 
-/** What `afterDark` (in feel's file) draws with of the page's own: an enemy, something thrown, the paint on what he stands on. */
-const PAGE = { foe, thrown, standing: (v: View) => standing(scene.play, v.alpha, leaving) };
+/** What `afterDark` (in feel's file) draws with of the page's own: an enemy, something thrown, the paint on what he stands on, the bracteate found before. */
+const PAGE = { foe, thrown, standing: (v: View) => standing(scene.play, v.alpha, leaving), owned: () => owned(scene.play) };
 /** A lift or a train about to set off: its stripe flashes (`render/feel.ts`). */
 const leaving = (d: CarrierDef, t: number) => !!feel?.leaving(d, t);
 
