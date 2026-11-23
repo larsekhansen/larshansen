@@ -1,4 +1,4 @@
-import { frame, paint, type Frame } from "@larshansen/pixelkit/frames";
+import { frame, pixels, type Frame } from "@larshansen/pixelkit/frames";
 import { R, mix, view } from "@larshansen/pixelkit/paint";
 import { COIN, ENEMY, PALETTE } from "@larshansen/pixelkit/palette";
 
@@ -39,26 +39,65 @@ const KEY_ROWS = [".wGG.", "GG.Gg", "GuuuG", "Gg.gg", ".ggg.", "..I..", "..i..",
 const KEY_INK = { G: COIN.gold, g: COIN.goldDark, w: COIN.shine, u: P.runeGlow, I: lit(P.iron, 0.45), i: P.iron, j: shade(P.iron, 0.4) };
 export const KEY = frame("rune key", KEY_INK, [KEY_ROWS]);
 
-/** The raven on its wall, facing right: a blue-black sheen on its lit side, a grey beak, an eye; its head turns on its own. */
-const RAVEN_HEAD = ["..kKk..", ".kKKebb", "kkKkkB."];
-const RAVEN_BODY = ["kKkkkk.", ".kkkd..", "..f.f.."];
-const RAVEN_INK = { k: P.raven, K: "#33364f", d: "#0b090e", e: P.ravenEye, b: P.ravenBeak, B: shade(P.ravenBeak, 0.35), f: P.ravenBeak };
+/**
+ * The raven on its wall, perched, facing right (order 38, redrawn: order 36's was a few dark pixels, 7 x 6, lost on the dark
+ * stone). A raven as one sits on a wall: a heavy head with the raven's great bill, grey and hooked, a pale eye that can be
+ * found, shaggy feathers at its throat; its body leaning forward, wings folded, a long wedge of tail hanging behind and down,
+ * its feet gripping the wall's edge. Black lit from the top left in the blue-violet sheen a raven's feathers take from a torch,
+ * so it stands off the slate it sits on. 10 x 13: the head (8 x 5) a piece of its own, so it turns toward him, and blinks.
+ */
+const RAVEN_HEAD = ["..SKKk..", ".SKkkkk.", "SKkkeBbb", ".kkkkBb.", "..kkkk.."];
+const RAVEN_BODY = ["...SKKkk..", "..SKKkkkkk", ".SKkkkkkkd", ".Kkkkkkkdd", "Kkkkkkkdd.", "kkkkkkdd..", ".kkdkdd...", "dd..f.f...", "d...ff.ff."];
+const RAVEN_INK = { k: P.raven, K: "#33364f", S: "#525884", d: "#0b090e", e: P.ravenEye, b: P.ravenBeak, B: shade(P.ravenBeak, 0.35), f: "#6a645a" };
 export const RAVEN = {
   head: frame("raven's head", RAVEN_INK, [RAVEN_HEAD]),
   blink: frame("raven's head, blinking", RAVEN_INK, [RAVEN_HEAD.map((r) => r.replace("e", "k"))]),
   body: frame("raven", RAVEN_INK, [RAVEN_BODY])
 };
-
-/** The mound-dweller on his stone seat, 9 x 12: a grey hood and cloak lit on its left edge, his face in shadow. */
-const SEATED = ["..ggggg..", ".ggggggg.", "ggdddddgg", "ggdddddgg", ".gdddddg.", ".ggggggg.", "ggggggggg", "ggGgggGgg", "ggGgggGgg", "ggGgggGgg", "gGGgggGGg", "GGG...GGG"];
-const litLeft = (rows: string[]) =>
-  rows.map((row) => [...row].map((ch, i) => (ch === "g" && (i === 0 || row[i - 1] === ".") ? "L" : ch === "g" && (i === row.length - 1 || row[i + 1] === ".") ? "G" : ch)).join(""));
-export const DWELLER = frame("mound-dweller", { g: "#a3a9a6", L: "#c2c7c4", G: "#7f8582", d: "#1b1c22" }, [litLeft(SEATED)]);
-
-/** Draws a figure's frame in world pixels, facing right or mirrored about its own width. */
-export function put(f: Frame, x: number, y: number, facing = 1) {
-  paint(f, x, y, facing, f.x1);
+/** The raven's size, and where its head sits on its body (over its breast, at the front, whichever way it faces). */
+export const RAVEN_W = 10;
+export const RAVEN_H = 13;
+/** The raven's pixels, row by row ("" nothing): its body facing `facing`, its head turned toward `look`, blinking or not. */
+export function ravenGrid(facing: 1 | -1, look: 1 | -1, blink: boolean): string[][] {
+  const g = Array.from({ length: RAVEN_H }, () => Array<string>(RAVEN_W).fill(""));
+  pixels(RAVEN.body, facing, RAVEN.body.x1, (c, r, colour) => (g[r + 4][c] = colour));
+  const head = blink ? RAVEN.blink : RAVEN.head;
+  const hx = facing > 0 ? 2 : 0;
+  pixels(head, look, head.x1, (c, r, colour) => (g[r][c + hx] = colour));
+  return g;
 }
+/** Draws the raven at (x, y), a rectangle a pixel (the maze keeps it as a piece and copies it: `render.ts`). */
+export function drawRavenAt(x: number, y: number, facing: 1 | -1, look: 1 | -1, blink: boolean) {
+  ravenGrid(facing, look, blink).forEach((row, r) => row.forEach((c, k) => c && R(x + k, y + r, 1, 1, c)));
+}
+
+/**
+ * The mound-dweller on his stone seat, 9 x 12 (order 38, redrawn: order 36's was a grey block whose eyes the page drew apart
+ * from it). The hood's peak and its opening rounded round a face in shadow, two pale points of eyes in it that follow him; the
+ * cloak falling from his shoulders in folds, lit on its left, his pale hands folded in his lap, its hem parted over his feet.
+ * Three frames: his eyes to his left, ahead and to his right.
+ */
+const SEATED = [
+  "..LLggG..",
+  ".LgggggG.",
+  "LgdddddgG",
+  "LgdddddgG",
+  ".gdddddG.",
+  ".LggdggG.",
+  "LgggggggD",
+  "LgGgggGgD",
+  "LgGgggGGD",
+  "LggHHhgGD",
+  "LgGgggGGD",
+  "DGD...DGD"
+];
+const DWELLER_INK = { g: "#a3a9a6", L: "#c2c7c4", G: "#7f8582", D: "#5f6562", d: "#1b1c22", e: "#e2dcc0", H: "#c8bfae", h: "#9a9282" };
+/** The mound-dweller with his eyes to his left (-1), ahead (0) or to his right (1). */
+export const DWELLER: Record<-1 | 0 | 1, Frame> = {
+  [-1]: frame("mound-dweller, looking left", DWELLER_INK, [SEATED], [["e.e"], 2, 3]),
+  0: frame("mound-dweller", DWELLER_INK, [SEATED], [["e.e"], 3, 3]),
+  1: frame("mound-dweller, looking right", DWELLER_INK, [SEATED], [["e.e"], 4, 3])
+};
 
 // --- the adders --------------------------------------------------------------------------------------------------------
 

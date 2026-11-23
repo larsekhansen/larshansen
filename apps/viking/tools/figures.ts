@@ -272,8 +272,16 @@ async function enemies(): Promise<Map<string, Row[]>> {
     const blocks = seen.map(([level, c]) => ({ level, states: states(c) }));
     const first = seen[0][1];
     const rest = [[ENEMY_STATES.natural, first.natural, ROLES.calm], ...(first.marks ? [[ENEMY_STATES.marks, [first.marks], ""] as const] : [])] as const;
-    // Each state's frames on one grid, so they line up along the row.
-    const take = (ds: readonly { rects: Rect[] }[], rim: string) => grids(ds.map((d) => d.rects)).map((g) => (rim ? outline(g, rim) : pad(g)));
+    // Each state's frames on one grid, so they line up along the row; what the look draws plain (a jumper's ripple, its splash)
+    // laid over the outlined shape without an outline, as the page draws it (order 38).
+    const take = (ds: readonly { rects: (Rect & { plain?: true })[] }[], rim: string) => {
+      const both = grids(ds.flatMap((d) => [d.rects.filter((r) => !r.plain), d.rects.filter((r) => r.plain)]));
+      return ds.map((_, i) => {
+        const g = rim ? outline(both[2 * i], rim) : pad(both[2 * i]);
+        both[2 * i + 1].forEach((row, y) => row.forEach((c, x) => c && (g[y + 2][x + 2] = c)));
+        return g;
+      });
+    };
     const rows: (Row & { levels: string[] })[] = [];
     for (const b of blocks) {
       const mine = b.states.map(([state, ds, rim]) => ({ state, frames: take(ds, rim) }));
@@ -505,7 +513,8 @@ function maze(): Map<string, Row[]> {
     ])
   );
   const frameRow = (fs: Frame[]) => ({ frames: fs.map((f) => pad(frameGrid(f, f.x1, f.y1))) });
-  out.set("maze-raven", named("maze-raven", [frameRow([mazeFigures.RAVEN.head, mazeFigures.RAVEN.blink]), frameRow([mazeFigures.RAVEN.body])]));
+  // The raven whole (order 38): perched, its head toward him, turned the other way, blinking.
+  out.set("maze-raven", named("maze-raven", [{ frames: grids([[1, 1, false], [1, -1, false], [1, 1, true]].map(([f, l, b]) => record(() => mazeFigures.drawRavenAt(40, 40, f as 1, l as 1, b as boolean)))).map(pad) }]));
   out.set("maze-stone", named("maze-stone", [frameRow([mazeFigures.STONES.unlit, mazeFigures.STONES.lit, mazeFigures.STONES.flare])]));
   out.set("maze-key", named("maze-key", [frameRow([mazeFigures.KEY])]));
   const portal = { c: 2, r: 2, twin: { c: 0, r: 0 }, pair: 0 };
@@ -519,7 +528,7 @@ function maze(): Map<string, Row[]> {
       ]).map(pad)
     }
   ]);
-  out.set("maze-dweller", named("maze-dweller", [frameRow([mazeFigures.DWELLER])]));
+  out.set("maze-dweller", named("maze-dweller", [frameRow([mazeFigures.DWELLER[-1], mazeFigures.DWELLER[0], mazeFigures.DWELLER[1]])]));
   return out;
 }
 
