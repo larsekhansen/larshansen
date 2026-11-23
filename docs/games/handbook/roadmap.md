@@ -1,16 +1,16 @@
 # Roadmap
 
-As of 23 November 2026, after order 37 was built (not yet reviewed or live). Change this file in the same change that makes it wrong.
+As of 23 November 2026, after order 37 was reviewed and merged (PR #85). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 22 November 2026 |
-| Last live | Order 36, the maze catches up, PR #84 (built, reviewed and merged on 22 November); before it orders 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 37, up and down in the mound, PR #85 (reviewed and merged on 23 November); before it orders 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Order 37, up and down in the mound, and the phone's notch, branch `up-and-down` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 27 % used when order 36 was reviewed on 22 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 30 % used when order 37 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
