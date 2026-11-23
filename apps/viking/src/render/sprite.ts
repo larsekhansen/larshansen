@@ -54,7 +54,7 @@ export const lastShape = () => ({ rects, colours, rim: rimNow });
 
 /** Inside an outlined drawing: draws `draw` straight onto the screen, with no outline (a ripple, a splash, a nest). */
 export function plain(draw: () => void) {
-  if (!onto) return draw();
+  if (!onto) return noPage.plain ? noPage.plain(draw) : draw();
   target(onto);
   draw();
   target(asCtx);
@@ -70,8 +70,11 @@ export function calm() {
  * drew kept for `eyes`. `rim`: the outline's colour, the warning red unless given (`ROLES.calm` for what cannot
  * hurt him); the drawing may say it is calm itself (`calm()`). Outside a browser it just draws.
  */
-/** Where there is no page, a tool may be handed each shape outlined and its rim, to outline it as the page does (`tools/figures.ts`, order 36). */
-export const noPage: { outline?: (draw: () => void, rim: string) => void } = {};
+/**
+ * Where there is no page, a tool may be handed each shape outlined and its rim, to outline it as the page does (`tools/figures.ts`,
+ * order 36), and what is drawn plain inside one (a ripple, a splash: order 38), to leave it without the outline as the page does.
+ */
+export const noPage: { outline?: (draw: () => void, rim: string) => void; plain?: (draw: () => void) => void } = {};
 
 export function outlined(draw: () => void, who?: object, rim: string = ENEMY.warning) {
   if (typeof document === "undefined" || onto) return !onto && noPage.outline ? noPage.outline(draw, rim) : draw();
