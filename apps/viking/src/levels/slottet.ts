@@ -783,14 +783,11 @@ function farKerbs() {
 function balusters(c0: number, c1: number, r: number) {
   const y = r * TILE;
   R(c0 * TILE, y - 9, (c1 - c0 + 1) * TILE, 2, MASONRY.worn);
-  // Each baluster turned (order 28): lit on its left, shaded on its right, narrower at its waist.
-  for (let x = c0 * TILE + 2; x < (c1 + 1) * TILE - 2; x += 4)
-    prop("baluster", [BALUSTER], "", 2, 7, x, y - 7, (b) => {
-      for (let k = 0; k < 7; k++) {
-        dot(b, 0, k, k === 3 ? null : tone(BALUSTER, 3));
-        dot(b, 1, k, k === 0 ? tone(BALUSTER, 2) : tone(BALUSTER, 1));
-      }
-    });
+  // Each baluster turned (order 28; order 40: it was a bar two wide, nicked at its waist): a vase three wide, lit on its left and
+  // shaded on its right, under its square cap a narrow neck, the swelling of its body, a neck again and its foot.
+  const BODY = [[3, 2, 1], [-1, 2, -1], [3, 2, 1], [3, 2, 1], [-1, 2, 1], [-1, 2, -1], [3, 2, 0]];
+  for (let x = c0 * TILE + 2; x < (c1 + 1) * TILE - 3; x += 4)
+    prop("baluster", [BALUSTER], "", 3, 7, x, y - 7, (b) => BODY.forEach((row, k) => row.forEach((i, c) => dot(b, c, k, i < 0 ? null : tone(BALUSTER, i)))));
 }
 /** A crowd barrier's steel, in the grey it was. */
 const BARRIER: Stuff = { name: "barrier", ramp: [mix(P.iron, INK, 0.45), mix(P.iron, INK, 0.25), mix(P.iron, INK, 0.1), P.iron] };
