@@ -593,13 +593,18 @@ body.touch.in-maze .help {
   box-sizing: border-box;
 }
 
-/* A level's end counts what he took with the game's own pictures beside the words (order 41): the bracteate, the skilling. */
+/* A level's end counts what he took with the game's own pictures beside the words (order 41): the bracteate, the skilling. Each hangs
+   to the left of its line, taking no room from it (its width and gap given back by the margin), so no line wraps where it did not. */
 #finish-gold::before,
 #finish-coins::before {
   content: "";
   display: inline-block;
-  margin-right: 6px;
+  margin: 0 6px 0 -18px;
   vertical-align: -1px;
+}
+
+#finish-coins::before {
+  margin-left: -16px;
 }
 
 #finish-more.home:not([hidden]) {
