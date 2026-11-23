@@ -160,7 +160,9 @@ function sent(params: URLSearchParams, help: HTMLElement) {
 export function afterStart(params: URLSearchParams, frame: (whole?: boolean) => void, help: HTMLElement) {
   // In a frame (`tools/shots.ts --wait`, order 35), the page tells the frame round it once its picture is drawn, so the picture
   // is taken then, not after a guess of how long the level's files take to come (a guess too short gave blank pictures).
-  void Promise.resolve(begin(params, frame, help))
+  // `?debug&natural` (order 38): every invader as its natural self, as the rune's ring of daylight leaves it, drawn again before the rest.
+  const natural = params.has("natural") ? import("./render/feel").then((m) => ((m.LIFT_ALL.on = true), frame())) : undefined;
+  void (natural ? natural.then(() => begin(params, frame, help)) : Promise.resolve(begin(params, frame, help)))
     .catch(() => undefined)
     .then(() => window.parent !== window && window.parent.postMessage("viking:drawn", "*"));
 }

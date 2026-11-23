@@ -9,7 +9,7 @@ import { snap, sx, sy, unit, textCtx } from "@larshansen/pixelkit/text";
 import { COLS, LEVELS, ROWS, findTiles, finishOf, isWall, mapInfo, ravenTile, startCentre, type Cell, type LevelDef, type Portal } from "./levels";
 import { ENTRANCE, FACE, FRAME, VOID, faceAt, hasTorch, hash, liningAt, stillPixels } from "./look";
 import { drawFeather } from "./feather";
-import { DWELLER, KEY, RAVEN, STONES, STONE_H, STONE_RUNE, STONE_W, drawAdder, put } from "./figures";
+import { DWELLER, KEY, RAVEN_H, RAVEN_W, STONES, STONE_H, STONE_RUNE, STONE_W, drawAdder, ravenGrid } from "./figures";
 import type { View } from "./heading";
 import { BODY, FALL_STEPS, levelDef, sliderRise, sliderSolid, sliderWarning, type Stone } from "./rules";
 
@@ -152,15 +152,20 @@ function curseColor(f: Frame) {
 const stoneOrigin = (s: Stone) => ({ x: s.c * TILE + 4, y: s.r * TILE + 2 });
 
 function drawRaven(a: Art, f: Frame) {
-  const x = a.raven.c * TILE + 4;
-  const y = a.raven.r * TILE + 2;
+  const x = a.raven.c * TILE + 3;
+  const y = a.raven.r * TILE + 1;
   const blink = f.t % 200 < 7 && !view.reduced;
   // It looks at him once he is more than a few pixels to one side; straight below, it keeps its pose.
-  const dx = f.x - (x + 3.5);
+  const dx = f.x - (x + RAVEN_W / 2);
   const head = dx > 6 ? 1 : dx < -6 ? -1 : a.ravenFacing;
-  put(blink ? RAVEN.blink : RAVEN.head, x, y, head);
-  put(RAVEN.body, x, y + 3, a.ravenFacing);
+  // Kept as a piece a pose (its facing, its head's, a blink) and copied, as the mound's other figures are.
+  const key = `raven:${a.ravenFacing}:${head}:${blink ? 1 : 0}`;
+  let g = ravens.get(key);
+  if (!g) ravens.set(key, (g = ravenGrid(a.ravenFacing, head, blink)));
+  const grid = g;
+  piece(key, x, y, RAVEN_W, RAVEN_H, (px, py) => grid[py][px]);
 }
+const ravens = new Map<string, string[][]>();
 
 /** Where the raven's bubble hangs from, in world art pixels: above its head. */
 export function ravenAnchor(level: number) {
@@ -648,11 +653,7 @@ function drawChamber(f: Frame) {
   // The figure, seated, 9 x 12, with eyes that follow him.
   const fx = cx - 4;
   const fy = top + 2;
-  outlinedFrame(DWELLER, fx, fy);
-  const look = f.x < cx - 6 ? -1 : f.x > cx + 6 ? 1 : 0;
-  const eye = "#b39a4a";
-  R(fx + 3 + look, fy + 3, 1, 1, eye);
-  R(fx + 5 + look, fy + 3, 1, 1, eye);
+  outlinedFrame(DWELLER[f.x < cx - 6 ? -1 : f.x > cx + 6 ? 1 : 0], fx, fy);
   // The feather over the finish tiles, bobbing.
   const bob = view.reduced ? 0 : Math.round(Math.sin(f.t * 0.06) * 2);
   const ax = cx - 2;

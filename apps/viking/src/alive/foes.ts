@@ -1,7 +1,7 @@
 import { ENEMY } from "@larshansen/pixelkit/palette";
 import { windingUp, type Enemy } from "../game/enemies";
 import { clock, moving, parts, step4 } from "./parts";
-import { frame, inked, type Frame, type Piece } from "./frames";
+import { frame, type Frame, type Piece } from "./frames";
 import { NEON_A, NEON_B, glamFrame } from "./glamour";
 
 // The enemies of line 1's first three levels drawn as frames (order 23, section 1; way 3 of `docs/games/GRAIN.md`),
@@ -69,6 +69,13 @@ export interface Looks {
   windup?: Frame;
   /** Steps an idle frame shows: a second (a breath), or less (a flame). */
   rate?: number;
+  /**
+   * Drawn from this many rows over its box's top, at its own height whatever box its level keeps, never squashed to a kept one
+   * (order 38: the birds on the wing, whose raised wing stands over the box as far as the stomp rule allows).
+   */
+  above?: number;
+  /** Drawn for the box its levels keep, at its own height, not squashed to it (order 25's `fit`; the scooter since order 38). */
+  fit?: boolean;
 }
 
 // --- The pigeon: 13 x 11, head on the right ----------------------------------------------------------------
@@ -130,37 +137,73 @@ export const RAT: Looks = {
   move: [rat("rat, running 1", RAT_TAIL.a, RAT_LEGS.a), rat("rat, running 2", RAT_TAIL.b, RAT_LEGS.b), rat("rat, running 3", RAT_TAIL.c, RAT_LEGS.c), rat("rat, running 4", RAT_TAIL.b, RAT_LEGS.b)]
 };
 
-// --- The gull (and the crow, in plum): 17 x 10 on the wing, head on the right ------------------------------
+// --- The birds on the wing: the gull and the crow, 17 wide, head on the right (order 38, redrawn) -------------------------
+// Order 23's gull was a lens with a beak: wings three rows over a body squashed to the box its level keeps, the black of its
+// wingtips running into the outline, and the crow was the same frames in plum. Now each is its own bird with a wing beat that
+// reads: the near wing raised tall over its back, swept level and back with its tip trailing over the tail, pressed down under
+// its belly, and half raised and bent at the wrist coming up again; its body sinks as the wing lifts and rises as it presses
+// down. A frame is drawn from two rows over its box's top, whatever box its level keeps (`above`): every frame's top within two
+// pixels of the box's top, so its back is where he lands on it, while the raised wing stands as tall as the rule allows.
+
+/**
+ * The gull: a herring gull as one is seen over the harbour. A white body lit along its back, its belly in the white's shade, a
+ * round head with a dark eye and a heavy orange bill, a short square tail; its wings in the plum ramp (its natural self a
+ * herring gull's grey mantle), lit along the leading edge, shaded along the trailing edge, the tip black with a white mirror.
+ */
 const GULL_BODY = [
-  "............WW...",
-  "ww...WWWWWWWWeloo",
-  ".wwwwWWWWWWWWWW..",
-  "...wwwwwwwwwww..."
+  "...........WWW...",
+  "w.....WWWWWWWWelO",
+  "wwwwWWWWWWWWWWWoo",
+  "..wwwwwwwwwwwww.."
 ];
-const GULL_WINGS: Record<string, readonly string[]> = {
-  up: ["....lll..........", "....wWWW.........", ".....wWWWW.......", "......wWWWW......"],
-  high: [".................", ".................", "..llwWWWW........", "....wwWWWW......."],
-  level: [".................", ".................", ".................", "lllwwWWWWW......."],
-  down: [".................", ".................", ".................", "................."]
+/** The near wing in each of its four places, in rows from the frame's top (two over the box's). */
+const GULL_WING: Record<string, readonly string[]> = {
+  up: ["..ll..l..........", "..lWl.dl.........", "...lMMdd.........", "...dmMMMd........", "....dmmMMM.......", ".....ddmmMMM....."],
+  level: ["", "", "", ".....MMMMMM......", "lWlddmmmMMMM.....", ".lldddmmmm.......", "...lldddd........", ".....dd.........."],
+  down: ["", "", "", "", "", ".......ddmMM.....", "......dmmMM......", ".....ldmM........", "....lWld.........", "...ll............"],
+  high: ["", "lWl..............", ".lldMM...........", "....dmMM.........", ".....dmmMM......."]
 };
-const GULL_DOWN = [".....wwWWWW......", "....wwWWW........", "....lll.........."];
-const gull = (name: string, wing: string, bob = 0) =>
-  make(name, at(GULL_WINGS[wing], 0, bob), at(GULL_BODY, 0, 3 + bob), ...(wing === "down" ? [at(GULL_DOWN, 0, 7 + bob)] : []), mark(GULL_CREST, 10, 1 + bob));
+/** Where its body stands in each frame (its crown's row): sunk as the wing lifts, raised as it presses down. */
+const LIFT: Record<string, number> = { up: 5, level: 3, down: 2, high: 4 };
 /** A teased crest (order 27): swept up and back off its crown, in the level's two neons. */
-const GULL_CREST = ["n.N.", ".NNN"];
+const CREST = ["n.N.", ".NNN"];
+const wing = (rows: readonly string[]): Piece => [rows.map((r) => r || "................."), 0, 0];
+const gull = (name: string, w: string, lift = LIFT[w]) => make(name, at(GULL_BODY, 0, lift), wing(GULL_WING[w]), mark(CREST, 10, lift - 1));
 export const GULL: Looks = {
   w: 17,
   h: 10,
-  // Gliding (a flyer that keeps its place): wings out, rising and falling a pixel on the air.
-  idle: [gull("gull, gliding", "level", -1), gull("gull, gliding, lower", "level")],
-  // Its wing beat, four frames on its own clock.
-  // (Wings down, its body rises a pixel with the beat: so its back is where he lands on it.)
-  move: [gull("gull, wings up", "up"), gull("gull, wings half up", "high"), gull("gull, wings out", "level", -1), gull("gull, wings down", "down", -1)]
+  above: 2,
+  // Gliding (a flyer that keeps its place): wings level, rising and falling a pixel on the air.
+  idle: [gull("gull, gliding", "level", 2), gull("gull, gliding, lower", "level")],
+  // Its wing beat, four frames on its own clock: up, pressed level, down, and half raised coming up again.
+  move: [gull("gull, wings up", "up"), gull("gull, wings level", "level"), gull("gull, wings down", "down"), gull("gull, wings half up", "high")]
 };
-/** The crow: the gull's frames in plum, its wingtips the near-black, its beak dark (its marks and bare self with them). */
-const CROW_INK: Record<string, string> = { [E.white]: E.plum, [E.whiteShade]: E.plumDark, [E.orange]: E.line };
-const crowed = (f: Frame): Frame => ({ ...inked(f, (c) => CROW_INK[c] ?? c), name: f.name.replace("gull", "crow") });
-export const CROW: Looks = { w: 17, h: 9, idle: GULL.idle.map(crowed), move: GULL.move.map(crowed) };
+
+/**
+ * The crow: a hooded crow, Oslo's own. A heavy head with a thick straight bill, a rounded tail fanned behind, broad wings ending
+ * in splayed fingers. Glammed its mantle and belly in the plum's light, its head, wings and tail in the plum and its dark; its
+ * natural self grey with a black head, wings and tail, as a hooded crow is. Its marks are the gull's crest, as before.
+ */
+const CROW_BODY = [
+  "..........mmm....",
+  "dd....MMMMMmmelll",
+  "dddMMMMMMMMMmmll.",
+  ".dd.MMMMMMMMM...."
+];
+const CROW_WING: Record<string, readonly string[]> = {
+  up: [".l.l..l..........", "..l.l.ll.........", "...ldmdd.........", "...ddmmmd........", "....ddmmmm.......", ".....dddmmmm....."],
+  level: ["", "", "", ".....mmmmmm......", "l.lddddmmmmm.....", ".l.ldddddm.......", "..l.lddd.........", ".....dd.........."],
+  down: ["", "", "", "", "", ".......dddmm.....", "......dddmm......", ".....dddm........", "....l.ld.........", "...l.l.l........."],
+  high: ["", "l.l..............", ".l.ldm...........", "....ddmm.........", ".....dddmm......."]
+};
+const crow = (name: string, w: string, lift = LIFT[w]) => make(name, at(CROW_BODY, 0, lift), wing(CROW_WING[w]), mark(CREST, 10, lift - 1));
+export const CROW: Looks = {
+  w: 17,
+  h: 10,
+  above: 2,
+  idle: [crow("crow, gliding", "level", 2), crow("crow, gliding, lower", "level")],
+  move: [crow("crow, wings up", "up"), crow("crow, wings level", "level"), crow("crow, wings down", "down"), crow("crow, wings half up", "high")]
+};
 
 /** The looks drawn as frames, by name: a level's own add theirs (`foeLooks`). */
 export const FOES: Record<string, Looks> = { pigeon: PIGEON, rat: RAT, crow: CROW };
@@ -201,7 +244,8 @@ export function drawFoe(e: Enemy, f: Frame, w: number, h: number, fit = false) {
 export function drawFoeLook(e: Enemy, t: number): boolean {
   const l = e.def.look === "gull" ? (e.def.kind === "flyer" ? FLYING.gull : FOES.gullStanding) : FOES[e.def.look];
   if (!l) return false;
-  drawFoe(e, foeFrame(e, t, l), l.w, l.h);
+  if (l.above !== undefined) drawFoe(e, foeFrame(e, t, l), l.w, e.h + l.above, true);
+  else drawFoe(e, foeFrame(e, t, l), l.w, l.h, l.fit);
   return true;
 }
 

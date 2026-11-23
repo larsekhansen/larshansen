@@ -274,6 +274,8 @@ function arrow(x: number, y: number, dir: number) {
 }
 /** Arrows at the screen's edge for throwers and flyers about to come into view: on (order 23, section 5, tried; see the hand-back). */
 export const EDGE_ARROWS = { on: true };
+/** `?debug&natural` (order 38): every invader drawn as its natural self, as the rune's ring leaves it, for a picture in place. */
+export const LIFT_ALL = { on: false };
 
 const RINGS = 6;
 const rx = new Float32Array(RINGS);
@@ -920,6 +922,7 @@ export function createFeel(host: Host) {
      * the calm outline wherever the rules have it (drawing only: the level is won). True when drawn so.
      */
     lifted(e: Enemy, look: () => void): boolean {
+      if (LIFT_ALL.on) return natural(e, look, level), true;
       if (lift.at < 0) return false;
       if (!lift.done.has(e)) {
         if (Math.hypot(e.x - lift.x, e.y - e.h / 2 - lift.y) > liftRadius(now - lift.at)) return false;

@@ -1,22 +1,30 @@
 # Roadmap
 
-As of 23 November 2026, after order 37 was reviewed and merged (PR #85). Change this file in the same change that makes it wrong.
+As of 23 November 2026, after order 38 was reviewed and merged (PR #86). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
-| Date | 22 November 2026 |
-| Last live | Order 37, up and down in the mound, PR #85 (reviewed and merged on 23 November); before it orders 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 37, up and down in the mound, and the phone's notch, branch `up-and-down` |
+| Date | 23 November 2026 |
+| Last live | Order 38, a third look, PR #86 (reviewed and merged on 23 November); before it orders 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Order 38, a third look, with every figure on one table, branch `a-third-look` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 30 % used when order 37 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 34 % used when order 38 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 37, up and down in the mound, and the phone's notch** (`orders/37-up-and-down-in-the-mound.md`, ADR 0056 and 0043 amended), built on
-branch `up-and-down`, waiting for review. What order 36 left and idea 4: in the maze his back going up a corridor and his face coming down one
+**Order 38, a third look, with every figure on one table** (`orders/38-a-third-look.md`, ADR 0046 amended), built on branch `a-third-look`,
+waiting for review. Lars's standing wish ("keep looking for more assets that should have increased details"): every one of the 119 figures
+looked at on its sheet and every enemy in place at phone size, glammed and natural (`?debug&natural`), marked 1 to 3 and ranked
+(`apps/viking/tools/review/o38/before.md`); the worst redrawn (the e-scooter as a hire scooter; the gull, the crow and Stortinget's pigeon on
+the wing, each beating through shapes; the salmon's water breaking; the maze's raven and mound-dweller with faces), the wasp's beat touched
+up; the flyers' beat and every level's silhouettes held by a test; the figures' sheets leave what a look draws plain without an outline.
+Drawing only: no box, speed, timing, route or word changed. Each item, done or not, with its measures: `apps/viking/tools/review/o38/after.md`.
+
+**Order 37, up and down in the mound, and the phone's notch** (`orders/37-up-and-down-in-the-mound.md`, ADR 0056 and 0043 amended), live
+(PR #85). What order 36 left and idea 4: in the maze his back going up a corridor and his face coming down one
 (the kit's `himviews.ts`, four run frames at the side run's rhythm), which drawing shows a little sticky (`maze/heading.ts`), his ghost's run by
 distance; the maze's reduced-motion test draws the scene itself through a curse, a level's end and its card; the maze page's checking aids and
 synth out of its first script (34.40 to 31.93 kB, the aim of 31 missed by 0.9 with his views in it); a pretended notch (`?debug&safe`) and live
@@ -94,6 +102,12 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 38's look-first table (`apps/viking/tools/review/o38/before.md`) left three figures at 2 that a later round could take: the bishop's guard
+at Gamlebyen and the coot at Østensjøvannet (small for the boxes their levels keep: a blob with a spike, a dark round bird) and the squirrel
+(its curled tail most of it). With reduced motion the jumpers (the salmon, the track rat) show nothing before they leap: their tell is drawn only
+with motion (found by order 38, not changed; `o38/after.md`). The page of every figure is worth publishing again now: the figures order 38
+redrew are on it.
+
 Order 36 brought the maze up to the rest (idea 8) and order 37 gave him his back and his face there; the page of every figure can be published
 again with the maze's figures on it, in either language (`apps/viking/tools/figures.ts`: `figures.json` names every state in both since order 37). Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
 deletion of `landing-game-polish` (in the planner's own session), and his play notes. When he has played, the proposals in
@@ -151,7 +165,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

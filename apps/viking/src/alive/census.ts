@@ -7,6 +7,7 @@ import { BUILT, loadLevel } from "../levels/index";
 import type { View } from "../levels/types";
 import "../render/feel";
 import { drawEnemy } from "../render/pickups";
+import { noPage } from "../render/sprite";
 import { drawBreak, type Shape } from "./death";
 import { clock, forced } from "./parts";
 import { LEANS, glam } from "./glamour";
@@ -18,7 +19,8 @@ import { NATURAL, naturalName, naturalOf } from "./natural";
 
 export interface Drawn {
   name: string;
-  rects: { x: number; y: number; w: number; h: number; c: string }[];
+  /** What it paints; `plain`: drawn plain, with no outline round it on the page (a ripple, a splash: order 38). */
+  rects: { x: number; y: number; w: number; h: number; c: string; plain?: true }[];
 }
 
 /** What a look's states draw: its idle, move, wind-up and death frames, each a list of rectangles. */
@@ -53,6 +55,16 @@ export async function census(everyLevel = false): Promise<Record<string, Census>
   const out: Record<string, Census> = {};
   const was = { ...view };
   Object.assign(view, { camX: 0, camY: 0, camXf: 0, camYf: 0, w: 4000, h: 4000, reduced: false });
+  // What a look draws plain (a jumper's ripple, its splash: no outline on the page) is noted as plain (order 38).
+  let plainly = false;
+  noPage.plain = (d) => {
+    plainly = true;
+    try {
+      d();
+    } finally {
+      plainly = false;
+    }
+  };
   try {
     for (const st of BUILT) {
       const def = await loadLevel(st.id);
@@ -69,7 +81,7 @@ export async function census(everyLevel = false): Promise<Record<string, Census>
         const ink = (c: string) => (glam.mode === "bare" ? naturalOf(name, c) : (lean[c] ?? c));
         const draw = (label: string, t: number, own = t): Drawn => {
           const rects: Drawn["rects"] = [];
-          const rec = { fillStyle: "", globalAlpha: 1, fillRect(x: number, y: number, w: number, h: number) { rects.push({ x, y, w, h, c: ink(rec.fillStyle) }); } };
+          const rec = { fillStyle: "", globalAlpha: 1, fillRect(x: number, y: number, w: number, h: number) { rects.push({ x, y, w, h, c: ink(rec.fillStyle), ...(plainly ? { plain: true as const } : {}) }); } };
           target(rec as unknown as CanvasRenderingContext2D);
           clock.t = own;
           p.t = t;
@@ -159,6 +171,7 @@ export async function census(everyLevel = false): Promise<Record<string, Census>
     forced.state = null;
     glam.mode = "glam";
     clock.t = 0;
+    noPage.plain = undefined;
     Object.assign(view, was);
   }
   return out;

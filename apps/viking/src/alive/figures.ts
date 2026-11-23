@@ -325,10 +325,9 @@ export const STATE_WORDS: Record<string, Words> = {
   "the other way": n("the other way", "den andre veien"),
   "up and down a corridor": n("up and down a corridor", "opp og ned en gang"),
   "its head toward him, the other way, blinking": n("its head toward him, the other way, blinking", "hodet mot ham, den andre veien, blunker"),
-  "its body": n("its body", "kroppen"),
   "unlit, lit, lighting": n("unlit, lit, lighting", "slukt, tent, tennes"),
   "ready, cooling, sending him": n("ready, cooling, sending him", "klar, kjøles, sender ham"),
-  seated: n("seated", "sitter")
+  "seated, its eyes following him": n("seated, its eyes following him", "sitter, øynene følger ham")
 };
 
 /** His rows on his sheet: a state and the frames of his table in it. */
@@ -354,11 +353,11 @@ export const MAZE_STATES: Record<string, readonly string[]> = {
   "maze-him": ["standing, breathing, blinking", "running", "running the other way", "going away, standing, breathing", "going away, running", "going away, running, facing the other way", "coming toward, standing, breathing, blinking", "coming toward, running", "coming toward, running, facing the other way", "cursed"],
   "maze-ghost": ["running", "going away", "coming toward"],
   "maze-adder": ["along a corridor, its wave", "the other way", "up and down a corridor"],
-  "maze-raven": ["its head toward him, the other way, blinking", "its body"],
+  "maze-raven": ["its head toward him, the other way, blinking"],
   "maze-stone": ["unlit, lit, lighting"],
   "maze-key": ["lying"],
   "maze-portal": ["ready, cooling, sending him"],
-  "maze-dweller": ["seated"]
+  "maze-dweller": ["seated, its eyes following him"]
 };
 /** A carrier's kind (the kit's), as its row is named with its number. */
 export const CARRIER_WORDS: Record<string, Words> = { path: n("path", "bane"), lift: n("lift", "heis"), orbit: n("orbit", "sirkel"), travel: n("travel", "pendel"), bob: n("bob", "duver") };

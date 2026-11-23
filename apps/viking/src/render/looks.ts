@@ -38,28 +38,42 @@ const GULL_STANDING: Looks = {
   windup: frame("gull on the bank, rearing", FOE_INK, [GULL_STAND.slice(4), 0, 4], [GULL_STAND.slice(0, 4), 0, -2], [["WWW", "WWW"], 7, 2], [["mmmmm", "MmmmM", ".mmm."], 1, 1], [["OO", "OO"], 10, -3], [GULL_LEGS, 0, 11], gullShades(-2))
 };
 
-const SCOOTER_TOP = [
-  "............mmmmm.",
-  "..............gG..",
-  "..............gG..",
-  "..............gGe.",
-  "..............gG..",
-  "..............gG..",
-  "..............gG..",
-  "..............gG..",
-  "..............gG..",
-  "..............gG..",
-  "..ggggggggggggggG.",
-  "..GGGGGGGGGGGGG..."
+/**
+ * The e-scooter (order 38, redrawn: order 23's was an L-shaped tube, its wheels lost under its deck when squashed to the box
+ * the level keeps). A hire scooter as they stand about on Oslo's pavements, riding itself: a T-bar with its grips, a stem
+ * with a headlamp, down to a small front wheel, a low deck lit along its edge between the wheels, its rear end over a small
+ * back wheel with a reflector. Its wheels turn by the distance it rolls: a spoke's light goes round each hub. Drawn for the box its
+ * levels keep (`fit`, 18 x 13 over a box 14 x 12): its bar's top a pixel over the box's top, where he lands on it. Under the
+ * glamour its frame is the acid green with a neon tube down its stem and a neon strip along its deck, and streamers hang from
+ * its grips; its own colours (its natural self) are a deep petrol and graphite, no company's.
+ */
+const SCOOTER_FRAME = [
+  "...........llMWW..",
+  "..............Gg..",
+  "..............Gga.",
+  "..............GgW.",
+  "...............Gg.",
+  "...............Gg.",
+  "...............Gg.",
+  ".gGGGGGGGGGGGGGGg.",
+  "Ogggggggggggggggd."
 ];
-const WHEEL = [["Mmmm", "mppm", "mmmm"], ["mmmM", "mppm", "mmmm"], ["mmmm", "mppm", "mmmM"], ["mmmm", "mppm", "Mmmm"]];
-/** Its glam (order 27): a neon strip glowing under its deck, and streamers off its handlebar's ends. */
-const SCOOTER_GLAM = [mark(["NNNNNNNNN"], 5, 12), mark(["n...n", "N...N"], 12, 1)];
-const scooterFrame = (name: string, k: number, lamp = true) => frame(name, FOE_INK, [SCOOTER_TOP], [WHEEL[k], 1, 12], [WHEEL[k], 14, 12], ...(lamp ? [] : [[["G"], 16, 3] as Piece]), ...SCOOTER_GLAM);
-/** A rented e-scooter riding itself: deck, stem, bars, two wheels that turn, a lamp. 18 x 15. */
+/** A small wheel, 5 across: its tyre near-black, its rim plum, its hub pale; a spoke's light goes round it as it rolls. */
+const SCOOTER_WHEEL = [
+  [".lll.", "lMmml", "lmamd", "lmmdl", ".lll."],
+  [".lll.", "lmmMl", "lmamd", "lmmdl", ".lll."],
+  [".lll.", "lmmml", "lmamM", "lmmdl", ".lll."],
+  [".lll.", "lmmml", "lmamd", "lMmdl", ".lll."]
+];
+/** Its glam (order 27's, kept in kind): a neon strip along its deck, a neon tube down its stem, streamers off its grips. */
+const SCOOTER_GLAM = [mark(["NNNNNN"], 6, 8), mark(["N", "n", "N"], 16, 4), mark(["N.", "nN", ".n"], 10, 1)];
+const scooterFrame = (name: string, k: number, lamp = true) =>
+  frame(name, FOE_INK, [SCOOTER_FRAME], [SCOOTER_WHEEL[k], 0, 8], [SCOOTER_WHEEL[(k + 1) % 4], 13, 8], ...(lamp ? [] : [[["l"], 16, 2] as Piece]), ...SCOOTER_GLAM);
+/** A rented e-scooter riding itself: a T-bar, a stem with its lamp, a deck, two small wheels that turn. 18 x 13, drawn for its kept box. */
 const SCOOTER: Looks = {
   w: 18,
-  h: 15,
+  h: 13,
+  fit: true,
   idle: [scooterFrame("scooter, waiting", 0), scooterFrame("scooter, its lamp off", 0, false)],
   move: [0, 1, 2, 3].map((k) => scooterFrame(`scooter, rolling ${k + 1}`, k))
 };
@@ -167,7 +181,7 @@ const WASP_LEGS = ["...l.l...l.l..", "..l...l..l..l."];
 // Its wings in the palette's white alone (order 26: the white's shade is greenish; a grey-white comes within 2 of the snow).
 const WASP_WING: Record<string, readonly string[]> = {
   up: ["...WWW...", "..WWWWW..", "..WWWWWW.", "...WWWW.."],
-  high: [".........", ".WWWWWW..", "..WWWWWWW", "...WWWW.."],
+  high: ["WW.......", ".WWW.....", "..WWWW...", "...WWWW.."],
   level: [".........", ".........", "WWWWWWW..", ".WWWWWWW."],
   down: [".........", ".........", ".........", "........."]
 };

@@ -4,9 +4,10 @@ import { TILE } from "@larshansen/pixelkit/config";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
-import { ENEMY } from "@larshansen/pixelkit/palette";
+import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
 import { drawSky } from "@larshansen/pixelkit/sky";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
+import { NATURAL } from "../alive/natural";
 import { newPlay } from "../game/play";
 import { BUILT, loadLevel } from "../levels/index";
 import type { LevelDef, View } from "../levels/types";
@@ -333,4 +334,17 @@ describe("harmless things keep off the warning red (order 33)", () => {
     expect(wrong).toEqual([]);
     expect(Object.keys(NAMED_LIGHTS).filter((k) => !used.has(k))).toEqual([]);
   }, 300_000);
+
+  // Order 38: the e-scooter, redrawn as a hire scooter as they stand about on Oslo's pavements, has a colour of its own when its
+  // glamour breaks (no hire company's): it must not read as hurting (the warning red) nor as anything else that means something.
+  test(`the e-scooter's own colours stand ${NEAR} or more off the warning red and off every role's colours`, () => {
+    const rgb = (c: string) => parseColour(c)!.rgb;
+    const wrong: string[] = [];
+    for (const c of Object.values(NATURAL.scooter.ink)) {
+      if (deltaE(rgb(c), RED) < NEAR) wrong.push(`${c}: ${deltaE(rgb(c), RED).toFixed(1)} from the warning red`);
+      for (const [role, colours] of Object.entries(ROLES.COLOURS))
+        for (const o of colours) if (deltaE(rgb(c), rgb(o)) < NEAR) wrong.push(`${c}: ${deltaE(rgb(c), rgb(o)).toFixed(1)} from ${role} ${o}`);
+    }
+    expect(wrong).toEqual([]);
+  });
 });

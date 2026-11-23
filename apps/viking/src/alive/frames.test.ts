@@ -94,6 +94,76 @@ describe("every enemy and harmless mover has its frames (order 23)", () => {
   });
 });
 
+// Order 38: a third look. What the look-first table measured, held: a flyer's beat is shapes, not a pixel's bob; and in every
+// level each figure's silhouette is its own.
+/** A drawing's silhouette as pixels (what it draws plain, a ripple or a splash, is the water's, not its own). */
+const silhouette = (d: Drawn) => {
+  const s = new Set<number>();
+  for (const r of d.rects) if (!r.plain) for (let y = Math.round(r.y); y < Math.round(r.y + r.h); y++) for (let x = Math.round(r.x); x < Math.round(r.x + r.w); x++) s.add(y * 4096 + x);
+  return s;
+};
+/** How many pixels two silhouettes differ by, laid one over the other the way that makes them most alike (shifted up to `most` pixels). */
+function apart(a: Set<number>, b: Set<number>, most: number, ox = 0, oy = 0): number {
+  let best = Infinity;
+  for (let dy = -most; dy <= most; dy++)
+    for (let dx = -most; dx <= most; dx++) {
+      const d = (oy + dy) * 4096 + ox + dx;
+      let n = 0;
+      for (const p of a) if (!b.has(p + d)) n++;
+      for (const p of b) if (!a.has(p - d)) n++;
+      best = Math.min(best, n);
+    }
+  return best;
+}
+/** A silhouette's top left, so two figures' can be laid over each other. */
+const corner = (s: Set<number>) => {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  for (const p of s) {
+    x0 = Math.min(x0, p % 4096);
+    y0 = Math.min(y0, Math.floor(p / 4096));
+  }
+  return { x0, y0 };
+};
+/** Pixels a flyer's frames must differ by, two by two: a wing beat through shapes, never a beat that is a pixel or two. */
+const BEAT = 8;
+/** Pixels two figures of one level must differ by, still: told apart by their shape alone. */
+const APART = 12;
+
+describe("a third look: every figure on one table (order 38)", () => {
+  let everyLevel: Record<string, Census> = {};
+  beforeAll(async () => {
+    everyLevel = await census(true);
+  }, 120_000);
+
+  test(`every flyer's wing beat is shapes: any two frames of it differ by ${BEAT} pixels or more, however they are laid over each other`, () => {
+    const flat: string[] = [];
+    for (const [key, c] of Object.entries(everyLevel)) {
+      if (c.kind !== "flyer") continue;
+      const m = c.move.map(silhouette);
+      for (let i = 0; i < m.length; i++) for (let j = i + 1; j < m.length; j++) if (apart(m[i], m[j], 2) < BEAT) flat.push(`${key}: ${c.move[i].name} and ${c.move[j].name}, ${apart(m[i], m[j], 2)} pixels`);
+    }
+    expect(Object.values(everyLevel).some((c) => c.kind === "flyer")).toBe(true);
+    expect(flat).toEqual([]);
+  });
+
+  test(`in every level no figure's silhouette is another's: any two, still, differ by ${APART} pixels or more, however they are laid over each other`, () => {
+    const alike: string[] = [];
+    const byLevel = new Map<string, [string, Set<number>][]>();
+    for (const [key, c] of Object.entries(everyLevel)) (byLevel.get(c.level) ?? byLevel.set(c.level, []).get(c.level)!).push([key, silhouette(c.idle[0])]);
+    for (const [, figures] of byLevel)
+      for (let i = 0; i < figures.length; i++)
+        for (let j = i + 1; j < figures.length; j++) {
+          const [a, b] = [figures[i][1], figures[j][1]];
+          const [ca, cb] = [corner(a), corner(b)];
+          const d = apart(a, b, 4, cb.x0 - ca.x0, cb.y0 - ca.y0);
+          if (d < APART) alike.push(`${figures[i][0]} and ${figures[j][0]}: ${d} pixels`);
+        }
+    expect(byLevel.size).toBeGreaterThanOrEqual(16);
+    expect(alike).toEqual([]);
+  });
+});
+
 describe("his frames (order 23)", () => {
   const still: HimState = { t: 0, walking: false, landed: 99, deep: false, dashing: false, shield: false, seated: false, slope: 0, thrown: false, entering: false, reduced: false };
   const body = (o: Partial<{ onGround: boolean; vy: number; x: number; facing: 1 | -1 }> = {}) => ({ x: 100, y: 100, vx: 0, vy: 0, onGround: true, facing: 1, coyote: 0, buffer: 0, cutReady: false, airJumps: 0, ...o }) as never;
