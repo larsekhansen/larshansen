@@ -5,7 +5,8 @@ retuned: no route, box, speed, timing, heart, enemy placement or story word, in 
 the repository, in `~/.cache/claude-scratch-larshansen/o40/`: `shots/` (the hand-back's pictures: `item1/`, `item2/`, `item3/`, `item4/`; and every
 picture taken: `takes-day/`, `takes-main/`, `takes-all/`, `takes-shadow/`, `tells-main-all/`, `tells-wip/`, `eight-main/`, `eight-final/`),
 `figures/` (the figures tool on the branch; order 39's `o39/figures/` is `origin/main`'s), `same/` (every level's places from both builds),
-`sloppy-main/` and `sloppy/` (the run files), `runs/` (the maze's), `front/`, `work/` (places, measures, logs), `bin/` (the scripts).
+`sloppy-main/` and `sloppy/` (the run files), `runs/` (the maze's), `front/`, `timing/` (the suites' times and JUnit reports), `work/` (places,
+measures, logs), `bin/` (the scripts).
 Done in the order the order gives: item 1, item 2, item 3, item 4. What was looked at first: `before.md`.
 
 ## 1. What he takes, after dusk: done
@@ -110,7 +111,7 @@ boy were already over theirs. `render/reduced.test.ts` (every jumper's tell one 
 Each keeps its place and its size but the pontoons (two rows deeper, under water, where the deck covered the old band's top) and the baluster
 (three wide where it was two, at the same pitch: the same number in each balustrade). Pictures: at four times, the figures tool's sheets before
 and after (`shots/item3/four-times.png`); in place at 390 x 844, by day and under each level's sky (`shots/item3/in-place-*.png`; props are not
-glammed, so glammed and natural are the same picture; the track rat glammed and natural in `shots/item2/`). **Read better in place**: the stove
+glammed, so glammed and natural are the same picture; the track rat's tell glammed, natural and at night in `shots/item3/trackrat-natural-night-x5.png`). **Read better in place**: the stove
 pipes plainly (a chimney, not a T), the balusters plainly (a balustrade of turned stone), the fire basket (a basket on a stem under its fire),
 the pontoons a little (floats under the deck), the posts a little (Holmenkollen's station posts read as columns, the deck's posts as timber).
 None reads worse.
