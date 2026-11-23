@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, by order 37's, and by order 38's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, by order 37's, by order 38's, and by order 39's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -94,6 +94,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-22 | Order 36: the maze catches up (roadmap idea 8; ADR 0056). Looked at first (`o36/before.md`); one stepped harness for the maze in both pages; him in the mound from the viking game's own sheet (his frames and the feather moved into the kit) with a torch; the mound redrawn by the game's methods as its own iron-bound place (lining, faces, earth, hill, pad, doorways, stones, raven, dweller), adders in the warning red, the key in the take-gold, the door's corners in the use cyan; the help line says what a finger does on a phone, goes at his first move, wraps; the raven's words wrap; thumb-sized targets; nothing blinks with reduced motion; the joins held (a test and stepped pictures in and out of the mound); the figures' bosses outlined as the page outlines them and the maze on the page of every figure; the reduced-motion test's dead watch of the kit's carriers removed. The maze's rules unchanged, step for step | `orders/36-the-maze-catches-up.md`, branch `the-maze-catches-up` |
 | 2026-11-23 | Order 37: up and down in the mound, and the phone's notch. His back going up a corridor and his face coming down one in the maze (the kit's `himviews.ts`; which drawing shows a little sticky, `maze/heading.ts`), his ghost's run by distance; the maze's reduced-motion test draws the scene itself through a curse, a level's end and its card; the maze page's checking aids and synth out of its first script (34.40 to 31.93 kB); a pretended notch (`?debug&safe`) and live frames (`?debug&live`) in the harness, the camera's jump on a notched phone reproduced and gone (it eases for the ground ahead either way, ADR 0043 amended), bubbles off the safe sides; the maze's way out falls back where Back has nowhere to go; the figures' states in both languages | `orders/37-up-and-down-in-the-mound.md`, branch `up-and-down` |
 | 2026-11-23 | Order 38: a third look, with every figure on one table. All 119 sheets looked at at four times and every enemy in place at phone size, glammed and natural (`?debug&natural`), marked and ranked (`o38/before.md`); the e-scooter redrawn as a hire scooter, the gull, the crow and Stortinget's pigeon on the wing beating through shapes, the salmon's water breaking, the maze's raven and mound-dweller with faces to find, the wasp's beat touched up; a flyer's beat and every level's silhouettes held by a test (ADR 0046 amended); the figures' sheets leave what a look draws plain without an outline. Drawing only | `orders/38-a-third-look.md`, branch `a-third-look` |
+| 2026-11-23 | Order 39: the rest of the table. The bishop's guard (a kettle hat, the halberd's blade), the coot (its white in the pale, past the glamour), the squirrel (a tail that is a tail, the cone it throws in its paws) and the mound-dweller (folds, a hand) redrawn; a still tell for the jumpers with reduced motion (the salmon's water and the track rat's stones held, ADR 0040 amended), every other tell checked with motion and without; every boss state, carrier, thrown thing and pickup photographed in place and measured against what is round it, and what is thrown given a dark pixel between its outline and its glow after dusk; order 38's marks kept honest. Drawing only | `orders/39-the-rest-of-the-table.md`, branch `rest-of-the-table` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -289,7 +290,7 @@ seconds a place, where a browser a place took five; `--each` is the old way), so
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 58.53 kB gzipped after order 38 (58,512 bytes by GNU gzip, 10 more than order 37's: the hook a page-less tool is handed what a
+- **First script**: 58.55 kB gzipped after order 39 (58,530 bytes by GNU gzip, 18 more than order 38's: the page marks what it throws, `THROWN` in `render/sprite.ts`, and the chunks' names it carries); the glow for what is thrown is in `feel`'s file (42.73 to 42.77 kB gzipped), the redrawn figures in their levels' files, the shared looks' and the maze's scene file. 58.53 kB gzipped after order 38 (58,512 bytes by GNU gzip, 10 more than order 37's: the hook a page-less tool is handed what a
   look draws plain, `noPage.plain` in `render/sprite.ts`, and the chunks' names it carries); the birds, the scooter's own colours and `?debug&natural`'s
   switch are in `feel`'s file (42,514 to 42,747 bytes), the raven and the dweller in the maze's scene file (19,500 to 19,667). 58.52 kB gzipped after order 37 (58,502 bytes by GNU gzip, 215 more than order 36's): the maze's way out that falls
   back where Back has nowhere to go (`game/wayout.ts` and its call, 0.13 kB), the kit's bubble keeping off the safe sides, the call that
@@ -851,8 +852,31 @@ with its measures in `o38/after.md`). Lars has not played; nothing was retuned: 
   salmon's "rings" its foam.
 - **Left at 2, for a later round**: the bishop's guard and the coot (small for their kept boxes), the squirrel; the ski pole, the tube railing, the
   posts and the stove pipe were struck from the planner's list with reasons (`before.md`). With reduced motion the jumpers show no tell before they leap
-  (as before; not changed).
+  (as before; not changed). Order 39 did all of these: the three redrawn, and a still tell for the jumpers.
 - **Unplayed**: none of it has been seen at speed or on a phone.
+
+## Order 39: the rest of the table
+
+Order 39 (`orders/39-the-rest-of-the-table.md`; ADR 0040 amended; the in-place table and order 38's marks kept honest in
+`apps/viking/tools/review/o39/before.md`, each item done or not with its measures in `o39/after.md`). Lars has not played; nothing was retuned.
+What to know:
+- **A tell has a still form** (ADR 0040 amended): with reduced motion the salmon's water is held broken at its fullest and the track rat's
+  stones held kicked up, for every step of the tell and no other (they were not drawn at all with reduced motion, since order 23). Every
+  other tell, the bosses' and Loki's included, already had one (the table in `o39/after.md`). Held by `render/reduced.test.ts` (every jumper's
+  tell) and `render/feel.test.ts` (the throwers' wind-ups, the turns, the sledgers' lean, with reduced motion too). Without reduced motion the
+  pictures are byte-identical.
+- **Redrawn** (drawing only, each in its box, frames, timing and speed): the bishop's guard (`levels/gamlebyen.ts`: a kettle hat with its
+  brim, the halberd levelled with its axe-blade), the coot (`levels/ostensjovannet.ts`: its white shield and bill in `E.pale`, which no sheen or
+  lean touches), the squirrel (`render/looks.ts`: a plume of a tail, tufted ears, the cone it throws held and raised in its paws), the
+  mound-dweller (`packages/maze/src/figures.ts`: folds, one hand).
+- **Looked at in place**: every boss state, every carrier, what each thrower throws and every pickup in every level, by day and under its
+  level's own sky, measured as its rim against the pixel beyond (`o39/rim.tsv`, `props.tsv`; the scripts in the scratch folder are described
+  in `before.md`). **What is thrown** after dusk had its own glow against its red outline (Bjørvika's bolts 16.5 off it): it now keeps a pixel
+  of the dark between them, as every invader does over a level's own dark since order 32 (`THROWN` in `render/sprite.ts`, `glows` in
+  `alive/glamour.ts`, `alive/thrown.test.ts`): 40 or more under every level's sky. Left for the planner: what he takes against an evening
+  sky, warm on warm.
+- **Order 38's marks**: no 3s; eight 2s left, each with why (`o39/before.md`).
+- **Unplayed**: none of it has been seen at speed or on a phone, and nobody has turned reduced motion on with a person watching.
 
 ## Known weak spots, as of order 16
 
@@ -895,13 +919,13 @@ reorder this list.
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone. Since order 36 the way into the maze from
    the map and back, from Nordmarka and back into it, and the feather moment after the maze are stepped pictures (`?debug&walkin`, `&out`,
    `&after`), and what each page remembers of the maze is a test (`packages/maze/src/joins.test.ts`): none of it by a person.
-8. **Margins.** The first script is 58.53 kB gzipped after order 38, 58.52 after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
+8. **Margins.** The first script is 58.55 kB gzipped after order 39, 58.53 kB after order 38, 58.52 after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
    two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour; after order 34, 370.5 s against 335.0 s for
    `origin/main` the same hour, over the 360 its order set: its scenery walk in `render/warning.test.ts` about 18 s, `o34/after.md` says what could be trimmed;
    after order 35 under 300 s, its three runs in `o35/after.md`; after order 37 268.0 s, 263.1 s for `origin/main` the same hour; after order 38 265.6 s
-   warm, 265.8 s for `origin/main` the same hour): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
+   warm, 265.8 s for `origin/main` the same hour; after order 39 271.5 s, 270.0 s for `origin/main` the same hour): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
    Akershus's alone takes 52 s), and about 70 s the reduced-motion test, which draws every level.
 9. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)). Since order 21 on a touch phone it is the run alone during a

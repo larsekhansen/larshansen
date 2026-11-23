@@ -63,3 +63,19 @@ so the page and the tests did not quite run the same game.
 - Answers drawn by each level: the same event would look different from level to level.
 - Flash on every event: under reduced motion every flash is a still mark instead, and nothing blinks three
   times a second.
+
+## Amended by order 39 (23 November 2026): a tell that only moves is a still mark with reduced motion
+"With a still answer under reduced motion" was held for what just happened, not for what is about to. Order 38 found that the two
+jumpers' tells were movements drawn only with motion (since order 23): the salmon's water breaking before it leaps and the track rat's
+ballast stirring between the rails. With reduced motion the drawing held them still at nothing, so the players who asked for less motion
+saw no tell at all before a thing that hurts. The planner decided, on Lars's behalf, as a fairness mend that is easy to undo: every tell
+has a still form. With reduced motion the salmon's water is held broken at its fullest and the track rat's stones held kicked up (as at
+one step of their stir), for every step of the tell and at no other, never blinking; without reduced motion nothing changed (the pictures
+are byte-identical). The timing as the rules see it did not change (the sloppy player's run files are identical). Every other tell was
+checked the same way (`apps/viking/tools/review/o39/after.md` has the table: each tell, what is seen with motion and without): each
+already had a still form (a pose held, a warning lit and steady, the dashes of the paint joined, a still crack, a ring that stands).
+Held by `render/reduced.test.ts` (every jumper's tell is one still mark at every step of it and at no other; shown to fail on the drawing
+before and on a planted blink) and `render/feel.test.ts` (the throwers' wind-ups, the statues', guards' and swans' turns and the sledgers'
+lean change their outline by 18 pixels or more with reduced motion too). The track rat's tell, three dark stones on the third rail's red
+cover, is small with motion or without; making it larger would change the picture with motion, which this mend does not, and is left for
+a later round.

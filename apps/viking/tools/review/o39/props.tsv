@@ -1,0 +1,24 @@
+level	kind	places found	by day (median of its places)	its worst place by day	(10th percentile)	at night (median)	its worst place at night	(10th percentile)	where by day
+akershus	fire basket	16	27.4	0.0	0.0	8.4	0.0	0.0	akershus-c060-day
+ekeberg	lamp old	1	26.8	26.8	9.6	6.0	6.0	3.2	ekeberg-c240-day
+ekeberg	rail tube	6	25.2	21.3	12.5	7.6	5.5	4.1	ekeberg-c240-day
+encore	lamp old	2	45.7	45.7	31.7	6.3	6.3	4.3	encore-park-day
+encore	speaker stack	2	7.7	7.7	2.5	3.0	3.0	0.9	encore-park-day
+encore	truss tower	6	25.4	21.5	11.2	3.2	3.0	2.6	encore-park-day
+gamlebyen	lamp old	2	24.7	20.0	15.0	2.1	2.0	1.0	gamlebyen-c000-day
+holmenkollen	post	6	0.0	0.0	0.0	0.0	0.0	0.0	holmenkollen-c120-day
+langkaia	hut door	4	62.1	46.0	42.5	44.0	9.7	9.4	langkaia-c060-day
+langkaia	leg	4	65.6	3.2	0.0	21.9	2.1	0.0	langkaia-c000-day
+langkaia	plank wall	1	17.7	17.7	9.2	10.7	10.7	8.0	langkaia-c120-day
+langkaia	post	2	43.4	42.9	33.5	11.4	11.4	10.8	langkaia-c060-day
+langkaia	sauna cabin	2	62.0	61.9	22.8	75.3	75.3	9.6	langkaia-c120-day
+langkaia	stove pipe	20	11.9	0.0	0.0	6.3	0.0	0.0	langkaia-c000-day
+nabolaget	post	7	0.0	0.0	0.0	0.0	0.0	0.0	nabolaget-c120-day
+radhuset	lamp square	3	44.1	42.9	36.6	7.7	7.7	6.4	radhuset-c120-day
+radhuset	rail bars	24	1.5	1.0	0.0	1.1	0.3	0.0	radhuset-c120-day
+slottet	baluster	16	47.3	46.8	46.7	48.0	47.6	47.5	slottet-c060-day
+slottet	barrier	1	36.5	36.5	24.8	14.4	14.4	11.9	slottet-c120-day
+slottet	rail tube	32	0.0	0.0	0.0	0.0	0.0	0.0	slottet-c000-day
+vigelandsparken	gate lantern	2	46.2	46.2	39.0	11.3	11.2	7.8	vigelandsparken-c000-day
+vigelandsparken	gate pillar	1	21.2	21.2	16.8	12.0	12.0	8.9	vigelandsparken-c000-day
+vigelandsparken	lamp park	2	36.0	30.7	24.5	11.1	9.1	1.9	vigelandsparken-c060-day
