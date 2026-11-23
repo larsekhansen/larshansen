@@ -1,22 +1,29 @@
 # Roadmap
 
-As of 23 November 2026, after order 38 was reviewed and merged (PR #86). Change this file in the same change that makes it wrong.
+As of 23 November 2026, after order 39 was reviewed and merged (PR #87). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 23 November 2026 |
-| Last live | Order 38, a third look, PR #86 (reviewed and merged on 23 November); before it orders 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 38, a third look, with every figure on one table, branch `a-third-look` |
+| Last live | Order 39, the rest of the table, PR #87 (reviewed and merged on 23 November); before it orders 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Order 39, the rest of the table, branch `rest-of-the-table` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 34 % used when order 38 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 38 % used when order 39 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 38, a third look, with every figure on one table** (`orders/38-a-third-look.md`, ADR 0046 amended), built on branch `a-third-look`,
-waiting for review. Lars's standing wish ("keep looking for more assets that should have increased details"): every one of the 119 figures
+**Order 39, the rest of the table** (`orders/39-the-rest-of-the-table.md`, ADR 0040 amended), reviewed, merged and live
+(PR #87, 23 November). Nothing else is in flight. What order 38 left: the bishop's guard (a kettle hat, the halberd's blade), the coot (its white in the pale, which the glamour does not
+touch), the squirrel (a plume of a tail, tufted ears, the cone it throws in its paws) and the mound-dweller (folds, a hand) redrawn; with reduced
+motion the jumpers' tells held still (they showed nothing), every other tell checked with motion and without (the table in
+`apps/viking/tools/review/o39/after.md`); every boss state, carrier, thrown thing and pickup photographed in place and measured against what is
+round it (`o39/before.md`, `rim.tsv`, `props.tsv`), what is thrown given a pixel of the dark between its outline and its own glow after dusk;
+order 38's marks kept honest (no 3s, each 2 named). Drawing only. Each item, done or not, with its measures: `o39/after.md`.
+
+**Order 38, a third look, with every figure on one table** (`orders/38-a-third-look.md`, ADR 0046 amended), live (PR #86). Lars's standing wish ("keep looking for more assets that should have increased details"): every one of the 119 figures
 looked at on its sheet and every enemy in place at phone size, glammed and natural (`?debug&natural`), marked 1 to 3 and ranked
 (`apps/viking/tools/review/o38/before.md`); the worst redrawn (the e-scooter as a hire scooter; the gull, the crow and Stortinget's pigeon on
 the wing, each beating through shapes; the salmon's water breaking; the maze's raven and mound-dweller with faces), the wasp's beat touched
@@ -102,11 +109,10 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
-Order 38's look-first table (`apps/viking/tools/review/o38/before.md`) left three figures at 2 that a later round could take: the bishop's guard
-at Gamlebyen and the coot at Østensjøvannet (small for the boxes their levels keep: a blob with a spike, a dark round bird) and the squirrel
-(its curled tail most of it). With reduced motion the jumpers (the salmon, the track rat) show nothing before they leap: their tell is drawn only
-with motion (found by order 38, not changed; `o38/after.md`). The page of every figure is worth publishing again now: the figures order 38
-redrew are on it.
+Order 39 finished order 38's table (`apps/viking/tools/review/o39/`). What it left for a decision: what he takes against an evening sky is warm on
+warm (the bracteate and the cheese at Ekeberg and Langkaia, the skilling): the maze's own rule for a thing to take, a dark line round it, after
+dusk, would mend it and change every coin in every evening picture; and the track rat's tell (three dark stones on the third rail's red cover)
+is small with motion or without. The page of every figure is worth publishing again now: the figures orders 38 and 39 redrew are on it.
 
 Order 36 brought the maze up to the rest (idea 8) and order 37 gave him his back and his face there; the page of every figure can be published
 again with the maze's figures on it, in either language (`apps/viking/tools/figures.ts`: `figures.json` names every state in both since order 37). Order 34 answered what Lars had said. What is still his: a line for the opening card (he suggested one; who speaks it is unclear), the
@@ -165,7 +171,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

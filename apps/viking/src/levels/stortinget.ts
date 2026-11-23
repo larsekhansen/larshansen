@@ -914,7 +914,11 @@ const TRACK_RAT = { rising: RAT_RISING, top: RAT.move[2], falling: RAT_FALLING, 
 function trackRat(e: Enemy, t: number) {
   const l = leap(e, t);
   const floor = (P + 1) * TILE;
-  if (l.ripple && !view.reduced && Math.floor(t / 5) % 2) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast)));
+  // Its tell: the ballast stirring between the rails, three stones kicked up on and off. With reduced motion (order 39) they are
+  // held kicked up, as at one step of their stir (the middle one highest), for the whole of the tell: there from its first step to
+  // its last, never blinking.
+  if (l.ripple && view.reduced) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - (dx === 0 ? 1 : 0), 2, 1, METRO.ballast)));
+  else if (l.ripple && Math.floor(t / 5) % 2) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast)));
   if (l.up <= 0) return;
   const next = leap(e, t + 1).up;
   const top = Math.abs(next - l.up) <= 1 && Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 2;

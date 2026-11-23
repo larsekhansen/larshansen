@@ -42,7 +42,7 @@ export const NATURAL: Record<string, Natural> = {
   // A hooded crow (order 38): grey mantle and belly, black head, wings and tail.
   crow: { ink: { [E.plum]: "#33313a", [E.plumDark]: "#1f1d24", [E.plumLight]: "#8a8c92" }, leave: "fly" },
   magpie: { ink: { [E.plumDark]: "#1e2030", [E.plum]: "#2a2c40", [E.plumLight]: "#3a3e58", [E.white]: "#f0f0ea", [E.whiteShade]: "#c0c4c8", [E.poison]: "#2f5a52", [E.poisonLight]: "#4a7a70" }, leave: "fly" },
-  coot: { ink: { [E.plumDark]: "#1e1e22", [E.plum]: "#2e2e34", [E.plumLight]: "#46464e", [E.white]: "#f0f0ea", [E.poison]: "#7a8a4a" }, leave: "swim" },
+  coot: { ink: { [E.plumDark]: "#1e1e22", [E.plum]: "#2e2e34", [E.plumLight]: "#46464e", [E.white]: "#f0f0ea", [E.pale]: "#f0f0ea", [E.poison]: "#7a8a4a", [E.poisonLight]: "#a4b070" }, leave: "swim" },
   duck: { ink: { [E.whiteShade]: "#a8a49c", [E.white]: "#d4d0c8", [E.poison]: "#2f6b3a", [E.poisonLight]: "#4f8f5a", [E.plum]: "#7a4a3a", [E.plumLight]: "#9a6450", [E.orange]: "#c87a3a", [E.orangeLight]: "#d0b048" }, leave: "run" },
   penguin: { ink: { [E.plumDark]: "#1e2228", [E.plum]: "#2e343c", [E.plumLight]: "#4a5058", [E.white]: "#f0f0ea", [E.whiteShade]: "#c8ccd0", [E.orange]: "#c87a3a", [E.orangeLight]: "#d0b048" }, leave: "run" },
   owl: { ink: { [E.orange]: "#8a6a4a", [E.orangeLight]: "#b0906a" }, leave: "fly" },

@@ -1,6 +1,6 @@
 # Start here
 
-State as of 23 November 2026, after order 38 was built (not yet reviewed or live); order 37 is live. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 23 November 2026, after order 39 was built (not yet reviewed or live); order 38 is live. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -54,6 +54,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 36 the maze catches up | #84 | The maze in the game's grain (ADR 0056): him from the fjord's own sheet with a torch, the mound redrawn as its own iron-bound place, adders in the warning red, the key and the door with the kit's read; the help line says what a finger does on a phone; nothing blinks with reduced motion; one stepped harness for both pages; the joins held; the figures' bosses outlined and the maze on the page of every figure. The maze's rules unchanged |
 | 37 up and down in the mound | #85 | In the maze his back going up a corridor and his face coming down one, a little sticky so a diagonal never flickers, his ghost's run by distance; the maze's reduced-motion test draws the scene itself; the maze page's first script 34.4 to 31.9 kB; a pretended notch and live frames in the harness, and the camera's jump on a notched phone gone (it eases for the ground ahead either way); bubbles off a notch; the maze's way out falls back where Back has nowhere to go; the figures' states in both languages |
 | 38 a third look | #86 | Every figure on one table: all 119 looked at on their sheets and every enemy in place, glammed and natural, marked and ranked; the e-scooter redrawn as a hire scooter, the gull, the crow and the pigeon on the wing beating through shapes, the salmon's water breaking, the maze's raven and mound-dweller with faces; a flyer's beat and every level's silhouettes held by a test (ADR 0046 amended). Drawing only |
+| 39 the rest of the table | #87 | The bishop's guard, the coot, the squirrel and the mound-dweller redrawn; a still tell for the jumpers with reduced motion, every other tell checked (ADR 0040 amended); every boss state, carrier, thrown thing and pickup photographed in place and measured, and what is thrown kept clear of its own glow after dusk; order 38's marks kept honest. Drawing only |
 | 31 loose ends and a second look | #79 | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real

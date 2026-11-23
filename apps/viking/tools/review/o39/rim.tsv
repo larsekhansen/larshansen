@@ -1,0 +1,206 @@
+subject	group	level	its sky as met	by day	under its own sky (night for a level pinned to day, evening for Langkaia)	the same after order 39	how
+troll-asleep	boss	nordmarka	twilight				outline not found in the picture (in the dark, or off the middle)
+troll-walk	boss	nordmarka	twilight				outline not found in the picture (in the dark, or off the middle)
+troll-windup	boss	nordmarka	twilight	34.1	30.7	30.7	its outline (red) against the pixel beyond it
+troll-stuck	boss	nordmarka	twilight	63.5	61.7	61.7	its outline (calm) against the pixel beyond it
+troll-stone	boss	nordmarka	twilight	71.2	60.7	60.7	its outline (calm) against the pixel beyond it
+plough-parked	boss	nabolaget	winter (night)	9.1	59.9	59.9	its outline (calm) against the pixel beyond it
+plough-drive	boss	nabolaget	winter (night)	52.3	31.6	31.6	its outline (red) against the pixel beyond it
+plough-windup	boss	nabolaget	winter (night)	12.0	55.9	55.9	its outline (calm) against the pixel beyond it
+plough-stuck	boss	nabolaget	winter (night)	14.3	51.4	51.4	its outline (calm) against the pixel beyond it
+plough-beaten	boss	nabolaget	winter (night)	18.3	60.4	60.4	its outline (calm) against the pixel beyond it
+serpent-ring	boss	gamlebyen	night				outline not found in the picture (in the dark, or off the middle)
+serpent-rear	boss	gamlebyen	night	71.8	60.6	60.6	its outline (calm) against the pixel beyond it
+serpent-spit	boss	gamlebyen	night	52.5	56.9	45.9	its outline (red) against the pixel beyond it
+serpent-dazed	boss	gamlebyen	night	21.5	57.2	57.2	its outline (calm) against the pixel beyond it
+serpent-lash	boss	gamlebyen	night	9.0	58.5	58.5	its outline (calm) against the pixel beyond it
+loki-strut	boss	encore	evening	39.7	29.8	29.8	its outline (red) against the pixel beyond it
+loki-club	boss	encore	evening	39.7	29.5	29.5	its outline (red) against the pixel beyond it
+loki-pose	boss	encore	evening	39.7	25.9	25.9	its outline (red) against the pixel beyond it
+loki-rev	boss	encore	evening	63.1	58.5	58.5	its outline (calm) against the pixel beyond it
+loki-ring	boss	encore	evening	63.1	58.5	58.5	its outline (calm) against the pixel beyond it
+loki-plain	boss	encore	evening	69.4	61.2	61.2	its outline (calm) against the pixel beyond it
+thrown-gull	thrown	radhuset	day	47.1	22.9	46.2	its outline (red) against the pixel beyond it
+thrown-kid	thrown	holmenkollen	winterday	52.5	52.5	52.5	its outline (red) against the pixel beyond it
+thrown-squirrel	thrown	nordmarka	twilight	44.8	44.8	44.7	its outline (red) against the pixel beyond it
+thrown-slinger	thrown	bygdoy	day	51.3	33.0	46.1	its outline (red) against the pixel beyond it
+thrown-ringer	thrown	vigelandsparken	day	52.7	57.0	46.4	its outline (red) against the pixel beyond it
+thrown-nester	thrown	ostensjovannet	twilight	43.7	23.7	43.8	its outline (red) against the pixel beyond it
+thrown-riveter	thrown	bjorvika	evening	52.3	16.5	40.7	its outline (red) against the pixel beyond it
+thrown-archer	thrown	gamlebyen	night	52.5	21.2	46.4	its outline (red) against the pixel beyond it
+carrier-langkaia-0	carrier	langkaia	the clock				not found in the picture by its own colours (0.71 of them): under water, in the dark, or moving
+carrier-langkaia-1	carrier	langkaia	the clock				not found in the picture by its own colours (0.47 of them): under water, in the dark, or moving
+carrier-langkaia-2	carrier	langkaia	the clock				not found in the picture by its own colours (0.71 of them): under water, in the dark, or moving
+carrier-langkaia-3	carrier	langkaia	the clock				not found in the picture by its own colours (0.47 of them): under water, in the dark, or moving
+carrier-langkaia-4	carrier	langkaia	the clock				not found in the picture by its own colours (0.71 of them): under water, in the dark, or moving
+carrier-langkaia-5	carrier	langkaia	the clock				not found in the picture by its own colours (0.47 of them): under water, in the dark, or moving
+carrier-langkaia-6	carrier	langkaia	the clock				not found in the picture by its own colours (0.71 of them): under water, in the dark, or moving
+carrier-langkaia-7	carrier	langkaia	the clock				not found in the picture by its own colours (0.47 of them): under water, in the dark, or moving
+carrier-langkaia-8	carrier	langkaia	the clock				not found in the picture by its own colours (0.71 of them): under water, in the dark, or moving
+carrier-langkaia-9	carrier	langkaia	the clock				not found in the picture by its own colours (0.47 of them): under water, in the dark, or moving
+carrier-langkaia-10	carrier	langkaia	the clock				not found in the picture by its own colours (0.71 of them): under water, in the dark, or moving
+carrier-akershus-0	carrier	akershus	day	50.5	5.2	5.2	its edge against the pixel beyond it
+carrier-radhuset-0	carrier	radhuset	day	21.1	14.9	14.9	its edge against the pixel beyond it
+carrier-radhuset-1	carrier	radhuset	day	50.3	5.3	5.3	its edge against the pixel beyond it
+carrier-radhuset-2	carrier	radhuset	day				not found in the picture by its own colours (0.55 of them): under water, in the dark, or moving
+carrier-radhuset-3	carrier	radhuset	day				not found in the picture by its own colours (0.43 of them): under water, in the dark, or moving
+carrier-radhuset-4	carrier	radhuset	day				not found in the picture by its own colours (0.20 of them): under water, in the dark, or moving
+carrier-slottet-0	carrier	slottet	17mai	34.7	34.7	34.7	its edge against the pixel beyond it
+carrier-slottet-1	carrier	slottet	17mai	27.9	27.9	27.9	its edge against the pixel beyond it
+carrier-slottet-2	carrier	slottet	17mai	28.4	28.4	28.4	its edge against the pixel beyond it
+carrier-slottet-3	carrier	slottet	17mai	25.5	25.5	25.5	its edge against the pixel beyond it
+carrier-slottet-4	carrier	slottet	17mai				not found in the picture by its own colours (0.30 of them): under water, in the dark, or moving
+carrier-slottet-5	carrier	slottet	17mai	34.3	34.3	34.3	its edge against the pixel beyond it
+carrier-slottet-6	carrier	slottet	17mai	43.3	43.3	43.3	its edge against the pixel beyond it
+carrier-slottet-7	carrier	slottet	17mai	10.9	10.9	10.9	its edge against the pixel beyond it
+carrier-holmenkollen-0	carrier	holmenkollen	winterday	44.4	44.4	44.4	its edge against the pixel beyond it
+carrier-holmenkollen-2	carrier	holmenkollen	winterday				not found in the picture by its own colours (0.65 of them): under water, in the dark, or moving
+carrier-akerselva-0	carrier	akerselva	day				not found in the picture by its own colours (0.58 of them): under water, in the dark, or moving
+carrier-akerselva-2	carrier	akerselva	day				not found in the picture by its own colours (0.57 of them): under water, in the dark, or moving
+carrier-akerselva-3	carrier	akerselva	day				not found in the picture by its own colours (0.58 of them): under water, in the dark, or moving
+carrier-akerselva-4	carrier	akerselva	day				not found in the picture by its own colours (0.61 of them): under water, in the dark, or moving
+carrier-akerselva-5	carrier	akerselva	day				not found in the picture by its own colours (0.57 of them): under water, in the dark, or moving
+carrier-akerselva-6	carrier	akerselva	day				not found in the picture by its own colours (0.77 of them): under water, in the dark, or moving
+carrier-akerselva-7	carrier	akerselva	day				not found in the picture by its own colours (0.77 of them): under water, in the dark, or moving
+carrier-akerselva-8	carrier	akerselva	day				not found in the picture by its own colours (0.77 of them): under water, in the dark, or moving
+carrier-akerselva-9	carrier	akerselva	day				not found in the picture by its own colours (0.77 of them): under water, in the dark, or moving
+carrier-akerselva-10	carrier	akerselva	day				not found in the picture by its own colours (0.77 of them): under water, in the dark, or moving
+carrier-akerselva-11	carrier	akerselva	day				not found in the picture by its own colours (0.77 of them): under water, in the dark, or moving
+carrier-akerselva-12	carrier	akerselva	day				not found in the picture by its own colours (0.59 of them): under water, in the dark, or moving
+carrier-akerselva-13	carrier	akerselva	day				not found in the picture by its own colours (0.57 of them): under water, in the dark, or moving
+carrier-akerselva-14	carrier	akerselva	day				not found in the picture by its own colours (0.57 of them): under water, in the dark, or moving
+carrier-akerselva-15	carrier	akerselva	day				not found in the picture by its own colours (0.58 of them): under water, in the dark, or moving
+carrier-akerselva-16	carrier	akerselva	day				not found in the picture by its own colours (0.56 of them): under water, in the dark, or moving
+carrier-akerselva-17	carrier	akerselva	day				not found in the picture by its own colours (0.57 of them): under water, in the dark, or moving
+carrier-akerselva-18	carrier	akerselva	day				not found in the picture by its own colours (0.58 of them): under water, in the dark, or moving
+carrier-akerselva-20	carrier	akerselva	day				not found in the picture by its own colours (0.56 of them): under water, in the dark, or moving
+carrier-akerselva-21	carrier	akerselva	day				not found in the picture by its own colours (0.58 of them): under water, in the dark, or moving
+carrier-nordmarka-0	carrier	nordmarka	twilight				not found in the picture by its own colours (0.45 of them): under water, in the dark, or moving
+carrier-stortinget-0	carrier	stortinget	day	67.4	20.9	20.9	its edge against the pixel beyond it
+carrier-stortinget-1	carrier	stortinget	day	47.8	20.5	20.5	its edge against the pixel beyond it
+carrier-stortinget-2	carrier	stortinget	day	65.7	20.9	20.9	its edge against the pixel beyond it
+carrier-stortinget-3	carrier	stortinget	day	47.8	20.5	20.5	its edge against the pixel beyond it
+carrier-stortinget-4	carrier	stortinget	day	31.6	10.3	10.3	its edge against the pixel beyond it
+carrier-stortinget-5	carrier	stortinget	day	61.1	20.5	20.5	its edge against the pixel beyond it
+carrier-stortinget-6	carrier	stortinget	day	47.8	20.5	20.5	its edge against the pixel beyond it
+carrier-stortinget-7	carrier	stortinget	day	28.5	20.5	20.5	its edge against the pixel beyond it
+carrier-stortinget-8	carrier	stortinget	day	47.8	20.5	20.5	its edge against the pixel beyond it
+carrier-stortinget-9	carrier	stortinget	day	47.8	20.5	20.5	its edge against the pixel beyond it
+carrier-ekeberg-0	carrier	ekeberg	evening	27.6	23.0	23.0	its edge against the pixel beyond it
+carrier-ekeberg-1	carrier	ekeberg	evening	27.6	23.0	23.0	its edge against the pixel beyond it
+carrier-ekeberg-2	carrier	ekeberg	evening	49.0	34.2	34.2	its edge against the pixel beyond it
+carrier-nabolaget-0	carrier	nabolaget	winter (night)	36.0	17.0	17.0	its edge against the pixel beyond it
+carrier-nabolaget-1	carrier	nabolaget	winter (night)	49.2	8.1	8.1	its edge against the pixel beyond it
+carrier-bygdoy-0	carrier	bygdoy	day				not found in the picture by its own colours (0.48 of them): under water, in the dark, or moving
+carrier-bygdoy-1	carrier	bygdoy	day	26.8	15.8	15.8	its edge against the pixel beyond it
+carrier-bygdoy-2	carrier	bygdoy	day	45.0	19.6	19.6	its edge against the pixel beyond it
+carrier-vigelandsparken-0	carrier	vigelandsparken	day	22.2	19.4	19.4	its edge against the pixel beyond it
+carrier-vigelandsparken-1	carrier	vigelandsparken	day				not found in the picture by its own colours (0.72 of them): under water, in the dark, or moving
+carrier-bjorvika-0	carrier	bjorvika	evening	16.3	19.4	19.4	its edge against the pixel beyond it
+carrier-bjorvika-1	carrier	bjorvika	evening	59.3	30.3	30.3	its edge against the pixel beyond it
+carrier-bjorvika-2	carrier	bjorvika	evening	59.4	30.5	30.5	its edge against the pixel beyond it
+carrier-bjorvika-3	carrier	bjorvika	evening	59.4	30.5	30.5	its edge against the pixel beyond it
+carrier-bjorvika-4	carrier	bjorvika	evening				not found in the picture by its own colours (0.66 of them): under water, in the dark, or moving
+carrier-bjorvika-5	carrier	bjorvika	evening				not found in the picture by its own colours (0.66 of them): under water, in the dark, or moving
+carrier-bjorvika-6	carrier	bjorvika	evening				not found in the picture by its own colours (0.66 of them): under water, in the dark, or moving
+carrier-bjorvika-7	carrier	bjorvika	evening	57.5	27.0	27.0	its edge against the pixel beyond it
+carrier-bjorvika-8	carrier	bjorvika	evening	57.5	27.0	27.0	its edge against the pixel beyond it
+carrier-bjorvika-9	carrier	bjorvika	evening	57.5	27.0	27.0	its edge against the pixel beyond it
+carrier-gamlebyen-0	carrier	gamlebyen	night	38.6	15.4	15.4	its edge against the pixel beyond it
+carrier-gamlebyen-1	carrier	gamlebyen	night	38.8	16.0	16.0	its edge against the pixel beyond it
+skilling-langkaia	pickup	langkaia	the clock	49.9	17.2	17.2	its edge against the pixel beyond it
+cheese-langkaia	pickup	langkaia	the clock	32.1	18.3	18.3	its edge against the pixel beyond it
+bracteate-langkaia	pickup	langkaia	the clock	50.9	14.5	14.5	its edge against the pixel beyond it
+rune-langkaia	pickup	langkaia	the clock	56.7	31.2	31.2	its edge against the pixel beyond it
+bench-langkaia	pickup	langkaia	the clock	33.2	16.7	16.7	its edge against the pixel beyond it
+flag-langkaia	pickup	langkaia	the clock	24.2	19.0	19.0	its edge against the pixel beyond it
+skilling-akershus	pickup	akershus	day	49.6	37.6	37.6	its edge against the pixel beyond it
+cheese-akershus	pickup	akershus	day	30.4	37.7	37.7	its edge against the pixel beyond it
+bracteate-akershus	pickup	akershus	day	48.2	47.1	47.1	its edge against the pixel beyond it
+rune-akershus	pickup	akershus	day	48.6	5.2	5.2	its edge against the pixel beyond it
+bench-akershus	pickup	akershus	day	40.8	15.9	15.9	its edge against the pixel beyond it
+flag-akershus	pickup	akershus	day	18.2	23.4	23.4	its edge against the pixel beyond it
+skilling-radhuset	pickup	radhuset	day	49.6	37.3	37.3	its edge against the pixel beyond it
+cheese-radhuset	pickup	radhuset	day	43.3	40.8	40.8	its edge against the pixel beyond it
+bracteate-radhuset	pickup	radhuset	day				not found in the picture by its own colours (0.28 of them): under water, in the dark, or moving
+rune-radhuset	pickup	radhuset	day				not found in the picture by its own colours (0.19 of them): under water, in the dark, or moving
+bench-radhuset	pickup	radhuset	day	23.4	11.8	11.8	its edge against the pixel beyond it
+flag-radhuset	pickup	radhuset	day	17.3	13.2	13.2	its edge against the pixel beyond it
+skilling-slottet	pickup	slottet	17mai	43.2	43.2	43.2	its edge against the pixel beyond it
+cheese-slottet	pickup	slottet	17mai	43.3	43.3	43.3	its edge against the pixel beyond it
+bracteate-slottet	pickup	slottet	17mai	38.1	38.1	38.1	its edge against the pixel beyond it
+rune-slottet	pickup	slottet	17mai	59.8	59.8	59.8	its edge against the pixel beyond it
+bench-slottet	pickup	slottet	17mai	30.2	30.2	30.2	its edge against the pixel beyond it
+flag-slottet	pickup	slottet	17mai				not found in the picture by its own colours (0.67 of them): under water, in the dark, or moving
+skilling-holmenkollen	pickup	holmenkollen	winterday	32.5	32.5	32.5	its edge against the pixel beyond it
+cheese-holmenkollen	pickup	holmenkollen	winterday	34.5	34.5	34.5	its edge against the pixel beyond it
+bracteate-holmenkollen	pickup	holmenkollen	winterday	45.4	45.4	45.4	its edge against the pixel beyond it
+rune-holmenkollen	pickup	holmenkollen	winterday	35.6	35.6	35.6	its edge against the pixel beyond it
+bench-holmenkollen	pickup	holmenkollen	winterday	31.2	31.2	31.2	its edge against the pixel beyond it
+flag-holmenkollen	pickup	holmenkollen	winterday	35.2	35.2	35.2	its edge against the pixel beyond it
+skilling-akerselva	pickup	akerselva	day	49.8	37.5	37.5	its edge against the pixel beyond it
+cheese-akerselva	pickup	akerselva	day	28.0	37.5	37.5	its edge against the pixel beyond it
+bracteate-akerselva	pickup	akerselva	day	50.9	46.7	46.7	its edge against the pixel beyond it
+rune-akerselva	pickup	akerselva	day	51.2	5.9	5.9	its edge against the pixel beyond it
+bench-akerselva	pickup	akerselva	day	20.1	8.4	8.4	its edge against the pixel beyond it
+flag-akerselva	pickup	akerselva	day	31.7	21.8	21.8	its edge against the pixel beyond it
+skilling-nordmarka	pickup	nordmarka	twilight				not found in the picture by its own colours (0.80 of them): under water, in the dark, or moving
+cheese-nordmarka	pickup	nordmarka	twilight				not found in the picture by its own colours (0.28 of them): under water, in the dark, or moving
+bracteate-nordmarka	pickup	nordmarka	twilight				not found in the picture by its own colours (0.28 of them): under water, in the dark, or moving
+rune-nordmarka	pickup	nordmarka	twilight				not found in the picture by its own colours (0.37 of them): under water, in the dark, or moving
+bench-nordmarka	pickup	nordmarka	twilight				not found in the picture by its own colours (0.16 of them): under water, in the dark, or moving
+flag-nordmarka	pickup	nordmarka	twilight				not found in the picture by its own colours (0.34 of them): under water, in the dark, or moving
+skilling-stortinget	pickup	stortinget	day	35.7	28.6	28.6	its edge against the pixel beyond it
+cheese-stortinget	pickup	stortinget	day	40.2	35.7	35.7	its edge against the pixel beyond it
+bracteate-stortinget	pickup	stortinget	day	38.6	46.4	46.4	its edge against the pixel beyond it
+rune-stortinget	pickup	stortinget	day	56.7	19.5	19.5	its edge against the pixel beyond it
+bench-stortinget	pickup	stortinget	day	38.9	14.4	14.4	its edge against the pixel beyond it
+flag-stortinget	pickup	stortinget	day	12.7	7.3	7.3	its edge against the pixel beyond it
+skilling-ekeberg	pickup	ekeberg	evening	31.0	17.7	17.7	its edge against the pixel beyond it
+cheese-ekeberg	pickup	ekeberg	evening	43.3	15.0	15.0	its edge against the pixel beyond it
+bracteate-ekeberg	pickup	ekeberg	evening	50.9	14.5	14.5	its edge against the pixel beyond it
+rune-ekeberg	pickup	ekeberg	evening	56.6	30.5	30.5	its edge against the pixel beyond it
+bench-ekeberg	pickup	ekeberg	evening				not found in the picture by its own colours (0.46 of them): under water, in the dark, or moving
+flag-ekeberg	pickup	ekeberg	evening	40.6	36.7	36.7	its edge against the pixel beyond it
+skilling-nabolaget	pickup	nabolaget	winter (night)	49.8	37.5	37.5	its edge against the pixel beyond it
+cheese-nabolaget	pickup	nabolaget	winter (night)	37.1	34.7	34.7	its edge against the pixel beyond it
+bracteate-nabolaget	pickup	nabolaget	winter (night)	51.0	46.7	46.7	its edge against the pixel beyond it
+rune-nabolaget	pickup	nabolaget	winter (night)				not found in the picture by its own colours (0.33 of them): under water, in the dark, or moving
+bench-nabolaget	pickup	nabolaget	winter (night)	43.8	10.5	10.5	its edge against the pixel beyond it
+flag-nabolaget	pickup	nabolaget	winter (night)	17.6	23.2	23.2	its edge against the pixel beyond it
+skilling-bygdoy	pickup	bygdoy	day	15.5	30.0	30.0	its edge against the pixel beyond it
+cheese-bygdoy	pickup	bygdoy	day	27.6	28.0	28.0	its edge against the pixel beyond it
+bracteate-bygdoy	pickup	bygdoy	day	40.1	30.5	30.5	its edge against the pixel beyond it
+rune-bygdoy	pickup	bygdoy	day	56.9	6.7	6.7	its edge against the pixel beyond it
+bench-bygdoy	pickup	bygdoy	day	31.3	12.4	12.4	its edge against the pixel beyond it
+flag-bygdoy	pickup	bygdoy	day	24.6	20.1	20.1	its edge against the pixel beyond it
+skilling-vigelandsparken	pickup	vigelandsparken	day	41.1	32.6	32.6	its edge against the pixel beyond it
+cheese-vigelandsparken	pickup	vigelandsparken	day	43.3	42.0	42.0	its edge against the pixel beyond it
+bracteate-vigelandsparken	pickup	vigelandsparken	day	50.9	46.7	46.7	its edge against the pixel beyond it
+rune-vigelandsparken	pickup	vigelandsparken	day	51.8	10.1	10.1	its edge against the pixel beyond it
+bench-vigelandsparken	pickup	vigelandsparken	day	43.8	18.1	18.1	its edge against the pixel beyond it
+flag-vigelandsparken	pickup	vigelandsparken	day	23.5	20.9	20.9	its edge against the pixel beyond it
+skilling-korketrekkeren	pickup	korketrekkeren	evening	47.3	29.1	29.1	its edge against the pixel beyond it
+cheese-korketrekkeren	pickup	korketrekkeren	evening				not found in the picture by its own colours (0.28 of them): under water, in the dark, or moving
+bracteate-korketrekkeren	pickup	korketrekkeren	evening	46.6	25.3	25.3	its edge against the pixel beyond it
+rune-korketrekkeren	pickup	korketrekkeren	evening	55.9	31.5	31.5	its edge against the pixel beyond it
+bench-korketrekkeren	pickup	korketrekkeren	evening	39.7	23.8	23.8	its edge against the pixel beyond it
+flag-korketrekkeren	pickup	korketrekkeren	evening	38.6	34.8	34.8	its edge against the pixel beyond it
+skilling-ostensjovannet	pickup	ostensjovannet	twilight	36.5	32.6	32.6	its edge against the pixel beyond it
+cheese-ostensjovannet	pickup	ostensjovannet	twilight	43.3	38.8	38.8	its edge against the pixel beyond it
+bracteate-ostensjovannet	pickup	ostensjovannet	twilight	50.9	41.6	41.6	its edge against the pixel beyond it
+rune-ostensjovannet	pickup	ostensjovannet	twilight	26.7	13.5	13.5	its edge against the pixel beyond it
+bench-ostensjovannet	pickup	ostensjovannet	twilight	33.0	18.4	18.4	its edge against the pixel beyond it
+flag-ostensjovannet	pickup	ostensjovannet	twilight	20.8	24.1	24.1	its edge against the pixel beyond it
+skilling-bjorvika	pickup	bjorvika	evening	49.9	18.0	18.0	its edge against the pixel beyond it
+cheese-bjorvika	pickup	bjorvika	evening	24.8	21.0	21.0	its edge against the pixel beyond it
+bracteate-bjorvika	pickup	bjorvika	evening	51.6	23.4	23.4	its edge against the pixel beyond it
+rune-bjorvika	pickup	bjorvika	evening	61.4	48.8	48.8	its edge against the pixel beyond it
+bench-bjorvika	pickup	bjorvika	evening	36.0	26.1	26.1	its edge against the pixel beyond it
+flag-bjorvika	pickup	bjorvika	evening	23.9	21.8	21.8	its edge against the pixel beyond it
+skilling-gamlebyen	pickup	gamlebyen	night	44.5	37.4	37.4	its edge against the pixel beyond it
+cheese-gamlebyen	pickup	gamlebyen	night	28.5	33.3	33.3	its edge against the pixel beyond it
+bracteate-gamlebyen	pickup	gamlebyen	night	50.9	46.7	46.7	its edge against the pixel beyond it
+rune-gamlebyen	pickup	gamlebyen	night				not found in the picture by its own colours (0.25 of them): under water, in the dark, or moving
+bench-gamlebyen	pickup	gamlebyen	night	37.9	16.4	16.4	its edge against the pixel beyond it
+flag-gamlebyen	pickup	gamlebyen	night	27.3	21.8	21.8	its edge against the pixel beyond it

@@ -196,37 +196,45 @@ const WASP: Looks = {
   move: [wasp("wasp, wings up", "up"), wasp("wasp, wings half up", "high"), wasp("wasp, wings out", "level", -1), wasp("wasp, wings down", "down", -1)]
 };
 
-// --- The squirrel: 13 x 17 sitting up, facing right, its tail a curl behind; a cone in its paws, raised to throw -------
-const SQUIRREL = [
-  ".OOOO........",
-  "OOOaOO.......",
-  "OOooOOo.l....",
-  "OOo..oO.OOO..",
-  "Ooo...o.OOOe.",
-  "ooo...o.OOOOl",
-  "ooo......oo..",
-  "ooo....OOOO..",
-  "ooo...OOaao..",
-  ".ooo..OOaaoo.",
-  ".ooo..Ooaaoo.",
-  "..ooo.ooaaoo.",
-  "..oooooooao..",
-  "...ooooooooo.",
-  "....oooooooo.",
-  ".....ll.ll...",
-  "....lll.lll.."
+// --- The squirrel: 15 x 17 sitting up, facing right (order 39, redrawn: order 38 found its tail a curl that was most of it, a
+// blob at phone size). A red squirrel as Nordmarka and Ekeberg have them: its tail a plume rising from its rump behind its back,
+// a gap of sky between, flicked back at its tip; its ears tufted; a pale belly; in its forepaws a cone as big as the one it
+// throws (the same cone: `CONE_SHOT`'s first frame), raised in both paws over its head to throw, so what flies at him came
+// from its paws. Under the glamour, a sweatband in neon. -----------------------------------------------------------------
+const SQUIRREL_TAIL = [
+  "..OO.....",
+  ".OOoO....",
+  "OOo.oO...",
+  "Oo...oO..",
+  ".....oO..",
+  ".....oo..",
+  "....Ooo..",
+  "....Ooo..",
+  "...Ooo...",
+  "...Ooo...",
+  "..OOoo...",
+  "..Ooo....",
+  ".OOoo....",
+  ".Oooo....",
+  "..oooo...",
+  "...oooo.."
 ];
-const CONE = ["dM", "Md", "dm"];
+const SQUIRREL_HEAD = ["..l.l", "..O.O", ".OOOO", "OOOOO", "OOOeO", "OOOOl", ".aOO."];
+const SQUIRREL_TRUNK = [".OOaa..", ".OOOaa.", ".OOoaa.", "OoOoaa.", "OoOooaa", "OOooooa", "Ooooooo", "oooooo.", ".ooooo."];
+const SQUIRREL_FEET = ["ll.lll."];
+/** The cone it holds, and throws: the thrown cone's own first frame without its stem. */
+const CONE = [".dMd.", "dMdMd", "MdMdm", "dMdmd", ".dmd."];
 /** Its glam (order 27): a sweatband round its head, in neon. */
-const SQUIRREL_BAND = (dy: number) => mark(["NNn"], 6, 3 + dy);
-const CONE_UP = [".dd.", "dMdM", "MdMd", ".dm."];
+const SQUIRREL_BAND = (dy: number) => mark(["NNn"], 7, 3 + dy);
+const squirrel = (name: string, dy: number, ...more: Piece[]) =>
+  make(name, at(SQUIRREL_TAIL, -3, dy), at(SQUIRREL_HEAD, 6, 1 + dy), at(SQUIRREL_TRUNK, 5, 8 + dy), at(SQUIRREL_FEET, 5, 16), ...more, SQUIRREL_BAND(dy));
 const SQUIRREL_LOOKS: Looks = {
   w: 11,
   h: 17,
-  idle: [make("squirrel, a cone in its paws", at(SQUIRREL, -2), at(CONE, 9, 9), SQUIRREL_BAND(0)), make("squirrel, nibbling", at(SQUIRREL, -2), at(["........"], 3, 3), at(SQUIRREL.slice(3, 7), -2, 4), at(CONE, 9, 8), SQUIRREL_BAND(1))],
-  move: [make("squirrel, a cone in its paws", at(SQUIRREL, -2), at(CONE, 9, 9), SQUIRREL_BAND(0))],
-  // Winding up (order 19): up on its toes, the cone raised high over its head.
-  windup: make("squirrel, the cone raised", at(SQUIRREL, -2, -1), SQUIRREL_BAND(-1), at(["o", "O"], 11, 1), at(CONE_UP, 8, -2), at([".....ll.ll..."], -2, 15), at(["....lll.lll.."], -2, 16))
+  idle: [squirrel("squirrel, a cone in its paws", 0, at(["O", "o"], 8, 9), at(CONE, 8, 8)), squirrel("squirrel, nibbling", 0, at(["O", "o"], 8, 10), at(CONE, 8, 9))],
+  move: [squirrel("squirrel, a cone in its paws", 0, at(["O", "o"], 8, 9), at(CONE, 8, 8))],
+  // Winding up (order 19): up on its toes, the cone raised high over its head in both forepaws.
+  windup: squirrel("squirrel, the cone raised", -1, at(["O", "O", "O", "o", "o"], 11, 2), at(CONE, 9, -3))
 };
 
 // --- The kid: 11 x 18, a child in winter clothes, facing right (order 27, redrawn: Lars, "make kid, sledgers more detailed

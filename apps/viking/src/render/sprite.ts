@@ -45,8 +45,8 @@ export interface Sprite {
 const kept = new Map<string, Sprite>();
 const KEPT_MOST = 800;
 const eyesOf = new WeakMap<object, [number, number][]>();
-/** The outlines copied this frame, in screen pixels, for `rings` and `glows` (a pool, reused frame to frame); `sprite`: an invader's, which glows. */
-const drawnRings: { ring: HTMLCanvasElement; x: number; y: number; sprite: Sprite | null }[] = [];
+/** The outlines copied this frame, in screen pixels, for `rings` and `glows` (a pool, reused frame to frame); `sprite`: an invader's, which glows; `thrown`: what it throws. */
+const drawnRings: { ring: HTMLCanvasElement; x: number; y: number; sprite: Sprite | null; thrown: boolean }[] = [];
 let drawnCount = 0;
 /** For the tests: the last outlined shape as it was recorded (its rectangles, x, y, w, h in turn, as drawn; its colours; its outline's). */
 export const lastShape = () => ({ rects, colours, rim: rimNow });
@@ -76,6 +76,8 @@ export function calm() {
  */
 export const noPage: { outline?: (draw: () => void, rim: string) => void; plain?: (draw: () => void) => void } = {};
 
+/** Passed as `who` to `outlined` for what an invader throws (order 39): after dusk its glow keeps a dark pixel off its outline. */
+export const THROWN = {};
 export function outlined(draw: () => void, who?: object, rim: string = ENEMY.warning) {
   if (typeof document === "undefined" || onto) return !onto && noPage.outline ? noPage.outline(draw, rim) : draw();
   onto = ctx();
@@ -155,9 +157,10 @@ export function outlined(draw: () => void, who?: object, rim: string = ENEMY.war
     kept.set(key, sprite);
   }
   g.drawImage(sprite.whole, x0 - m, y0 - m);
-  const at = drawnRings[drawnCount] ?? (drawnRings[drawnCount] = { ring: sprite.ring, x: 0, y: 0, sprite: null });
+  const at = drawnRings[drawnCount] ?? (drawnRings[drawnCount] = { ring: sprite.ring, x: 0, y: 0, sprite: null, thrown: false });
   at.ring = sprite.ring;
   at.sprite = rim === ENEMY.warning ? sprite : null;
+  at.thrown = who === THROWN;
   at.x = x0 - m;
   at.y = y0 - m;
   drawnCount++;
@@ -183,9 +186,9 @@ export function rings(g: CanvasRenderingContext2D) {
   for (let i = 0; i < drawnCount; i++) g.drawImage(drawnRings[i].ring, drawnRings[i].x, drawnRings[i].y);
 }
 
-/** For the glow after dark (order 27, `alive/glamour.ts`): each invader outlined since `freshRings`, its sprite and where it was copied. */
-export function invaders(each: (s: Sprite, x: number, y: number) => void) {
-  for (let i = 0; i < drawnCount; i++) if (drawnRings[i].sprite) each(drawnRings[i].sprite!, drawnRings[i].x, drawnRings[i].y);
+/** For the glow after dark (order 27, `alive/glamour.ts`): each invader outlined since `freshRings`, its sprite and where it was copied, and whether it is what one throws. */
+export function invaders(each: (s: Sprite, x: number, y: number, thrown: boolean) => void) {
+  for (let i = 0; i < drawnCount; i++) if (drawnRings[i].sprite) each(drawnRings[i].sprite!, drawnRings[i].x, drawnRings[i].y, drawnRings[i].thrown);
 }
 
 /** Where the eyes of an enemy were drawn last (world pixels): they shine in the headlamp and after dusk. */

@@ -523,24 +523,35 @@ function swanArt(e: Enemy, t: number) {
   drawFoe(at, f, 20, 19);
 }
 
-/** A coot, 13 x 10 on its long legs: black (the plum's darkest) lit at its back, a white shield and bill, an eye, green legs with lobed toes; it bobs its head as it goes. Drawn for its box, not squashed to it (one coot keeps the box it had before order 18). */
+/**
+ * A coot, 13 x 10 (order 39, redrawn: order 38 found it a dark round blob at phone size, its white lost): a plump black bird
+ * (the plum's darkest, its back lit) with its head up, the white shield up its brow and its short white bill, an eye, long
+ * grey-green legs on big lobed toes; it nods as it goes. The white is drawn in the pale, which neither the glamour's sheen nor
+ * a level's lean touches, so it stays a light mark on its head glammed and natural. Drawn for its box, not squashed to it (one
+ * coot keeps the box it had before order 18).
+ */
 const COOT_BODY = [
-  "...........",
-  ".dmMmmddd..",
-  "dmmddddddd.",
-  "ddddddddddl",
-  "lddddddddl.",
-  ".llllllll.."
+  "...dmMm...",
+  "..dmmmmmd.",
+  ".ddddddddd",
+  "dddddddddd",
+  ".ldddddddl",
+  "...lllll.."
 ];
-const COOT_HEAD = [".dd..", "dmdaa", "dedWa", ".ld.."];
-const COOT_LEGS = [["...g...g.....", "..gg..gg....."], ["....g.g......", "...ggggg....."], ["..g....g.....", ".gg....gg...."], ["....g.g......", "...ggggg....."]];
+const COOT_HEAD = [".dd..", "ddda.", "dedaa", "dddaa", ".dd.."];
+const COOT_LEGS = [
+  ["....g..g.....", "..GGg.GGg...."],
+  [".....g.g.....", "...GGgGGg...."],
+  ["...g....g....", ".GGg...GGg..."],
+  [".....g.g.....", "...GGgGGg...."]
+];
 /** Its glam (order 27): a neon cap of feathers on its crown (shades would not show on its black head). */
-const cootFrame = (name: string, legs: number, nod: number, dy = 0) => frame(name, FOE_INK, [COOT_BODY, 0, 2 + dy], [COOT_HEAD, 8 + nod, nod + dy], [COOT_LEGS[legs], 0, 8], mark(["NN"], 9 + nod, nod + dy));
+const cootFrame = (name: string, legs: number, nod: number) => frame(name, FOE_INK, [COOT_BODY, 0, 2], [COOT_HEAD, 8 + nod, nod], [COOT_LEGS[legs], 0, 8], mark(["NN"], 9 + nod, nod));
 const COOT: Looks = {
   w: 13,
   h: 10,
   idle: [cootFrame("coot, still", 0, 0), cootFrame("coot, pecking", 0, 1)],
-  move: [cootFrame("coot, walking 1", 3, 1, 1), cootFrame("coot, walking 2", 1, 0), cootFrame("coot, walking 3", 2, 1, 1), cootFrame("coot, walking 4", 1, 0)]
+  move: [cootFrame("coot, walking 1", 3, 1), cootFrame("coot, walking 2", 1, 0), cootFrame("coot, walking 3", 2, 1), cootFrame("coot, walking 4", 1, 0)]
 };
 
 /**

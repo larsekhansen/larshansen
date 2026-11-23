@@ -73,25 +73,26 @@ export function drawRavenAt(x: number, y: number, facing: 1 | -1, look: 1 | -1, 
 
 /**
  * The mound-dweller on his stone seat, 9 x 12 (order 38, redrawn: order 36's was a grey block whose eyes the page drew apart
- * from it). The hood's peak and its opening rounded round a face in shadow, two pale points of eyes in it that follow him; the
- * cloak falling from his shoulders in folds, lit on its left, his pale hands folded in his lap, its hem parted over his feet.
- * Three frames: his eyes to his left, ahead and to his right.
+ * from it; order 39 again: three greys and no folds or hands to be seen). The hood's peak and its opening rounded round a face in
+ * shadow, two pale points of eyes in it that follow him (order 38's); the cloak lit on its left, falling from his shoulders in
+ * folds (a dark groove beside each lit ridge, splaying at the hem), one pale hand out of his sleeve on his knee, its hem parted
+ * over his feet. Three frames: his eyes to his left, ahead and to his right.
  */
 const SEATED = [
-  "..LLggG..",
-  ".LgggggG.",
+  "...LgG...",
+  "..LggGG..",
+  ".LgdddgG.",
   "LgdddddgG",
-  "LgdddddgG",
-  ".gdddddG.",
-  ".LggdggG.",
-  "LgggggggD",
-  "LgGgggGgD",
-  "LgGgggGGD",
-  "LggHHhgGD",
-  "LgGgggGGD",
+  "LgddddDGG",
+  "LgGdddGGD",
+  "LLgGgGgGD",
+  "LgKgLgKGD",
+  "LgKgLKHhD",
+  "LgKgLKhhD",
+  "LKgGLgKGD",
   "DGD...DGD"
 ];
-const DWELLER_INK = { g: "#a3a9a6", L: "#c2c7c4", G: "#7f8582", D: "#5f6562", d: "#1b1c22", e: "#e2dcc0", H: "#c8bfae", h: "#9a9282" };
+const DWELLER_INK = { g: "#a3a9a6", L: "#c2c7c4", G: "#7f8582", D: "#5f6562", K: "#4a4f4d", d: "#1b1c22", e: "#e2dcc0", H: "#c8bfae", h: "#9a9282" };
 /** The mound-dweller with his eyes to his left (-1), ahead (0) or to his right (1). */
 export const DWELLER: Record<-1 | 0 | 1, Frame> = {
   [-1]: frame("mound-dweller, looking left", DWELLER_INK, [SEATED], [["e.e"], 2, 3]),

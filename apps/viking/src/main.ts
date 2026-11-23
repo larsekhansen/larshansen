@@ -66,7 +66,7 @@ import { BARE, ahead, kartDef, lineTwoOpen, type KartArt } from "./levels/kart";
 import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
-import { freshRings, outlined } from "./render/sprite";
+import { THROWN, freshRings, outlined } from "./render/sprite";
 import { STAND_LEDGE, hazardEdge, shiver, standing } from "./render/stand";
 import { bannerAlpha } from "./render/banner";
 import type { Feel } from "./render/feel";
@@ -1474,7 +1474,7 @@ function foe(e: Enemy, v: View) {
   outlined(look, e, e.calm ? ROLES.calm : ENEMY.warning);
 }
 /** Something thrown, outlined as its thrower is. */
-const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)));
+const thrown = (s: Shot, v: View) => outlined(() => void (scene.def.art.shot?.(s, v) || drawShot(s)), THROWN);
 
 /** What `afterDark` (in feel's file) draws with of the page's own: an enemy, something thrown, the paint on what he stands on. */
 const PAGE = { foe, thrown, standing: (v: View) => standing(scene.play, v.alpha, leaving) };

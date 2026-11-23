@@ -214,6 +214,27 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   npm registry (a 404; nothing was sent but the package's name). *From a scratch folder, import the repository's files by their path and run
   `bun --no-install`.*
 
+- **A tell that is only a movement is nothing with reduced motion** (order 39, found by order 38): the salmon's water and the track rat's
+  ballast were drawn under `!view.reduced` since order 23, so the players who asked for less motion saw no warning at all; every test held
+  that nothing blinked, and nothing did. *For every warning ask what it is with reduced motion, and hold that it is something (a still mark
+  there for the whole of the tell), not only that it does not blink.*
+- **Finding a figure in a picture by its colours** (order 39): the street's backdrop is washed toward the air, a lean and a sheen recolour an
+  invader, the dark recolours everything, so an exact match finds little and a loose one finds a one-toned piece on any wall of its tone.
+  What worked: for what the page outlines, the outline by its exact colour by day, only the cluster that joins the one nearest the middle (a
+  thrower's own outline beside its shot was counted at first and halved the measure), the same pixels under the other sky; for the rest, a
+  match within 24 a channel with every colour of the piece found; and a pixel beyond a prop's edge that belongs to another piece (a railing's
+  next span, a lamp's head over its post) is no edge. *Look at the found place in a crop before believing a number; a 0 was a bad match
+  every time.*
+- **A new test that outlines under a stand-in document leaves its outlines noted** (order 39): the next test to draw over a level's dark found
+  them and made their glow with no document, three failures in a file that passed alone (order 32's lesson about shared state, again).
+  *A test that puts up a stand-in document forgets what it drew before taking it down (`freshRings`, `forgetShapes`), and restores the paint
+  target and the view; run the whole suite before believing a new test.*
+- **A piece laid over another can hide an eye** (order 39): the bishop's guard's levelled halberd crossed his face on the frames his body
+  dropped a row. *Ask the census for every frame's eye pixel after redrawing a figure.*
+- **The worst by a measure is not always the worst to a player** (order 39): carriers and benches measured lowest at their edges, but they are
+  told by their role's mark (the paint, the cyan corners); a level pinned to day is never seen at night. *Rank by the sky it is met under, and
+  say what the measure does not count.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

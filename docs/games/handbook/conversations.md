@@ -195,6 +195,16 @@ Holmenkollen is one word (`look: "hare"` to `"hedgehog"` in `levels/holmenkollen
 
 The planner did not accept it in review: at the game's size it read as a pale blob, and its small spikes said "hurts from above" less clearly than the hedgehog's spines. The hare was taken out again before the merge (the commit and its revert are in the history); Holmenkollen keeps its hedgehog until a hare can be drawn that reads.
 
+### Order 39: a still tell for those who asked for less motion (the planner's call)
+
+Not something Lars said: order 38 found that with reduced motion the two jumpers (Akerselva's salmon, Stortinget's track rat) showed
+no tell at all before they leapt, since order 23: their tell was a movement, and reduced motion held it still at nothing. The planner
+decided on his behalf, as a fairness mend that is easy to undo (ADR 0040 amended): every tell has a still form. With reduced motion the
+salmon's water is held broken at its fullest and the rat's stones held kicked up, for the whole of the tell, never blinking; without
+reduced motion nothing changed. Every other tell, the bosses' and Loki's included, was checked the same way and already had one
+(`apps/viking/tools/review/o39/after.md`). Undoing it is two lines (`levels/akerselva.ts`, `levels/stortinget.ts`) and the test that holds
+it. For him to judge, if he ever turns reduced motion on: whether the held swell and the held stones are seen in time.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.
