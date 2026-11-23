@@ -205,6 +205,17 @@ reduced motion nothing changed. Every other tell, the bosses' and Loki's include
 (`apps/viking/tools/review/o39/after.md`). Undoing it is two lines (`levels/akerselva.ts`, `levels/stortinget.ts`) and the test that holds
 it. For him to judge, if he ever turns reduced motion on: whether the held swell and the held stones are seen in time.
 
+### Order 40: a dark line round what he takes after dusk (the planner's call)
+
+Not something Lars said: order 39 measured what he takes in place and found it warm on warm against an evening sky (the bracteate, the
+cheese and the skilling 14.5 to 18 off the ground round them at Langkaia, Ekeberg and Bjørvika). The planner decided on his behalf, as a
+look that is easy to undo (ADR 0044 amended): under any sky but the day's a thing he can take has a line a pixel wide round it in the
+level's dark (a dark plum in the evening, an indigo at twilight, a navy at night), the rule the maze's rune key already has (ADR 0056).
+By day nothing changed. Every skilling, cheese and bracteate met after dusk now stands 31.6 or more off what is round it
+(`apps/viking/tools/review/o40/after.md`). The lighter way, a line on the shadow side only, was tried and not chosen. Undoing it is one
+call in `apps/viking/src/render/dusk.ts` and its test (`alive/takes.test.ts`). For him to judge: whether a coin with a dark rim at dusk
+still reads as treasure, or looks heavier than he likes.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.

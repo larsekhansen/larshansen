@@ -420,6 +420,13 @@ function lilyPad(p: SinkPad, s: PadState, t: number, i: number) {
     R(x + 6, y - 2, 2, 1, L.sun);
   }
   if (s.sinkAt !== null && !view.reduced) for (let k = 0; k < 3; k++) R(x + 4 + k * 7, FLOOR - 2 - ((t + k * 5) % 6), 1, 1, L.glint);
+  // About to go (order 40: its tremble alone was a pixel to and fro, and nothing with reduced motion): the water stirring at its
+  // rim, a glint at each end and a broken line of it along its foot, there for the whole of the half second, still.
+  if (padSoon(p, s)) {
+    R(x - 2, y + 2, 2, 1, L.glint);
+    R(x + p.w, y + 2, 2, 1, L.glint);
+    for (let k = 1; k < p.w - 1; k += 3) R(x + k, y + 4, 2, 1, L.glint);
+  }
 }
 
 // --- What moves at the lake, drawn as frames (order 25; way 3, ADR 0045) -------------------------------------------

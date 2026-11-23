@@ -421,6 +421,9 @@ function cellar() {
   R(70 * TILE - 2, y0 + 2 * TILE - 4, 9, 1, METAL.chain);
 }
 
+/** A fire basket, 6 x 6, by tones of cast iron (3 lit, 0 the dark between its bars): rim, cage, bowl, stem, foot. */
+const BASKET = ["333332", "302010", "201010", ".2110.", "..21..", ".3210."];
+
 /** The inside of the keep: its stone in shadow, seen past its open front. */
 const INSIDE: Stone = { base: mix(STONE_BACK.base, INK, 0.35), light: mix(STONE_BACK.light, INK, 0.35), dark: mix(STONE_BACK.dark, INK, 0.35), mortar: mix(STONE_BACK.mortar, INK, 0.35), moss: STONE_BACK.moss };
 function keepInside(t: number) {
@@ -430,14 +433,11 @@ function keepInside(t: number) {
     [218 * TILE + 4, 16 * TILE + 6],
     [229 * TILE + 2, 11 * TILE + 6]
   ] as const) {
-    // The basket's iron (order 28): its rim lit, bars down to its bowl.
-    prop("fire basket", [CAST], "", 6, 3, x, y + 4, (g) => {
-      for (let k = 0; k < 6; k++) {
-        dot(g, k, 0, k === 0 ? tone(CAST, 4) : tone(CAST, 3));
-        dot(g, k, 1, k % 2 ? tone(CAST, 1) : tone(CAST, 2));
-        dot(g, k, 2, k === 0 || k === 5 ? null : tone(CAST, 1));
-      }
-    });
+    // The basket's iron (order 28; order 40: it was a rim over a bowl): a rim lit on its left, a cage of bars with the dark of
+    // the coals between them, its bowl, and the stem and the foot it stands on.
+    prop("fire basket", [CAST], "", 6, 6, x, y + 4, (g) =>
+      BASKET.forEach((row, k) => [...row].forEach((ch, i) => dot(g, i, k, ch === "." ? null : tone(CAST, Number(ch)))))
+    );
     // Their flames flicker (order 24), still with reduced motion.
     flame(x + 3, y + 5, t, x);
     light(x, y, 6, 6, "soft");

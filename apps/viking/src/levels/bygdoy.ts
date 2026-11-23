@@ -552,6 +552,12 @@ function bundle(p: SinkPad, s: PadState, t: number) {
   // Going under: bubbles round it.
   if (s.sinkAt !== null && !view.reduced) for (let k = 0; k < 3; k++) R(p.x + 4 + k * 10, FLOOR - 2 - ((t + k * 5) % 6), 2, 2, P.foam);
   R(p.x - 2, FLOOR + 1, p.w + 4, 1, P.foam);
+  // About to go (order 40: its tremble alone was a pixel to and fro): water slopping up at each end, still, for the half second.
+  if (bundleSoon(s))
+    for (const ex of [p.x - 3, p.x + p.w + 1]) {
+      R(ex, y + 1, 2, 3, P.foam);
+      R(ex + (ex < p.x ? -1 : 2), y + 3, 1, 1, P.foam);
+    }
 }
 
 /** The Kon-Tiki museum across the water: a white hall with a long sloping roof, its name in a band. */

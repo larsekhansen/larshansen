@@ -1,0 +1,109 @@
+subject	kind	level	sky	met under it	found by its colours	by day	under the sky, before (origin/main)	after: the all-round line (built)	after: the line on the shadow side (tried)	after: the line against the ground beyond it	note
+skilling-langkaia@evening	skilling	langkaia	evening	yes	1.00	49.9	17.2	31.6	31.6	38.7	
+skilling-langkaia@twilight	skilling	langkaia	twilight	yes	1.00	49.9	37.2	36.9	37.2	25.5	
+skilling-langkaia@night	skilling	langkaia	night	yes	1.00	49.9	37.6	35.9	37.6	7.5	
+cheese-langkaia@evening	cheese	langkaia	evening	yes	1.00	32.1	18.3	44.9	27.9	39.5	
+cheese-langkaia@twilight	cheese	langkaia	twilight	yes	1.00	32.1	37.3	49.8	41.1	25.8	
+cheese-langkaia@night	cheese	langkaia	night	yes	1.00	32.1	38.4	49.6	42.6	11.5	
+bracteate-langkaia@evening	bracteate	langkaia	evening	yes	1.00	50.9	14.5	49.6	46.0	39.9	
+bracteate-langkaia@twilight	bracteate	langkaia	twilight	yes	1.00	50.9	41.6	49.9	47.8	25.9	
+bracteate-langkaia@night	bracteate	langkaia	night	yes	1.00	50.9	46.7	45.9	45.9	7.7	
+rune-langkaia@evening	rune	langkaia	evening	yes	1.00	56.7	31.2	31.2			the rune's stone: its own edge is a dark line already; no line added
+rune-langkaia@twilight	rune	langkaia	twilight	yes	1.00	56.7	19.3	19.3			the rune's stone: its own edge is a dark line already; no line added
+rune-langkaia@night	rune	langkaia	night	yes	1.00	56.7	6.7	6.7			the rune's stone: its own edge is a dark line already; no line added
+bench-langkaia@evening	bench	langkaia	evening	yes	0.98	33.2	16.7	16.7			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+bench-langkaia@twilight	bench	langkaia	twilight	yes	0.98	33.2	0.0	0.0			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+bench-langkaia@night	bench	langkaia	night	yes	0.98	33.2	14.0	14.0			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-langkaia@evening	flag	langkaia	evening	yes	1.00	24.2	19.0	19.0			a flag he raises, not a thing to take
+flag-langkaia@twilight	flag	langkaia	twilight	yes	1.00	24.2	24.4	24.4			a flag he raises, not a thing to take
+flag-langkaia@night	flag	langkaia	night	yes	1.00	24.2	19.0	19.0			a flag he raises, not a thing to take
+skilling-akershus@night	skilling	akershus	night	no (a level pinned to day)	1.00	49.6	37.6	35.9		6.8	
+cheese-akershus@night	cheese	akershus	night	no (a level pinned to day)	1.00	30.4	37.7	49.6		5.1	
+bracteate-akershus@night	bracteate	akershus	night	no (a level pinned to day)	1.00	48.2	47.1	45.9		3.0	
+rune-akershus@night	rune	akershus	night	no (a level pinned to day)	1.00	48.6	5.2	5.2			the rune's stone: its own edge is a dark line already; no line added
+bench-akershus@night	bench	akershus	night	no (a level pinned to day)	0.98	40.8	15.9	15.9			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-akershus@night	flag	akershus	night	no (a level pinned to day)	1.00	18.2	23.4	23.4			a flag he raises, not a thing to take
+skilling-radhuset@night	skilling	radhuset	night	no (a level pinned to day)	1.00	49.6	37.3	35.9		9.0	
+cheese-radhuset@night	cheese	radhuset	night	no (a level pinned to day)	1.00	43.3	40.8	49.6		11.4	
+bracteate-radhuset@night	bracteate	radhuset	night	no (a level pinned to day)	0.28						not found in the picture by its own colours (in the dark, or moving)
+rune-radhuset@night	rune	radhuset	night	no (a level pinned to day)	0.19						the rune's stone: its own edge is a dark line already; no line added; not found in the picture by its own colours (in the dark, or moving)
+bench-radhuset@night	bench	radhuset	night	no (a level pinned to day)	0.98	23.4	11.8	11.8			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-radhuset@night	flag	radhuset	night	no (a level pinned to day)	0.97	17.3	13.2	13.2			a flag he raises, not a thing to take
+skilling-slottet@night	skilling	slottet	night	no (a level pinned to day)	1.00	43.2	29.5	35.9		19.9	
+cheese-slottet@night	cheese	slottet	night	no (a level pinned to day)	1.00	43.3	42.0	49.6		7.6	
+bracteate-slottet@night	bracteate	slottet	night	no (a level pinned to day)	1.00	38.1	44.5	45.9		7.6	
+rune-slottet@night	rune	slottet	night	no (a level pinned to day)	1.00	59.8	20.1	20.1			the rune's stone: its own edge is a dark line already; no line added
+bench-slottet@night	bench	slottet	night	no (a level pinned to day)	0.85	30.2	27.3	27.3			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-slottet@night	flag	slottet	night	no (a level pinned to day)	0.67						a flag he raises, not a thing to take; not found in the picture by its own colours (in the dark, or moving)
+skilling-holmenkollen@night	skilling	holmenkollen	night	no (a level pinned to day)	1.00	32.5	33.1	35.9		11.1	
+cheese-holmenkollen@night	cheese	holmenkollen	night	no (a level pinned to day)	1.00	34.5	32.9	49.6		18.6	
+bracteate-holmenkollen@night	bracteate	holmenkollen	night	no (a level pinned to day)	1.00	45.4	32.7	45.9		23.6	
+rune-holmenkollen@night	rune	holmenkollen	night	no (a level pinned to day)	1.00	35.6	7.9	7.9			the rune's stone: its own edge is a dark line already; no line added
+bench-holmenkollen@night	bench	holmenkollen	night	no (a level pinned to day)	0.98	31.2	15.8	15.8			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-holmenkollen@night	flag	holmenkollen	night	no (a level pinned to day)	1.00	35.2	20.5	20.5			a flag he raises, not a thing to take
+skilling-akerselva@night	skilling	akerselva	night	no (a level pinned to day)	1.00	49.8	37.5	35.9		7.1	
+cheese-akerselva@night	cheese	akerselva	night	no (a level pinned to day)	1.00	28.0	37.5	49.6		4.7	
+bracteate-akerselva@night	bracteate	akerselva	night	no (a level pinned to day)	1.00	50.9	46.7	45.9		7.7	
+rune-akerselva@night	rune	akerselva	night	no (a level pinned to day)	1.00	51.2	5.9	5.9			the rune's stone: its own edge is a dark line already; no line added
+bench-akerselva@night	bench	akerselva	night	no (a level pinned to day)	0.98	20.1	8.4	8.4			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-akerselva@night	flag	akerselva	night	no (a level pinned to day)	1.00	31.7	21.8	21.8			a flag he raises, not a thing to take
+skilling-nordmarka@twilight	skilling	nordmarka	twilight	yes	0.80	4.8	4.8	4.8	4.8	3.2	
+cheese-nordmarka@twilight	cheese	nordmarka	twilight	yes	0.28						not found in the picture by its own colours (in the dark, or moving)
+bracteate-nordmarka@twilight	bracteate	nordmarka	twilight	yes	0.28						not found in the picture by its own colours (in the dark, or moving)
+rune-nordmarka@twilight	rune	nordmarka	twilight	yes	0.37						the rune's stone: its own edge is a dark line already; no line added; not found in the picture by its own colours (in the dark, or moving)
+bench-nordmarka@twilight	bench	nordmarka	twilight	yes	0.16						a thing to use, not to take: told by its cyan corners, which keep their light after dark; not found in the picture by its own colours (in the dark, or moving)
+flag-nordmarka@twilight	flag	nordmarka	twilight	yes	0.34						a flag he raises, not a thing to take; not found in the picture by its own colours (in the dark, or moving)
+skilling-stortinget@night	skilling	stortinget	night	no (a level pinned to day)	1.00	35.7	28.6	35.9		26.8	
+cheese-stortinget@night	cheese	stortinget	night	no (a level pinned to day)	1.00	40.2	35.7	49.6		4.2	
+bracteate-stortinget@night	bracteate	stortinget	night	no (a level pinned to day)	1.00	38.6	46.4	45.9		1.3	
+rune-stortinget@night	rune	stortinget	night	no (a level pinned to day)	1.00	56.7	19.5	19.5			the rune's stone: its own edge is a dark line already; no line added
+bench-stortinget@night	bench	stortinget	night	no (a level pinned to day)	0.98	38.9	14.4	14.4			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-stortinget@night	flag	stortinget	night	no (a level pinned to day)	1.00	12.7	7.3	7.3			a flag he raises, not a thing to take
+skilling-ekeberg@evening	skilling	ekeberg	evening	yes	1.00	31.0	17.7	31.6	31.6	20.3	
+cheese-ekeberg@evening	cheese	ekeberg	evening	yes	1.00	43.3	15.0	44.9	27.9	40.0	
+bracteate-ekeberg@evening	bracteate	ekeberg	evening	yes	1.00	50.9	14.5	49.6	46.0	39.9	
+rune-ekeberg@evening	rune	ekeberg	evening	yes	1.00	56.6	30.5	30.5			the rune's stone: its own edge is a dark line already; no line added
+bench-ekeberg@evening	bench	ekeberg	evening	yes	0.46						a thing to use, not to take: told by its cyan corners, which keep their light after dark; not found in the picture by its own colours (in the dark, or moving)
+flag-ekeberg@evening	flag	ekeberg	evening	yes	1.00	40.6	36.7	36.7			a flag he raises, not a thing to take
+skilling-nabolaget@winter	skilling	nabolaget	winter	yes	1.00	49.8	37.5	35.9	37.5	7.1	
+cheese-nabolaget@winter	cheese	nabolaget	winter	yes	1.00	37.1	34.7	49.6	41.4	19.5	
+bracteate-nabolaget@winter	bracteate	nabolaget	winter	yes	1.00	51.0	46.7	45.9	45.9	7.5	
+rune-nabolaget@winter	rune	nabolaget	winter	yes	0.33						the rune's stone: its own edge is a dark line already; no line added; not found in the picture by its own colours (in the dark, or moving)
+bench-nabolaget@winter	bench	nabolaget	winter	yes	0.98	43.8	10.5	10.5			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-nabolaget@winter	flag	nabolaget	winter	yes	1.00	17.6	23.2	23.2			a flag he raises, not a thing to take
+skilling-bygdoy@night	skilling	bygdoy	night	no (a level pinned to day)	1.00	15.5	30.0	35.9		11.3	
+cheese-bygdoy@night	cheese	bygdoy	night	no (a level pinned to day)	1.00	27.6	28.0	49.6		21.4	
+bracteate-bygdoy@night	bracteate	bygdoy	night	no (a level pinned to day)	1.00	40.1	30.5	45.9		25.0	
+rune-bygdoy@night	rune	bygdoy	night	no (a level pinned to day)	1.00	56.9	6.7	6.7			the rune's stone: its own edge is a dark line already; no line added
+bench-bygdoy@night	bench	bygdoy	night	no (a level pinned to day)	0.98	31.3	12.4	12.4			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-bygdoy@night	flag	bygdoy	night	no (a level pinned to day)	1.00	24.6	20.1	20.1			a flag he raises, not a thing to take
+skilling-vigelandsparken@night	skilling	vigelandsparken	night	no (a level pinned to day)	1.00	41.1	32.6	35.9		16.9	
+cheese-vigelandsparken@night	cheese	vigelandsparken	night	no (a level pinned to day)	1.00	43.3	42.0	49.6		8.9	
+bracteate-vigelandsparken@night	bracteate	vigelandsparken	night	no (a level pinned to day)	1.00	50.9	46.7	45.9		7.7	
+rune-vigelandsparken@night	rune	vigelandsparken	night	no (a level pinned to day)	1.00	51.8	10.1	10.1			the rune's stone: its own edge is a dark line already; no line added
+bench-vigelandsparken@night	bench	vigelandsparken	night	no (a level pinned to day)	0.98	43.8	18.1	18.1			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-vigelandsparken@night	flag	vigelandsparken	night	no (a level pinned to day)	1.00	23.5	20.9	20.9			a flag he raises, not a thing to take
+skilling-korketrekkeren@evening	skilling	korketrekkeren	evening	yes	1.00	47.3	29.1	31.6	31.6	40.0	
+cheese-korketrekkeren@evening	cheese	korketrekkeren	evening	yes	0.28						not found in the picture by its own colours (in the dark, or moving)
+bracteate-korketrekkeren@evening	bracteate	korketrekkeren	evening	yes	1.00	46.6	25.3	49.6	46.0	40.0	
+rune-korketrekkeren@evening	rune	korketrekkeren	evening	yes	1.00	55.9	31.5	31.5			the rune's stone: its own edge is a dark line already; no line added
+bench-korketrekkeren@evening	bench	korketrekkeren	evening	yes	0.98	39.7	23.8	23.8			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-korketrekkeren@evening	flag	korketrekkeren	evening	yes	1.00	38.6	34.8	34.8			a flag he raises, not a thing to take
+skilling-ostensjovannet@twilight	skilling	ostensjovannet	twilight	yes	1.00	36.5	32.6	36.9	36.9	24.7	
+cheese-ostensjovannet@twilight	cheese	ostensjovannet	twilight	yes	1.00	43.3	38.8	49.8	41.5	25.9	
+bracteate-ostensjovannet@twilight	bracteate	ostensjovannet	twilight	yes	1.00	50.9	41.6	49.9	47.8	25.9	
+rune-ostensjovannet@twilight	rune	ostensjovannet	twilight	yes	1.00	26.7	13.5	13.5			the rune's stone: its own edge is a dark line already; no line added
+bench-ostensjovannet@twilight	bench	ostensjovannet	twilight	yes	0.98	33.0	18.4	18.4			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-ostensjovannet@twilight	flag	ostensjovannet	twilight	yes	1.00	20.8	24.1	24.1			a flag he raises, not a thing to take
+skilling-bjorvika@evening	skilling	bjorvika	evening	yes	1.00	49.9	18.0	31.6	31.6	40.0	
+cheese-bjorvika@evening	cheese	bjorvika	evening	yes	1.00	24.8	21.0	44.9	31.6	19.2	
+bracteate-bjorvika@evening	bracteate	bjorvika	evening	yes	1.00	51.6	23.4	49.6	46.0	27.5	
+rune-bjorvika@evening	rune	bjorvika	evening	yes	1.00	61.4	48.8	48.8			the rune's stone: its own edge is a dark line already; no line added
+bench-bjorvika@evening	bench	bjorvika	evening	yes	0.98	36.0	26.1	26.1			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-bjorvika@evening	flag	bjorvika	evening	yes	1.00	23.9	21.8	21.8			a flag he raises, not a thing to take
+skilling-gamlebyen@night	skilling	gamlebyen	night	yes	1.00	44.5	37.4	35.9	37.4	9.8	
+cheese-gamlebyen@night	cheese	gamlebyen	night	yes	1.00	28.5	33.3	40.7	37.1	2.9	
+bracteate-gamlebyen@night	bracteate	gamlebyen	night	yes	1.00	50.9	46.7	45.9	45.9	7.7	
+rune-gamlebyen@night	rune	gamlebyen	night	yes	0.25						the rune's stone: its own edge is a dark line already; no line added; not found in the picture by its own colours (in the dark, or moving)
+bench-gamlebyen@night	bench	gamlebyen	night	yes	0.98	37.9	16.4	16.4			a thing to use, not to take: told by its cyan corners, which keep their light after dark
+flag-gamlebyen@night	flag	gamlebyen	night	yes	1.00	27.3	21.8	21.8			a flag he raises, not a thing to take

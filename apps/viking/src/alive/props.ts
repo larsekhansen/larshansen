@@ -116,15 +116,35 @@ function column(g: Grid, s: Stuff, x: number, y: number, w: number, h: number, g
 
 // --- Posts --------------------------------------------------------------------------------------------------------
 
-/** A post `w` wide from `top` down to `bottom`: lit on its left, its grain, a cap lit on top, its foot darker where it stands. */
+/**
+ * A post `w` wide from `top` down to `bottom`: lit on its left, shaded on its right. Iron (order 40: it was a bar with a lit top)
+ * has a cap with a dark line under it, a collar a quarter of the way down and a plinth at its foot; wood its grain, a knot now and
+ * then, a bolt near its top, and its foot dark and wet where it stands.
+ */
 export function post(s: Stuff, x: number, top: number, bottom: number, w = 2) {
   const h = Math.round(bottom - top);
   if (h <= 0) return;
   put("post", [s], `${s.name}|${w}|${h}`, w, h, Math.round(x), Math.round(top), (g) => {
-    column(g, s, 0, 0, w, h, s === STEEL || s === CONCRETE ? 0 : 0.14, w * 31 + h);
-    for (let i = 0; i < w; i++) dot(g, i, 0, T(s, i === w - 1 ? 2 : 3));
-    for (let i = 0; i < w; i++) dot(g, i, h - 1, T(s, 0));
-    if (h > 6) for (let i = 1; i < w; i++) dot(g, i, h - 2, T(s, 1));
+    const iron = s === CAST || s === STEEL;
+    column(g, s, 0, 0, w, h, iron || s === CONCRETE ? 0 : 0.14, w * 31 + h);
+    const across = (y: number, c: (i: number) => number) => {
+      for (let i = 0; i < w; i++) dot(g, i, y, T(s, c(i)));
+    };
+    across(0, (i) => (i === w - 1 ? 2 : 3));
+    if (iron && h > 8) {
+      across(1, () => 0);
+      across(2 + Math.round((h - 8) / 4), (i) => (i === w - 1 ? 2 : 3));
+      across(h - 3, (i) => (i === 0 ? 3 : 2));
+      across(h - 2, (i) => (i === w - 1 ? 0 : 1));
+    } else if (!iron && h > 8) {
+      // A bolt through it near its top; a knot every so often down its face.
+      dot(g, w - 2, 3, T(s, 0));
+      dot(g, Math.max(0, w - 3), 3, T(s, 3));
+      for (let y = 9; y < h - 4; y += 11) dot(g, w > 2 ? 1 : 0, y + (w * 3 + h) % 4, T(s, 0));
+      across(h - 3, (i) => (i === 0 ? 2 : 1));
+      across(h - 2, (i) => (i === 0 ? 1 : 0));
+    } else if (h > 6) for (let i = 1; i < w; i++) dot(g, i, h - 2, T(s, 1));
+    across(h - 1, () => 0);
   });
 }
 
@@ -515,13 +535,60 @@ export function rowboat(x: number, y: number, w: number) {
  * tarred boards with a brass knob; the window with the stove's light behind it in a frame of wood; the pontoons under the
  * deck, a dark band lit on its top, wet under; the stove pipe and its smoke.
  */
-export function pontoons(x: number, y: number, rw: number) {
-  put("pontoons", [TAR], `${rw}`, rw, 7, Math.round(x), Math.round(y), (g) => {
-    for (let i = 3; i < rw - 3; i++) dot(g, i, 4, i % 9 === 4 ? T(TAR, 3) : T(TAR, 1));
-    for (let i = 2; i < rw - 2; i++) {
-      dot(g, i, 5, i % 6 === 0 ? mix(T(TAR, 0), P.water, 0.4) : mix(T(TAR, 1), P.water, 0.5));
-      dot(g, i, 6, mix(T(TAR, 0), P.water, 0.55));
+/**
+ * A stove's chimney pipe through a roof, 5 wide and `h` tall (order 40: it was a bar under a flat cap): a rain cap on two little
+ * legs with the dark of the flue under it, soot round the pipe's mouth, the round pipe lit down its left and shaded down its
+ * right, a joint's collar halfway up a tall one, and the flashing where it goes through the roof.
+ */
+function stovePipe(x: number, y: number, h: number) {
+  put("stove pipe", [STEEL], h > 10 ? "tall" : "", 5, h, x, y, (g) => {
+    const soot = mix(T(STEEL, 0), INK, 0.55);
+    // The cap: its peak, its brim lit on the left, its legs, the flue's dark under it.
+    box(g, 1, 0, 3, 1, T(STEEL, 1));
+    dot(g, 1, 0, T(STEEL, 2));
+    dot(g, 0, 1, T(STEEL, 3));
+    box(g, 1, 1, 3, 1, T(STEEL, 2));
+    dot(g, 4, 1, T(STEEL, 0));
+    dot(g, 1, 2, T(STEEL, 1));
+    dot(g, 2, 2, soot);
+    dot(g, 3, 2, T(STEEL, 0));
+    // The pipe, round: lit, its face, shaded; soot at its mouth.
+    for (let yy = 3; yy < h - 2; yy++) {
+      dot(g, 1, yy, yy === 3 ? soot : T(STEEL, 3));
+      dot(g, 2, yy, yy === 3 ? soot : T(STEEL, 2));
+      dot(g, 3, yy, T(STEEL, yy === 3 ? 0 : 1));
     }
+    // A joint's collar halfway up a tall pipe.
+    if (h > 10) {
+      const j = Math.round(h / 2);
+      dot(g, 0, j, T(STEEL, 3));
+      box(g, 1, j, 3, 1, T(STEEL, 2));
+      dot(g, 4, j, T(STEEL, 0));
+    }
+    // The flashing where it goes through the roof, and its foot in the roof's shadow.
+    dot(g, 0, h - 2, T(STEEL, 2));
+    box(g, 1, h - 2, 3, 1, T(STEEL, 1));
+    dot(g, 4, h - 2, T(STEEL, 0));
+    box(g, 0, h - 1, 5, 1, T(STEEL, 0));
+  });
+}
+
+export function pontoons(x: number, y: number, rw: number) {
+  // Order 40: its floats, where it was a dark band under the deck's edge. Under the deck (its top five rows, which the deck covers)
+  // a row of tarred drums, each lit on its upper left and rounded, a gap of water between them; at the waterline the water darkens
+  // them, and under it they fade into the fjord.
+  put("pontoons", [TAR], `${rw}`, rw, 9, Math.round(x), Math.round(y), (g) => {
+    const F = 8;
+    for (let f = 2; f + F <= rw - 2; f += F + 2)
+      for (let i = 0; i < F; i++) {
+        const end = i === 0 || i === F - 1;
+        const lit = i < 3 ? 3 : i < F - 2 ? 2 : 1;
+        dot(g, f + i, 4, T(TAR, 0));
+        dot(g, f + i, 5, end ? T(TAR, 1) : T(TAR, lit));
+        dot(g, f + i, 6, mix(T(TAR, end ? 0 : lit - 1), P.water, 0.35));
+        dot(g, f + i, 7, mix(T(TAR, end ? 0 : 1), P.water, 0.55));
+        if (!end) dot(g, f + i, 8, mix(T(TAR, 0), P.water, 0.7));
+      }
   });
 }
 export function saunaCabin(x: number, y: number, t: number) {
@@ -551,11 +618,7 @@ export function saunaCabin(x: number, y: number, t: number) {
   light(cx + 18, y - 13, 4, 5, "soft");
   light(cx + 23, y - 13, 3, 5, "soft");
   // The stove pipe through the roof.
-  put("stove pipe", [STEEL], "", 5, 8, cx + 23, y - 28, (g) => {
-    box(g, 0, 0, 5, 1, T(STEEL, 1));
-    box(g, 1, 1, 3, 7, T(STEEL, 1));
-    for (let yy = 1; yy < 8; yy++) dot(g, 3, yy, T(STEEL, 0));
-  });
+  stovePipe(cx + 23, y - 28, 8);
   if (!view.reduced) smoke(cx + 24, y - 30, t, { ...STOVE_SMOKE, rise: 18 });
 }
 
@@ -585,11 +648,7 @@ function clubHut(x: number, top: number, w: number, water: number, t: number) {
     box(g, 1, 11, 8, 1, T(TAR, 1));
     dot(g, 6, 8, T(TAR, 3));
   });
-  put("stove pipe", [STEEL], "tall", 5, 14, x + 51, top - 15, (g) => {
-    box(g, 0, 0, 5, 1, T(STEEL, 1));
-    box(g, 1, 1, 3, 13, T(STEEL, 1));
-    for (let y = 1; y < 14; y++) dot(g, 3, y, T(STEEL, 0));
-  });
+  stovePipe(x + 51, top - 15, 14);
   if (!view.reduced) smoke(x + 52, top - 18, t + 30, STOVE_SMOKE);
 }
 

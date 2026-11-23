@@ -910,6 +910,12 @@ const RAT_KICKING = frame(
   ],
   [[".p..pp...", "..pp..pp.", "........p"], 6, 0]
 );
+/**
+ * Its snout poking up over the third rail's cover before it leaps (order 40: three dark stones on the red cover were all its tell,
+ * small with motion or without): the top of its rising frame, its nose, its eye and its whiskers, the rest of it still in the pit;
+ * sniffing, its nose down a pixel and up again.
+ */
+const TRACK_RAT_PEEK = { up: frame("track rat, peeking", FOE_INK, [RISING_BODY.slice(0, 4)]), down: frame("track rat, peeking, sniffing", FOE_INK, [RISING_BODY.slice(1, 4)]) };
 const TRACK_RAT = { rising: RAT_RISING, top: RAT.move[2], falling: RAT_FALLING, kicking: RAT_KICKING };
 function trackRat(e: Enemy, t: number) {
   const l = leap(e, t);
@@ -919,6 +925,12 @@ function trackRat(e: Enemy, t: number) {
   // its last, never blinking.
   if (l.ripple && view.reduced) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - (dx === 0 ? 1 : 0), 2, 1, METRO.ballast)));
   else if (l.ripple && Math.floor(t / 5) % 2) plain(() => [-5, 0, 5].forEach((dx) => R(e.x + dx, floor - 2 - ((t + dx) % 2), 2, 1, METRO.ballast)));
+  // And (order 40) its snout over the cover, outlined as the rat is, for the whole of the tell: sniffing with motion, held up still
+  // with reduced motion. Drawing only: it cannot be touched until it leaps, as before.
+  if (l.ripple) {
+    const f = view.reduced || Math.floor(t / 5) % 2 ? TRACK_RAT_PEEK.up : TRACK_RAT_PEEK.down;
+    drawFoe({ ...e, y: floor - 4 }, f, 10, f === TRACK_RAT_PEEK.up ? 4 : 3, true);
+  }
   if (l.up <= 0) return;
   const next = leap(e, t + 1).up;
   const top = Math.abs(next - l.up) <= 1 && Math.abs(leap(e, t + 3).up - leap(e, t - 3).up) <= 2;

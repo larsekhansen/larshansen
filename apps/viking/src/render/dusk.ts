@@ -5,6 +5,7 @@ import type { Play } from "../game/play";
 import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import type { View } from "../levels/types";
 import { glows } from "../alive/glamour";
+import { takeLines } from "../alive/things";
 import { drawCheese, drawSkilling } from "./pickups";
 import { eyes, ringCount, rings, ringsTo } from "./sprite";
 import { hazardEdge } from "./stand";
@@ -17,20 +18,21 @@ import { standTops } from "./tiles";
 /** Eye-shine: the one bright pixel that answers a light in the dark. */
 export const EYE_SHINE = "#fff1c2";
 
-/** What the page draws for these: an enemy in its look and outline, something thrown, the paint on what he stands on. */
+/** What the page draws for these: an enemy in its look and outline, something thrown, the paint on what he stands on; and whether the level's bracteate was found on an earlier visit (only its pale ring hangs there). */
 export interface PageDrawing {
   foe(e: Enemy, v: View): void;
   thrown(s: Shot, v: View): void;
   standing(v: View): void;
+  owned?(): boolean;
 }
 
 /**
  * After dusk the street layer has the night's tint over it, and a pigeon on dark planks is a dark shape on dark.
  * So what moves keeps the light of its outline (order 22: the warning red round what can hurt him, the calm pale
  * round what cannot), what can hurt him is a little lighter than its tinted self, with eye-shine where it has
- * eyes; the hazards get a lit edge; the skilling and the cheese shine nearly as by day; what he can stand on
- * keeps the light of its paint. In a level under the trees, the dark that comes after covers all of it but the
- * lamp's circle.
+ * eyes; the hazards get a lit edge; what he takes has a line of the level's dark round it (order 40) and the skilling and the
+ * cheese shine nearly as by day; what he can stand on keeps the light of its paint. In a level under the trees, the dark that
+ * comes after covers all of it but the lamp's circle.
  */
 export function afterDark(p: Play, v: View, page: PageDrawing) {
   const street = ctx();
@@ -40,6 +42,9 @@ export function afterDark(p: Play, v: View, page: PageDrawing) {
   for (const e of p.enemies) if (e.alive) page.foe(e, v);
   for (const s of p.shots) page.thrown(s, v);
   ringsTo(noted);
+  // What he takes keeps a line of the level's dark round it (order 40): against an evening sky it was warm on warm.
+  street.globalAlpha = 1;
+  takeLines(p, v.sky.phase, !!page.owned?.());
   street.globalAlpha = 0.8;
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);

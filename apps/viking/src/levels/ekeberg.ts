@@ -576,7 +576,8 @@ function gustLeaves(z: Zone, t: number) {
   const phase = pulsePhase(t, z.beat);
   if (phase === "rest") return;
   const { age, of } = pulseAge(t, z.beat);
-  const n = phase === "warn" ? 4 + Math.floor((age / of) * 8) : 22;
+  // Order 40: eight leaves from its first step (four were all there was), sixteen by its last.
+  const n = phase === "warn" ? 8 + Math.floor((age / of) * 8) : 22;
   const dir = Math.sign(z.push.x) || -1;
   const tt = view.reduced ? 0 : t;
   for (let i = 0; i < n; i++) {
@@ -588,6 +589,12 @@ function gustLeaves(z: Zone, t: number) {
     R(x, y, 3, 2, i % 3 ? HILL.leaf : HILL.leafRed);
     R(x + (dir < 0 ? 3 : -1), y + 1, 1, 1, i % 3 ? HILL.leaf : HILL.leafRed);
     if (phase === "live" && i % 3 === 0) R(x - dir * 4 + (dir < 0 ? 0 : -8), y + 3, 10, 1, "rgba(255, 255, 255, 0.5)");
+    // Coming (order 40: a few leaves were all its warning, and in the evening they were the evening's colour): the wind's streaks
+    // already, shorter and fainter than when it blows, and the leaves light on their windward side.
+    if (phase === "warn") {
+      if (i % 2 === 0) R(x - dir * 4 + (dir < 0 ? 0 : -6), y + 3, 6, 1, "rgba(255, 255, 255, 0.4)");
+      R(x + (dir < 0 ? 2 : 0), y, 1, 1, mix(i % 3 ? HILL.leaf : HILL.leafRed, WHITE, 0.45));
+    }
   }
 }
 
