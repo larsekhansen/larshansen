@@ -1,22 +1,22 @@
 # Roadmap
 
-As of 23 November 2026, after order 39 was built (order 38 reviewed and merged, PR #86). Change this file in the same change that makes it wrong.
+As of 23 November 2026, after order 39 was reviewed and merged (PR #87). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 23 November 2026 |
-| Last live | Order 38, a third look, PR #86 (reviewed and merged on 23 November); before it orders 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 39, the rest of the table, PR #87 (reviewed and merged on 23 November); before it orders 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Order 39, the rest of the table, branch `rest-of-the-table` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 34 % used when order 38 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 38 % used when order 39 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 39, the rest of the table** (`orders/39-the-rest-of-the-table.md`, ADR 0040 amended), built on branch `rest-of-the-table`, waiting for
-review. What order 38 left: the bishop's guard (a kettle hat, the halberd's blade), the coot (its white in the pale, which the glamour does not
+**Order 39, the rest of the table** (`orders/39-the-rest-of-the-table.md`, ADR 0040 amended), reviewed, merged and live
+(PR #87, 23 November). Nothing else is in flight. What order 38 left: the bishop's guard (a kettle hat, the halberd's blade), the coot (its white in the pale, which the glamour does not
 touch), the squirrel (a plume of a tail, tufted ears, the cone it throws in its paws) and the mound-dweller (folds, a hand) redrawn; with reduced
 motion the jumpers' tells held still (they showed nothing), every other tell checked with motion and without (the table in
 `apps/viking/tools/review/o39/after.md`); every boss state, carrier, thrown thing and pickup photographed in place and measured against what is
