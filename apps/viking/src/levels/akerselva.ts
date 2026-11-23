@@ -250,13 +250,15 @@ function drawSalmon(e: Enemy, t: number, water = Infinity) {
   const rowAt = (r: number) => Math.round((r * e.h) / 15);
   // Before it leaps the water over it swells and breaks (order 38: it was a line of foam blinking on and off, which read as a
   // ring on the water): a hump of paler water ringed with foam, swelling and breaking on its own beat, its crest thrown up in
-  // drops every other beat. Drawn plain, as the water's, not the fish's: no outline.
-  if (l.ripple && !view.reduced)
+  // drops every other beat. Drawn plain, as the water's, not the fish's: no outline. With reduced motion (order 39) the water is
+  // held broken at its fullest for the whole of the tell, there from its first step to its last and never blinking: the tell is
+  // what is seen, not its movement.
+  if (l.ripple)
     plain(() => {
       const cx = Math.round(e.x);
       const y = Math.min(water, Math.round(e.y));
       const swell = mix(P.foam, P.water, 0.45);
-      if (Math.floor(t / 6) % 2) {
+      if (view.reduced || Math.floor(t / 6) % 2) {
         R(cx - 7, y - 1, 3, 1, P.foam);
         R(cx - 4, y - 1, 8, 1, swell);
         R(cx + 4, y - 1, 3, 1, P.foam);

@@ -233,7 +233,19 @@ describe("what is about to happen is seen before it happens", () => {
   /** How many pixels of outline a pose must change by: a sixth of a thrower's body of about a hundred and ten. */
   const POSE = 18;
 
-  test(`every thrower winds up for ${WINDUP} steps (0.4 s is the least) in a pose ${POSE} or more pixels unlike its rest`, async () => {
+  /** With reduced motion as without (order 39: a tell that is only a movement shows nothing to those who asked for less motion). */
+  const bothWays = async (check: (how: string) => Promise<void>) => {
+    for (const reduced of [false, true]) {
+      view.reduced = reduced;
+      try {
+        await check(reduced ? " with reduced motion" : "");
+      } finally {
+        view.reduced = false;
+      }
+    }
+  };
+
+  test(`every thrower winds up for ${WINDUP} steps (0.4 s is the least) in a pose ${POSE} or more pixels unlike its rest, with reduced motion too`, () => bothWays(async (how) => {
     expect(WINDUP).toBeGreaterThanOrEqual(24);
     const seen: string[] = [];
     for (const st of BUILT) {
@@ -244,13 +256,13 @@ describe("what is about to happen is seen before it happens", () => {
         seen.push(`${st.id} ${e.def.look}`);
         const at = (n: number) => Array.from({ length: 1000 }, (_, t) => t).find((t) => untilThrow(e, t) === n)!;
         const d = differ(look(def, p, e, at(WINDUP + 30)), look(def, p, e, at(WINDUP - 20)));
-        expect(d, `${st.id}'s ${e.def.look}`).toBeGreaterThanOrEqual(POSE);
+        expect(d, `${st.id}'s ${e.def.look}${how}`).toBeGreaterThanOrEqual(POSE);
       }
     }
     expect(seen.length).toBeGreaterThanOrEqual(11);
-  });
+  }));
 
-  test(`a statue that walks, a guard that wakes and a swan that turns on him change outline by ${POSE} pixels or more`, async () => {
+  test(`a statue that walks, a guard that wakes and a swan that turns on him change outline by ${POSE} pixels or more, with reduced motion too`, () => bothWays(async (how) => {
     const cases: [string, string, (e: Enemy) => void, (e: Enemy) => void][] = [
       ["vigelandsparken", "statue", (e) => void (e.calm = true), (e) => void (e.calm = false)],
       ["vigelandsparken", "bronze", (e) => void (e.calm = true), (e) => void (e.calm = false)],
@@ -265,21 +277,21 @@ describe("what is about to happen is seen before it happens", () => {
       const a = look(def, p, e, 10);
       turned(e);
       const b = look(def, p, e, 10);
-      expect(differ(a, b), `${id}'s ${kind}`).toBeGreaterThanOrEqual(POSE);
+      expect(differ(a, b), `${id}'s ${kind}${how}`).toBeGreaterThanOrEqual(POSE);
     }
-  });
+  }));
 
-  test(`a sledger about to set off leans into a pose ${POSE} or more pixels unlike its rest`, async () => {
+  test(`a sledger about to set off leans into a pose ${POSE} or more pixels unlike its rest, with reduced motion too`, () => bothWays(async (how) => {
     const def = await loadLevel("korketrekkeren");
     const p = newPlay(def, optsFor(def));
     for (const e of p.enemies.filter((x) => x.def.look === "sledger")) {
       const start = e.home - (e.def.range ?? 0) * 16;
       const at = (him: number) => cover(() => void def.art.enemy?.(e, { ...viewAt(p, 10), him: { x: him, y: 0 } }));
       // Far off it sits; four tiles before he sets it going (ten tiles), it leans forward and digs in.
-      expect(differ(at(start - 20 * 16), at(start - 12 * 16)), `the sledger at ${e.def.c}`).toBeGreaterThanOrEqual(POSE);
-      expect(differ(at(start - 20 * 16), at(start - 15 * 16)), `the sledger at ${e.def.c}`).toBe(0);
+      expect(differ(at(start - 20 * 16), at(start - 12 * 16)), `the sledger at ${e.def.c}${how}`).toBeGreaterThanOrEqual(POSE);
+      expect(differ(at(start - 20 * 16), at(start - 15 * 16)), `the sledger at ${e.def.c}${how}`).toBe(0);
     }
-  });
+  }));
 
   test("a pad, a bundle and the stone that sinks tremble for half a second before they go under him", async () => {
     for (const [id, x] of [["ostensjovannet", 712], ["bygdoy", 2112]] as const) {

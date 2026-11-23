@@ -748,6 +748,51 @@ describe("with reduced motion nothing flashes (orders 30 and 31)", () => {
     expect((await boss("nabolaget", false)).length).toBeGreaterThan(0);
   }, 120_000);
 
+  test("every jumper's tell is seen with reduced motion (order 39): a still mark at every step of the tell and at no other, drawn the same at every step", async () => {
+    // With reduced motion the salmon's water and the track rat's ballast were not drawn at all (orders 23 to 38): their tell was a
+    // movement, held still at nothing. Each jumper's beat is drawn step by step where it waits (under its water, or on its post),
+    // recorded as in a browser: the step before its tell is one drawing, every step of the tell one other, which is drawn at no
+    // other step of the beat.
+    const found: string[] = [];
+    const seen: string[] = [];
+    let moving = 0;
+    for (const st of BUILT) {
+      const def = await loadLevel(st.id);
+      const p = newPlay(def, optsFor(def));
+      p.enemies.forEach((e, i) => {
+        if (e.def.kind !== "jumper") return;
+        const name = `${st.id}'s ${e.def.look ?? "jumper"} ${i}`;
+        seen.push(name);
+        // A whole beat from the first step of a tell: back to the step before it, and on to the next tell's first step.
+        const t0 = Array.from({ length: 2000 }, (_, t) => t + 1).find((t) => leap(e, t).ripple && !leap(e, t - 1).ripple)!;
+        const t1 = Array.from({ length: 2000 }, (_, t) => t0 + 1 + t).find((t) => leap(e, t).ripple && !leap(e, t - 1).ripple)!;
+        const draw = (t: number, v: View) => outlined(() => void (def.art.enemy?.(e, v) || drawEnemy(e, t)), e, ENEMY.warning);
+        const beat = (reduced: boolean) =>
+          asInBrowser(() =>
+            withView(reduced, () => {
+              forgetShapes();
+              // The camera on it, as when he comes to it.
+              const v = viewOf(def, { ...p, body: { ...p.body, x: e.x, y: e.y } } as Play, t0);
+              const clocks = Array.from({ length: t1 - t0 + 1 }, (_, k) => t0 - 1 + k);
+              return recordings((t) => ((v.t = t), draw(t, v)), clocks, W, H).map((print, k) => ({ t: clocks[k], print, tell: leap(e, clocks[k]).ripple }));
+            })
+          );
+        const steps = beat(true);
+        const tell = steps.filter((s) => s.tell);
+        const mark = tell[0].print;
+        if (tell.length < 60) found.push(`${name}: a tell of ${tell.length} steps`);
+        if (tell.some((s) => s.print !== mark)) found.push(`${name}: its tell is drawn ${new Set(tell.map((s) => s.print)).size} ways (it blinks or moves)`);
+        if (steps[0].print === mark) found.push(`${name}: nothing to see in its tell (drawn as the step before it)`);
+        if (steps.some((s) => !s.tell && s.print === mark)) found.push(`${name}: its tell's mark is drawn outside its tell`);
+        // Without reduced motion its tell moves (the test sees it): the swell breaks on its beat, the ballast stirs, the boy stamps.
+        if (new Set(beat(false).filter((s) => s.tell).map((s) => s.print)).size > 1) moving++;
+      });
+    }
+    expect(found).toEqual([]);
+    expect(seen.length).toBeGreaterThanOrEqual(8);
+    expect(moving).toBe(seen.length);
+  }, 60_000);
+
   test("every ledge on a beat, through its warning, draws the same at every step of the clock", async () => {
     const found: string[] = [];
     for (const st of BUILT) {
