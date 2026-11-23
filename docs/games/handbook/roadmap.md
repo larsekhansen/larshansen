@@ -1,22 +1,22 @@
 # Roadmap
 
-As of 23 November 2026, after order 40 was built (branch `takes-and-warns`, not yet reviewed). Change this file in the same change that makes it wrong.
+As of 23 November 2026, after order 40 was reviewed and merged (PR #88). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 23 November 2026 |
-| Last live | Order 39, the rest of the table, PR #87 (reviewed and merged on 23 November); before it orders 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 40, what he takes, and what warns, branch `takes-and-warns` |
+| Last live | Order 40, what he takes, and what warns, PR #88 (reviewed and merged on 23 November); before it orders 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 38 % used when order 39 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 42 % used when order 40 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 40, what he takes, and what warns** (`orders/40-what-he-takes-and-what-warns.md`, ADR 0044 amended), built on branch `takes-and-warns`,
-waiting for review. What order 39 left: after dusk a line of the level's dark round what he takes (the planner's call; the maze's rule; every
+**Order 40, what he takes, and what warns** (`orders/40-what-he-takes-and-what-warns.md`, ADR 0044 amended), reviewed, merged and live
+(PR #88, 23 November). Nothing else is in flight. What order 39 left: after dusk a line of the level's dark round what he takes (the planner's call; the maze's rule; every
 skilling, cheese and bracteate met after dusk 31.6 or more off what is round it); every tell in order 39's table ranked in place by size,
 contrast and how long it stands (`apps/viking/tools/review/o40/tells.tsv`), and the four weakest made to read by drawing only (the track rat's
 snout over the third rail's cover, a closing wall's stones at Gamlebyen, the water stirring round a lily pad or a bundle about to sink, a gust's
