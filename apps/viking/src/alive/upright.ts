@@ -326,10 +326,13 @@ export function underBand(map: TileMap, u: Under) {
       }
       c = e + 1;
     }
+  // Where the ground is open to the map's foot (a pit, a gully), nothing is drawn under the foot and the far layers showed
+  // through as if the pit had a floor: the same dark comes on there from two tiles over the foot, so a pit reads as one.
+  const pit = (c: number) => (s[c] < 0 && !map.isSolid(c, map.rows - 1) && !map.isWater(c, map.rows - 1) ? map.rows - u.from - 2 : -1);
   for (let c = c0; c <= c1; ) {
-    const r = at(c);
+    const r = at(c) >= 0 ? at(c) : pit(c);
     let e = c;
-    while (e + 1 <= c1 && at(e + 1) === r) e++;
+    while (e + 1 <= c1 && (at(e + 1) >= 0 ? at(e + 1) : pit(e + 1)) === r) e++;
     if (r >= 0) {
       const y = (r + u.from) * TILE - view.camY;
       if (y < view.h) {
