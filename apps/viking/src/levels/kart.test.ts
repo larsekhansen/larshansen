@@ -6,7 +6,7 @@ import { formatTime, newPlay } from "../game/play";
 import { fresh, type Progress } from "../game/progress";
 import { padLayout, type Insets, type Rect } from "../render/pad";
 import { ENCORE_STOP, LINE, LINE_1, LINE_2, ORDER } from "./index";
-import { ENCORE_COL, kartDef, stationX } from "./kart";
+import { ENCORE_COL, LINE_Y, kartDef, stationX } from "./kart";
 import { kartArt, stationBoards } from "./kartArt";
 
 // Order 41: on the line map the boards under the stations ran into each other where stations stand three tiles apart (Stortinget,
@@ -84,6 +84,8 @@ const notches = (w: number, h: number): [string, Insets][] =>
     : [["no notch", NO_NOTCH], ["notch both sides", { top: 0, right: 47, bottom: 21, left: 47 }], ["notch left", { top: 0, right: 0, bottom: 21, left: 47 }], ["notch right", { top: 0, right: 47, bottom: 21, left: 0 }]];
 /** The header over the map on a phone, the site's links whole (CSS pixels, measured): two rows of links and the runes upright, one row on its side. */
 const mapBar = (w: number, h: number, safe: Insets) => safe.top + (h > w ? 250 : 39);
+/** The most the map's picture may be lifted for its boards, CSS pixels. */
+const LIFTED = 48;
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 
 /** Every board on the map as the page lays it (`layoutBoards`): over each door that is not a station, and under the stations in their rows. */
@@ -123,6 +125,7 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
       const v = viewFor(w, h, dpr, 240);
       const unit = v.k / dpr;
       const bad: string[] = [];
+      const lifts: string[] = [];
       for (const [label, progress] of PROGRESS) {
         const all = { ...progress, cleared: progress.cleared.filter((id) => ORDER.includes(id)) };
         for (const [notch, safe] of notches(w, h)) {
@@ -134,14 +137,21 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
           const row = [slots.move, slots.jump];
           const bar = (mapBar(w, h, safe) * dpr) / v.k;
           let cam: { x: number; y: number } | null = null;
+          let plain: { x: number; y: number } | null = null;
+          let lift = 0;
           const met = new Set<string>();
           const walk = (x: number, facing: 1 | -1) => {
-            const bottom = play.map.surfaceBelow(x + PLAYER.w / 2, 0) ?? play.map.height;
+            // On the deck, or down in Jernhaugen's dip; not on top of line 2's gate, where he cannot stand.
+            const bottom = play.map.surfaceBelow(x + PLAYER.w / 2, LINE_Y - TILE);
+            if (bottom === null || bottom < LINE_Y) return;
             const him = { x, y: bottom - PLAYER.h };
             const focus = { x: x + PLAYER.w / 2, y: him.y + PLAYER.h / 2, facing };
             const floor = play.map.height;
             const bounds = { width: play.map.width, bottom: v.h > v.w ? Math.max(floor, Math.round(focus.y + v.h / 3)) : floor, top: bar };
             cam = frame(cam ?? { x: 0, y: 0 }, focus, bounds, v, 1000 / 60, cam === null, { buttons, unit, him, facing, vy: 0, below });
+            // What the boards cost: how much higher the picture stands than the camera would put it for him alone.
+            plain = frame(plain ?? { x: 0, y: 0 }, focus, bounds, v, 1000 / 60, plain === null, { buttons, unit, him, facing, vy: 0 });
+            lift = Math.max(lift, (cam.y - plain.y) * unit);
             // Where the camera has stopped at an end of the line, a board on that side of the screen goes no further: it is held there.
             const atLeft = cam.x <= 0.5;
             const atRight = cam.x >= play.map.width - v.w - 0.5;
@@ -155,8 +165,13 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
           for (let x = TILE; x < play.map.width - 2 * TILE; x += 2) walk(x, 1);
           for (let x = play.map.width - 2 * TILE; x > TILE; x -= 2) walk(x, -1);
           for (const m of met) bad.push(`${label}, ${notch}: ${m}`);
+          lifts.push(`${label}, ${notch}: ${Math.round(lift)}`);
+          // The lift stays small, the same all along the deck: 0 upright, on its side up to 45 px with every station's time on the boards and a
+          // notch (the lines' added-up times hang lowest).
+          if (lift > LIFTED) bad.push(`${label}, ${notch}: the picture lifted ${Math.round(lift)} px for the boards`);
         }
       }
+      console.log(`${w} x ${h}, the most the picture is lifted for the boards (CSS px): ${lifts.join("; ")}`);
       expect(bad).toEqual([]);
     });
 });
