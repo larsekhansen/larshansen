@@ -25,6 +25,8 @@ import { NATURAL, naturalName } from "../alive/natural";
 import { forced } from "../alive/parts";
 import { lean, outlined } from "./sprite";
 import { ENCORE, STORY, type StoryWords } from "../game/story";
+import type { Progress } from "../game/progress";
+import { fillFinish, type CardResult } from "./finish";
 import { invasion } from "../alive/invasion";
 import { drawFoeLook } from "../alive/foes";
 import { clock } from "../alive/parts";
@@ -854,13 +856,14 @@ export function createFeel(host: Host) {
     invasion(level: string, t: number) {
       invasion(level, t);
     },
-    /** A line's glamour lifted (order 27): its sting, as the card says so. */
-    lineLifted() {
-      voice("lifted");
-    },
-    /** The story's words (order 27, `game/story.ts`). */
-    story(lang: "nb" | "en"): StoryWords {
-      return STORY[lang];
+    /**
+     * The card at a level's end filled under its title (`render/finish.ts`, order 42: out of the first script); a line's glamour lifted
+     * with it plays its sting (order 27). What a screen reader is told.
+     */
+    card(r: CardResult, def: LevelDef, progress: Progress, lang: "nb" | "en", touch: boolean, bracteate: boolean, toMap: string): string {
+      const f = fillFinish(r, def, progress, lang, touch, bracteate, toMap);
+      if (f.lifted) voice("lifted");
+      return f.say;
     },
     /**
      * The line under a place's name as he arrives, where the story has one (order 27): the map's until the opening card has

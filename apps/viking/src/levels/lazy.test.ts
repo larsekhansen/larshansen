@@ -20,8 +20,8 @@ import type { LevelDef, View } from "./types";
 // is never drawn without it.
 
 const SRC = resolve(dirname(import.meta.path), "..");
-/** What vite puts in feel's file (`vite.config.ts`): `alive/`, `render/feel.ts` and `game/story.ts`. */
-const FEEL = /\/src\/(alive\/|render\/feel\.ts$|game\/story\.ts$)/;
+/** What vite puts in feel's file (`vite.config.ts`): `alive/`, `render/feel.ts`, `render/dusk.ts`, `render/finish.ts`, `game/story.ts` and `game/runecells.ts`. */
+const FEEL = /\/src\/(alive\/|render\/(feel|dusk|finish)\.ts$|game\/(story|runecells)\.ts$)/;
 
 /** Whether a file of `src` reaches feel's file through its imports that are not types alone (relative imports, followed). */
 function reachesFeel(file: string, seen = new Set<string>()): boolean {
@@ -163,6 +163,26 @@ describe("without feel's file (order 30)", () => {
     }
     expect([...short].map(([k, n]) => `${k}: ${n} pixels with nothing drawn`)).toEqual([]);
   }, 120_000);
+
+  test("every level draws its own carriers, ledges on a beat, cannons and drums: the first script has no plain drawing of them (order 42)", async () => {
+    // The kit's plain carrier and ledge, which no level used, left the first script, and the kit's cannon and drum went with the two
+    // levels that draw them (Akershus, Slottet: the kit's `launcherart.ts`, in feel's file). Langkaia, the one level that can be drawn
+    // without feel's file, draws its carriers itself; it has no ledges on a beat, cannons or drums.
+    const all: Progress = { ...fresh(), cleared: [...ORDER], best: Object.fromEntries(ORDER.map((id) => [id, 60000])) };
+    const defs = [...(await Promise.all([...BUILT.map((l) => l.id), "encore"].map((id) => loadLevel(id)))), kartDef(fresh(), BARE), kartDef(all, BARE)];
+    const undrawn: string[] = [];
+    for (const def of defs) {
+      const p = newPlay(def, {});
+      if (def.carriers.length && !def.art.carrier) undrawn.push(`${def.id}: carriers`);
+      if (def.timed.length && !def.art.timed) undrawn.push(`${def.id}: ledges on a beat`);
+      if (p.cannons.length && !def.art.cannon) undrawn.push(`${def.id}: cannons`);
+      if (p.drums.length && !def.art.drum) undrawn.push(`${def.id}: drums`);
+    }
+    expect(undrawn).toEqual([]);
+    expect(LANGKAIA.carriers.length).toBeGreaterThan(0);
+    const langkaia = newPlay(LANGKAIA, {});
+    expect([LANGKAIA.timed.length, langkaia.cannons.length, langkaia.drums.length]).toEqual([0, 0, 0]);
+  });
 
   test("every solid tile and everything he is carried on, in Langkaia and on the map without its look, is drawn without feel's file", () => {
     const all: Progress = { ...fresh(), cleared: [...ORDER], best: Object.fromEntries(ORDER.map((id) => [id, 60000])) };

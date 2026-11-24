@@ -1,6 +1,6 @@
 import { PLAYER } from "./config";
 import { doorNear, walkIn, type AppLink, type Door } from "./doors";
-import { runHarness, type Harness } from "./harness";
+import type { Harness } from "./harness";
 import type { Lang } from "./i18n";
 import type { Action, Input } from "./input";
 import { createStepper } from "./loop";
@@ -451,7 +451,7 @@ export function launch(o: { stage: HTMLElement; layout(): void; still(): void; l
   }).observe(o.stage);
   o.layout();
   if (o.harness) {
-    runHarness(o.harness, o.input, o.step);
+    o.harness.run(o.input, o.step);
     o.still();
   } else o.loop.start();
 }

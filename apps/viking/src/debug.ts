@@ -10,6 +10,8 @@ import { timedPhase } from "@larshansen/pixelkit/timed";
 import { sx, sy } from "@larshansen/pixelkit/text";
 import { browserLang } from "@larshansen/pixelkit/i18n";
 export { pretendSafe } from "@larshansen/pixelkit/safe";
+// The kit's harness (`?debug&steps=N`), which the page reads as it starts (order 42: out of the first script).
+export { readHarness } from "@larshansen/pixelkit/harness";
 
 // What only `?debug` needs, fetched when it is asked for: no visitor's first script carries it.
 

@@ -1,6 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
+import { drawDrum } from "@larshansen/pixelkit/launcherart";
 import { R, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CAST, box as pbox, dot, prop, railing, tone, type Stuff } from "../alive/props";
 import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
@@ -969,6 +970,8 @@ export const SLOTTET: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
+    // The bass drums in the parade, the kit's (order 42: the first script steps them and leaves their drawing here).
+    drum: (_i, l, firedAt, v) => drawDrum(l, v.t, firedAt),
     // Far off over the city, a few birds where the sky was empty (order 24, ADR 0039's scenery: quiet, small, never near the lane).
     far: (v) => {
       farHills(v.sky, v.him.x);

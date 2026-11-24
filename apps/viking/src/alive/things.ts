@@ -4,7 +4,8 @@ import { FEATHERS } from "@larshansen/pixelkit/feather";
 import { R, TINT, light, mix, view } from "@larshansen/pixelkit/paint";
 import type { Phase } from "@larshansen/pixelkit/oslo";
 import type { Play } from "../game/play";
-import { runeCells, type RuneChar } from "../game/runes";
+import { runeCells } from "../game/runecells";
+import type { RuneChar } from "../game/runes";
 import { SHEEP, type Sheep } from "../game/sheep";
 import { frame, lit, paint, pixels, shade, stamp, type Frame } from "./frames";
 
