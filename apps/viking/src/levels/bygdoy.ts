@@ -252,26 +252,49 @@ function farCity() {
 /** Where the woods behind the street open by the water between the halls, in world x. */
 const OPEN = [1880, 2780] as const;
 
-/** Holmenkollen's ridge, forested and nearer than the far hills, the jump on its right shoulder: the tower, the inrun down to the right, the hill under it. */
+/**
+ * Holmenkollen's ridge, forested and nearer than the far hills, the jump on its shoulder, and the TV tower on the higher crest
+ * above and behind it, a little to its right. The jump's hill opens toward the town (order 44), so from across the fjord one
+ * looks up into it: the inrun comes down steeply from the tower and the landing hill's clearing fans out under it. The tower is a
+ * thin mast with a thick collar near its top.
+ */
 const holmenkollen = () =>
-  farPiece("bygdoy holmenkollen", 46, 26, (b) => {
+  farPiece("bygdoy holmenkollen", 48, 36, (b) => {
     const wood = mix(LAND.forestDark, LAND.farHills, 0.3);
-    for (let x = 0; x < 46; x++) {
-      const t = (x - 18) / 26;
+    // Tryvannshøgda behind, higher and a little paler (farther); Holmenkollen's shoulder in front of it.
+    for (let x = 14; x < 48; x++) {
+      const t = (x - 34) / 16;
+      const h = Math.round(18 * Math.pow(Math.max(0, 1 - t * t), 0.7)) + ((x * 3) % 5 === 0 ? 1 : 0);
+      if (h > 0) b.fill(x, 1, 1, h, mix(wood, LAND.farHills, 0.22));
+    }
+    for (let x = 0; x < 40; x++) {
+      const t = (x - 18) / 22;
       const h = Math.max(1, Math.round(13 * Math.pow(Math.max(0, 1 - t * t), 0.8)) + ((x * 5) % 7 === 0 ? 1 : 0));
       b.fill(x, 1, 1, h, x < 16 ? mix(wood, LAND.farHills, 0.15) : wood);
     }
-    // The jump stands up out of the trees: its tower at the top, the inrun slanting down to the right on its steel legs,
-    // meeting the hill where the landing hill's clearing runs on down.
-    b.fill(17, 2, 13, 24, PAINT.trim);
-    b.fill(16, 4, 25, 25, lighter(STONE.light, 0.3));
-    for (let k = 0; k < 16; k++) {
-      const u = 23 - Math.round(k * 0.72);
-      b.dot(19 + k, u, PAINT.trim);
-      b.dot(19 + k, u - 1, darker(STONE.light, 0.15));
-      if (k % 3 === 1) b.fill(19 + k, 1, 10, u - 2, darker(STONE.light, 0.35));
+    // The landing hill's clearing fanning out toward the town under the knoll; the inrun on its legs, steep as seen from below;
+    // the tower at its top.
+    const grass = mix(LAND.forest, PAINT.trim, 0.45);
+    for (let u = 2; u <= 11; u++) {
+      const half = Math.round((12 - u) * 0.55);
+      b.fill(24 - half, half * 2 + 2, u, u, u > 9 ? lighter(grass, 0.15) : grass);
     }
-    for (let k = 0; k < 9; k++) b.fill(35 + k, 2, 2, Math.max(2, 11 - k), mix(LAND.forest, PAINT.trim, 0.45));
+    for (let k = 0; k < 7; k++) {
+      const u = 24 - Math.round(k * 1.6);
+      b.fill(19 + k, 1, u - 1, u, PAINT.trim);
+      b.dot(19 + k, u - 2, darker(STONE.light, 0.15));
+      if (k % 2 === 1) b.fill(19 + k, 1, 11, u - 3, darker(STONE.light, 0.35));
+    }
+    b.fill(17, 2, 13, 25, PAINT.trim);
+    b.fill(18, 1, 13, 24, darker(STONE.light, 0.1));
+    b.fill(16, 4, 26, 26, lighter(STONE.light, 0.3));
+    // The TV tower: the shaft, the collar near its top, the mast over it.
+    const concrete = mix(PAINT.trim, STONE.light, 0.45);
+    b.fill(36, 2, 18, 30, concrete);
+    b.fill(36, 1, 18, 30, lighter(concrete, 0.3));
+    b.block(34, 6, 26, 28, lighter(concrete, 0.1));
+    b.fill(34, 6, 26, 26, darker(concrete, 0.2));
+    b.fill(37, 1, 31, 36, darker(concrete, 0.25));
   });
 
 /** Rådhuset from across the water: two square brick towers, the east one taller, the hall between them. */

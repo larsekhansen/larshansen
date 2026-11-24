@@ -1,8 +1,8 @@
 import { column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { stamp } from "@larshansen/pixelkit/kept";
-import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { INK, LAND, PALETTE, ROLES, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { R, ctx, layerOrigin, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { FACADE, INK, LAND, PALETTE, ROLES, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
@@ -17,6 +17,7 @@ import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/f
 import { frame, paint, type Piece } from "../alive/frames";
 import { drawLook } from "../render/looks";
 import { plane } from "../alive/depth";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { outlined, plain } from "../render/sprite";
 import { shiver } from "../render/stand";
 import { mapBuilder } from "./build";
@@ -258,14 +259,30 @@ const sunUp = (v: View) => Math.max(0, Math.min(1, (v.him.x - 203 * TILE) / (44 
 const GLOW = ["255, 214, 150", "255, 204, 140", "255, 192, 128", "255, 180, 118", "255, 166, 108", "255, 152, 100", "255, 138, 94", "255, 126, 90"];
 const DISC = ["#fff0c0", "#ffe2a0", "#ffd28a", "#ffbe72", "#ffa860", "#ff9452"];
 
-/** The far shore's low hills and the town's lights going out; at the far end, the sun coming up behind them. */
+/** How high Østmarka's forest line stands over the far shore, beyond the ridge (order 44). */
+const OSTMARKA = 20;
+/**
+ * How much higher the sun's glow lies than before order 44: Østmarka's even line stands where the old hills' tops were jagged, and
+ * the glow's warmest bands lay in the dips between them; they lie along the line now.
+ */
+const GLOW_LIFT = OSTMARKA - 10;
+/** Where the trees along the bank stand back over the long crossing, in world x, so the far shore shows (order 44). */
+const OPEN = [2330, 3050] as const;
+
+/**
+ * The far shore (order 44): across the lake its reed beds at the water, the eastern ridge with its rows of blocks from the 1950s and
+ * 1960s among trees, a window lit here and there in the twilight, and beyond the ridge the dark forest of Østmarka, a long even line.
+ * No famous building. At the far end the sun comes up behind them.
+ */
 function farShore(v: View) {
   const base = FLOOR - 22;
   const k = sunUp(v);
-  const hillTop = (x: number) => {
+  const ridgeTop = (x: number) => {
     const wx = layerWorldX(x, 0.12);
-    return base - (14 + Math.round(5 * Math.sin(wx * 0.021) + 3 * Math.sin(wx * 0.07)));
+    return base - (12 + Math.round(3 * Math.sin(wx * 0.006) + 1.5 * Math.sin(wx * 0.031)));
   };
+  // What stands in front of the sun as it comes up: Østmarka's line over the ridge, or the ridge where it is higher.
+  const hillTop = (x: number) => Math.min(ridgeTop(x), base - OSTMARKA);
   if (k > 0) {
     // The sun's disc rising over the far hills, a warm band along the sky above them.
     // Off to the right of the far hide as he stands at the rune, so the hide does not hide it.
@@ -276,7 +293,7 @@ function farShore(v: View) {
       const h = Math.round(Math.sqrt(r * r - x * x));
       column(sx + x, sy - h, sy + h, x * x + 4 < r * r ? L.sun : mix(L.sun, WHITE, 0.4));
     }
-    for (let x = 0; x < view.w; x++) column(x, base - 40, base - 30, `rgba(${L.sunGlow}, ${(0.18 * k * Math.max(0, 1 - Math.abs(x - sx) / 260)).toFixed(3)})`);
+    for (let x = 0; x < view.w; x++) column(x, base - 40 - GLOW_LIFT, base - 30 - GLOW_LIFT, `rgba(${L.sunGlow}, ${(0.18 * k * Math.max(0, 1 - Math.abs(x - sx) / 260)).toFixed(3)})`);
     // The twilight's tint goes over the layer, and would leave the sun a grey disc: its own light comes
     // on after it, as a window's does. A glow over the hills, red low down and gold higher, and the
     // disc, gold, redder at its foot; none of it over the hills that stand in front of it.
@@ -286,7 +303,7 @@ function farShore(v: View) {
       const top = hillTop(x);
       // Eight bands, warmer and stronger down to the hills.
       for (let i = 0; i < 8; i++) {
-        const y0 = base - 80 + i * 10;
+        const y0 = base - 80 - GLOW_LIFT + i * 10;
         const bottom = Math.min(y0 + 10, top);
         if (bottom > y0) light(x + view.camX, y0, 1, bottom - y0, "soft", `rgba(${GLOW[i]}, ${(0.05 * (i + 1) * near).toFixed(3)})`);
       }
@@ -298,21 +315,81 @@ function farShore(v: View) {
       for (let y = sy - h; y < foot; y += 3) light(sx + x + view.camX, y, 1, Math.min(3, foot - y), "soft", DISC[Math.min(DISC.length - 1, Math.floor(((y - sy + r) / (2 * r + 1)) * DISC.length))]);
     }
   }
-  for (let x = 0; x < view.w; x++) {
-    const wx = layerWorldX(x, 0.12);
-    const top = hillTop(x);
-    column(x, top, base, mix(LAND.farHills, STONE.dark, 0.3));
-    if (Math.floor(wx) % 17 === 0) column(x, top + 3, top + 4, L.sun);
+  // Østmarka beyond the ridge: one piece laid end to end along the layer, an even line whichever way he goes.
+  const forest = ostmarka();
+  for (let x = -(((Math.floor(layerOrigin(0.12)) % forest.w) + forest.w) % forest.w); x < view.w; x += forest.w) drawFar(forest, x, base);
+  for (let x = 0; x < view.w; x++) column(x, ridgeTop(x), base, mix(LAND.forest, LAND.farHills, 0.5));
+  // The blocks along the ridge, three kinds in turn, each standing on the ridge where it is, where the ridge is seen: over the long
+  // crossing and the far shore, where the bank's trees end.
+  for (let i = 0; i < 5; i++) {
+    const f = blocks(i % 3);
+    const x = layerX(1500 + i * 700, 0.12) - f.w / 2;
+    if (x + f.w < 0 || x > view.w) continue;
+    drawFar(f, x, ridgeTop(Math.max(0, Math.min(view.w - 1, Math.round(x + f.w / 2)))) + 4);
   }
+  // The reed beds where the far shore shows, across the long crossing (elsewhere the bank's trees hide them): one piece.
+  drawFar(reedBeds(), layerX(2690, 0.12) - 48, base + 1);
   // The lake from the far shore to the bank he walks along, as a plane running away from him (order 23): still water,
   // so its strips drift only a little.
   plane({ layer: 0.12, top: base, bottom: FLOOR, from: 0.12, to: 0.36, tones: [mix(L.still, L.glint, 0.3), L.still, L.stillDeep], glint: L.glint, drift: 0.04, strip: 2, near: 4 }, v.t);
 }
 
+/** Østmarka's forest beyond the ridge: dark spruce in an even line, their tips a pixel or two over it. */
+const ostmarka = () =>
+  farPiece("ostensjovannet ostmarka", 512, OSTMARKA + 2, (b) => {
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.15);
+    for (let x = 0; x < 512; x++) {
+      const tip = (x * 7) % 5 === 0 ? 2 : (x * 3) % 4 === 0 ? 1 : 0;
+      b.fill(x, 1, 1, OSTMARKA + tip - 1, wood);
+      if (tip) b.dot(x, OSTMARKA + tip - 1, darker(wood, 0.15));
+    }
+  });
+
+/**
+ * Blocks on the ridge, of the 1950s and 1960s: long low slabs in pale render with rows of windows, now and then a taller one,
+ * trees among them and in front; three kinds, laid along the ridge in turn. In one row of each a window in three can come on.
+ */
+const blocks = (kind: number) =>
+  farPiece(`ostensjovannet blocks ${kind}`, 72, 26, (b) => {
+    const tree = mix(LAND.forest, LAND.farHills, 0.35);
+    const slabs: [number, number, number][] =
+      kind === 0 ? [[4, 22, 9], [30, 18, 8], [52, 16, 10]] : kind === 1 ? [[2, 18, 8], [26, 7, 21], [40, 26, 9]] : [[6, 26, 8], [36, 20, 10], [60, 8, 17]];
+    slabs.forEach(([x, w, h], i) => {
+      const c = mix(FACADE.blocks[(kind * 2 + i) % FACADE.blocks.length], LAND.farHills, 0.15);
+      b.block(x, w, 3, h + 2, c);
+      // Rows of small windows; in one row a window in three can come on after dusk, a pane at a time (a lit row would read as paint).
+      for (let u = 5; u < h + 1; u += 2) for (let k = x + 1; k < x + w - 1; k += 2) (u === h - 1 && (k - x) % 6 === 1 ? b.pane : b.fill)(k, 1, u, u, darker(c, 0.3));
+    });
+    // Trees in front of their feet and between them.
+    for (let x = 0; x < 72; x++) {
+      const h = 3 + Math.round(2 * Math.sin(x * 0.7) + ((x * 5) % 3));
+      b.fill(x, 1, 1, h, (x * 3) % 7 < 2 ? darker(tree, 0.12) : tree);
+    }
+    for (const [cx, r] of [[kind ? 25 : 28, 4], [kind === 2 ? 33 : 47, 3], [68, 4]] as const)
+      for (let dy = -r; dy <= r; dy++) {
+        const half = Math.round(Math.sqrt(r * r - dy * dy));
+        b.fill(cx - half, half * 2 + 1, 4 + r + dy, 4 + r + dy, dy < 0 ? lighter(tree, 0.1) : tree);
+      }
+  });
+
+/** The reed beds at the far shore's water: three beds with open water between, brown heads over green stalks. */
+const reedBeds = () =>
+  farPiece("ostensjovannet reeds", 96, 5, (b) => {
+    for (const [x0, w, k] of [[0, 30, 0], [37, 24, 1], [68, 28, 0]] as const)
+      for (let x = 0; x < w; x++) {
+        const h = Math.round(3 + Math.sin(x * (k ? 0.5 : 0.35)) - Math.abs(x - w / 2) / 10);
+        if (h < 1) continue;
+        b.fill(x0 + x, 1, 1, h, (x + k) % 3 ? L.reed : L.reedDark);
+        if ((x * 7 + k) % 4 === 0) b.dot(x0 + x, h, L.reedHead);
+      }
+  });
+
 /** Birches and willows along the far bank, low, in rows. */
 function bankTrees(factor: number, foot: number, n: number, fade: number) {
   for (let i = 0; i < n; i++) {
     const wx = i * 36 + ((i * 23) % 17);
+    // Over the long crossing they stand back, and the far shore shows across the open water (order 44).
+    if (wx > OPEN[0] && wx < OPEN[1]) continue;
     const x = layerX(wx, factor);
     if (x < -24 || x > view.w + 24) continue;
     const h = 14 + ((i * 11) % 12);

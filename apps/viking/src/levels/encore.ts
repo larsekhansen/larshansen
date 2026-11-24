@@ -1,9 +1,10 @@
 import { box, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { DECK, tile as textured, type Grain } from "../alive/ground";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
 import { ENCORE as WORDS } from "../game/story";
@@ -80,12 +81,32 @@ function plainness(): number {
 /** Loki has not woken yet: one cold light on him at his mark. */
 const waiting = () => !show.loki || show.loki.phase === "asleep";
 
-// --- The far layers: Ekeberg's ridge, Bjørvika's towers, the park's trees ------------------------------------------------
+// --- The far layers: Ekeberg's hillside, Bjørvika's towers, the park's trees ------------------------------------------------
 
 const ground = FLOOR * TILE;
 function far(v: View) {
   drawOsloHills(v.sky, ground - 6);
+  // Ekeberg's hillside over the park (order 44): behind the towers and between them, in the farthest layer, so they stand as
+  // they were.
+  drawFar(ekeberg(), layerX(200, 0.12) - 180, ground - 2);
 }
+
+/** Ekeberg's hillside, standing over the park: wooded to its brow, the steep face's rock showing grey among the trees, lit on its left. */
+const ekeberg = () =>
+  farPiece("encore ekeberg", 360, 70, (b) => {
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.3);
+    const rock = mix("#8e8a84", LAND.farHills, 0.3);
+    const at = (x: number) => 34 + 30 * Math.min(1, Math.max(0, (x - 40) / 200)) ** 0.8 + 3 * Math.sin(x * 0.05) + 2 * Math.sin(x * 0.17);
+    for (let x = 0; x < 360; x++) {
+      const h = Math.round(at(x)) + ((x * 7) % 5 === 0 ? 1 : 0);
+      const slope = at(x + 3) - at(x - 3);
+      b.fill(x, 1, 1, h, slope > 0.6 ? lighter(wood, 0.06) : wood);
+      b.dot(x, h, lighter(wood, 0.18));
+      // The steep face: grey rock in ledges among the trees, low on the hill.
+      for (const [x0, x1] of [[86, 118], [170, 196], [238, 262]]) if (x >= x0 && x < x1) b.fill(x, 1, 6, 14 + Math.round(5 * Math.sin(((x - x0) / (x1 - x0)) * Math.PI)) - ((x * 5) % 3), x - x0 < 3 ? lighter(rock, 0.15) : rock);
+      for (let u = h - 4 - (x % 3); u > 20; u -= 7 + ((x * 5) % 4)) if ((x * 11 + u) % 6 < 2) b.fill(x, 1, u - 1, u, darker(wood, 0.15));
+    }
+  });
 
 /** Bjørvika's tall slim towers to the west, seen over the park, a window lit here and there. */
 function mid() {

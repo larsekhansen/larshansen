@@ -303,6 +303,31 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **The far view alone, by a scratch build** (order 43): two switches in a scratch copy of `main.ts` (the sky and the far passes only; the sky only)
   showed each far view without the play, and the far view is the pixels where the two differ (`o43/before.md`). Nothing of it is in the repository.
 
+- **A far piece at a level's start is somewhere else on each phone** (order 44): the camera is held at the level's left edge there, so the view's
+  middle is 120 art pixels in upright and 211 on its side, and a piece at world x stands 91 x (1 - the layer's speed) pixels further right on its
+  side than upright; and on its side the page's bar covers the canvas's top 40 art pixels. Korketrekkeren's TV tower was behind the restaurant
+  upright, behind a sign's bubble or the bar on its side, until it was placed for both. *Place a start's landmark for both sizes and look at both.*
+- **A lit row of windows is a stripe of the paint** (order 44): Østensjøvannet's blocks first lit whole rows of windows after dusk, and across the
+  lake they read as yellow ledges. *Light single panes with dark between them.*
+- **An even line where a jagged one was hides what lay in the dips** (order 44): the sunrise's warmest bands at Østensjøvannet showed in the dips
+  between the old jagged hills; Østmarka's even line covered them and the glow was gone. They lie along the line now. *Before and after, look at
+  what was seen through what you replace.*
+- **Pale far things vanish against an evening sky** (order 44): the haze washes toward the sky's own air, so a pale concrete tower in an evening
+  level was the sky's colour. Against a low sun it is a dark silhouette. *Draw what stands against the light dark.*
+- **A level's middle layer can lie wholly under the view** (order 44): Gamle Oslo's houses of Kampen are drawn below the roofs he walks on, so a
+  church among them showed its spire's tip at most; in the farthest layer, nearer than its hills, it is seen. *Look where each layer is on the
+  screen before choosing one for a landmark.*
+- **bash 5.2 reads `&` in `${var/pattern/replacement}` as the match** (order 44): `${U[@]/\?debug/?debug&faronly}` gave `?debug?debugfaronly`.
+  Escape it (`\&`).
+- **A background command that keeps a pipe open never ends** (order 44): a build script piped into `grep` started its preview servers with
+  `cd ... && nohup ... &`, and the backgrounded subshell held the pipe, so the command never returned. Start servers with `setsid`, all three
+  streams redirected.
+- **A flat band is a field** (order 44): Korketrekkeren's farthest water, drawn as two flat bands to save copies, filled more than a 250th of what
+  the level paints, so the palette test held it as a field, and a paler tone than the plane's came 10.0 off the calm outline; the warning and lights
+  tests, which were run, did not look. *After drawing anything broad, run the palette test too, or the whole suite.*
+- **The map's far layers have no haze** (order 44): the same far shore the levels share is rawer on the map, and its ochre houses came 9.5 off a
+  coin's copper there, where the levels' washed ones did not. *A shared drawing is held where each user shows it.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

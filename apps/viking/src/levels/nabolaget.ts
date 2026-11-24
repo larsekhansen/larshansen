@@ -4,8 +4,8 @@ import { TILE } from "@larshansen/pixelkit/config";
 import type { Light } from "@larshansen/pixelkit/dark";
 import { kept, keptStrips, seen } from "@larshansen/pixelkit/kept";
 import type { Launcher } from "@larshansen/pixelkit/launcher";
-import { R, ctx, gable, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
-import { BRICK, ENEMY, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
+import { R, ctx, gable, layerX, light, mix, view, wdisc, type LightKind } from "@larshansen/pixelkit/paint";
+import { BRICK, ENEMY, FACADE, ROLES, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, TRAM, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { CAST, lamp, panelDoor, plankWall, post, railing, tramSide } from "../alive/props";
 /** A chimney's smoke on a winter night: pale, thin. */
@@ -26,6 +26,7 @@ import { drawNightKept } from "../render/night";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { EDGE, edgesAt, tile as textured, CRATE, type Grain } from "../alive/ground";
 import { STORY } from "../game/story";
 
@@ -269,7 +270,17 @@ function lights(v: View): Light[] {
 const CHURCH_WINDOWS = [114, 117, 120, 123].map((c) => ({ x: c * TILE + 4, y: 12 * TILE + 6 }));
 const LANE_LAMPS = [82 * TILE, 98 * TILE];
 
-/** The far hills under the northern lights: Ekeberg to the south, its lights, snow on the ridge. */
+/**
+ * Where the far view's landmarks are seen from, in world x (order 44). The walk runs from Vålerenga west to Kværnerdalen, the other
+ * way from the line map, which has the city and Ekeberg (the stop before) to Gamle Oslo's left: so, as the map has them, the city
+ * toward the fjord at the start (the Barcode's slim towers, and the tall plain slab by the central station), Ekeberg's wooded
+ * hillside rising close to its right, and Kampen kirke on its hill to the north-east, the other way, toward the end.
+ */
+const CITY = 380;
+const EKEBERG = 1000;
+const KAMPEN = 2950;
+
+/** The far hills under the northern lights, snow on the ridge, a window lit here and there; the city toward the fjord, Ekeberg's hillside close, Kampen kirke. */
 function farHills() {
   const base = 190 + view.camY * 0.85;
   for (let x = 0; x < view.w; x++) {
@@ -279,10 +290,51 @@ function farHills() {
     column(x, base - h, base - h + 3, SNOW.far);
     if ((Math.floor(wx) * 13) % 37 === 0) lit(x, base - h + 6 + ((Math.floor(wx) * 7) % 12), 1, 1);
   }
+  drawFar(city(), layerX(CITY, 0.12) - 40, base + 2);
+  // Kampen kirke on its hill, nearer than the hills behind and over the roofs between, once (order 44: it stood in the houses' layer
+  // over every 17th house, two to a screen, where the roofs in front hid all but its spire).
+  drawFar(kampen(), layerX(KAMPEN, 0.12) - 22, base + 2);
+  drawFar(ekeberg(), layerX(EKEBERG, 0.12), base + 6);
 }
+
+/** The city toward the fjord: the Barcode's row of slim tall blocks with gaps between, light and dark; the tall plain slab by the station to their right; rows of windows, about half lit at night. */
+const city = () =>
+  farPiece("nabolaget city", 80, 54, (b) => {
+    [[2, 5, 26], [9, 4, 33], [15, 5, 29], [22, 4, 36], [28, 5, 28], [35, 4, 34], [41, 5, 30], [48, 4, 25]].forEach(([x, w, h], k) => {
+      const c = mix(k % 3 === 1 ? FACADE.stageDoor : k % 2 ? FACADE.aluminium : FACADE.libraryTop, LAND.farHills, 0.2);
+      b.block(x, w, 1, h, c);
+      for (let u = 4; u < h - 1; u += 3) (u % 6 === 4 ? b.pane : b.fill)(x + 1, w - 2, u, u, k % 3 === 1 ? lighter(c, 0.2) : darker(c, 0.3));
+    });
+    // The slab: tall, plain, dark glass, its long side toward him, a plain top.
+    const slab = mix(GLASS.farWindow, FACADE.aluminiumLine, 0.35);
+    b.block(60, 12, 1, 52, slab);
+    b.fill(60, 12, 52, 52, lighter(slab, 0.35));
+    for (let u = 4; u < 51; u += 3) for (const x of [62, 66, 69]) (u % 9 === 4 && x !== 66 ? b.pane : b.fill)(x, 2, u, u, darker(slab, 0.25));
+  });
+
+/** Ekeberg's hillside rising close over Kværnerdalen: wooded, snow among the trees and on its ledges, its brow against the sky, falling away again to the south; a lit window or two at its foot. */
+const ekeberg = () =>
+  farPiece("nabolaget ekeberg", 230, 70, (b) => {
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.25);
+    const at = (x: number) => {
+      const up = Math.min(1, x / 120);
+      const down = x > 180 ? (x - 180) / 50 : 0;
+      return 10 + 54 * (up < 0.5 ? 2 * up * up : 1 - 2 * (1 - up) * (1 - up)) - 34 * down * down + (x > 100 && x < 190 ? 3 * Math.sin(x * 0.09) : 0);
+    };
+    for (let x = 0; x < 230; x++) {
+      const h = Math.round(at(x) + ((x * 7) % 5 === 0 ? 2 : (x * 3) % 4 === 0 ? 1 : 0));
+      // The steep face, turned from the light, a shade darker; the brow and the foot lit.
+      const slope = at(x + 3) - at(x - 3);
+      b.fill(x, 1, 1, h, slope > 2.4 && (x * 7) % 3 !== 0 ? darker(wood, 0.1) : slope < -1 ? darker(wood, 0.05) : wood);
+      // Snow on the trees' tops and in clearings among them.
+      b.dot(x, h, SNOW.far);
+      for (let u = h - 3 - (x % 4); u > 4; u -= 6 + ((x * 5) % 5)) if ((x * 13 + u * 7) % 9 < 3) b.fill(x, 1, u, u, mix(SNOW.far, wood, 0.35));
+    }
+    for (const [x, u] of [[14, 6], [31, 9], [57, 13], [122, 7], [168, 5], [205, 4]] as const) b.pane(x, 2, u, u, GLASS.farWindow);
+  });
 const LAND_NIGHT = "#2a3458";
 
-/** Kampen and Vålerenga further off: rows of small houses, snow on their roofs, Kampen kirke's spire. */
+/** Kampen and Vålerenga further off: rows of small houses, snow on their roofs. */
 function midRoofs(t: number) {
   const base = 230 + view.camY * 0.75;
   for (const far of [true, false]) for (let i = 0; i < 60; i++) {
@@ -299,12 +351,34 @@ function midRoofs(t: number) {
     lit(x + 4, base - h + 4, 3, 3);
     if (i % 3) lit(x + w - 7, base - h + 4, 3, 3);
     if (i % 5 === 0 && !view.reduced) for (let k = 0; k < 3; k++) box(x + w - 6 + ((t / 20 + k) % 3), base - h - 12 - k * 4 - ((t / 6) % 4), 3, 2, `rgba(220, 225, 235, ${0.4 - k * 0.1})`);
-    if (i % 17 === 8) {
-      box(x + w / 2 - 3, base - h - 26, 6, 26, mix(BRICK.red, LAND_NIGHT, 0.35));
-      for (let k = 0; k < 16; k++) box(x + w / 2 - Math.floor(k / 5), base - h - 42 + k, 1 + Math.floor(k / 5) * 2, 1, mix(BRICK.red, LAND_NIGHT, 0.35));
-    }
   }
 }
+
+/** Kampen kirke on its low hill: red brick, the nave's steep roof with snow on it and its tall windows, the tall tower and its pointed spire, a cross. */
+const kampen = () =>
+  farPiece("nabolaget kampen", 46, 76, (b) => {
+    const brick = mix(BRICK.red, LAND_NIGHT, 0.3);
+    const hill = mix(SNOW.far, LAND_NIGHT, 0.45);
+    for (let x = 0; x < 46; x++) {
+      const k = (x - 23) / 23;
+      b.fill(x, 1, 1, Math.round(12 * Math.sqrt(Math.max(0, 1 - k * k))) + 1, x < 16 ? lighter(hill, 0.08) : hill);
+    }
+    b.block(6, 22, 12, 26, brick);
+    for (let k = 0; k < 9; k++) b.fill(6 + k, 22 - k * 2, 27 + k, 27 + k, k < 2 ? mix(ROOF.churchSlate, LAND_NIGHT, 0.3) : mix(SNOW.far, LAND_NIGHT, 0.25));
+    // Its tall windows lit from inside on a winter evening, as Vålerenga kirke's are.
+    for (const x of [9, 13, 17, 21]) b.pane(x, 1, 16, 22, darker(brick, 0.4));
+    b.block(28, 9, 10, 50, brick);
+    for (let u = 14; u < 50; u += 6) b.fill(29, 7, u, u, darker(brick, 0.1));
+    b.fill(30, 2, 40, 45, darker(brick, 0.45));
+    b.fill(34, 2, 40, 45, darker(brick, 0.45));
+    b.fill(27, 11, 50, 50, lighter(brick, 0.15));
+    for (let u = 51; u <= 72; u++) {
+      const w = Math.max(1, Math.round(9 - ((u - 51) * 8) / 21));
+      b.fill(28 + Math.floor((9 - w) / 2), w, u, u, mix(ROOF.churchSlate, LAND_NIGHT, 0.2));
+    }
+    b.fill(32, 1, 73, 76, mix(PAINT.trim, LAND_NIGHT, 0.4));
+    b.fill(31, 3, 75, 75, mix(PAINT.trim, LAND_NIGHT, 0.4));
+  });
 /** A gable in a layer's own pixels. */
 function gableBox(x: number, baseY: number, w: number, h: number, c: string) {
   for (let i = 0; i < h; i++) {

@@ -8,7 +8,10 @@ import { drawSky } from "@larshansen/pixelkit/sky";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { NATURAL } from "../alive/natural";
 import { newPlay } from "../game/play";
-import { BUILT, loadLevel } from "../levels/index";
+import { fresh, type Progress } from "../game/progress";
+import { BUILT, ORDER, loadLevel } from "../levels/index";
+import { kartDef } from "../levels/kart";
+import { kartArt } from "../levels/kartArt";
 import type { LevelDef, View } from "../levels/types";
 import { ANY_METHOD, deltaE, mixRgb, parseColour, skyOf, tinted, type Rgb } from "./fields";
 import { airOf, backHazeOf, hazeOf } from "./haze";
@@ -288,10 +291,19 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit; far
 
 /** Each level's walk, made by whichever test asks first. */
 const WALKED = new Map<string, ReturnType<typeof nearRed>>();
-async function walked(id: string) {
+async function walked(id: string, def?: LevelDef) {
   let w = WALKED.get(id);
-  if (!w) WALKED.set(id, (w = nearRed(await loadLevel(id))));
+  if (!w) WALKED.set(id, (w = nearRed(def ?? (await loadLevel(id)))));
   return w;
+}
+
+/** The line map with line 1 only and with every rune (order 44: the far test held the levels and the encore, not the map). */
+function maps(): { id: string; def: LevelDef }[] {
+  const all: Progress = { ...fresh(), cleared: [...ORDER], best: Object.fromEntries(ORDER.map((id) => [id, 60000])) };
+  return [
+    { id: "kart", def: kartDef(fresh(), kartArt) },
+    { id: "kart (every rune)", def: kartDef(all, kartArt) }
+  ];
 }
 
 describe("harmless things keep off the warning red (order 33)", () => {
@@ -390,6 +402,8 @@ const NAMED_FAR: Record<string, string> = {
   "akershus #c9a14a what he takes": FAR_OCHRE,
   "radhuset #c9a14a what he takes": FAR_OCHRE,
   "bygdoy #c9a14a what he takes": FAR_OCHRE,
+  "kart #c9a14a what he takes": `${FAR_OCHRE}; on the line map, which has no haze (ADR 0044), 9.5 off it (order 44 brought the map under this test)`,
+  "kart (every rune) #c9a14a what he takes": `${FAR_OCHRE}; on the line map, which has no haze (ADR 0044), 9.5 off it`,
   "stortinget #a1864b what he takes": "a lamp far off in the rock, faded into the vault's dark",
   "stortinget #7e693f what he takes": "the lamps along the far platforms and in their trains' windows, faded into the vault's dark",
   "stortinget #24457e his tunic": "the T-bane's own blue on the roundels of the cavern's far columns (the line's colour), under the ground",
@@ -407,9 +421,11 @@ describe("the far view keeps off what means something (order 43)", () => {
     const wrong: string[] = [];
     const used = new Set<string>();
     const least: Record<string, { d: number; at: string }> = {};
-    for (const st of [...BUILT, { id: "encore" }]) {
-      const def = await loadLevel(st.id);
-      for (const [key, n] of (await walked(st.id)).far) {
+    const scenes: { id: string; def: LevelDef }[] = [];
+    for (const st of [...BUILT, { id: "encore" }]) scenes.push({ id: st.id, def: await loadLevel(st.id) });
+    for (const st of [...scenes, ...maps()]) {
+      const def = st.def;
+      for (const [key, n] of (await walked(st.id, def)).far) {
         if (n < FEW_FAR) continue;
         const at = key.indexOf(" ");
         const k = Number(key.slice(0, at));
@@ -437,4 +453,61 @@ describe("the far view keeps off what means something (order 43)", () => {
     expect([...new Set(wrong)]).toEqual([]);
     expect(Object.keys(NAMED_FAR).filter((k) => !used.has(k))).toEqual([]);
   }, 300_000);
+
+  // Order 44: the test above walks every view by day and tints what it finds as each sky tints it (the haze toward that sky's air,
+  // then its tint, as the kit's `pass` does), rather than walking every view again under each sky. That is exact only while no far,
+  // mid or near layer draws anything differently under another sky (a level's own dark and its lights are drawn after the passes
+  // and held by `render/lights.test.ts`). Held here cheaply: every scene's three far layers drawn at five places along it under
+  // each sky, their fills and copies recorded call by call, the same as by day.
+  test("no far, mid or near layer draws differently under another sky, so the day's walk tinted is what every sky shows", async () => {
+    const wrong: string[] = [];
+    const scenes: { id: string; def: LevelDef }[] = [];
+    for (const st of [...BUILT, { id: "encore" }]) scenes.push({ id: st.id, def: await loadLevel(st.id) });
+    for (const { id, def } of [...scenes, ...maps()]) {
+      const map = newPlay(def, {}).map;
+      const was = { ...view, g: ctx() };
+      const record = (phase: Phase) => {
+        const calls: string[] = [];
+        let style: unknown = "#000";
+        const g: Record<string, unknown> = {
+          globalAlpha: 1,
+          globalCompositeOperation: "source-over",
+          canvas: { width: 320, height: 200 },
+          get fillStyle() {
+            return style;
+          },
+          set fillStyle(v: unknown) {
+            style = v;
+          },
+          createLinearGradient: () => ({ addColorStop: () => undefined }),
+          fillRect: (x: number, y: number, w: number, h: number) => calls.push(`${String(style)} ${x},${y},${w},${h}`),
+          drawImage: (_i: unknown, ...a: number[]) => calls.push(`copy ${a.join(",")}`)
+        };
+        Object.setPrototypeOf(g, ANY_METHOD);
+        const sky = skyOf(def, phase);
+        const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
+        try {
+          Object.assign(view, { w: 320, h: 200, k: 1, reduced: true });
+          target(g as unknown as CanvasRenderingContext2D);
+          for (let i = 0; i < 5; i++) {
+            const x = Math.round(((map.width - 320) * i) / 4);
+            const y = Math.round(map.height / 2 - 100);
+            Object.assign(view, { camX: x, camXf: x, camY: y, camYf: y });
+            v.him = { x: x + 160, y: y + 100 };
+            def.art.far?.(v);
+            def.art.mid?.(v);
+            def.art.near?.(v);
+            lights.length = 0;
+          }
+        } finally {
+          target(was.g);
+          Object.assign(view, { w: was.w, h: was.h, k: was.k, camX: was.camX, camY: was.camY, camXf: was.camXf, camYf: was.camYf, reduced: was.reduced });
+        }
+        return calls.join("\n");
+      };
+      const day = record("day");
+      for (const phase of PHASES) if (phase !== "day" && record(phase) !== day) wrong.push(`${id} under ${phase}`);
+    }
+    expect(wrong).toEqual([]);
+  }, 120_000);
 });

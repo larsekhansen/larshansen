@@ -1,7 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
-import { R, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, FIRE, GLASS, INK, LAND, LAMP, METAL, PAINT, PALETTE, PLANTS, RIVER, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { STOVE_SMOKE, smoke } from "@larshansen/pixelkit/props";
 import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilemap";
@@ -14,6 +14,7 @@ import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { NEON_B, glam } from "../alive/glamour";
 import { EDGE, edgesAt, hash, tile as textured, type Grain } from "../alive/ground";
 import { dot, prop, tone, type Grid, type Stuff } from "../alive/props";
@@ -335,7 +336,10 @@ const terrace = (c: number) => (c < 92 ? T1 : c < 155 ? T2 : T3);
 const REF = T2 * TILE - 120;
 const sink = (s: number, k: number) => s + view.camY - k * (view.camY - REF);
 
-/** Grefsenkollen and the hills north of the city, in summer green; a tower on the top. */
+/**
+ * The hills north of the city, in summer green; and up the river from Nydalen, once, Grefsenkollen (order 44). No tower stands on
+ * it (order 43 drew one, three or four to a screen).
+ */
 function farHills() {
   const base = sink(116, 0.16);
   for (let x = 0; x < view.w; x++) {
@@ -345,16 +349,107 @@ function farHills() {
     const f = h - 10 + 3 * Math.sin(wx * 0.05);
     column(x, base - f, base + 400, mix(LAND.forest, LAND.farHills, 0.45));
     if ((Math.floor(wx / 2) * 7) % 9 === 0) column(x, base - f - 1, base - f + 1, mix(LAND.forestDark, LAND.farHills, 0.4));
-    // The tower on Grefsenkollen.
-    const tw = Math.floor(wx) % 900;
-    if (tw >= 300 && tw < 302) column(x, base - h - 10, base - h, mix(PAINT.trim, LAND.farHills, 0.3));
   }
+  drawFar(grefsenkollen(), layerX(110, 0.12), base + 4);
 }
 
-/** The old mills and the new blocks along the river, between: brick, sawtooth roofs, chimneys, trees. */
+/** Grefsenkollen, seen up the river from Nydalen: a rounded hill wooded to its top, nearer and darker than the ridges, lit on its left, its crown of trees against the sky. */
+const grefsenkollen = () =>
+  farPiece("akerselva grefsenkollen", 140, 62, (b) => {
+    const wood = mix(LAND.forestDark, LAND.forest, 0.35);
+    // A broad rounded top, its long slope to the left (toward the river), steeper to the right; its edge the trees' crowns.
+    const at = (x: number) => {
+      const k = Math.min(1, Math.abs(x - 74) / (x < 74 ? 74 : 66));
+      return 54 * Math.pow(1 - k * k, 1.3) + 2 * Math.sin(x * 0.21) * (1 - k);
+    };
+    for (let x = 0; x < 140; x++) {
+      const crown = ((x * 7) % 5 === 0 ? 1 : 0) + ((x * 3) % 4 === 0 ? 1 : 0);
+      const h = Math.round(at(x)) - 2 + crown;
+      if (h < 1) continue;
+      // Lit where its face turns up toward the light (the left), shaded where it falls away.
+      const slope = at(x + 2) - at(x - 2);
+      b.fill(x, 1, 1, h, slope > 2 ? lighter(wood, 0.1) : slope < -2 ? darker(wood, 0.08) : wood);
+      b.dot(x, h, slope > 0 ? lighter(wood, 0.2) : darker(wood, 0.1));
+      // The trees' crowns in darker clumps down its face.
+      for (let u = h - 4 - (x % 3); u > 8; u -= 7 + ((x * 5) % 4)) if ((x * 11 + u) % 6 < 2) b.fill(x, 1, u - 1, u, darker(wood, 0.12));
+    }
+  });
+
+/**
+ * Where the river passes the two churches whose spires stand over its roofs (order 44), in world x, each once and in the river's
+ * order: Sagene kirke by Hjula, then Paulus kirke at Grünerløkka, by Aamodt bru. Both are seen from the lower terraces, where the
+ * town shows over the bank (from the upper ones the bank hides the town).
+ */
+const SAGENE = 2080;
+const PAULUS = 2700;
+
+/** Sagene kirke on its rise above the river: red brick, a tall slim tower and its slim pointed spire, the nave's roof at its foot, trees round it. */
+const sagene = () =>
+  farPiece("akerselva sagene", 40, 98, (b) => {
+    // The rise it stands on, grass and trees, lit on its left.
+    const green = mix(PLANTS.leaves, LAND.farHills, 0.3);
+    for (let x = 0; x < 40; x++) {
+      const k = (x - 19) / 20;
+      const h = Math.round(24 * Math.pow(Math.max(0, 1 - k * k), 0.5)) + ((x * 5) % 3 === 0 ? 1 : 0);
+      if (h > 0) b.fill(x, 1, 1, h, k < -0.4 ? lighter(green, 0.12) : k > 0.5 ? darker(green, 0.1) : green);
+      for (let u = h - 3; u > 3; u -= 6) if ((x * 7 + u) % 5 < 2) b.fill(x, 1, u - 1, u, darker(green, 0.15));
+    }
+    const brick = mix(RIVER.brick, LAND.farHills, 0.2);
+    const at = (u: number) => u + 21;
+    b.block(16, 16, at(1), at(16), brick);
+    for (let k = 0; k < 6; k++) b.fill(16 + k, 18 - k * 2, at(17 + k), at(17 + k), k ? mix(ROOF.churchSlate, LAND.farHills, 0.2) : lighter(ROOF.churchSlate, 0.2));
+    for (const x of [19, 24, 28]) b.pane(x, 1, at(6), at(11), darker(brick, 0.4));
+    b.block(9, 7, at(1), at(44), brick);
+    for (let u = 4; u < 44; u += 5) b.fill(10, 5, at(u), at(u), darker(brick, 0.08));
+    b.fill(8, 9, at(44), at(45), lighter(brick, 0.15));
+    b.fill(11, 3, at(36), at(41), darker(brick, 0.45));
+    b.fill(12, 1, at(36), at(41), brick);
+    b.pane(12, 1, at(24), at(27), darker(brick, 0.4));
+    for (let u = 46; u <= 73; u++) {
+      const w = Math.max(1, Math.round(7 - ((u - 46) * 6) / 27));
+      const x0 = 9 + Math.floor((7 - w) / 2);
+      b.fill(x0, w, at(u), at(u), darker(brick, 0.22));
+      if (w > 2) b.dot(x0, at(u), darker(brick, 0.05));
+    }
+    b.fill(12, 1, at(74), at(76), darker(brick, 0.3));
+    // Trees in front of the nave's foot and the tower's.
+    for (const [cx, r] of [[6, 4], [30, 5], [36, 3]] as const) for (let dy = -r; dy <= r; dy++) {
+      const half = Math.round(Math.sqrt(r * r - dy * dy));
+      b.fill(cx - half, half * 2 + 1, 18 + r + dy, 18 + r + dy, dy > 1 ? darker(green, 0.12) : dy < -1 ? lighter(green, 0.1) : green);
+    }
+  });
+
+/** Paulus kirke at Grünerløkka: a broader brick tower with corner pinnacles and a clock, a pointed spire, the gable of the nave beside it. */
+const paulus = () =>
+  farPiece("akerselva paulus", 30, 66, (b) => {
+    const brick = mix(RIVER.brickDark, LAND.farHills, 0.15);
+    b.block(0, 13, 1, 18, brick);
+    for (let k = 0; k < 7; k++) b.fill(k, 13 - k * 2, 19 + k, 19 + k, mix(ROOF.churchSlate, LAND.farHills, 0.2));
+    b.pane(4, 2, 5, 12, darker(brick, 0.4));
+    b.pane(8, 2, 5, 12, darker(brick, 0.4));
+    b.block(14, 10, 1, 38, brick);
+    for (let u = 6; u < 38; u += 6) b.fill(15, 8, u, u, darker(brick, 0.1));
+    b.fill(17, 4, 28, 31, mix(PAINT.trim, LAND.farHills, 0.2));
+    b.dot(19, 30, darker(brick, 0.3));
+    b.fill(16, 2, 18, 24, darker(brick, 0.45));
+    b.fill(20, 2, 18, 24, darker(brick, 0.45));
+    for (const x of [13, 23]) b.fill(x, 2, 38, 42, lighter(brick, 0.12)), b.dot(x + (x < 20 ? 0 : 1), 43, lighter(brick, 0.12));
+    for (let u = 39; u <= 63; u++) {
+      const w = Math.max(1, Math.round(8 - ((u - 39) * 7) / 24));
+      b.fill(15 + Math.floor((8 - w) / 2), w, u, u, u === 39 ? lighter(ROOF.churchSlate, 0.25) : mix(ROOF.churchSlate, LAND.farHills, 0.1));
+    }
+    b.fill(19, 1, 64, 66, darker(brick, 0.3));
+  });
+
+/** The old mills and the new blocks along the river, between: brick, sawtooth roofs, chimneys, trees; the two churches' spires over them. */
 function midTown(t: number) {
   const ground = sink(170, 0.26);
   for (const far of [true, false]) for (let i = 0; i < 48; i++) {
+    // The churches stand among the nearer row (order 44), each once: what stands in front of them hides their feet.
+    if (!far && i === 0) {
+      drawFar(sagene(), layerX(SAGENE, 0.2) - 12, ground + 2);
+      drawFar(paulus(), layerX(PAULUS, 0.2) - 15, ground + 2);
+    }
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     // Sparser than a street: groups of two with sky and trees between.

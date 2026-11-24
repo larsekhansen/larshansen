@@ -1,8 +1,8 @@
-import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
+import { box, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Path, Travel } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { drawDrum } from "@larshansen/pixelkit/launcherart";
-import { R, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { CAST, box as pbox, dot, prop, railing, tone, type Stuff } from "../alive/props";
 import { BRICK, FACADE, FLAG, GLASS, GROUND, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PARADE, PLANTS, ROLES, ROOF, SKIN, STONE, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { ledge, type LedgeLook } from "@larshansen/pixelkit/props";
@@ -22,6 +22,7 @@ import { outlined } from "../render/sprite";
 import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 
 // Level 4, rune S: Slottet. 17 May, Karl Johan, uphill all the way from Egertorget to the palace.
 // The children's parade walks up the street with its banners; stand on a banner's crossbar and it
@@ -865,14 +866,29 @@ const raised = (him: number) => BASE - streetY(him) + up(him);
 function farHills(sky: Sky, him: number) {
   const lift = raised(him);
   drawOsloHills(sky, BASE + 2 * TILE, lift);
-  for (let x = 0; x < view.w; x++) {
-    const wx = layerWorldX(x, 0.12);
-    const d = wx - 3100;
-    if (d < 0 || d > 24) continue;
-    // The jump: a thin white line down from the ridge.
-    column(x, BASE - 74 + d * 1.2 - lift, BASE - 70 + d * 1.2 - lift, mix(PAINT.trim, LAND.farHills, 0.2));
-  }
+  // The ridge to the north-west over the roofs (order 44: it was a white line two pixels long, over nothing): Holmenkollen's
+  // jump, the next stop, seen from the town, and the TV tower above and behind it, a little to its right.
+  drawFar(ridge(), layerX(3100, 0.12) - 18, BASE - 40 - lift);
 }
+
+/** The ridge with the jump and the TV tower, small and far: forested, higher to the right; the jump's tower and its steep inrun with the landing hill's clearing under it; the tower's thin shaft, its collar, its mast. */
+const ridge = () =>
+  farPiece("slottet ridge", 40, 34, (b) => {
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.35);
+    for (let x = 0; x < 40; x++) {
+      const h = Math.max(1, Math.round(14 + 6 * Math.sin((Math.PI * Math.min(x, 20)) / 40) + (x > 20 ? 4 * Math.sin((Math.PI * (x - 20)) / 30) : 0) - (x > 32 ? (x - 32) * 1.4 : 0)) + ((x * 5) % 7 === 0 ? 1 : 0));
+      b.fill(x, 1, 1, h, x < 14 ? mix(wood, LAND.farHills, 0.12) : wood);
+    }
+    const grass = mix(LAND.forest, PAINT.trim, 0.45);
+    for (let u = 12; u <= 17; u++) b.fill(13 - Math.round((18 - u) * 0.5), 2 + Math.round((18 - u) * 1), u, u, grass);
+    for (let k = 0; k < 4; k++) b.fill(10 + k, 1, 24 - Math.round(k * 1.7), 25 - Math.round(k * 1.7), PAINT.trim);
+    b.fill(9, 1, 18, 26, PAINT.trim);
+    b.fill(8, 3, 27, 27, lighter(STONE.light, 0.3));
+    const concrete = mix(PAINT.trim, STONE.light, 0.45);
+    b.fill(27, 1, 20, 29, concrete);
+    b.fill(26, 3, 27, 28, lighter(concrete, 0.1));
+    b.fill(27, 1, 30, 34, darker(concrete, 0.25));
+  });
 
 /** The city between: roofs in pale colours, and flags on every pole. Raised with the street (`raised`). */
 function cityRoofs(t: number, him: number) {
