@@ -368,6 +368,53 @@ describe("the upright phone's tall bands are filled (order 45)", () => {
     expect(Object.keys(FLAT_NAMED).filter((k) => !used.has(k))).toEqual([]);
   }, 300_000);
 
+  test("with reduced motion nothing the upright sky and the band under the ground add moves: drawn at four moments, the same calls", async () => {
+    const moved: string[] = [];
+    const was = { ...view };
+    try {
+      for (const { id, def } of await scenes()) {
+        if (!def.art.sky && !def.art.under) continue;
+        const { play, at } = await places(id, def);
+        for (const s of SKIES) {
+          const sky = s.sky(def);
+          const pl = at[0];
+          const { v, cam, top, body } = framed(play, pl, 390, 844);
+          Object.assign(view, { w: v.w, h: v.h, k: v.k, dpr: DPR, camX: Math.round(cam.x), camXf: cam.x, camY: Math.round(cam.y), camYf: cam.y, reduced: true });
+          const him = { x: body.x + PLAYER.w / 2, y: body.y + PLAYER.h / 2 };
+          const record = (t: number) => {
+            const calls: string[] = [];
+            let style: unknown = "";
+            const g: Record<string, unknown> = {
+              get fillStyle() {
+                return style;
+              },
+              set fillStyle(c: unknown) {
+                style = c;
+              },
+              globalAlpha: 1,
+              canvas: { width: v.w, height: v.h },
+              createLinearGradient: (...a: number[]) => {
+                const stops: string[] = [];
+                return { addColorStop: (o: number, c: string) => stops.push(`${o.toFixed(4)} ${c}`), toString: () => `grad ${a.join(",")} ${stops.join(";")}` };
+              },
+              fillRect: (x: number, y: number, w: number, h: number) => calls.push(`${String(style)} ${x},${y},${w},${h}`)
+            };
+            Object.setPrototypeOf(g, ANY_METHOD);
+            target(g as unknown as CanvasRenderingContext2D);
+            def.art.sky?.(viewOf(sky, t, him), top);
+            def.art.under?.(viewOf(sky, t, him), play.map);
+            return calls.join("\n");
+          };
+          const first = record(100);
+          if ([109, 517, 1905].some((t) => record(t) !== first)) moved.push(`${id} (${s.name})`);
+        }
+      }
+    } finally {
+      Object.assign(view, was);
+    }
+    expect(moved).toEqual([]);
+  });
+
   test("nothing the upright sky and the band under the ground add comes within 10 of the warning red, the paint or any role's colours, under any sky", async () => {
     const ROLE: { role: string; colours: readonly string[]; day?: boolean }[] = [
       { role: "the warning red", colours: [ENEMY.red] },

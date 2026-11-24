@@ -20,9 +20,9 @@ import { custom, drawProp, type Piece } from "./ground";
 // holds still with reduced motion; what is far moves with the camera at a sliver of its speed, as the kit's clouds do.
 //
 // Under the ground: the level's ground goes on down past the play into its own dark, a fixed depth under its surface wherever its
-// body runs unbroken to the map's foot (so never under a pit, a tower's face or water he swims in), with what lies in it (stones,
-// roots, a pipe, the quay's piles) drawn first and darkened with it: so it never reads as somewhere to go, and the pad's buttons
-// stand on a dark ground.
+// body runs unbroken to the map's foot in the letters the level names (so never a tower's face or a ledge), with what lies in it
+// (stones, roots, an old pipe) drawn first and darkened with it, in layers; and under a pit's foot the same dark. So it never reads
+// as somewhere to go, and the pad's buttons stand on a dark ground.
 
 /** The sky's own colours at its top and at the horizon (the kit's gradient, `pixelkit/sky.ts`). */
 const TOP: Record<Phase, string> = { day: "#4f96d8", evening: "#2b3466", night: "#050a1d", twilight: "#1d2a5e" };
@@ -34,7 +34,7 @@ export interface Weather {
   streaks?: number;
   /** Small far clouds in a row low over the horizon, 1 to 6. */
   far?: number;
-  /** A grey winter's cover: bands of stratus over the upper sky, 1 or 2. */
+  /** A grey winter's cover: the upper sky drawn toward its grey, and long flat clouds under it, 1 to 3. */
   cover?: number;
   /** Stars thinning toward the horizon after dusk: how many over the upper sky. */
   stars?: number;
