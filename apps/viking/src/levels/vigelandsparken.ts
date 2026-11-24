@@ -232,7 +232,8 @@ function farTown(lift: number) {
     const h = 10 + Math.round(4 * Math.sin(wx * 0.07) + 3 * Math.sin(wx * 0.19));
     column(x, base - h, base, mix(LAND.farHills, STONE.light, 0.45));
     if (Math.floor(wx) % 9 < 2 && Math.floor(wx / 37) % 2) column(x, base - h + 3, base - h + 4, mix(LAND.farHills, WHITE, 0.35));
-    if (Math.floor(wx) % 75 < 2 && Math.floor(wx / 37) % 2) lit(x, base - h + 3, 1, 1);
+    // A window lit here and there after dusk: one in about 24 of the layer's columns, the same ones every night.
+    if (Math.round(wx * 0.12) % 24 === 7) lit(x, base - h + 3, 1, 1);
     // A church's spire over the blocks, once (it stood every 640 pixels before order 43).
     const k = Math.floor(wx) - 1400;
     if (k >= 0 && k < 4) column(x, base - h - 22 + Math.abs(k - 2) * 4, base - h, mix(STONE.dark, LAND.farHills, 0.4));
