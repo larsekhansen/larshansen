@@ -1,22 +1,22 @@
 # Roadmap
 
-As of 24 November 2026, after order 41 was built (not yet reviewed). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 41 was reviewed and merged (PR #89). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 40, what he takes, and what warns, PR #88 (reviewed and merged on 23 November); before it orders 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 41, the screens between, and the last weak tells (branch `screens-between`) |
+| Last live | Order 41, the screens between, PR #89 (reviewed and merged on 24 November); before it orders 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 42 % used when order 40 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 47 % used when order 41 was reviewed on 24 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 41, the screens between, and the last weak tells** (`orders/41-the-screens-between.md`, ADR 0044 amended), built on branch `screens-between`,
-waiting for review. Every screen that is not a level on one table (`apps/viking/tools/review/o41/before.md`: the line map, every card, what is drawn
+**Order 41, the screens between, and the last weak tells** (`orders/41-the-screens-between.md`, ADR 0044 amended), reviewed, merged and live
+(PR #89, 24 November). Nothing else is in flight. Every screen that is not a level on one table (`apps/viking/tools/review/o41/before.md`: the line map, every card, what is drawn
 over a level, the maze's own screens, at both sizes, in both languages, with touch and a pretended notch and with a mouse) and from the top of its
 ranking redrawn: a pressed pad control darker with a white ring (it went white and vanished over snow or white marble), a heart lost hollow, a dimmed
 control with its edge in dashes, the boards under the map's stations in rows so none meets another, a padlock on a shut station, the "!" clear of the
