@@ -141,6 +141,7 @@ const LIT: Record<string, Record<string, string>> = {
     "halls levels/bygdoy": "the museums' halls and windows"
   },
   vigelandsparken: {
+    "lit backdrop": "Frogner's windows far off over the park (order 43)",
     "tbane alive/ground": "the T sign",
     "gateLantern levels/vigelandsparken": "the main gate's lanterns",
     "lamp alive/props": "the bridge's lanterns",

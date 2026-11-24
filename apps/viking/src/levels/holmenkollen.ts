@@ -12,6 +12,7 @@ import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
+import { darker, drawFar, farPiece } from "../alive/far";
 import { crowdFlag, flagFlying, person } from "../alive/things";
 import { tile as textured, type Grain } from "../alive/ground";
 import { CAST, box as pbox, dot, post, prop, tone, type Stuff } from "../alive/props";
@@ -532,11 +533,36 @@ function farCity() {
       column(x, foot - h, foot, inBlock === w - 1 ? mix(color, INK, 0.15) : color);
       if (inBlock === 2 && (block + row) % 3 === 0) lit(x, foot - h + 2, 1, 1);
     }
-    // The City Hall's two brick towers, by the water.
-    const hall = lx % 160;
-    if ((hall >= 60 && hall < 64) || (hall >= 68 && hall < 72)) column(x, horizon - 10, horizon + 6, mix(BRICK.red, LAND.farHills, 0.2));
   }
+  // Out on the fjord, the islands; by the water, once, Rådhuset's two brick towers (order 43: they stood every 160 pixels of
+  // the layer, two or three to a screen).
+  drawFar(island(26, 3), layerX(1250, 0.12), horizon - 12);
+  drawFar(island(34, 4), layerX(3500, 0.12), horizon - 11);
+  drawFar(radhuset(), layerX(2450, 0.12), horizon + 7);
 }
+
+/** Rådhuset far below by the harbour: two brick towers, the east one taller, the hall between them. */
+const radhuset = () =>
+  farPiece("holmenkollen radhuset", 15, 17, (b) => {
+    const brick = mix(BRICK.red, LAND.farHills, 0.2);
+    b.block(4, 7, 1, 6, brick);
+    b.block(0, 4, 1, 15, brick);
+    b.block(10, 5, 1, 17, brick);
+    b.fill(11, 2, 13, 14, mix(PAINT.trim, LAND.farHills, 0.2));
+    b.pane(1, 1, 6, 11, darker(brick, 0.4));
+    b.pane(12, 1, 5, 10, darker(brick, 0.4));
+  });
+
+/** An island out on the fjord, low and wooded, a pale rim of rock. */
+const island = (w: number, h: number) =>
+  farPiece(`holmenkollen island ${w}`, w, h + 1, (b) => {
+    for (let x = 0; x < w; x++) {
+      const t = (x - (w - 1) / 2) / (w / 2);
+      const top = Math.max(1, Math.round((h + 1) * Math.pow(Math.max(0, 1 - t * t), 0.7)));
+      b.fill(x, 1, 1, 1, mix(STONE.light, LAND.farHills, 0.3));
+      if (top > 1) b.fill(x, 1, 2, top, mix(x < w / 2 ? LAND.island : darker(LAND.island, 0.15), LAND.farHills, 0.25));
+    }
+  });
 
 /** Forested ridges in between, white with snow on their tops. */
 function ridges(t: number) {

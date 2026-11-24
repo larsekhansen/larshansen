@@ -1,15 +1,15 @@
-import { box, lit } from "@larshansen/pixelkit/backdrop";
 import { carrierShown, orbitAngle, type CarrierDef, type Orbit, type Path } from "@larshansen/pixelkit/carrier";
 import { keptStrips } from "@larshansen/pixelkit/kept";
 import { osloClock } from "@larshansen/pixelkit/oslo";
 import { TILE } from "@larshansen/pixelkit/config";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { BRICK, FACADE, GLASS, GROUND, INK, LAMP, MASONRY, METAL, PAINT, PALETTE, ROOF, SHIMMER, SNOW, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, GLASS, GROUND, INK, LAMP, LAND, MASONRY, METAL, PAINT, PALETTE, ROOF, SHIMMER, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { WOOD_LEDGE, lampPool, pane, type LedgeLook } from "@larshansen/pixelkit/props";
 import { STEEL, box as pbox, dot, lamp, prop, railing, tone, type Stuff } from "../alive/props";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { keepBoxes, type EnemyDef } from "../game/enemies";
-import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
+import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
@@ -564,26 +564,101 @@ function fountain(t: number) {
 
 const LAMPS = [12, 46, 66, 100, 118, 140, 152].map((c) => c * TILE + 6);
 
-/** Across the harbour, small: Aker Brygge's glass and brick, and the fortress on its hill the other way. */
-function harbourSide(base: number) {
-  const at = (wx: number) => layerX(wx, 0.4);
-  const x = at(900);
-  const blocks = [
-    { dx: 0, w: 30, h: 40, c: BRICK.kruttverket },
-    { dx: 34, w: 22, h: 52, c: FACADE.blocks[3] },
-    { dx: 60, w: 26, h: 36, c: GLASS.palmHouse },
-    { dx: 90, w: 30, h: 46, c: FACADE.blocks[1] }
-  ];
-  for (const k of blocks) {
-    box(x + k.dx, base - k.h, k.w, k.h, k.c);
-    box(x + k.dx, base - k.h, k.w, 2, mix(k.c, WHITE, 0.3));
-    for (let y = base - k.h + 5; y < base - 5; y += 6)
-      for (let wx = x + k.dx + 3; wx < x + k.dx + k.w - 3; wx += 5) {
-        box(wx, y, 2, 3, mix(k.c, INK, 0.3));
-        lit(wx, y, 2, 3);
+// --- The far view (order 43) ----------------------------------------------------------------------------
+// From the harbour front by Rådhusplassen, looking out over Pipervika: Akershus on its rock to the east, the way he came along
+// the line (on the map it stands to Rådhuset's left), Aker Brygge's wharf and Tjuvholmen's sloping glass roofs to the west,
+// Hovedøya low and wooded out on the fjord, Nesodden's hills beyond. As the view climbs the towers the far layers rise with it
+// (`climbed`, as Akershus's do), so from the parapet the harbour lies under the horizon instead of sinking out of the view.
+
+/** How far the far layers rise as the view climbs the towers. */
+const up = () => climbed(ROWS * TILE, ROWS * TILE);
+
+/** Akershus across the harbour: its rock and bastions to the water, trees on its shoulders, the white castle, its towers' spires in old copper. */
+const akershus = () =>
+  farPiece("radhuset akershus", 74, 48, (b) => {
+    const wash = mix(PAINT.trim, STONE.light, 0.3);
+    // The rock it stands on, falling to the water at both ends; lit on its left.
+    for (let x = 0; x < 74; x++) {
+      const top = Math.round(3 + 7 * Math.pow(Math.sin((Math.PI * x) / 73), 0.6));
+      b.fill(x, 1, 1, top, x < 24 ? STONE.light : x < 54 ? STONE.base : STONE.dark);
+      if ((x * 5) % 7 === 0) b.dot(x, Math.max(1, top - 2), STONE.mortar);
+    }
+    // The bastions: stone in courses, leaning back from the water, battlements along their top.
+    for (let x = 8; x < 66; x++) {
+      const lean = x < 12 ? 12 - x : x > 61 ? x - 61 : 0;
+      b.fill(x, 1, 8, 14 - lean, x < 30 ? STONE.light : STONE.base);
+      for (let u = 9; u < 14 - lean; u += 3) if ((x + u) % 5) b.dot(x, u, STONE.dark);
+      if (!lean && x % 3 === 0) b.dot(x, 15, x < 30 ? lighter(STONE.light) : STONE.light);
+    }
+    // Trees on the rock's shoulders, in clumps.
+    for (const [x0, w] of [[0, 10], [64, 10]] as const)
+      for (let k = 0; k < w; k++) {
+        const h = 4 + Math.round(3 * Math.sin((Math.PI * k) / (w - 1))) + ((k * 7) % 3 === 0 ? 1 : 0);
+        b.fill(x0 + k, 1, 6, 6 + h, k < w / 2 ? LAND.forest : LAND.forestDark);
+        b.dot(x0 + k, 6 + h, k < w / 2 ? lighter(LAND.forest, 0.15) : LAND.forest);
       }
-  }
-}
+    // The castle: whitewashed, a dark slate roof hipped at each end, two rows of small windows.
+    b.block(22, 30, 15, 25, wash);
+    for (let k = 0; k < 4; k++) b.fill(22 + k, 30 - 2 * k, 26 + k, 26 + k, k === 3 ? lighter(ROOF.slate, 0.15) : ROOF.slate);
+    b.fill(22, 1, 26, 26, lighter(ROOF.slate, 0.25));
+    for (let x = 25; x < 50; x += 4) {
+      b.pane(x, 1, 18, 19, GLASS.farWindow);
+      b.pane(x, 1, 22, 23, GLASS.farWindow);
+    }
+    // Its two towers, the east one taller, each under a pointed spire of old copper, lit on its left.
+    for (const [x0, top, spire] of [[16, 31, 9], [50, 34, 12]] as const) {
+      b.block(x0, 7, 15, top, wash);
+      b.pane(x0 + 3, 1, top - 5, top - 3, GLASS.farWindow);
+      for (let k = 0; k < spire; k++) {
+        const half = Math.max(0, Math.round(3.5 - (k * 3.5) / (spire - 1)));
+        for (let j = -half; j <= half; j++) b.dot(x0 + 3 + j, top + 1 + k, j < 0 ? METAL.copperLight : j > 0 ? METAL.copperDark : METAL.copper);
+      }
+      b.dot(x0 + 3, top + spire + 1, METAL.copperDark);
+    }
+  });
+
+/** Aker Brygge's wharf to the west: the old yard's brick hall under its gable, glass, a white block, brick; Tjuvholmen's roofs sloping to the fjord. */
+const akerBrygge = () =>
+  farPiece("radhuset aker brygge", 112, 34, (b) => {
+    b.fill(0, 112, 1, 2, darker(STONE.base, 0.25));
+    // The shipyard's hall: brick, its gable, tall windows.
+    b.block(2, 22, 3, 17, BRICK.red);
+    for (let k = 0; k < 11; k++) {
+      b.fill(2 + k, 22 - 2 * k, 18 + k, 18 + k, ROOF.factory);
+      b.fill(2 + k, Math.max(1, 11 - k), 18 + k, 18 + k, lighter(ROOF.factory, 0.12));
+    }
+    for (let x = 5; x < 22; x += 3) b.pane(x, 1, 6, 13, GLASS.farWindow);
+    // Glass in floors, its mullions.
+    b.block(26, 18, 3, 24, mix(GLASS.palmHouse, STONE.light, 0.35));
+    for (let u = 6; u < 24; u += 4) b.fill(27, 16, u, u, mix(GLASS.palmHouse, STONE.dark, 0.45));
+    for (let x = 29; x < 43; x += 4) b.pane(x, 2, 8, 9, GLASS.farWindow), b.pane(x, 2, 16, 17, GLASS.farWindow);
+    // A white block, rows of windows.
+    b.block(46, 16, 3, 20, PAINT.farWhite);
+    for (let u = 6; u < 19; u += 4) for (let x = 48; x < 60; x += 3) b.pane(x, 1, u, u + 1, GLASS.farWindow);
+    // Brick again, taller.
+    b.block(64, 14, 3, 23, BRICK.kruttverket);
+    for (let u = 6; u < 22; u += 4) for (let x = 66; x < 76; x += 3) b.pane(x, 1, u, u + 1, darker(BRICK.kruttverket, 0.45));
+    // Tjuvholmen: long roofs of glass over timber, rising from the water's edge and curving down toward the fjord.
+    for (let k = 0; k < 30; k++) {
+      const x = 81 + k;
+      const roof = 4 + Math.round(15 * Math.pow(Math.max(0, 1 - k / 30), 1.4));
+      b.fill(x, 1, 3, roof - 2, k % 4 === 0 ? darker(PALETTE.woodDark, 0.15) : mix(PALETTE.woodDark, STONE.light, 0.55));
+      b.fill(x, 1, roof - 1, roof, lighter(mix(GLASS.palmHouse, STONE.light, 0.2), 0.2));
+    }
+  });
+
+/** Hovedøya out on the fjord: low and wooded, a pale rim of rock at the water. */
+const hovedoya = () =>
+  farPiece("radhuset hovedoya", 90, 9, (b) => {
+    for (let x = 0; x < 90; x++) {
+      const t = (x - 44) / 45;
+      const h = Math.max(1, Math.round(8 * Math.pow(Math.max(0, 1 - t * t), 0.7)) + (x > 6 && x < 84 && (x * 7) % 5 === 0 ? 1 : 0));
+      b.fill(x, 1, 1, 1, x < 40 ? STONE.light : STONE.base);
+      if (h > 1) b.fill(x, 1, 2, h, x < 36 ? LAND.island : darker(LAND.island, 0.15));
+      if (h > 2 && x % 5 === 2) b.dot(x, h, lighter(LAND.island, x < 36 ? 0.2 : 0.08));
+      if (h > 3 && x % 7 === 3) b.dot(x, h - 2, darker(LAND.island, 0.3));
+    }
+  });
 
 /** The flourish: every bell of the carillon swings, the clock's hour hand spins round, pigeons go up off the parapet. */
 function flourish(age: number) {
@@ -637,10 +712,15 @@ export const RADHUSET: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
-    far: (v) => drawOsloHills(v.sky, WATER),
-    mid: (v) => drawFjord(v.t, WATER),
+    far: (v) => drawOsloHills(v.sky, WATER, up()),
+    mid(v) {
+      drawFjord(v.t, WATER, up());
+      drawFar(hovedoya(), layerX(900, 0.2), WATER - 15 - up());
+    },
     near(v) {
-      harbourSide(WATER - 2);
+      // Akershus to the east, seen from the harbour front; Aker Brygge to the west, seen from the square and the towers.
+      drawFar(akershus(), layerX(240, 0.4), WATER - 2 - up());
+      drawFar(akerBrygge(), layerX(2700, 0.4), WATER - 2 - up());
       drawGulls(v.t, 30 * TILE);
     },
     back(v: View) {
