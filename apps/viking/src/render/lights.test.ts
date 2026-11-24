@@ -158,6 +158,7 @@ const LIT: Record<string, Record<string, string>> = {
     "invasion alive/invasion": "the invaders' neon sign"
   },
   ostensjovannet: {
+    "lit backdrop": "the blocks' windows on the ridge across the lake (order 44)",
     "tbane alive/ground": "the T sign",
     "farShore levels/ostensjovannet": "the sun coming up behind the far shore",
     "sunrise levels/ostensjovannet": "its light along the water",
