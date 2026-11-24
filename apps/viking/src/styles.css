@@ -685,6 +685,12 @@ body.touch {
   display: none;
 }
 
+/* Not over the story's opening card either (order 42: on a short phone its button lay under the move pad and the jump). Hidden by the style
+   sheet, not turned off: the camera keeps the pad's room, so the map does not move when the card goes. */
+body:has(.card.story) .pad {
+  display: none;
+}
+
 /* The safe areas, read by the pad through this hidden element's padding. */
 .pad .safe {
   position: absolute;
