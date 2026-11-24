@@ -1,21 +1,21 @@
 # Roadmap
 
-As of 24 November 2026, after order 43 was built (branch `far-view`, not yet reviewed); order 42 is live (PR #90). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 43 was reviewed and merged (PR #91). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 42, room, and the edges of the screen, PR #90 (reviewed and merged on 24 November); before it orders 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 43, the far view (branch `far-view`, 24 November) |
+| Last live | Order 43, the far view, PR #91 (reviewed and merged on 24 November); before it orders 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 52 % used when order 42 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 56 % used when order 43 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 43, the far view, an ode to Oslo** (`orders/43-the-far-view.md`, ADR 0044 and 0047 amended), built on branch `far-view`, waiting for review.
+**Order 43, the far view, an ode to Oslo** (`orders/43-the-far-view.md`, ADR 0044 and 0047 amended), reviewed, merged and live (PR #91, 24 November). Nothing else is in flight.
 Lars, 22 November: "It's more of an ode to Oslo." Every level's far view, the encore's and the line map's on one table (`apps/viking/tools/review/o43/before.md`:
 what stands in it, what a person who knows Oslo looks for from there and whether it is there, repeats, the sky, its colours against every role, a mark);
 the four 3s and the first 2 redrawn with a brush for the far view (`alive/far.ts`: a silhouette painted once in its material's tones, copied, its windows
