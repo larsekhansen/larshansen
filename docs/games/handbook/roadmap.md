@@ -1,22 +1,21 @@
 # Roadmap
 
-As of 24 November 2026, after order 44 was built (not yet reviewed). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 44 was reviewed and merged (PR #92). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 43, the far view, PR #91 (reviewed and merged on 24 November); before it orders 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 44, the rest of the far view, branch `far-view-rest` |
+| Last live | Order 44, the rest of the far view, PR #92 (reviewed and merged on 24 November); before it orders 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 56 % used when order 43 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 60 % used when order 44 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 44, the rest of the far view** (`orders/44-the-rest-of-the-far-view.md`, ADR 0044 and 0047 amended), built on branch `far-view-rest`, waiting for
-review. The places order 43 could not look up were given by the planner from his own knowledge of Oslo (not looked up; they wait for Lars,
+**Order 44, the rest of the far view** (`orders/44-the-rest-of-the-far-view.md`, ADR 0044 and 0047 amended), reviewed, merged and live (PR #92, 24 November). Nothing else is in flight. The places order 43 could not look up were given by the planner from his own knowledge of Oslo (not looked up; they wait for Lars,
 `conversations.md`) and order 43's table finished, drawing only: the jump seen from the town with the TV tower above and behind it, a little to its
 right (Vigelandsparken mended, Bygdøy's added, Slottet's floating line made the ridge); Akerselva (Grefsenkollen without its tower, Sagene kirke and
 Paulus kirke once each); Gamle Oslo (Kampen kirke once, the Barcode and the slab by the station, Ekeberg's hillside, as the line map has them);
