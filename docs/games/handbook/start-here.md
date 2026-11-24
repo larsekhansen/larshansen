@@ -1,6 +1,6 @@
 # Start here
 
-State as of 24 November 2026, after order 43 was built (not yet reviewed or live); order 42 is live. Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 24 November 2026, after order 44 was built (not yet reviewed or live); order 43 is live. Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -59,6 +59,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 41 the screens between | #89 | Every screen that is not a level on one table (the map, the cards, the bar, the pad, the maze's own) and the worst mended: a pressed button darker with a white ring (it vanished over white ground), a heart lost hollow, a dimmed button with a dashed edge, the map's station boards in rows, a padlock on a shut station, the "!" clear of the head, the edge arrow off a notch, the bar's coin and gold drawn as the game draws them; the last four weak tells (the welder's sparks, Bjørvika's gust, the sinking stone, the heron); the rune's stone a pale rim after dusk (ADR 0044 amended). Drawing only |
 | 42 room, and the edges of the screen | #90 | The first script from 58.65 to 55.80 kB with nothing a player sees changed (ADR 0035 amended: what only later files use moved into files that already existed, dead plain drawings out); a card's foot off the home bar, the maze's list kept on the screen on its own page, the opening card holds the plate back and hides the pad, the map's boards kept off the pad and a notch (ADR 0043 amended); a thin dark line round the page's speech bubbles; the "!" three pixels wide with a two-pixel dot |
 | 43 the far view | #91 | Every level's far view on one table (an ode to Oslo); the thinnest given what a person who knows Oslo looks for from there, once each, as silhouettes (`alive/far.ts`, ADR 0047 amended): Rådhuset, Akershus, Bygdøy, Vigelandsparken, Holmenkollen; every far colour held off the warning red, the paint and every role under every sky (ADR 0044 amended). Drawing only |
+| 44 the rest of the far view | (branch `far-view-rest`) | The places order 43 could not look up, given by the planner (not looked up; they wait for Lars) and the table finished: the jump seen from the town with the TV tower above and behind it (Vigelandsparken, Bygdøy, Slottet); Akerselva's Grefsenkollen without a tower and its two churches; Gamle Oslo's Kampen kirke once, the Barcode and Ekeberg; Østensjøvannet's reeds, ridge blocks and Østmarka; Korketrekkeren's TV tower and the town far below; Langkaia's islands; Ekeberg behind the encore's towers; the far-colour test walks the map (ADR 0044, 0047 amended). Drawing only |
 | 31 loose ends and a second look | #79 | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
@@ -84,7 +85,7 @@ phone before going live. The Pi cannot run the game in a headless browser (HANDO
   here.
 - **ADR 0035**: the viking game's first script must stay under 60 kB gzipped; the build fails
   over it. New drawing goes in lazy chunks, and a new module is named in `vite.config.ts` (one it is not told about lands in the
-  first script). Order 42 made room: 55.80 kB (55.82 after order 43).
+  first script). Order 42 made room: 55.80 kB (55.82 after order 43, 55.83 after order 44).
 - **ADR 0044**: colour means something. Yellow paint on a top edge is "stand here" and nothing
   else is that yellow; red outline hurts; pale blue outline is harmless; cyan corners are "use";
   violet is "hit now". `render/palette.test.ts` enforces it.

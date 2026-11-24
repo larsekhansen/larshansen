@@ -224,6 +224,33 @@ as a look that is easy to undo (ADR 0044 amended): under any sky but the day's t
 comes from, is a pale moonlit grey, not a line all round. By day nothing changed. Undoing it is one call in `apps/viking/src/render/dusk.ts`
 and its test (`alive/takes.test.ts`). For him to judge: whether the stone reads as lit by the moon, or as a stone with a pale edge.
 
+### Order 44: the places in the far view, as the planner knows them (not looked up; they wait for Lars)
+
+Not something Lars said: order 43 left seven far views thin, most of them because its implementer could not look a place up and would
+not guess. Order 44 gave the places from the planner's own knowledge of Oslo, nothing looked up, and its implementer drew them
+(`apps/viking/tools/review/o44/after.md`). They wait for Lars's word, place by place: is this it, and is it where it should be.
+
+- Holmenkollen's jump and the TV tower, seen from the town: the tower on the ridge above and behind the jump, a little to its right and
+  clearly higher, a thin mast with a thick collar near its top; the jump's hill opens toward the town, so one looks up into it
+  (Vigelandsparken, Bygdøy; and Slottet, where a white line floated over the roofs).
+- Hovedøya is seen from Rådhusplassen, and from Bygdøynes the city lies to the north-east with Rådhuset left of Akershus: order 43 left
+  as it was.
+- Akerselva: no tower on Grefsenkollen (taken out); Grefsenkollen a rounded wooded hill up the river; Sagene kirke (a tall slim brick
+  spire) and Paulus kirke (a pointed spire at Grünerløkka), once each in the river's order.
+- Gamle Oslo: Kampen kirke's spire once on its low hill; Ekeberg's hillside close; toward the fjord the Barcode and one tall plain slab
+  by the central station (no name on it).
+- Østensjøvannet: no famous building; reed beds, the ridges' 1950s and 1960s blocks lit after dusk, Østmarka's dark even line beyond.
+- Korketrekkeren: the TV tower close above the top of the run; where the forest opens, the town far below in small lights and the fjord
+  with its islands.
+- Slottet: the view down Karl Johan to Stortinget with the University and Nationaltheatret is the level's own street (left as it was).
+- The encore: Ekeberg's hillside over the park, behind and between the towers.
+- Langkaia: out on the fjord Hovedøya, smaller islands with Lindøya's rows of cabins, Nesodden's long ridge behind (the shared far
+  shore stands for it); Ekeberg's hillside to the east.
+
+Where a level's walk runs the other way from the compass, a landmark stands on the side the line map puts it (Gamle Oslo's city and
+Ekeberg to its left, as the map has the centre and Ekeberg left of it; Kampen the other way). Every piece is drawn in its level's own
+file (Langkaia's in `feel`'s file, through the props kit's hook); taking one out is a line.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.

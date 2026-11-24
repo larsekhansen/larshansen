@@ -1,6 +1,6 @@
 # Roadmap
 
-As of 24 November 2026, after order 43 was reviewed and merged (PR #91). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 44 was built (not yet reviewed). Change this file in the same change that makes it wrong.
 
 ## Status
 
@@ -8,14 +8,23 @@ As of 24 November 2026, after order 43 was reviewed and merged (PR #91). Change 
 |---|---|
 | Date | 24 November 2026 |
 | Last live | Order 43, the far view, PR #91 (reviewed and merged on 24 November); before it orders 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Nothing |
+| Built, waiting for review | Order 44, the rest of the far view, branch `far-view-rest` |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | About 56 % used when order 43 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 43, the far view, an ode to Oslo** (`orders/43-the-far-view.md`, ADR 0044 and 0047 amended), reviewed, merged and live (PR #91, 24 November). Nothing else is in flight.
+**Order 44, the rest of the far view** (`orders/44-the-rest-of-the-far-view.md`, ADR 0044 and 0047 amended), built on branch `far-view-rest`, waiting for
+review. The places order 43 could not look up were given by the planner from his own knowledge of Oslo (not looked up; they wait for Lars,
+`conversations.md`) and order 43's table finished, drawing only: the jump seen from the town with the TV tower above and behind it, a little to its
+right (Vigelandsparken mended, Bygdøy's added, Slottet's floating line made the ridge); Akerselva (Grefsenkollen without its tower, Sagene kirke and
+Paulus kirke once each); Gamle Oslo (Kampen kirke once, the Barcode and the slab by the station, Ekeberg's hillside, as the line map has them);
+Østensjøvannet (reed beds, the ridge's blocks lit, Østmarka's line); Korketrekkeren (the TV tower at the top, one opening onto the town's lights and
+the fjord's islands); Langkaia (Hovedøya, Lindøya, Ekeberg, in `feel`'s file); the encore (Ekeberg behind the towers). The far-colour test walks the
+map and holds that no far layer draws differently under another sky. Each item, done or not, with its measures: `apps/viking/tools/review/o44/after.md`.
+
+**Order 43, the far view, an ode to Oslo** (`orders/43-the-far-view.md`, ADR 0044 and 0047 amended), reviewed, merged and live (PR #91, 24 November).
 Lars, 22 November: "It's more of an ode to Oslo." Every level's far view, the encore's and the line map's on one table (`apps/viking/tools/review/o43/before.md`:
 what stands in it, what a person who knows Oslo looks for from there and whether it is there, repeats, the sky, its colours against every role, a mark);
 the four 3s and the first 2 redrawn with a brush for the far view (`alive/far.ts`: a silhouette painted once in its material's tones, copied, its windows
@@ -145,10 +154,15 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 44 left (`apps/viking/tools/review/o44/after.md`): every place it drew is the planner's knowledge, not looked up, and waits for Lars's word
+(the list in `after.md`); Sagene kirke and Kampen kirke are glimpsed more than seen (the level's own lane stands in front of them most of the way);
+Bygdøy's far view still shows only through the gap between Fram's hall and the Kon-Tiki museum; the far hills Langkaia shares with four levels and the
+map stay as they were (Nesodden is the shared far shore). The page of every figure and LEVELS.html can be published again.
+
 Order 43 left (`apps/viking/tools/review/o43/after.md`): the 2s of its table not redrawn: Akerselva (a tower on Grefsenkollen three or four to a screen,
 and whether one stands there at all), Gamle Oslo (Kampen kirke's spire two to a screen), the encore (Ekeberg over the park, which its slim towers would
 have to make room for), Østensjøvannet, Korketrekkeren, Slottet, and Langkaia (the fjord's islands: its far layers are the first script's, shared with
-four levels and the map). For Lars: whether each landmark drawn is the place he knows, and where it stands.
+four levels and the map). For Lars: whether each landmark drawn is the place he knows, and where it stands. Order 44 took up all seven.
 
 Order 42 left (`apps/viking/tools/review/o42/after.md`): on a short phone on its side (667 x 375) the map's bar is two rows of links, and with line 2 open
 a third of runes (97 or 159 of 375 px), so the map's stations stand just under it and its rune stones under it; laying the bar out again for that size
@@ -227,7 +241,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (283.6 and 279.9 s after order 44, 281.4 and 282.4 s for `origin/main` the same hour, 539 tests; 277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

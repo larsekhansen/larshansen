@@ -151,3 +151,11 @@ the paint's yellow under every sky, off what he takes, a boss's "now", the mark 
 seen then, and off his tunic's blue by day, but by name (`apps/viking/src/render/warning.test.ts`, on the walk its tests share). Named: what
 was there before order 43 (the far shore's ochre houses of the shared fjord near a coin's copper under an evening sky; Stortinget's far lamps and
 the T-bane's blue on its far columns; Kampen's ochre houses under an evening sky; Bjørvika's fjord by day), each with why.
+
+## Amended by order 44 (24 November 2026): the far-colour test walks the map, and holds its own premise
+Order 43's test walked every level and the encore by day and tinted each far colour as each sky tints it, and did not walk the line map.
+Now it walks the map too (with line 1 only and with every rune); the map has no haze, and its far shore's ochre houses come within 9.5 of a
+coin's copper under an evening sky, named as the levels' are. And it holds the premise that makes the day's walk tinted exact: every scene's
+far, mid and near layers drawn at five places under each sky record the same fills and copies as by day (a level's own dark and its lights
+come after the passes and are held by `render/lights.test.ts`). Shown to fail on a far drawing planted under the night sky only. Windows in a
+far piece are single panes with dark between them: a lit row of them reads as the paint.

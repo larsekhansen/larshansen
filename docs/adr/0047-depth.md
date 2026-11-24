@@ -53,3 +53,19 @@ world x, with reduced motion too), and nothing repeats within two screens. Where
 place opens (Bygdøy by the open water, Vigelandsparken round the Monolith's plateau), and where the view climbs the far layers rise with it
 (`climbed`: Rådhuset's towers, Akershus's walls, Vigelandsparken's plateau). Done for Rådhuset, Akershus, Bygdøy, Vigelandsparken and Holmenkollen
 (`o43/after.md`); the other levels' far views are as they were. DESIGN's "Frames, shadows and depth", item 9.
+
+## Amended by order 44 (24 November 2026): the rest of the far view, by the places the planner gave
+Order 43 left seven far views at mark 2, most because its implementer could not look a place up and would not guess. Order 44 gave the
+places from the planner's own knowledge of Oslo (not looked up; they wait for Lars: `docs/games/handbook/conversations.md`) and finished
+the table (`apps/viking/tools/review/o44/after.md`), by order 43's method and brush. Decided with it:
+- **The jump seen from the town** is drawn as one looks up into it (its hill opens toward the town): the inrun steep, the landing hill's
+  clearing fanning out under it; and the TV tower stands on the ridge above and behind it, a little to its right and clearly higher, a thin
+  mast with a thick collar near its top (Vigelandsparken, Bygdøy, Slottet).
+- **Where a level's walk runs the other way from the compass**, a landmark stands on the side the line map puts it (Gamle Oslo: the city and
+  Ekeberg to the left, as the map has the centre and Ekeberg left of Gamle Oslo; Kampen kirke the other way).
+- **Where the level's nearer layers hide the far view** they stand back once where the place's own ground opens (Østensjøvannet's bank trees
+  over the long crossing, Korketrekkeren's spruces over the crossing and the gap), as order 43 opened Bygdøy's woods; and a landmark goes in
+  the farthest layer where the middle one lies under the view (Kampen kirke).
+- **Langkaia's own far view** is in `feel`'s file (`alive/langkaiafar.ts`), asked for through the props kit's hook, as Langkaia's props are
+  (ADR 0053): its level is the first script's, whose shared far layers stay as they are.
+- **No invented landmark**: Østensjøvannet's far view is its reed beds, the ridge's blocks and Østmarka's line.
