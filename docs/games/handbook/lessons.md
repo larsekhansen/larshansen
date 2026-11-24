@@ -250,6 +250,23 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   close are on because of where he stands; drawing at `t - 1` with today's state shows the tell still. The test keeps a copy of the level's own
   ground (`structuredClone`) and where he was, a step before it came on.
 
+- **Firefox's `--screenshot` with a relative folder writes nothing** (order 41): a copy of `hand.ts` run with a relative output folder measured
+  every page and saved no picture, each reported FAILED. *Give the tools absolute paths.*
+- **A stepped picture can show two things at once that never meet in play** (order 41): `?debug&card` puts the card up over the level's
+  first frame, so the plate with the place's name lies under it and the pad stays drawn beside it (the page hides the pad a frame later, when
+  a card is up). The look-first table counted neither as an overlap. *Before calling two elements a clash, ask whether play ever shows them
+  together.*
+- **`?debug&fetch=hang#akershus` with no progress opens the map** (order 41): Akershus is not open, so the page goes to the map and no board
+  shows. Pretend the station before it cleared (`&cleared=langkaia`).
+- **A word's contrast measured in a picture is noisy** (order 41): letters are smoothed into their field, so the pixels of a white word on a
+  translucent button are mostly in between, and a pressed button that had gone white over snow still "measured" 9 from what showed through
+  it. Where the colours are known (the stylesheet's, the kit's plate), work the contrast out over every ground the levels paint, and use the
+  pictures to see.
+- **A small layout rule in the first script costs more than its lines** (order 41): the boards' rows cost 172 bytes there; asked of the map's
+  lazy look (which already brings its words) they cost 52. *Ask whether a rule belongs to a lazy file the page already waits for.*
+- **A test that reads a stylesheet's rules** must take its comments out first (order 41): a comment before a selector list became part of the
+  first selector, and the rule was not found.
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

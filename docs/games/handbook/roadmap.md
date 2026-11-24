@@ -1,19 +1,28 @@
 # Roadmap
 
-As of 23 November 2026, after order 40 was reviewed and merged (PR #88). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 41 was built (not yet reviewed). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
-| Date | 23 November 2026 |
+| Date | 24 November 2026 |
 | Last live | Order 40, what he takes, and what warns, PR #88 (reviewed and merged on 23 November); before it orders 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Nothing |
+| Built, waiting for review | Order 41, the screens between, and the last weak tells (branch `screens-between`) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | About 42 % used when order 40 was reviewed on 23 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
+
+**Order 41, the screens between, and the last weak tells** (`orders/41-the-screens-between.md`, ADR 0044 amended), built on branch `screens-between`,
+waiting for review. Every screen that is not a level on one table (`apps/viking/tools/review/o41/before.md`: the line map, every card, what is drawn
+over a level, the maze's own screens, at both sizes, in both languages, with touch and a pretended notch and with a mouse) and from the top of its
+ranking redrawn: a pressed pad control darker with a white ring (it went white and vanished over snow or white marble), a heart lost hollow, a dimmed
+control with its edge in dashes, the boards under the map's stations in rows so none meets another, a padlock on a shut station, the "!" clear of the
+head it stands over, the edge arrow off a notch, the bar's skilling and gold and a level's card's counts drawn as the game draws them; the four tells
+order 40 left (the welder's sparks, Bjørvika's gust, Gamlebyen's sinking stone, the heron); the rune's stone a pale rim on its lit side after dusk (the
+planner's call). Each item, done or not, with its measures: `o41/after.md`.
 
 **Order 40, what he takes, and what warns** (`orders/40-what-he-takes-and-what-warns.md`, ADR 0044 amended), reviewed, merged and live
 (PR #88, 23 November). Nothing else is in flight. What order 39 left: after dusk a line of the level's dark round what he takes (the planner's call; the maze's rule; every
@@ -118,6 +127,11 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 41 left (`apps/viking/tools/review/o41/after.md`): on a phone on its side with a notch, the story's opening card and the maze's level list reach
+into the home bar's strip (their buttons are 56 tall; mending it moves a touch target, which order 41 did not allow: start a card under the bar on a
+short screen, or keep a card's height off the safe bottom so it scrolls); the cards are the site's chrome, plain, shared with the front page and the
+maze; a bubble on white snow or a cloud has no edge (the kit's, shared with the front page); the "!" is two art pixels wide standing.
+
 Order 40 left (`apps/viking/tools/review/o40/after.md`): the fifth weakest tell, the welder's sparks at Bjørvika (18 pixels), and Bjørvika's own gust,
 the sinking stone at Gamlebyen and the heron, which share the giving-way tell order 40 mended for the pads and bundles; the rune's stone at night
 and twilight (its dark edge on the night's dark ground, 6.7 to 19.3; its rune is lit), which a dark line cannot help: a pale rim would be a
@@ -182,7 +196,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).
