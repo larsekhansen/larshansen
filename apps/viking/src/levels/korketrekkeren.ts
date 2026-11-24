@@ -272,9 +272,9 @@ function farHills(v: View) {
   }
   // The fjord far down under the hills, and the snow on the slopes before it, as planes running away from him (order
   // 23): strips each a little faster than the one above; the water drifts, the snow lies still.
-  // The farthest water, under the hills, still and flat: two bands (order 44; as strips of the plane it cost twenty copies a frame).
-  box(0, base - 26, view.w, 8, mix(P.water, WHITE, 0.5));
-  box(0, base - 18, view.w, 6, mix(P.water, WHITE, 0.47));
+  // The farthest water, under the hills, still and flat, in the plane's farthest tone (order 44; as strips of the plane it cost twenty
+  // copies a frame; a paler tone came within 10 of the calm outline).
+  box(0, base - 26, view.w, 14, mix(P.water, WHITE, 0.45));
   plane({ layer: 0.12, top: base - 12, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.38), mix(P.water, WHITE, 0.3)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
   box(0, base + 40, view.w, 360, mix(P.water, WHITE, 0.35));
   // The fjord's islands, low and wooded under snow, out on the water where the forest opens.
