@@ -2,11 +2,11 @@ import { carrierDrawn, carrierShown, type CarrierDef } from "@larshansen/pixelki
 import { HOIST_STEPS, POLE } from "@larshansen/pixelkit/checkpoint";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { R, ctx, target as setTarget, view } from "@larshansen/pixelkit/paint";
-import { COIN, DUST, ENEMY, FEATHER, FLAG, FOOD, LAMP, METAL, PALETTE, ROLES, STAND, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
+import { COIN, DUST, ENEMY, FEATHER, FLAG, FOOD, INK, LAMP, METAL, PALETTE, ROLES, STAND, SWEATER, WHITE } from "@larshansen/pixelkit/palette";
 import { playerPixels, type Look } from "@larshansen/pixelkit/person";
 import type { Body } from "@larshansen/pixelkit/physics";
 import type { Sfx, Voice } from "@larshansen/pixelkit/sfx";
-import { FONT, fontPx, safeSides, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
+import { FONT, bubbleEdge, fontPx, safeSides, snap, sx, sy, textCtx, unit } from "@larshansen/pixelkit/text";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import type { Phase } from "@larshansen/pixelkit/oslo";
 import type { LevelDef } from "../levels/types";
@@ -45,6 +45,9 @@ export { afterDark, runeFlight } from "./dusk";
 // The frames (order 23): the shared enemies and the small things are drawn from them once this file is here; the
 // fjord's water is a plane that recedes.
 Object.assign(LOOKS, { enemy: drawFoeLook, skilling, cheese, bench, bracteate, bracteateOutline, rune: runeStone, sheep, flag, pole: skiPole, feather });
+// The page's speech bubbles (a sign's words, a boss's, his own, the key at a door) with a thin line of the game's dark round them (order
+// 42): on white snow or a cloud a bubble had no edge. The kit's bubble has none unless a page asks; the front page never does.
+bubbleEdge.color = INK;
 DEPTH.fjord = fjord;
 LAP.at = lap;
 
@@ -259,13 +262,18 @@ export function alertSize(age: number, reduced: boolean): number {
   const up = Math.min(1, (age + 1) / 3);
   return age < ALERT_PULSE ? up * (1 + 0.45 * Math.abs(Math.sin((age / (ALERT_PULSE / 2)) * Math.PI))) : 1;
 }
-/** The "!": a red bar and dot with a dark edge, `h` of its full height (wider as it swells), its foot at (x, y). */
+/**
+ * The "!": a red bar and dot with a dark edge all round, `h` of its full height (wider as it swells), its foot at (x, y). Since order 42
+ * three pixels wide (five as it swells), its dot two pixels tall under a one-pixel gap: two wide, its dot a pixel and its foot open, it read
+ * as a thin bar on snow and stone. Its colours are the warning's (ADR 0044).
+ */
 function bang(x: number, y: number, h: number) {
   const n = Math.max(1, Math.round(7 * h));
-  const w = h > 1.25 ? 4 : 2;
-  R(x - w / 2 - 1, y - n - 1, w + 2, n + 1, ENEMY.line);
-  R(x - w / 2, y - n, w, n - (n > 3 ? 3 : 0), ENEMY.warning);
-  if (n > 3) R(x - w / 2, y - 1, w, 1, ENEMY.warning);
+  const w = h > 1.25 ? 5 : 3;
+  const l = x - (w >> 1);
+  R(l - 1, y - n - 1, w + 2, n + 2, ENEMY.line);
+  R(l, y - n, w, n - (n > 3 ? 3 : 0), ENEMY.warning);
+  if (n > 3) R(l, y - 2, w, 2, ENEMY.warning);
 }
 /** An arrow at the screen's edge, pointing out to `dir`, its tip at (x, y): something about to come into view (order 23). */
 function arrow(x: number, y: number, dir: number) {

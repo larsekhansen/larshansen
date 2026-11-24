@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { skyFor } from "@larshansen/pixelkit/oslo";
 import { target, view } from "@larshansen/pixelkit/paint";
 import { placeBody } from "@larshansen/pixelkit/physics";
+import { INK } from "@larshansen/pixelkit/palette";
+import { bubbleEdge } from "@larshansen/pixelkit/text";
 import type { Voice } from "@larshansen/pixelkit/sfx";
 import { WINDUP, untilThrow, type Enemy } from "../game/enemies";
 import { newPlay, stepPlay, type Play, type PlayIntent } from "../game/play";
@@ -311,5 +313,14 @@ describe("what is about to happen is seen before it happens", () => {
       expect(sankAt, id).toBeGreaterThan(0);
       expect(sankAt - soonFrom, id).toBeGreaterThanOrEqual(24);
     }
+  });
+});
+
+// Order 42: the page's speech bubbles have a thin line of the game's dark round them (on white snow or a cloud a bubble had no edge),
+// set by feel's file on the kit's bubble, which has none unless a page asks (the front page never does). How it stands against every
+// ground: `render/palette.test.ts`.
+describe("a bubble's edge (order 42)", () => {
+  test("feel's file gives the page's bubbles a line in the ink", () => {
+    expect(bubbleEdge.color).toBe(INK);
   });
 });
