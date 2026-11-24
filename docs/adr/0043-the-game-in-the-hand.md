@@ -112,3 +112,29 @@ to 57 % of a route's frames, with one 72 to 76 %; the most lift unchanged; uprig
 starting to ease, are about twice as frequent on its side with a notch. A speech bubble keeps off the safe sides as the buttons do (the
 kit's `safeSides`, set by the pad; the maze's raven spoke under a left notch). No browser here has a notch: `?debug&safe=left|right|sides|
 upright` pretends one (every stylesheet reads a safe area as `var(--safe-*, env(safe-area-inset-*))`).
+
+## Amended by order 42 (24 November 2026): the edges of the screen
+Order 41 left three things at the screen's edges, which a touch target had to move to mend (`apps/viking/tools/review/o41/after.md`):
+
+- **A card's foot keeps off the home bar's strip.** On a phone on its side with a home bar (21 px), the story's opening card and the maze's
+  level list reached 11 px into its strip: a card was as tall as the screen less 10 px. Now its foot is 10 px over the screen's or at the safe
+  area's edge, whichever is higher, and it scrolls when its words do not fit (`body.touch .card`, `#finish` and `.card.story` in
+  `styles.css`). With no home bar nothing moves. On the maze's own page the level list (from 18 % down) ran past the screen's foot on a
+  phone on its side with a notch or without, its last rows out of reach: its foot is kept the same way there (`packages/maze/src/panel.ts`),
+  so that page's picture without a notch changed too (the list's foot shows).
+- **The place's name waits for the opening card, and the pad is hidden under it.** At the first visit the plate with "T-banen" came up under the
+  story's card; it is held back until the card has gone, and then shows its full time. On a short phone (360 x 640, 667 x 375) the card's button
+  lay under the move pad and the jump: the style sheet hides the pad while the card is up (`body:has(.card.story) .pad`); it is not turned off,
+  so the camera keeps the pad's room and the map does not move when the card goes.
+- **The map's boards keep clear of the pad.** On the line map the boards under the stations, hung in rows since order 41, came close to
+  the move pad and the jump on a phone on its side (Ekeberg's, line 1 nearly done; and in the first frame, framed before the pad is up,
+  under it). On a touch screen the camera keeps everything from him down to the lowest board clear of the pad's bottom row across the
+  whole view (`below` in `game/frame.ts`), the same lift everywhere on the flat deck; and at the line's start a board stands clear of a
+  notch on the left (`stationBoards` in `levels/kartArt.ts`). The raised slot (the way in, over the jump on its side) stands over the deck
+  itself by this record's design: the boards pass under it at the screen's edge as the stations do. The lift is nothing upright and on its
+  side up to 45 px (every station timed, a notch), and it stops where the stations' doors would go under the bar: on a short phone on its
+  side (667 x 375) the map's bar is two rows of links, three with line 2's runes (97 or 159 of 375 px), and there the stations come first
+  and the lowest boards may reach the pad. Held by `levels/kart.test.ts` at 390 x 844, 844 x 390, 360 x 640 and 667 x 375, without a notch
+  and with one on either side or both.
+- **Not mended, for a later decision**: that tall bar over the map on a short phone (upright at 360 x 640 it is 204 px, 251 with a notch);
+  laying it out again for those sizes moves the site's links, thumb targets on a phone without a notch.

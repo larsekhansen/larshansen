@@ -1,6 +1,6 @@
 # Roadmap
 
-As of 24 November 2026, after order 41 was reviewed and merged (PR #89). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 42 was built on branch `room-and-edges` (not yet reviewed or merged); order 41 is live (PR #89). Change this file in the same change that makes it wrong.
 
 ## Status
 
@@ -8,12 +8,20 @@ As of 24 November 2026, after order 41 was reviewed and merged (PR #89). Change 
 |---|---|
 | Date | 24 November 2026 |
 | Last live | Order 41, the screens between, PR #89 (reviewed and merged on 24 November); before it orders 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Nothing |
+| Built, waiting for review | Order 42, room, and the edges of the screen (branch `room-and-edges`; `apps/viking/tools/review/o42/after.md`) |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
 | Weekly allowance | About 47 % used when order 41 was reviewed on 24 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
+
+**Order 42, room, and the edges of the screen** (`orders/42-room-and-edges.md`, ADR 0035, 0043 and 0053 amended), built on branch `room-and-edges`,
+waiting for review. The first script from 58.65 to 55.80 kB gzipped (item 1 alone 55.70) with nothing a player sees changed: what only later files use
+moved into files that already existed (`o42/before.md` has the first script's modules on a table, each with what needs it), the dead plain carrier and
+ledge out; a card's foot off the home bar's strip, the maze's list kept on the screen on its own page, the opening card holding the map's plate back and
+the pad hidden under it, the map's boards kept clear of the pad's bottom row and of a notch at the line's start; every screen kind looked at again at the four
+phone sizes with a notch; a thin line of the game's dark round the page's speech bubbles; the "!" three pixels wide with a two-pixel dot. Each item, done or not, with its measures:
+`o42/after.md`.
 
 **Order 41, the screens between, and the last weak tells** (`orders/41-the-screens-between.md`, ADR 0044 amended), reviewed, merged and live
 (PR #89, 24 November). Nothing else is in flight. Every screen that is not a level on one table (`apps/viking/tools/review/o41/before.md`: the line map, every card, what is drawn
@@ -127,10 +135,18 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 42 left (`apps/viking/tools/review/o42/after.md`): on a short phone on its side (667 x 375) the map's bar is two rows of links, and with line 2 open
+a third of runes (97 or 159 of 375 px), so the map's stations stand just under it and its rune stones under it; laying the bar out again for that size
+moves the links (thumb targets), which order 42 was not to do; there the map's lowest boards may reach the pad. Upright on a short phone
+(360 x 640) the map's bar is 204 px, 251 with a notch: the stations' rune stones stand at its foot and the plate over the stations. The maze's level list inside the page lies
+over the maze's help line on a short phone (a dialog over it; the help line goes at his first move). The first script's next candidates (ADR 0035
+amended): the maze's glue in `main.ts` (about 1.2 kB), the bosses' bubbles' placing.
+
 Order 41 left (`apps/viking/tools/review/o41/after.md`): on a phone on its side with a notch, the story's opening card and the maze's level list reach
 into the home bar's strip (their buttons are 56 tall; mending it moves a touch target, which order 41 did not allow: start a card under the bar on a
 short screen, or keep a card's height off the safe bottom so it scrolls); the cards are the site's chrome, plain, shared with the front page and the
-maze; a bubble on white snow or a cloud has no edge (the kit's, shared with the front page); the "!" is two art pixels wide standing.
+maze; a bubble on white snow or a cloud has no edge (the kit's, shared with the front page); the "!" is two art pixels wide standing. Order 42 took up
+all of it but the cards being plain.
 
 Order 40 left (`apps/viking/tools/review/o40/after.md`): the fifth weakest tell, the welder's sparks at Bjørvika (18 pixels), and Bjørvika's own gust,
 the sinking stone at Gamlebyen and the heron, which share the giving-way tell order 40 mended for the pads and bundles; the rune's stone at night
@@ -196,7 +212,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, by order 37's, by order 38's, by order 39's, by order 40's, and by order 41's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, by order 37's, by order 38's, by order 39's, by order 40's, by order 41's, and by order 42's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -97,6 +97,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-23 | Order 39: the rest of the table. The bishop's guard (a kettle hat, the halberd's blade), the coot (its white in the pale, past the glamour), the squirrel (a tail that is a tail, the cone it throws in its paws) and the mound-dweller (folds, a hand) redrawn; a still tell for the jumpers with reduced motion (the salmon's water and the track rat's stones held, ADR 0040 amended), every other tell checked with motion and without; every boss state, carrier, thrown thing and pickup photographed in place and measured against what is round it, and what is thrown given a dark pixel between its outline and its glow after dusk; order 38's marks kept honest. Drawing only | `orders/39-the-rest-of-the-table.md`, branch `rest-of-the-table` |
 | 2026-11-23 | Order 40: what he takes, and what warns. After dusk a line of the level's dark round what he takes (the maze's rule, ADR 0044 amended: every skilling, cheese and bracteate met after dusk 31.6 or more off what is round it, where the evening's left them 14.5 to 18); every tell ranked in place by size, contrast and length, and the weakest mended by drawing: the track rat's snout over the third rail's cover, the stones of a wall closing behind him at Gamlebyen, the water stirring round a lily pad or a bundle about to sink, a gust's streaks while it warns, held by a test to a stated number of pixels; five of the eight figures left at mark 2 redrawn (the stove pipe, the pontoons, the post, the balusters, the fire basket). Drawing only | `orders/40-what-he-takes-and-what-warns.md`, branch `takes-and-warns` |
 | 2026-11-24 | Order 41: the screens between, and the last weak tells. Every screen that is not a level on one table (the line map, every card, what is drawn over a level, the maze's own screens; 39 states at both sizes, in both languages, with touch and a pretended notch and with a mouse, `o41/before.md`); from the top of its ranking redrawn: a pressed pad control darker with a white ring (it went white and vanished over white ground), a heart lost hollow (it was faint), a dimmed control with its edge in dashes, the boards under the map's stations in rows so none meets another, the "!" clear of the thrower's head, a padlock on a shut station, the edge arrow off a notch, the bar's skilling and gold and a level's card drawn as the game draws them; the welder's sparks, Bjørvika's gust, Gamlebyen's sinking stone and the heron given a tell a player can see; the rune's stone a pale rim on its lit side after dusk (ADR 0044 amended). Drawing only | `orders/41-the-screens-between.md`, branch `screens-between` |
+| 2026-11-24 | Order 42: room, and the edges of the screen. The first script from 58.65 to 55.80 kB gzipped with nothing a player sees changed (what only later files use moved into files that already existed: swatches, the runes as pixels, the cannon's and drum's look, the harness, the card after a rune filled in; dead plain drawings out; ADR 0035 amended), no new fetch before a first frame; a card's foot off the home bar's strip, the maze's list in its own page kept on the screen, the map's plate waiting for the opening card, the pad hidden under it, the map's boards kept clear of the pad's bottom row and a notch (ADR 0043 amended); a thin line of the game's dark round the page's speech bubbles (the kit's, by a setting the page makes); the "!" three pixels wide | `orders/42-room-and-edges.md`, branch `room-and-edges` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -168,7 +169,7 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   fresh seeds (101 to 200). Measure on fresh seeds, not the ones a level was tuned on. Remember what the
   sloppy player is: the route's plan with a person's timing. It never finds a better line, and
   "off route" and "gave up" mostly mean it fell somewhere the route never goes.
-- **The harness**: `?debug&steps=N&keys=…` steps the game synchronously and draws one frame (if he is hit in the last
+- **The harness**: `?debug&steps=N&keys=…` (since order 42 the kit's harness comes with the page's `?debug` file) steps the game synchronously and draws one frame (if he is hit in the last
   four of those steps the page holds its picture; since order 35 a frame over canvases a resize has just emptied is drawn
   whatever holds, and `?debug&perf` measures a whole frame there, where it measured nothing); the level's music hears every
   stepped step (order 35), so the encore's shouted lines show in a still picture;
@@ -191,7 +192,10 @@ frames. So everything is checked by other means ([ADR 0005](../adr/0005-checking
   `var(--safe-*, env(safe-area-inset-*))`; the kit's `safe.ts`, in the debug files). A stepped page snaps its camera, so what happens only
   from frame to frame (the camera easing, and its jump on a turn) does not show in it: `?debug&live=<frames>` (viking page) runs that many
   frames after the stepped start as the page runs them, a sixtieth of a second each, and lists on the help line how far the camera moved
-  in each: `/viking/?debug&told&touch&pole&safe=right&level=bygdoy&auto&steps=1923&live=80#bygdoy`.
+  in each: `/viking/?debug&told&touch&pole&safe=right&level=bygdoy&auto&steps=1923&live=80#bygdoy`. A stepped page on a touch screen frames its camera
+  once, before the pad is up (it is "off" until the first frame says it is up), so it has made no room for the pad; a browser's resize observation lays
+  the page out again with the pad up, headless Firefox delivers none: call `__game.layout()` before taking the picture (order 42's scratch copy of
+  `hand.ts` does) to see the camera as in play.
 - **The front page gate**: 28 reference screenshots of the front page, taken before any of this
   work. After every kit change they must be byte-identical (`cmp`). The references live in
   `/tmp/shots-before-jernhaugen` (earlier `/tmp/shots-before`) with addresses in `/tmp/shots-urls.txt` (the `:5180` lines); `/tmp` does
@@ -292,7 +296,11 @@ seconds a place, where a browser a place took five; `--each` is the old way), so
   the hop off was a step, cost almost nothing; what it loses is to walkers and the rebar). (4) The hesitating player is a crude model: it
   stops on a sinking pad as readily as on a stone; the lake was eased for it (lily pads 1.7 s), the sledge's
   feel at speed and the statues' rule are still unreviewed.
-- **First script**: 58.65 kB gzipped after order 41 (58,625 bytes by GNU gzip, 74 more than order 40's: the hearts' edge, 7 bytes, the page asking the map's look for how its stations' boards are laid, about 52, and the chunks' names it carries; the boards' rows themselves, the padlock, the pad's looks, the bar's icons and the cards' are in the map's lazy file, `feel`'s, the pad's and the stylesheet, which the first script's budget does not count: the stylesheet 3,983 to 4,620 bytes gzipped); the mended tells in their levels' files (Bjørvika 7.11 to 7.24, Gamlebyen 16.15 to 16.26, Østensjøvannet 7.35 to 7.41), the rune's rim and the "!" and arrow in `feel`'s file (43.72 to 43.89), the map's look 7.25 to 7.58. 58.56 kB gzipped after order 40 (58,551 bytes by GNU gzip, 21 more than order 39's: the page tells `afterDark` whether the level's bracteate was found before, `PAGE.owned`, 24 bytes, and the chunks' names it carries); the line round what he takes and the redrawn props are in `feel`'s file (42.77 to 43.72 kB gzipped), the mended tells in their levels' files (Stortinget 10.18 to 10.26, Gamlebyen 16.12 to 16.15, Østensjøvannet 7.31 to 7.35, Bygdøy 9.97 to 10.01, Ekeberg 7.75 to 7.77), the balusters and the fire baskets in Slottet's and Akershus's. 58.55 kB gzipped after order 39 (58,530 bytes by GNU gzip, 18 more than order 38's: the page marks what it throws, `THROWN` in `render/sprite.ts`, and the chunks' names it carries); the glow for what is thrown is in `feel`'s file (42.73 to 42.77 kB gzipped), the redrawn figures in their levels' files, the shared looks' and the maze's scene file. 58.53 kB gzipped after order 38 (58,512 bytes by GNU gzip, 10 more than order 37's: the hook a page-less tool is handed what a
+- **First script**: 55.80 kB gzipped after order 42 (55,730 bytes by GNU gzip; ADR 0035 amended, `apps/viking/tools/review/o42/`): 58.65 to 55.70 kB for room,
+  what only later files use moved into files that already existed (the kit's swatches no first-script code draws with, the runes as pixels, the cannon's
+  and drum's look, the harness, the card after a rune filled in) and the dead plain carrier and ledge taken out; then the plate waiting for the
+  opening card, the pad hidden under it, the map's boards kept off the pad (about 0.07 kB) and the bubble's edge (the kit's, 0.05 kB). `feel`'s file
+  43.89 to 46.12 kB gzipped. 58.65 kB gzipped after order 41 (58,625 bytes by GNU gzip, 74 more than order 40's: the hearts' edge, 7 bytes, the page asking the map's look for how its stations' boards are laid, about 52, and the chunks' names it carries; the boards' rows themselves, the padlock, the pad's looks, the bar's icons and the cards' are in the map's lazy file, `feel`'s, the pad's and the stylesheet, which the first script's budget does not count: the stylesheet 3,983 to 4,620 bytes gzipped); the mended tells in their levels' files (Bjørvika 7.11 to 7.24, Gamlebyen 16.15 to 16.26, Østensjøvannet 7.35 to 7.41), the rune's rim and the "!" and arrow in `feel`'s file (43.72 to 43.89), the map's look 7.25 to 7.58. 58.56 kB gzipped after order 40 (58,551 bytes by GNU gzip, 21 more than order 39's: the page tells `afterDark` whether the level's bracteate was found before, `PAGE.owned`, 24 bytes, and the chunks' names it carries); the line round what he takes and the redrawn props are in `feel`'s file (42.77 to 43.72 kB gzipped), the mended tells in their levels' files (Stortinget 10.18 to 10.26, Gamlebyen 16.12 to 16.15, Østensjøvannet 7.31 to 7.35, Bygdøy 9.97 to 10.01, Ekeberg 7.75 to 7.77), the balusters and the fire baskets in Slottet's and Akershus's. 58.55 kB gzipped after order 39 (58,530 bytes by GNU gzip, 18 more than order 38's: the page marks what it throws, `THROWN` in `render/sprite.ts`, and the chunks' names it carries); the glow for what is thrown is in `feel`'s file (42.73 to 42.77 kB gzipped), the redrawn figures in their levels' files, the shared looks' and the maze's scene file. 58.53 kB gzipped after order 38 (58,512 bytes by GNU gzip, 10 more than order 37's: the hook a page-less tool is handed what a
   look draws plain, `noPage.plain` in `render/sprite.ts`, and the chunks' names it carries); the birds, the scooter's own colours and `?debug&natural`'s
   switch are in `feel`'s file (42,514 to 42,747 bytes), the raven and the dweller in the maze's scene file (19,500 to 19,667). 58.52 kB gzipped after order 37 (58,502 bytes by GNU gzip, 215 more than order 36's): the maze's way out that falls
   back where Back has nowhere to go (`game/wayout.ts` and its call, 0.13 kB), the kit's bubble keeping off the safe sides, the call that
@@ -932,6 +940,38 @@ with its measures in `o41/after.md`). Lars has not played; nothing was retuned: 
   stylesheet), `levels/kart.test.ts` (no two of the map's boards meet), `render/tells.test.ts`, `alive/takes.test.ts`; each shown to fail on origin/main's drawing.
 - **Unplayed**: none of it has been touched on a phone or seen at speed.
 
+## Order 42: room, and the edges of the screen
+
+Order 42 (`orders/42-room-and-edges.md`; ADR 0035, 0043 and 0053 amended; what was looked at first in `apps/viking/tools/review/o42/before.md`, each
+item done or not with its measures in `o42/after.md`). Lars has not played; nothing was retuned: no route, box, speed, timing, heart, enemy placement
+or word. What to know:
+- **Room in the first script** (ADR 0035 amended): 58.65 to 55.70 kB gzipped for item 1 alone (the first script's modules on a table, each with what
+  needs it, `o42/before.md`), with nothing a player sees changed (every level's places by day and night byte-identical, and a picture of each moved
+  thing at its first frame) and the same five fetches before a first frame. What only later files use went into files that already existed: the
+  kit's swatches no first-script code draws with (the river's and the ice's to their levels' files; the feather's, the tram's, the creatures' to
+  `feel`'s); the runes as pixels (`game/runecells.ts`); how the kit's cannon and drum look, split from their rules (the kit's `launcherart.ts`), drawn
+  by Akershus and Slottet themselves; the kit's harness to `?debug`'s file (the harness carries its own runner, so the kit's `launch` no longer
+  imports it); the card after a rune filled in by `feel`'s file (`render/finish.ts`, with its words; the page puts the card up with its title and
+  button, and the three cards share `cardUp`). The page's plain carrier and plain ledge, which no level drew with, are gone (`levels/lazy.test.ts`
+  holds that every level draws its own). A module the bundler is not told about still lands in the first script: name it in `vite.config.ts`.
+- **A card's foot keeps off the home bar's strip** (ADR 0043 amended): 10 px over the screen's foot, or the safe area's edge where higher, and it
+  scrolls; with no home bar nothing moves. The maze's level list on the maze's own page ran past the screen's foot on a phone on its side, with a
+  notch or without: it is kept on the screen the same way there (that page's picture without a notch changed; its first script 32.12 to 31.86 kB,
+  the cards' style sheet's comments taken out of the string it is sent).
+- **The opening card**: the map's plate waits until it has gone; the pad is hidden under it by the style sheet (on a short phone its button lay under the pad).
+- **The map's boards and the pad**: on a touch screen the camera keeps everything from him down to the lowest board clear of the pad's bottom row
+  across the whole view (`below` in `game/frame.ts`; on its side at most 45 px higher, nothing upright), and stops where the stations' doors would go
+  under the bar; at the line's start a board stands clear of a notch on the left (`stationBoards`). `levels/kart.test.ts`. Not held: the raised slot
+  over the jump on its side, which stands over the deck itself; and on a short phone on its side (667 x 375) the map's bar is two or three rows
+  (97 or 159 of 375 px: the links wrap, and line 2's runes take a row), so there the stations come first and the lowest boards may reach the pad.
+- **A stepped picture on a touch screen is framed before the pad is up** (`handbook/lessons.md`): lay it out again (`__game.layout()`) to see the
+  camera as in play; order 42's scratch copy of `hand.ts` does.
+- **Two small marks** (item 3): a line a pixel wide of the game's dark (the ink) round each of the page's speech bubbles, so a bubble reads on white
+  snow or a cloud: the kit's bubble has an edge only when a page asks (`bubbleEdge`, set by `feel`'s file; the front page and the maze's own page ask
+  nothing, the maze inside this page has it); and the "!" over what turns on him three pixels wide (five as it swells), its dot two pixels tall under
+  a one-pixel gap, its dark edge all round: tried in place against a dot a pixel tall and against the old, on snow, stone and the dark, it read best.
+- **Unplayed**: none of it has been touched on a phone or seen at speed; the notch is pretended.
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -973,13 +1013,13 @@ reorder this list.
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone. Since order 36 the way into the maze from
    the map and back, from Nordmarka and back into it, and the feather moment after the maze are stepped pictures (`?debug&walkin`, `&out`,
    `&after`), and what each page remembers of the maze is a test (`packages/maze/src/joins.test.ts`): none of it by a person.
-8. **Margins.** The first script is 58.65 kB gzipped after order 41, 58.56 kB after order 40, 58.55 kB after order 39, 58.53 kB after order 38, 58.52 after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
+8. **Margins.** The first script is 55.80 kB gzipped after order 42 (room made: ADR 0035 amended), 58.65 kB gzipped after order 41, 58.56 kB after order 40, 58.55 kB after order 39, 58.53 kB after order 38, 58.52 after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
    two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour; after order 34, 370.5 s against 335.0 s for
    `origin/main` the same hour, over the 360 its order set: its scenery walk in `render/warning.test.ts` about 18 s, `o34/after.md` says what could be trimmed;
    after order 35 under 300 s, its three runs in `o35/after.md`; after order 37 268.0 s, 263.1 s for `origin/main` the same hour; after order 38 265.6 s
-   warm, 265.8 s for `origin/main` the same hour; after order 39 271.5 s, 270.0 s for `origin/main` the same hour; after order 40 272.6 to 277.0 s alone, 262.2 and 270.9 s for `origin/main` the same hour, 512 tests; after order 41 263.1 and 273.6 s, 273.3 and 275.1 s for `origin/main` the same hour, 530 tests): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
+   warm, 265.8 s for `origin/main` the same hour; after order 39 271.5 s, 270.0 s for `origin/main` the same hour; after order 40 272.6 to 277.0 s alone, 262.2 and 270.9 s for `origin/main` the same hour, 512 tests; after order 41 263.1 and 273.6 s, 273.3 and 275.1 s for `origin/main` the same hour, 530 tests; after order 42 275.6 and 276.1 s, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
    Akershus's alone takes 52 s), and about 70 s the reduced-motion test, which draws every level.
 9. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)). Since order 21 on a touch phone it is the run alone during a

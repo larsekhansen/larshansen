@@ -50,3 +50,15 @@ what moves, what he takes, what hurts and the paint keeping their light) and of 
 (`render/dusk.ts`); and, with the maze, the maze's feather drawing (the page's plain one was only a fallback). Without `feel`'s
 file the page is therefore silent, nothing keeps its light after dusk, and the rune lands in the header without flying: every
 level still starts and every solid thing is drawn plainly, which is what this record holds (`levels/lazy.test.ts`).
+
+## Amended by order 42 (24 November 2026): the card after a rune, and what only later levels draw
+For room in the first script (ADR 0035, amended): the card after a rune is filled in by `feel`'s file (`render/finish.ts`: the time, the
+best, the bracteate, the skilling, a clean run, the last line and its words); the first script puts the card up with its title and its
+button. Without `feel`'s file it is that alone, the level's rune and name and "To the map", and it still goes by itself after six
+seconds. Game over and a load that failed are the first script's, whole, as before (a failed load is when `feel`'s file may be missing).
+
+And a drawing that only levels fetched later use needs no plain one in the first script, since those levels bring `feel`'s file with
+them: the kit's plain carrier and plain ledge on a beat, which no level drew with (every level with carriers or ledges draws its own,
+Langkaia too), left the page; the kit's cannon and drum are drawn by the two levels that have them (Akershus, Slottet). Held by
+`levels/lazy.test.ts`: every level and the map with carriers, ledges on a beat, cannons or drums draws them itself, and Langkaia has no
+ledges, cannons or drums.
