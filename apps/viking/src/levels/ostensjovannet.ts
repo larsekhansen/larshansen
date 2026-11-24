@@ -319,15 +319,16 @@ function farShore(v: View) {
   const forest = ostmarka();
   for (let x = -(((Math.floor(layerOrigin(0.12)) % forest.w) + forest.w) % forest.w); x < view.w; x += forest.w) drawFar(forest, x, base);
   for (let x = 0; x < view.w; x++) column(x, ridgeTop(x), base, mix(LAND.forest, LAND.farHills, 0.5));
-  // The blocks along the ridge, three kinds in turn, each standing on the ridge where it is; the reed beds at the water.
-  for (let i = 0; i < 8; i++) {
+  // The blocks along the ridge, three kinds in turn, each standing on the ridge where it is, where the ridge is seen: over the long
+  // crossing and the far shore, where the bank's trees end.
+  for (let i = 0; i < 5; i++) {
     const f = blocks(i % 3);
-    const x = layerX(260 + i * 560, 0.12) - f.w / 2;
+    const x = layerX(1500 + i * 700, 0.12) - f.w / 2;
     if (x + f.w < 0 || x > view.w) continue;
     drawFar(f, x, ridgeTop(Math.max(0, Math.min(view.w - 1, Math.round(x + f.w / 2)))) + 4);
   }
-  // The reed beds where the far shore shows, across the long crossing (elsewhere the bank's trees hide them).
-  for (const [i, wx] of [2380, 2690, 2990].entries()) drawFar(reedBed(i % 2), layerX(wx, 0.12) - 15, base + 1);
+  // The reed beds where the far shore shows, across the long crossing (elsewhere the bank's trees hide them): one piece.
+  drawFar(reedBeds(), layerX(2690, 0.12) - 48, base + 1);
   // The lake from the far shore to the bank he walks along, as a plane running away from him (order 23): still water,
   // so its strips drift only a little.
   plane({ layer: 0.12, top: base, bottom: FLOOR, from: 0.12, to: 0.36, tones: [mix(L.still, L.glint, 0.3), L.still, L.stillDeep], glint: L.glint, drift: 0.04, strip: 2, near: 4 }, v.t);
@@ -335,9 +336,9 @@ function farShore(v: View) {
 
 /** Østmarka's forest beyond the ridge: dark spruce in an even line, their tips a pixel or two over it. */
 const ostmarka = () =>
-  farPiece("ostensjovannet ostmarka", 256, OSTMARKA + 2, (b) => {
+  farPiece("ostensjovannet ostmarka", 512, OSTMARKA + 2, (b) => {
     const wood = mix(LAND.forestDark, LAND.farHills, 0.15);
-    for (let x = 0; x < 256; x++) {
+    for (let x = 0; x < 512; x++) {
       const tip = (x * 7) % 5 === 0 ? 2 : (x * 3) % 4 === 0 ? 1 : 0;
       b.fill(x, 1, 1, OSTMARKA + tip - 1, wood);
       if (tip) b.dot(x, OSTMARKA + tip - 1, darker(wood, 0.15));
@@ -371,15 +372,16 @@ const blocks = (kind: number) =>
       }
   });
 
-/** A reed bed at the far shore's water: brown heads over green stalks, two kinds. */
-const reedBed = (kind: number) =>
-  farPiece(`ostensjovannet reeds ${kind}`, 30, 5, (b) => {
-    for (let x = 0; x < 30; x++) {
-      const h = Math.round(3 + Math.sin(x * (kind ? 0.5 : 0.35)) - Math.abs(x - 15) / 10);
-      if (h < 1) continue;
-      b.fill(x, 1, 1, h, (x + kind) % 3 ? L.reed : L.reedDark);
-      if ((x * 7 + kind) % 4 === 0) b.dot(x, h, L.reedHead);
-    }
+/** The reed beds at the far shore's water: three beds with open water between, brown heads over green stalks. */
+const reedBeds = () =>
+  farPiece("ostensjovannet reeds", 96, 5, (b) => {
+    for (const [x0, w, k] of [[0, 30, 0], [37, 24, 1], [68, 28, 0]] as const)
+      for (let x = 0; x < w; x++) {
+        const h = Math.round(3 + Math.sin(x * (k ? 0.5 : 0.35)) - Math.abs(x - w / 2) / 10);
+        if (h < 1) continue;
+        b.fill(x0 + x, 1, 1, h, (x + k) % 3 ? L.reed : L.reedDark);
+        if ((x * 7 + k) % 4 === 0) b.dot(x0 + x, h, L.reedHead);
+      }
   });
 
 /** Birches and willows along the far bank, low, in rows. */
