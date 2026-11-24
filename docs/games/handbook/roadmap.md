@@ -1,22 +1,22 @@
 # Roadmap
 
-As of 24 November 2026, after order 42 was built on branch `room-and-edges` (not yet reviewed or merged); order 41 is live (PR #89). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 42 was reviewed and merged (PR #90). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 41, the screens between, PR #89 (reviewed and merged on 24 November); before it orders 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 42, room, and the edges of the screen (branch `room-and-edges`; `apps/viking/tools/review/o42/after.md`) |
+| Last live | Order 42, room, and the edges of the screen, PR #90 (reviewed and merged on 24 November); before it orders 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 47 % used when order 41 was reviewed on 24 November; next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 52 % used when order 42 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 42, room, and the edges of the screen** (`orders/42-room-and-edges.md`, ADR 0035, 0043 and 0053 amended), built on branch `room-and-edges`,
-waiting for review. The first script from 58.65 to 55.80 kB gzipped (item 1 alone 55.70) with nothing a player sees changed: what only later files use
+**Order 42, room, and the edges of the screen** (`orders/42-room-and-edges.md`, ADR 0035, 0043 and 0053 amended), reviewed, merged and live
+(PR #90, 24 November). Nothing else is in flight. The first script from 58.65 to 55.80 kB gzipped (item 1 alone 55.70) with nothing a player sees changed: what only later files use
 moved into files that already existed (`o42/before.md` has the first script's modules on a table, each with what needs it), the dead plain carrier and
 ledge out; a card's foot off the home bar's strip, the maze's list kept on the screen on its own page, the opening card holding the map's plate back and
 the pad hidden under it, the map's boards kept clear of the pad's bottom row and of a notch at the line's start; every screen kind looked at again at the four
