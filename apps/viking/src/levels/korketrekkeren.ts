@@ -2,7 +2,7 @@ import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import type { Hazard } from "@larshansen/pixelkit/hazard";
 import { seen, stamp } from "@larshansen/pixelkit/kept";
-import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, layerOrigin, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, METAL, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
@@ -17,6 +17,7 @@ import { FOE_INK, drawFoe, mark } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tile as textured, type Grain } from "../alive/ground";
 import { CAST, box as pbox, dot, poolAlong, prop, tone, type Stuff } from "../alive/props";
 import { mapBuilder } from "./build";
@@ -249,26 +250,91 @@ const floorAt = (x: number) => Math.min(ROWS * TILE, (trackY(Math.max(X0, Math.m
 /** The ground behind the run at a street x: the run's height there, or the flat at either end. */
 const behind = (sx: number) => trackY(Math.max(X0, Math.min(RIDE.to - 1, sx))) ?? (sx < X0 ? TOP_ROW * TILE : END_ROW * TILE);
 
-/** The far hills: the fjord and the town far below, white hills over them, the low sun along their tops. Kept at his height. */
+/**
+ * Where the forest opens (order 44), in world x: once, over the crossing of the line and the gap where the old bridge over the
+ * stream is gone, where the level's own ground opens; there the town and the fjord lie far below to the south-east. Elsewhere the
+ * spruces hide them, as they do on the run.
+ */
+const OPEN = [2380, 2960] as const;
+
+/**
+ * The far hills: the fjord and the town far below, white hills over them, the low sun along their tops. Kept at his height. Since
+ * order 44 as one sees it from up here: the hills beyond the fjord low on the horizon, the fjord under them with its islands, the
+ * town along its near shore in its small lights after dusk (it was a stone-grey fleck every few pixels under hills half as high again).
+ */
 function farHills(v: View) {
   const base = v.him.y + 20;
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
-    const h = 50 + Math.round(16 * Math.sin(wx * 0.011) + 8 * Math.sin(wx * 0.037));
+    const h = 38 + Math.round(9 * Math.sin(wx * 0.011) + 4 * Math.sin(wx * 0.037));
     column(x, base - h, base + 400, mix(LAND.farHills, WHITE, 0.4));
     column(x, base - h, base - h + 2, mix(K.lantern, WHITE, 0.55));
-    if (Math.floor(wx) % 13 < 2) column(x, base - 12 - (Math.floor(wx) % 5), base - 12, mix(STONE.light, WHITE, 0.3));
   }
   // The fjord far down under the hills, and the snow on the slopes before it, as planes running away from him (order
   // 23): strips each a little faster than the one above; the water drifts, the snow lies still.
-  plane({ layer: 0.12, top: base - 12, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.38), mix(P.water, WHITE, 0.3)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
+  plane({ layer: 0.12, top: base - 26, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.38), mix(P.water, WHITE, 0.3)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
   box(0, base + 40, view.w, 360, mix(P.water, WHITE, 0.35));
+  // The fjord's islands, low and wooded under snow, out on the water where the forest opens.
+  for (const [wx, k, dy] of [[2470, 0, 0], [2700, 1, 4], [2880, 2, 2]] as const) drawFar(island(k), layerX(wx, 0.12), base - 21 + dy);
+  // The town along the fjord's near shore: two pieces in turn, laid end to end along the layer.
+  const t0 = town(0);
+  const o = ((Math.floor(layerOrigin(0.12)) % (t0.w * 2)) + t0.w * 2) % (t0.w * 2);
+  for (let x = -o, k = 0; x < view.w; x += t0.w, k++) drawFar(town(k % 2), x, base - 8);
 }
+
+/** The town far below along the fjord's near shore: snowy roofs close together, a block here and there, a lit window now and then after dusk; two kinds. */
+const town = (kind: number) =>
+  farPiece(`korketrekkeren town ${kind}`, 80, 7, (b) => {
+    const roof = mix(LAND.farHills, WHITE, 0.55);
+    const wall = mix(LAND.farHills, STONE.dark, 0.25);
+    for (let x = 0; x < 80; x++) {
+      const h = 3 + ((x * 7 + kind * 3) % 5 === 0 ? 2 : (x * 3 + kind) % 4 === 0 ? 1 : 0) + (Math.sin(x * (kind ? 0.19 : 0.23) + kind) > 0.6 ? 1 : 0);
+      b.fill(x, 1, 1, h - 1, wall);
+      b.dot(x, h, roof);
+    }
+    for (let x = 3 + kind * 2; x < 80; x += 7) b.pane(x, 1, 2, 2, darker(wall, 0.2));
+  });
+
+/** An island on the fjord far below: low, wooded, snow on its shores; three shapes. */
+const island = (kind: number) =>
+  farPiece(`korketrekkeren island ${kind}`, [22, 14, 30][kind], 4, (b) => {
+    const w = [22, 14, 30][kind];
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.35);
+    for (let x = 0; x < w; x++) {
+      const k = (x - w / 2) / (w / 2);
+      const h = Math.round(3.6 * Math.sqrt(Math.max(0, 1 - k * k)) + ((x * 5 + kind) % 4 === 0 ? 0.6 : 0));
+      if (h < 1) continue;
+      b.fill(x, 1, 1, h, x % 5 === kind ? darker(wood, 0.1) : wood);
+      b.dot(x, 1, mix(K.bank, LAND.farHills, 0.3));
+    }
+  });
+
+/**
+ * Tryvannstårnet on Tryvannshøgda, close above Frognerseteren at the top of the run (order 44): a thin concrete shaft, a thick
+ * collar near its top, the mast over it. Its foot is behind the hill; against the low sun it stands dark, lit on its left edge.
+ */
+const tvTower = () =>
+  farPiece("korketrekkeren tower", 9, 92, (b) => {
+    const concrete = mix(STONE.dark, INK, 0.2);
+    b.fill(3, 3, 1, 58, concrete);
+    b.fill(3, 1, 1, 58, lighter(concrete, 0.3));
+    b.fill(5, 1, 1, 58, darker(concrete, 0.15));
+    b.block(0, 9, 55, 61, lighter(concrete, 0.08));
+    b.fill(0, 9, 55, 55, darker(concrete, 0.25));
+    b.fill(0, 9, 61, 61, lighter(concrete, 0.3));
+    b.fill(3, 3, 62, 66, concrete);
+    b.fill(4, 1, 67, 92, darker(concrete, 0.3));
+    b.fill(3, 3, 78, 78, darker(concrete, 0.3));
+  });
 
 /** Spruce on the slope behind the run, layered, snow on their boughs. Darker in the trees at dusk. Each shape is drawn once and copied (ADR 0036). */
 function spruces(factor: number, n: number, fade: number) {
+  // Behind the forest at the top, the TV tower stands close above Frognerseteren (order 44): it rises out of the view as he goes down.
+  if (factor < 0.3) drawFar(tvTower(), layerX(-355, factor) - 4, TOP_ROW * TILE + 10);
   for (let i = 0; i < n; i++) {
     const wx = i * 31 + ((i * 17) % 13);
+    // Where the forest opens over the crossing and the gap, the spruces stand back (order 44).
+    if (wx > OPEN[0] && wx < OPEN[1]) continue;
     const x = layerX(wx, factor);
     if (x < -20 || x > view.w + 20) continue;
     const foot = behind(x + view.camX) - 14 - ((i * 7) % 18) - (factor < 0.3 ? 16 : 0);

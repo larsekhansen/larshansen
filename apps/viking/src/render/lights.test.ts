@@ -149,6 +149,7 @@ const LIT: Record<string, Record<string, string>> = {
     "invasion alive/invasion": "the invaders' neon sign"
   },
   korketrekkeren: {
+    "lit backdrop": "the town's small lights far below by the fjord (order 44)",
     "tbane alive/ground": "the T sign",
     "frognerseteren levels/korketrekkeren": "Frognerseteren's windows",
     "trailLights levels/korketrekkeren": "the lit trail's lamps, over the dusk under the trees",
