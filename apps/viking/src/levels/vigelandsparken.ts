@@ -9,7 +9,7 @@ import * as V from "@larshansen/pixelkit/swatches/park";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { leap, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
-import { drawOsloHills } from "../render/backdrop";
+import { climbed, drawOsloHills } from "../render/backdrop";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
@@ -224,8 +224,8 @@ const P = PALETTE;
  * Monolith's plateau (order 43) the ridge to the north-west with Holmenkollen's jump on its shoulder and the TV tower on
  * Tryvannshøgda further up, as they are seen from the park. After dusk a window lit here and there along the blocks.
  */
-function farTown() {
-  const base = FLOOR - 30;
+function farTown(lift: number) {
+  const base = FLOOR - 30 - lift;
   drawFar(ridge(), layerX(3200, 0.12), base - 6);
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
@@ -276,8 +276,10 @@ function parkTrees(factor: number, foot: number, n: number, fade: number) {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 44 + ((i * 29) % 21);
-    // The Monolith's plateau is open granite: no trees behind it, and the view opens to the ridge (order 43).
-    if (wx > PLATEAU[0] && wx < PLATEAU[1]) continue;
+    // The Monolith's plateau is open granite: no trees behind it, and the view opens to the ridge (order 43). (A farther
+    // row's tree stands where its spaced-out place puts it, a quarter on.)
+    const at = far ? wx / 0.75 : wx;
+    if (at > PLATEAU[0] && at < PLATEAU[1]) continue;
     const x = spedX(far ? (wx * factor) / (factor * 0.75) : wx, far ? (factor * 0.75) : factor, factor);
     if (x < -30 || x > view.w + 30) continue;
     const h = 22 + ((i * 13) % 14);
@@ -855,8 +857,11 @@ export const VIGELANDSPARKEN: LevelDef = {
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
     far: (v) => {
-      drawOsloHills(v.sky, FLOOR);
-      farTown();
+      // From the plateau and the Monolith's figures the far layer rises with the view (order 43, `climbed`): the ridge stays on
+      // the horizon over the park's crowns, which do not rise.
+      const lift = climbed(ROWS * TILE, 9 * TILE);
+      drawOsloHills(v.sky, FLOOR, lift);
+      farTown(lift);
     },
     mid: () => parkTrees(0.2, FLOOR - 14, 90, 0.35),
     near: () => parkTrees(0.4, FLOOR - 4, 70, 0.12),
