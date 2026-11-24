@@ -5,6 +5,7 @@ import { DOORWAY, FACADE, INK, LAMP, METAL, PAINT, PALETTE, TRAM, WHITE } from "
 import { STOVE_SMOKE, lampPool, smoke } from "@larshansen/pixelkit/props";
 import { TEXTURED } from "../render/tiles";
 import { custom, drawProp, hash, type Piece } from "./ground";
+import { langkaiaFar } from "./langkaiafar";
 
 // The last flat things (order 28, ADR 0051): the props at arm's length that orders 23 to 27 left in rectangles, drawn as
 // order 26 drew the ground: each a per-pixel piece in three to five tones of one material, a lit side, a shadowed foot and
@@ -672,6 +673,9 @@ TEXTURED.prop = (kind, a, b, c = 0, d = 0, e = 0) => {
       return true;
     case "post":
       post(POST, a, b, c, 3);
+      return true;
+    case "islands":
+      langkaiaFar(a);
       return true;
   }
   return false;

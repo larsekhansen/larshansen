@@ -505,7 +505,8 @@ export const LANGKAIA: LevelDef = {
   ],
   art: {
     far: (v) => drawOsloHills(v.sky, WATER),
-    mid: (v) => drawFjord(v.t, WATER),
+    // The fjord's islands and Ekeberg's hillside, Langkaia's own (order 44), with feel's file.
+    mid: (v) => (drawFjord(v.t, WATER), TEXTURED.prop?.("islands", WATER, 0)),
     near(v) {
       // MUNCH and the Barcode across the water, where the front page has them too; Sørenga; the fortress.
       const at = (wx: number) => layerX(wx, 0.4);
