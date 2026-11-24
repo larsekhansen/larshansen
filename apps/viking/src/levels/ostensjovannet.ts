@@ -326,7 +326,8 @@ function farShore(v: View) {
     if (x + f.w < 0 || x > view.w) continue;
     drawFar(f, x, ridgeTop(Math.max(0, Math.min(view.w - 1, Math.round(x + f.w / 2)))) + 4);
   }
-  for (let i = 0; i < 10; i++) drawFar(reedBed(i % 2), layerX(120 + i * 430, 0.12) - 15, base + 1);
+  // The reed beds where the far shore shows, across the long crossing (elsewhere the bank's trees hide them).
+  for (const [i, wx] of [2380, 2690, 2990].entries()) drawFar(reedBed(i % 2), layerX(wx, 0.12) - 15, base + 1);
   // The lake from the far shore to the bank he walks along, as a plane running away from him (order 23): still water,
   // so its strips drift only a little.
   plane({ layer: 0.12, top: base, bottom: FLOOR, from: 0.12, to: 0.36, tones: [mix(L.still, L.glint, 0.3), L.still, L.stillDeep], glint: L.glint, drift: 0.04, strip: 2, near: 4 }, v.t);
@@ -334,9 +335,9 @@ function farShore(v: View) {
 
 /** Østmarka's forest beyond the ridge: dark spruce in an even line, their tips a pixel or two over it. */
 const ostmarka = () =>
-  farPiece("ostensjovannet ostmarka", 96, OSTMARKA + 2, (b) => {
+  farPiece("ostensjovannet ostmarka", 256, OSTMARKA + 2, (b) => {
     const wood = mix(LAND.forestDark, LAND.farHills, 0.15);
-    for (let x = 0; x < 96; x++) {
+    for (let x = 0; x < 256; x++) {
       const tip = (x * 7) % 5 === 0 ? 2 : (x * 3) % 4 === 0 ? 1 : 0;
       b.fill(x, 1, 1, OSTMARKA + tip - 1, wood);
       if (tip) b.dot(x, OSTMARKA + tip - 1, darker(wood, 0.15));

@@ -272,7 +272,10 @@ function farHills(v: View) {
   }
   // The fjord far down under the hills, and the snow on the slopes before it, as planes running away from him (order
   // 23): strips each a little faster than the one above; the water drifts, the snow lies still.
-  plane({ layer: 0.12, top: base - 26, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.38), mix(P.water, WHITE, 0.3)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
+  // The farthest water, under the hills, still and flat: two bands (order 44; as strips of the plane it cost twenty copies a frame).
+  box(0, base - 26, view.w, 8, mix(P.water, WHITE, 0.5));
+  box(0, base - 18, view.w, 6, mix(P.water, WHITE, 0.47));
+  plane({ layer: 0.12, top: base - 12, bottom: base + 40, from: 0.12, to: 0.3, tones: [mix(P.water, WHITE, 0.45), mix(P.water, WHITE, 0.38), mix(P.water, WHITE, 0.3)], glint: WHITE, drift: 0.06, strip: 2, near: 5 }, v.t);
   box(0, base + 40, view.w, 360, mix(P.water, WHITE, 0.35));
   // The fjord's islands, low and wooded under snow, out on the water where the forest opens.
   for (const [wx, k, dy] of [[2470, 0, 0], [2700, 1, 4], [2880, 2, 2]] as const) drawFar(island(k), layerX(wx, 0.12), base - 21 + dy);
@@ -284,15 +287,15 @@ function farHills(v: View) {
 
 /** The town far below along the fjord's near shore: snowy roofs close together, a block here and there, a lit window now and then after dusk; two kinds. */
 const town = (kind: number) =>
-  farPiece(`korketrekkeren town ${kind}`, 80, 7, (b) => {
+  farPiece(`korketrekkeren town ${kind}`, 160, 7, (b) => {
     const roof = mix(LAND.farHills, WHITE, 0.55);
     const wall = mix(LAND.farHills, STONE.dark, 0.25);
-    for (let x = 0; x < 80; x++) {
+    for (let x = 0; x < 160; x++) {
       const h = 3 + ((x * 7 + kind * 3) % 5 === 0 ? 2 : (x * 3 + kind) % 4 === 0 ? 1 : 0) + (Math.sin(x * (kind ? 0.19 : 0.23) + kind) > 0.6 ? 1 : 0);
       b.fill(x, 1, 1, h - 1, wall);
       b.dot(x, h, roof);
     }
-    for (let x = 3 + kind * 2; x < 80; x += 7) b.pane(x, 1, 2, 2, darker(wall, 0.2));
+    for (let x = 3 + kind * 2; x < 160; x += 7) b.pane(x, 1, 2, 2, darker(wall, 0.2));
   });
 
 /** An island on the fjord far below: low, wooded, snow on its shores; three shapes. */
