@@ -272,13 +272,13 @@ const LANE_LAMPS = [82 * TILE, 98 * TILE];
 
 /**
  * Where the far view's landmarks are seen from, in world x (order 44). The walk runs from Vålerenga west to Kværnerdalen, the other
- * way from the line map, which has the city to Gamle Oslo's left (west) and the east side to its right: so, as the map has them, the
- * city toward the fjord at the start (the Barcode's slim towers, and the tall plain slab by the central station), Kampen kirke on its
- * hill to the north-east over the roofs, and Ekeberg's wooded hillside rising close to the south-east at the end.
+ * way from the line map, which has the city and Ekeberg (the stop before) to Gamle Oslo's left: so, as the map has them, the city
+ * toward the fjord at the start (the Barcode's slim towers, and the tall plain slab by the central station), Ekeberg's wooded
+ * hillside rising close to its right, and Kampen kirke on its hill to the north-east, the other way, toward the end.
  */
 const CITY = 380;
-const KAMPEN = 1160;
-const EKEBERG = 3060;
+const EKEBERG = 1000;
+const KAMPEN = 2950;
 
 /** The far hills under the northern lights, snow on the ridge, a window lit here and there; the city toward the fjord; Ekeberg's hillside close at the end. */
 function farHills() {
