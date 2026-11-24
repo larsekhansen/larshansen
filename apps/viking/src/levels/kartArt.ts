@@ -4,6 +4,7 @@ import { box } from "@larshansen/pixelkit/backdrop";
 import { R, ctx, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, COIN, DOORWAY, ENEMY, FACADE, FLAG, FOOD, HAT_RED, INK, LAND, MASONRY, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { plankDoor } from "@larshansen/pixelkit/props";
+import { safeSides, unit } from "@larshansen/pixelkit/text";
 import { rampHeight } from "@larshansen/pixelkit/tilemap";
 import { drawFjord, drawOsloHills } from "../render/backdrop";
 import { drawTick } from "../render/actors";
@@ -822,8 +823,13 @@ const under = (boards: readonly { cx: number; w: number; y: number }[], cx: numb
 /**
  * The boards under the stations as the map lays them (order 41), from the page's `layoutBoards`: each in its row (`boardRows`), and each
  * line's added-up time under every board it would meet. Without the map's look (the bare map) the page lays them as before.
+ *
+ * And on the map every board keeps clear of a notch at the line's start, where the camera stops (order 42): `doors`, the boards the page
+ * laid over the doors, are moved in from the world's left edge by as much as a notch on the left side of the screen takes (`edge`,
+ * world pixels; the kit's `safeSides`, which the pad sets). With no notch nothing moves (no board starts left of the world).
  */
-export function stationBoards<B extends { cx: number; w: number; y: number }>(stations: B[], lines: B[]): B[] {
+export function stationBoards<B extends { cx: number; w: number; y: number }>(stations: B[], lines: B[], doors: B[] = [], edge = Math.ceil(safeSides.left / unit())): B[] {
+  if (stations.length) for (const b of doors) b.cx = Math.max(b.cx, edge + b.w / 2);
   const rows = boardRows(stations);
   const out = stations.map((b, i) => ({ ...b, y: b.y + rows[i] * 13 }));
   for (const b of lines) out.push({ ...b, y: under(out, b.cx, b.w) });

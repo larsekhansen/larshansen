@@ -876,11 +876,13 @@ export function createFeel(host: Host) {
       // The encore's own line (order 29), from its block of the story.
       return s.arrival[id] ?? (id === "encore" ? ENCORE[lang].arrival : null);
     },
-    /** The opening card (order 27): the first time he arrives on the map, once (`again` shows it whatever). True when shown. */
-    opening(lang: "nb" | "en", stage: HTMLElement, again = false): boolean {
-      if (!again && storyTold()) return false;
-      openingCard(STORY[lang], stage);
-      return true;
+    /**
+     * The opening card (order 27): the first time he arrives on the map, once (`again` shows it whatever). The card when shown, so the
+     * page can hold the place's name back until it has gone (order 42); null when not.
+     */
+    opening(lang: "nb" | "en", stage: HTMLElement, again = false): HTMLElement | null {
+      if (!again && storyTold()) return null;
+      return openingCard(STORY[lang], stage);
     },
 
     /** After dark, under the outlines: each invader's glow of its own neon (order 27). */
@@ -1340,7 +1342,7 @@ function storyTold(): boolean {
  * The opening card (order 27): the story's title, its lines, one button on. Any key, a tap on the button or a click
  * closes it (the key is the card's, not the game's). Marks the story told.
  */
-function openingCard(s: StoryWords, stage: HTMLElement) {
+function openingCard(s: StoryWords, stage: HTMLElement): HTMLElement {
   try {
     localStorage.setItem("viking.told", "1");
   } catch {
@@ -1373,6 +1375,7 @@ function openingCard(s: StoryWords, stage: HTMLElement) {
   addEventListener("keydown", key, true);
   stage.appendChild(card);
   on.focus({ preventScroll: true });
+  return card;
 }
 
 /** How long the rune's ring of daylight runs, in steps, and how far it has gone (world pixels). */

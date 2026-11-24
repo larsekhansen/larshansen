@@ -285,8 +285,8 @@ function layoutBoards(s: Scene): Board[] {
       const text = kartWords?.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0))) ?? "";
       lines.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
     });
-  // The map's look lays the stations' boards in rows so none meets another (order 41, `stationBoards`).
-  boards.push(...(stationBoards?.(stations, lines) ?? [...stations, ...lines]));
+  // The map's look lays the stations' boards in rows so none meets another (order 41, `stationBoards`), and every board clear of a notch where the line starts (order 42).
+  boards.push(...(stationBoards?.(stations, lines, boards) ?? [...stations, ...lines]));
   s.signs.forEach((sg) => {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
@@ -368,7 +368,7 @@ function openScene(id: string, at?: string) {
   // The story (order 27): a line under the place's name where it has one, and the opening card the first time on the map.
   const line = feel?.arrival(def.id, lang, !progress.cleared.length);
   if (line && state.banner) state.banner.sub = line;
-  if (scene.map) feel?.opening(lang, stage);
+  if (scene.map) story = feel?.opening(lang, stage);
   // On the map after a level cleared for the first time: its stone and the station it opened answer.
   if (scene.map && firstClear) {
     const i = ORDER.indexOf(firstClear);
@@ -1303,7 +1303,8 @@ function camera(elapsedMs: number, snap: boolean) {
   const cam = { x: view.camXf - shake.x, y: view.camYf - shake.y };
   const bounds = { width: scene.play.map.width, bottom, top: bar };
   let at = follow(cam, focus, bounds, view, elapsedMs, snap);
-  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing, p.body.vy);
+  // On the map the boards under the stations keep clear of the pad's bottom row too (order 42): the foot of the lowest.
+  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing, p.body.vy, scene.map ? Math.max(...scene.boards.map((b) => b.y)) + 11 : undefined);
   const nudge = feel?.nudge(state.steps);
   shake.x = nudge?.x ?? 0;
   shake.y = nudge?.y ?? 0;
@@ -1595,6 +1596,11 @@ const benchStop = { id: "bench" };
 function plated(b: typeof state.banner) {
   drawn.banner = null;
   if (!b) return null;
+  // At the first visit the opening card comes up with the map's plate: the plate waits until the card has gone (order 42).
+  if (story?.isConnected) {
+    b.since = state.steps;
+    return null;
+  }
   const age = state.steps - b.since;
   const alpha = bannerAlpha(age);
   if (alpha <= 0) return null;
@@ -1611,6 +1617,9 @@ function plated(b: typeof state.banner) {
   state.banner = null;
   return null;
 }
+
+/** The story's opening card while it is up (order 27), which the place's name waits for. */
+let story: HTMLElement | null | undefined;
 
 /** What the page drew where, for `?debug` (order 21's measuring, `tools/glance/hand.ts`). */
 const drawn: { banner: Rect | null } = { banner: null };
