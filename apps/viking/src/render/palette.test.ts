@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+import { readFileSync } from "node:fs";
 import { target, view } from "@larshansen/pixelkit/paint";
 import { TILE } from "@larshansen/pixelkit/config";
 import { ENEMY, ROLES, STAND } from "@larshansen/pixelkit/palette";
@@ -751,4 +752,77 @@ describe("under a level's own dark the red outline reads as clearly as by day (o
     expect(lane.after).toBeGreaterThanOrEqual(forest.after);
     expect(laneGlow.after).toBeGreaterThanOrEqual(forestGlow.after);
   }, 120_000);
+});
+
+// Order 41: what is drawn over a level, the screens between, looked at on one table (`apps/viking/tools/review/o41/before.md`). The
+// touch pad's buttons lie over the picture, see-through; a pressed one went white and over snow, white marble or a bright sky it and its
+// word were gone (0 off its fill), and a dimmed one was told by its faintness alone. Held here, by the colours the stylesheet gives them
+// (read from `styles.css`, so the test holds the page's own rules) over every colour any level paints as a field, by day and under each
+// tint, and over every sky: a button's word stands off its own fill at rest, pressed and dimmed; a pressed one has its white ring, and it
+// stands off its fill; the button is seen against the ground by its fill or its edge. And the place's name on its plate, the help line,
+// a bubble's words, and the "!" over what turns on him and the arrow at the screen's edge (the warning red with its near-black edge).
+describe("what is drawn over a level stands off every level's ground (order 41)", () => {
+  const css = readFileSync(new URL("../styles.css", import.meta.url), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  /** The body of the first rule whose selector list contains `sel`. */
+  const rule = (sel: string) => [...css.matchAll(/([^{}]*)\{([^}]*)\}/g)].find(([, s]) => s.split(",").some((x) => x.trim() === sel))?.[2] ?? "";
+  const rgba = (body: string, prop: string) => {
+    const m = new RegExp(`${prop}:[^;]*?rgba\\((\\d+), (\\d+), (\\d+), ([\\d.]+)\\)`).exec(body);
+    return m ? { c: [+m[1], +m[2], +m[3]] as Rgb, a: +m[4] } : null;
+  };
+  const WHITE: Rgb = [255, 255, 255];
+  const grounds: Rgb[] = [];
+  beforeAll(async () => {
+    for (const st of BUILT) {
+      const f = levelFields(await loadLevel(st.id), "day", FIELD_SHARE, await paintedOf(st.id));
+      for (const phase of ["day", "evening", "twilight", "night"] as Phase[]) for (const c of f.keys()) grounds.push(tinted(rgb(c), phase));
+    }
+    for (const phase of ["day", "evening", "twilight", "night"] as Phase[]) {
+      const rec = areaRecorder();
+      target(rec.ctx);
+      Object.assign(view, { w: 320, h: 200, camX: 0, camY: 0 });
+      drawSky(skyFor(new Date(2026, 5, 15, 12), phase), 0);
+      for (const c of rec.area.keys()) if (c.startsWith("#")) grounds.push(rgb(c));
+    }
+  }, 120_000);
+  /** The least of `f` over every ground, and where. */
+  const least = (f: (g: Rgb) => number) => grounds.reduce((m, g) => (f(g) < m.v ? { v: f(g), at: g } : m), { v: Infinity, at: [0, 0, 0] as Rgb });
+
+  const REST = 18;
+  const PRESSED = 35;
+  const DIMMED = 9;
+  const SEEN = 15;
+  test(`the pad's words: ${REST} or more off their button's fill at rest, ${PRESSED} or more pressed (with its white ring), ${DIMMED} or more dimmed (with its edge in dashes); each button ${SEEN} or more off the ground by its fill or its edge`, () => {
+    const base = rule(".pad button");
+    const pressedRule = rule('.pad [data-pressed="down"]');
+    const dimRule = rule(".pad .dim");
+    const fill = rgba(base, "background")!;
+    const edge = rgba(base, "border")!;
+    const pressed = rgba(pressedRule, "background")!;
+    const dim = Number(/opacity: ([\d.]+)/.exec(dimRule)?.[1]);
+    expect(pressedRule).toMatch(/box-shadow: inset 0 0 0 3px #fff/);
+    expect(dimRule).toMatch(/border-style: dashed/);
+    const over = (g: Rgb, c: { c: Rgb; a: number }, k = 1) => mixRgb(g, c.c, c.a * k);
+    const rest = least((g) => deltaE(WHITE, over(g, fill)));
+    const down = least((g) => deltaE(WHITE, over(g, pressed)));
+    const dimmed = least((g) => deltaE(mixRgb(g, WHITE, dim), over(g, fill, dim)));
+    const seen = least((g) => Math.max(deltaE(over(g, fill), g), deltaE(over(g, edge), g)));
+    console.log(`The pad over ${grounds.length} grounds, at the least: a word at rest ${rest.v.toFixed(1)}, pressed ${down.v.toFixed(1)}, dimmed ${dimmed.v.toFixed(1)}; a button against the ground ${seen.v.toFixed(1)}`);
+    expect(rest.v).toBeGreaterThanOrEqual(REST);
+    expect(down.v).toBeGreaterThanOrEqual(PRESSED);
+    expect(dimmed.v).toBeGreaterThanOrEqual(DIMMED);
+    expect(seen.v).toBeGreaterThanOrEqual(SEEN);
+  });
+
+  test("the place's name on its plate and the help line: their words 45 or more off the plate over every ground; a bubble's words 80 or more off the bubble", () => {
+    // The kit's plate (`text.ts`, rgba(20, 22, 34, 0.74)) and the help line's (`chrome.css`, 0.72), the bubble's white (0.96) and its ink.
+    const plate = least((g) => deltaE(WHITE, mixRgb(g, [20, 22, 34], 0.72)));
+    const words = least((g) => deltaE(rgb("#1f1a17"), mixRgb(g, WHITE, 0.96)));
+    expect(plate.v).toBeGreaterThanOrEqual(45);
+    expect(words.v).toBeGreaterThanOrEqual(80);
+  });
+
+  test('the "!" over what turns on him and the arrow at the screen\'s edge: by the warning red or its near-black edge, 20 or more off every ground', () => {
+    const mark = least((g) => Math.max(deltaE(rgb(ENEMY.warning), g), deltaE(rgb(ENEMY.line), g)));
+    expect(mark.v).toBeGreaterThanOrEqual(20);
+  });
 });

@@ -132,3 +132,13 @@ byte-identical). Measured in place as order 39 measured: every skilling, cheese 
 as before. The shadow side only (a line on the lower right) was tried as the lighter means and not chosen: it read as relief, but the cheese's lit
 top stayed warm on warm (27.9 at Ekeberg and Langkaia) and a skilling seen edge on became a dark stick. Held by `alive/takes.test.ts`. Undoing it is
 the call in `render/dusk.ts` and that test.
+
+## Amended by order 41 (24 November 2026): the rune's stone a pale rim on its lit side after dusk
+Decided by the planner on Lars's behalf ("carry on as planned"; a look, easy to undo), as the amendment above left it: the rune's stone has a
+dark edge of its own all round, so a dark line could not help it, and on the night's dark ground it stood 6.7 to 19.3 off what was round it
+(Langkaia's night and twilight, 13.5 at Østensjøvannet's). Now, under any sky but the day's, the stone's own edge pixels on its top and its
+left, where the light comes from (the moon will do), are a pale moonlit grey (`RUNE_RIM`, `#cdcdd2`): not a line all round, not a pixel
+outside its shape, and it bobs with the stone. It stands 30 or more off the stone's own dark edge under every tint, 39.8 off the warning red
+and 16.1 or more off every role's colour (the nearest, the calm pale). Drawn by `runeRim` (`alive/things.ts`) in `afterDark` (`render/dusk.ts`,
+`feel`'s file), only while the rune can be taken; by day nothing changes (the pictures are byte-identical). Measured in place:
+`apps/viking/tools/review/o41/after.md`. Held by `alive/takes.test.ts`. Undoing it is the call in `render/dusk.ts` and that test.

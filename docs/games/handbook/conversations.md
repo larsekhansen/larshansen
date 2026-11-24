@@ -216,6 +216,14 @@ By day nothing changed. Every skilling, cheese and bracteate met after dusk now 
 call in `apps/viking/src/render/dusk.ts` and its test (`alive/takes.test.ts`). For him to judge: whether a coin with a dark rim at dusk
 still reads as treasure, or looks heavier than he likes.
 
+### Order 41: a pale rim on the rune's stone after dusk (the planner's call)
+
+Not something Lars said: order 40 left the rune's stone dark on dark at night and twilight (its own edge is a dark line all round, 6.7 to
+19.3 off the night's ground round it at Langkaia, 13.5 at Østensjøvannet), which a dark line cannot help. The planner decided on his behalf,
+as a look that is easy to undo (ADR 0044 amended): under any sky but the day's the stone's own edge on its top and left, where the light
+comes from, is a pale moonlit grey, not a line all round. By day nothing changed. Undoing it is one call in `apps/viking/src/render/dusk.ts`
+and its test (`alive/takes.test.ts`). For him to judge: whether the stone reads as lit by the moon, or as a stone with a pale edge.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.

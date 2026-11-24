@@ -518,13 +518,23 @@ function welder(t: number) {
   // Its sparks hurt, so under the glamour they are its fire (order 27): magenta and lime, as the brazier's.
   if (phase !== "rest" || flick) light(x + 10, y - 6, 2, 2, "lamp", phase === "rest" ? "#9fd0ff" : ENEMY.magenta);
   if (phase === "rest") return;
-  // The warning: a few sparks dripping off the beam's edge. Live: a curtain of them to the floor below.
-  const n = phase === "warn" ? 3 : 12;
+  if (phase === "warn") {
+    // Order 41: the warning was three sparks a pixel wide dripping off the beam (18 pixels, the fifth smallest tell in the game). Now
+    // the torch flares, a cross of sparks round its tip, and the curtain starts already: eight sparks off the beam's edge, three
+    // pixels long, falling no further than a third of the way and further as the second goes, held where they are with reduced motion.
+    light(x + 7, y - 6, 8, 2, "lamp", ENEMY.lime);
+    light(x + 10, y - 9, 2, 8, "lamp", ENEMY.lime);
+    light(x + 10, y - 6, 2, 2, "lamp", ENEMY.magenta);
+    const reach = 12 + Math.floor((age / SPARKS.beat!.warn) * 10);
+    for (let i = 0; i < 8; i++) light(SPARKS.x + ((i * 5) % SPARKS.w), SPARKS.y + (view.reduced ? (i * 7) % 16 : (age * 2 + i * 9) % reach), 1, 3, "lamp", i % 3 ? ENEMY.lime : ENEMY.magenta);
+    return;
+  }
+  // Live: a curtain of them to the floor below.
+  const n = 12;
   for (let i = 0; i < n; i++) {
     const fall = view.reduced ? (i * 11) % 44 : (age * 3 + i * 17) % 44;
     const sx = SPARKS.x + ((i * 5) % SPARKS.w);
-    const sy = SPARKS.y + (phase === "warn" ? fall % 12 : fall);
-    light(sx, sy, 1, 2, "lamp", i % 3 ? ENEMY.lime : ENEMY.magenta);
+    light(sx, SPARKS.y + fall, 1, 2, "lamp", i % 3 ? ENEMY.lime : ENEMY.magenta);
   }
 }
 
@@ -625,13 +635,19 @@ function cab() {
 function gust(z: Zone, t: number) {
   const phase = pulsePhase(t, z.beat!);
   if (phase === "rest") return;
-  const n = phase === "warn" ? 10 : 26;
+  // Order 41, as Ekeberg's gust in order 40: more of the dust from its first step (it was ten streaks, sixteen now and more as the
+  // second goes) and a scrap of paper in every fourth, lit on its windward edge; thick while it pushes, as before.
+  const { age, of } = pulseAge(t, z.beat!);
+  const n = phase === "warn" ? 16 + Math.floor((age / of) * 8) : 26;
   const tt = view.reduced ? 0 : t;
   for (let i = 0; i < n; i++) {
     const x = z.x + z.w - ((i * 97 + tt * (phase === "warn" ? 3 : 5)) % z.w);
     const y = z.y + ((i * 37) % z.h);
     R(Math.round(x), y, i % 5 === 0 ? 3 : 6, 1, mix(S.concreteLight, WHITE, 0.3));
-    if (i % 7 === 0) R(Math.round(x) - 2, y - 1, 2, 2, S.fence);
+    if (i % (phase === "warn" ? 4 : 7) === 0) {
+      R(Math.round(x) - 2, y - 1, 2, 2, S.fence);
+      if (phase === "warn") R(Math.round(x) - 2, y - 1, 1, 2, mix(S.fence, WHITE, 0.6));
+    }
   }
 }
 

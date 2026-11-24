@@ -745,6 +745,26 @@ function closing(v: View) {
   }
 }
 
+/**
+ * The stone that sinks, about to go (order 41, as order 40 mended a lily pad about to sink): the water stirring round its pillar's
+ * foot, a glint each side and a broken line of them on the surface, for the whole of its last half second, still. Its tremble alone
+ * was its tell, and with reduced motion only the paint's dashes joined.
+ */
+function sinking(v: View) {
+  const s = v.grounds as Ruins | null;
+  if (!s) return;
+  STONES.forEach((st, i) => {
+    const on = s.on[i];
+    if (!st.sinks || !s.up[i] || on === null || v.t - on <= SINK.firm / 2) return;
+    const x = st.c * TILE;
+    const y = (st.r + 1) * TILE;
+    const foam = mix(PALETTE.water, PALETTE.foam, 0.7);
+    R(x, y, 2, 1, foam);
+    R(x + TILE - 2, y, 2, 1, foam);
+    for (let k = -3; k < TILE + 3; k += 4) R(x + k, y + 2, 2, 1, mix(PALETTE.water, PALETTE.foam, 0.5));
+  });
+}
+
 /** Old stone (order 26, from the textured set): rubble in courses, mortar, a block split here and there, moss in the shadowed joints and on top where it is open to the sky. */
 const OLD_STONE: Grain = { name: "gb-stone", kind: "blocks", ramp: [G.stoneDark, mix(G.stone, G.stoneDark, 0.5), G.stone, G.stoneLight], h: 8, w: 16, off: 6, split: 0.45, kerb: [G.stoneLight, G.stoneLight], accent: { moss: G.moss, tuft: G.moss } };
 function oldStone(c: number, r: number, x: number, y: number, map: TileMap) {
@@ -1421,6 +1441,7 @@ export const GAMLEBYEN: LevelDef = {
       pools();
       reflections(v);
       closing(v);
+      sinking(v);
       const s = v.grounds as Ruins | null;
       if (s) {
         R(TOWER.x, s.y, TOWER.w, 6, G.risen);

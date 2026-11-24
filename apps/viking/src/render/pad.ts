@@ -331,7 +331,9 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
       // shield, or Duck on the sledge, once he has it; with neither, the way in, dimmed.
       const door = controls.enter.classList.contains("show");
       const shield = !controls.shield.hidden && !door;
-      if (controls.shield.classList.contains("aside") === shield) {
+      // Either out of step with what this frame wants (order 41: the shield starts without `aside`, so away from a door at the first
+      // frame the way in stayed shown under it, its dimmed edge round the shield's).
+      if (controls.shield.classList.contains("aside") === shield || controls.enter.classList.contains("aside") !== shield) {
         controls.shield.classList.toggle("aside", !shield);
         controls.enter.classList.toggle("aside", shield);
       }

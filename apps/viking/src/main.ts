@@ -265,21 +265,25 @@ function doorSpots(def: LevelDef, play: Play): DoorSpot[] {
 /** Boards: over each door, on each sign post; on the map, under each station, with its best time. */
 function layoutBoards(s: Scene): Board[] {
   const boards: Board[] = [];
+  const stations: Board[] = [];
   for (const d of s.doors) {
     if (s.map && (ORDER.includes(d.id) || d.id === ENCORE_STOP.id)) {
       const best = progress.best[d.id];
       const text = best !== undefined ? `${d.sign} ${formatTime(best)}` : d.sign;
-      boards.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10, w: boardWidth(text) });
+      stations.push({ text, cx: d.x + d.w / 2, y: d.bottom + 10, w: boardWidth(text) });
     } else boards.push(doorBoard(d, 13));
   }
   // On the map, under the end of a line all cleared: its best times added up.
+  const lines: Board[] = [];
   if (s.map)
     [LINE_1, LINE_2].forEach((ids, n) => {
       const end = s.doors.find((d) => d.id === ids[ids.length - 1]);
       if (!end || ids.some((id) => progress.best[id] === undefined)) return;
       const text = kartWords?.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0))) ?? "";
-      boards.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
+      lines.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
     });
+  // The map's look lays the stations' boards in rows so none meets another (order 41, `stationBoards`).
+  boards.push(...(stationBoards?.(stations, lines) ?? [...stations, ...lines]));
   s.signs.forEach((sg) => {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
@@ -302,6 +306,8 @@ const standAt = (d: Door) => place(d.x + d.w / 2, d.bottom);
  * soon, so it is asked for as the page starts. Until it is here (or if it never comes) the map is bare.
  */
 let kartArt: KartArt | null = null;
+/** How the map's look lays the boards under its stations (order 41). */
+let stationBoards: (typeof import("./levels/kartArt"))["stationBoards"] | null = null;
 /** The map's words, which come with its look. */
 let kartWords: (typeof import("./levels/kartArt").KART_WORDS)["en"] | null = null;
 let kartLoading: Promise<void> | null = null;
@@ -310,6 +316,7 @@ const loadKart = () =>
     (m) => {
       kartArt = m.kartArt;
       kartWords = m.KART_WORDS[lang];
+      stationBoards = m.stationBoards;
     },
     (e) => {
       kartLoading = null;
@@ -802,9 +809,10 @@ function pixelSvg(rows: string[], colors: Record<string, string>): SVGSVGElement
   );
   return svg;
 }
-// A waffle heart: crust and dough in a grid, as the waffle iron leaves it.
-const WAFFLE_HEART = [".cc.cc.", "cdcdcdc", "dcdcdcd", "cdcdcdc", ".cdcdc.", "..cdc..", "...c..."];
-const hearts = Array.from({ length: HEARTS }, () => heartsEl.appendChild(pixelSvg(WAFFLE_HEART, { c: FOOD.waffleCrust, d: FOOD.waffleDough })));
+// A waffle heart: crust and dough in a grid, as the waffle iron leaves it, its edge the crust's shade (order 41: a heart lost is
+// that edge alone, hollow, where it was the whole heart faint: `.hearts svg.gone` in styles.css).
+const WAFFLE_HEART = [".oo.oo.", "odcocdo", "ocdcdco", "odcdcdo", ".ocdco.", "..odo..", "...o..."];
+const hearts = Array.from({ length: HEARTS }, () => heartsEl.appendChild(pixelSvg(WAFFLE_HEART, { c: FOOD.waffleCrust, d: FOOD.waffleDough, o: FOOD.waffleShade })));
 // The helmet over the hat, with the pompom on top: one for the lives, with the number beside it.
 livesEl.appendChild(pixelSvg(["...w...", "..iii..", ".iiiii.", "iiiiiii", "rrrrrrr", ".s...s."], { w: WHITE, i: PALETTE.ironDark, r: PALETTE.iron, s: PALETTE.ironDark }));
 const livesN = livesEl.appendChild(document.createElement("span"));

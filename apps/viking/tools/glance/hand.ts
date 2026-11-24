@@ -1,7 +1,7 @@
 // The game in the hand (order 21): pictures of a screen state at a phone's size and pixel ratio, with
 // the touch controls showing, and what covers the game's picture measured from the page itself.
 //
-//   bun tools/glance/hand.ts [--size=390x844] [--dpr=3] [--touch] [--turn=844x390] [--port=5186] <outDir> <base> <states.tsv>
+//   bun tools/glance/hand.ts [--size=390x844] [--dpr=3] [--touch] [--turn=844x390] [--port=5186] [--lang=nb-NO] <outDir> <base> <states.tsv>
 //
 // <base> is where a built game is served (http://localhost:5184). Each line of the states file is a name, a
 // tab, and an address's path and query (`/viking/?debug&steps=40&level=langkaia#langkaia`). This tool serves
@@ -14,7 +14,8 @@
 // `--turn` turns the phone once the page has drawn: the frame is given the second size, and measured again.
 //
 // Writes <outDir>/<name>_<W>x<H>.png and a line of JSON per state to <outDir>/measure.jsonl; `hand-table.ts`
-// makes the tables of them.
+// makes the tables of them. `--lang=nb-NO` (order 41) has the fresh profile ask for that language first, as `tools/shots.ts` does; the
+// picture's name ends with it.
 
 import { appendFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync, existsSync, statSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -25,7 +26,7 @@ const args = process.argv.slice(2);
 const opt = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
 const [outDir, base, list] = args.filter((a) => !a.startsWith("--"));
 if (!outDir || !base || !list) {
-  console.error("usage: bun tools/glance/hand.ts [--size=390x844] [--dpr=3] [--touch] [--turn=844x390] [--port=5186] <outDir> <base> <states.tsv>");
+  console.error("usage: bun tools/glance/hand.ts [--size=390x844] [--dpr=3] [--touch] [--turn=844x390] [--port=5186] [--lang=nb-NO] <outDir> <base> <states.tsv>");
   process.exit(2);
 }
 const [W, H] = (opt("size") ?? "390x844").split("x").map(Number);
@@ -33,6 +34,7 @@ const turn = opt("turn")?.split("x").map(Number) ?? null;
 const DPR = Number(opt("dpr") ?? 3);
 const TOUCH = args.includes("--touch");
 const PORT = Number(opt("port") ?? 5186);
+const LANG = opt("lang");
 mkdirSync(outDir, { recursive: true });
 
 /** Runs in the frame's parent, with the game's window: everything the tables need, in CSS pixels of the game's window. */
@@ -224,6 +226,7 @@ function profile(): string {
   const dir = mkdtempSync(join(tmpdir(), "hand-"));
   const prefs = [`user_pref("layout.css.devPixelsPerPx", "${DPR.toFixed(1)}");`];
   // A coarse pointer and no hover, as a phone reports: the page's `(pointer: coarse)` is true.
+  if (LANG) prefs.push(`user_pref("intl.accept_languages", "${LANG}");`, `user_pref("intl.locale.requested", "${LANG}");`);
   if (TOUCH) prefs.push(`user_pref("ui.primaryPointerCapabilities", 1);`, `user_pref("ui.allPointerCapabilities", 1);`);
   writeFileSync(join(dir, "user.js"), prefs.join("\n") + "\n");
   return dir;
@@ -234,7 +237,7 @@ let failed = 0;
 for (const line of readFileSync(list, "utf8").split("\n")) {
   if (!line.trim() || line.startsWith("#")) continue;
   const [name, path] = line.split("\t");
-  const key = `${name}_${W}x${H}${turn ? `-${turn[0]}x${turn[1]}` : ""}`;
+  const key = `${name}_${W}x${H}${turn ? `-${turn[0]}x${turn[1]}` : ""}${LANG ? `_${LANG}` : ""}`;
   const file = join(outDir, `${key}.png`);
   rmSync(file, { force: true });
   const prof = profile();

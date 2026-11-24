@@ -5,7 +5,7 @@ import type { Play } from "../game/play";
 import { RUNE_CHARS, runeCells, type RuneChar } from "../game/runes";
 import type { View } from "../levels/types";
 import { glows } from "../alive/glamour";
-import { takeLines } from "../alive/things";
+import { runeRim, takeLines } from "../alive/things";
 import { drawCheese, drawSkilling } from "./pickups";
 import { eyes, ringCount, rings, ringsTo } from "./sprite";
 import { hazardEdge } from "./stand";
@@ -45,6 +45,9 @@ export function afterDark(p: Play, v: View, page: PageDrawing) {
   // What he takes keeps a line of the level's dark round it (order 40): against an evening sky it was warm on warm.
   street.globalAlpha = 1;
   takeLines(p, v.sky.phase, !!page.owned?.());
+  // The rune's stone a pale rim on its lit side (order 41): its own edge is dark, and on the night's dark ground it was lost.
+  // (Where the page draws it: free of its troll or its boss, not yet taken. `runeFree` is the first script's; not imported, so it exports no more.)
+  if (p.rune && p.runeAt === null && p.def.rune >= 0 && (!p.troll || p.troll.phase === "stone") && (!p.boss || p.boss.rules.beaten(p.boss.state))) runeRim(p.rune.x, p.rune.y, p.t, p.def.rune);
   street.globalAlpha = 0.8;
   p.skilling.forEach((s, i) => s.at === null && drawSkilling(s.box.x + 1, s.box.y + 1, p.t, i));
   if (p.cheese && p.cheese.at === null) drawCheese(p.cheese.box.x, p.cheese.box.y - 2, p.t);

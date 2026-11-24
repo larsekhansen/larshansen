@@ -1,7 +1,7 @@
 import { afterAll, describe, expect, test } from "bun:test";
-import { target, view } from "@larshansen/pixelkit/paint";
+import { drawLights, lights, target, view } from "@larshansen/pixelkit/paint";
 import { placeBody } from "@larshansen/pixelkit/physics";
-import { pulsePhase } from "@larshansen/pixelkit/timed";
+import { pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import { autopilot, type Move } from "../game/bot";
 import { leap, type Enemy } from "../game/enemies";
 import { newPlay, stepPlay, type Play } from "../game/play";
@@ -9,6 +9,8 @@ import { SHIELD_RULES } from "../game/shield";
 import { ORDER, loadLevel } from "../levels/index";
 import * as ROUTES from "../levels/routes";
 import { CLOSERS, STONES } from "../levels/gamlebyen";
+import { GUSTS, SPARKS } from "../levels/bjorvika";
+import { HERON } from "../levels/ostensjovannet";
 import type { LevelDef, View } from "../levels/types";
 import { drawEnemy } from "./pickups";
 import { skyOf } from "./fields";
@@ -19,7 +21,9 @@ import "./feel";
 // and at steps inside it, in a box round it; it must change at least `least` pixels there at every one of those steps, with motion and
 // with reduced motion. Measured in place (`apps/viking/tools/review/o40/after.md`), these were the smallest tells in the game: the
 // track rat's three stones (6 pixels, on and off), the wall that closes behind him at Gamlebyen (about 13), a lily pad or a bundle
-// about to sink (a pixel's tremble), a gust coming at Ekeberg (a few leaves of the evening's own colour). What the page outlines is
+// about to sink (a pixel's tremble), a gust coming at Ekeberg (a few leaves of the evening's own colour). Order 41 mended the four
+// it left and holds them here: the welder's sparks at Bjørvika (19 pixels: three sparks dripping), Bjørvika's gust (60), the stone
+// that sinks at Gamlebyen and the heron (a tremble, and with reduced motion nothing here: 0). What the page outlines is
 // recorded without its outline here (`outlined` just draws where there is no page), so a figure's numbers are its body's alone.
 
 const NONE = { left: false, right: false, jumpHeld: false, jumpPressed: false };
@@ -53,6 +57,10 @@ interface Tell {
   level: string;
   /** Where he is put (as `?x=&y=`), or the route played. */
   at?: [number, number];
+  /** Put in the air there, to fall onto what carries him (the heron). */
+  fall?: boolean;
+  /** The route played until this holds, then nothing pressed (he stays on the stone that sinks). */
+  hold?: (p: Play) => boolean;
   on: (p: Play) => boolean;
   /** The box round it, in world pixels, from the play when it comes on. */
   box: (p: Play) => [number, number, number, number];
@@ -76,6 +84,8 @@ const closing = (p: Play) =>
     return p.body.x + 5 > c * 16 + 8 && !STONES.some((st, i) => st.behind && st.c === c && (s.at[i] !== null || s.up[i]));
   });
 const soon = (p: Play) => p.def.grounds?.stands?.(p.grounds!.state, p.t)?.find((s) => s.soon);
+/** A beat's warning beginning this step. */
+const begins = (t: number, beat: Pulse) => pulsePhase(t, beat) === "warn" && pulsePhase(t - 1, beat) === "rest";
 const TELLS: Tell[] = [
   { ...jumper("the track rat's snout and ballast (Stortinget)", "stortinget", 4, 10) },
   { ...jumper("the salmon's water (Akerselva)", "akerselva", 0, 12) },
@@ -106,6 +116,54 @@ const TELLS: Tell[] = [
     draw: (def, _p, v) => def.art.front?.(v),
     least: 10
   },
+  // Order 41: the four order 40 left. The welder's sparks are lights (Bjørvika is always in its evening): drawn as after dusk.
+  {
+    name: "the welder's sparks about to fall (Bjørvika)",
+    level: "bjorvika",
+    at: [40 * 16, 100],
+    on: (p) => begins(p.t, SPARKS.beat!),
+    box: () => [SPARKS.x - 6, SPARKS.y - 26, SPARKS.x + SPARKS.w + 6, SPARKS.y + 30],
+    draw: (def, _p, v) => {
+      lights.length = 0;
+      def.art.back(v);
+      drawLights();
+    },
+    least: 60
+  },
+  {
+    name: "a gust coming (Bjørvika)",
+    level: "bjorvika",
+    at: [40 * 16, 100],
+    on: (p) => begins(p.t, GUSTS[0].beat!),
+    box: () => [GUSTS[0].x - 24, GUSTS[0].y, GUSTS[0].x + GUSTS[0].w + 24, GUSTS[0].y + GUSTS[0].h],
+    draw: (def, _p, v) => def.art.front?.(v),
+    least: 80
+  },
+  {
+    name: "the stone that sinks about to go (Gamlebyen)",
+    level: "gamlebyen",
+    hold: (p) => (p.grounds!.state as { on: (number | null)[] }).on.some((on) => on !== null),
+    on: (p) => soon(p)?.w === 16,
+    box: (p) => [soon(p)!.x - 6, soon(p)!.y - 4, soon(p)!.x + 22, soon(p)!.y + 24],
+    draw: (def, p, v) => {
+      // Its tile reads the ruins' state the back pass leaves (`shown`), as in the page.
+      def.art.back(v);
+      const s = soon(p) ?? { x: 0, y: 0 };
+      for (const c of [s.x / 16 - 1, s.x / 16, s.x / 16 + 1]) for (const r of [s.y / 16, s.y / 16 + 1]) def.art.tile?.(p.map.tileAt(c, r), c, r, c * 16, r * 16, p.map, v.sky);
+      def.art.front?.(v);
+    },
+    least: 16
+  },
+  {
+    name: "the heron about to fly (Østensjøvannet)",
+    level: "ostensjovannet",
+    at: [HERON.x + 1, HERON.y - 20],
+    fall: true,
+    on: (p) => soon(p)?.w === HERON.w,
+    box: () => [HERON.x - 6, HERON.y - 20, HERON.x + HERON.w + 8, HERON.y + 34],
+    draw: (def, _p, v) => def.art.front?.(v),
+    least: 16
+  },
   {
     name: "a gust coming (Ekeberg)",
     level: "ekeberg",
@@ -121,14 +179,14 @@ const viewOf = (def: LevelDef, p: Play, t: number): View => ({ sky: skyOf(def, "
 const saved = { ...view };
 afterAll(() => void Object.assign(view, saved));
 
-describe("no tell smaller than it was held to (order 40)", () => {
+describe("no tell smaller than it was held to (orders 40 and 41)", () => {
   for (const tell of TELLS)
     test(`${tell.name}: ${tell.least} pixels or more at every step of it, with motion and with reduced motion`, async () => {
       const def = await loadLevel(tell.level);
       const p = newPlay(def, optsFor(def));
       if (tell.at) {
         const [x, y] = tell.at;
-        const at = p.map.surfaceBelow(x, y);
+        const at = tell.fall ? null : p.map.surfaceBelow(x, y);
         if (at !== null) placeBody(p.body, x, at);
         else {
           placeBody(p.body, x, y);
@@ -138,9 +196,11 @@ describe("no tell smaller than it was held to (order 40)", () => {
       const pilot = tell.at ? null : autopilot(routeOf(tell.level) ?? []);
       // The world a step before it came on: where he was and the level's own ground (a pad he stood on, the ruins).
       let prev = { grounds: null as unknown, him: { x: 0, y: 0 } };
+      let held = false;
       for (let k = 0; k < 4000 && !tell.on(p); k++) {
         prev = { grounds: structuredClone(p.grounds?.state ?? null), him: { x: p.body.x + 5, y: p.body.y + 7 } };
-        stepPlay(p, pilot ? (pilot(p) ?? NONE) : NONE);
+        held ||= !!tell.hold?.(p);
+        stepPlay(p, pilot && !held ? (pilot(p) ?? NONE) : NONE);
       }
       expect(tell.on(p)).toBe(true);
       const [x0, y0, x1, y1] = tell.box(p);

@@ -402,7 +402,14 @@ function faintly(on: boolean, draw: () => void) {
   g.globalAlpha = a;
 }
 
-/** The station on the line: a white square in a frame of its line's colour, as on a metro map; grey while closed. */
+/**
+ * A padlock on a closed station's face (order 41: closed was told from open by its greyer frame and face alone, colour only): its
+ * shackle in iron lit on the left, its body dark iron lit along its top with a keyhole, 6 x 6 on the 8 x 6 face.
+ */
+const LOCK = ["..ss..", ".s..S.", "bLLLLb", "bbkbbb", "bbkbbb", "dddddd"];
+const LOCK_INK: Record<string, string> = { s: mix(METAL.lampHat, WHITE, 0.35), S: METAL.lampHat, b: METAL.castIron, L: mix(METAL.castIron, WHITE, 0.3), k: mix(WHITE, STONE.base, 0.4), d: mix(METAL.castIron, INK, 0.5) };
+
+/** The station on the line: a white square in a frame of its line's colour, as on a metro map; grey while closed, with a padlock on it. */
 function stationMark(i: number, open: boolean) {
   const x = stationX(i);
   const frame = open ? (LINE[i].line === 2 ? LINE_2_COLOR : HAT_RED) : mix(LINE[i].line === 2 ? LINE_2_COLOR : HAT_RED, INK, 0.4);
@@ -411,8 +418,10 @@ function stationMark(i: number, open: boolean) {
   // edge in the frame's shadow. Stortinget is where line 2 leaves: an orange bar across the foot of its square.
   const two = ORDER[i] === "stortinget";
   drawProp(
-    custom(`kart station ${frame} ${two ? 1 : 0}`, 12, 10, (px, py) => {
+    custom(`kart station ${frame} ${two ? 1 : 0}${open ? "" : " locked"}`, 12, 10, (px, py) => {
       if (px >= 2 && px < 10 && py >= 2 && py < 8) {
+        const lock = open ? "." : LOCK[py - 2][px - 3] ?? ".";
+        if (lock !== ".") return LOCK_INK[lock];
         if (two && py >= 6) return LINE_2_COLOR;
         return px === 2 || py === 2 ? mix(white, STONE.base, 0.25) : white;
       }
@@ -789,6 +798,35 @@ export function kartArt(progress: Progress, open: boolean): Art {
     ground: () => ({ top: PALETTE.grass, dot: PALETTE.grassDark, fill: PALETTE.earth }),
     ledges: {}
   };
+}
+
+/**
+ * The rows of the boards under the map's stations, in order along the line, each its centre and width (order 41): a board hangs in
+ * the first of three rows where it comes no nearer than two pixels to the last board in that row (else in the row that ends first).
+ * With best times on them, or on a phone, Stortinget's, Ekeberg's and Gamle Oslo's ran into each other, three tiles apart.
+ */
+export function boardRows(boards: readonly { cx: number; w: number }[]): number[] {
+  const ends = [-1e9, -1e9, -1e9];
+  return boards.map(({ cx, w }) => {
+    let row = ends.findIndex((e) => cx - w / 2 >= e + 2);
+    if (row < 0) row = ends.indexOf(Math.min(...ends));
+    ends[row] = cx + w / 2;
+    return row;
+  });
+}
+
+/** Where a board `w` wide centred at `cx` hangs under every board it would meet (a line's added-up time under its last station). */
+const under = (boards: readonly { cx: number; w: number; y: number }[], cx: number, w: number) => Math.max(...boards.filter((b) => Math.abs(b.cx - cx) < (b.w + w) / 2 + 2).map((b) => b.y)) + 16;
+
+/**
+ * The boards under the stations as the map lays them (order 41), from the page's `layoutBoards`: each in its row (`boardRows`), and each
+ * line's added-up time under every board it would meet. Without the map's look (the bare map) the page lays them as before.
+ */
+export function stationBoards<B extends { cx: number; w: number; y: number }>(stations: B[], lines: B[]): B[] {
+  const rows = boardRows(stations);
+  const out = stations.map((b, i) => ({ ...b, y: b.y + rows[i] * 13 }));
+  for (const b of lines) out.push({ ...b, y: under(out, b.cx, b.w) });
+  return out;
 }
 
 /** The line map's words, in both languages: they come with its look, so the first script does not carry them (order 18). */

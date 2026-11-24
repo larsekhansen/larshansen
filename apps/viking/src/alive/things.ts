@@ -205,6 +205,19 @@ export function runeStone(x: number, y: number, char: string, state: "lit" | "da
   );
 }
 
+/**
+ * After dusk, the rune's stone a pale rim on its lit side (order 41, the planner's call): its edge's top and left pixels in the moon's
+ * light, where they were its dark edge on the night's dark ground (6.7 to 19.3 off what is round it at Langkaia's night and twilight,
+ * 13.5 at Østensjøvannet's). Not a line all round: the light comes from the top left, as on everything the game draws. It bobs with
+ * the stone (`runeStone`'s bob). `render/dusk.ts` calls it, in `afterDark`; by day nothing changes.
+ */
+export const RUNE_RIM = mix(lit(P.rock, 0.55), "#dfe6ff", 0.3);
+export function runeRim(x: number, y: number, steps: number, seed = 0) {
+  const b = !view.reduced ? (Math.sin(steps * 0.05 + seed * 1.3) > 0 ? 0 : 1) : 0;
+  R(x + 2, y + 1 + b, 12, 1, RUNE_RIM);
+  R(x + 1, y + 2 + b, 1, 12, RUNE_RIM);
+}
+
 // --- The sheep -----------------------------------------------------------------------------------------------------
 const WOOL: Record<string, string> = { H: lit(P.wool, 0.4), w: P.wool, s: mix(P.wool, WOOL_SHADE, 0.35), S: mix(P.wool, WOOL_SHADE, 0.6), f: P.woodDark, F: lit(P.woodDark, 0.25), e: lit(P.wool, 0.2), k: INK };
 /** A sheep, 12 x 7, its head on the right: wool in four tones lit along its back and curled, a dark face with an eye and an ear, dark legs. */

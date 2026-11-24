@@ -478,13 +478,13 @@ body.touch.in-maze .help {
   display: none;
 }
 
-.goldcount i {
+/* The bracteate, as the game draws it (order 41: it was a disc of the gold with a rim, a plain shape beside the waffle hearts and the
+   helmet drawn in pixels): its rim lit at the top left, its ring of dots, the beast curled in the middle. */
+.goldcount i,
+#finish-gold::before {
   width: 12px;
   height: 12px;
-  border: 2px solid #8a5f14;
-  border-radius: 50%;
-  background: #c8902a;
-  box-sizing: border-box;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' shape-rendering='crispEdges'%3E%3Crect x='4' y='0' width='4' height='1' fill='%23dbb775'/%3E%3Crect x='2' y='1' width='2' height='1' fill='%23dbb775'/%3E%3Crect x='4' y='1' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='5' y='1' width='2' height='1' fill='%23dbb775'/%3E%3Crect x='7' y='1' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='8' y='1' width='1' height='1' fill='%23dbb775'/%3E%3Crect x='9' y='1' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='1' y='2' width='5' height='1' fill='%23dbb775'/%3E%3Crect x='6' y='2' width='2' height='1' fill='%23c8902a'/%3E%3Crect x='8' y='2' width='1' height='1' fill='%23dbb775'/%3E%3Crect x='9' y='2' width='2' height='1' fill='%238a5f14'/%3E%3Crect x='1' y='3' width='4' height='1' fill='%23dbb775'/%3E%3Crect x='5' y='3' width='2' height='1' fill='%238a5f14'/%3E%3Crect x='7' y='3' width='2' height='1' fill='%23c8902a'/%3E%3Crect x='9' y='3' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='10' y='3' width='1' height='1' fill='%23614315'/%3E%3Crect x='0' y='4' width='1' height='1' fill='%23dbb775'/%3E%3Crect x='1' y='4' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='2' y='4' width='2' height='1' fill='%23dbb775'/%3E%3Crect x='4' y='4' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='5' y='4' width='2' height='1' fill='%23c8902a'/%3E%3Crect x='7' y='4' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='8' y='4' width='1' height='1' fill='%23dbb775'/%3E%3Crect x='9' y='4' width='2' height='1' fill='%23c8902a'/%3E%3Crect x='11' y='4' width='1' height='1' fill='%23614315'/%3E%3Crect x='0' y='5' width='3' height='1' fill='%23dbb775'/%3E%3Crect x='3' y='5' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='4' y='5' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='5' y='5' width='1' height='1' fill='%23dbb775'/%3E%3Crect x='6' y='5' width='4' height='1' fill='%23c8902a'/%3E%3Crect x='10' y='5' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='11' y='5' width='1' height='1' fill='%23614315'/%3E%3Crect x='0' y='6' width='2' height='1' fill='%23dbb775'/%3E%3Crect x='2' y='6' width='3' height='1' fill='%23c8902a'/%3E%3Crect x='5' y='6' width='2' height='1' fill='%238a5f14'/%3E%3Crect x='7' y='6' width='3' height='1' fill='%23c8902a'/%3E%3Crect x='10' y='6' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='11' y='6' width='1' height='1' fill='%23614315'/%3E%3Crect x='0' y='7' width='1' height='1' fill='%23dbb775'/%3E%3Crect x='1' y='7' width='6' height='1' fill='%23c8902a'/%3E%3Crect x='7' y='7' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='8' y='7' width='3' height='1' fill='%23c8902a'/%3E%3Crect x='11' y='7' width='1' height='1' fill='%23614315'/%3E%3Crect x='1' y='8' width='2' height='1' fill='%23dbb775'/%3E%3Crect x='3' y='8' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='4' y='8' width='3' height='1' fill='%238a5f14'/%3E%3Crect x='7' y='8' width='2' height='1' fill='%23c8902a'/%3E%3Crect x='9' y='8' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='10' y='8' width='1' height='1' fill='%23614315'/%3E%3Crect x='1' y='9' width='3' height='1' fill='%238a5f14'/%3E%3Crect x='4' y='9' width='4' height='1' fill='%23c8902a'/%3E%3Crect x='8' y='9' width='2' height='1' fill='%238a5f14'/%3E%3Crect x='10' y='9' width='1' height='1' fill='%23614315'/%3E%3Crect x='2' y='10' width='1' height='1' fill='%238a5f14'/%3E%3Crect x='3' y='10' width='1' height='1' fill='%23614315'/%3E%3Crect x='4' y='10' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='5' y='10' width='2' height='1' fill='%238a5f14'/%3E%3Crect x='7' y='10' width='1' height='1' fill='%23c8902a'/%3E%3Crect x='8' y='10' width='2' height='1' fill='%23614315'/%3E%3Crect x='4' y='11' width='4' height='1' fill='%23614315'/%3E%3C/svg%3E") center / 100% no-repeat;
 }
 
 /* On the line map there is no clock to run, and no level to start again. */
@@ -516,8 +516,10 @@ body.touch.in-maze .help {
   shape-rendering: crispEdges;
 }
 
-.hearts svg.gone {
-  opacity: 0.22;
+/* A heart lost (order 41): its edge alone, hollow, in the crust's shade (`WAFFLE_HEART` in main.ts). It was the whole heart at a
+   fifth of its strength, which on the bar's cream was 9 off it (CIEDE2000) and told from a full one by colour alone. */
+.hearts svg.gone rect:not([fill="#9c6428"]) {
+  visibility: hidden;
 }
 
 .lives svg {
@@ -544,13 +546,12 @@ body.touch.in-maze .help {
   display: none;
 }
 
-.coins i {
+/* The skilling, as the game draws it (order 41: it was a copper disc with a rim): its face lit at the top left, the stamp. */
+.coins i,
+#finish-coins::before {
   width: 10px;
   height: 10px;
-  border: 2px solid #8f5326;
-  border-radius: 50%;
-  background: #b06a3a;
-  box-sizing: border-box;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 5 5' shape-rendering='crispEdges'%3E%3Crect x='1' y='0' width='2' height='1' fill='%23b06a3a'/%3E%3Crect x='3' y='0' width='1' height='1' fill='%238f5326'/%3E%3Crect x='0' y='1' width='1' height='1' fill='%23b06a3a'/%3E%3Crect x='1' y='1' width='1' height='1' fill='%23fff0c0'/%3E%3Crect x='2' y='1' width='2' height='1' fill='%23b06a3a'/%3E%3Crect x='4' y='1' width='1' height='1' fill='%238f5326'/%3E%3Crect x='0' y='2' width='1' height='1' fill='%23b06a3a'/%3E%3Crect x='1' y='2' width='1' height='1' fill='%23fff0c0'/%3E%3Crect x='2' y='2' width='1' height='1' fill='%238f5326'/%3E%3Crect x='3' y='2' width='1' height='1' fill='%23b06a3a'/%3E%3Crect x='4' y='2' width='1' height='1' fill='%238f5326'/%3E%3Crect x='0' y='3' width='3' height='1' fill='%23b06a3a'/%3E%3Crect x='3' y='3' width='2' height='1' fill='%238f5326'/%3E%3Crect x='1' y='4' width='3' height='1' fill='%238f5326'/%3E%3C/svg%3E") center / 100% no-repeat;
 }
 
 .in-maze .life,
@@ -590,6 +591,20 @@ body.touch.in-maze .help {
   width: max-content;
   max-width: max(50%, min(36em, calc(100% - 32px)));
   box-sizing: border-box;
+}
+
+/* A level's end counts what he took with the game's own pictures beside the words (order 41): the bracteate, the skilling. Each hangs
+   to the left of its line, taking no room from it (its width and gap given back by the margin), so no line wraps where it did not. */
+#finish-gold::before,
+#finish-coins::before {
+  content: "";
+  display: inline-block;
+  margin: 0 6px 0 -18px;
+  vertical-align: -1px;
+}
+
+#finish-coins::before {
+  margin-left: -16px;
 }
 
 #finish-more.home:not([hidden]) {
@@ -690,7 +705,8 @@ body.touch {
   background: rgba(24, 24, 30, 0.36);
   color: #fff;
   font: 700 15px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+  /* A dark halo round each letter (order 41: over snow or white marble a word stood 9 or 10 off the button's fill). */
+  text-shadow: 0 0 2px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.7);
   pointer-events: auto;
   touch-action: none;
   -webkit-user-select: none;
@@ -736,24 +752,44 @@ body.touch {
   stroke-width: 2.8;
   stroke-linecap: round;
   stroke-linejoin: round;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
+  filter: drop-shadow(0 0 1.5px rgba(0, 0, 0, 0.9)) drop-shadow(0 1px 1px rgba(0, 0, 0, 0.7));
 }
 
-.pad [data-pressed="down"] {
+/* Pressed (order 41): darker, with a white ring inside its edge, so it is told from one at rest by its shape and on any ground. It
+   went white, and over snow, white marble or a bright sky it vanished, its word with it. Nothing moves: the ring is inside the
+   control, which keeps its place and size. */
+.pad [data-pressed="down"],
+.pad .move[data-pressed="both"] {
   border-color: #fff;
-  background: rgba(255, 255, 255, 0.45);
+  background: rgba(24, 24, 30, 0.62);
+  box-shadow: inset 0 0 0 3px #fff;
 }
 
 .pad .move[data-pressed="left"] {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.45) 50%, rgba(24, 24, 30, 0.36) 50%);
+  background: linear-gradient(90deg, rgba(24, 24, 30, 0.62) 50%, rgba(24, 24, 30, 0.36) 50%);
 }
 
 .pad .move[data-pressed="right"] {
-  background: linear-gradient(90deg, rgba(24, 24, 30, 0.36) 50%, rgba(255, 255, 255, 0.45) 50%);
+  background: linear-gradient(90deg, rgba(24, 24, 30, 0.36) 50%, rgba(24, 24, 30, 0.62) 50%);
 }
 
-.pad .move[data-pressed="both"] {
-  background: rgba(255, 255, 255, 0.45);
+/* The half of the move pad held: its own ring. */
+.pad .move[data-pressed="left"]::before,
+.pad .move[data-pressed="right"]::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc(50% - 3px);
+  border: 3px solid #fff;
+  border-radius: 19px;
+  box-sizing: border-box;
+}
+
+.pad .move[data-pressed="right"]::before {
+  left: auto;
+  right: 2px;
 }
 
 /* The way in shares its slot with the shield: shown where there is a door or a bench, or where he has no shield;
@@ -763,10 +799,12 @@ body.touch {
   background: rgba(24, 24, 30, 0.36);
 }
 
-/* A button with nothing to do now: the dash resting or spent, the shield in the air, the way in with nowhere to go. */
+/* A button with nothing to do now: the dash resting or spent, the shield in the air, the way in with nowhere to go. Its edge broken
+   in dashes too (order 41), as an empty rune slot's is: it was told by its faintness alone, and over white ground it was nearly gone. */
 .pad .dim,
 .pad .enter:not(.show) {
-  opacity: 0.4;
+  opacity: 0.55;
+  border-style: dashed;
 }
 
 /* The help line on a touch screen is a note of what just changed, placed by the page clear of him. */
