@@ -6,12 +6,13 @@ import { deckEverywhere, deckGround, deckTops, type Deck } from "@larshansen/pix
 import { keptStrips, seen } from "@larshansen/pixelkit/kept";
 import { drawOar, oarBank, type Oar } from "@larshansen/pixelkit/oars";
 import { R, gable, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { BRICK, ENEMY, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as M from "@larshansen/pixelkit/swatches/museum";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tbaneDoor } from "../render/furniture";
 import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, turned, type Piece } from "../alive/frames";
@@ -231,25 +232,84 @@ export const BYGDOY_RULES = { COLS, ROWS, CARRIERS, DECKS, PADS };
 // --- Art ----------------------------------------------------------------------------------------------
 const P = PALETTE;
 
-/** Oslo across the fjord, far: the city's low line, Rådhuset's two towers, Akershus on its rock. */
+/**
+ * Oslo across the fjord, far: the city's low line; and from the beach on (order 43), each once, where the city lies from
+ * Bygdøynes: Holmenkollen's ridge with the jump on its shoulder far to the left, Rådhuset's two brick towers by the water,
+ * Akershus on its rock to their right. Not from Rådhusbrygga at the start, where Rådhuset is behind him.
+ */
 function farCity() {
   const base = FLOOR - 26;
+  drawFar(holmenkollen(), layerX(2120, 0.12), base + 2);
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
     const h = 6 + Math.round(3 * Math.sin(wx * 0.05) + 2 * Math.sin(wx * 0.17));
     column(x, base - h, base, mix(LAND.farHills, STONE.light, 0.4));
     if (Math.floor(wx) % 23 < 2) column(x, base - h + 2, base - h + 3, mix(GLASS.farWindow, WHITE, 0.3));
-    // Rådhuset's two towers, once along the far shore.
-    const k = ((Math.floor(wx) % 700) + 700) % 700;
-    if ((k >= 300 && k < 306) || (k >= 314 && k < 320)) column(x, base - h - 14, base - h, mix(P.sailStripe, LAND.farHills, 0.45));
   }
+  drawFar(radhuset(), layerX(2420, 0.12), base);
+  drawFar(akershus(), layerX(2640, 0.12), base + 1);
 }
+/** Where the woods behind the street open by the water between the halls, in world x. */
+const OPEN = [1880, 2780] as const;
+
+/** Holmenkollen's ridge, forested and nearer than the far hills, the jump on its right shoulder: the tower, the inrun down to the right, the hill under it. */
+const holmenkollen = () =>
+  farPiece("bygdoy holmenkollen", 46, 26, (b) => {
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.3);
+    for (let x = 0; x < 46; x++) {
+      const t = (x - 18) / 26;
+      const h = Math.max(1, Math.round(13 * Math.pow(Math.max(0, 1 - t * t), 0.8)) + ((x * 5) % 7 === 0 ? 1 : 0));
+      b.fill(x, 1, 1, h, x < 16 ? mix(wood, LAND.farHills, 0.15) : wood);
+    }
+    // The jump stands up out of the trees: its tower at the top, the inrun slanting down to the right on its steel legs,
+    // meeting the hill where the landing hill's clearing runs on down.
+    b.fill(17, 2, 13, 24, PAINT.trim);
+    b.fill(16, 4, 25, 25, lighter(STONE.light, 0.3));
+    for (let k = 0; k < 16; k++) {
+      const u = 23 - Math.round(k * 0.72);
+      b.dot(19 + k, u, PAINT.trim);
+      b.dot(19 + k, u - 1, darker(STONE.light, 0.15));
+      if (k % 3 === 1) b.fill(19 + k, 1, 10, u - 2, darker(STONE.light, 0.35));
+    }
+    for (let k = 0; k < 9; k++) b.fill(35 + k, 2, 2, Math.max(2, 11 - k), mix(LAND.forest, PAINT.trim, 0.45));
+  });
+
+/** Rådhuset from across the water: two square brick towers, the east one taller, the hall between them. */
+const radhuset = () =>
+  farPiece("bygdoy radhuset", 22, 20, (b) => {
+    const brick = mix(BRICK.red, LAND.farHills, 0.25);
+    b.block(5, 12, 1, 7, brick);
+    b.block(1, 5, 1, 16, brick);
+    b.block(16, 6, 1, 19, brick);
+    for (let u = 3; u < 15; u += 3) b.pane(2, 2, u, u + 1, darker(brick, 0.45)), b.pane(18, 2, u, u + 1, darker(brick, 0.45));
+    b.fill(17, 3, 15, 17, PAINT.trim);
+  });
+
+/** Akershus on its rock: stone walls to the water, the white castle, its towers' spires in old copper, trees at its ends. */
+const akershus = () =>
+  farPiece("bygdoy akershus", 34, 20, (b) => {
+    for (let x = 0; x < 34; x++) b.fill(x, 1, 1, Math.round(2 + 4 * Math.sin((Math.PI * x) / 33)), x < 14 ? STONE.light : STONE.base);
+    b.fill(4, 26, 4, 7, STONE.light);
+    for (let x = 4; x < 30; x += 2) b.dot(x, 8, STONE.light);
+    for (const x of [0, 1, 2, 31, 32, 33]) b.fill(x, 1, 3, 5, LAND.forestDark);
+    const wash = mix(PAINT.trim, STONE.light, 0.3);
+    b.block(10, 14, 8, 13, wash);
+    b.fill(10, 14, 14, 14, ROOF.slate);
+    b.fill(11, 12, 15, 15, ROOF.slate);
+    for (let x = 12; x < 23; x += 3) b.pane(x, 1, 10, 11, GLASS.farWindow);
+    for (const [x0, top, spire] of [[8, 15, 4], [23, 16, 6]] as const) {
+      b.block(x0, 3, 8, top, wash);
+      for (let k = 0; k < spire; k++) b.fill(x0 + (k > spire / 2 ? 1 : 0), k > spire / 2 ? 1 : 3, top + 1 + k, top + 1 + k, k === 0 ? METAL.copper : METAL.copperLight);
+    }
+  });
 
 /** Bygdøy behind the street: oak and lime woods, and now and then a roof of the old farms. */
 function woods(t: number) {
   const foot = FLOOR - 6;
   for (let i = 0; i < 70; i++) {
     const wx = i * 58 + ((i * 37) % 30);
+    // By the open water between the halls the woods open, and the city is seen across the fjord (order 43).
+    if (wx > OPEN[0] && wx < OPEN[1]) continue;
     const x = layerX(wx, 0.4);
     if (x < -30 || x > view.w + 30) continue;
     const h = 20 + ((i * 29) % 18);

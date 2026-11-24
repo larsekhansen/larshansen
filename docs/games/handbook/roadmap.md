@@ -1,19 +1,29 @@
 # Roadmap
 
-As of 24 November 2026, after order 42 was reviewed and merged (PR #90). Change this file in the same change that makes it wrong.
+As of 24 November 2026, after order 43 was reviewed and merged (PR #91). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 42, room, and the edges of the screen, PR #90 (reviewed and merged on 24 November); before it orders 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 43, the far view, PR #91 (reviewed and merged on 24 November); before it orders 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 52 % used when order 42 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 56 % used when order 43 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
+
+**Order 43, the far view, an ode to Oslo** (`orders/43-the-far-view.md`, ADR 0044 and 0047 amended), reviewed, merged and live (PR #91, 24 November). Nothing else is in flight.
+Lars, 22 November: "It's more of an ode to Oslo." Every level's far view, the encore's and the line map's on one table (`apps/viking/tools/review/o43/before.md`:
+what stands in it, what a person who knows Oslo looks for from there and whether it is there, repeats, the sky, its colours against every role, a mark);
+the four 3s and the first 2 redrawn with a brush for the far view (`alive/far.ts`: a silhouette painted once in its material's tones, copied, its windows
+lit after dusk): Rådhuset (Akershus to the east, Aker Brygge and Tjuvholmen to the west, Hovedøya, the far layers rising up the towers), Akershus (the
+Opera, the Barcode and MUNCH to the east, Rådhuset to the west, Hovedøya), Bygdøy (the woods open by the water onto Holmenkollen's jump, Rådhuset and
+Akershus), Vigelandsparken (the trees stand back round the Monolith's plateau onto the ridge with the jump and the TV tower) and Holmenkollen (Rådhuset
+once, islands); every far colour held off the warning red, the paint and every role under every sky (`render/warning.test.ts`). Drawing only. Each item,
+done or not, with its measures: `o43/after.md`.
 
 **Order 42, room, and the edges of the screen** (`orders/42-room-and-edges.md`, ADR 0035, 0043 and 0053 amended), reviewed, merged and live
 (PR #90, 24 November). Nothing else is in flight. The first script from 58.65 to 55.80 kB gzipped (item 1 alone 55.70) with nothing a player sees changed: what only later files use
@@ -135,6 +145,11 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 43 left (`apps/viking/tools/review/o43/after.md`): the 2s of its table not redrawn: Akerselva (a tower on Grefsenkollen three or four to a screen,
+and whether one stands there at all), Gamle Oslo (Kampen kirke's spire two to a screen), the encore (Ekeberg over the park, which its slim towers would
+have to make room for), Østensjøvannet, Korketrekkeren, Slottet, and Langkaia (the fjord's islands: its far layers are the first script's, shared with
+four levels and the map). For Lars: whether each landmark drawn is the place he knows, and where it stands.
+
 Order 42 left (`apps/viking/tools/review/o42/after.md`): on a short phone on its side (667 x 375) the map's bar is two rows of links, and with line 2 open
 a third of runes (97 or 159 of 375 px), so the map's stations stand just under it and its rune stones under it; laying the bar out again for that size
 moves the links (thumb targets), which order 42 was not to do; there the map's lowest boards may reach the pad. Upright on a short phone
@@ -212,7 +227,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

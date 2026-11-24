@@ -1,15 +1,16 @@
-import { box, column, layerWorldX } from "@larshansen/pixelkit/backdrop";
+import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Lift } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
-import { R, light, mix, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, INK, LAND, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
+import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
+import { ENEMY, INK, LAND, PAINT, PALETTE, PLANTS, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import type { Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as V from "@larshansen/pixelkit/swatches/park";
 import { timedPhase } from "@larshansen/pixelkit/timed";
 import { leap, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
-import { drawOsloHills } from "../render/backdrop";
+import { climbed, drawOsloHills } from "../render/backdrop";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { clock } from "../alive/parts";
@@ -218,18 +219,57 @@ export const VIGELAND_RULES = { COLS, ROWS, CARRIERS, SLAB, STEP };
 // --- Art ----------------------------------------------------------------------------------------------
 const P = PALETTE;
 
-/** Frogner behind the trees, far: apartment blocks in pale rows, a church spire, the hills over them. */
-function farTown() {
-  const base = FLOOR - 30;
+/**
+ * Frogner behind the trees, far: apartment blocks in pale rows, a church spire once, the hills over them; and from the
+ * Monolith's plateau (order 43) the ridge to the north-west with Holmenkollen's jump on its shoulder and the TV tower on
+ * Tryvannshøgda further up, as they are seen from the park. After dusk a window lit here and there along the blocks.
+ */
+function farTown(lift: number) {
+  const base = FLOOR - 30 - lift;
+  drawFar(ridge(), layerX(3200, 0.12), base - 6);
   for (let x = 0; x < view.w; x++) {
     const wx = layerWorldX(x, 0.12);
     const h = 10 + Math.round(4 * Math.sin(wx * 0.07) + 3 * Math.sin(wx * 0.19));
     column(x, base - h, base, mix(LAND.farHills, STONE.light, 0.45));
     if (Math.floor(wx) % 9 < 2 && Math.floor(wx / 37) % 2) column(x, base - h + 3, base - h + 4, mix(LAND.farHills, WHITE, 0.35));
-    const k = ((Math.floor(wx) % 640) + 640) % 640;
-    if (k >= 400 && k < 404) column(x, base - h - 22 + Math.abs(k - 402) * 4, base - h, mix(STONE.dark, LAND.farHills, 0.4));
+    // A window lit here and there after dusk: one in about 24 of the layer's columns, the same ones every night.
+    if (Math.round(wx * 0.12) % 24 === 7) lit(x, base - h + 3, 1, 1);
+    // A church's spire over the blocks, once (it stood every 640 pixels before order 43).
+    const k = Math.floor(wx) - 1400;
+    if (k >= 0 && k < 4) column(x, base - h - 22 + Math.abs(k - 2) * 4, base - h, mix(STONE.dark, LAND.farHills, 0.4));
   }
 }
+
+/** Where the park's trees stand back round the Monolith's plateau, in world x. */
+const PLATEAU = [2700, 3720] as const;
+
+/** The ridge to the north-west, forested: Holmenkollen's jump standing up out of the trees, its inrun slanting down to the right; the TV tower on the higher crest beyond. */
+const ridge = () =>
+  farPiece("vigelandsparken ridge", 76, 40, (b) => {
+    const wood = mix(LAND.forestDark, LAND.farHills, 0.3);
+    for (let x = 0; x < 76; x++) {
+      const h = Math.max(1, Math.round(6 + 7 * Math.sin((Math.PI * Math.min(x, 34)) / 68) + (x > 34 ? 9 * Math.sin((Math.PI * (x - 34)) / 84) : 0) - (x > 62 ? (x - 62) * 1.1 : 0)) + ((x * 5) % 7 === 0 ? 1 : 0));
+      b.fill(x, 1, 1, h, x < 30 ? mix(wood, LAND.farHills, 0.15) : wood);
+    }
+    // The jump: its tower, the inrun on its legs, the landing hill's clearing.
+    b.fill(16, 2, 13, 25, PAINT.trim);
+    b.fill(15, 4, 26, 26, lighter(STONE.light, 0.3));
+    for (let k = 0; k < 16; k++) {
+      const u = 24 - Math.round(k * 0.72);
+      b.dot(18 + k, u, PAINT.trim);
+      b.dot(18 + k, u - 1, darker(STONE.light, 0.15));
+      if (k % 3 === 1) b.fill(18 + k, 1, 12, u - 2, darker(STONE.light, 0.35));
+    }
+    for (let k = 0; k < 7; k++) b.fill(34 + k, 2, 6, Math.max(7, 14 - k), mix(LAND.forest, PAINT.trim, 0.45));
+    // The TV tower: a slim concrete shaft, its deck near the top, the mast over it.
+    const concrete = mix(PAINT.trim, STONE.light, 0.45);
+    b.fill(54, 3, 18, 32, concrete);
+    b.fill(54, 1, 18, 32, lighter(concrete, 0.3));
+    b.fill(56, 1, 18, 32, darker(concrete, 0.15));
+    b.fill(53, 5, 31, 33, lighter(concrete, 0.15));
+    b.fill(53, 5, 31, 31, darker(concrete, 0.2));
+    b.fill(55, 1, 34, 40, darker(concrete, 0.25));
+  });
 
 /** The park's tall trees behind the paths, round-crowned limes and maples in rows, now and then a lamp. */
 function parkTrees(factor: number, foot: number, n: number, fade: number) {
@@ -237,6 +277,10 @@ function parkTrees(factor: number, foot: number, n: number, fade: number) {
     // Every other one a little farther, slower, and drawn first (order 23: more speeds, split from what the layer has).
     if ((i % 2 === 1) !== far) continue;
     const wx = i * 44 + ((i * 29) % 21);
+    // The Monolith's plateau is open granite: no trees behind it, and the view opens to the ridge (order 43). (A farther
+    // row's tree stands where its spaced-out place puts it, a quarter on.)
+    const at = far ? wx / 0.75 : wx;
+    if (at > PLATEAU[0] && at < PLATEAU[1]) continue;
     const x = spedX(far ? (wx * factor) / (factor * 0.75) : wx, far ? (factor * 0.75) : factor, factor);
     if (x < -30 || x > view.w + 30) continue;
     const h = 22 + ((i * 13) % 14);
@@ -814,8 +858,11 @@ export const VIGELANDSPARKEN: LevelDef = {
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
     far: (v) => {
-      drawOsloHills(v.sky, FLOOR);
-      farTown();
+      // From the plateau and the Monolith's figures the far layer rises with the view (order 43, `climbed`): the ridge stays on
+      // the horizon over the park's crowns, which do not rise.
+      const lift = climbed(ROWS * TILE, 9 * TILE);
+      drawOsloHills(v.sky, FLOOR, lift);
+      farTown(lift);
     },
     mid: () => parkTrees(0.2, FLOOR - 14, 90, 0.35),
     near: () => parkTrees(0.4, FLOOR - 4, 70, 0.12),

@@ -1,11 +1,11 @@
 import { TILE } from "@larshansen/pixelkit/config";
-import { barcode, munch } from "@larshansen/pixelkit/landmarks";
 import { drawCannon } from "@larshansen/pixelkit/launcherart";
 import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
-import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
+import { BRICK, FACADE, FIRE, GLASS, INK, LAND, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, type LedgeLook } from "@larshansen/pixelkit/props";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
+import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { FOE_INK, SHADES, drawFoe, foeFrame, glamFire, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { flagFlying, flame } from "../alive/things";
@@ -546,6 +546,76 @@ function flourish(age: number) {
   }
 }
 
+// --- The far view (order 43) ----------------------------------------------------------------------------
+// From the walls, over the harbour: Bjørvika to the east, the way he came along the line (the Opera's white roof rising out of
+// the water, the Barcode's slim towers behind it, MUNCH's bent top), Hovedøya low and wooded just off the fortress, and to the
+// west, where the line goes on, Rådhuset's two brick towers by the water. Each once. The near layer rises with the far ones as
+// the view climbs the walls (`climbed`), so they stay on the horizon.
+
+/** How far the far layers rise as the view climbs the walls. */
+const up = () => climbed(ROWS * TILE, ROWS * TILE);
+
+/** Bjørvika from the fortress: the Opera's marble roof out of the water to its stage tower, the Barcode behind, MUNCH tall at its end. */
+const bjorvika = () =>
+  farPiece("akershus bjorvika", 112, 50, (b) => {
+    // The Barcode's towers behind, light and dark, each with its own stripes.
+    [[30, 5, 30], [36, 4, 36], [41, 5, 33], [47, 4, 40], [52, 5, 31], [58, 4, 37], [63, 5, 34], [69, 4, 29]].forEach(([x, w, h], k) => {
+      const c = k % 3 === 1 ? mix(FACADE.stageDoor, STONE.light, 0.25) : k % 2 ? FACADE.aluminium : FACADE.libraryTop;
+      b.block(x, w, 3, h, c);
+      for (let u = 6; u < h - 1; u += 4) b.pane(x + 1, w - 2, u, u, k % 3 === 1 ? lighter(c, 0.25) : darker(c, 0.25));
+    });
+    // The Opera: the marble roof rising out of the water to its flat top, the walls under it, the foyer's glass, the stage tower.
+    for (let x = 0; x < 78; x++) {
+      const top = x < 34 ? 2 + Math.round(x * 0.36) : x < 72 ? 14 : 14 - (x - 71) * 2;
+      b.fill(x, 1, 1, top, x < 40 ? FACADE.marbleWall : mix(FACADE.marbleWall, STONE.base, 0.15));
+      b.dot(x, top, x < 34 ? FACADE.marble : lighter(FACADE.marble, 0.3));
+      b.dot(x, top - 1, FACADE.marbleEdge);
+    }
+    for (let x = 36; x < 66; x++) b.fill(x, 1, 2, 10, x % 4 === 0 ? mix(GLASS.foyerMullion, STONE.base, 0.3) : GLASS.foyer);
+    b.pane(37, 28, 4, 8, GLASS.foyer);
+    b.block(46, 16, 15, 25, FACADE.stageTower);
+    for (let u = 17; u < 25; u += 2) for (let x = 48 + (u % 4 === 1 ? 1 : 0); x < 60; x += 2) b.dot(x, u, FACADE.stageTowerDot);
+    // MUNCH: the tall tower clad in aluminium, its top bent toward the fjord, a band of window near its top.
+    for (let u = 1; u <= 46; u++) {
+      const lean = u > 36 ? Math.round((u - 36) * 0.4) : 0;
+      for (let k = 0; k < 11; k++) b.dot(86 + k + lean, u, k === 0 ? lighter(FACADE.aluminium, 0.25) : k === 10 ? FACADE.aluminiumLine : u % 3 === 0 ? FACADE.aluminiumLine : FACADE.aluminium);
+    }
+    b.pane(90, 7, 42, 43, FACADE.munchWindow);
+  });
+
+/** Rådhuset from the fortress: its two brick towers, the east one with its clock, the hall between, on the quay. */
+const radhuset = () =>
+  farPiece("akershus radhuset", 60, 44, (b) => {
+    b.fill(0, 60, 1, 2, mix(STONE.base, INK, 0.2));
+    b.block(14, 32, 3, 16, BRICK.red);
+    for (let x = 17; x < 44; x += 3) b.pane(x, 1, 6, 12, darker(BRICK.red, 0.45));
+    for (const [x0, w, top] of [[4, 12, 36], [44, 13, 41]] as const) {
+      b.block(x0, w, 3, top, BRICK.red);
+      for (let u = 6; u < top - 3; u += 3) b.dot(x0 + 1, u, BRICK.course);
+      for (let x = x0 + 3; x < x0 + w - 2; x += 3) b.pane(x, 1, 8, top - 6, darker(BRICK.red, 0.45));
+      b.fill(x0 - 1, w + 2, top + 1, top + 1, lighter(BRICK.red, 0.3));
+    }
+    // The clock on the east tower's face, toward the harbour.
+    b.fill(48, 5, 31, 35, PAINT.trim);
+    b.fill(49, 3, 30, 36, PAINT.trim);
+    b.dot(50, 33, INK);
+    b.dot(50, 34, INK);
+    b.dot(51, 33, INK);
+  });
+
+/** Hovedøya just off the fortress: low and wooded, a pale rim of rock at the water. */
+const hovedoya = () =>
+  farPiece("akershus hovedoya", 96, 10, (b) => {
+    for (let x = 0; x < 96; x++) {
+      const t = (x - 47) / 48;
+      const h = Math.max(1, Math.round(9 * Math.pow(Math.max(0, 1 - t * t), 0.7)) + (x > 6 && x < 90 && (x * 7) % 5 === 0 ? 1 : 0));
+      b.fill(x, 1, 1, 1, x < 40 ? STONE.light : STONE.base);
+      if (h > 1) b.fill(x, 1, 2, h, x < 38 ? LAND.island : darker(LAND.island, 0.15));
+      if (h > 2 && x % 5 === 2) b.dot(x, h, lighter(LAND.island, x < 38 ? 0.2 : 0.08));
+      if (h > 3 && x % 7 === 3) b.dot(x, h - 2, darker(LAND.island, 0.3));
+    }
+  });
+
 export const AKERSHUS: LevelDef = {
   id: "akershus",
   rune: 1,
@@ -587,14 +657,15 @@ export const AKERSHUS: LevelDef = {
     // The saluting battery's iron cannons, the kit's (order 42: the first script steps them and leaves their drawing here).
     cannon: (_i, l, loadedAt, firedAt, v) => drawCannon(l, v.t, loadedAt, firedAt),
     // On the walls and the battery the hills stay on the horizon and the fjord spreads under them (order 20).
-    far: (v) => drawOsloHills(v.sky, WATER, climbed(ROWS * TILE, ROWS * TILE)),
-    mid: (v) => drawFjord(v.t, WATER, climbed(ROWS * TILE, ROWS * TILE)),
+    far: (v) => drawOsloHills(v.sky, WATER, up()),
+    mid(v) {
+      drawFjord(v.t, WATER, up());
+      drawFar(hovedoya(), layerX(1300, 0.2), WATER - 15 - up());
+    },
     near(v) {
-      // Bjørvika across the harbour, small: MUNCH, the Barcode.
-      munch(layerX(1500, 0.4), WATER - 6);
-      barcode(layerX(1560, 0.4), WATER - 6);
-      munch(layerX(3300, 0.4), WATER - 6);
-      barcode(layerX(3360, 0.4), WATER - 6);
+      // Bjørvika to the east (the start of the walls), Rådhuset to the west (their end), each once.
+      drawFar(bjorvika(), layerX(500, 0.4), WATER - 3 - up());
+      drawFar(radhuset(), layerX(3900, 0.4), WATER - 3 - up());
       drawGulls(v.t, GATE * TILE - 140);
     },
     back(v: View) {

@@ -3,14 +3,14 @@ import { carrierDrawn, carrierShown, drawCarrier } from "@larshansen/pixelkit/ca
 import { TILE } from "@larshansen/pixelkit/config";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
-import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
+import { ENEMY, ROLES, STAND } from "@larshansen/pixelkit/palette";
 import { drawSky } from "@larshansen/pixelkit/sky";
 import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
 import { NATURAL } from "../alive/natural";
 import { newPlay } from "../game/play";
 import { BUILT, loadLevel } from "../levels/index";
 import type { LevelDef, View } from "../levels/types";
-import { ANY_METHOD, deltaE, mixRgb, parseColour, skyOf, type Rgb } from "./fields";
+import { ANY_METHOD, deltaE, mixRgb, parseColour, skyOf, tinted, type Rgb } from "./fields";
 import { airOf, backHazeOf, hazeOf } from "./haze";
 import { STAND_LEDGE, standTop } from "./stand";
 import { drawTiles, drawWater } from "./tiles";
@@ -86,6 +86,8 @@ function raster(w: number, h: number) {
   const found: { hex: string; who: string }[] = [];
   let style: unknown = "#000";
   let mine = true;
+  /** While the far layers are drawn (order 43): the area each of their colours fills, under the haze it is drawn with. */
+  let tally: Map<string, number> | null = null;
   const base: Record<string, unknown> = {
     globalAlpha: 1,
     globalCompositeOperation: "source-over",
@@ -106,6 +108,10 @@ function raster(w: number, h: number) {
       const y0 = Math.max(0, Math.round(y));
       const y1 = Math.min(h, Math.round(y + rh));
       if (x1 <= x0 || y1 <= y0) return;
+      if (tally) {
+        const key = `${HAZED.k} ${style}`;
+        tally.set(key, (tally.get(key) ?? 0) + (x1 - x0) * (y1 - y0));
+      }
       // What covers a pixel with anything not near the red, or not counted, clears it; a counted near-red fill marks it.
       let id = -1;
       if (ink.near && mine) id = found.push({ hex: ink.hex, who: caller() }) - 1;
@@ -118,6 +124,10 @@ function raster(w: number, h: number) {
     /** Whether what is drawn from now on counts (the things he meets) or only covers (the paint on what he stands on). */
     counting(all: boolean) {
       mine = all;
+    },
+    /** From now on, the far layers' fills are tallied into `t` (null: no longer). */
+    tallying(t: Map<string, number> | null) {
+      tally = t;
     },
     /** Each colour within 10 of the warning red that counts, its pixels, and who drew it. */
     near() {
@@ -183,7 +193,7 @@ type Lit = Map<string, { d: number; n: number }>;
  * the ground behind and under what he meets, washed by its layer's haze, what he meets only covering it (`scenery`). What he
  * meets is drawn once, onto both.
  */
-function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit } {
+function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit; far: Map<string, number> } {
   const play = newPlay(def, {});
   const map = play.map;
   const sky = skyOf(def, "day");
@@ -191,7 +201,7 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit } {
   Object.assign(view, { w: 320, h: 200, k: 1, reduced: true });
   const v: View = { sky, t: 0, alpha: 1, doors: new Map(), now: new Date(2026, 5, 15, 12), him: { x: 0, y: 0 }, flourish: null, facing: 1, troll: null, flags: [], enemies: [], boss: null, cleared: [], runeAt: null, grounds: null };
   const art = def.art;
-  const most = { things: new Map() as Most, scenery: new Map() as Most, lights: new Map() as Lit };
+  const most = { things: new Map() as Most, scenery: new Map() as Most, lights: new Map() as Lit, far: new Map<string, number>() };
   const horizon = map.height - 4 * TILE - 34;
   const haze = hazeOf(def);
   const air = parseColour(airOf(def, "day"))!.rgb;
@@ -222,12 +232,16 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit } {
         behind.counting(false);
         drawSky(sky, 0, horizon);
         behind.counting(true);
+        const far = new Map<string, number>();
+        behind.tallying(far);
         wash(haze[0]);
         art.far?.(v);
         wash(haze[1]);
         art.mid?.(v);
         wash(haze[2]);
         art.near?.(v);
+        behind.tallying(null);
+        for (const [k, n] of far) most.far.set(k, Math.max(most.far.get(k) ?? 0, n));
         wash(backHazeOf(def));
         art.back(v);
         wash(0);
@@ -346,4 +360,81 @@ describe("harmless things keep off the warning red (order 33)", () => {
     }
     expect(wrong).toEqual([]);
   });
+});
+
+// Order 43 (the far view): what stands behind the play is never mistaken for what means something. Every colour the far, mid
+// and near layers paint over a few pixels of a view, washed toward the level's air by its layer's haze and tinted as each sky
+// tints it (`kit.pass`: the haze, then the tint), stands 10 or more off the warning red and the paint's yellow under every sky
+// (both keep their light after dark), off what he takes, a boss's "now", the mark of things to use and the calm outline under
+// every sky as each is seen then, and off his tunic's blue by day: the palette test's rule for a level's fields, held here for
+// every far colour from a few pixels up, so a landmark drawn small cannot slip under it. Shares the walk above.
+/** A few pixels of a far colour in a view: a window, a spire's tip. */
+const FEW_FAR = 6;
+type Phase = "day" | "evening" | "twilight" | "night";
+const PHASES: Phase[] = ["day", "evening", "twilight", "night"];
+const rgbOf = (c: string) => parseColour(c)!.rgb;
+/** Each role's colours, the skies it is held under, and how much of its own light it keeps under a tint (null: all of it). */
+const FAR_ROLES: { role: string; colours: readonly string[]; phases: Phase[]; own: number | null }[] = [
+  { role: "the warning red", colours: [ENEMY.red], phases: PHASES, own: null },
+  { role: "the paint", colours: [STAND.top], phases: PHASES, own: null },
+  { role: "his tunic", colours: [ROLES.him.tunic, ROLES.him.tunicLit, ROLES.him.tunicShade], phases: ["day"], own: null },
+  { role: "what he takes", colours: [ROLES.take.copper, ROLES.take.gold, ROLES.take.goldDark], phases: PHASES, own: 0.8 },
+  { role: "a boss's now", colours: ROLES.COLOURS.now, phases: PHASES, own: 0.25 },
+  { role: "things to use", colours: ROLES.COLOURS.use, phases: PHASES, own: null },
+  { role: "the calm outline", colours: ROLES.COLOURS.calm, phases: PHASES, own: null }
+];
+/** Far colours that may come within 10 of a role's, by level, colour as drawn and role, and why. */
+const FAR_OCHRE = "the far shore's ochre houses over the fjord (the kit's `drawFjord`, the front page's colours), six pixels by five a house, near a coin's copper only under an evening sky";
+const NAMED_FAR: Record<string, string> = {
+  "langkaia #c9a14a what he takes": FAR_OCHRE,
+  "akershus #c9a14a what he takes": FAR_OCHRE,
+  "radhuset #c9a14a what he takes": FAR_OCHRE,
+  "bygdoy #c9a14a what he takes": FAR_OCHRE,
+  "stortinget #a1864b what he takes": "a lamp far off in the rock, faded into the vault's dark",
+  "stortinget #7e693f what he takes": "the lamps along the far platforms and in their trains' windows, faded into the vault's dark",
+  "stortinget #24457e his tunic": "the T-bane's own blue on the roundels of the cavern's far columns (the line's colour), under the ground",
+  "stortinget #1e335a his tunic": "the T-bane's blue band along the far platforms' walls, faded into the vault's dark",
+  "nabolaget #917b4f what he takes": "Kampen's ochre houses far off; near a coin's copper only under an evening sky, which the winter night's level has only when a player asks for it (the T key)",
+  "bjorvika #5f79a3 the calm outline": "the fjord's far strips by day, which the evening's level has only when a player asks for it (the T key)",
+  "bjorvika #5e78a2 the calm outline": "the fjord's far strips by day (the T key)",
+  "bjorvika #5d77a1 the calm outline": "the fjord's far strips by day (the T key)",
+  "bjorvika #969eb5 the calm outline": "the fjord's first far strip by day (the T key), a few pixels",
+  "bjorvika #93a9cf the calm outline": "the fjord's glints and the far ferry's wake by day (the T key), a few pixels"
+};
+
+describe("the far view keeps off what means something (order 43)", () => {
+  test(`every colour of the far, mid and near layers over ${FEW_FAR} pixels of a view, as seen under every sky, stands ${NEAR} or more off the warning red, the paint and every role's colours, but by name`, async () => {
+    const wrong: string[] = [];
+    const used = new Set<string>();
+    const least: Record<string, { d: number; at: string }> = {};
+    for (const st of [...BUILT, { id: "encore" }]) {
+      const def = await loadLevel(st.id);
+      for (const [key, n] of (await walked(st.id)).far) {
+        if (n < FEW_FAR) continue;
+        const at = key.indexOf(" ");
+        const k = Number(key.slice(0, at));
+        const p = parseColour(key.slice(at + 1));
+        if (!p) continue;
+        const hex = `#${p.rgb.map((v) => Math.round(v).toString(16).padStart(2, "0")).join("")}`;
+        for (const phase of PHASES) {
+          const seen = tinted(mixRgb(p.rgb, rgbOf(airOf(def, phase)), k), phase);
+          for (const r of FAR_ROLES) {
+            if (!r.phases.includes(phase)) continue;
+            for (const c of r.colours) {
+              const shown = r.own === null || phase === "day" ? rgbOf(c) : mixRgb(tinted(rgbOf(c), phase), rgbOf(c), r.own);
+              const d = deltaE(seen, shown);
+              if (d < (least[r.role]?.d ?? Infinity)) least[r.role] = { d, at: `${st.id} ${hex} (${phase})` };
+              if (d >= NEAR) continue;
+              const name = `${st.id} ${hex} ${r.role}`;
+              if (NAMED_FAR[name]) used.add(name);
+              else wrong.push(`${name} (${phase}): ${d.toFixed(1)}, ${n} pixels at the most in a view`);
+            }
+          }
+        }
+      }
+    }
+    console.log(`The far view's least distances from each role's colours:\n  ${Object.entries(least).map(([r, l]) => `${r}: ${l.d.toFixed(1)} at ${l.at}`).join("\n  ")}`);
+    expect([...new Set(wrong)]).toEqual([]);
+    expect(Object.keys(NAMED_FAR).filter((k) => !used.has(k))).toEqual([]);
+  }, 300_000);
 });

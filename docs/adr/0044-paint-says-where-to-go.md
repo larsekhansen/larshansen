@@ -142,3 +142,12 @@ outside its shape, and it bobs with the stone. It stands 30 or more off the ston
 and 16.1 or more off every role's colour (the nearest, the calm pale). Drawn by `runeRim` (`alive/things.ts`) in `afterDark` (`render/dusk.ts`,
 `feel`'s file), only while the rune can be taken; by day nothing changes (the pictures are byte-identical). Measured in place:
 `apps/viking/tools/review/o41/after.md`. Held by `alive/takes.test.ts`. Undoing it is the call in `render/dusk.ts` and that test.
+
+## Amended by order 43 (24 November 2026): the far view keeps off every role, however small
+The palette test held a level's fields (a colour over a 250th of what it paints) off every role, and order 34 held the scenery off the warning red
+within 24 pixels of a view; a landmark drawn small in a far layer slipped under both. Now every colour of the far, mid and near layers over six
+pixels of a view, washed toward the level's air by its haze and tinted as each sky tints it, stands 10 or more (CIEDE2000) off the warning red and
+the paint's yellow under every sky, off what he takes, a boss's "now", the mark of things to use and the calm outline under every sky as each is
+seen then, and off his tunic's blue by day, but by name (`apps/viking/src/render/warning.test.ts`, on the walk its tests share). Named: what
+was there before order 43 (the far shore's ochre houses of the shared fjord near a coin's copper under an evening sky; Stortinget's far lamps and
+the T-bane's blue on its far columns; Kampen's ochre houses under an evening sky; Bjørvika's fjord by day), each with why.
