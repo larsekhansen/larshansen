@@ -1644,7 +1644,8 @@ function covers(r: Rect): boolean {
 function inHand(p: Play) {
   padKit?.frame(p, {
     level: mode === "scene" && !scene.map && !state.card && !fetching,
-    on: mode === "scene" && !state.card && !fetching,
+    // Off under a card, the story's opening card too (order 42: on a short phone its button lay under the pad).
+    on: mode === "scene" && !state.card && !fetching && !story?.isConnected,
     still: frozen() || state.finished || !!state.flight || !!p.loaded || state.mode !== "play",
     shown,
     banner: drawn.banner,

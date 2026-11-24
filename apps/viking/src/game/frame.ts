@@ -105,8 +105,11 @@ export function roomy(at: { x: number; y: number }, cam: { x: number; y: number 
   }
   // On the line map the boards hang under the deck, the lowest `below`: from him down to it, the whole view across, clear of the
   // bottom row (order 42). On a flat deck that is the same lift everywhere. The raised slot (the way in, over the jump on its side)
-  // stands over the deck itself by design; the boards pass under it at the screen's edge as the stations do.
-  const boards = (y: number) => (room.below === undefined ? y : roomFor({ x: at.x, y: room.him.y, w: size.w, h: room.below - room.him.y }, at.x, y, room.unit, row));
+  // stands over the deck itself by design; the boards pass under it at the screen's edge as the stations do. The lift stops where
+  // the doors he stands at (two tiles over his feet: the stations) would go under the bar: on a short phone on its side the map's
+  // bar is tall, and there the stations come first.
+  const doors = room.him.y + PLAYER.h - 2 * TILE - (bounds.top ?? 0);
+  const boards = (y: number) => (room.below === undefined ? y : Math.max(y, Math.min(doors, roomFor({ x: at.x, y: room.him.y, w: size.w, h: room.below - room.him.y }, at.x, y, room.unit, row))));
   // The camera eases, so a falling man is a step's fall times its time constant below where it means him to be: it
   // looks that much further down, and is there when he is. It eases for the ground ahead either way (order 37), so that
   // turning round does not lift it all at once where a button stands behind him.

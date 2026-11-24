@@ -69,7 +69,9 @@ describe("the line map's boards never run into each other (order 41)", () => {
 // phone's pixel ratio, without a notch and with one (upright the notch at the top and the home bar; on its side on both sides, or
 // on one), with the stations' best times and the lines' added-up times on the boards or none. The raised slot (the way in, over
 // the jump on its side) stands over the deck itself by design (ADR 0043): the boards pass under it at the screen's edge as the
-// stations do, and that is not held. The boards' widths are the same stand-in as above.
+// stations do, and that is not held. The boards' widths are the same stand-in as above. The lift stops where the stations' doors would
+// go under the bar: on the short phone on its side (667 x 375) the map's bar is two rows of links and, with line 2 open, a third of
+// runes (159 of 375 px), and there the stations come first and the lowest boards may reach the jump or the move pad (printed, not held).
 
 const PHONES: [number, number][] = [
   [390, 844],
@@ -82,8 +84,12 @@ const notches = (w: number, h: number): [string, Insets][] =>
   h > w
     ? [["no notch", NO_NOTCH], ["notch", { top: 47, right: 0, bottom: 34, left: 0 }]]
     : [["no notch", NO_NOTCH], ["notch both sides", { top: 0, right: 47, bottom: 21, left: 47 }], ["notch left", { top: 0, right: 0, bottom: 21, left: 47 }], ["notch right", { top: 0, right: 47, bottom: 21, left: 0 }]];
-/** The header over the map on a phone, the site's links whole (CSS pixels, measured): two rows of links and the runes upright, one row on its side. */
-const mapBar = (w: number, h: number, safe: Insets) => safe.top + (h > w ? 250 : 39);
+/**
+ * The header over the map on a phone, the site's links whole (CSS pixels, measured in order 42's pictures): upright two rows of links,
+ * the runes and the lives, under the notch; on its side at 844 one row; at 667 the links wrap to two rows, and with line 2 open its runes
+ * take a third.
+ */
+const mapBar = (w: number, h: number, safe: Insets, lineTwo: boolean) => safe.top + (h > w ? 204 : w >= 844 ? 39 : lineTwo ? 159 : 97);
 /** The most the map's picture may be lifted for its boards, CSS pixels. */
 const LIFTED = 48;
 const overlaps = (a: Rect, b: Rect) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
@@ -126,6 +132,7 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
       const unit = v.k / dpr;
       const bad: string[] = [];
       const lifts: string[] = [];
+      const notes: string[] = [];
       for (const [label, progress] of PROGRESS) {
         const all = { ...progress, cleared: progress.cleared.filter((id) => ORDER.includes(id)) };
         for (const [notch, safe] of notches(w, h)) {
@@ -135,9 +142,11 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
           // On the map: the move pad, the way in, the jump (the dash and the shield are not shown there).
           const buttons = [slots.move, slots.enter, slots.jump];
           const row = [slots.move, slots.jump];
-          const bar = (mapBar(w, h, safe) * dpr) / v.k;
+          const lineTwo = all.cleared.includes("nabolaget");
+          const bar = (mapBar(w, h, safe, lineTwo) * dpr) / v.k;
           let cam: { x: number; y: number } | null = null;
           let plain: { x: number; y: number } | null = null;
+          const squeezed = new Set<string>();
           let lift = 0;
           const met = new Set<string>();
           const walk = (x: number, facing: 1 | -1) => {
@@ -152,13 +161,18 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
             // What the boards cost: how much higher the picture stands than the camera would put it for him alone.
             plain = frame(plain ?? { x: 0, y: 0 }, focus, bounds, v, 1000 / 60, plain === null, { buttons, unit, him, facing, vy: 0 });
             lift = Math.max(lift, (cam.y - plain.y) * unit);
+            // The boards' lift never takes the stations' doors (two tiles over his feet) under the bar: the camera is no higher than it would be
+            // for him alone, or than where the doors meet the bar (two pixels for the two cameras easing from different places).
+            if (cam.y > Math.max(plain.y, bottom - 2 * TILE - bar) + 2) met.add(`the stations' doors lifted under the bar (by ${Math.round((cam.y - Math.max(plain.y, bottom - 2 * TILE - bar)) * unit)} px)`);
             // Where the camera has stopped at an end of the line, a board on that side of the screen goes no further: it is held there.
             const atLeft = cam.x <= 0.5;
             const atRight = cam.x >= play.map.width - v.w - 0.5;
             for (const b of boards) {
               const r = { x: (b.cx - b.w / 2 - cam.x) * unit, y: (b.y - cam.y) * unit, w: b.w * unit, h: 11 * unit };
               if (r.x + r.w <= 0 || r.x >= w) continue;
-              for (const c of row) if (overlaps(r, c)) met.add(`${b.text} under the ${c === slots.move ? "move pad" : "jump"}`);
+              // Where the bar leaves no room (a short phone on its side with line 2's runes in the bar), the lift stops at the stations' doors.
+              const capped = cam.y >= bottom - 2 * TILE - bar - 0.5;
+              for (const c of row) if (overlaps(r, c)) (capped ? squeezed : met).add(`${b.text} under the ${c === slots.move ? "move pad" : "jump"}`);
               if ((atLeft && r.x < safe.left) || (atRight && r.x + r.w > w - safe.right)) met.add(`${b.text} under the notch at the line's ${atLeft ? "start" : "end"} (${Math.round(r.x)} to ${Math.round(r.x + r.w)})`);
             }
           };
@@ -166,12 +180,16 @@ describe("the line map's boards keep clear of the pad's bottom row and of a notc
           for (let x = play.map.width - 2 * TILE; x > TILE; x -= 2) walk(x, -1);
           for (const m of met) bad.push(`${label}, ${notch}: ${m}`);
           lifts.push(`${label}, ${notch}: ${Math.round(lift)}`);
+          if (squeezed.size) notes.push(`${label}, ${notch}: ${[...squeezed].join(", ")}`);
           // The lift stays small, the same all along the deck: 0 upright, on its side up to 45 px with every station's time on the boards and a
           // notch (the lines' added-up times hang lowest).
           if (lift > LIFTED) bad.push(`${label}, ${notch}: the picture lifted ${Math.round(lift)} px for the boards`);
         }
       }
       console.log(`${w} x ${h}, the most the picture is lifted for the boards (CSS px): ${lifts.join("; ")}`);
+      if (notes.length) console.log(`${w} x ${h}, where the bar leaves no room and the stations come first, boards reach the pad's bottom row: ${notes.join("; ")}`);
+      // That happens only on the short phone on its side with line 2 open (the bar 159 of 375 px): nowhere else.
+      if (notes.length && !(w === 667 && h === 375)) bad.push(...notes);
       expect(bad).toEqual([]);
     });
 });
