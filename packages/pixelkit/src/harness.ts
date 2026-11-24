@@ -32,13 +32,19 @@ export interface Harness {
   /** The actions held on each step; past the end of the script, nothing is held. */
   script: Action[][];
   now: Date;
+  /**
+   * Runs the steps (`runHarness`). The harness carries it, so a scene's `launch` need not import this file: a page whose
+   * first script has no room fetches the harness with its `?debug` code (order 42, the viking page).
+   */
+  run(input: Input, step: () => void): void;
 }
 
 /** The stepping asked for in the address, or null when the page runs as usual. Only under `?debug`. */
 export function readHarness(params: URLSearchParams): Harness | null {
   if (!params.has("debug") || !params.has("steps")) return null;
   const steps = Math.max(0, Math.floor(Number(params.get("steps")) || 0));
-  return { steps, script: parseKeys(params.get("keys") ?? ""), now: FROZEN_NOW };
+  const h: Harness = { steps, script: parseKeys(params.get("keys") ?? ""), now: FROZEN_NOW, run: (input, step) => runHarness(h, input, step) };
+  return h;
 }
 
 /**

@@ -10,6 +10,16 @@ import { markCount, marksOf, type Marks, type Records } from "./records";
 // scene owns them, so both pages that host the maze get the same ones. Their styles are put in the
 // page once, here, so neither page needs to know about them. Each level's marks are shown as three
 // notches cut in a small standing stone, drawn with filled rectangles on a tiny canvas.
+//
+// What the rules below are for (kept out of the style sheet the page is sent, since order 42):
+// - The stage's own canvases are stacked absolutely; the small stones sit in the card's flow (`.card canvas.mz-stone`).
+// - `.mz-safe`: the screen's safe areas, read by the scene through this hidden element's padding (the raven's words keep clear of a
+//   notch).
+// - On a touch screen (order 36, as the fjord's cards since order 21): the cards' buttons and the level list's rows are targets a
+//   thumb finds, 56 tall and 8 apart; nothing on the stage selects, calls out or scrolls the page; a card scrolls if it must.
+// - The list's and the card's foot 10 px over the screen's, or off the home bar's strip where that is higher (order 42): from where
+//   they stand (18 %, 16 %) on a phone on its side the level list ran past the screen's foot, its last rows out of reach, and with a
+//   home bar into its strip. Vikingfjorden's cards keep their own place and foot: its rule for `body.touch .card` wins there.
 
 const CSS = `
 .mz-levels {
@@ -57,7 +67,6 @@ const CSS = `
 .mz-levels .mz-row b { font-variant-numeric: tabular-nums; }
 .mz-levels .mz-row span:last-child { font-variant-numeric: tabular-nums; color: rgba(31, 26, 23, 0.7); }
 .mz-levels .mz-row:disabled span:last-child { color: inherit; }
-/* The stage's own canvases are stacked absolutely; these small ones sit in the card's flow. */
 .card canvas.mz-stone { position: static; display: block; flex: none; will-change: auto; image-rendering: pixelated; image-rendering: crisp-edges; }
 .mz-done {
   z-index: 5;
@@ -74,16 +83,13 @@ const CSS = `
 .mz-marks li.new { font-weight: 700; }
 .mz-done .mz-line { max-width: 26em; margin-top: 8px; font-style: italic; }
 .mz-done .mz-line:empty { display: none; }
-/* The screen's safe areas, read by the scene through this hidden element's padding (the raven's words keep clear of a notch). */
 .mz-safe { position: absolute; visibility: hidden; pointer-events: none; padding: var(--safe-top, env(safe-area-inset-top)) var(--safe-right, env(safe-area-inset-right)) var(--safe-bottom, env(safe-area-inset-bottom)) var(--safe-left, env(safe-area-inset-left)); }
-/* On a touch screen (order 36, as the fjord's cards since order 21): the cards' buttons and the level list's rows are targets a
-   thumb finds, 56 tall and 8 apart; nothing on the stage selects, calls out or scrolls the page; a card scrolls if it must. */
 .mz-touch .mz-done .actions button,
 .mz-touch .mz-levels .mz-row { min-height: 56px; }
 .mz-touch .mz-done .actions button { min-width: 56px; padding: 6px 20px; white-space: nowrap; }
 .mz-touch .mz-levels .mz-close { min-width: 56px; min-height: 56px; top: 0; right: 0; }
 .mz-touch .mz-levels .mz-row + .mz-row { margin-top: 2px; }
-.mz-touch .mz-levels, .mz-touch .mz-done { max-height: calc(100% - 24px - var(--safe-bottom, env(safe-area-inset-bottom))); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
+.mz-touch .mz-levels, .mz-touch .mz-done { max-height: calc(82% - max(10px, var(--safe-bottom, env(safe-area-inset-bottom)))); overflow-y: auto; overscroll-behavior: contain; touch-action: pan-y; }
 .mz-touch .stage { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 `;
 

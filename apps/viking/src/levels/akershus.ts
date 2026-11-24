@@ -1,5 +1,6 @@
 import { TILE } from "@larshansen/pixelkit/config";
 import { barcode, munch } from "@larshansen/pixelkit/landmarks";
+import { drawCannon } from "@larshansen/pixelkit/launcherart";
 import { R, layerX, light, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
 import { FIRE, GLASS, INK, METAL, PAINT, PALETTE, PLANTS, ROOF, SNOW, STONE, STONE_BACK, WHITE, type Stone } from "@larshansen/pixelkit/palette";
 import { STONE_LEDGE, type LedgeLook } from "@larshansen/pixelkit/props";
@@ -583,6 +584,8 @@ export const AKERSHUS: LevelDef = {
   ],
   doors: [{ id: "tbane", tile: "t", sign: "T-banen", href: "#kart" }],
   art: {
+    // The saluting battery's iron cannons, the kit's (order 42: the first script steps them and leaves their drawing here).
+    cannon: (_i, l, loadedAt, firedAt, v) => drawCannon(l, v.t, loadedAt, firedAt),
     // On the walls and the battery the hills stay on the horizon and the fjord spreads under them (order 20).
     far: (v) => drawOsloHills(v.sky, WATER, climbed(ROWS * TILE, ROWS * TILE)),
     mid: (v) => drawFjord(v.t, WATER, climbed(ROWS * TILE, ROWS * TILE)),

@@ -267,6 +267,29 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **A test that reads a stylesheet's rules** must take its comments out first (order 41): a comment before a selector list became part of the
   first selector, and the rule was not found.
 
+- **A stepped picture on a touch screen is framed before the pad is up** (found in order 42): the pad stays "off" until the page's first frame
+  says it is up, and a stepped page frames its camera once, before that frame; so the camera of every stepped picture on a touch screen
+  has made no room for the pad. A browser's resize observation lays the page out again at once (with the pad up); headless Firefox delivers
+  none. Order 41's picture of the map on its side showed Ekeberg's lowered board touching the move pad, where the camera of the second frame
+  in a real browser stands 22 px higher. *On a touch screen, lay the stepped page out again before measuring (`__game.layout()`, as order 42's
+  scratch copy of `hand.ts` does), and model the camera in a test as the page frames it (`frame` with the pad's room).*
+- **A style sheet kept in a script ships its comments** (order 42): the maze's cards' CSS is a string in `panel.ts`, and its comments went to
+  every visitor of both pages. Moved into the script's own comments, the maze page's first script went from 32.12 to 31.86 kB.
+- **What the first script carries for others can be read off it** (order 42): built without minifying, every top-level binding the first
+  script declares and its own code never uses, only exports, is there for a lazy file (`who-uses.py` in order 42's scratch folder). A whole
+  module of such bindings can move by the bundler's rule (the swatches of one level were there because the rule sends what it is not told
+  about to the first script); a binding beside others the first script uses needs its module split (`runecells.ts`, the kit's
+  `launcherart.ts`). *Read the module list and who imports what, not only the size.*
+- **A safety net nobody stands on** (order 42): the page drew the kit's plain carrier and plain ledge on a beat where a level had no drawing of
+  its own, and no level was without one. *Ask which levels a fallback is for; if none, take it out and hold that none needs it.*
+- **A function only `?debug` calls, reached through a module every page imports** (order 42): the kit's `launch` imported the harness's
+  stepping, so the harness was in every visitor's first script though only `?debug&steps` reads it. The harness now carries its runner, and
+  the page fetches the harness with its `?debug` code.
+
+- **Turning the pad off also takes its room from the camera** (order 42): put "off" under the opening card, the map dropped while the card was up
+  and eased back about 20 px as it went; hidden by the style sheet instead (`body:has(.card.story) .pad`), the pad is gone and the camera keeps its
+  place. *Ask what else reads a switch before using it for a new case.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

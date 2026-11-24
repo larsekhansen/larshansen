@@ -109,6 +109,12 @@ export function wrapLines(text: string, max: number): string[] {
  */
 export const safeSides = { left: 0, right: 0 };
 
+/**
+ * A line round every speech bubble, in this colour, so a bubble reads where the ground behind it is as white as it is (order 42: on
+ * white snow or a cloud it had no edge). None unless a page sets it (the viking game's `feel` file does); the front page never does.
+ */
+export const bubbleEdge = { color: "" };
+
 /** A speech bubble with its bottom edge at y, centred on x (or starting at x with `align: "left"`) and kept on screen, off its safe sides. Screen CSS pixels. */
 export function bubble(x: number, y: number, text: string, align: "center" | "left" = "center") {
   u.font = `600 ${Math.max(12, fontPx())}px ${FONT}`;
@@ -120,6 +126,11 @@ export function bubble(x: number, y: number, text: string, align: "center" | "le
   if (u.roundRect) u.roundRect(left, y - h, w, h, h / 2);
   else u.rect(left, y - h, w, h);
   u.fill();
+  if (bubbleEdge.color) {
+    u.strokeStyle = bubbleEdge.color;
+    u.lineWidth = 1;
+    u.stroke();
+  }
   u.fillStyle = "#1f1a17";
   u.fillText(text, left + w / 2, y - h / 2 + 0.5);
 }

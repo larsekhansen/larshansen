@@ -4,7 +4,6 @@ import { dirname, resolve } from "node:path";
 import { carrierDrawn, carrierShown, drawCarrier } from "@larshansen/pixelkit/carrier";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { TILE } from "@larshansen/pixelkit/config";
-import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { textTarget } from "@larshansen/pixelkit/text";
 import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
@@ -358,8 +357,8 @@ function thingsOf(def: LevelDef, p: Play, t0: number, t1: number): [string, ((t:
     out.push([`ledge ${i}'s paint`, same ? (t) => timedPhase(t, l) !== "off" && standTop(l.x, l.y, l.w, "gives", timedPhase(t, l) === "warn") : null]);
   });
   // What happened to a thing (fired, drummed, raised) is held at its age, as the bosses' moves are.
-  p.cannons.forEach((l, i) => out.push([`cannon ${i}`, (t, v) => (art.cannon ? art.cannon(i, l, -999, p.firedAt[i] + t - p.t, v) : drawCannon(l, t, -999, p.firedAt[i] + t - p.t))]));
-  p.drums.forEach((l, i) => out.push([`drum ${i}`, (t, v) => (art.drum ? art.drum(i, l, p.drummedAt[i] + t - p.t, v) : drawDrum(l, t, p.drummedAt[i] + t - p.t))]));
+  p.cannons.forEach((l, i) => out.push([`cannon ${i}`, (t, v) => art.cannon?.(i, l, -999, p.firedAt[i] + t - p.t, v)]));
+  p.drums.forEach((l, i) => out.push([`drum ${i}`, (t, v) => art.drum?.(i, l, p.drummedAt[i] + t - p.t, v)]));
   p.flags.forEach((f, i) => {
     const up = p.raisedAt[i];
     out.push([`flag ${i}`, (t, v) => void (art.flag?.(i, f, up === null ? null : up + t - p.t, v) || (LOOKS.flag ?? drawCheckpoint)(f, up === null ? null : up + t - p.t, t, def.id))]);

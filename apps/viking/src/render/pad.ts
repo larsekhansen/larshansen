@@ -247,7 +247,7 @@ export interface Pad {
   /** Where each shown control is, in CSS pixels of the window. */
   rects(): Rect[];
   /** Where the camera goes with room left for the buttons (`roomy` in `game/frame.ts`), from where `follow` put it. */
-  room(at: { x: number; y: number }, cam: { x: number; y: number }, focus: Focus, bounds: Bounds, elapsedMs: number, snap: boolean, him: { x: number; y: number }, facing: number, vy: number): { x: number; y: number };
+  room(at: { x: number; y: number }, cam: { x: number; y: number }, focus: Focus, bounds: Bounds, elapsedMs: number, snap: boolean, him: { x: number; y: number }, facing: number, vy: number, below?: number): { x: number; y: number };
   /** Puts each control where it goes: after a resize. */
   layout(): void;
   show(s: PadState): void;
@@ -364,7 +364,7 @@ export function createPad(el: HTMLElement, input: Input, lang: Lang, page: { hea
       help.style.visibility = "hidden";
     },
     rects: () => Object.values(shownRects()),
-    room: (at, cam, focus, bounds, elapsedMs, snap, him, facing, vy) => (el.classList.contains("off") ? at : roomy(at, cam, focus, bounds, view, elapsedMs, snap, { buttons: pad.rects(), unit: view.k / view.dpr, him, facing, vy })),
+    room: (at, cam, focus, bounds, elapsedMs, snap, him, facing, vy, below) => (el.classList.contains("off") ? at : roomy(at, cam, focus, bounds, view, elapsedMs, snap, { buttons: pad.rects(), unit: view.k / view.dpr, him, facing, vy, below })),
     layout,
     show(s) {
       const key = `${+s.on}${+s.dash}${+s.shield}${+controls.dash.hidden}${+controls.shield.hidden}${+controls.shield.classList.contains("aside")}`;

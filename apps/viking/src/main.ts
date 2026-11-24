@@ -1,15 +1,14 @@
 import "@larshansen/pixelkit/chrome.css";
 import "./styles.css";
 import { aim, follow } from "@larshansen/pixelkit/camera";
-import { carrierDrawn, drawCarrier, rideShown, type CarrierDef } from "@larshansen/pixelkit/carrier";
+import { carrierDrawn, rideShown, type CarrierDef } from "@larshansen/pixelkit/carrier";
 import { HOIST_STEPS, POLE, drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
 import { wireMute } from "@larshansen/pixelkit/chrome";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { buildDoors, doorAt, readAppLinks, type Door, type DoorSpot } from "@larshansen/pixelkit/doors";
-import { readHarness } from "@larshansen/pixelkit/harness";
+import type { Harness } from "@larshansen/pixelkit/harness";
 import { browserLang, soundWords } from "@larshansen/pixelkit/i18n";
 import { createInput } from "@larshansen/pixelkit/input";
-import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { R, ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { DUST, ENEMY, FOOD, INK, METAL, PALETTE, ROLES, SHIMMER, WHITE } from "@larshansen/pixelkit/palette";
 import type { Look } from "@larshansen/pixelkit/person";
@@ -49,7 +48,7 @@ import { readMuted, saveMuted } from "@larshansen/pixelkit/mute";
 import type { Sfx } from "@larshansen/pixelkit/sfx";
 import { makesEntry, wayOut } from "./game/wayout";
 import { drawSparks } from "@larshansen/pixelkit/sparks";
-import { drawTimed, timedPhase } from "@larshansen/pixelkit/timed";
+import { timedPhase } from "@larshansen/pixelkit/timed";
 import { boardWidth, doorBoard, drawOverlay, fontPx, platedRect, sx, sy, textCtx, unit, wrapLines, type Board } from "@larshansen/pixelkit/text";
 import { footOf } from "@larshansen/pixelkit/tilemap";
 import { walkTo } from "@larshansen/pixelkit/walkto";
@@ -67,9 +66,10 @@ import { MARKS, type LevelDef, type View } from "./levels/types";
 import { drawBracteate, drawBracteateOutline, drawRune, drawSheep, drawTick } from "./render/actors";
 import { LOOKS, drawBench, drawCheese, drawEnemy, drawShot, drawSkilling } from "./render/pickups";
 import { THROWN, freshRings, outlined } from "./render/sprite";
-import { STAND_LEDGE, hazardEdge, shiver, standing } from "./render/stand";
+import { hazardEdge, shiver, standing } from "./render/stand";
 import { bannerAlpha } from "./render/banner";
 import type { Feel } from "./render/feel";
+import type { CardResult } from "./render/finish";
 import type { Enemy, Shot } from "./game/enemies";
 import { TEXTURED, drawTiles, drawWater } from "./render/tiles";
 import { airOf, backHazeOf, hazeOf } from "./render/haze";
@@ -119,8 +119,11 @@ if (debug) {
   const named = params.get("level") ?? location.hash.slice(1);
   if (named) void loadLevel(named).catch(() => undefined);
 }
-/** `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). */
-const harness = readHarness(params);
+/**
+ * `?debug&steps=N`: stepped at load and drawn once, with the clock frozen (see the kit's harness). The harness comes with `?debug`'s
+ * code (order 42: out of the first script), read before the first scene opens.
+ */
+let harness: Harness | null = null;
 const now = () => harness?.now ?? new Date();
 
 /** Progress pretended under `?debug&cleared=...` (set at start, once the debug code is here): never stored. */
@@ -282,8 +285,8 @@ function layoutBoards(s: Scene): Board[] {
       const text = kartWords?.lineTime(n + 1, formatTime(ids.reduce((a, id) => a + progress.best[id], 0))) ?? "";
       lines.push({ text, cx: end.x + end.w / 2, y: end.bottom + 26, w: boardWidth(text) });
     });
-  // The map's look lays the stations' boards in rows so none meets another (order 41, `stationBoards`).
-  boards.push(...(stationBoards?.(stations, lines) ?? [...stations, ...lines]));
+  // The map's look lays the stations' boards in rows so none meets another (order 41, `stationBoards`), and every board clear of a notch where the line starts (order 42).
+  boards.push(...(stationBoards?.(stations, lines, boards) ?? [...stations, ...lines]));
   s.signs.forEach((sg) => {
     const label = s.def.signs[sg.i]?.label[lang] ?? "";
     boards.push({ text: label, cx: sg.x, y: sg.bottom - 30, w: boardWidth(label), post: sg.bottom });
@@ -365,7 +368,7 @@ function openScene(id: string, at?: string) {
   // The story (order 27): a line under the place's name where it has one, and the opening card the first time on the map.
   const line = feel?.arrival(def.id, lang, !progress.cleared.length);
   if (line && state.banner) state.banner.sub = line;
-  if (scene.map) feel?.opening(lang, stage);
+  if (scene.map) story = feel?.opening(lang, stage);
   // On the map after a level cleared for the first time: its stone and the station it opened answer.
   if (scene.map && firstClear) {
     const i = ORDER.indexOf(firstClear);
@@ -901,8 +904,11 @@ function tryAgainAtBoss() {
 
 const finishOn = $<HTMLButtonElement>("finish-on");
 const finishMap = $<HTMLButtonElement>("finish-map");
-/** A card comes: which, and from when, for the card after a rune going by itself; the header's restart is not for it. */
-function cardUp(kind: "clear" | "over" | "failed") {
+/**
+ * A card comes: which, and from when, for the card after a rune going by itself; the header's restart is not for it. Its title and first
+ * line, its other lines hidden (the card after a rune has them filled by feel's file), and the keyboard on its button.
+ */
+function cardUp(kind: "clear" | "over" | "failed", title: string, line = "") {
   state.finished = true;
   state.card = kind;
   state.cardAt = state.steps;
@@ -911,6 +917,11 @@ function cardUp(kind: "clear" | "over" | "failed") {
   finishMap.textContent = t.toMap;
   finishOn.textContent = kind === "clear" ? t.toMap : t.overAgain;
   finishEl.classList.toggle("auto", kind === "clear" && !view.reduced);
+  $<HTMLElement>("finish-title").textContent = title;
+  $<HTMLElement>("finish-line").textContent = line;
+  for (const el of ["finish-gold", "finish-coins", "finish-clean", "finish-more"]) $<HTMLElement>(el).hidden = true;
+  finishEl.hidden = false;
+  finishOn.focus({ preventScroll: true });
 }
 /** After a rune: out to the map, at the station just cleared. Once, whatever asked first (a key, a tap, the button, the six seconds). */
 function outToMap() {
@@ -919,92 +930,35 @@ function outToMap() {
   document.body.classList.remove("cleared");
   go("kart", arriveAfterClear(scene.def.id));
 }
-const finishCoins = $<HTMLElement>("finish-coins");
-const finishClean = $<HTMLElement>("finish-clean");
 
-/** The rune is in its slot: the card with the time, the best, the skilling, the bracteate, and a clean run. */
+/**
+ * The rune is in its slot: the card with the time, the best, the skilling, the bracteate, and a clean run. The first script puts it up
+ * with its title (the encore has no rune, order 29: its card is titled with what it is) and its way on; feel's file fills in the rest
+ * (`render/finish.ts`, order 42), and without it the card is that alone.
+ */
 function showCard(r: CardResult) {
-  cardUp("clear");
-  // The encore has no rune (order 29): its card is titled with what it is.
-  $<HTMLElement>("finish-title").textContent = `${scene.def.rune < 0 ? scene.def.landmark[lang] : RUNE_CHARS[scene.def.rune]} · ${scene.def.name}`;
-  $<HTMLElement>("finish-line").textContent = `${formatTime(r.ms)} · ${r.newBest ? t.finishNew : t.finishBest(formatTime(progress.best[scene.def.id] ?? r.ms))}`;
-  const gold = $<HTMLElement>("finish-gold");
-  gold.hidden = !scene.play.bracteate;
-  gold.textContent = r.gold ? t.goldFound : t.goldMissed;
-  finishCoins.hidden = r.total === 0;
-  finishCoins.textContent = t.finishSkilling(r.found, r.total);
-  finishClean.hidden = !r.clean && !r.pole;
-  finishClean.textContent = [r.clean ? t.finishClean : "", r.pole ? (touch ? t.finishPoleTouch : t.finishPole) : ""].filter(Boolean).join(" ");
-  // The last line counts honestly: the runes he has, on the last level built of each line; with the
-  // tenth, the name, plainly, in both languages; and when Nabolaget opens line 2, that it has.
-  const more = $<HTMLElement>("finish-more");
-  const of = (ids: string[]) => ids.filter((id) => progress.cleared.includes(id)).length;
-  const lastOfTwo = BUILT.filter((l) => l.line === 2).at(-1)?.id;
-  more.hidden = !r.home && !r.opened && scene.def.id !== "nabolaget" && !scene.def.cardLine;
-  more.classList.toggle("home", r.home);
-  more.textContent = "";
-  if (r.home) {
-    const other = strings(lang === "nb" ? "en" : "nb");
-    for (const line of [t.homeLine, other.homeLine, ...(r.opened ? [t.lineTwoOpened] : [])]) more.appendChild(document.createElement("span")).textContent = line;
-  } else if (r.opened) more.textContent = t.lineTwoOpened;
-  else if (scene.def.id === "nabolaget") more.textContent = t.runesLeft(of(LINE_1));
-  else more.textContent = scene.def.cardLine?.[lang](of(LINE_2), ORDER.length - progress.bracteates.length) ?? "";
-  // The story's end (order 27): line 1 is lifted with the tenth rune, all of Oslo with the last of line 2.
-  const end = r.home ? feel?.story(lang).endOne : scene.def.id === lastOfTwo && of(LINE_2) === LINE_2.length ? feel?.story(lang).endTwo : "";
-  if (end) {
-    feel?.lineLifted();
-    more.hidden = false;
-    more.appendChild(document.createElement("span")).textContent = ` ${end}`;
-  }
-  finishEl.hidden = false;
-  say(`${scene.def.name}. ${formatTime(r.ms)}. ${r.newBest ? t.finishNew : ""} ${t.toMap}.`);
+  cardUp("clear", `${scene.def.rune < 0 ? scene.def.landmark[lang] : RUNE_CHARS[scene.def.rune]} · ${scene.def.name}`);
+  say(feel?.card(r, scene.def, progress, lang, touch, !!scene.play.bracteate, t.toMap) ?? scene.def.name);
   sfx.play("clear");
-  finishOn.focus({ preventScroll: true });
 }
 
 /** No lives left: a plain card, and the level starts over with three lives. */
 function showOver() {
-  cardUp("over");
   const line = scene.play.overAtBoss ? t.overLineBoss : t.overLine;
-  $<HTMLElement>("finish-title").textContent = t.overTitle;
-  $<HTMLElement>("finish-line").textContent = line;
-  $<HTMLElement>("finish-gold").hidden = true;
-  finishCoins.hidden = true;
-  finishClean.hidden = true;
-  $<HTMLElement>("finish-more").hidden = true;
-  finishEl.hidden = false;
+  cardUp("over", t.overTitle, line);
   say(`${t.overTitle}. ${line}`);
   sfx.play("over");
-  finishOn.focus({ preventScroll: true });
 }
 
 /** A level's file did not come: a plain card, "Try again" (the page again, at that level) and "To the map". */
 let failedLevel: string | null = null;
 function showLoadFailed(id: string) {
   failedLevel = id;
-  const name = nameOf(id);
-  cardUp("failed");
-  $<HTMLElement>("finish-title").textContent = t.loadFailedTitle;
-  $<HTMLElement>("finish-line").textContent = t.loadFailedLine(name);
-  for (const el of ["finish-gold", "finish-coins", "finish-clean", "finish-more"]) $<HTMLElement>(el).hidden = true;
-  finishEl.hidden = false;
-  say(`${t.loadFailedTitle}. ${t.loadFailedLine(name)}`);
-  finishOn.focus({ preventScroll: true });
+  const line = t.loadFailedLine(nameOf(id));
+  cardUp("failed", t.loadFailedTitle, line);
+  say(`${t.loadFailedTitle}. ${line}`);
 }
 
-interface CardResult {
-  ms: number;
-  newBest: boolean;
-  gold: boolean;
-  found: number;
-  total: number;
-  clean: boolean;
-  pole: boolean;
-  /** This rune was the tenth: the card says so, once. */
-  home: boolean;
-  /** Line 2 opened with this clear (Nabolaget's first): the card says so. */
-  opened: boolean;
-}
 let cardResult: CardResult | null = null;
 
 finishOn.addEventListener("click", () => {
@@ -1349,7 +1303,8 @@ function camera(elapsedMs: number, snap: boolean) {
   const cam = { x: view.camXf - shake.x, y: view.camYf - shake.y };
   const bounds = { width: scene.play.map.width, bottom, top: bar };
   let at = follow(cam, focus, bounds, view, elapsedMs, snap);
-  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing, p.body.vy);
+  // On the map the boards under the stations keep clear of the pad's bottom row too (order 42): the foot of the lowest.
+  if (padKit && !lookAt) at = padKit.room(at, cam, focus, bounds, elapsedMs, snap, shown, p.body.facing, p.body.vy, scene.map ? Math.max(...scene.boards.map((b) => b.y)) + 11 : undefined);
   const nudge = feel?.nudge(state.steps);
   shake.x = nudge?.x ?? 0;
   shake.y = nudge?.y ?? 0;
@@ -1410,26 +1365,22 @@ const follows = pageFollows(enterButton, links, help);
 function drawThings(v: View) {
   const p = scene.play;
   const art = scene.def.art;
-  p.def.carriers.forEach((d, i) => {
-    const at = carrierDrawn(d, p.t, v.alpha);
-    if (art.carrier) art.carrier(i, at, v);
-    else drawCarrier(d, p.t, v.alpha, v.sky.snow, STAND_LEDGE);
-  });
+  // A level with things that carry him, ledges on a beat, cannons or drums draws them (order 42: the kit's plain drawings of
+  // them, which no level used, left the first script; `levels/lazy.test.ts` holds that every level draws its own).
+  p.def.carriers.forEach((d, i) => art.carrier?.(i, carrierDrawn(d, p.t, v.alpha), v));
   p.def.timed.forEach((l, i) => {
     // About to go, it trembles (order 19): drawn a pixel to and fro.
     const dx = timedPhase(p.t, l) === "warn" ? shiver(p.t) : 0;
     const g = ctx();
     g.translate(dx, 0);
-    if (art.timed) art.timed(i, v);
-    else drawTimed(l, p.t, v.sky.snow, STAND_LEDGE);
+    art.timed?.(i, v);
     g.translate(-dx, 0);
   });
   // Under what moves and over what it moves on: its shadow (order 23).
   feel?.shadows(p, p.loaded ? null : shown, v.alpha);
   p.cannons.forEach((l, i) => {
     const loadedAt = p.loaded?.i === i ? p.loaded.at : -999;
-    if (art.cannon) art.cannon(i, l, loadedAt, p.firedAt[i], v);
-    else drawCannon(l, p.t, loadedAt, p.firedAt[i]);
+    art.cannon?.(i, l, loadedAt, p.firedAt[i], v);
     if (p.loaded?.i === i) {
       // While he sits in the barrel: the first second of the arc, dotted.
       for (const d of cannonArc(p, i, 60, 2)) {
@@ -1438,7 +1389,7 @@ function drawThings(v: View) {
       }
     }
   });
-  p.drums.forEach((l, i) => (art.drum ? art.drum(i, l, p.drummedAt[i], v) : drawDrum(l, p.t, p.drummedAt[i])));
+  p.drums.forEach((l, i) => art.drum?.(i, l, p.drummedAt[i], v));
   p.flags.forEach((f, i) => {
     if (!art.flag?.(i, f, p.raisedAt[i], v)) (LOOKS.flag ?? drawCheckpoint)(f, p.raisedAt[i], p.t, p.def.id);
     // Raised, it says so as an earned rune does: a tick at the top of its pole (order 18).
@@ -1645,6 +1596,11 @@ const benchStop = { id: "bench" };
 function plated(b: typeof state.banner) {
   drawn.banner = null;
   if (!b) return null;
+  // At the first visit the opening card comes up with the map's plate: the plate waits until the card has gone (order 42).
+  if (story?.isConnected) {
+    b.since = state.steps;
+    return null;
+  }
   const age = state.steps - b.since;
   const alpha = bannerAlpha(age);
   if (alpha <= 0) return null;
@@ -1661,6 +1617,9 @@ function plated(b: typeof state.banner) {
   state.banner = null;
   return null;
 }
+
+/** The story's opening card while it is up (order 27), which the place's name waits for. */
+let story: HTMLElement | null | undefined;
 
 /** What the page drew where, for `?debug` (order 21's measuring, `tools/glance/hand.ts`). */
 const drawn: { banner: Rect | null } = { banner: null };
@@ -1792,6 +1751,7 @@ async function start() {
     // `?debug&safe=…` (order 37): a pretended notch and home bar, which no browser here has, set before the first scene lays
     // out its pad, its bar and its cards.
     (await debugging).pretendSafe(params.get("safe"));
+    harness = (await debugging).readHarness(params);
     pretend = (await debugging).debugProgress(params);
     if (pretend) progress = pretend;
     readFeather();

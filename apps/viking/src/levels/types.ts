@@ -138,7 +138,7 @@ export interface Art {
   carrier?(i: number, at: { x: number; y: number }, v: View): void;
   /** Draws timed ledge `i`; when absent the kit's plain one is drawn. */
   timed?(i: number, v: View): void;
-  /** Draws cannon `i` its own way (a snow cannon); without it the kit's iron cannon is drawn. */
+  /** Draws cannon `i`: the kit's iron cannon (`launcherart.ts`) or its own (a snow cannon). A level with cannons draws them (order 42). */
   cannon?(i: number, l: Launcher, loadedAt: number, firedAt: number, v: View): void;
   /** Draws enemy `i` (its look), when the level has its own drawing for it. */
   enemy?(e: Enemy, v: View): boolean;
@@ -158,7 +158,7 @@ export interface Art {
   troll?(t: Troll, v: View): void;
   /** Draws the last boss, from its state. */
   boss?(state: unknown, v: View): void;
-  /** Draws bass drum `i` its own way (a clothesline); without it the kit's drum is drawn. */
+  /** Draws bass drum `i`: the kit's drum (`launcherart.ts`) or its own (a clothesline). A level with drums draws them (order 42). */
   drum?(i: number, l: Launcher, firedAt: number, v: View): void;
 }
 

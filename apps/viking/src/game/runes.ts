@@ -1,6 +1,7 @@
 // The Elder Futhark runes that spell LARS HANSEN (line 1) and VIKING (line 2), as strokes in a 1 x 1
-// box, so no runic font is needed. `runeCells` turns the strokes into a small pixel grid with
-// one-pixel lines. V is written with the u-rune (uruz), as the old inscriptions do.
+// box, so no runic font is needed. `runeCells` (`runecells.ts`, with `feel`'s file: the first script only draws the
+// header's strokes) turns the strokes into a small pixel grid with one-pixel lines. V is written with the u-rune
+// (uruz), as the old inscriptions do.
 
 export type RuneChar = "L" | "A" | "R" | "S" | "H" | "N" | "E" | "V" | "I" | "K" | "G";
 
@@ -45,41 +46,3 @@ export const RUNE_STROKES: Record<RuneChar, Stroke[]> = {
     [[0.8, 0.06], [0.2, 0.94]]
   ]
 };
-
-const cache = new Map<string, boolean[][]>();
-
-/** The rune as `rows` rows of `cols` cells, true where a pixel is lit. Lines run one cell wide. */
-export function runeCells(char: RuneChar, cols: number, rows: number): boolean[][] {
-  const key = `${char}${cols}x${rows}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const grid = Array.from({ length: rows }, () => Array<boolean>(cols).fill(false));
-  for (const stroke of RUNE_STROKES[char])
-    for (let i = 0; i < stroke.length - 1; i++) {
-      // A straight line between two points, a cell at a time.
-      let x0 = Math.round(stroke[i][0] * (cols - 1));
-      let y0 = Math.round(stroke[i][1] * (rows - 1));
-      const x1 = Math.round(stroke[i + 1][0] * (cols - 1));
-      const y1 = Math.round(stroke[i + 1][1] * (rows - 1));
-      const dx = Math.abs(x1 - x0);
-      const dy = -Math.abs(y1 - y0);
-      const sx = x0 < x1 ? 1 : -1;
-      const sy = y0 < y1 ? 1 : -1;
-      let err = dx + dy;
-      for (;;) {
-        grid[y0][x0] = true;
-        if (x0 === x1 && y0 === y1) break;
-        const e2 = 2 * err;
-        if (e2 >= dy) {
-          err += dy;
-          x0 += sx;
-        }
-        if (e2 <= dx) {
-          err += dx;
-          y0 += sy;
-        }
-      }
-    }
-  cache.set(key, grid);
-  return grid;
-}

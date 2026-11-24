@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 import { carrierDrawn, carrierShown, drawCarrier } from "@larshansen/pixelkit/carrier";
 import { TILE } from "@larshansen/pixelkit/config";
 import { drawCheckpoint } from "@larshansen/pixelkit/checkpoint";
-import { drawCannon, drawDrum } from "@larshansen/pixelkit/launcher";
 import { ctx, lights, target, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, ROLES } from "@larshansen/pixelkit/palette";
 import { drawSky } from "@larshansen/pixelkit/sky";
@@ -247,8 +246,8 @@ function nearRed(def: LevelDef): { things: Most; scenery: Most; lights: Lit } {
           else drawCarrier(d, 0, 1, sky.snow, STAND_LEDGE);
         });
         def.timed.forEach((l, i) => (art.timed ? art.timed(i, v) : drawTimed(l, 0, sky.snow, STAND_LEDGE)));
-        play.cannons.forEach((l, i) => (art.cannon ? art.cannon(i, l, -999, play.firedAt[i], v) : drawCannon(l, 0, -999, play.firedAt[i])));
-        play.drums.forEach((l, i) => (art.drum ? art.drum(i, l, play.drummedAt[i], v) : drawDrum(l, 0, play.drummedAt[i])));
+        play.cannons.forEach((l, i) => art.cannon?.(i, l, -999, play.firedAt[i], v));
+        play.drums.forEach((l, i) => art.drum?.(i, l, play.drummedAt[i], v));
         play.flags.forEach((f, i) => art.flag?.(i, f, null, v) || drawCheckpoint(f, null, 0));
         art.front?.(v);
         met.counting(false);

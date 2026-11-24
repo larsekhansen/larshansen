@@ -825,4 +825,13 @@ describe("what is drawn over a level stands off every level's ground (order 41)"
     const mark = least((g) => Math.max(deltaE(rgb(ENEMY.warning), g), deltaE(rgb(ENEMY.line), g)));
     expect(mark.v).toBeGreaterThanOrEqual(20);
   });
+
+  // Order 42: a bubble on white snow or a cloud had no edge (its white 0 off the ground; its words still read). The page gives its bubbles
+  // a thin line of the game's dark, the ink (`feel`'s file sets the kit's `bubbleEdge`: `render/feel.test.ts` holds it), so a bubble is
+  // seen by its white or by that line.
+  test("a bubble: seen against every ground by its white or by the line of the game's dark round it, 30 or more", () => {
+    const seen = least((g) => Math.max(deltaE(mixRgb(g, WHITE, 0.96), g), deltaE(rgb("#1f1a17"), g)));
+    console.log(`A bubble against ${grounds.length} grounds, at the least ${seen.v.toFixed(1)} (its white alone: ${least((g) => deltaE(mixRgb(g, WHITE, 0.96), g)).v.toFixed(1)})`);
+    expect(seen.v).toBeGreaterThanOrEqual(30);
+  });
 });

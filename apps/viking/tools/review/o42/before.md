@@ -1,0 +1,145 @@
+# Order 42: room, and the edges of the screen: looked at first
+
+Looked at on branch `room-and-edges`, from `origin/main` at `5e46578` (after order 41), its build (`vite build` in `apps/viking`, vite under Node, as
+the deploy builds it) and the same build with a plugin that writes each chunk's modules (`bin/stats.config.ts`). Pictures and working files outside
+the repository, in `~/.cache/claude-scratch-larshansen/o42/` (`bin/` the scripts, `work/` the measures, `shots/` the pictures).
+
+## 1. What is in the first script
+
+The page's first script is **58,647 bytes gzipped by zlib** (vite's number, 58.65 kB; 58,625 by GNU `gzip -c`), 144,771 bytes, 83 modules. Each module
+below with its bytes in the script, its own code gzipped alone, and its share of the script's gzip (its own gzip scaled so the shares add up to
+the script's: a module's code compresses better among the rest than alone, by about 0.7). "Needed by": whether the first frame of the map or of a
+level draws with it or steps it, or only something later (a level's end, a click, a door, `?debug`).
+
+How it was found what each module is for: the module's own code in the script (rollup's `RenderedModule.code`), and, built without minifying,
+which of its top-level bindings the first script's own code uses and which only the lazy files import from it (`bin/who-uses.py`,
+`bin/exported-only.py`). Every module of the script is reached from `main.ts` by static imports; what is there only for later files is either a
+binding nothing in the first script calls, or a module the bundler's rule sends to the first script because it is not named (`vite.config.ts`:
+anything not named lands there). The second kind can move whole; the first only by splitting its module.
+
+| Module | Bytes | Own gzip | Share of the script's gzip | Needed by | What it is for (and what this order does with it) |
+|---|---|---|---|---|---|
+| `main.ts` | 59,789 | 18,217 | 12,712 | first frame | the page: scenes, the header, the camera, drawing, doors. Later only: the card after a rune filled in (moved), the harness (moved), the maze's glue behind its door and the bosses' bubbles (kept: woven through the page's state) |
+| `levels/langkaia.ts` | 17,144 | 5,874 | 4,099 | first frame | the first level, so a fresh visitor starts without a level's fetch (ADR 0011) |
+| `game/play.ts` | 16,989 | 5,139 | 3,586 | first frame | the rules (every level, the map) |
+| `kit/scene.ts` | 8,300 | 3,122 | 2,179 | first frame | the kit's scene helpers |
+| `render/tiles.ts` | 9,961 | 2,650 | 1,849 | first frame | tiles and water; `standTops` is feel's alone (one binding, kept) |
+| `kit/text.ts` | 7,630 | 2,534 | 1,768 | first frame | the overlay: the plate, boards, bubbles, the help line's wrap |
+| `game/i18n.ts` | 5,671 | 2,137 | 1,491 | first frame | the page's words; the card after a rune's words only later (moved, with the card) |
+| `game/enemies.ts` | 6,091 | 2,117 | 1,477 | first frame | the enemies' rules (Langkaia's pigeon is the first) |
+| `kit/paint.ts` | 5,437 | 2,024 | 1,412 | first frame | the drawing primitives |
+| `kit/physics.ts` | 6,913 | 1,894 | 1,322 | first frame | the body |
+| `kit/person.ts` | 4,455 | 1,657 | 1,156 | first frame | him drawn plainly until feel's file is here (ADR 0053) |
+| `kit/carrier.ts` | 5,296 | 1,646 | 1,149 | first frame | carriers' rules (Langkaia's rafts); its plain drawing no level used (the page's call of it removed) |
+| `kit/sky.ts` | 4,004 | 1,539 | 1,074 | first frame | the sky |
+| `kit/props.ts` | 4,105 | 1,488 | 1,038 | first frame | boards, ledges, crates without feel's file; `smoke` and `lampPool` are later files' (kit, kept) |
+| `kit/launcher.ts` | 3,944 | 1,452 | 1,013 | first frame | cannons' and drums' rules; their drawing only Akershus and Slottet (moved: the kit's `launcherart.ts`) |
+| `render/sprite.ts` | 3,811 | 1,366 | 953 | first frame | the outlines of what moves |
+| `kit/palette.ts` | 2,742 | 1,306 | 911 | first frame | the palette |
+| `levels/index.ts` | 4,242 | 1,273 | 888 | first frame | the stations and the levels' loaders |
+| `levels/kart.ts` | 2,775 | 1,265 | 883 | first frame | the line map built from progress (the bare map without its look) |
+| `render/backdrop.ts` | 3,017 | 1,170 | 816 | first frame | the far layers |
+| `kit/oslo.ts` | 2,933 | 1,152 | 804 | first frame | the sky by Oslo's clock |
+| `game/progress.ts` | 2,776 | 1,118 | 780 | first frame | what is saved |
+| `kit/tilemap.ts` | 2,787 | 1,074 | 749 | first frame | the map reader |
+| `kit/stage.ts` | 2,619 | 1,001 | 699 | first frame | the canvases |
+| `kit/input.ts` | 2,320 | 930 | 649 | first frame | keys |
+| `vite/preload-helper.js` | 2,213 | 922 | 643 | ? | ? |
+| `render/stand.ts` | 2,043 | 892 | 622 | first frame | the paint on what he stands on; `hazardEdge` only later levels' (kept, small) |
+| `game/runes.ts` | 2,060 | 841 | 587 | first frame | the header's runes as strokes; `runeCells` only feel's and the map's look (moved: `game/runecells.ts`) |
+| `kit/doors.ts` | 1,740 | 835 | 583 | first frame | doors |
+| `render/ship.ts` | 2,188 | 757 | 528 | first frame | Langkaia's longship |
+| `kit/checkpoint.ts` | 1,545 | 687 | 479 | first frame | flags (Langkaia's) |
+| `kit/timed.ts` | 1,577 | 660 | 461 | first frame | ledges on a beat: their rules; their plain drawing no level used (the page's call of it removed) |
+| `levels/build.ts` | 1,610 | 660 | 461 | first frame | Langkaia's map builder |
+| `kit/harness.ts` | 1,140 | 619 | 432 | `?debug` only | the stepped harness (moved to `?debug`'s file; the kit's `launch` no longer imports it) |
+| `kit/landmarks.ts` | 1,454 | 558 | 389 | first frame | Langkaia's far shore (MUNCH, the Barcode) |
+| `vite/modulepreload-polyfill.js` | 1,280 | 540 | 377 | ? | ? |
+| `game/sheep.ts` | 1,023 | 532 | 371 | first frame | sheep's rules, in the rules (kept) |
+| `kit/i18n.ts` | 1,098 | 525 | 366 | first frame | the kit's words |
+| `kit/walkto.ts` | 995 | 482 | 336 | first click | a click's walk (kept: 0.34 kB, a click wants its answer at once) |
+| `kit/config.ts` | 755 | 454 | 317 | first frame | constants |
+| `render/furniture.ts` | 846 | 398 | 278 | first frame | the T-bane's door |
+| `kit/camera.ts` | 766 | 391 | 273 | first frame | the camera |
+| `render/actors.ts` | 799 | 383 | 267 | first frame | plain drawings without feel's file (ADR 0053), the tick |
+| `render/pickups.ts` | 770 | 375 | 262 | first frame | plain drawings without feel's file, `LOOKS` |
+| `kit/swatches/forest.ts` | 921 | 362 | 253 | first frame | five of its colours the first script's; 29 Nordmarka's alone (kit swatch, kept whole) |
+| `levels/types.ts` | 571 | 350 | 244 | first frame | `MARKS` |
+| `kit/chrome.ts` | 664 | 346 | 241 | first frame | the sound switch |
+| `kit/swatches/facade.ts` | 592 | 295 | 206 | first frame | facades |
+| `kit/swatches/river.ts` | 658 | 292 | 204 | later | Akerselva's alone (moved to its file) |
+| `kit/surface.ts` | 480 | 287 | 200 | first frame | ice, inrun, belts (rules) |
+| `kit/swatches/paint.ts` | 635 | 279 | 195 | first frame | paints |
+| `kit/zone.ts` | 503 | 277 | 193 | first frame | zones (rules) |
+| `kit/swatches/metal.ts` | 574 | 270 | 188 | first frame | metals |
+| `kit/swatches/enemy.ts` | 573 | 264 | 184 | first frame | the enemy palette |
+| `game/card.ts` | 409 | 262 | 183 | a level's end | the card's rules (kept, small: which keys, when it goes) |
+| `kit/backdrop.ts` | 536 | 254 | 177 | first frame | far-layer helpers |
+| `render/haze.ts` | 379 | 254 | 177 | first frame | the haze |
+| `kit/mute.ts` | 455 | 246 | 172 | first frame | the sound switch's state |
+| `kit/swatches/roles.ts` | 374 | 238 | 166 | first frame | the roles' colours |
+| `kit/loop.ts` | 400 | 229 | 160 | first frame | the frame loop |
+| `kit/swatches/parade.ts` | 441 | 218 | 152 | first frame | one of its colours the first script's (kit swatch, kept whole) |
+| `kit/hazard.ts` | 316 | 208 | 145 | first frame | hazards (rules) |
+| `kit/swatches/plants.ts` | 368 | 186 | 130 | first frame | plants |
+| `game/wayout.ts` | 245 | 186 | 130 | behind a door | the maze's way out (kept: 0.13 kB, in the maze's glue) |
+| `kit/sparks.ts` | 232 | 162 | 113 | first frame | sparks (the helmet's dust) |
+| `kit/swatches/masonry.ts` | 251 | 160 | 112 | first frame | masonry |
+| `kit/swatches/ice.ts` | 262 | 158 | 110 | later | Holmenkollen's alone (moved to its file) |
+| `kit/swatches/stand.ts` | 194 | 133 | 93 | first frame | the paint's colours |
+| `kit/swatches/ground.ts` | 207 | 129 | 90 | first frame | ground |
+| `kit/swatches/brick.ts` | 190 | 128 | 89 | first frame | brick |
+| `kit/swatches/food.ts` | 179 | 123 | 86 | first frame | the waffle heart, the cheese |
+| `kit/swatches/roof.ts` | 158 | 119 | 83 | first frame | roofs |
+| `kit/swatches/glass.ts` | 140 | 116 | 81 | first frame | glass |
+| `render/banner.ts` | 107 | 113 | 79 | first frame | the plate's fade |
+| `kit/swatches/coin.ts` | 148 | 110 | 77 | first frame | coins |
+| `kit/swatches/land.ts` | 143 | 107 | 75 | first frame | land |
+| `kit/swatches/fire.ts` | 105 | 90 | 63 | first frame | fire |
+| `kit/swatches/feather.ts` | 92 | 86 | 60 | later | the feather's colours: feel's file and the maze's alone (moved to feel's file) |
+| `kit/swatches/snow.ts` | 74 | 77 | 54 | first frame | snow |
+| `kit/swatches/tram.ts` | 75 | 76 | 53 | later | the tram's colours: Ekeberg's, Gamle Oslo's and the props kit's (moved to feel's file) |
+| `kit/swatches/flag.ts` | 77 | 72 | 50 | first frame | flags |
+| `kit/swatches/creature.ts` | 53 | 65 | 45 | later | Holmenkollen's and Nordmarka's alone (moved to feel's file) |
+| `kit/swatches/doorway.ts` | 50 | 62 | 43 | first frame | doorways |
+
+The first script: 58,647 bytes gzipped by zlib (144,771 bytes), 83 modules; the shares add up to it (each module's own gzip, scaled).
+
+
+**What can leave without anything a player sees changing, or changing when he sees it** (the first scene waits for `feel`'s file, so anything that
+comes with it is there by the first frame; a level fetched later brings its own file and `feel`'s; nothing moved may be needed by the first frame
+of Langkaia or of the map without `feel`'s file, ADR 0053):
+
+| What | Where it is | Where it can go | Saves (estimated) |
+|---|---|---|---|
+| The kit's swatches that no first-script code draws with: the river's (Akerselva alone), the ice's (Holmenkollen alone), the feather's, the tram's and the creatures' (only `feel`'s file and later levels) | whole modules, there by the bundler's default | the river's and the ice's to their level's file (`OWN`), the others to `feel`'s | about 0.45 kB |
+| `runeCells`, the runes as pixels | `game/runes.ts`, beside the strokes the header draws | a module of its own in `feel`'s file (its users: the rune on its stone, its flight, the map's look) | about 0.2 kB |
+| How a cannon and a drum look | the kit's `launcher.ts`, beside their rules (which `play.ts` steps) | a kit module of their own, drawn by the two levels that use the kit's look (Akershus's cannons, Slottet's drums); Holmenkollen and Gamle Oslo draw their own | about 0.7 kB |
+| The plain carrier and the plain ledge on a beat | the page's fallbacks (`drawCarrier`, `drawTimed` in `main.ts`) | nowhere: every level with carriers or ledges draws its own (Langkaia too), so they are dead | about 0.25 kB |
+| The kit's harness (`?debug&steps=N`) | the kit's `harness.ts`, imported by the kit's `launch` | `?debug`'s file, once the harness carries its own runner | about 0.4 kB |
+| The card after a rune filled in, and its words | `main.ts` and `game/i18n.ts` | `feel`'s file; the first script keeps the card's title and its button, so without that file the card still says where he was and takes him on | about 1 kB |
+| The maze's glue (going in and out of the mound, its header) | `main.ts` | not moved: it is woven through the page's own state (the scene, the help line, the pad, the history); moving it would hand most of the page to it | (about 1.2 kB) |
+| The bosses' bubbles' placing | `main.ts` | not moved: small, and read every frame of a boss's fight | (about 0.3 kB) |
+| A click's walk (`walkTo`) | the kit's `walkto.ts` | not moved: a click wants its answer at once | (0.34 kB) |
+
+What is said twice: the three cards (a level's end, Game over, a load that failed) each set their title, their first line and hid the same four
+lines; they can share one function.
+
+## 2. The edges, before
+
+Photographed from origin/main's build with order 41's scratch copy of `hand.ts` (`bin/screens.ts`, laying the stepped page out again before it
+measures, as a browser does at the start: see `after.md`), every screen state of order 41's table and the map at the line's two ends, at 390 x 844,
+844 x 390, 360 x 640 and 667 x 375, in both languages, with a pretended notch and home bar (`&safe=upright`, `&safe=sides`) and without
+(`shots/survey/main/`; the cards, the map and the maze: 22 states).
+
+- **The opening card and the maze's level list on its side with a home bar**: both 86 to 380 px at 844 x 390 (the card's foot the screen's less
+  10), the home bar's strip from 369: 11 px into it, in both languages; the card's button and the list's last rows are in its scroll, behind the foot.
+- **The maze's own page** (`shots/mazepage/main/`): its level list stands from 18 % down with its height the screen's less 24 px and the safe area,
+  so on a phone on its side it runs past the screen's foot, with a notch or without: its fifth row cut by the screen's edge, its sixth and seventh never
+  in reach.
+- **The plate under the opening card**: at the first visit both come up together; upright the card covers the plate whole, on its side the plate
+  shows over the card's top edge.
+- **The map's boards and the pad**: on a phone on its side the boards order 41 hung in lower rows (Ekeberg's with line 1 nearly done; both lines' added-up
+  times) reach the move pad's or the jump's top as the deck scrolls past them (a model of the page's camera walking the line: 29 boards, by progress and
+  notch, at 844 x 390 and 667 x 375; upright none). Order 41's picture showed Ekeberg's on the move pad itself: a stepped page frames its camera before the
+  pad is up, and the camera of the frames after rises about 22 px.

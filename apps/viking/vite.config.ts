@@ -15,8 +15,8 @@ const ROUTE = /\/src\/levels\/routes\/(\w+)\.ts$/;
 // `kept` (what is drawn once and copied, ADR 0036, 0041), which the levels that keep or stamp their drawing fetch,
 // and the kit's dark, which Nordmarka's night and the maze's dark level both draw with; the night of a level's own
 // (`render/night`) goes with the kit's dark, since Nordmarka and Vålerenga both draw theirs with it (order 33).
-const OWN: Record<string, string> = { "swatches/metro": "stortinget", kept: "kept", dark: "dark", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "swatches/ruins": "gamlebyen", "game/serpent": "gamlebyen", "game/plough": "nabolaget", "game/troll": "nordmarka", "game/loki": "encore", "game/tune": "encore", "render/loki": "encore", "render/night": "dark", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
-const OWNED = /\/(swatches\/metro|swatches\/hill|swatches\/winter|swatches\/museum|swatches\/park|swatches\/sledge|swatches\/lake|swatches\/site|swatches\/ruins|game\/serpent|game\/plough|game\/troll|game\/loki|game\/tune|render\/loki|render\/night|deck|sink|oars|kept|dark)\.ts$/;
+const OWN: Record<string, string> = { "swatches/metro": "stortinget", "swatches/river": "akerselva", "swatches/ice": "holmenkollen", kept: "kept", dark: "dark", "swatches/hill": "ekeberg", "swatches/winter": "nabolaget", "swatches/museum": "bygdoy", "swatches/park": "vigelandsparken", "swatches/sledge": "korketrekkeren", "swatches/lake": "ostensjovannet", "swatches/site": "bjorvika", "swatches/ruins": "gamlebyen", "game/serpent": "gamlebyen", "game/plough": "nabolaget", "game/troll": "nordmarka", "game/loki": "encore", "game/tune": "encore", "render/loki": "encore", "render/night": "dark", deck: "bygdoy", sink: "sink", oars: "bygdoy" };
+const OWNED = /\/(swatches\/metro|swatches\/river|swatches\/ice|swatches\/hill|swatches\/winter|swatches\/museum|swatches\/park|swatches\/sledge|swatches\/lake|swatches\/site|swatches\/ruins|game\/serpent|game\/plough|game\/troll|game\/loki|game\/tune|render\/loki|render\/night|deck|sink|oars|kept|dark)\.ts$/;
 
 /**
  * The first script's budget (ADR 0011): the script the page loads first (the kit, the rules, the line map,
@@ -52,8 +52,8 @@ export default defineConfig({
           const route = ROUTE.exec(id);
           if (route) return route[1] === "common" ? "routes" : `${route[1]}-route`;
           if (/\/src\/game\/bot\.ts$/.test(id)) return "routes";
-          // What only `?debug` needs, and the kit's pretended notch (order 37), which only it sets.
-          if (/\/src\/debug\.ts$/.test(id) || /\/packages\/pixelkit\/src\/safe\.ts$/.test(id)) return "debug";
+          // What only `?debug` needs, and the kit's pretended notch (order 37), which only it sets, and the kit's harness (order 42).
+          if (/\/src\/debug\.ts$/.test(id) || /\/packages\/pixelkit\/src\/(safe|harness)\.ts$/.test(id)) return "debug";
           // The grain study (order 22, part B): only under `?debug&grain`.
           if (/\/src\/grain\//.test(id)) return "grain";
           // Walking carefully to a clicked spot in a level (order 22): fetched with the first click.
@@ -65,10 +65,17 @@ export default defineConfig({
           // What answers events (order 19), and the frames, shadows and depth that keep the picture alive (order 23):
           // fetched as the page starts, alongside the map's look.
           // The story's words (order 27) come with it, and the page's drawing after dusk and of the rune's flight (order 33).
-          if (/\/src\/(render\/feel|render\/dusk|game\/story)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
+          // The runes as pixels (order 42: the first script draws the header's runes as strokes) too.
+          // The card after a rune filled in (order 42) comes with it too.
+          if (/\/src\/(render\/feel|render\/dusk|render\/finish|game\/story|game\/runecells)\.ts$/.test(id) || /\/src\/alive\//.test(id)) return "feel";
           // His frames, the feather and the frames' machinery (the kit's since order 36, so the maze draws the same man and
           // feather) go with them.
           if (/\/packages\/pixelkit\/src\/(frames|him|feather)\.ts$/.test(id)) return "feel";
+          // The kit's swatches the first script never draws with, which several later files share (order 42: the feather's, the
+          // tram's, the creatures'); those one level alone draws with go with it (`OWN`: the river's, the ice's).
+          if (/\/packages\/pixelkit\/src\/swatches\/(feather|tram|creature)\.ts$/.test(id)) return "feel";
+          // How a cannon and a drum look (the kit's `launcherart.ts`): the first script steps them, and Akershus and Slottet draw them.
+          if (/\/packages\/pixelkit\/src\/launcherart\.ts$/.test(id)) return "feel";
           // The kit's synth (order 33): the page's sounds come with feel's file, which the first scene waits for.
           if (/\/packages\/pixelkit\/src\/sfx\.ts$/.test(id)) return "feel";
           // The touch pad and the camera's room for it (order 21): fetched on a touch screen only, with the first scene.

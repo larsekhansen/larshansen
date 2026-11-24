@@ -66,6 +66,11 @@ export interface Room {
   facing: number;
   /** How fast he falls (world pixels a step): the camera, easing, lags that times its time constant behind him. */
   vy?: number;
+  /**
+   * On the line map, the foot of the lowest board under its stations (world y; order 42). From him down to there, across the whole
+   * view, nothing is under the pad's bottom row (the move pad, the dash, the jump): order 41's lower rows of boards came close to it.
+   */
+  below?: number;
 }
 
 /** A tile and a half more each way: the camera starts to make room before a button is in the way, so it eases there. */
@@ -87,27 +92,35 @@ export function roomy(at: { x: number; y: number }, cam: { x: number; y: number 
   // He stands at most two thirds of the way down the screen above the pad (ADR 0021's two thirds, counted from the
   // top of its bottom row), upright and on its side, so the pad lies over ground he has passed, not over him; the bottom row
   // of the map goes on down under him where the view looks below it.
+  // The pad's bottom row (the move pad, the dash, the jump): a button raised above it in a corner is left to the lift.
+  const low = Math.max(...room.buttons.map((b) => b.y + b.h));
+  const row = room.buttons.filter((b) => b.y + b.h >= low - 30);
   {
-    // The pad's bottom row (the move pad, the dash, the jump): a button raised above it in a corner is left to the lift.
-    const low = Math.max(...room.buttons.map((b) => b.y + b.h));
-    const pad = size.h - Math.min(...room.buttons.filter((b) => b.y + b.h >= low - 30).map((b) => b.y)) / room.unit;
+    const pad = size.h - Math.min(...row.map((b) => b.y)) / room.unit;
     const bottom = Math.max(bounds.bottom, Math.round(focus.y + size.h / 3 + (2 * pad) / 3));
     if (bottom > bounds.bottom) {
       bounds = { ...bounds, bottom };
       at = follow(cam, focus, bounds, size, elapsedMs, snap);
     }
   }
+  // On the line map the boards hang under the deck, the lowest `below`: from him down to it, the whole view across, clear of the
+  // bottom row (order 42). On a flat deck that is the same lift everywhere. The raised slot (the way in, over the jump on its side)
+  // stands over the deck itself by design; the boards pass under it at the screen's edge as the stations do. The lift stops where
+  // the doors he stands at (two tiles over his feet: the stations) would go under the bar: on a short phone on its side the map's
+  // bar is tall, and there the stations come first.
+  const doors = room.him.y + PLAYER.h - 2 * TILE - (bounds.top ?? 0);
+  const boards = (y: number) => (room.below === undefined ? y : Math.max(y, Math.min(doors, roomFor({ x: at.x, y: room.him.y, w: size.w, h: room.below - room.him.y }, at.x, y, room.unit, row))));
   // The camera eases, so a falling man is a step's fall times its time constant below where it means him to be: it
   // looks that much further down, and is there when he is. It eases for the ground ahead either way (order 37), so that
   // turning round does not lift it all at once where a button stands behind him.
   const early = eitherWay(room.him, EARLY);
   early.h += Math.max(0, room.vy ?? 0) * (EASE_MS / (1000 / 60));
-  const lifted = roomFor(early, at.x, at.y, room.unit, room.buttons);
+  const lifted = boards(roomFor(early, at.x, at.y, room.unit, room.buttons));
   if (lifted > at.y) {
     // The kit's camera rises no higher than `-top` and goes no lower than `bottom`: ask it for at least `lifted`.
     const top = Math.min(bounds.top ?? 0, -lifted);
     at.y = follow(cam, focus, { ...bounds, top, bottom: Math.max(bounds.bottom, lifted + size.h) }, size, elapsedMs, snap).y;
   }
-  at.y = roomFor(aheadOf(room.him, room.facing), at.x, at.y, room.unit, room.buttons);
+  at.y = boards(roomFor(aheadOf(room.him, room.facing), at.x, at.y, room.unit, room.buttons));
   return at;
 }

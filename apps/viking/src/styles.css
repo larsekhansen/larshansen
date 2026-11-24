@@ -685,6 +685,12 @@ body.touch {
   display: none;
 }
 
+/* Not over the story's opening card either (order 42: on a short phone its button lay under the move pad and the jump). Hidden by the style
+   sheet, not turned off: the camera keeps the pad's room, so the map does not move when the card goes. */
+body:has(.card.story) .pad {
+  display: none;
+}
+
 /* The safe areas, read by the pad through this hidden element's padding. */
 .pad .safe {
   position: absolute;
@@ -821,10 +827,12 @@ body.touch .card .actions button {
   white-space: nowrap;
 }
 
-/* A card never goes under the bar, and scrolls when a short screen cannot hold it. */
+/* A card never goes under the bar, and scrolls when a short screen cannot hold it. Its foot keeps off the home bar's strip (order 42:
+   on a phone on its side the opening card's button and the maze's level list reached 11 px into it): 10 px from the screen's foot, or
+   the safe area's edge where that is higher, so on a phone with no home bar nothing moves. */
 body.touch .card {
   top: max(22%, calc(var(--bar, 0px) + 10px));
-  max-height: calc(100% - max(22%, calc(var(--bar, 0px) + 10px)) - 10px);
+  max-height: calc(100% - max(22%, calc(var(--bar, 0px) + 10px)) - max(10px, var(--safe-bottom, env(safe-area-inset-bottom))));
   overflow-y: auto;
   overscroll-behavior: contain;
   touch-action: pan-y;
@@ -840,7 +848,7 @@ body.touch .card.loading {
 #finish,
 .card.story {
   top: max(22%, calc(var(--bar, 0px) + 10px));
-  max-height: calc(100% - max(22%, calc(var(--bar, 0px) + 10px)) - 10px);
+  max-height: calc(100% - max(22%, calc(var(--bar, 0px) + 10px)) - max(10px, var(--safe-bottom, env(safe-area-inset-bottom))));
   overflow-y: auto;
   overscroll-behavior: contain;
 }
