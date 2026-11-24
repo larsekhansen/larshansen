@@ -243,32 +243,42 @@ function farTown(lift: number) {
 /** Where the park's trees stand back round the Monolith's plateau, in world x. */
 const PLATEAU = [2700, 3720] as const;
 
-/** The ridge to the north-west, forested: Holmenkollen's jump standing up out of the trees, its inrun slanting down to the right; the TV tower on the higher crest beyond. */
+/**
+ * The ridge to the north-west, forested: Holmenkollen's jump standing up out of the trees and the TV tower on the higher crest
+ * above and behind it, a little to its right. The jump's hill opens toward the town (order 44), so from the park one looks up
+ * into it: the inrun comes down steeply toward him from the tower and the landing hill's clearing fans out under it. The tower
+ * is a thin mast with a thick collar near its top.
+ */
 const ridge = () =>
-  farPiece("vigelandsparken ridge", 76, 40, (b) => {
+  farPiece("vigelandsparken ridge", 64, 42, (b) => {
     const wood = mix(LAND.forestDark, LAND.farHills, 0.3);
-    for (let x = 0; x < 76; x++) {
-      const h = Math.max(1, Math.round(6 + 7 * Math.sin((Math.PI * Math.min(x, 34)) / 68) + (x > 34 ? 9 * Math.sin((Math.PI * (x - 34)) / 84) : 0) - (x > 62 ? (x - 62) * 1.1 : 0)) + ((x * 5) % 7 === 0 ? 1 : 0));
-      b.fill(x, 1, 1, h, x < 30 ? mix(wood, LAND.farHills, 0.15) : wood);
+    for (let x = 0; x < 64; x++) {
+      const h = Math.max(1, Math.round(6 + 7 * Math.sin((Math.PI * Math.min(x, 30)) / 60) + (x > 30 ? 10 * Math.sin((Math.PI * (x - 30)) / 64) : 0) - (x > 54 ? (x - 54) * 1.3 : 0)) + ((x * 5) % 7 === 0 ? 1 : 0));
+      b.fill(x, 1, 1, h, x < 26 ? mix(wood, LAND.farHills, 0.15) : wood);
     }
-    // The jump: its tower, the inrun on its legs, the landing hill's clearing.
-    b.fill(16, 2, 13, 25, PAINT.trim);
-    b.fill(15, 4, 26, 26, lighter(STONE.light, 0.3));
-    for (let k = 0; k < 16; k++) {
-      const u = 24 - Math.round(k * 0.72);
-      b.dot(18 + k, u, PAINT.trim);
-      b.dot(18 + k, u - 1, darker(STONE.light, 0.15));
-      if (k % 3 === 1) b.fill(18 + k, 1, 12, u - 2, darker(STONE.light, 0.35));
+    // The landing hill's clearing, fanning out toward the town under the knoll; then the inrun on its legs, steep as seen from
+    // below, and the tower at its top.
+    const grass = mix(LAND.forest, PAINT.trim, 0.45);
+    for (let u = 2; u <= 12; u++) {
+      const half = Math.round((13 - u) * 0.55);
+      b.fill(23 - half, half * 2 + 2, u, u, u > 10 ? lighter(grass, 0.15) : grass);
     }
-    for (let k = 0; k < 7; k++) b.fill(34 + k, 2, 6, Math.max(7, 14 - k), mix(LAND.forest, PAINT.trim, 0.45));
-    // The TV tower: a slim concrete shaft, its deck near the top, the mast over it.
+    for (let k = 0; k < 7; k++) {
+      const u = 25 - Math.round(k * 1.6);
+      b.fill(18 + k, 1, u - 1, u, PAINT.trim);
+      b.dot(18 + k, u - 2, darker(STONE.light, 0.15));
+      if (k % 2 === 1) b.fill(18 + k, 1, 12, u - 3, darker(STONE.light, 0.35));
+    }
+    b.fill(16, 2, 13, 26, PAINT.trim);
+    b.fill(17, 1, 13, 25, darker(STONE.light, 0.1));
+    b.fill(15, 4, 27, 27, lighter(STONE.light, 0.3));
+    // The TV tower, on the higher crest: the shaft, the collar near its top, the mast over it.
     const concrete = mix(PAINT.trim, STONE.light, 0.45);
-    b.fill(54, 3, 18, 32, concrete);
-    b.fill(54, 1, 18, 32, lighter(concrete, 0.3));
-    b.fill(56, 1, 18, 32, darker(concrete, 0.15));
-    b.fill(53, 5, 31, 33, lighter(concrete, 0.15));
-    b.fill(53, 5, 31, 31, darker(concrete, 0.2));
-    b.fill(55, 1, 34, 40, darker(concrete, 0.25));
+    b.fill(44, 2, 19, 36, concrete);
+    b.fill(44, 1, 19, 36, lighter(concrete, 0.3));
+    b.block(42, 6, 31, 34, lighter(concrete, 0.1));
+    b.fill(42, 6, 31, 31, darker(concrete, 0.2));
+    b.fill(45, 1, 37, 42, darker(concrete, 0.25));
   });
 
 /** The park's tall trees behind the paths, round-crowned limes and maples in rows, now and then a lamp. */
