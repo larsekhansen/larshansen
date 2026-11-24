@@ -40,3 +40,16 @@ implementer. Within ADR 0036's rule (what never changes is drawn once and copied
 ## Not chosen
 - A canvas per speed: five stacked canvases already cost a composition each frame.
 - A shadow of the haze on each strip: the layer's own haze goes over the plane, as over the rest of the layer.
+
+## Amended by order 43 (24 November 2026): the far view says where he is
+Lars, of the game (22 November): "It's more of an ode to Oslo." Order 43 looked at every level's far view (`apps/viking/tools/review/o43/before.md`)
+and found the layers this record set up (the planes, the speeds) carrying little of the place: five levels shared the same hills and far shore,
+Rådhuset's harbour front showed four plain blocks on the wrong side, landmarks that were there came round two to five times a screen. Decided by
+the planner's order, carried out by its implementer: **what a person who knows Oslo looks for from a place stands in its far view, roughly where
+it is seen from, once.** A landmark is a far piece (`apps/viking/src/alive/far.ts`): a silhouette that can be told at phone size, painted once in
+three or four tones of its material lit from the top left and copied (ADR 0036), washed by its layer's haze; about half its windows lit after dusk
+(ADR 0054). It is placed by the world x it is seen from (a thing in a far layer is in the middle of the screen when the camera's middle is at its
+world x, with reduced motion too), and nothing repeats within two screens. Where a level's own trees hid its far view they stand back where the
+place opens (Bygdøy by the open water, Vigelandsparken round the Monolith's plateau), and where the view climbs the far layers rise with it
+(`climbed`: Rådhuset's towers, Akershus's walls, Vigelandsparken's plateau). Done for Rådhuset, Akershus, Bygdøy, Vigelandsparken and Holmenkollen
+(`o43/after.md`); the other levels' far views are as they were. DESIGN's "Frames, shadows and depth", item 9.

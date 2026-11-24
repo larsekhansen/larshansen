@@ -290,6 +290,19 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
   and eased back about 20 px as it went; hidden by the style sheet instead (`body:has(.card.story) .pad`), the pad is gone and the camera keeps its
   place. *Ask what else reads a switch before using it for a new case.*
 
+- **A far view can be hidden by the level's own nearer layers** (order 43): Vigelandsparken's limes and maples (its mid and near layers) covered its far
+  layer at every place but the gate on a phone on its side, and Bygdøy's woods its city; the first landmark drawn there was invisible in every
+  picture with the play. *Look at a far layer with the play in front, at 844 x 390 where most of it shows, before drawing more into it; open the
+  nearer layer where the place opens, or raise the far one where the view climbs.*
+- **A thing in a far layer is placed by the world x it is seen from** (order 43): `layerOrigin` is taken from the view's middle, so what a far layer
+  draws at world x is in the middle of the screen when the camera's middle is there, by day and with reduced motion alike. Placed by a layer pixel
+  beyond the level's width it is never seen with reduced motion. And a thing that comes round every N world pixels comes round every N x 0.12
+  pixels of the screen in the far layer.
+- **A farther row of a split layer stands a quarter on** (order 43): order 23's split rows draw every other tree at `wx / 0.75` (`spedX`), so a gap
+  cut by `wx` left the farther row standing in it. *Test a rule about where a thing stands on where it is drawn.*
+- **The far view alone, by a scratch build** (order 43): two switches in a scratch copy of `main.ts` (the sky and the far passes only; the sky only)
+  showed each far view without the play, and the far view is the pixels where the two differ (`o43/before.md`). Nothing of it is in the repository.
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

@@ -6,7 +6,7 @@ Read this first if you are about to work on the front page game (`apps/landing`)
 what is known to be weak, and how to work here without breaking things.
 
 Written 2026-11-14 by Claude (the planning and reviewing session), for whoever comes next; brought up to
-date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, by order 37's, by order 38's, by order 39's, by order 40's, by order 41's, and by order 42's. Keep it current: when something here stops being true,
+date by order 15's implementer on 15 November, by order 16's the same night, by order 17's the next day, by order 18's after that, by order 19's, by order 20's, by order 21's, by order 22's, by order 23's, by order 24's, by order 25's, by order 26's, by order 27's, by order 28's, by order 29's, by order 30's, by order 31's, by order 32's, by order 33's, by order 34's, by order 35's, by order 36's, by order 37's, by order 38's, by order 39's, by order 40's, by order 41's, by order 42's, and by order 43's. Keep it current: when something here stops being true,
 change it in the same commit.
 
 ## Where to look for what
@@ -98,6 +98,7 @@ page is published as a private artifact on Lars's claude.ai account.
 | 2026-11-23 | Order 40: what he takes, and what warns. After dusk a line of the level's dark round what he takes (the maze's rule, ADR 0044 amended: every skilling, cheese and bracteate met after dusk 31.6 or more off what is round it, where the evening's left them 14.5 to 18); every tell ranked in place by size, contrast and length, and the weakest mended by drawing: the track rat's snout over the third rail's cover, the stones of a wall closing behind him at Gamlebyen, the water stirring round a lily pad or a bundle about to sink, a gust's streaks while it warns, held by a test to a stated number of pixels; five of the eight figures left at mark 2 redrawn (the stove pipe, the pontoons, the post, the balusters, the fire basket). Drawing only | `orders/40-what-he-takes-and-what-warns.md`, branch `takes-and-warns` |
 | 2026-11-24 | Order 41: the screens between, and the last weak tells. Every screen that is not a level on one table (the line map, every card, what is drawn over a level, the maze's own screens; 39 states at both sizes, in both languages, with touch and a pretended notch and with a mouse, `o41/before.md`); from the top of its ranking redrawn: a pressed pad control darker with a white ring (it went white and vanished over white ground), a heart lost hollow (it was faint), a dimmed control with its edge in dashes, the boards under the map's stations in rows so none meets another, the "!" clear of the thrower's head, a padlock on a shut station, the edge arrow off a notch, the bar's skilling and gold and a level's card drawn as the game draws them; the welder's sparks, Bjørvika's gust, Gamlebyen's sinking stone and the heron given a tell a player can see; the rune's stone a pale rim on its lit side after dusk (ADR 0044 amended). Drawing only | `orders/41-the-screens-between.md`, branch `screens-between` |
 | 2026-11-24 | Order 42: room, and the edges of the screen. The first script from 58.65 to 55.80 kB gzipped with nothing a player sees changed (what only later files use moved into files that already existed: swatches, the runes as pixels, the cannon's and drum's look, the harness, the card after a rune filled in; dead plain drawings out; ADR 0035 amended), no new fetch before a first frame; a card's foot off the home bar's strip, the maze's list in its own page kept on the screen, the map's plate waiting for the opening card, the pad hidden under it, the map's boards kept clear of the pad's bottom row and a notch (ADR 0043 amended); a thin line of the game's dark round the page's speech bubbles (the kit's, by a setting the page makes); the "!" three pixels wide | `orders/42-room-and-edges.md`, branch `room-and-edges` |
+| 2026-11-24 | Order 43: the far view, an ode to Oslo (Lars, 22 November: "It's more of an ode to Oslo"). Every level's far view, the encore's and the line map's looked at on one table, by day and under each one's sky, at both sizes, glammed and natural, alone and with the play (`o43/before.md`); the thinnest given what a person who knows Oslo looks for from there, once each, as silhouettes in their materials' tones (`alive/far.ts`, ADR 0047 amended): Rådhuset (Akershus to the east, Aker Brygge and Tjuvholmen to the west, Hovedøya, the far layers raised up the towers), Akershus (the Opera, the Barcode and MUNCH to the east, Rådhuset to the west, Hovedøya), Bygdøy (the woods open by the water onto Holmenkollen's jump, Rådhuset and Akershus), Vigelandsparken (the trees stand back round the Monolith's plateau onto the ridge with the jump and the TV tower) and Holmenkollen (Rådhuset once, islands); every far colour held off the warning red, the paint and every role under every sky (ADR 0044 amended). Drawing only | `orders/43-the-far-view.md`, branch `far-view` |
 | 2026-11-21 | Order 31: loose ends and a second look. The cards keep under the header with a mouse too; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline over the dark; reduced motion held by drawing every path, not by reading the source; Stortinget's escalator shafts kept and copied; every word in both languages, held by a test; a second walk for flat things, and the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn | `orders/31-loose-ends-and-a-second-look.md`, branch `loose-ends` |
 | 2026-11-15 | Order 20: the places at their best. Nordmarka, Bygdøy and Korketrekkeren drawn at a quarter or less of the rectangles, the pictures byte-identical (ADR 0041); every level walked at both sizes and the flat places given what they have (ADR 0042); what order 19 left (a closing wall's tremble, the sledgers' lean, one sound for two statues, the hooks' sounds, the dawn picture's address, a crop) | `orders/20-places-at-their-best.md`, branch `places-at-their-best` |
 
@@ -972,6 +973,33 @@ or word. What to know:
   a one-pixel gap, its dark edge all round: tried in place against a dot a pixel tall and against the old, on snow, stone and the dark, it read best.
 - **Unplayed**: none of it has been touched on a phone or seen at speed; the notch is pretended.
 
+## Order 43: the far view, an ode to Oslo
+
+Order 43 (`orders/43-the-far-view.md`; ADR 0044 and 0047 amended; what was looked at first in `apps/viking/tools/review/o43/before.md`, each item done
+or not with its measures in `o43/after.md`). Lars has not played; nothing was retuned: no route, box, speed, timing, heart, enemy placement or word.
+What to know:
+- **Every far view on one table** (`o43/before.md`): each level's far, mid and near layers, the encore's and the line map's, by day and under its own
+  sky at 390 x 844 and 844 x 390, glammed and natural, and alone (a scratch build that draws the sky and the far layers only, beside one that draws the
+  sky only, so the far view is the pixels where they differ); what a person who knows Oslo looks for from each place, whether it is there, repeats,
+  the sky, the colours against every role; a mark each. Four levels and the map share their far and mid layers (`drawOsloHills`, `drawFjord`, in the first
+  script): Langkaia, Akershus, Rådhuset, Bygdøy and the map. The glamour touches no far view.
+- **The far view's brush** (`alive/far.ts`, in `feel`'s file): `farPiece` paints a silhouette once in three or four tones of its material, lit on its
+  left and top, and keeps it; `drawFar` copies it into a far layer with its foot on a world y, and about half its windows come on after dusk (the
+  census's "lit backdrop"). Each level paints its own landmarks in its own file. **A thing in a far layer drawn at world x is in the middle of the
+  screen when the camera's middle is there**, by day and with reduced motion: place a landmark by the world x it is seen from.
+- **Redrawn** (the four 3s and the first 2): Rådhuset (Akershus on its rock to the east, Aker Brygge's yard hall, glass, blocks and Tjuvholmen's
+  sloping roofs to the west, Hovedøya; the far layers rise as the view climbs the towers); Akershus (Bjørvika to the east: the Opera's roof, the
+  Barcode, MUNCH's bent top; Rådhuset's towers to the west; Hovedøya; MUNCH and the Barcode no longer twice, the near layer rising with the walls);
+  Bygdøy (the woods behind the street open by the water between the halls onto Holmenkollen's ridge and jump, Rådhuset and Akershus across the
+  fjord; Rådhuset's towers no longer three to five a screen); Vigelandsparken (the park's trees stand back round the Monolith's plateau, which shows
+  the ridge with the jump and the TV tower on Tryvannshøgda, the far layer rising from the plateau; the spire once); Holmenkollen (Rådhuset by the
+  harbour once, where it was two or three a screen; islands on the fjord). The other levels' pictures are byte-identical.
+- **Held by a test** (`render/warning.test.ts`, on the walk its tests share): every colour of the far, mid and near layers over six pixels of a view,
+  as each sky leaves it, 10 or more off the warning red, the paint and every role's colours, but by name (the far shore's ochre houses, Stortinget's
+  far lamps and blue, Kampen's ochre, Bjørvika's fjord by day were there before and are named); shown to fail on the paint's yellow planted in a far
+  piece.
+- **Unplayed**: none of it has been seen on a phone or at speed; whether each landmark is the place a person knows is for Lars (`o43/after.md`).
+
 ## Known weak spots, as of order 16
 
 Most important first. Lars had not yet played when this was written; expect his comments to
@@ -1013,13 +1041,13 @@ reorder this list.
    board on a slow line (seen only with `?debug&fetch=hang`); upright phones on a real phone. Since order 36 the way into the maze from
    the map and back, from Nordmarka and back into it, and the feather moment after the maze are stepped pictures (`?debug&walkin`, `&out`,
    `&after`), and what each page remembers of the maze is a test (`packages/maze/src/joins.test.ts`): none of it by a person.
-8. **Margins.** The first script is 55.80 kB gzipped after order 42 (room made: ADR 0035 amended), 58.65 kB gzipped after order 41, 58.56 kB after order 40, 58.55 kB after order 39, 58.53 kB after order 38, 58.52 after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
+8. **Margins.** The first script is 55.82 kB gzipped after order 43 (55,819 bytes: the land swatches' `island` colour, 18 bytes), 55.80 kB gzipped after order 42 (room made: ADR 0035 amended), 58.65 kB gzipped after order 41, 58.56 kB after order 40, 58.55 kB after order 39, 58.53 kB after order 38, 58.52 after order 37 (58.32 after order 36), 57.94 kB gzipped of a 60 kB budget after order 33 (59.60 after orders 31 and 32), and the build fails over it
    (ADR 0011 says what can still move out, ADR 0035 how it is enforced). The viking test suite takes about
    250 s alone since order 31 (212 s after order 30; after order 32, 323 s, the new lights test 13 s and the reduced-motion file's
    two new parts about 12 s of it; after order 33, 340 s, at the limit its order set: 323 s for `origin/main` the same hour; after order 34, 370.5 s against 335.0 s for
    `origin/main` the same hour, over the 360 its order set: its scenery walk in `render/warning.test.ts` about 18 s, `o34/after.md` says what could be trimmed;
    after order 35 under 300 s, its three runs in `o35/after.md`; after order 37 268.0 s, 263.1 s for `origin/main` the same hour; after order 38 265.6 s
-   warm, 265.8 s for `origin/main` the same hour; after order 39 271.5 s, 270.0 s for `origin/main` the same hour; after order 40 272.6 to 277.0 s alone, 262.2 and 270.9 s for `origin/main` the same hour, 512 tests; after order 41 263.1 and 273.6 s, 273.3 and 275.1 s for `origin/main` the same hour, 530 tests; after order 42 275.6 and 276.1 s, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
+   warm, 265.8 s for `origin/main` the same hour; after order 39 271.5 s, 270.0 s for `origin/main` the same hour; after order 40 272.6 to 277.0 s alone, 262.2 and 270.9 s for `origin/main` the same hour, 512 tests; after order 41 263.1 and 273.6 s, 273.3 and 275.1 s for `origin/main` the same hour, 530 tests; after order 42 275.6 and 276.1 s, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; after order 43 277.9 and 272.7 s, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests): about 100 s of it the reach and dead-end searches on four workers (CPU-bound:
    Akershus's alone takes 52 s), and about 70 s the reduced-motion test, which draws every level.
 9. **The viking header is solid cream,** not the front page's frosted bar
    ([ADR 0015](../adr/0015-solid-header-in-viking.md)). Since order 21 on a touch phone it is the run alone during a

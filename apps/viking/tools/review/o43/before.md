@@ -10,8 +10,8 @@ and working files outside the repository, in `~/.cache/claude-scratch-larshansen
   stands past each), the encore at three places (x 100, 380, 680) and the line map at four places with line 1 only (three stations cleared) and four
   with line 2 open (line 1 cleared). Each picture 170 steps in, so the place's name on its plate has gone and the sky over the far view is clear.
 - **Sizes and skies**: 390 x 844 and 844 x 390 (on its side an art pixel is two screen pixels and the view is 423 x 196 art pixels, where far
-  more of the far view shows), by day and under the level's own sky (Langkaia and the map, which follow the clock, at night). 306 addresses, 612
-  pictures, none blank.
+  more of the far view shows), by day and under the level's own sky (Langkaia and the map, which follow the clock, at night). 161 addresses with the play
+  and the same 145 of them with the far view alone, 612 pictures at the two sizes, and 145 of the sky alone on its side; none blank.
 - **Natural**: one place a level with `?debug&natural` at both sizes. The far layers draw no figure and read no glamour (`glam.mode` and the rune's
   lift are read only where an invader is drawn), and the pictures differ only in the figures: the glamour does not touch the far view anywhere, as
   ADR 0050 has it for scenery (the invaders' own scenery, `alive/invasion.ts`, stands in the street's backdrop, not in the far view).
@@ -116,8 +116,9 @@ between its own: the distances here are a little smaller than the colours drawn 
 | vigelandsparken | day | 5 | 0.87 | 16.6 / 27.2 | 27.7 | 10.7 | 36.1 | 29.5 | 52 to 79 |
 
 
-Read: the far views' own edges are softer than the outlines (the 99th percentile 7 to 47 by day, against the outline's 43.7), but where lit
-windows stand on a dark night (Langkaia's Sørenga blocks, Gamle Oslo's houses: 53 to 62), which are lights (ADR 0054). The most of each is a single
+Read: the far views' own edges are softer than the outlines (the 99th percentile 12 to 41 by day, against the outline's 43.7), but Gamle Oslo's
+snow on dark roofs (47 by day, which the winter night's level shows only by the T key) and where lit windows stand on a dark night (Langkaia's
+Sørenga blocks, Gamle Oslo's houses: 53 to 62), which are lights (ADR 0054). The most of each is a single
 pair of pixels (a lit window, the sun's rim, a gull). No far view comes near the warning red but Bjørvika's crane lights after dusk (10.3, named
 since order 35); the paint's 7.7 after dusk is the kit's window light, named by ADR 0044 (small panes, never a top edge). The calm pale comes within 10
 in Akerselva's, Bjørvika's and Østensjøvannet's by day, as smoothed edges of pale hills and the fjord's light (the walk below finds none in Akerselva's
