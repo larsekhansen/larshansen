@@ -6,6 +6,7 @@ import { STONE_LEDGE, type LedgeLook } from "@larshansen/pixelkit/props";
 import { keepBoxes, type Enemy, type EnemyDef } from "../game/enemies";
 import { climbed, drawFjord, drawGulls, drawOsloHills } from "../render/backdrop";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
+import { skyBand } from "../alive/upright";
 import { FOE_INK, SHADES, drawFoe, foeFrame, glamFire, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { flagFlying, flame } from "../alive/things";
@@ -703,6 +704,9 @@ export const AKERSHUS: LevelDef = {
     },
     front: () => wallDetails(),
     ground: () => ({ top: P.grass, dot: P.grassDark, fill: P.earth }),
+    // On an upright screen (order 45): a fair day over the fjord: high streaks, small clouds far off, the air thick toward the
+    // horizon, a few gulls. Under him the walls he climbs, which are the level's own.
+    sky: (v, top) => skyBand(v, { streaks: 2, far: 3, birds: "few", haze: 100 }, top),
     ledges: { _: STONE_LEDGE, "=": IVY, "-": COPPER, "^": SLATE },
     carrier: (_i, at) => hoist(at),
     enemy(e, v) {

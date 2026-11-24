@@ -38,16 +38,20 @@ const rnd = seeded(53);
 const FAR_HOUSES = Array.from({ length: 9 }, (_, i) => ({ wx: 200 + i * 230 + Math.floor(rnd() * 90), color: [PAINT.farRed, PAINT.farWhite, PAINT.farOchre][i % 3] }));
 const bank = (wx: number) => 7 + 4 * Math.sin(wx * 0.011 + 1) + 3 * Math.sin(wx * 0.037 + 2);
 
+/** The height of view the far layers are drawn for: on an upright screen they are drawn as for a view this high round him (`farPass` in main.ts). */
+export const FAR_VIEW_H = 220;
+
 /**
  * How far the far layers rise with the view once it has climbed above where it stands over the level's
  * ground (`floor`, the camera's lowest edge), up to `most` (order 20): so from a tower's top the hills stay on
  * the horizon behind him instead of sinking out of the view, and the fjord spreads down under them. Nothing on
- * the ground (the pictures there are as before), nor on an upright screen, whose far layers are already moved
- * round him.
+ * the ground (the pictures there are as before). On an upright screen (order 45) they rise as they would in the
+ * view they are drawn for, `FAR_VIEW_H` high round him (until then they did not rise there at all, and from the
+ * walls or a tower the landmarks lay behind what he stands on).
  */
 export function climbed(floor: number, most: number) {
-  if (view.h > view.w) return 0;
-  return Math.min(most, Math.max(0, Math.round(floor - view.h - view.camY)));
+  const h = view.h > view.w ? FAR_VIEW_H : view.h;
+  return Math.min(most, Math.max(0, Math.round(floor - h - view.camY)));
 }
 
 /** The fjord's water as a plane running away from him (order 23, `alive/depth.ts`), once that file is here: it draws from the water's line to `deep`. */

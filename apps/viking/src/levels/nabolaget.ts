@@ -27,6 +27,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
+import { inTheGround, skyBand, underBand } from "../alive/upright";
 import { EDGE, edgesAt, tile as textured, CRATE, type Grain } from "../alive/ground";
 import { STORY } from "../game/story";
 
@@ -1330,6 +1331,10 @@ export const NABOLAGET: LevelDef = {
     },
     front() {},
     ground: () => ({ top: SNOW.lying, dot: SNOW.shade, fill: GROUND.cobbleFill }),
+    // On an upright screen (order 45): a winter night: stars thinning toward the horizon, the northern lights' curtains rising,
+    // a cloud or two; under the street, stones and the old water main, darkening.
+    sky: (v, top) => skyBand(v, { stars: 80, curtains: ROWS * TILE - 4 * TILE - 34, streaks: 1, far: 2, haze: 80 }, top),
+    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#0b0e1a", most: 0.8, pipe: { depth: 3, tones: [mix(PALETTE.ironDark, GROUND.cobbleFill, 0.3), PALETTE.iron, PALETTE.ironDark] }, things: inTheGround({ stone: PALETTE.rock, every: 24 }) }),
     tile(t, c, r, x, y, m) {
       if (t === "R" || t === "T" || t === "H") return true;
       if (t === "#") {

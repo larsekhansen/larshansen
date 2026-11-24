@@ -11,6 +11,7 @@ import { leap, windingUp, type Enemy, type EnemyDef, type Shot } from "../game/e
 import type { Play } from "../game/play";
 import { climbed, drawOsloHills } from "../render/backdrop";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
+import { inTheGround, skyBand, underBand } from "../alive/upright";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
 import { clock } from "../alive/parts";
@@ -892,6 +893,10 @@ export const VIGELANDSPARKEN: LevelDef = {
       for (const x of BRIDGE_LAMPS) pool(x + 1, FLOOR);
     },
     ground: (c) => (c < 35 || (c > 82 && c < 89) || c > 103 ? { top: V.gravel, dot: V.gravelDark, fill: mix(P.earth, INK, 0.35) } : { top: V.graniteLight, dot: V.graniteShade, fill: V.graniteShade }),
+    // On an upright screen (order 45): a summer day over Frogner: high streaks, a plane's trail, small clouds far off, the air
+    // thick toward the horizon, a few birds; under the park the trees' roots, stones, the fountain's old pipe, darkening.
+    sky: (v, top) => skyBand(v, { streaks: 3, far: 4, trail: true, birds: "few", haze: 100 }, top),
+    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#1a1510", most: 0.8, pipe: { depth: 3, tones: [mix(P.ironDark, P.earth, 0.3), mix(P.iron, P.earth, 0.2), P.ironDark] }, things: inTheGround({ stone: mix(STONE.base, P.earth, 0.3), root: mix(P.woodDark, INK, 0.25), every: 22 }) }),
     tile(t, c, r, x, y, map) {
       if (t === "#" && !map.isWater(c, r - 1) && !map.isWater(c, r - 2)) lawn(c, r, x, y, map);
       else if (t === "G") granite(c, r, x, y, map);

@@ -73,6 +73,7 @@ import type { CardResult } from "./render/finish";
 import type { Enemy, Shot } from "./game/enemies";
 import { TEXTURED, drawTiles, drawWater } from "./render/tiles";
 import { airOf, backHazeOf, hazeOf } from "./render/haze";
+import { FAR_VIEW_H } from "./render/backdrop";
 
 // Vikingfjorden: a T-bane line through Oslo with a level at each stop. The page shows one scene at
 // a time, the line map (#kart) or a level (#langkaia ...), and the maze in the burial mound
@@ -1291,6 +1292,7 @@ function camera(elapsedMs: number, snap: boolean) {
   // Where the bar ends, for the cards, which keep below it with a mouse as on a touch screen (`--bar`, order 31).
   if (Math.round(hb.bottom) !== barAt) document.body.style.setProperty("--bar", `${(barAt = Math.round(hb.bottom))}px`);
   const bar = (hb.height * view.dpr) / view.k;
+  barRows = bar;
   const p = scene.play;
   const look = p.def.flourishLook && p.runeAt !== null ? Math.min(p.def.flourishLook, (p.t - p.runeAt) * 1.5) : 0;
   // On the sledge the camera looks well ahead, so he is drawn left of the middle and sees what comes.
@@ -1312,6 +1314,8 @@ function camera(elapsedMs: number, snap: boolean) {
 }
 const shake = { x: 0, y: 0 };
 let barAt = -1;
+/** How many rows of the picture the bar covers (art pixels). */
+let barRows = 0;
 const lookAt =debug ? params.get("look")?.split(",").map(Number) : null;
 
 /** The canvases were just laid out again, and so emptied: the next frame is drawn whatever holds (order 35). */
@@ -1329,8 +1333,6 @@ function layout() {
 
 const pass = (onto: CanvasRenderingContext2D, draw: () => void, haze = 0) => kit.pass(onto, draw, scene.skies.sky.phase, haze, haze > 0 ? airOf(scene.def, scene.skies.sky.phase) : undefined);
 
-/** The height of view the far layers are drawn for. */
-const FAR_VIEW_H = 220;
 /**
  * A far layer's pass. The far layers are placed for a view of the usual height, with him about in its
  * middle; on an upright screen he stands two thirds of the way down a much taller view, so a layer
@@ -1469,6 +1471,9 @@ function render(alpha: number) {
   beginLayers(kit, sky, state.steps, horizon);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
   const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
+  // On an upright screen the sky over the far view is tall, and so is the ground under him: the level fills them (order 45).
+  const upright = view.h > view.w;
+  if (upright) art.sky?.(v, barRows);
   const haze = hazeOf(scene.def);
   if (art.far) farPass(kit.depth(0.12), () => art.far!(v), haze[0]);
   if (art.mid) farPass(kit.depth(0.2), () => art.mid!(v), haze[1]);
@@ -1480,6 +1485,7 @@ function render(alpha: number) {
     TEXTURED.boards ? TEXTURED.boards(scene.boards) : drawBoards(scene.boards);
     drawWater(p.map, p.t);
     drawTiles(p.map, art, sky, scene.def.underground);
+    if (upright) art.under?.(v, p.map);
   });
   pass(street, () => {
     freshRings();

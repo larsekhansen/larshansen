@@ -13,6 +13,7 @@ import { drawLook, drawLookShot } from "../render/looks";
 import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { mapBuilder } from "./build";
+import { inTheGround, skyBand, underBand } from "../alive/upright";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
@@ -722,6 +723,10 @@ export const EKEBERG: LevelDef = {
       pool(VIEW_LAMP + 1, T * TILE);
     },
     ground: () => ({ top: HILL.grass, dot: HILL.grassDark, fill: HILL.soil }),
+    // On an upright screen (order 45): the evening's first stars high over the Scream's bands, a few crows; under the hillside,
+    // its stones and the oaks' roots, darkening into the rock.
+    sky: (v, top) => skyBand(v, { stars: 30, birds: "few", far: 2 }, top),
+    under: (_v, m) => underBand(m, { letters: "#K", from: 2, over: 110, dark: "#1a1622", most: 0.8, things: inTheGround({ stone: mix(STONE.base, HILL.soil, 0.25), root: mix(HILL.soil, INK, 0.45), every: 18 }) }),
     tile(t, c, r, x, y, m) {
       if (t === "#") {
         grassTile(c, r, x, y, m);
