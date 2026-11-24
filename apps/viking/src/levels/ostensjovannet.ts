@@ -345,7 +345,7 @@ const ostmarka = () =>
 
 /**
  * Blocks on the ridge, of the 1950s and 1960s: long low slabs in pale render with rows of windows, now and then a taller one,
- * trees among them and in front; three kinds, laid along the ridge in turn. About half their windows' rows can come on.
+ * trees among them and in front; three kinds, laid along the ridge in turn. In one row of each a window in three can come on.
  */
 const blocks = (kind: number) =>
   farPiece(`ostensjovannet blocks ${kind}`, 72, 26, (b) => {

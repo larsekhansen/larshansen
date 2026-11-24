@@ -280,7 +280,7 @@ const CITY = 380;
 const EKEBERG = 1000;
 const KAMPEN = 2950;
 
-/** The far hills under the northern lights, snow on the ridge, a window lit here and there; the city toward the fjord; Ekeberg's hillside close at the end. */
+/** The far hills under the northern lights, snow on the ridge, a window lit here and there; the city toward the fjord, Ekeberg's hillside close, Kampen kirke. */
 function farHills() {
   const base = 190 + view.camY * 0.85;
   for (let x = 0; x < view.w; x++) {
