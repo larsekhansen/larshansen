@@ -309,7 +309,8 @@ function passes(def: LevelDef, play: Play, t: number, him: { x: number; y: numbe
 function composed(def: LevelDef, play: Play, drawn: ReturnType<typeof passes>, sky: Sky, t: number, him: { x: number; y: number }, top: number) {
   const out = raster(view.w, view.h, undefined, "out");
   target(out.ctx);
-  drawSky(sky, t, play.map.height - 4 * TILE - 34);
+  // The sky reaches its horizon's colour at his row, as the page hands the kit upright (order 46).
+  drawSky(sky, t, play.map.height - 4 * TILE - 34, him.y - view.camYf);
   def.art.sky?.(viewOf(sky, t, him), top);
   const tint = TINT[sky.phase];
   const air = airOf(def, sky.phase);
