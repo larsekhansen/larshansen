@@ -1170,7 +1170,7 @@ export const AKERSELVA: LevelDef = {
     // On an upright screen (order 45): a summer day up the river: high streaks, small clouds far off over the town, the air thick
     // toward the horizon, a few birds; under the banks the birches' roots, stones, an old pipe from the mills, darkening.
     sky: (v, top) => skyBand(v, { streaks: 2, far: 4, birds: "few", haze: 100 }, top),
-    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#1a1410", most: 0.8, pipe: { depth: 4, tones: [mix(P.ironDark, P.earth, 0.3), mix(P.iron, P.earth, 0.2), P.ironDark] }, things: inTheGround({ stone: mix(P.rock, P.earth, 0.3), root: mix(P.woodDark, INK, 0.25), every: 22 }) }),
+    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#1a1410", most: 0.8, pipe: { depth: 4, tones: [mix(P.ironDark, P.earth, 0.3), mix(P.iron, P.earth, 0.2), P.ironDark] }, things: inTheGround({ stone: mix(P.rock, P.earth, 0.3), root: mix(P.woodDark, INK, 0.25), every: 64 }) }),
     tile(t, c, r, x, y, m) {
       if (t === "K") {
         rockTile(c, r, x, y, m);

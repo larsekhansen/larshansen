@@ -27,14 +27,45 @@ export interface Plane {
   /** A strip's height at the top and at the foot (pixels): nearer strips are taller, as the swell is. 3 and 3 unless given. */
   strip?: number;
   near?: number;
+  /**
+   * A band the far layers have lifted on an upright screen (order 45: `climbed` upright), hundreds of pixels tall: its strips grow by
+   * half each toward him, as a plane's do, so it is a dozen strips where the even ones were two hundred (each strip is three copies),
+   * and one texture serves every height (the band's height changes as he climbs).
+   */
+  tall?: boolean;
 }
 
 /** The width a strip's texture repeats over. */
 const PERIOD = 192;
 const textures = new Map<string, { canvas: HTMLCanvasElement; rows: number[]; heights: number[] }>();
 
+/** How tall a lifted band's texture is: deeper than any level's view goes under its horizon. */
+const TALL = 1024;
+/** A lifted band's strips (`Plane.tall`): from the top strip's height, each half again as tall, to `TALL`. */
+function tallStrips(p: Plane): number[] {
+  const out: number[] = [];
+  let h = p.strip ?? 3;
+  for (let y = 0; y < TALL; ) {
+    const s = Math.min(TALL - y, Math.round(h));
+    out.push(s);
+    y += s;
+    h *= 1.5;
+  }
+  return out;
+}
+
 /** A plane's strips: their heights, top to foot, filling it. */
 function strips(p: Plane): number[] {
+  if (p.tall) {
+    const out: number[] = [];
+    let y = 0;
+    for (const h of tallStrips(p)) {
+      if (y >= p.bottom - p.top) break;
+      out.push(Math.min(h, p.bottom - p.top - y));
+      y += h;
+    }
+    return out;
+  }
   const a = p.strip ?? 3;
   const b = p.near ?? a;
   const total = p.bottom - p.top;
@@ -49,14 +80,14 @@ function strips(p: Plane): number[] {
 
 /** A plane's texture: each strip its tone, with glints that grow longer and more frequent toward the near strip. Drawn once. */
 function texture(p: Plane) {
-  const heights = strips(p);
+  const heights = p.tall ? tallStrips(p) : strips(p);
   const id = `${p.tones.join()}${p.glint}${heights.join()}`;
   let t = textures.get(id);
   if (t) return t;
   const n = heights.length;
   const canvas = document.createElement("canvas");
   canvas.width = PERIOD;
-  canvas.height = p.bottom - p.top;
+  canvas.height = p.tall ? TALL : p.bottom - p.top;
   const g = canvas.getContext("2d")!;
   const rows: number[] = [];
   let y0 = 0;
@@ -105,6 +136,7 @@ export function plane(p: Plane, t: number) {
   }
   const tex = texture(p);
   const n = tex.heights.length;
+  const total = p.bottom - p.top;
   const g = ctx();
   const o = layerOrigin(p.layer);
   const frac = o - Math.floor(o);
@@ -116,7 +148,9 @@ export function plane(p: Plane, t: number) {
     const x0 = Math.round(-layerOrigin(f) + frac + tt * p.drift * (0.35 + 0.65 * share));
     const start = (((x0 % PERIOD) + PERIOD) % PERIOD) - PERIOD;
     const y = p.top + tex.rows[k] - view.camY;
-    const s = tex.heights[k];
+    // A lifted band (`tall`) is the first strips of its texture, the last cut at the band's foot.
+    if (tex.rows[k] >= total) break;
+    const s = Math.min(tex.heights[k], total - tex.rows[k]);
     for (let x = start; x < view.w; x += PERIOD) g.drawImage(tex.canvas, 0, tex.rows[k], PERIOD, s, x, y, PERIOD, s);
   }
 }
@@ -131,12 +165,17 @@ export function spedX(wx: number, f: number, layer: number): number {
   return Math.round(wx * fo - layerOrigin(f) + (o - Math.floor(o)));
 }
 
+/** The fjord's band where nothing lifts it: from the far shore's water line to `deep` (`drawFjord`, `render/backdrop.ts`). */
+const FJORD_BAND = 26;
+
 /**
  * The fjord's water as a plane (`drawFjord`'s, on the middle canvas): from the far shore's water line, at the layer's
  * own speed, to well past it nearer the quay; and a sailing boat far out on it, going its own way at its own pace.
  */
 export function fjord(t: number, top: number, bottom: number) {
-  plane({ layer: 0.2, top, bottom, from: 0.2, to: 0.5, tones: [WATER_FAR, PALETTE.water, WATER_NEAR], glint: PALETTE.foam, drift: 0.12, strip: 2, near: 4 }, t);
+  // Lifted on an upright screen (order 45: the far layers rise with him there as on a wide one), the band runs hundreds of pixels down.
+  const tall = view.h > view.w && bottom - top > FJORD_BAND;
+  plane({ layer: 0.2, top, bottom, from: 0.2, to: 0.5, tones: [WATER_FAR, PALETTE.water, WATER_NEAR], glint: PALETTE.foam, drift: 0.12, strip: 2, near: 4, tall }, t);
   // The boat: on the strip a third of the way down, a white sail and a dark hull, crossing in about four minutes.
   const f = 0.3;
   const span = view.w + 400;

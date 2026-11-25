@@ -848,7 +848,7 @@ export const KORKETREKKEREN: LevelDef = {
     // On an upright screen (order 45): the evening's high streaks lit from below, a plane's trail, small clouds far off over
     // the town, the air thick toward the horizon, crows; under the run's snow, stones, darkening into the hill.
     sky: (v, top) => skyBand(v, { streaks: 3, far: 3, trail: true, birds: "few", haze: 100 }, top),
-    under: (_v, m) => underBand(m, { letters: "#", from: 3, over: 120, dark: "#1d1b2f", most: 0.78, things: inTheGround({ stone: mix(STONE.base, K.slope, 0.35), deep: 3, every: 26 }) }),
+    under: (_v, m) => underBand(m, { letters: "#", from: 3, over: 120, dark: "#1d1b2f", most: 0.78, things: inTheGround({ stone: mix(STONE.base, K.slope, 0.35), deep: 3, every: 64 }) }),
     tile(t, c, r, x, y, map) {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.

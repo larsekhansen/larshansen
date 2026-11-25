@@ -706,7 +706,7 @@ export const AKERSHUS: LevelDef = {
     ground: () => ({ top: P.grass, dot: P.grassDark, fill: P.earth }),
     // On an upright screen (order 45): a fair day over the fjord: high streaks, small clouds far off, the air thick toward the
     // horizon, a few gulls. Under him the walls he climbs, which are the level's own.
-    sky: (v, top) => skyBand(v, { streaks: 2, far: 3, birds: "few", haze: 100 }, top),
+    sky: (v, top) => skyBand(v, { streaks: 2, far: 2, birds: "few", haze: 100 }, top),
     ledges: { _: STONE_LEDGE, "=": IVY, "-": COPPER, "^": SLATE },
     carrier: (_i, at) => hoist(at),
     enemy(e, v) {

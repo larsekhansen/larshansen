@@ -726,7 +726,7 @@ export const EKEBERG: LevelDef = {
     // On an upright screen (order 45): the evening's first stars high over the Scream's bands, a few crows; under the hillside,
     // its stones and the oaks' roots, darkening into the rock.
     sky: (v, top) => skyBand(v, { stars: 30, birds: "few", far: 2 }, top),
-    under: (_v, m) => underBand(m, { letters: "#K", from: 2, over: 110, dark: "#1a1622", most: 0.8, things: inTheGround({ stone: mix(STONE.base, HILL.soil, 0.25), root: mix(HILL.soil, INK, 0.45), every: 18 }) }),
+    under: (_v, m) => underBand(m, { letters: "#K", from: 2, over: 110, dark: "#1a1622", most: 0.8, things: inTheGround({ stone: mix(STONE.base, HILL.soil, 0.25), root: mix(HILL.soil, INK, 0.45), every: 64 }) }),
     tile(t, c, r, x, y, m) {
       if (t === "#") {
         grassTile(c, r, x, y, m);

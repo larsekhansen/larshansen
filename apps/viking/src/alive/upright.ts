@@ -321,8 +321,8 @@ export function underBand(map: TileMap, u: Under) {
         g.fillStyle = u.pipe.tones[1];
         g.fillRect(x, y, (e - c + 1) * TILE, 1);
         g.fillStyle = u.pipe.tones[2];
-        // A joint every three tiles, where the pipe's lengths meet.
-        for (let k = c; k <= e; k++) if (k % 3 === 0) g.fillRect(k * TILE - view.camX, y - 1, 2, 6);
+        // A joint every five tiles, where the pipe's lengths meet.
+        for (let k = c; k <= e; k++) if (k % 5 === 0) g.fillRect(k * TILE - view.camX, y - 1, 2, 6);
       }
       c = e + 1;
     }
@@ -370,14 +370,14 @@ function darkening(g: CanvasRenderingContext2D, y: number, bottom: number, u: Un
   return grad;
 }
 
-/** What lies in a level's ground (order 45): stones from `deep` tiles down, roots in the first tile under the surface; about one in `every` tiles each. */
+/** What lies in a level's ground (order 45): a stone in about one in `every` tiles from `deep` tiles down, a root under the surface in about one column in twelve. */
 export function inTheGround(o: { stone: string; root?: string; every?: number; deep?: number }) {
   const every = o.every ?? 24;
   const lit = mix(o.stone, WHITE, 0.22);
   const shade = mix(o.stone, INK, 0.3);
   return (c: number, depth: number, x: number, y: number) => {
     const h = (c * 73 + depth * 151 + 17) % (every * 4);
-    if (o.root && depth === 1 && h % 4 === 1) {
+    if (o.root && depth === 1 && h % 12 === 1) {
       // A root under the surface: a thread going down and aside, a finer one off it.
       const g = ctx();
       g.fillStyle = o.root;

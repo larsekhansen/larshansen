@@ -234,7 +234,7 @@ function surfaceRow(c: number) {
 /** The upright phone's sky (order 45): a winter's day, snowing: grey cover high up, small clouds far off over the city, thick air at the horizon, a few crows. */
 const UPRIGHT_SKY = { cover: 3, far: 3, haze: 110, birds: "few" } as const;
 /** Under the snow, on an upright screen (order 45): boulders in the packed snow, darkening into the mountain's rock. */
-const UNDER = { letters: "#V", from: 3, over: 120, dark: "#1c2433", most: 0.78, things: inTheGround({ stone: mix(STONE.base, ICY.steelShade, 0.35), deep: 3, every: 26 }) };
+const UNDER = { letters: "#V", from: 3, over: 120, dark: "#1c2433", most: 0.78, things: inTheGround({ stone: mix(STONE.base, ICY.steelShade, 0.35), deep: 3, every: 64 }) };
 
 /** Ice: a glassy blue sheet with streaks of light and a crack, over snow (order 26). */
 const ICE_SHEET: Grain = { name: "hk-ice", kind: "ice", ramp: [ICY.iceDark, mix(ICY.ice, ICY.iceDark, 0.4), ICY.ice, ICY.iceLight], accent: { snow: mix(SNOW.lying, ICY.groove, 0.4), snowShade: ICY.groove } };

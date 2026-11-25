@@ -1461,7 +1461,7 @@ export const GAMLEBYEN: LevelDef = {
     // On an upright screen (order 45): the night: stars thinning toward the horizon, the northern lights' curtains rising, a
     // cloud or two; under the old town, its stones and roots, darkening.
     sky: (v, top) => skyBand(v, { stars: 80, curtains: ROWS * TILE - 4 * TILE - 34, streaks: 1, far: 2, haze: 80 }, top),
-    under: (_v, m) => underBand(m, { letters: "#~", from: 2, over: 110, dark: "#0d0f18", most: 0.8, things: inTheGround({ stone: PALETTE.rock, root: mix(PALETTE.woodDark, INK, 0.3), every: 18 }) }),
+    under: (_v, m) => underBand(m, { letters: "#~", from: 2, over: 110, dark: "#0d0f18", most: 0.8, things: inTheGround({ stone: PALETTE.rock, root: mix(PALETTE.woodDark, INK, 0.3), every: 64 }) }),
     tile(t, c, r, x, y, map) {
       if (t === "~") return calmWater(c, r, x, y, map);
       if (t === "Z" || t === "z") stoneTile(c, r, x, y, t === "Z");
