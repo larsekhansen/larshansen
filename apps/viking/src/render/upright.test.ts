@@ -322,7 +322,8 @@ async function flats(id: string, def: LevelDef) {
   f = { sky: 0, under: 0, at: "" };
   const { play, at } = await places(id, def);
   const was = { ...view };
-  const skies = def.sky === "day" ? [SKIES[0]] : [SKIES[0], SKIES[SKIES.length - 1]];
+  // By day, and under its own sky where that is not a day's (a winter's day or 17 May draws its passes as any day does).
+  const skies = def.sky === "day" || def.sky === "winterday" || def.sky === "17mai" ? [SKIES[0]] : [SKIES[0], SKIES[SKIES.length - 1]];
   try {
     for (const [w, h] of SIZES)
       for (const pl of at) {
