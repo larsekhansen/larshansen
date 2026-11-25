@@ -244,6 +244,10 @@ export const KORKETREKKEREN_RULES = { COLS, ROWS };
 const P = PALETTE;
 /** The snow's top (order 26). */
 const CRUST: Grain = { name: "kt-crust", kind: "snow", ramp: [mix(K.runGroove, INK, 0.15), mix(K.slopeShade, K.slope, 0.5), K.slope, mix(K.slope, K.bank, 0.5), K.bank], accent: { sparkle: WHITE } };
+/** The stones in the run's snow (order 45). */
+const KT_STONE = mix(STONE.base, K.slope, 0.35);
+/** Under the run's snow, on an upright screen (order 45): stones in it, darkening from three tiles down; order 46: through the packed crust's darkest step to the stones' rock. */
+const UNDER = { letters: "#", from: 3, over: 120, dark: "#1d1b2f", most: 0.85, things: inTheGround({ stone: KT_STONE, deep: 3, every: 64 }), deep: { "#": [CRUST.ramp[0], mix(KT_STONE, INK, 0.3)] } };
 
 /** The view's floor follows the run down, a few rows under it. */
 const floorAt = (x: number) => Math.min(ROWS * TILE, (trackY(Math.max(X0, Math.min(RIDE.to - 1, x))) ?? (x < X0 ? TOP_ROW * TILE : END_ROW * TILE)) + 5 * TILE);
@@ -848,7 +852,7 @@ export const KORKETREKKEREN: LevelDef = {
     // On an upright screen (order 45): the evening's high streaks lit from below, a plane's trail, small clouds far off over
     // the town, the air thick toward the horizon, crows; under the run's snow, stones, darkening into the hill.
     sky: (v, top) => skyBand(v, { streaks: 3, far: 3, trail: true, birds: "few", haze: 100 }, top),
-    under: (_v, m) => underBand(m, { letters: "#", from: 3, over: 120, dark: "#1d1b2f", most: 0.78, things: inTheGround({ stone: mix(STONE.base, K.slope, 0.35), deep: 3, every: 64 }) }),
+    under: (_v, m) => underBand(m, UNDER),
     tile(t, c, r, x, y, map) {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.

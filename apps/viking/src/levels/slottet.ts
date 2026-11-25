@@ -1029,7 +1029,7 @@ export const SLOTTET: LevelDef = {
     // On an upright screen (order 45): 17 May's sky: high streaks, small clouds far off over the town, the air thick toward the
     // horizon, a few birds; under Karl Johan, stones and the old water main, darkening.
     sky: (v, top) => skyBand(v, { streaks: 2, far: 4, birds: "few", haze: 100 }, top),
-    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#17150f", most: 0.8, pipe: { depth: 3, tones: [mix(PALETTE.ironDark, UNDER, 0.3), PALETTE.iron, PALETTE.ironDark] }, things: inTheGround({ stone: mix(STONE.base, UNDER, 0.3), every: 64 }) }),
+    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#17150f", most: 0.85, deep: { "#": [UNDERS[3].ramp[0]] }, pipe: { depth: 3, tones: [mix(PALETTE.ironDark, UNDER, 0.3), PALETTE.iron, PALETTE.ironDark] }, things: inTheGround({ stone: mix(STONE.base, UNDER, 0.3), every: 64 }) }),
     tile(t, c, r, x, y, map: TileMap) {
       if (t === "U") {
         under(c, r, x, y, map);
