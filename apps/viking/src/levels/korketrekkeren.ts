@@ -18,6 +18,7 @@ import { frame, paint, type Piece } from "../alive/frames";
 import { HIM_INK } from "../alive/him";
 import { plane } from "../alive/depth";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
+import { inTheGround, skyBand, underBand } from "../alive/upright";
 import { tile as textured, type Grain } from "../alive/ground";
 import { CAST, box as pbox, dot, poolAlong, prop, tone, type Stuff } from "../alive/props";
 import { mapBuilder } from "./build";
@@ -844,6 +845,10 @@ export const KORKETREKKEREN: LevelDef = {
       }
     },
     ground: () => ({ top: K.bank, dot: K.runGroove, fill: K.slope, kind: "snow" }),
+    // On an upright screen (order 45): the evening's high streaks lit from below, a plane's trail, small clouds far off over
+    // the town, the air thick toward the horizon, crows; under the run's snow, stones, darkening into the hill.
+    sky: (v, top) => skyBand(v, { streaks: 3, far: 3, trail: true, birds: "few", haze: 100 }, top),
+    under: (_v, m) => underBand(m, { letters: "#", from: 3, over: 120, dark: "#1d1b2f", most: 0.78, things: inTheGround({ stone: mix(STONE.base, K.slope, 0.35), deep: 3, every: 64 }) }),
     tile(t, c, r, x, y, map) {
       if (t !== "#") return false;
       // Snow: a bright crust, drifts and footprints at the top, shading and a buried stone below.

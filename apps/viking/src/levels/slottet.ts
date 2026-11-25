@@ -23,6 +23,7 @@ import { mapBuilder } from "./build";
 import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
+import { inTheGround, skyBand, underBand } from "../alive/upright";
 
 // Level 4, rune S: Slottet. 17 May, Karl Johan, uphill all the way from Egertorget to the palace.
 // The children's parade walks up the street with its banners; stand on a banner's crossbar and it
@@ -1025,6 +1026,10 @@ export const SLOTTET: LevelDef = {
       crowd(v.t);
     },
     ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: UNDER, kind: "paving" }),
+    // On an upright screen (order 45): 17 May's sky: high streaks, small clouds far off over the town, the air thick toward the
+    // horizon, a few birds; under Karl Johan, stones and the old water main, darkening.
+    sky: (v, top) => skyBand(v, { streaks: 2, far: 4, birds: "few", haze: 100 }, top),
+    under: (_v, m) => underBand(m, { letters: "#", from: 2, over: 110, dark: "#17150f", most: 0.8, pipe: { depth: 3, tones: [mix(PALETTE.ironDark, UNDER, 0.3), PALETTE.iron, PALETTE.ironDark] }, things: inTheGround({ stone: mix(STONE.base, UNDER, 0.3), every: 64 }) }),
     tile(t, c, r, x, y, map: TileMap) {
       if (t === "U") {
         under(c, r, x, y, map);

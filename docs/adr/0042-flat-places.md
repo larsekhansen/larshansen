@@ -41,3 +41,7 @@ place of every level, at both sizes, by the same measure.
 - Left: Nordmarka's dark marks six pictures (the dark is the level's idea: only the headlamp's circle shows);
   Holmenkollen's far city sinks as he climbs the hill, by design, and one picture high on the hill is marked
   for its sky, which has its falling snow in it.
+
+## Amended by order 45 (25 November 2026)
+"Nor on an upright screen" no longer holds: there the far layers rise as they would in the view they are drawn for, 220 high round him, so from a
+tower's top the horizon stays at his eye upright too ([0043](0043-the-game-in-the-hand.md), amended by order 45). On a wide screen nothing changed.

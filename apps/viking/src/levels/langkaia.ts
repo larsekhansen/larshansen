@@ -534,6 +534,9 @@ export const LANGKAIA: LevelDef = {
     },
     front: (v) => mooring(v.t),
     ground: () => ({ top: P.sand, dot: P.sandDark, fill: P.earth, kind: "sand" }),
+    // On an upright screen (order 45), with feel's file: the sky over the fjord, and the quay going down into the deep water.
+    sky: (v, top) => TEXTURED.upright?.sky(v, top),
+    under: (v, m) => TEXTURED.upright?.under(v, m),
     // The stern, solid under its deck: drawn as the deck, the hull behind it.
     tile(t, _c, _r, x, y, _map, sky) {
       // With the textured set here (order 26) the stern is its deck's planks, drawn with the shared letters.

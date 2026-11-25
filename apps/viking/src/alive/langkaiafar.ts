@@ -1,6 +1,9 @@
 import { layerX, mix } from "@larshansen/pixelkit/paint";
 import { GLASS, LAND, PAINT, STONE } from "@larshansen/pixelkit/palette";
 import { darker, drawFar, farPiece, lighter } from "./far";
+import { skyBand, underBand } from "./upright";
+import { TEXTURED } from "../render/tiles";
+import { TILE } from "@larshansen/pixelkit/config";
 
 // Langkaia's own far view (order 44): what is seen from the quay out on the fjord and up the shore, drawn over the far shore and
 // the fjord the first script shares with four levels and the map (`drawFjord`, `drawOsloHills`, which stay as they are). Out on
@@ -86,3 +89,12 @@ const ekeberg = () =>
       b.pane(x + 2, 2, 2, 3, GLASS.farWindow);
     }
   });
+
+// --- Langkaia on an upright phone (order 45) -------------------------------------------------------------------------------
+
+/** Langkaia's tall sky by day and after dusk (it follows the clock): high streaks, small clouds far off over the fjord, gulls, the air
+ * thick toward the horizon; after dusk the stars thinning toward the horizon and the northern lights' curtains where the night has them. */
+const SKY = { streaks: 2, far: 4, birds: "few", haze: 100, stars: 80, curtains: 20 * TILE - 4 * TILE - 34 } as const;
+/** Under the quay, the Opera's marble and the harbour's water: the dark of the deep coming on two tiles down. */
+const UNDER = { letters: "~QM#", from: 2, over: 130, dark: "#0d1d24", most: 0.75 };
+TEXTURED.upright = { sky: (v, top) => skyBand(v, SKY, top), under: (_v, m) => underBand(m, UNDER) };

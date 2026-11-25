@@ -1,19 +1,29 @@
 # Roadmap
 
-As of 24 November 2026, after order 44 was reviewed and merged (PR #92). Change this file in the same change that makes it wrong.
+As of 25 November 2026, after order 45 was reviewed and merged (PR #93). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 44, the rest of the far view, PR #92 (reviewed and merged on 24 November); before it orders 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Last live | Order 45, the upright phone, PR #93 (reviewed and merged on 25 November); before it orders 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 60 % used when order 44 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 65 % used when order 45 was reviewed on 25 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
+
+**Order 45, the upright phone** (`orders/45-the-upright-phone.md`, ADR 0043 and 0042 amended), reviewed, merged and live (PR #93, 25 November). Nothing else is in flight.
+Every level, the encore and both maps looked at on a phone held upright as a phone shows it (a pixel ratio of 3: 293 x 634 art pixels at 390 x 844,
+where earlier pictures at a ratio of 1 showed a third more), at five places and swept along each route with the canvases read row by row
+(`apps/viking/tools/review/o45/before.md`): about 40 % plain sky over a strip of far view and street, 45 % ground of one material. The planner's call
+(`conversations.md`): where he stands kept; the far layers rise with him upright as on a wide screen (`climbed`), so Akershus's and Rådhuset's
+landmarks stand at his eye from the walls and towers. Upright only, by drawing (`alive/upright.ts`): ten levels' tall sky (the air thick toward the
+horizon, high streaks, far clouds, a winter's cover, stars thinning, the northern lights' curtains, far birds, a plane's trail) and the ground under
+him going down in layers into its own dark with stones, roots or an old pipe; a pit's foot dark. Held by `render/upright.test.ts`. Each item, done or
+not, with its measures: `o45/after.md`.
 
 **Order 44, the rest of the far view** (`orders/44-the-rest-of-the-far-view.md`, ADR 0044 and 0047 amended), reviewed, merged and live (PR #92, 24 November). Nothing else is in flight. The places order 43 could not look up were given by the planner from his own knowledge of Oslo (not looked up; they wait for Lars,
 `conversations.md`) and order 43's table finished, drawing only: the jump seen from the town with the TV tower above and behind it, a little to its
@@ -153,6 +163,12 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 45 left (`apps/viking/tools/review/o45/after.md`): the levels it did not fill upright (Rådhuset, Bygdøy, Østensjøvannet, Bjørvika, the encore,
+Nordmarka, Stortinget, the maps: 2s and 1s of its table, each named with why); three flat places the test names (Ekeberg's fjord far below the
+viewpoint, Gamlebyen's harbour at the prow, the encore's water mirror); the kit's sky gradient runs to the screen's foot upright, so its horizon colour
+lies under the ground (the haze toward the horizon stands in for it); falling snow is as sparse upright as the kit draws it. Whether any of it reads
+on a real phone is for Lars.
+
 Order 44 left (`apps/viking/tools/review/o44/after.md`): every place it drew is the planner's knowledge, not looked up, and waits for Lars's word
 (the list in `after.md`); Sagene kirke and Kampen kirke are glimpsed more than seen (the level's own lane stands in front of them most of the way);
 Bygdøy's far view still shows only through the gap between Fram's hall and the Kon-Tiki museum; the far hills Langkaia shares with four levels and the
@@ -240,7 +256,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (283.6 and 279.9 s after order 44, 281.4 and 282.4 s for `origin/main` the same hour, 539 tests; 277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (286.6 and 285.6 s after order 45, 276.1 and 278.0 s for `origin/main` the same hour, 542 tests; 283.6 and 279.9 s after order 44, 281.4 and 282.4 s for `origin/main` the same hour, 539 tests; 277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).

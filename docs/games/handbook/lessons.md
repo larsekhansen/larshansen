@@ -328,6 +328,32 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **The map's far layers have no haze** (order 44): the same far shore the levels share is rawer on the map, and its ochre houses came 9.5 off a
   coin's copper there, where the levels' washed ones did not. *A shared drawing is held where each user shows it.*
 
+- **A "390 x 844" picture at a pixel ratio of 1 is not a phone** (order 45): `tools/shots.ts --size=390x844` gives the page a view of 391 x 845 art
+  pixels; a phone at a ratio of 3 shows 293 x 634 (the kit's `viewFor`: the 240-pixel minimum width sets 4 device pixels an art pixel), 271 x 481 at
+  360 x 640. Orders 43 and 44 judged the upright far view on the larger view. *Look at an upright frame as a phone shows it: `tools/glance/hand.ts`
+  (a pixel ratio of 3, a coarse pointer, the page laid out again), not `shots.ts`.*
+- **A comment that says a case is handled can be wrong about what the handling moves** (order 45): `climbed` returned nothing upright because the far
+  layers there "are already moved round him", but `farPass` moves only what a layer places by the screen; what it places in the world (every landmark
+  of orders 43 and 44) stays at its world height, so from Akershus's walls Rådhuset's towers never showed upright. *Read what a shift moves (here: the
+  view's `camY` moved one way and the transform the other) before trusting it covers a case.*
+- **The canvases can be read** (order 45): every depth's canvas is at art pixels, and the wrapper page of `hand.ts` is the game's origin, so it can
+  read the sky's, each far layer's and the street's alpha row by row: how much of a row the street covers, how much far view shows, how plain a
+  row is, exactly, in one load, where order 43 needed a far-only and a sky-only scratch build and three pictures. And `__game.still()` after moving
+  `__game.body` sweeps a whole level in one browser (1,525 places in a few minutes).
+- **Layers for nothing** (order 45): a gradient's stops can carry thin lines (a stop either side of a pixel), so the ground's layers under him are
+  one fill a column group, not a rectangle a layer.
+- **A test of pixels upright wants its own small canvas** (order 45): the warning test's walk is 320 x 200; an upright frame is 293 x 634 and its
+  bands are what the passes leave. `render/upright.test.ts` composites the sky, the shifted and washed far layers and the street in typed arrays
+  (fills, see-through fills, the brush's gradients, `source-atop` for the haze and the tint) and draws each pass once a place, washing it per sky
+  (no far layer draws differently under another sky). Time it on a quiet Pi: under the batch of pictures it took twice as long.
+- **A test as fast as its process lets it be** (order 45): `render/upright.test.ts` drew its frames in 7 s alone and in 18.7 s in the suite, right after
+  `render/reduced.test.ts` (each file's time from `bun test --reporter=junit`; run as a pair, the two showed it at once). Not the heap (a full GC first
+  changed nothing), not a stand-in document left behind: the same functions (the kit's `R`, the tiles' drawing, the bot) had been through every kind of
+  stand-in canvas there and ran two and a half times slower after. In workers of their own (`render/upright.worker.ts`) the frames take 5.8 s in the suite
+  too. *When a test is slow only in company, time it in pairs with the files before it, and put costly drawing in a worker.*
+- **`pkill -f` with a pattern in your own command line kills your own shell** (order 45, again, as the playbook says): `pkill -f "bin/final.sh"` in a
+  command that also named `bin/final.sh` ended the command itself; the batch's child went on and had to be found by its process number. *Kill by PID.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

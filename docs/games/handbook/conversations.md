@@ -251,6 +251,21 @@ Where a level's walk runs the other way from the compass, a landmark stands on t
 Ekeberg to its left, as the map has the centre and Ekeberg left of it; Kampen the other way). Every piece is drawn in its level's own
 file (Langkaia's in `feel`'s file, through the props kit's hook); taking one out is a line.
 
+### Order 45: the upright phone's camera and far layers (the planner's call)
+
+Not something Lars said: orders 43 and 44 both found the far view a thin strip on a phone held upright, above it a tall plain sky and below the
+ground a tall plain band, the play a third of the screen. Order 45 looked at every level upright on a phone's own view (`apps/viking/tools/review/o45/before.md`)
+and the planner decided on his behalf, as a look that is easy to undo (ADR 0043 amended):
+- **Where he stands upright is as before** (0.60 of the screen, two thirds of the way down above the pad): standing him lower shows more of the plain
+  sky, higher more of the plain ground; what he must see is in view; the fill is drawing. Not chosen: letting the camera rise over a level's top.
+- **The far layers rise with him upright as on a wide screen** (`climbed` reckons the view they are drawn for): from Akershus's walls Rådhuset's towers
+  stand at his eye, from Slottet's banners the ridge with the jump. Only those four levels that raise their far layers (Akershus, Rådhuset, Slottet,
+  Vigelandsparken), only upright. Undoing it is one line in `apps/viking/src/render/backdrop.ts` (`climbed`: `if (view.h > view.w) return 0`).
+- **The tall sky and the ground under him filled, upright only** (ten levels: Holmenkollen, Korketrekkeren, Vigelandsparken, Slottet, Gamlebyen, Gamle Oslo,
+  Langkaia, Ekeberg, Akerselva, and Akershus's sky): each level's `sky` and `under` in its own file (Langkaia's in `feel`'s file); taking one away is a
+  line in that level's art. For him to judge: whether the sky reads as weather and depth or as clutter, whether the dark under the ground reads as
+  ground going down or as a black band, and whether the pad's buttons read better on it.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.

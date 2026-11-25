@@ -10,6 +10,7 @@ import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { EDGE, tile as textured, type Grain } from "../alive/ground";
 import { lamp } from "../alive/props";
+import { inTheGround, skyBand, underBand } from "../alive/upright";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
@@ -1457,6 +1458,10 @@ export const GAMLEBYEN: LevelDef = {
       longship(at.x, at.y, LONGSHIPS[i].w);
     },
     ground: (c) => (c < 99 ? { top: G.grass, dot: G.grassDark, fill: G.earth } : { top: G.cobble, dot: G.cobbleDark, fill: G.earth, kind: "setts" }),
+    // On an upright screen (order 45): the night: stars thinning toward the horizon, the northern lights' curtains rising, a
+    // cloud or two; under the old town, its stones and roots, darkening.
+    sky: (v, top) => skyBand(v, { stars: 80, curtains: ROWS * TILE - 4 * TILE - 34, streaks: 1, far: 2, haze: 80 }, top),
+    under: (_v, m) => underBand(m, { letters: "#~", from: 2, over: 110, dark: "#0d0f18", most: 0.8, things: inTheGround({ stone: PALETTE.rock, root: mix(PALETTE.woodDark, INK, 0.3), every: 64 }) }),
     tile(t, c, r, x, y, map) {
       if (t === "~") return calmWater(c, r, x, y, map);
       if (t === "Z" || t === "z") stoneTile(c, r, x, y, t === "Z");

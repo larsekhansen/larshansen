@@ -158,6 +158,10 @@ export interface Art {
   troll?(t: Troll, v: View): void;
   /** Draws the last boss, from its state. */
   boss?(state: unknown, v: View): void;
+  /** On an upright screen only (order 45): what the tall sky over the far view holds, drawn over the kit's sky on its canvas (`alive/upright.ts`); `top` is the rows the bar covers. */
+  sky?(v: View, top: number): void;
+  /** On an upright screen only (order 45): what lies under the ground, past the play, darkening downward; drawn over the tiles. */
+  under?(v: View, map: TileMap): void;
   /** Draws bass drum `i`: the kit's drum (`launcherart.ts`) or its own (a clothesline). A level with drums draws them (order 42). */
   drum?(i: number, l: Launcher, firedAt: number, v: View): void;
 }

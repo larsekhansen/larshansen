@@ -4,7 +4,7 @@ import { R, mix, stoneWall, view } from "@larshansen/pixelkit/paint";
 import { BRICK, FACADE, HAT_RED, INK, MASONRY, PALETTE, SNOW, STAND, STONE, WHITE } from "@larshansen/pixelkit/palette";
 import { WOOD_LEDGE, crate, edgesOf, forVisibleTiles, groundFill, groundTop, ledge, outlineTile, visibleTiles } from "@larshansen/pixelkit/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import type { Art } from "../levels/types";
+import type { Art, View } from "../levels/types";
 import type { Board } from "@larshansen/pixelkit/text";
 import type { Door } from "@larshansen/pixelkit/doors";
 import { STAND_LEDGE, tileTop } from "./stand";
@@ -43,6 +43,8 @@ export const TEXTURED: {
   /** The last flat things (order 28, `alive/props.ts`): painted plank walls, and Langkaia's props by name. */
   walls?(x: number, top: number, w: number, color: string, line: string, ground: number): boolean;
   prop?(kind: string, a: number, b: number, c?: number, d?: number, e?: number): boolean;
+  /** Langkaia's tall sky and the band under its quay on an upright screen (order 45), from feel's file: its level is the first script's. */
+  upright?: { sky(v: View, top: number): void; under(v: View, map: TileMap): void };
 } = {};
 
 /** Deep water, a little greener than the front page's, so it is never his tunic's blue (order 18); and deeper over the bed. */
