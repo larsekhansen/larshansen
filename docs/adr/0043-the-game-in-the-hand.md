@@ -138,3 +138,31 @@ Order 41 left three things at the screen's edges, which a touch target had to mo
   and with one on either side or both.
 - **Not mended, for a later decision**: that tall bar over the map on a short phone (upright at 360 x 640 it is 204 px, 251 with a notch);
   laying it out again for those sizes moves the site's links, thumb targets on a phone without a notch.
+
+## Amended by order 45 (25 November 2026): where he stands upright, and the far layers there
+Orders 43 and 44 gave every level a far view of its place, and both found it a thin strip upright. Order 45 looked at every level upright on a
+phone's own view (293 x 634 art pixels at 390 x 844 and a pixel ratio of 3, 271 x 481 at 360 x 640: earlier pictures at a pixel ratio of 1 showed a
+third more), at five places of each and swept along each whole route (`apps/viking/tools/review/o45/before.md`). Decided by the planner on Lars's
+behalf, as a look that is easy to undo:
+
+- **Where he stands: as before.** Two thirds of the way down from the canvas's top to the pad's bottom row (0.60 of the screen at both sizes), wherever
+  the level's top does not hold the camera. The screen is shared alike in every level that walks a street: about 40 % sky, a strip of far view and
+  street, 45 % ground. Standing him lower shows more of the plain sky, higher more of the plain ground; neither fills the screen, and what he must see
+  is in view where he stands (the route climbs at most 256 CSS pixels over his feet within a view, which shows 420 above them; 16 tiles below, 4.7 of
+  them under the pad's row). The fill is drawing (the sky and the band under the ground, `alive/upright.ts`, below), not the camera. Not chosen: letting
+  the camera rise over a level's top upright (on Akershus's upper walls it holds him at 0.17 of the screen, the walls below him), which would show
+  more plain sky over him there.
+- **The far layers rise with him upright, as on a wide screen.** `climbed` (order 20, ADR 0042) raises a level's far layers as the view climbs above
+  where it stands over the level's ground; it returned nothing upright ("whose far layers are already moved round him"), but what the far layers place
+  in the world (every landmark of orders 43 and 44, the hills' and the water's lines) stays at its world height upright, so from Akershus's walls
+  Rådhuset's towers never showed upright and from Slottet's banners the ridge with the jump never showed half. Now upright it reckons the view the far
+  layers are drawn for (`FAR_VIEW_H`, 220 high round him, `render/backdrop.ts`), so from the walls and the towers the horizon stays at his eye as on a
+  wide screen. It changes only the four levels that raise their far layers (Akershus, Rådhuset, Slottet, Vigelandsparken), only upright.
+- **What it costs.** Lifted upright, the fjord's receding plane (`drawFjord`'s, ADR 0047) runs hundreds of pixels down from the horizon to the quay, and
+  its even strips two or three pixels tall were two hundred strips, 479 and 648 copies a frame more at Akershus and Rådhuset. Upright, a band lifted
+  so (`Plane.tall` in `alive/depth.ts`) is a dozen strips, each half again as tall as the one above, as a plane's are toward the eye, from one texture
+  for every height (the band's height changes as he climbs; the even strips made a texture a height): at most 10 copies a frame more than before.
+- **The rules do not see it.** The camera is the same code as before; the sloppy player's run files are byte-identical; the pad covers what it covered.
+  On its side and on a desktop every picture is byte-identical.
+
+Undoing it: `climbed` in `render/backdrop.ts` back to `if (view.h > view.w) return 0` (one line).
