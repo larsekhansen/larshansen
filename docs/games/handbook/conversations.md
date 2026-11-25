@@ -266,6 +266,26 @@ and the planner decided on his behalf, as a look that is easy to undo (ADR 0043 
   line in that level's art. For him to judge: whether the sky reads as weather and depth or as clutter, whether the dark under the ground reads as
   ground going down or as a black band, and whether the pad's buttons read better on it.
 
+### Order 46: the dark under the ground, a second look (the planner's call)
+
+Not something Lars said: order 45 took the ground under him upright down into each level's own near-black, and the planner, looking at its
+pictures, doubted it: under snow (Holmenkollen, Korketrekkeren) white going to black read more as a shadow over the screen than as ground
+going down. Order 46 showed, for each material at both upright sizes by day and under its sky with the pad, what stood beside two lighter
+tries (`apps/viking/tools/review/o46/after.md`, item 1): the band ending at a tone of its own material's darkest ramp step, and the darkening
+starting lower in fewer, broader layers. The planner decided on his behalf, as a look that is easy to undo (ADR 0043 amended): **the first, for
+every material.** Snow goes down to packed blue-grey snow and then the rock its boulders are of; earth to dark wet earth; stone to its shaded
+courses; the Opera's marble to its shadowed grey; water to its deep, a dark teal (toward the ink it came within 10 of his tunic's navy). The
+layers' lines are the tone lit and the tone in the joint's shade, seen from the first layer on (in water, its depth strips); a pit's foot keeps
+the near-black, so a pit still reads as one. The second try kept the black under the pad and its broad steps' edges read as shelves. The pad's
+measures hold (order 41's: a word at rest 19.5 or more off its fill, pressed 39.2, dimmed 9.9, a button seen 17.3 off the ground; at the band's
+darkest the white word stands 66.5 or more off its button's face where it stood 79.3, the button's white edge 42.9 where it stood 48.7).
+Undoing it is the `deep` line in each level's `under` (and `most` back to 0.75 to 0.8): without `deep` the band goes to `dark` as before. For
+him to judge: whether the ground under him now reads as ground going down, and whether the buttons still read well on it.
+
+Also the planner's call, in the same order: on an upright screen the sky reaches its horizon's colour at his row, where the far view stands,
+not at the canvas's foot under the ground (the kit's `drawSky` takes the row, its default unchanged; the page hands it upright). Every upright
+sky but Stortinget's changed by it. Undoing it is one argument in `apps/viking/src/main.ts` (`beginLayers(..., horizon)`).
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.
