@@ -18,6 +18,7 @@ import type { LevelDef, View } from "./types";
 import { spedX } from "../alive/depth";
 import { tile as textured, type Grain } from "../alive/ground";
 import { lamp, pool, railing as rail, tramSide, type Stuff } from "../alive/props";
+import { drawFar, farPiece, type Brush } from "../alive/far";
 
 // Level 9, rune E: Ekeberg. Always evening, under the banded sky of The Scream, which Munch set on
 // this hillside. Up from Gamlebyen on the tram's roof as it climbs its trestle to the top of the
@@ -282,6 +283,9 @@ function city(v: View) {
   for (let k = 0; k < 6; k++) box(L(98), fy(192) - 2 - k, Math.max(1, 3 - Math.floor(k / 2)), 1, mix(WHITE, HILL.fjord, 0.1));
   box(L(46), fy(166) - 2, 2, 2, PALETTE.sail);
   box(L(46), fy(166) - 3, 2, 1, mix(PALETTE.sail, WHITE, 0.4));
+  // On an upright phone the fjord runs far down the tall screen under the viewpoint, where it was one plain blue (order 46): further
+  // out two islands, a ferry going out with its long wake held still on the water, and the far shore's wooded ridge at the water.
+  if (view.h > view.w) fjordOut(L);
   // The places: the palace on its rise, Rådhuset's two towers, the fortress on the water, Stortinget, the Opera's white wedge, the river's valley, Vålerenga's church.
   box(L(-84), fy(112), 13, 6, mix(PALETTE.sand, HILL.city, 0.55));
   box(L(-53), fy(100), 4, 18, mix(PALETTE.sailStripe, HILL.city, 0.55));
@@ -305,6 +309,105 @@ function city(v: View) {
     box(x - 1, y - 1, 3, 3, LAMP);
   }
 }
+
+/** The fjord further out (order 46), drawn only where the screen is taller than wide: what a wide screen never reaches. Still, one copy each. */
+function fjordOut(L: (dx: number) => number) {
+  drawFar(SHORE, L(-170), fy(205));
+  drawFar(ISLAND, L(8), fy(226));
+  drawFar(HOLM, L(-112), fy(246));
+  drawFar(GLINTS, L(-190), fy(384));
+  drawFar(WAKE, L(-60), fy(314));
+  drawFar(SKERRY, L(78), fy(340));
+}
+/** Woods seen from above the fjord: dark crowns, their lit tops, a gap now and then (`up` rows from the foot, `top` the highest). */
+const crown = (x: number, up: number, top: number) => {
+  const k = (x * 7 + up * 13) % 11;
+  if (up === top) return k < 6 ? mix(HILL.oakLight, HILL.fjord, 0.3) : k < 9 ? mix(HILL.oak, HILL.fjord, 0.3) : null;
+  return k < 2 ? mix(HILL.oakLight, HILL.fjord, 0.35) : k < 8 ? mix(HILL.oak, HILL.fjord, 0.35) : mix(HILL.oakDark, HILL.fjord, 0.3);
+};
+/** The rocks at the water line: pale granite lit on top, in the fjord's shade at the water. */
+const ROCK_LIT = mix(HILL.graniteLight, HILL.fjord, 0.3);
+const ROCK_FACE = mix(HILL.granite, HILL.fjord, 0.4);
+const ROCK_FOOT = mix(HILL.graniteDark, HILL.fjord, 0.5);
+/** A wooded back on rocks, `w` wide, rising `rise` a pixel from its ends to at most `most` rows of woods. */
+function wooded(b: Brush, w: number, rise: number, most: number, shift = 0) {
+  for (let x = 0; x < w; x++) {
+    const e = Math.min(x, w - 1 - x);
+    const top = Math.round(Math.min(most, e * rise) + (e > 12 ? Math.sin((x + shift) * 0.35) : 0));
+    if (top < 1) continue;
+    b.dot(x, 1, ROCK_FOOT);
+    b.dot(x, 2, e < 5 || (x + shift) % 9 === 3 ? ROCK_LIT : ROCK_FACE);
+    for (let up = 3; up <= top + 2; up++) {
+      const c = crown(x + shift, up, top + 2);
+      if (c) b.dot(x, up, c);
+    }
+  }
+}
+/** A house by the water: a pale wall lit on its left, a dark roof, a window that may come on after dusk. */
+function house(b: Brush, x: number, up: number, wall: string) {
+  b.block(x, 5, up, up + 2, mix(wall, HILL.fjord, 0.2));
+  b.fill(x - 1, 7, up + 3, up + 3, mix(HILL.roofTeal, INK, 0.25));
+  b.pane(x + 2, 1, up + 1, up + 1, GLASS.farWindow);
+}
+/** An island further out than Hovedøya, nearer the viewpoint: a low wooded back on rocks. */
+const ISLAND = farPiece("ekeberg island", 64, 11, (b) => wooded(b, 64, 0.5, 8));
+/** A holm with a row of summer cabins on its rocks. */
+const HOLM = farPiece("ekeberg holm", 46, 9, (b) => {
+  wooded(b, 46, 0.6, 5, 5);
+  for (const [x, wall] of [[9, PAINT.farWhite], [16, PAINT.mint], [23, PAINT.farWhite], [30, PAINT.farGreen]] as const) house(b, x, 3, wall);
+});
+/** The far shore across the fjord: a long wooded point coming in from the west, rocks at its water, houses by it, a jetty. */
+const SHORE = farPiece("ekeberg shore", 176, 12, (b) => {
+  for (let x = 0; x < 176; x++) {
+    const top = Math.round(Math.min(9, Math.max(0, (176 - x) * 0.09)) + Math.sin(x * 0.2) * 0.6);
+    if (top < 1) continue;
+    b.dot(x, 1, ROCK_FOOT);
+    b.dot(x, 2, x % 7 === 2 ? ROCK_LIT : ROCK_FACE);
+    for (let up = 3; up <= top + 2; up++) {
+      const c = crown(x, up, top + 2);
+      if (c) b.dot(x, up, c);
+    }
+  }
+  for (const [x, wall] of [[40, PAINT.farWhite], [52, PAINT.mint], [118, PAINT.farWhite]] as const) house(b, x, 3, wall);
+  b.fill(58, 10, 1, 1, mix(HILL.trestle, HILL.fjord, 0.3));
+});
+/** A ferry going out to sea, its wake held still on the water behind it: two arms spreading toward the viewpoint and a trail between. */
+const WAKE = farPiece("ekeberg wake", 132, 58, (b) => {
+  const foam = (k: number) => mix(HILL.fjordLight, HILL.fjord, Math.min(0.7, 0.15 + k / 140));
+  for (let k = 0; k < 118; k++) {
+    const x = 13 + k;
+    b.dot(x, 51 - Math.round(k * 0.1), foam(k));
+    if (k % 7 !== 3) b.dot(x, 51 - Math.round(k * 0.42) - 1, foam(k + 8));
+    if (k < 76 && k % 3 !== 1) b.dot(x, 51 - Math.round(k * 0.25), foam(k + 20));
+  }
+  // The ferry: its hull white over a dark water line, a row of windows, the bridge, a dark funnel.
+  b.fill(0, 14, 50, 50, mix(HILL.trestle, INK, 0.35));
+  b.block(0, 14, 51, 53, mix(WHITE, HILL.fjord, 0.12));
+  for (let x = 2; x < 12; x += 2) b.pane(x, 1, 52, 52, GLASS.farWindow);
+  b.fill(3, 8, 54, 55, mix(HILL.restaurantShade, HILL.fjord, 0.15));
+  b.fill(6, 2, 56, 57, mix(HILL.trestle, INK, 0.3));
+});
+/** A bare skerry nearer in, with a sea mark on it: a white post, its top dark. */
+const SKERRY = farPiece("ekeberg skerry", 30, 10, (b) => {
+  for (let x = 0; x < 30; x++) {
+    const e = Math.min(x, 29 - x);
+    const top = Math.min(3, Math.round(e * 0.4));
+    if (top < 1) continue;
+    b.fill(x, 1, 1, 1, ROCK_FOOT);
+    b.fill(x, 1, 2, top + 1, x < 12 ? ROCK_LIT : ROCK_FACE);
+  }
+  b.fill(14, 2, 5, 8, mix(WHITE, HILL.fjord, 0.15));
+  b.fill(14, 2, 9, 10, mix(HILL.trestle, INK, 0.3));
+});
+/** The light on the nearer water, held still: short streaks, longer and further apart the nearer. */
+const GLINTS = farPiece("ekeberg glints", 380, 120, (b) => {
+  for (let up = 2; up <= 120; up += 5 + ((up * 7) % 4)) {
+    for (let x = (up * 37) % 23; x < 380; x += 26 + ((x * 13 + up) % 31)) {
+      const len = 2 + Math.round((120 - up) / 30) + (x % 3);
+      b.fill(x, len, up, up, mix(HILL.fjordLight, HILL.fjord, 0.45 + (up % 3) * 0.1));
+    }
+  }
+});
 
 /**
  * The hillside's oaks behind the path, in the evening: a wooded slope that follows the ground a little
@@ -726,7 +829,7 @@ export const EKEBERG: LevelDef = {
     // On an upright screen (order 45): the evening's first stars high over the Scream's bands, a few crows; under the hillside,
     // its stones and the oaks' roots, darkening into the rock.
     sky: (v, top) => skyBand(v, { stars: 30, birds: "few", far: 2 }, top),
-    under: (_v, m) => underBand(m, { letters: "#K", from: 2, over: 110, dark: "#1a1622", most: 0.8, things: inTheGround({ stone: mix(STONE.base, HILL.soil, 0.25), root: mix(HILL.soil, INK, 0.45), every: 64 }) }),
+    under: (_v, m) => underBand(m, { letters: "#K", from: 2, over: 110, dark: "#1a1622", most: 0.85, deep: { "#": [HILLSIDE.ramp[0]], K: [QUARRY.ramp[0]] }, things: inTheGround({ stone: mix(STONE.base, HILL.soil, 0.25), root: mix(HILL.soil, INK, 0.45), every: 64 }) }),
     tile(t, c, r, x, y, m) {
       if (t === "#") {
         grassTile(c, r, x, y, m);

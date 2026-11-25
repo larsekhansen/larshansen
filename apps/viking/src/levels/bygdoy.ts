@@ -16,7 +16,8 @@ import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tbaneDoor } from "../render/furniture";
 import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
 import { frame, paint, turned, type Piece } from "../alive/frames";
-import { tile as textured, type Grain } from "../alive/ground";
+import { QUAY, earthOf, tile as textured, type Grain } from "../alive/ground";
+import { DEEP_WATER, inTheGround, skyBand, underBand } from "../alive/upright";
 import { pool } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { shiver } from "../render/stand";
@@ -567,6 +568,34 @@ function rock(c: number, r: number, x: number, y: number, map: TileMap) {
 const HALL = (base: string, name: string): Grain => ({ name, kind: "blocks", ramp: [mix(base, INK, 0.25), mix(base, INK, 0.06), base, mix(base, WHITE, 0.3), mix(base, WHITE, 0.45)], h: 16, w: 16, flat: true, fine: true });
 const HALL_TOP = HALL(mix(M.deck, WHITE, 0.15), "by-hall");
 const HALL_UNDER = HALL(mix(STONE.base, M.deck, 0.3), "by-hall under");
+
+/** The ground under the beach (to column 69), the halls' floors, and the park's lawn, as `art.ground` gives them. */
+const BEACH = { top: P.sand, dot: P.sandDark, fill: mix(P.sandDark, P.earth, 0.5), kind: "sand" } as const;
+const FLOORS = { top: mix(M.deck, WHITE, 0.2), dot: M.deck, fill: mix(STONE.base, M.deck, 0.3), kind: "paving" } as const;
+const LAWN = { top: P.grass, dot: P.grassDark, fill: P.earth };
+const groundAt = (c: number) => (c < 69 ? BEACH : c < 122 || (c >= 157 && c < 205) ? FLOORS : LAWN);
+/**
+ * On an upright screen (order 46): a summer day on the peninsula: high streaks, a plane's trail, small clouds far off over the fjord,
+ * the air thick toward the horizon, a few gulls; under the beach the sand going down to dark wet sand, under the halls their slabs to
+ * the shaded courses, under the park the earth to dark wet earth, with a stone and a root now and then; the quay's stone to its shaded
+ * courses; where the fjord is over the ground, its water to its deep.
+ */
+const UPRIGHT_SKY = { streaks: 3, far: 4, trail: true, birds: "few", haze: 100 } as const;
+const DEEPS = [[earthOf(BEACH).ramp[0]], [HALL_UNDER.ramp[0]], [earthOf(LAWN).ramp[0]]] as const;
+const QUAY_DEEP = [QUAY.ramp[1], QUAY.ramp[0]];
+/** Columns with the fjord over their ground: there it goes down as water does. */
+const WET = Array.from(MAP[0], (_, c) => MAP.some((row) => row[c] === "~"));
+/** A stone and a root now and then, not under the fjord. */
+const IN_GROUND = inTheGround({ stone: mix(STONE.base, P.earth, 0.3), root: mix(P.woodDark, INK, 0.25), every: 64 });
+const UNDER = {
+  letters: "#~Q",
+  from: 2,
+  over: 110,
+  dark: "#18150f",
+  most: 0.85,
+  deep: (c: number, foot: string) => (foot === "Q" ? QUAY_DEEP : WET[c] ? DEEP_WATER : DEEPS[groundAt(c) === BEACH ? 0 : groundAt(c) === FLOORS ? 1 : 2]),
+  things: (c: number, d: number, x: number, y: number) => void (!WET[c] && IN_GROUND(c, d, x, y))
+};
 function hallFloor(c: number, r: number, x: number, y: number, map: TileMap) {
   textured(r === W ? HALL_TOP : HALL_UNDER, c, r, x, y, map, null);
 }
@@ -1077,7 +1106,9 @@ export const BYGDOY: LevelDef = {
       const s = v.grounds as Ground | null;
       if (s) PADS.forEach((p, i) => bundle(p, s.pads[i], v.t));
     },
-    ground: (c) => (c < 69 ? { top: P.sand, dot: P.sandDark, fill: mix(P.sandDark, P.earth, 0.5), kind: "sand" } : c < 122 || (c >= 157 && c < 205) ? { top: mix(M.deck, WHITE, 0.2), dot: M.deck, fill: mix(STONE.base, M.deck, 0.3), kind: "paving" } : { top: P.grass, dot: P.grassDark, fill: P.earth }),
+    ground: groundAt,
+    sky: (v, top) => skyBand(v, UPRIGHT_SKY, top),
+    under: (_v, m) => underBand(m, UNDER),
     tile(t, c, r, x, y, map) {
       if (t === "B") {
         rowboat(x, y);

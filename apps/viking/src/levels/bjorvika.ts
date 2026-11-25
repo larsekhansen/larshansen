@@ -7,6 +7,7 @@ import { ENEMY, INK, PAINT, STAND, WHITE } from "@larshansen/pixelkit/palette";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as S from "@larshansen/pixelkit/swatches/site";
 import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
+import { skyBand } from "../alive/upright";
 import { box as pbox, dot, prop, tone, type Stuff } from "../alive/props";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
@@ -760,6 +761,10 @@ export const BJORVIKA: LevelDef = {
       for (const z of GUSTS) gust(z, v.t);
     },
     ground: () => ({ top: S.graniteLight, dot: S.graniteDark, fill: S.granite }),
+    // On an upright screen (order 46): the evening over the building site: high streaks lit from below, a plane's trail, small
+    // clouds far off over the fjord, the air thick toward the horizon, a few crows. Under him the new blocks' façades fill the
+    // screen with their windows (order 45): left as they are.
+    sky: (v, top) => skyBand(v, { streaks: 3, far: 3, trail: true, birds: "few", haze: 100 }, top),
     tile(t, c, r, x, y, map) {
       if (t === "#") granite(c, r, x, y, map);
       else if (t === "U") concrete(c, r, x, y, map);

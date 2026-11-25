@@ -354,6 +354,24 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **`pkill -f` with a pattern in your own command line kills your own shell** (order 45, again, as the playbook says): `pkill -f "bin/final.sh"` in a
   command that also named `bin/final.sh` ended the command itself; the batch's child went on and had to be found by its process number. *Kill by PID.*
 
+- **A lighter dark hides its own lines** (order 46): order 45's layers under the ground were steps of the dark's alpha, which showed over a near-black;
+  over ground of nearly their own colour (dark wet earth over earth) they vanished, and the plain runs under him grew from 8 to 16 % of the screen. In
+  the material's own tones each line is its own colour (the tone lit, the tone in the joint's shade). *When a band's colour comes nearer what is
+  under it, measure the plain runs again.*
+- **Water toward the ink passes his tunic** (order 46): the harbour's blue mixed toward the game's ink goes through a navy 6.5 off his tunic; the
+  upright test's colour check found 324 such colours at once. Toward a dark teal it keeps 11 or more off. *A dark made by mixing toward the ink
+  passes every blue on the way.*
+- **A test's walk sees only the size it walks** (order 46): `render/warning.test.ts` walks every level at 320 x 200, so far-layer drawing made only
+  for an upright screen (Ekeberg's fjord below the viewpoint) is held by no test; its colours were washed and tinted by hand as that test does
+  (`o46/bin/farcheck.ts`), and two came within 10 of a role. *Ask which test sees a new drawing; if none, check it the same way by hand and say so.*
+- **A far layer drawn for a view of the usual height leaves what it draws short upright** (found in order 46): Gamlebyen's dawn is drawn in its far
+  layer, so upright it ended at that layer's window and the night stood over it with an edge, on origin/main too, since order 45 drew the window
+  round him. *Upright, look at every state of a level's sky (dawn, a storm), not only its start.*
+- **Three tries as three builds of one switch** (order 46): a scratch constant in the brush picked the try, set with `sed` and built three times into
+  three folders served on three ports, so one address list gave the three side by side; the switch was taken out before the first commit.
+- **A picture already taken is a picture** (order 46): order 45's final upright pictures were made from the code origin/main has; six taken again
+  from origin/main's build were byte-identical, so its 320 served as the before, which saved half an hour of a busy Pi.
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

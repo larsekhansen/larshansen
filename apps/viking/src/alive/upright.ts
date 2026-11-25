@@ -252,6 +252,12 @@ export function curtains(v: View, horizonY: number) {
 
 // --- Under the ground --------------------------------------------------------------------------------------------------
 
+/**
+ * Water's own tones going down (order 46): the tiles' deep water (`DEEP` in `render/tiles.ts`) to a dark teal. Toward the game's ink
+ * it passed within 10 of his tunic's navy (`render/upright.test.ts`).
+ */
+export const DEEP_WATER: readonly string[] = ["#2b6a8e", "#143c3a"];
+
 /** What lies under a level's ground, and how deep its dark is. */
 export interface Under {
   /** The letters its ground's body is made of: a column whose run of these reaches the map's foot is ground to its surface. */
@@ -260,10 +266,17 @@ export interface Under {
   from: number;
   /** How far down it takes to come on, in art pixels. */
   over: number;
-  /** The level's dark: what the ground darkens to. */
+  /** The level's dark: what the ground darkens to (and a pit's foot, always). */
   dark: string;
   /** How dark at its darkest (0 to 1). */
   most?: number;
+  /**
+   * The tones its ground goes down through, top to bottom, by the letter at a column's foot (order 46): its own material's darkest
+   * ramp steps (snow to packed blue-grey snow and then rock, earth to dark wet earth, stone to its shaded courses, marble to its
+   * shadowed grey), in place of `dark`; or by the column, where one letter is several materials. A column whose foot is not named
+   * darkens to `dark`. Where they are water's (`DEEP_WATER`), its lines are the water's depth strips, not a layer's joints.
+   */
+  deep?: Readonly<Record<string, readonly string[]>> | ((c: number, foot: string) => readonly string[] | undefined);
   /** What lies in the ground, drawn first (each tile of a column `depth` tiles under its surface, at its world x, y). */
   things?(c: number, depth: number, x: number, y: number): void;
   /** An old pipe laid along the level this many tiles under its surface, in these tones (its body, its lit top, its joints). */
@@ -329,14 +342,19 @@ export function underBand(map: TileMap, u: Under) {
   // Where the ground is open to the map's foot (a pit, a gully), nothing is drawn under the foot and the far layers showed
   // through as if the pit had a floor: the same dark comes on there from two tiles over the foot, so a pit reads as one.
   const pit = (c: number) => (s[c] < 0 && !map.isSolid(c, map.rows - 1) && !map.isWater(c, map.rows - 1) ? map.rows - u.from - 2 : -1);
+  // Where the ground goes down through its own tones (order 46), a column's are its foot's material's; a pit's foot is the dark.
+  const foot = (c: number) => map.tileAt(c, map.rows - 1);
+  const deep = u.deep;
+  const tones = (c: number) => (deep && at(c) >= 0 ? (typeof deep === "function" ? deep(c, foot(c)) : deep[foot(c)]) ?? null : null);
   for (let c = c0; c <= c1; ) {
     const r = at(c) >= 0 ? at(c) : pit(c);
+    const t = tones(c);
     let e = c;
-    while (e + 1 <= c1 && (at(e + 1) >= 0 ? at(e + 1) : pit(e + 1)) === r) e++;
+    while (e + 1 <= c1 && (at(e + 1) >= 0 ? at(e + 1) : pit(e + 1)) === r && tones(e + 1) === t) e++;
     if (r >= 0) {
       const y = (r + u.from) * TILE - view.camY;
       if (y < view.h) {
-        g.fillStyle = darkening(g, y, view.h, u);
+        g.fillStyle = darkening(g, y, view.h, u, t);
         g.fillRect(c * TILE - view.camX, y, (e - c + 1) * TILE, view.h - y);
       }
     }
@@ -344,25 +362,53 @@ export function underBand(map: TileMap, u: Under) {
   }
 }
 
+/** A tone `f` of the way down the band's `over`: through each of `tones` in turn, the last from `over` on. */
+function toneAt(tones: readonly string[], f: number): string {
+  const n = tones.length;
+  if (n === 1 || f <= 1 / n) return tones[0];
+  if (f >= 1) return tones[n - 1];
+  const k = f * n - 1;
+  const i = Math.floor(k);
+  return mix(tones[i], tones[i + 1], k - i);
+}
+
 /** The ground's layers: lines this many pixels under where the dark begins, each a pixel lit and a pixel deeper. */
 const STRATA = [14, 33, 57, 84, 116, 152, 194];
 
-/** The dark under the ground from screen row `y` to `bottom`: nothing at `y`, its darkest `over` pixels down, the ground's layers in it. */
-function darkening(g: CanvasRenderingContext2D, y: number, bottom: number, u: Under): CanvasGradient {
+/**
+ * The dark under the ground from screen row `y` to `bottom`: nothing at `y`, its darkest `over` pixels down, the ground's layers in it;
+ * in `tones` (its material's own, order 46) where it has them, else in the level's dark.
+ */
+function darkening(g: CanvasRenderingContext2D, y: number, bottom: number, u: Under, tones: readonly string[] | null = null): CanvasGradient {
+  const water = tones === DEEP_WATER;
   const most = u.most ?? 0.8;
   const len = Math.max(1, bottom - y);
   const grad = g.createLinearGradient(0, y, 0, bottom);
   const a = (d: number) => most * Math.min(1, d / u.over);
   const hex = (k: number) => Math.round(Math.max(0, Math.min(1, k)) * 255).toString(16).padStart(2, "0");
-  const stop = (d: number, k: number) => d >= 0 && d <= len && grad.addColorStop(d / len, `${u.dark}${hex(k)}`);
+  const tone = (d: number) => (tones ? toneAt(tones, d / u.over) : u.dark);
+  const stop = (d: number, k: number, c = tone(d)) => d >= 0 && d <= len && grad.addColorStop(d / len, `${c}${hex(k)}`);
   stop(0, 0);
   for (const s of STRATA) {
     if (s + 2 > len) break;
     stop(s - 0.01, a(s));
-    stop(s, a(s) - 0.09);
-    stop(s + 0.99, a(s) - 0.09);
-    stop(s + 1, a(s) + 0.13);
-    stop(s + 1.99, a(s) + 0.13);
+    if (tones) {
+      // In its own tones a layer's lines are its tone lit and its tone in the joint's shade: by alpha alone, over ground of nearly
+      // its own colour, they would hardly show (order 46).
+      // In water the lines are its depth strips: the light from above, a pixel and a fainter one, no joint.
+      const lit = mix(tone(s), WHITE, water ? 0.22 : 0.12);
+      const joint = water ? mix(tone(s), WHITE, 0.1) : mix(tone(s), INK, 0.45);
+      // Seen from the first layer on, where the dark has hardly begun: the ground goes down in layers before it darkens.
+      stop(s, Math.max(0.3, a(s)), lit);
+      stop(s + 0.99, Math.max(0.3, a(s)), lit);
+      stop(s + 1, Math.max(0.4, a(s) + 0.13), joint);
+      stop(s + 1.99, Math.max(0.4, a(s) + 0.13), joint);
+    } else {
+      stop(s, a(s) - 0.09);
+      stop(s + 0.99, a(s) - 0.09);
+      stop(s + 1, a(s) + 0.13);
+      stop(s + 1.99, a(s) + 0.13);
+    }
     stop(s + 2, a(s + 2));
   }
   stop(Math.min(len, u.over), a(Math.min(len, u.over)));

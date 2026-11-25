@@ -166,3 +166,18 @@ behalf, as a look that is easy to undo:
   On its side and on a desktop every picture is byte-identical.
 
 Undoing it: `climbed` in `render/backdrop.ts` back to `if (view.h > view.w) return 0` (one line).
+
+## Amended by order 46 (25 November 2026): the dark under the ground, and the sky's horizon upright
+Decided by the planner on Lars's behalf, as looks that are easy to undo (`apps/viking/tools/review/o46/after.md`, `handbook/conversations.md`):
+
+- **The ground under him goes down in its own tones, not into a near-black.** Order 45's band ran to 0.75 to 0.8 of each level's dark, and under
+  snow it read as a shadow over the screen. Of three tries shown side by side for each material (what stood; the band ending at its material's
+  darkest ramp step; the darkening lower in fewer, broader layers) the first lighter one read best for all: snow to packed blue-grey snow and then
+  rock, earth to dark wet earth, stone to its shaded courses, marble to its shadowed grey, water to its deep (`Under.deep` in `alive/upright.ts`,
+  0.85 at its darkest; its layers' lines the tone lit and in the joint's shade, in water its depth strips). A pit's foot keeps the near-black.
+  The pad's buttons hold order 41's measures over it. Rådhuset, Bygdøy and the encore were filled the same way.
+- **Upright, the sky reaches its horizon's colour at his row** (the kit's `drawSky` takes the row, the canvas's foot by default, so the front page
+  is as it was; the page hands it his row upright), so the far view stands against the horizon's air; it lay under the ground before. Every
+  upright sky but the underground's changed; on its side and on a desktop nothing changed.
+
+Undoing them: the `deep` line in a level's `under`; the last argument of `beginLayers` in `apps/viking/src/main.ts`.

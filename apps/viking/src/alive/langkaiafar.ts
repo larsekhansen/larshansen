@@ -1,7 +1,8 @@
 import { layerX, mix } from "@larshansen/pixelkit/paint";
 import { GLASS, LAND, PAINT, STONE } from "@larshansen/pixelkit/palette";
+import { MARBLE, QUAY } from "./ground";
 import { darker, drawFar, farPiece, lighter } from "./far";
-import { skyBand, underBand } from "./upright";
+import { DEEP_WATER, skyBand, underBand } from "./upright";
 import { TEXTURED } from "../render/tiles";
 import { TILE } from "@larshansen/pixelkit/config";
 
@@ -96,5 +97,13 @@ const ekeberg = () =>
  * thick toward the horizon; after dusk the stars thinning toward the horizon and the northern lights' curtains where the night has them. */
 const SKY = { streaks: 2, far: 4, birds: "few", haze: 100, stars: 80, curtains: 20 * TILE - 4 * TILE - 34 } as const;
 /** Under the quay, the Opera's marble and the harbour's water: the dark of the deep coming on two tiles down. */
-const UNDER = { letters: "~QM#", from: 2, over: 130, dark: "#0d1d24", most: 0.75 };
+const UNDER = {
+  letters: "~QM#",
+  from: 2,
+  over: 130,
+  dark: "#0d1d24",
+  most: 0.85,
+  // Order 46: the quay's stone to its shaded courses, the Opera's marble to its shadowed grey, the harbour's water to its deep.
+  deep: { Q: [QUAY.ramp[1], QUAY.ramp[0]], M: [MARBLE.ramp[1], MARBLE.ramp[0]], "#": DEEP_WATER }
+};
 TEXTURED.upright = { sky: (v, top) => skyBand(v, SKY, top), under: (_v, m) => underBand(m, UNDER) };

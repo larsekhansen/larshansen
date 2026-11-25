@@ -48,12 +48,15 @@ function crescent(cx: number, cy: number) {
   }
 }
 
-/** `horizonY` is where the scene's far hills end in world pixels; a taller world passes its own. */
-export function drawSky(sky: Sky, t: number, horizonY = HORIZON) {
+/**
+ * `horizonY` is where the scene's far hills end in world pixels; a taller world passes its own. `low` is the screen row the sky
+ * reaches its horizon's colour at: the canvas's foot, unless a page knows its horizon stands higher (an upright phone's).
+ */
+export function drawSky(sky: Sky, t: number, horizonY = HORIZON, low = view.h) {
   const g = ctx();
   const tt = view.reduced ? 0 : t;
   const [top, bottom] = GRADIENT[sky.phase];
-  const grad = g.createLinearGradient(0, 0, 0, view.h);
+  const grad = g.createLinearGradient(0, 0, 0, low);
   grad.addColorStop(0, top);
   grad.addColorStop(1, bottom);
   g.fillStyle = grad;

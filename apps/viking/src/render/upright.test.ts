@@ -16,12 +16,13 @@ import { loadLevel } from "../levels/index";
 
 /** The most of the screen under the bar a band of one flat colour may take, in the sky or under him. */
 const FLAT = 0.2;
-/** Where a flat band upright is not the sky or the ground (order 45 filled the top of its ranking), the most it takes there now, and why. */
-const FLAT_NAMED: Record<string, { most: number; why: string }> = {
-  ekeberg: { most: 0.43, why: "at the viewpoint the fjord far below in the far layer (Ekeberg's own view of the town, its boats in it), under the evening's tint" },
-  gamlebyen: { most: 0.34, why: "at the longship's prow the harbour's water at dawn, darkening with its depth" },
-  encore: { most: 0.28, why: "the water mirror under the stage (the encore is not filled: order 45's ranking had it a 2)" }
-};
+/**
+ * Where a flat band upright is not the sky or the ground, the most it may take there, and why. Order 45 named three (Ekeberg's fjord far
+ * below the viewpoint, 0.43; Gamlebyen's harbour at the prow, 0.34; the encore's water mirror, 0.28); order 46 gave each what is there
+ * (the fjord's islands, a ferry's wake and the far shore; the harbour's depth strips and a mooring; what the mirror mirrors) and none is
+ * named now.
+ */
+const FLAT_NAMED: Record<string, { most: number; why: string }> = {};
 
 /**
  * Each scene's longest flat bands, measured in workers side by side. In a worker of its own the drawing is as fast as in a process

@@ -1468,11 +1468,13 @@ function render(alpha: number) {
   const art = scene.def.art;
   const p = scene.play;
   const horizon = p.map.height - 4 * TILE - 34;
-  beginLayers(kit, sky, state.steps, horizon);
+  // On an upright screen the far view stands round him, so the sky reaches its horizon's colour there, not at the canvas's foot
+  // far under the ground (order 46).
+  const upright = view.h > view.w;
+  beginLayers(kit, sky, state.steps, horizon, upright ? shown.y + PLAYER.h / 2 - view.camYf : undefined);
   const doorsById = new Map(scene.doors.map((d) => [d.id, d]));
   const v: View = { sky, t: p.t, alpha, doors: doorsById, now: now(), him: { x: shown.x + PLAYER.w / 2, y: shown.y + PLAYER.h / 2 }, flourish: p.def.flourish && p.runeAt !== null ? p.t - p.runeAt : null, facing: p.body.facing, troll: p.troll, flags: p.flags.map((f, i) => ({ ...f, raisedAt: p.raisedAt[i] })), enemies: p.enemies, boss: p.boss?.state ?? null, cleared: progress.cleared, runeAt: p.runeAt, grounds: p.grounds?.state ?? null };
   // On an upright screen the sky over the far view is tall, and so is the ground under him: the level fills them (order 45).
-  const upright = view.h > view.w;
   if (upright) art.sky?.(v, barRows);
   const haze = hazeOf(scene.def);
   if (art.far) farPass(kit.depth(0.12), () => art.far!(v), haze[0]);

@@ -395,9 +395,9 @@ export function sceneOverlay<D extends Door>(state: SceneState<D>, shown: Body, 
 // --- Drawing and running ---------------------------------------------------------------------------
 
 /** The start of a frame: the sky on the back canvas, and every depth layer cleared and moved by its fraction. */
-export function beginLayers(kit: Stage, sky: Sky, steps: number, horizonY?: number) {
+export function beginLayers(kit: Stage, sky: Sky, steps: number, horizonY?: number, low?: number) {
   target(kit.g);
-  drawSky(sky, steps, horizonY);
+  drawSky(sky, steps, horizonY, low);
   kit.nudge(kit.px, 0);
   for (const d of kit.depths) {
     d.g.clearRect(0, 0, view.w, view.h);

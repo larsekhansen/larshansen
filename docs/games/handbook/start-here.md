@@ -1,6 +1,6 @@
 # Start here
 
-State as of 25 November 2026, after order 45 was reviewed and merged (PR #93). Check `git log` and [`roadmap.md`](roadmap.md)
+State as of 25 November 2026, after order 46 was reviewed and merged (PR #94). Check `git log` and [`roadmap.md`](roadmap.md)
 before trusting any of it.
 
 ## What this is
@@ -61,6 +61,7 @@ in your testing." [`playbook.md`](playbook.md) has the steps.
 | 43 the far view | #91 | Every level's far view on one table (an ode to Oslo); the thinnest given what a person who knows Oslo looks for from there, once each, as silhouettes (`alive/far.ts`, ADR 0047 amended): Rådhuset, Akershus, Bygdøy, Vigelandsparken, Holmenkollen; every far colour held off the warning red, the paint and every role under every sky (ADR 0044 amended). Drawing only |
 | 44 the rest of the far view | #92 | The places order 43 could not look up, given by the planner (not looked up; they wait for Lars) and the table finished: the jump seen from the town with the TV tower above and behind it (Vigelandsparken, Bygdøy, Slottet); Akerselva's Grefsenkollen without a tower and its two churches; Gamle Oslo's Kampen kirke once, the Barcode and Ekeberg; Østensjøvannet's reeds, ridge blocks and Østmarka; Korketrekkeren's TV tower and the town far below; Langkaia's islands; Ekeberg behind the encore's towers; the far-colour test walks the map (ADR 0044, 0047 amended). Drawing only |
 | 45 the upright phone | #93 | Every level looked at upright as a phone shows it (a pixel ratio of 3) and its canvases read row by row: 40 % plain sky, 45 % ground of one material; where he stands kept, the far layers rise with him upright as on a wide screen (ADR 0043 amended); each level's tall sky and the ground under him going down in layers into its own dark, upright only (`alive/upright.ts`), ten levels; a test that no flat band takes more than a fifth of the screen upright. Drawing only |
+| 46 the rest of the upright phone | #94 | The ground under him upright goes down in its own tones, not into a near-black (snow over rock, dark wet earth, stone in shaded courses, marble in its grey, water to a deep teal; the planner's call of three tries, ADR 0043 amended); the sky reaches its horizon's colour at the far view upright; Rådhuset, Bygdøy, Østensjøvannet, Bjørvika and the encore filled; Ekeberg's fjord below the viewpoint, Gamlebyen's harbour and dawn, the encore's water mirror given what is there, and the upright test names no place. Drawing only |
 | 31 loose ends and a second look | #79 | The cards under the header with a mouse; Slottet's first pigeon on plain street; Nordmarka's invaders keep their red outline in the dark; reduced motion held by drawing every path; Stortinget's shafts kept and copied; every word in both languages, held by a test; the tram, Vigelandsparken's gate and Korketrekkeren's lit trail redrawn |
 
 **The single most important fact:** nothing has been judged by a person at speed or on a real
@@ -86,7 +87,7 @@ phone before going live. The Pi cannot run the game in a headless browser (HANDO
   here.
 - **ADR 0035**: the viking game's first script must stay under 60 kB gzipped; the build fails
   over it. New drawing goes in lazy chunks, and a new module is named in `vite.config.ts` (one it is not told about lands in the
-  first script). Order 42 made room: 55.80 kB (55.82 after order 43, 55.83 after order 44, 55.94 after order 45).
+  first script). Order 42 made room: 55.80 kB (55.82 after order 43, 55.83 after order 44, 55.94 after order 45 and after order 46).
 - **ADR 0044**: colour means something. Yellow paint on a top edge is "stand here" and nothing
   else is that yellow; red outline hurts; pale blue outline is harmless; cyan corners are "use";
   violet is "hit now". `render/palette.test.ts` enforces it.
