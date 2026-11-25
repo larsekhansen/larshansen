@@ -1,21 +1,21 @@
 # Roadmap
 
-As of 25 November 2026, after order 45 was built (branch `upright-phone`, waiting for review). Change this file in the same change that makes it wrong.
+As of 25 November 2026, after order 45 was reviewed and merged (PR #93). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 44, the rest of the far view, PR #92 (reviewed and merged on 24 November); before it orders 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 45, the upright phone (branch `upright-phone`; `apps/viking/tools/review/o45/after.md`) |
+| Last live | Order 45, the upright phone, PR #93 (reviewed and merged on 25 November); before it orders 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 60 % used when order 44 was reviewed on 24 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 65 % used when order 45 was reviewed on 25 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 45, the upright phone** (`orders/45-the-upright-phone.md`, ADR 0043 and 0042 amended), built on branch `upright-phone`, waiting for review.
+**Order 45, the upright phone** (`orders/45-the-upright-phone.md`, ADR 0043 and 0042 amended), reviewed, merged and live (PR #93, 25 November). Nothing else is in flight.
 Every level, the encore and both maps looked at on a phone held upright as a phone shows it (a pixel ratio of 3: 293 x 634 art pixels at 390 x 844,
 where earlier pictures at a ratio of 1 showed a third more), at five places and swept along each route with the canvases read row by row
 (`apps/viking/tools/review/o45/before.md`): about 40 % plain sky over a strip of far view and street, 45 % ground of one material. The planner's call
