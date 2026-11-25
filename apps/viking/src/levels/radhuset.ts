@@ -13,7 +13,8 @@ import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
 import { mapBuilder } from "./build";
-import { tile as textured, type Grain } from "../alive/ground";
+import { QUAY, tile as textured, type Grain } from "../alive/ground";
+import { skyBand, underBand } from "../alive/upright";
 import type { BellLedge, LevelDef, View } from "./types";
 
 // Level 3, rune R: Rådhuset, the City Hall's two brick towers. Its idea is the bell on a beat, and
@@ -520,6 +521,21 @@ const QUAY_STONE: Grain = {
   off: 8
 };
 
+/**
+ * On an upright screen (order 46): a summer day over the fjord: high streaks, small clouds far off over the islands, the air thick
+ * toward the horizon, a few gulls; under the square and the quay, the granite going down to its shaded courses and an old water main.
+ */
+const UPRIGHT_SKY = { streaks: 2, far: 4, birds: "few", haze: 100 } as const;
+const UNDER = {
+  letters: "#Q",
+  from: 2,
+  over: 110,
+  dark: "#17161a",
+  most: 0.85,
+  deep: { "#": [QUAY_STONE.ramp[1], QUAY_STONE.ramp[0]], Q: [QUAY.ramp[1], QUAY.ramp[0]] },
+  pipe: { depth: 3, tones: [mix(PALETTE.ironDark, MASONRY.gatePost, 0.3), mix(PALETTE.iron, MASONRY.gatePost, 0.2), PALETTE.ironDark] as const }
+};
+
 /** The passage through the west tower: dark, with a lamp on its wall. */
 function passage() {
   R(161 * TILE, (ROOF_ROW - 2) * TILE, 12 * TILE, 2 * TILE, mix(BRICK.red, INK, 0.65));
@@ -743,6 +759,8 @@ export const RADHUSET: LevelDef = {
       for (const x of LAMPS) lampPool(x, SQUARE);
     },
     ground: () => ({ top: GROUND.paving, dot: GROUND.pavingDot, fill: MASONRY.gatePost, kind: "paving" }),
+    sky: (v, top) => skyBand(v, UPRIGHT_SKY, top),
+    under: (_v, m) => underBand(m, UNDER),
     tile(t, c, r, x, y, map, sky) {
       // Under the promenade's paving, the quay's granite in courses (order 20: it was one plain fill).
       if (t === "#" && map.isSolid(c, r - 1) && map.tileAt(c, r - 1) === "#") return textured(QUAY_STONE, c, r, x, y, map, sky);

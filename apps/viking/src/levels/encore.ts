@@ -3,7 +3,9 @@ import { TILE } from "@larshansen/pixelkit/config";
 import { R, ctx, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, LAND, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/palette";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import { DECK, tile as textured, type Grain } from "../alive/ground";
+import { DECK, custom, drawProp, tile as textured, type Grain } from "../alive/ground";
+import { DEEP_WATER, inTheGround, skyBand, underBand } from "../alive/upright";
+import { seen } from "@larshansen/pixelkit/kept";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
@@ -339,6 +341,59 @@ function tileArt(t: string, c: number, r: number, x: number, y: number, map: Til
   return true;
 }
 
+// --- On an upright phone (order 46) ------------------------------------------------------------------------------------------
+// The stage, its figures and its lights are as ADR 0052 has them; on a screen taller than wide the sky over the park and what lies
+// under the path and in the water mirror are filled, as order 45 filled the levels' (`alive/upright.ts`).
+
+/** The evening's tall sky over the park: high streaks lit from below, small clouds far off over the fjord, the air thick toward the horizon, a few gulls. */
+const UPRIGHT_SKY = { streaks: 3, far: 3, birds: "few", haze: 100 } as const;
+/** What lies under the park's path: a stone now and then, the lime trees' roots (not in the water). */
+const STONES = inTheGround({ stone: mix("#8e8a84", PALETTE.earth, 0.3), root: mix(PALETTE.woodDark, INK, 0.25), every: 64 });
+/** Under the path, the earth to dark wet earth; under the water mirror, its water to its deep with its depth strips. */
+const UNDER = {
+  letters: "#~",
+  from: 3,
+  over: 120,
+  dark: "#14131c",
+  most: 0.85,
+  deep: { "#": [mix(PALETTE.earth, INK, 0.38)], "~": DEEP_WATER },
+  things: (c: number, d: number, x: number, y: number) => void (c < 11 && STONES(c, d, x, y))
+};
+/** The water mirror's colour under its surface (the tiles' deep water), which the stage's mirror image is laid faintly into; what is dark mirrors as the water's own dark. */
+const [MIRROR, MIRROR_DARK] = DEEP_WATER;
+/** The water line: the top of the water under the deck. */
+const MIRROR_AT = ground + TILE;
+/**
+ * The water mirror under the stage, what it mirrors (order 46): the stage upside down from the water line, its deck, the dark
+ * curtain, the truss towers and the roof, laid faintly into the water and fainter the deeper, broken by the water's ripples. Still:
+ * the stage's lights, the neon and Loki are not in it.
+ */
+const MIRRORED = custom("encore mirror", X1 - X0 + 16, 140, (x, y) => {
+  // The water's ripples: a row in six broken, and the rows either side of it shifted a pixel.
+  if (y % 6 === 0 && (x * 7 + y) % 5 < 3) return null;
+  const sx = X0 - 8 + x + (y % 6 === 1 ? 1 : y % 6 === 5 ? -1 : 0);
+  // The row of the stage it mirrors: the water line lies under the deck (`MIRROR_AT`), and this piece begins two rows under it.
+  const from = 2 * MIRROR_AT - 1 - (MIRROR_AT + 2 + y);
+  const k = 0.62 * (1 - y / 200);
+  let c: string | null = null;
+  if (from >= ground) c = MIRROR_DARK;
+  else if ((sx >= X0 - 8 && sx < X0) || (sx >= X1 && sx < X1 + 8)) {
+    // A truss tower: its chords and the zigzag between, as the tower is drawn.
+    const tx = sx < X0 ? sx - (X0 - 8) : sx - X1;
+    const z = (from - ROOF) % 8;
+    if (from >= ROOF) c = tx === 0 || tx === 7 || tx === (z < 4 ? 1 + z : 8 - z) ? METAL.rail : null;
+    else if (from >= ROOF - 10) c = MIRROR_DARK;
+  } else if (sx < X0 - 8 || sx >= X1 + 8) c = null;
+  else if (from >= ROOF + 7) c = (sx >> 2) % 2 ? MIRROR_DARK : mix(MIRROR_DARK, WHITE, 0.05);
+  else if (from >= ROOF) c = from === ROOF || from === ROOF + 6 ? METAL.rail : null;
+  else if (from >= ROOF - 10) c = from === ROOF - 10 ? mix(MIRROR_DARK, WHITE, 0.15) : MIRROR_DARK;
+  return c && mix(MIRROR, c, k);
+});
+/** On an upright screen only: the mirror image under the stage, before the water's dark goes over it. */
+function mirrored() {
+  if (seen(X0 - 8, X1 + 8)) drawProp(MIRRORED, X0 - 8, MIRROR_AT + 2, X1 - X0 + 16);
+}
+
 export const ENCORE: LevelDef = {
   id: "encore",
   rune: -1,
@@ -392,6 +447,11 @@ export const ENCORE: LevelDef = {
       stageFront();
     },
     ground: () => ({ top: mix(PALETTE.grass, "#b8a888", 0.6), dot: PALETTE.grassDark, fill: PALETTE.earth, kind: "gravel" }),
+    sky: (v, top) => skyBand(v, UPRIGHT_SKY, top),
+    under: (_v, m) => {
+      mirrored();
+      underBand(m, UNDER);
+    },
     tile: tileArt,
     ledges: { "=": { body: "#19171c", top: "#34303a", edge: "#0e0d10", joint: "#0e0d10" } },
     boss(state, v) {

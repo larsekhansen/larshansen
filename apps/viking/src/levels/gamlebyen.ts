@@ -2,20 +2,21 @@ import { column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
 import { seen, stamp } from "@larshansen/pixelkit/kept";
-import { R, layerOrigin, light, mix, view } from "@larshansen/pixelkit/paint";
+import { R, ctx, layerOrigin, light, mix, view } from "@larshansen/pixelkit/paint";
 import { ENEMY, INK, PALETTE, ROLES, WHITE } from "@larshansen/pixelkit/palette";
 import type { Body, Carrier } from "@larshansen/pixelkit/physics";
 import type { LedgeLook } from "@larshansen/pixelkit/props";
 import * as G from "@larshansen/pixelkit/swatches/ruins";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
-import { EDGE, tile as textured, type Grain } from "../alive/ground";
+import { EDGE, custom, drawProp, tile as textured, type Grain } from "../alive/ground";
 import { lamp } from "../alive/props";
-import { inTheGround, skyBand, underBand } from "../alive/upright";
+import { DEEP_WATER, inTheGround, skyBand, underBand } from "../alive/upright";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { RUNE_CHARS } from "../game/runes";
 import { SERPENT, SERPENT_STEPS, endingAge, headBox, mouth, neckX, neckUp, ringRadius, serpentBoss, tailBox, type Serpent, type SerpentDef } from "../game/serpent";
 import { drawRune } from "../render/actors";
 import { tbaneDoor } from "../render/furniture";
+import { FAR_VIEW_H } from "../render/backdrop";
 import { drawLook } from "../render/looks";
 import { clock, moving, step4 } from "../alive/parts";
 import { drawFoe, FOE_INK, foeFrame, mark, SHADES, type Looks } from "../alive/foes";
@@ -313,6 +314,17 @@ const dawnOf = (v: View) => {
   const a = endOf(v);
   return a === null ? 0 : Math.min(1, a / SERPENT_STEPS.dawn);
 };
+/**
+ * On an upright screen the far layer is drawn for a view of the usual height round him (`farPass`), so the dawn's sky stopped at its
+ * top and the night stood over it with an edge (order 46): over that, on the sky's canvas, its highest colour as the dawn lays it.
+ */
+function dawnAbove(v: View) {
+  const dawn = dawnOf(v);
+  if (dawn <= 0 || v.sky.phase === "day") return;
+  const g = ctx();
+  g.fillStyle = `rgba(${dawnColor(999)}, ${dawn.toFixed(3)})`;
+  g.fillRect(0, 0, view.w, Math.max(0, Math.round(v.him.y - view.camYf - FAR_VIEW_H / 2)) + 2);
+}
 /** The dawn sky's colour at a height over the horizon. */
 function dawnColor(h: number): string {
   const stops = G.dawnSky;
@@ -629,6 +641,34 @@ function lastLongship(t: number) {
   R(268 * TILE, deck, 4 * TILE, 3, G.plank);
   R(268 * TILE, deck, 4 * TILE, 1, G.plankLight);
   dragonHead(COLS * TILE - 6, deck);
+}
+
+/**
+ * Under the old town and the harbour on an upright screen (order 45): its stones and roots, darkening; order 46: the earth to dark wet
+ * earth, the harbour's water to its deep with its depth strips.
+ */
+const UNDER = {
+  letters: "#~",
+  from: 2,
+  over: 110,
+  dark: "#0d0f18",
+  most: 0.85,
+  deep: { "#": [mix(G.earth, INK, 0.38)], "~": DEEP_WATER },
+  things: inTheGround({ stone: PALETTE.rock, root: mix(PALETTE.woodDark, INK, 0.3), every: 64 })
+};
+/** The last longship's mooring (order 46): a chain from under its bow down into the harbour's dark, its links lit on their left. */
+const CHAIN = custom("gb mooring", 22, 170, (x, y) => {
+  const cx = Math.round(17 - y * 0.08 + Math.sin(y * 0.045) * 1.5);
+  const link = Math.floor(y / 3) % 2;
+  const iron = mix(PALETTE.ironDark, PALETTE.waterDeep, 0.25);
+  const lit = mix(PALETTE.iron, PALETTE.waterDeep, 0.15);
+  if (link === 0) return x === cx - 1 ? lit : x === cx || x === cx + 1 ? iron : null;
+  return x === cx && y % 3 !== 1 ? lit : null;
+});
+/** On an upright screen only, where the longship's foot is in view: the chain under its stem, drawn before the water's dark goes over it. */
+function mooring() {
+  const x = 269 * TILE;
+  if (seen(x - 4, x + 26)) drawProp(CHAIN, x, QUAY * TILE + TILE + 9, 22);
 }
 
 /**
@@ -1460,8 +1500,14 @@ export const GAMLEBYEN: LevelDef = {
     ground: (c) => (c < 99 ? { top: G.grass, dot: G.grassDark, fill: G.earth } : { top: G.cobble, dot: G.cobbleDark, fill: G.earth, kind: "setts" }),
     // On an upright screen (order 45): the night: stars thinning toward the horizon, the northern lights' curtains rising, a
     // cloud or two; under the old town, its stones and roots, darkening.
-    sky: (v, top) => skyBand(v, { stars: 80, curtains: ROWS * TILE - 4 * TILE - 34, streaks: 1, far: 2, haze: 80 }, top),
-    under: (_v, m) => underBand(m, { letters: "#~", from: 2, over: 110, dark: "#0d0f18", most: 0.8, things: inTheGround({ stone: PALETTE.rock, root: mix(PALETTE.woodDark, INK, 0.3), every: 64 }) }),
+    sky: (v, top) => {
+      skyBand(v, { stars: 80, curtains: ROWS * TILE - 4 * TILE - 34, streaks: 1, far: 2, haze: 80 }, top);
+      dawnAbove(v);
+    },
+    under: (_v, m) => {
+      mooring();
+      underBand(m, UNDER);
+    },
     tile(t, c, r, x, y, map) {
       if (t === "~") return calmWater(c, r, x, y, map);
       if (t === "Z" || t === "z") stoneTile(c, r, x, y, t === "Z");

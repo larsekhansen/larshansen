@@ -8,6 +8,7 @@ import type { LedgeLook } from "@larshansen/pixelkit/props";
 import { SINK, padState, padY, padsEverywhere, padsGround, stepPads, type PadState, type SinkPad } from "@larshansen/pixelkit/sink";
 import * as L from "@larshansen/pixelkit/swatches/lake";
 import { EDGE, edgesAt, tile as textured, type Grain } from "../alive/ground";
+import { skyBand } from "../alive/upright";
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { windingUp, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import type { Play } from "../game/play";
@@ -809,6 +810,10 @@ export const OSTENSJOVANNET: LevelDef = {
       sunrise(v);
     },
     ground: () => ({ top: mix(L.reed, L.padLight, 0.5), dot: L.reedDark, fill: mix(mix(L.mud, L.reed, 0.25), INK, 0.3) }),
+    // On an upright screen (order 46): the twilight before the sunrise over the lake: the last stars thinning toward the horizon, a
+    // high streak, small clouds far off over Østmarka, the air thick toward the horizon, a skein of geese. The lake's old bed under the
+    // island already goes down in its layers, darker deeper (order 20): it is left as it is.
+    sky: (v, top) => skyBand(v, { stars: 40, streaks: 1, far: 3, birds: "skein", haze: 90 }, top),
     tile(t, c, r, x, y, map) {
       if (t === "P") boardwalk(c, r, x, y, map);
       else if (t === "K") stone(c, r, x, y, map);
