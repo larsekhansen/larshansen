@@ -1,22 +1,21 @@
 # Roadmap
 
-As of 25 November 2026, after order 45 was reviewed and merged (PR #93) and order 46 was built (waiting for review). Change this file in the same change that makes it wrong.
+As of 25 November 2026, after order 46 was reviewed and merged (PR #94). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 24 November 2026 |
-| Last live | Order 45, the upright phone, PR #93 (reviewed and merged on 25 November); before it orders 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 46, the rest of the upright phone, branch `upright-rest` (`apps/viking/tools/review/o46/after.md`) |
+| Last live | Order 46, the rest of the upright phone, PR #94 (reviewed and merged on 25 November); before it orders 45 (PR #93), 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 65 % used when order 45 was reviewed on 25 November (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 71 % used when order 46 was reviewed on 25 November (no further round before the reset) (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 46, the rest of the upright phone, and a second look at the dark below** (`orders/46-the-rest-upright.md`, ADR 0043 amended), built on branch
-`upright-rest`, waiting for the planner's review. The ground under him upright goes down in its own material's tones, not into a near-black: of three
+**Order 46, the rest of the upright phone, and a second look at the dark below** (`orders/46-the-rest-upright.md`, ADR 0043 amended), reviewed, merged and live (PR #94, 25 November). Nothing else is in flight. The ground under him upright goes down in its own material's tones, not into a near-black: of three
 tries shown side by side for each material (what stood, the band ending at its material's darkest ramp step, the darkening lower in broader layers)
 the first, for all (the planner's call, `conversations.md`): snow to packed blue-grey snow and rock, earth to dark wet earth, stone to its shaded
 courses, marble to its shadowed grey, water to a deep teal with its depth strips; the pad's buttons hold order 41's measures over it. Upright the sky
