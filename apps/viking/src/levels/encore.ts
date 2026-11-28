@@ -5,7 +5,7 @@ import { ENEMY, INK, LAND, METAL, PALETTE, WHITE } from "@larshansen/pixelkit/pa
 import type { TileMap } from "@larshansen/pixelkit/tilemap";
 import { DECK, custom, drawProp, tile as textured, type Grain } from "../alive/ground";
 import { DEEP_WATER, inTheGround, skyBand, underBand } from "../alive/upright";
-import { seen } from "@larshansen/pixelkit/kept";
+import { keptStrips, seen } from "@larshansen/pixelkit/kept";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
@@ -303,11 +303,48 @@ function ball(v: View) {
   mirrorBall(x, ROOF + 21, glammed() && !waiting() ? v.t : 0);
 }
 
+/**
+ * The glamour's sequins on the backdrop and its marquee of bulbs along the stage's mouth (order 48; DESIGN, "Calm Oslo, loud
+ * glamour": where the glamour read tame, more sequins and stage light in what Loki has laid over a thing). Before the show the stage
+ * was a black box with two bolts of neon; now it glitters and its bulbs burn as soon as he is there, and both go out with his glamour:
+ * plain, the curtain is black cloth and the bulbs dark glass. Still things, drawn once and copied (ADR 0036); the bulbs on the screen
+ * are lights after dark, each its own small rectangle.
+ */
+const SEQUINS = [mix(CURTAIN, ENEMY.purple, 0.45), mix(CURTAIN, ENEMY.purple, 0.45), mix(CURTAIN, ENEMY.hotPink, 0.45), mix(CURTAIN, ENEMY.purple, 0.6), mix(CURTAIN, ENEMY.hotPink, 0.45), "#f2eaff", ENEMY.hotPink];
+function sequins() {
+  if (!glammed()) return;
+  const top = ROOF + 8;
+  keptStrips("sequins", X0, top, X1 - X0, ground - top, () => {
+    for (let y = top; y < ground - 2; y++)
+      for (let x = X0 + 1; x < X1 - 1; x++) if ((x * 37 + y * 101 + ((x * y) % 7)) % 31 === 0) R(x, y, 1, 1, SEQUINS[(x * 13 + y * 7) % SEQUINS.length]);
+  });
+}
+/** Where the marquee's bulbs hang: a row under the neon along the stage's mouth, every fourteen pixels. */
+const BULB_Y = ROOF + 16;
+const BULBS = Array.from({ length: Math.floor((X1 - X0 - 16) / 14) + 1 }, (_, k) => X0 + 8 + k * 14);
+/** White, the bulbs' own (the stage's warm white came within 7 of a coin's glint). */
+const BULB = "#ffffff";
+function marquee() {
+  const on = glammed();
+  keptStrips(`marquee ${on}`, X0, BULB_Y - 1, X1 - X0, 4, () => {
+    for (const x of BULBS) {
+      R(x, BULB_Y - 1, 2, 1, "#2a2630");
+      R(x, BULB_Y, 2, 2, on ? BULB : "#3a3440");
+      if (on) R(x + 1, BULB_Y + 1, 1, 1, "#e6e2f0");
+    }
+  });
+  if (!on) return;
+  // Lit after dark, their own warm white over the dark (ADR 0054); only those on the screen (order 32: a light is drawn wherever it is).
+  for (const x of BULBS) if (x + 2 > view.camX && x < view.camX + view.w) light(x, BULB_Y, 2, 2, "window", BULB);
+}
+
 /** The back of the stage: the backdrop curtain in folds, the roof, the towers, the truss, the lights, the ball. */
 function stageBack(v: View) {
   // The backdrop: dark curtain in folds from the truss to the deck.
   for (let x = X0; x < X1; x += 4) R(x, ROOF + 7, 4, ground - ROOF - 7, (x >> 2) % 2 ? CURTAIN : mix(CURTAIN, WHITE, 0.05));
+  sequins();
   neon(v);
+  marquee();
   roof();
   roofTruss(X0 - 8, X1 + 8, ROOF);
   for (const x of [X0 - 8, X1]) tower(x, ROOF, ground);

@@ -17,7 +17,7 @@ import { plane } from "../alive/depth";
 import { darker, drawFar, farPiece } from "../alive/far";
 import { crowdFlag, flagFlying, person } from "../alive/things";
 import { tile as textured, type Grain } from "../alive/ground";
-import { CAST, box as pbox, dot, post, prop, tone, type Stuff } from "../alive/props";
+import { CAST, box as pbox, dot, post, prop, skiWood, skis, tone, type Stuff } from "../alive/props";
 import { inTheGround, skyBand, underBand } from "../alive/upright";
 import type { LevelDef, View } from "./types";
 
@@ -350,18 +350,41 @@ function spruce(x: number, foot: number, h: number) {
   }
 }
 
-/** Holmenkollen station at the top of the line: a platform roof, the T sign, the name. */
+/**
+ * The station's name board (order 48, ADR 0058: calm Oslo, less technological): an old enamel board, its blue a step toward the
+ * snow's grey, the name in white capitals; where it was a white panel with a row of blue squares, which read as a screen.
+ */
+const BOARD_BLUE = mix(PAINT.tbane, ICY.steelShade, 0.3);
+/** Capitals three pixels wide (M and N four), five high: the ones HOLMENKOLLEN needs. */
+const CAPS: Record<string, string[]> = {
+  H: ["#.#", "#.#", "###", "#.#", "#.#"],
+  O: ["###", "#.#", "#.#", "#.#", "###"],
+  L: ["#..", "#..", "#..", "#..", "###"],
+  M: ["#..#", "####", "#..#", "#..#", "#..#"],
+  E: ["###", "#..", "##.", "#..", "###"],
+  N: ["#..#", "##.#", "#.##", "#..#", "#..#"],
+  K: ["#.#", "#.#", "##.", "#.#", "#.#"]
+};
+/** Holmenkollen station at the top of the line: a platform roof, the T sign, the name; skis against the shelter's post. */
 function station(v: View) {
   const y = 9 * TILE;
   R(0, y - 34, 14 * TILE, 4, ROOF.slate);
   R(0, y - 34, 14 * TILE, 2, SNOW.lying);
   // The platform roof's posts, steel painted dark (order 28).
   for (const x of [8, 100, 200]) post(CAST, x, y - 30, y, 3);
-  R(80, y - 26, 60, 10, PAINT.tbane);
-  R(82, y - 24, 56, 6, WHITE);
-  for (let i = 0; i < 7; i++) R(86 + i * 7, y - 23, 4, 4, PAINT.tbane);
+  R(80, y - 26, 60, 10, mix(BOARD_BLUE, INK, 0.25));
+  R(81, y - 25, 58, 8, BOARD_BLUE);
+  let at = 84;
+  for (const ch of "HOLMENKOLLEN") {
+    CAPS[ch].forEach((row, ry) => [...row].forEach((on, rx) => on === "#" && R(at + rx, y - 23 + ry, 1, 1, mix(WHITE, BOARD_BLUE, 0.12))));
+    at += CAPS[ch][0].length + 1;
+  }
+  // Skis against the post, as everyone up here carries them (the props kit's, order 48).
+  skis(SKIS, 104, y);
   tbaneDoor(v.doors.get("tbane"));
 }
+/** Pale birch skis, as at Frognerseteren (a warmer wood comes near a coin's copper). */
+const SKIS = skiWood("#b8a888");
 
 /** The jump: the steel tower at the top, the hut, the inrun on its legs, the lip, the landing hill and its marks. */
 function jump(v: View) {

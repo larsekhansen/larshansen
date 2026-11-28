@@ -410,13 +410,21 @@ function tiles(x0: number, x1: number, y0: number, y1: number, band: number | nu
   for (let y = y0; y < y1; y += 16) for (let x = stepFrom(x0 + 7, 8, a); x < b; x += 8) R(x, y, 1, 8, METRO.tileLine);
   for (let y = y0 + 8; y < y1; y += 16) for (let x = stepFrom(x0 + 3, 8, a); x < b; x += 8) R(x, y, 1, 8, METRO.tileLine);
   if (band !== null) {
-    R(x0, band, x1 - x0, 6, METRO.band);
-    R(x0, band, x1 - x0, 1, mix(METRO.band, WHITE, 0.3));
+    R(x0, band, x1 - x0, 6, BAND);
+    R(x0, band, x1 - x0, 1, mix(BAND, WHITE, 0.3));
   }
   R(x0, y0 - 4, x1 - x0, 4, METRO.concrete);
   R(x0, y0 - 1, x1 - x0, 1, METRO.concreteDark);
   R(x0, y1 - 3, x1 - x0, 3, METRO.tileShade);
 }
+
+/**
+ * Calm Oslo, loud glamour (order 48, ADR 0058): the station is honestly modern and stays so, but its signs are fewer and quieter, so
+ * what the invaders put up reads as theirs. The T-bane's blue band along the walls, and the posters' blocks, a step toward the
+ * tiles and the posters' cream: an old enamel's colours, not a lit advert's.
+ */
+const BAND = mix(METRO.band, METRO.tileShade, 0.35);
+const quiet = (c: string) => mix(c, METRO.poster, 0.45);
 
 /** The T roundel: a blue ring round a white disc with the blue T. */
 function roundel(cx: number, cy: number, r = 7) {
@@ -530,18 +538,19 @@ function platformWall(c0: number, c1: number, floor: number, seed: number) {
   if (!seen(x0 - 8, x1 + 8)) return;
   const top = floor - 84;
   tiles(x0, x1, top, floor - 6, floor - 52);
-  // The station's name in the band, every so often, in white.
-  for (let x = x0 + 40; x + 60 < x1; x += 180) stationName(x, floor - 51);
-  // Posters in steel frames.
-  for (let x = x0 + 110; x + 30 < x1; x += 160) {
+  // The station's name in the band, once a screen and a half, in white (it was every 180 pixels: order 48 quietened the signs).
+  for (let x = x0 + 40; x + 60 < x1; x += 360) stationName(x, floor - 51);
+  // Posters in steel frames, half as many, their colours an old enamel's.
+  for (let x = x0 + 110; x + 30 < x1; x += 320) {
     const k = (Math.floor(x / 160) + seed) % 3;
     R(x - 1, floor - 41, 30, 22, METRO.steelDark);
     R(x, floor - 40, 28, 20, METRO.poster);
-    R(x + 3, floor - 37, 10 + k * 4, 8, [TILE_RED, PAINT.tbane, PLANT_GREEN][k]);
-    R(x + 3, floor - 26, 20, 2, INK);
-    R(x + 3, floor - 23, 14, 1, INK);
+    R(x + 3, floor - 37, 10 + k * 4, 8, quiet([TILE_RED, PAINT.tbane, PLANT_GREEN][k]));
+    R(x + 3, floor - 26, 20, 2, quiet(INK));
+    R(x + 3, floor - 23, 14, 1, quiet(INK));
   }
-  for (let x = x0 + 30; x < x1; x += 120) roundel(x, floor - 70, 6);
+  // The T roundel once a screen and a half (it was every 120 pixels, three to a screen).
+  for (let x = x0 + 30; x < x1; x += 360) roundel(x, floor - 70, 6);
   // The track, seen past the platform's edge: a dark gap with a rail in it.
   R(x0, floor - 6, x1 - x0, 6, METRO.bed);
   R(x0, floor - 3, x1 - x0, 1, METRO.rail);

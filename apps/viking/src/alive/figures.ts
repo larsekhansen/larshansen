@@ -134,6 +134,9 @@ export const FIGURE_NAMES: Record<string, Words> = {
   "harmless-heron": n("heron", "hegre"),
   // The props at arm's length (ADR 0051), by kind.
   "prop-baluster": n("balusters", "baluster"),
+  "prop-barge board": n("carved barge board", "utskåret vindski"),
+  "prop-dragon head": n("carved dragon head", "utskåret dragehode"),
+  "prop-skis": n("skis against a wall", "ski mot en vegg"),
   "prop-barrier": n("crowd barrier", "sperregjerde"),
   "prop-chair": n("chairlift chair", "stolheisstol"),
   "prop-container": n("site container", "anleggscontainer"),
