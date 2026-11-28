@@ -1550,10 +1550,12 @@ function render(alpha: number) {
   // The shield given: his own bubble for five seconds, or until the passage, where the key shows.
   if (state.gift && (state.steps - state.gift.since > 300 || lesson)) state.gift = null;
   if (state.gift && state.mode === "play") bubble = { x: cx, y: shown.y - 4, lines: shieldWords() };
-  const nearKey = bubble ? bubble.lines[0] : null;
+  // What a screen reader hears: a bubble's words, or a shout in the talk panel (a boss's line was said as it came).
+  const heard = bubble ? bubble.lines : panel && sung ? sung : null;
+  const nearKey = heard ? heard[0] : null;
   if (nearKey !== state.nearSign) {
     state.nearSign = nearKey;
-    if (bubble) say(bubble.lines.join(" "));
+    if (heard) say(heard.join(" "));
   }
 
   // Blinking after a hit (`render/feel.ts` draws the rest of it over him); sitting, a little lower, on the
