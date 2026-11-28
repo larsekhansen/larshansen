@@ -1,6 +1,7 @@
 import { box, column, layerWorldX, lit } from "@larshansen/pixelkit/backdrop";
 import type { CarrierDef, Lift, Travel } from "@larshansen/pixelkit/carrier";
 import { PLAYER, TILE } from "@larshansen/pixelkit/config";
+import { kept } from "@larshansen/pixelkit/kept";
 import { LOAD_STEPS, type Launcher } from "@larshansen/pixelkit/launcher";
 import { R, layerX, light, mix, view } from "@larshansen/pixelkit/paint";
 import { BRICK, CREATURE, FACADE, FLAG, GLASS, ICY, INK, LAND, LAMP, METAL, PAINT, PALETTE, PARADE, PLANTS, ROOF, SNOW, STONE, WHITE } from "@larshansen/pixelkit/palette";
@@ -372,13 +373,16 @@ function station(v: View) {
   R(0, y - 34, 14 * TILE, 2, SNOW.lying);
   // The platform roof's posts, steel painted dark (order 28).
   for (const x of [8, 100, 200]) post(CAST, x, y - 30, y, 3);
-  R(80, y - 26, 60, 10, mix(BOARD_BLUE, INK, 0.25));
-  R(81, y - 25, 58, 8, BOARD_BLUE);
-  let at = 84;
-  for (const ch of "HOLMENKOLLEN") {
-    CAPS[ch].forEach((row, ry) => [...row].forEach((on, rx) => on === "#" && R(at + rx, y - 23 + ry, 1, 1, mix(WHITE, BOARD_BLUE, 0.12))));
-    at += CAPS[ch][0].length + 1;
-  }
+  // Drawn once and copied (ADR 0036): its letters are a hundred rectangles.
+  kept("holmenkollen name board", 80, y - 26, 60, 10, () => {
+    R(80, y - 26, 60, 10, mix(BOARD_BLUE, INK, 0.25));
+    R(81, y - 25, 58, 8, BOARD_BLUE);
+    let at = 84;
+    for (const ch of "HOLMENKOLLEN") {
+      CAPS[ch].forEach((row, ry) => [...row].forEach((on, rx) => on === "#" && R(at + rx, y - 23 + ry, 1, 1, mix(WHITE, BOARD_BLUE, 0.12))));
+      at += CAPS[ch][0].length + 1;
+    }
+  });
   // Skis against the post, as everyone up here carries them (the props kit's, order 48).
   skis(SKIS, 104, y);
   tbaneDoor(v.doors.get("tbane"));
