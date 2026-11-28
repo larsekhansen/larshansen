@@ -406,6 +406,36 @@ describe("the scene itself, drawn as the page draws it, with reduced motion (ord
   });
 });
 
+describe("the raven's face beside its words, drawn as the page draws it (order 48)", () => {
+  // The scene fetches the raven's portraits as its module loads; here they are waited for, as the harness waits for them.
+  beforeAll(async () => {
+    await import("./talk");
+    await new Promise((r) => setTimeout(r, 0));
+  });
+  /** What the panel draws on the sharp canvas: the portrait (a copy) and its lines of words. */
+  const panel = (d: { text: string }) => d.text.split("\n").filter((c) => c.startsWith("I ") || c.startsWith("T ")).join("\n");
+
+  test("with reduced motion the panel is whole from the first frame its line is up and the same at every step until the line changes", () => {
+    const { drawn } = scene(true, 2, intoTheWall(40), 110);
+    // The start line from the first frame: the portrait is there at once.
+    expect(drawn[0].text).toMatch(/^I /m);
+    const runs: string[] = [];
+    for (const d of drawn) {
+      const p = panel(d);
+      if (p && p !== runs.at(-1)) runs.push(p);
+    }
+    // One drawing for the start line and one for the curse's line, each held: nothing slid or blinked between.
+    expect(runs.length).toBe(2);
+    expect(runs[0]).toMatch(/Oh, you actually/);
+    expect(runs[1]).toMatch(/wall/i);
+  });
+
+  test("without reduced motion the same watch sees it slide in (so it can see a change at all)", () => {
+    const { drawn } = scene(false, 2, intoTheWall(40), 30);
+    expect(new Set(drawn.slice(0, 10).map(panel)).size).toBeGreaterThan(3);
+  });
+});
+
 /** The step on which the scripted player clears a level at key speed. */
 function playLevelSteps(level: number): number {
   const s = newState(level);

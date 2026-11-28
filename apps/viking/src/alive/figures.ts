@@ -93,6 +93,8 @@ export const FIGURE_NAMES: Record<string, Words> = {
   // The portraits in the talk panel (order 47, ADR 0057): each expression in a row, a row a stage of the fight.
   "portrait-loki": n("Loki talking: smug, delighted, outraged, wounded, scheming, shouting", "Loke som snakker: selvgod, henrykt, rasende, såret, lurende, roper"),
   "portrait-hero": n("the viking listening: calm, surprised, set, pleased", "vikingen som lytter: rolig, overrasket, bestemt, fornøyd"),
+  // The raven's, in the mound (order 48): the maze's talk panel.
+  "portrait-raven": n("the raven talking: dry, sharp, pleased", "ravnen som snakker: tørr, skarp, fornøyd"),
   // What carries him, a level at a time.
   "carrier-langkaia": n("the rafts and the rowing boat", "flåtene og robåten"),
   "carrier-akershus": n("the hoist", "heisen"),
@@ -217,6 +219,8 @@ export async function figureKinds(props: Record<string, Iterable<string>> = {}):
     if (def.talk) for (const kind of ["loki", "hero"]) add("portrait", kind, def.id);
   }
   for (const kind of MAZE_FIGURES) add("maze", kind, "jernhaugen");
+  // The raven speaks in the mound with its face beside its words (order 48).
+  add("portrait", "raven", "jernhaugen");
   return [...out.values()];
 }
 
@@ -299,6 +303,7 @@ export const STATE_WORDS: Record<string, Words> = {
   "his face, the shades knocked off": n("his face, the shades knocked off", "ansiktet hans, solbrillene slått av"),
   "his face, plain": n("his face, plain", "ansiktet hans, vanlig"),
   "his face, quiet": n("his face, quiet", "ansiktet hans, stille"),
+  "its face, quiet": n("its face, quiet", "ansiktet dens, stille"),
   "plain: standing, shrugging, walking off": n("plain: standing, shrugging, walking off", "vanlig: står, trekker på skuldrene, går av scenen"),
   // The pickups, the things every level has, the harmless movers, by their frames' names.
   spinning: n("spinning", "snurrer"),

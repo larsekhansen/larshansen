@@ -106,6 +106,9 @@ const STRINGS = {
 
 export type Strings = (typeof STRINGS)["en"];
 
+/** The raven's lines: what it says in its own voice (order 48: in the talk panel, each with a face, `RAVEN_FACE` in `talk.ts`). */
+export type RavenLine = "start1" | "start2" | "start3" | "start4" | "start5" | "start6" | "start7" | "curse1" | "curse2Wall" | "curse2Snake" | "curse3" | "curse4Pit" | "curse5" | "curse7" | "key" | "stone" | "teleport" | "end" | "endStandalone" | "feather" | "featherGold" | "featherGoldStandalone" | "endAgain";
+
 export function strings(lang: Lang): Strings {
   return STRINGS[lang];
 }

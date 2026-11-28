@@ -8,7 +8,7 @@ import { bubble, fontPx, safeSides, sx, sy, textCtx, unit, wrapLines as wrapped 
 import { createFx } from "./fx";
 import { createRecorder, ghostAt, loadGhost, saveGhost, type GhostPoints } from "./ghost";
 import { ghostWalk, newHeading, turn, type GhostWalk } from "./heading";
-import { strings } from "./i18n";
+import { strings, type RavenLine } from "./i18n";
 import { COLS, LEVELS, ROWS, centreOf, finishOf, mapInfo, portalAt } from "./levels";
 import { createLevelCard, createLevelPanel, type Cleared } from "./panel";
 import { betterFeather, browserStore, featherWon, loadFeather, loadRecords, loadReached, marksOf, recordClear, saveFeather, saveReached, type Feather, type Marks, type Records } from "./records";
@@ -66,6 +66,9 @@ export interface Maze {
   readonly levels: { toggle(): void; open(): void; close(): void; readonly isOpen: boolean };
   /** The rules' state, the same object for the whole visit (for checking). */
   readonly state: MazeState;
+  /** Whether the raven's portraits have come, and when they will (for checking: a stepped picture waits for them). */
+  talkReady(): boolean;
+  whenTalkReady(): Promise<void>;
 }
 
 /** Something that steers him in place of the visitor: the scripted player, for checking. */
@@ -87,6 +90,17 @@ function safeArea(el: HTMLElement): { top: number; right: number; bottom: number
   const cs = getComputedStyle(probe);
   return { top: parseFloat(cs.paddingTop) || 0, right: parseFloat(cs.paddingRight) || 0, bottom: parseFloat(cs.paddingBottom) || 0, left: parseFloat(cs.paddingLeft) || 0 };
 }
+
+/**
+ * The raven's face beside its words (order 48, ADR 0057 in the mound): its portraits and the panel, in a file of their own fetched
+ * as the scene's module loads, long before the level's fade-in is over; until it has come (and if it never comes) the raven's words
+ * hang in their bubble as before.
+ */
+let talk: typeof import("./talk") | null = null;
+const talkReady: Promise<void> = import("./talk").then(
+  (m) => void (talk = m),
+  () => undefined
+);
 
 /** How long the raven's lines stay up, in steps. A start line stays until a second after he first moves, if that is later. */
 const START_STEPS = 240;
@@ -130,7 +144,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   let left = false;
   let fade = 1;
   let fading: "in" | null = "in";
-  let words: { text: string; since: number; until: number; start: boolean } | null = null;
+  let words: { text: string; line: RavenLine; since: number; until: number; start: boolean; region: number } | null = null;
   /** The step of his first move in this level, for how long a start line stays. */
   let movedAt: number | null = null;
   /** The world stands still for a few steps when the curse takes him. */
@@ -167,8 +181,9 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
   /** The screen's safe areas, read again on a resize. */
   let insets: ReturnType<typeof safeArea> | null = null;
 
-  function speak(text: string, kind: "start" | "line" | "stay" = "line") {
-    words = { text, since: tick, until: kind === "stay" ? Infinity : tick + (kind === "start" ? START_STEPS : LINE_STEPS), start: kind === "start" };
+  function speak(line: RavenLine, kind: "start" | "line" | "stay" = "line") {
+    const text = t[line];
+    words = { text, line, since: tick, until: kind === "stay" ? Infinity : tick + (kind === "start" ? START_STEPS : LINE_STEPS), start: kind === "start", region: -1 };
     host.say(text);
   }
 
@@ -179,26 +194,26 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     return tick < until;
   }
 
-  function startLine(level: number) {
-    return [t.start1, t.start2, t.start3, t.start4, t.start5, t.start6, t.start7][level - 1];
+  function startLine(level: number): RavenLine {
+    return (["start1", "start2", "start3", "start4", "start5", "start6", "start7"] as const)[level - 1];
   }
 
-  function cursedLine() {
+  function cursedLine(): RavenLine {
     switch (state.level) {
       case 1:
-        return t.curse1;
+        return "curse1";
       case 3:
-        return t.curse3;
+        return "curse3";
       case 4:
-        return state.cause === "pit" ? t.curse4Pit : t.curse2Wall;
+        return state.cause === "pit" ? "curse4Pit" : "curse2Wall";
       case 5:
-        return t.curse5;
+        return "curse5";
       case 6:
-        return t.curse1;
+        return "curse1";
       case 7:
-        return t.curse7;
+        return "curse7";
       default:
-        return state.cause === "snake" ? t.curse2Snake : t.curse2Wall;
+        return state.cause === "snake" ? "curse2Snake" : "curse2Wall";
     }
   }
 
@@ -447,7 +462,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     if (ev.key) {
       sfx.play("pickup");
       gateSoundAt = tick + 14;
-      speak(t.key);
+      speak("key");
       keyAt = tick;
       const k = mapInfo(levelDef(state.level).map).key;
       if (k) fx.burst("key", k.c * TILE + 7, k.r * TILE + 7, tick);
@@ -455,7 +470,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     if (ev.fell) sfx.play("land");
     if (ev.lit !== undefined) {
       sfx.play("stone");
-      speak(t.stone);
+      speak("stone");
       stoneFlash.set(ev.lit, tick);
       const s = state.stones[ev.lit];
       fx.burst("stone", s.c * TILE + 8, s.r * TILE + 6, tick + ev.lit);
@@ -473,7 +488,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
       clearSteering();
       if (!toldTeleport) {
         toldTeleport = true;
-        speak(t.teleport);
+        speak("teleport");
       }
     }
     if (ev.cleared) cleared();
@@ -493,14 +508,15 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     if ((best || !ghost) && rec.length) saveGhost(level, rec.points(), store);
 
     const prize = featherWon(level, records, held, of);
-    let line = "";
+    let said: RavenLine | null = null;
     if (prize) {
       saveFeather(prize, store);
       held = { plain: true, gold: held.gold || prize === "gold" };
       won = betterFeather(won, prize);
-      if (prize === "gold") line = host.standalone ? t.featherGoldStandalone : t.featherGold;
-      else line = host.standalone ? t.endStandalone : t.feather;
-    } else if (level === of) line = t.endAgain;
+      if (prize === "gold") said = host.standalone ? "featherGoldStandalone" : "featherGold";
+      else said = host.standalone ? "endStandalone" : "feather";
+    } else if (level === of) said = "endAgain";
+    const line = said ? t[said] : "";
     if (level === of) {
       clearedLast = true;
       // The whole mound is done: the next visit starts at the first level again.
@@ -511,7 +527,7 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     sfx.play("door");
     if (prize || level === of) sfx.play("fanfare");
     host.say(t.cleared(level));
-    if (line) speak(line, "stay");
+    if (said) speak(said, "stay");
     finishAt = tick;
     const f = finishOf(levelDef(level).map);
     fx.burst("finish", (f.c + 1) * TILE, (f.r + 1) * TILE, tick);
@@ -627,15 +643,22 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
       const safe = (insets ??= safeArea(el));
       // Every bubble keeps off the safe sides (order 37: over the raven's head, its words ran under a notch).
       Object.assign(safeSides, { left: safe.left, right: safe.right });
-      // On a narrow screen a long line is two or more bubbles, one over another, as the fjord's lines are (order 36: they ran
-      // off the screen's edge at 390 wide), clear of a notch on its side.
-      const lines = wrapped(words.text, view.cssW - 12 - safe.left - safe.right);
-      const top = inset() * n + h * lines.length + 8;
-      const bx = sx(a.x);
-      const by = sy(a.y) - 4;
-      // Over the raven's head while it is in view; otherwise small, at the top left under the header.
-      const over = by >= top && bx > 20 && bx < view.cssW - 20 && by < view.cssH;
-      lines.forEach((line, i) => (over ? bubble(bx, by - (lines.length - 1 - i) * h, line) : bubble(8 + safe.left, top - (lines.length - 1 - i) * h, line, "left")));
+      // The raven's face beside its words (order 48): at the top left under the header, or at the foot, clear of him; it keeps the
+      // place it found for the line while the line is up. Where it has no room, the bubble.
+      const until = words.start && movedAt !== null ? Math.max(words.until, movedAt + AFTER_MOVE_STEPS) : words.until;
+      const region = talk ? talk.panel(words.line, words.text, tick - words.since, Number.isFinite(until) ? until - tick : null, words.region, x, y, inset(), safe) : -1;
+      if (region >= 0) words.region = region;
+      else {
+        // On a narrow screen a long line is two or more bubbles, one over another, as the fjord's lines are (order 36: they ran
+        // off the screen's edge at 390 wide), clear of a notch on its side.
+        const lines = wrapped(words.text, view.cssW - 12 - safe.left - safe.right);
+        const top = inset() * n + h * lines.length + 8;
+        const bx = sx(a.x);
+        const by = sy(a.y) - 4;
+        // Over the raven's head while it is in view; otherwise small, at the top left under the header.
+        const over = by >= top && bx > 20 && bx < view.cssW - 20 && by < view.cssH;
+        lines.forEach((line, i) => (over ? bubble(bx, by - (lines.length - 1 - i) * h, line) : bubble(8 + safe.left, top - (lines.length - 1 - i) * h, line, "left")));
+      }
     } else if (!wordsShown()) words = null;
     if (state.phase === "cursed" && !view.reduced) {
       // A rust-red frame round the whole view that fades as the curse runs out.
@@ -688,6 +711,8 @@ export function createMaze(host: MazeHost, opts?: { level?: number; steer?: Stee
     select,
     reached: () => reached,
     levels: panel,
-    state
+    state,
+    talkReady: () => talk !== null,
+    whenTalkReady: () => talkReady
   };
 }
