@@ -7,7 +7,7 @@ import type { Loki } from "./loki";
 import { newPlay } from "./play";
 import { SHIELD_RULES } from "./shield";
 import { ENCORE as WORDS, ENCORE_ALTERNATIVES } from "./story";
-import { AHEAD, BAR, BEAT, BASS, DRUMS, EIGHTH, INTRO, LEAD, LOOP, LOOP_BARS, PLAIN, PLAIN_STEPS, PLAYS_BY_HITS, RIFF, ROOTS, SHOUTS, bandNotes, encoreMusic, plainNotes, SHOUTING, shoutAt, type Note } from "./tune";
+import { AHEAD, BAR, BEAT, BASS, DRUMS, EIGHTH, INTRO, LEAD, LOOP, LOOP_BARS, PLAIN, PLAIN_STEPS, PLAYS_BY_HITS, RIFF, ROOTS, SHOUTS, bandNotes, encoreMusic, plainNotes, SHOUTING, shoutAt, shoutFrom, type Note } from "./tune";
 
 // The encore's tune (order 34, ADR 0055): deterministic, whole bars, every note in a sane range and volume, a layer fewer with
 // each hit, the plain notes after the third, nothing while muted or with no sound, and the shouted lines only while he struts.
@@ -243,6 +243,24 @@ describe("the encore's tune (order 34)", () => {
       }
       expect(ENCORE_ALTERNATIVES[key].length).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+describe("when a shouted line came in (order 47: the talk panel slides in from it)", () => {
+  test("shoutFrom is the first step of the line shoutAt says is up: the same line there and every step since, none or another the step before", () => {
+    const woke = 100;
+    let checked = 0;
+    for (const since of [100, 150, 233, 400, 401, 640])
+      for (let step = since; step < since + 6 * BAR; step += 7) {
+        const line = shoutAt(step, woke, since);
+        if (line === null) continue;
+        const from = shoutFrom(step, woke, since);
+        expect(from).toBeLessThanOrEqual(step);
+        for (let k = from; k <= step; k++) expect(shoutAt(k, woke, since)).toBe(line);
+        if (from > since) expect(shoutAt(from - 1, woke, since)).not.toBe(line);
+        checked++;
+      }
+    expect(checked).toBeGreaterThan(50);
   });
 });
 

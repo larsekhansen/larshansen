@@ -11,7 +11,7 @@ import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
 import { ENCORE as WORDS, ENCORE_FACES } from "../game/story";
 import { LOKI_STEPS, lokiBoss, type Loki, type LokiDef } from "../game/loki";
-import { encoreMusic } from "../game/tune";
+import { encoreMusic, shoutFrom } from "../game/tune";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLoki, drawRing, drawWave } from "../render/loki";
@@ -405,13 +405,19 @@ const PLAY_TALL = 80;
  * Loki's talk panel (order 47, ADR 0057): his portrait and the hero's beside his words, as `game/story.ts` tags each line; a line he
  * says (it came up when said, goes when its time is up) or one the music has him shout (it came up when the music first said so).
  */
+/** His tune, which also says when a shouted line came in. */
+const MUSIC = encoreMusic();
+
 function lokiTalk(): Talk {
   // The line the panel shows and the step it came up; the room it found, kept while the line is up, it still fits and the screen's
   // own room is the same (the bar, the pad's controls: they come up a frame after a level starts on a touch screen).
   const kept = { key: "", since: 0, region: -1, room: "" };
   return (line, shout, sung, room, boss, steps) => {
     const s = boss as Loki | null;
-    const said = line?.key && ENCORE_FACES[SAID[line.key]] ? { key: line.key, lines: line.lines, since: line.since ?? steps, left: line.until - steps } : shout && sung && ENCORE_FACES[SAID[shout]] ? { key: shout, lines: sung, since: kept.key === shout ? kept.since : steps, left: null } : null;
+    // A shout came in when the music brought it in (a stepped picture sees it first well after that), else when the panel first saw it.
+    const woke = MUSIC.woke?.() ?? null;
+    const sungFrom = () => (kept.key === shout ? kept.since : woke !== null && s ? Math.min(steps, shoutFrom(steps, woke, s.since)) : steps);
+    const said = line?.key && ENCORE_FACES[SAID[line.key]] ? { key: line.key, lines: line.lines, since: line.since ?? steps, left: line.until - steps } : shout && sung && ENCORE_FACES[SAID[shout]] ? { key: shout, lines: sung, since: sungFrom(), left: null } : null;
     if (!said || !s) return (kept.key = ""), null;
     const here = `${room.bar} ${room.pad.map((r) => `${r.x},${r.y}`).join(" ")}`;
     if (said.key !== kept.key || here !== kept.room) Object.assign(kept, { key: said.key, region: -1, room: here });
@@ -461,7 +467,7 @@ export const ENCORE: LevelDef = {
   // His lines in his own voice, with his face and the hero's beside them (order 47, ADR 0057); the hints stay in the bubble.
   talk: lokiTalk(),
   // His tune (order 34, ADR 0055): `game/tune.ts`.
-  music: encoreMusic(),
+  music: MUSIC,
   // The ending card's line (order 29): no runes to count here.
   cardLine: { nb: () => WORDS.nb.ending, en: () => WORDS.en.ending },
   art: {
