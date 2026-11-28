@@ -1,29 +1,28 @@
 # Roadmap
 
-As of 28 November 2026, after order 47 was built (branch `lars-28-nov`, waiting for review). Change this file in the same change that makes it wrong.
+As of 28 November 2026, after order 47 was reviewed and merged (PR #95). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
 | Date | 28 November 2026 |
-| Last live | Order 46, the rest of the upright phone, PR #94 (reviewed and merged on 25 November); before it orders 45 (PR #93), 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
-| Built, waiting for review | Order 47, what Lars said the second time (branch `lars-28-nov`; `orders/47-what-lars-said-second.md`, `apps/viking/tools/review/o47/after.md`) |
+| Last live | Order 47, what Lars said the second time, PR #95 (reviewed and merged on 28 November); before it orders 46 (PR #94), 45 (PR #93), 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Built, waiting for review | Nothing |
 | Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`), and on 28 November part of what was waiting again (order 47); he has not played yet |
-| Weekly allowance | About 71 % used when order 46 was reviewed on 25 November (no further round before the reset) (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Weekly allowance | About 7 % used when order 47 was reviewed on 28 November, just after the reset (a round now costs 4 to 5 points); next reset Saturday 5 December 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
 
-**Order 47, what Lars said the second time** (`orders/47-what-lars-said-second.md`; ADR 0057 and 0058, 0052 and 0055 amended), built on
-branch `lars-28-nov`, waiting for the planner's review. Lars's answers of 28 November (`conversations.md`, word for word, with the planner's
+**Order 47, what Lars said the second time** (`orders/47-what-lars-said-second.md`; ADR 0057 and 0058, 0052 and 0055 amended), reviewed, merged and live (PR #95, 28 November). Nothing else is in flight. Lars's answers of 28 November (`conversations.md`, word for word, with the planner's
 reading): the plough beaten at Gamle Oslo as he wrote it; Holmenkollen's mountain hare and enemies of the place's own (a balloon seller's cart
 at Slottet, a forklift at Bjørvika, a commuter's bicycle at Stortinget), each in its look's box and behaviour (`drawAs`, so the run files are
 byte-identical); Sagene kirke's spire copper and Paulus kirke's slate; faces when they talk (ADR 0057): Loki's portrait in six expressions at
 four stages and the hero's in four beside his words at the encore, under the stage's floor or under the bar, never over the pad, a notch or
 the play; two marks from the portrait on his figure; the theme written down (ADR 0058, DESIGN's "Calm Oslo, loud glamour"). Each item, done
-or not, with its measures: `apps/viking/tools/review/o47/after.md`. **The planner is writing plans (not builds) for** the city along Oslo's
-real streets and station names, the front page as a home with a door for each project, and the runes; nothing of those is decided.
+or not, with its measures: `apps/viking/tools/review/o47/after.md`. **The planner has written plans (not builds) for** the city along Oslo's
+real streets and station names, the front page as a home with a door for each project, and the runes: [`plans-28-nov.md`](plans-28-nov.md). Nothing of those is decided and nothing of them is built until Lars says so; the walks in it are from memory and wait for his corrections and a check on a map.
 
 **Order 46, the rest of the upright phone, and a second look at the dark below** (`orders/46-the-rest-upright.md`, ADR 0043 amended), reviewed, merged and live (PR #94, 25 November). Nothing else is in flight. The ground under him upright goes down in its own material's tones, not into a near-black: of three
 tries shown side by side for each material (what stood, the band ending at its material's darkest ramp step, the darkening lower in broader layers)
