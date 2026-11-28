@@ -1041,6 +1041,9 @@ const ORANGE = [mix(WINTER.ploughDark, INK, 0.25), WINTER.ploughDark, WINTER.plo
 const PARKED = ORANGE.map((c) => mix(c, INK, 0.45));
 const GLASS_TONES = [WINTER.cab, mix(WINTER.cab, WHITE, 0.12), mix(WINTER.cab, WHITE, 0.3)];
 const SNOW_TONES = [SNOW.shade, SNOW.lying, mix(SNOW.lying, WHITE, 0.4)];
+/** Its fleet number's digits (order 48), three wide and five high, as the departure boards' are; and their stencil's white. */
+const FLEET = ["111101101101111", "010110010010111", "111001111100111", "111001111001111", "101101111001001", "111100111001111", "111100111101111", "111001001001001", "111101111101111", "111101111001111"];
+const FLEET_WHITE = "#eeeee6";
 /** Its stage lights under the glamour (order 27): the glamour's neons, never the "now" violet its tell is in. */
 const STAGE = [ENEMY.hotPink, ENEMY.lime, ENEMY.magenta, ENEMY.white];
 
@@ -1107,6 +1110,9 @@ function ploughBody(p: Plough, v: View) {
   span(-29, -28, y0 + 18, 1, ORANGE[1]);
   span(-20, -19, y0 + 18, 10, ORANGE[1]);
   span(-17, -14, y0 + 21, 1, ORANGE[0]);
+  // The municipality's own (order 48; ADR 0058): its fleet number stencilled on the cab's door, white on the orange.
+  for (const [i, d] of [[0, 1], [4, 2]] as const)
+    for (let k = 0; k < 15; k++) if (FLEET[d][k] === "1") span(-28 + i + (k % 3), -27 + i + (k % 3), y0 + 21 + Math.floor(k / 3), 1, FLEET_WHITE);
   panel(-32, 32, y0 + 30, 14, ORANGE);
   panel(0, 32, y0 + 22, 8, ORANGE, 2);
   span(0, 32, y0 + 22, 1, ORANGE[3]);
@@ -1144,6 +1150,11 @@ function ploughBody(p: Plough, v: View) {
     }
   }
   if (!raised) R(f > 0 ? bx : bx - 6, g - 21, 6, 1, mix(WINTER.blade, WHITE, 0.35));
+  // The marker rods on the blade's outer corner (order 48: every plough of the city's carries them, so the blade's edge is seen in
+  // the snow): a thin rod, its tip in the plough's own lit orange; up with the blade while it revs.
+  const rx = f > 0 ? bx + 9 : bx - 10;
+  R(rx, g - 33 - raised, 1, 12, WINTER.ploughDark);
+  R(rx, g - 35 - raised, 1, 3, ORANGE[4]);
   // The beacons on the cab's roof: slow while it drives, fast while it revs before a charge, out when
   // beaten. With reduced motion they do not flash: one is lit while it drives, both (with their glow)
   // while it revs.

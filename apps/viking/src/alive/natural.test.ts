@@ -111,3 +111,47 @@ describe("what moves and cannot hurt him is natural (order 27)", () => {
     expect([...new Set(neon)]).toEqual([]);
   });
 });
+
+// Order 48 (ADR 0058: calm Oslo, loud glamour). "The glamour louder where it is tame ... so that glammed and natural differ at a
+// glance": held on the census this file already walks. Every look's glammed self differs from its natural self in at least half of
+// its pixels (a pixel differs when it is gone, or 15 or more off, CIEDE2000), but those named here, each with why. Measured on
+// 28 November: the swan 97 %, the statues 96 and 97 %, most 70 to 95 %; the squirrel, the nesting gull and the salmon the lowest
+// that pass (55 %).
+const GLAM_SHARE = 0.5;
+const TAME: Record<string, string> = {
+  // Lars asked for a wasp in amber and black (order 26): its glam is shades and a sheen, its bands stay its own.
+  wasp: "amber and black by Lars's word (33 %)",
+  // Vigelandsparken's ring-throwers are granite groups, the park's own sculpture until they throw: by the level's idea.
+  ringer: "granite by the park's idea (14 %)",
+  // A fox and a cat are orange of their own, and the glamour's orange is near it: found in order 48, left for a decision (a neon of
+  // their own would change four levels' pictures; ADR 0058 amended says so).
+  fox: "its own orange near the glamour's (25 %): left for a decision",
+  cat: "its own orange near the glamour's (15 %): left for a decision"
+};
+describe("glammed and natural differ at a glance (order 48)", () => {
+  test(`every look's glammed self differs from its natural self in ${GLAM_SHARE * 100} % or more of its pixels, but by name`, () => {
+    const tame: string[] = [];
+    const table: string[] = [];
+    for (const [name, l] of Object.entries(looks)) {
+      const at = (rs: readonly { x: number; y: number; w: number; h: number; c: string }[]) => {
+        const m = new Map<number, string>();
+        for (const r of rs) for (let j = 0; j < r.h; j++) for (let i = 0; i < r.w; i++) m.set((r.y + j) * 4096 + r.x + i, r.c);
+        return m;
+      };
+      const g = at(l.glammed.rects);
+      const n = at(l.natural[0].rects);
+      let differ = 0;
+      for (const [k, c] of g) {
+        const d = n.get(k);
+        if (!d || deltaE(rgb(c), rgb(d)) >= 15) differ++;
+      }
+      const share = differ / g.size;
+      table.push(`${name} ${(share * 100).toFixed(0)} %`);
+      if (share < GLAM_SHARE && !TAME[name]) tame.push(`${name}: ${(share * 100).toFixed(1)} %`);
+      // A look named here that has become loud enough comes off the list.
+      if (share >= GLAM_SHARE && TAME[name]) tame.push(`${name} is named as tame but differs ${(share * 100).toFixed(1)} %: take it off the list`);
+    }
+    console.log(`Glammed against natural, the share of each look's pixels that differ:\n  ${table.join(", ")}`);
+    expect(tame).toEqual([]);
+  });
+});

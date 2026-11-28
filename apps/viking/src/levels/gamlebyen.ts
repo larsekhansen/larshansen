@@ -868,6 +868,9 @@ const SCALE: Record<string, string> = {
   E: ENEMY.eye
 };
 
+/** Kelp off the fjord's floor (order 48): its brown-olive and a lit frond. */
+const KELP = ["#3e3a1c", "#7a7438"];
+
 /** A row's runs: `tone(b)` for b from 0 to w - 1, joined where they agree, drawn from x0 left to right or mirrored. */
 function runs(x0: number, y: number, w: number, dir: 1 | -1, tone: (b: number) => string) {
   let start = 0;
@@ -1028,6 +1031,25 @@ function serpentNeck(x: number, top: number, base: number, dir: 1 | -1, lean: nu
     const w = Math.round(12 + 8 * f);
     const cx = x + Math.round(lean * (1 - f) ** 1.5 + 6 * Math.sin(f * Math.PI * 1.5 + 0.3) * (1 - 0.5 * f) + sway * (1 - f));
     bodyRow(cx, y, w, dir, y - top);
+    // The fjord's own (order 48; ADR 0058): barnacles crusted on its back's scales now and then, kelp hanging off it under its jaw.
+    const k = y - top;
+    const x0 = cx - Math.floor(w / 2);
+    if (f > 0.2 && f < 0.85 && k % 9 === 4) {
+      // Two shells, pale and round, each with its dark mouth.
+      const bx = dir > 0 ? x0 + 3 + ((k >> 3) % 2) * 2 : x0 + w - 7 - ((k >> 3) % 2) * 2;
+      for (const [sx, sy] of [[0, 0], [3, 1]] as const) {
+        R(bx + sx, y + sy, 2, 1, SCALE.P);
+        R(bx + sx, y + sy + 1, 1, 1, SCALE.Q);
+        R(bx + sx + 1, y + sy + 1, 1, 1, SCALE.D);
+      }
+    }
+    if (k >= 2 && k < 20) {
+      // Two strands of kelp off its chin, swaying a pixel as they hang, a lit frond now and then.
+      const belly = dir > 0 ? x0 + w : x0 - 2;
+      const sway = (k >> 2) % 2;
+      R(belly + dir * sway, y, 1, 1, k % 4 === 1 ? KELP[1] : KELP[0]);
+      if (k < 14) R(belly + dir * (1 + sway), y, 1, 1, KELP[0]);
+    }
     if ((y - top) % 6 === 3 && f > 0.06 && f < 0.85) spine(dir > 0 ? cx - Math.floor(w / 2) - 1 : cx + Math.ceil(w / 2), y, 4, dir);
     if (lit.k > 0.05 && y % 2 === 0) light(lit.side > 0 ? cx + Math.ceil(w / 2) - 1 : cx - Math.floor(w / 2), y, 1, 2, "soft", `rgba(255, 190, 120, ${(0.6 * lit.k).toFixed(2)})`);
   }

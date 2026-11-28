@@ -670,6 +670,8 @@ const NOSE = [mix(FOREST.trollNose, INK, 0.3), FOREST.trollNose, mix(FOREST.trol
 const HAIR = [mix(FOREST.trollHair, INK, 0.3), FOREST.trollHair, FOREST.trollDark];
 const MOSS = [mix(FOREST.moss, INK, 0.25), FOREST.moss, FOREST.mossLight];
 const CLUB = [mix(FOREST.club, INK, 0.3), FOREST.club, mix(FOREST.club, WHITE, 0.18)];
+/** The young spruce on its back (order 48): the forest's needles. */
+const SPRUCE = [FOREST.needlesDark, FOREST.needles, FOREST.needlesLight];
 /**
  * Its glam (order 27, ADR 0050), as big as it is: its moss gone magenta and grown into a mullet down its back, and a spiked
  * wristband on its club arm. It is gone as the dawn turns it (stone takes the hair as moss again) and at the end.
@@ -775,6 +777,15 @@ function trollBody(t: Troll, v: View) {
   blob(0, 18 - bend / 2 + lift, 13, 11, HIDE, 2);
   blob(4, 16 - bend / 2 + lift, 7, 7, HIDE, 3);
   blob(-6, 26 - bend + lift, 7, 5, HIDE, 2);
+  // Older than the town (order 48; ADR 0058: stone and moss): a stone grown into the hump of its back with lichen on it, and a
+  // young spruce rooted in the moss of its shoulders, as the old trolls of the stories carry the forest on them. Stone at the end
+  // with the rest of it; the spruce stays a spruce.
+  blob(-9, 29 - bend + lift, 3, 2, STONE_TONES, 2);
+  box(-10, 30 - bend + lift, 2, 1, [FOREST.lichen], 0);
+  const sx = -3;
+  const sy = 31 - bend + lift;
+  box(sx, sy, 1, 3, [FOREST.trunkDark, FOREST.trunk], 1);
+  for (const [dx, dy, w] of [[-2, 2, 5], [-1, 4, 3], [-2, 5, 5], [-1, 7, 3], [0, 8, 1]] as const) box(sx + dx, sy + dy, w, 1, SPRUCE, 1);
   // The head, forward and low; its ear, nose, mouth and hair; an eye under the brow.
   blob(hx, hy, 7, 6, HIDE, 2);
   blob(hx - 6, hy + 1, 2, 3, HIDE, 1);
