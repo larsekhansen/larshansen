@@ -221,9 +221,9 @@ describe("what can hurt him: the enemy palette", () => {
     for (const name of ["statue", "bronze", "guard", "swan"]) expect(calmSeen.has(name)).toBe(true);
   });
 
-  test("every enemy has eyes that shine after dark, but the things with none (a scooter, a trolley, a grill, an umbrella, a brazier, an anthill, a hot-dog cart; since order 47 a bicycle and a forklift)", () => {
+  test("every enemy has eyes that shine after dark, but the things with none (a scooter, a trolley, a grill, an umbrella, a brazier, an anthill, a hot-dog cart; since order 47 a bicycle and a forklift; since order 48 the balloon cart, whose balloon no longer wears shades)", () => {
     const eyeless = [...seen.keys()].filter((n) => !withEyes.has(n));
-    expect(eyeless.filter((n) => !["scooter", "trolley", "grill", "umbrella", "brazier", "anthill", "hotdog", "bicycle", "forklift"].includes(n))).toEqual([]);
+    expect(eyeless.filter((n) => !["scooter", "trolley", "grill", "umbrella", "brazier", "anthill", "hotdog", "bicycle", "forklift", "balloons"].includes(n))).toEqual([]);
   });
 
   test("stomping works as drawn: the head he lands on is where the picture's head is, within two pixels of the box's top", () => {

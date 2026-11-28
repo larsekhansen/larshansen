@@ -210,20 +210,27 @@ export const ENEMIES: EnemyDef[] = [
 ];
 
 /**
- * A balloon seller's cart (order 47): 13 x 9, drawn for the pigeon's kept box (10 x 8, `fit`), its balloons' tops a pixel over it. Three balloons
- * on strings to a pole in the cart, each lit at its top left with a knot under it; a little painted box cart on two small wheels
- * that turn, its handle behind. Glammed, the balloons are neon (laser orange, magenta, acid green), a lime tube runs along the
- * cart's top and the middle balloon wears shades; its natural self is 17 May's: a red, a white and a blue balloon over a green
- * cart. Its balloons sway a pixel as it walks.
+ * A balloon seller's cart (order 47; redrawn in order 48, where three small balloons of three neons side by side over a cart with
+ * a lime tube read as a muddle of red at phone size): 13 x 9, drawn for the pigeon's kept box (10 x 8, `fit`), the higher
+ * balloon's top a pixel over it. Two big round balloons, one high over the cart's front and one lower behind it, each lit at its
+ * top left with a glint and tied by its knot to a plain little box cart on two small wheels that turn, its handle behind; not side
+ * by side, so the two over a bar never make a face. Glammed, the balloons are a hot coral and lime with a spark of the level's
+ * neons on each, over a laser-orange cart; its natural self is 17 May's: a red and a blue balloon (the flag's) over a green cart. As
+ * it walks the two sway out of step, each at its own height.
  */
-const SELLER_BALLOONS = [
-  [".OO.......GG.", "OaOO.XX..GaGG", "OOOOXaXX.GGGG", ".OO.XXXX..GG.", "...l.XX..l..."],
-  ["..OO......GG.", ".OaOOXX.GaGG.", ".OOOXaXXGGGG.", "..OOXXXX.GG..", "....l.ll.l..."]
-];
-const SELLER_CART = ["..MMMMMMMMMM.", "..mmmmmmmmmMd", "l.ddmdddmdddd"];
-const SELLER_WHEELS = [["...lal...lal."], ["...lla...lla."], ["...all...all."]];
-const SELLER_GLAM = [mark(["nlle"], 5, 2), mark(["LLLLLLLLLL"], 2, 6), mark(["N"], 0, 6)];
-const balloonCart = (name: string, b: number, w: number) => frame(name, FOE_INK, [SELLER_BALLOONS[b], 0, 0], [SELLER_CART, 0, 5], [SELLER_WHEELS[w], 0, 8], ...SELLER_GLAM);
+const BALLOON_HIGH = [".ppp.", "pappp", "ppppm", ".pmm.", "..l..", "..l.."];
+const BALLOON_LOW = [".LLL.", "LaLLL", "LLLLg", ".Lgg.", "..l.."];
+const SELLER_CART = ["l..OOOOOOOO..", ".l.oooooooo.."];
+const SELLER_WHEELS = [["...lal..lal.."], ["...lla..lla.."], ["...all..all.."]];
+/**
+ * Where the two balloons stand in each sway: [the high one's x, the low one's x]; the high one's top is the frame's, the low one's two
+ * rows down. Both in colours the sheen does not touch (the pink and the lime), so each keeps its own glint at its top left.
+ */
+const SELLER_SWAY = [[7, 1], [8, 0]] as const;
+const balloonCart = (name: string, b: number, w: number) => {
+  const [hx, lx] = SELLER_SWAY[b];
+  return frame(name, FOE_INK, [BALLOON_HIGH, hx, 0], [BALLOON_LOW, lx, 2], [SELLER_CART, 0, 6], [SELLER_WHEELS[w], 0, 8], mark(["N"], hx + 4, 0), mark(["n"], lx, 2));
+};
 const BALLOON_CART: Looks = {
   w: 13,
   h: 9,
@@ -597,6 +604,15 @@ export function paradeKidBody(x: number, ground: number, i: number, t: number) {
  * flag over it, so it is seen on plain street (order 31). Drawing only: the pigeon, the banners and the rules are as they were.
  */
 const FIRST_FOE = [9 * TILE, 18 * TILE] as const;
+/**
+ * Where no flag is held up out of the crowd (order 48): over the first pigeon's stretch (order 31), and where each balloon cart walks,
+ * a few pixels either side, so no flag at the near kerb stands across a cart (they did at columns 112 and 172: "a muddle of red").
+ * The flags' places, not the carts': the carts walk where the pigeons walked.
+ */
+const FLAGLESS: readonly (readonly [number, number])[] = [
+  FIRST_FOE,
+  ...ENEMIES.filter((e) => e.drawAs === "balloons").map((e) => [(e.c - (e.range ?? 0)) * TILE - 6, (e.c + (e.range ?? 0) + 1) * TILE + 6] as const)
+];
 
 /**
  * The parade between the banners: children walking up the street, a step behind his line. They join it past the first
@@ -752,7 +768,7 @@ function crowd(t: number) {
     const head = g - 6 - (tall % 3);
     // Drawn as frames since order 25 (`person` in alive/things.ts), each copied: shaded, and fewer rectangles.
     person(x, head - 1, [PARADE.bunadBlue, PAINT.ochre, PARADE.bunadRed, P.ironDark, PARADE.silkGreen][k % 5], [P.woodDark, INK, PARADE.fringe, P.earth][k % 4], false, k % 5 === 1);
-    if (k % 3 === 0 && (x + 12 < FIRST_FOE[0] || x + 5 > FIRST_FOE[1])) crowdFlag(x + 5, head - 9, view.reduced ? 0 : Math.floor((t + k * 11) / 9) % 2);
+    if (k % 3 === 0 && FLAGLESS.every(([a, b]) => x + 12 < a || x + 5 > b)) crowdFlag(x + 5, head - 9, view.reduced ? 0 : Math.floor((t + k * 11) / 9) % 2);
   }
 }
 

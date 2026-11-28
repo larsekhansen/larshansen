@@ -64,8 +64,9 @@ export const NATURAL: Record<string, Natural> = {
   // Order 47's figures of their place's own. A commuter's bicycle: a bottle green frame, a brown saddle and pannier, a wicker
   // basket, steel spokes over dark, a pale hub.
   bicycle: { ink: { [E.plumLight]: "#4a8466", [E.plum]: "#2f5e48", [E.plumDark]: "#2c2a28", [E.amber]: "#c8a060", [E.orange]: "#8a6034", [E.white]: "#c8ccd0", [E.whiteShade]: "#9aa0a8" }, leave: "roll" },
-  // 17 May's balloon cart: a red, a white and a blue balloon (the flag's own), a green-painted cart.
-  balloons: { ink: { [E.orangeLight]: "#c8283c", [E.magenta]: "#f4f4f2", [E.poisonLight]: "#2a4a9a", [E.plumLight]: "#5a8a5a", [E.plum]: "#3e6a44", [E.plumDark]: "#2a4a30" }, leave: "roll" },
+  // 17 May's balloon cart (order 48: two balloons where there were three): a red and a blue balloon (the flag's own), each lit at its
+  // top left with the glint, over a green-painted cart.
+  balloons: { ink: { [E.pink]: "#d8343e", [E.plum]: "#a8202e", [E.lime]: "#3a5cb0", [E.poison]: "#2a4490", [E.orangeLight]: "#5a8a5a", [E.orange]: "#3e6a44" }, leave: "roll" },
   // The site's forklift: an orange body, a grey mast and forks, its cab's glass a pale grey-blue, its beacon amber.
   forklift: { ink: { [E.plumLight]: "#c07a3a", [E.plum]: "#a05e2a", [E.plumDark]: "#6a4224", [E.white]: "#c8d4dc", [E.whiteShade]: "#8a9096", [E.amber]: "#d89a3a" }, leave: "roll" },
   trolley: { ink: { [E.pink]: "#b8bcc4", [E.plum]: "#6a6e78", [E.plumDark]: "#4a4e58", [E.plumLight]: "#9aa0aa", [E.orange]: "#b8403a", [E.orangeLight]: "#d06050" }, leave: "roll" },
