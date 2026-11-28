@@ -239,7 +239,7 @@ function extraState() {
     /** The step the card came. */
     cardAt: 0,
     /** What a boss says, shown over it in a bubble for a while: the troll's and the plough's lines, and the hint after a round with no hit. */
-    bossLine: null as { lines: string[]; until: number } | null,
+    bossLine: null as { lines: string[]; until: number; key?: string; since?: number } | null,
     /** The moment he is given the shield: his own words over him for a while. */
     gift: null as { since: number } | null,
     /** Until this step the help line stays up, though he moves: it has just changed (the shield, the sledge, the pole). */
@@ -1059,8 +1059,8 @@ const BOSS_LINE_STEPS = 180;
 const BOSS_HINT_STEPS = 300;
 
 /** A boss says something: over it in a bubble, and to a screen reader. */
-function bossSays(lines: string[], steps = BOSS_LINE_STEPS) {
-  state.bossLine = { lines, until: state.steps + steps };
+function bossSays(lines: string[], steps = BOSS_LINE_STEPS, key?: string) {
+  state.bossLine = { lines, until: state.steps + steps, key, since: state.steps };
   say(lines.join(" "));
 }
 
@@ -1141,7 +1141,7 @@ function react(ev: Events) {
     const sound: Record<string, Parameters<typeof sfx.play>[0]> = { wake: "gate", slam: "cannon", line: "stomp", beaten: "fanfare" };
     if (sound[ev.boss]) sfx.play(sound[ev.boss]);
     const words = p.def.bossWords?.[ev.boss];
-    if (words) bossSays(words[lang].split("\n"), /^miss|^rest/.test(ev.boss) ? BOSS_HINT_STEPS : BOSS_LINE_STEPS);
+    if (words) bossSays(words[lang].split("\n"), /^miss|^rest/.test(ev.boss) ? BOSS_HINT_STEPS : BOSS_LINE_STEPS, ev.boss);
   }
   if (ev.over) {
     session.lives = 0;
@@ -1532,11 +1532,14 @@ function render(alpha: number) {
   }
   if (state.bubble) bubble = { x: state.bubble.door.x + state.bubble.door.w / 2, y: state.bubble.door.bottom - state.bubble.door.h, lines: [state.bubble.text] };
   // A boss's line or hint, beside it, while nothing else is speaking.
-  const boss = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? bossBubbleAt(p, state.bossLine.lines) : null;
-  if (!bubble && boss && state.bossLine) bubble = { x: boss.x, y: boss.y, lines: state.bossLine.lines };
+  const line = state.bossLine && state.steps < state.bossLine.until && state.mode === "play" ? state.bossLine : null;
+  const boss = line ? bossBubbleAt(p, line.lines) : null;
   // What he shouts in time with his tune (order 34), while nothing else is speaking.
   const sung = !bubble && !boss && shout && state.mode === "play" ? p.def.bossWords?.[shout]?.[lang].split("\n") : null;
-  const sungAt = sung && bossBubbleAt(p, sung);
+  // A line in his own voice: the level's talk panel, his face beside the words, not a bubble (order 47), where it has room.
+  const panel = bubble ? null : p.def.talk?.(line, shout, sung, { bar: barAt, pad: padKit?.rects() ?? [] }, p.boss?.state, state.steps);
+  if (!bubble && boss && line && !panel) bubble = { x: boss.x, y: boss.y, lines: line.lines };
+  const sungAt = !panel && sung && bossBubbleAt(p, sung);
   if (sung && sungAt) bubble = { x: sungAt.x, y: sungAt.y, lines: sung };
   // The feather moment at the mound: his own bubble, even though he stands at a door.
   const speaking = state.mode === "play" && !!state.feather && state.steps - state.feather.since > FEATHER_FALL * 0.6;
@@ -1578,6 +1581,7 @@ function render(alpha: number) {
     bubble: shownBubble,
     marker: state.goal && !state.goal.door ? { x: state.goal.x, y: p.map.surfaceBelow(state.goal.x, Math.min(state.goal.y, p.map.height - TILE)) ?? p.map.height } : null
   });
+  panel?.();
   feel?.him(p, body, seated ? 0 : state.walk, sky.phase, look(), seen);
   feel?.fore(scene.def, sky.phase, drawn.banner, !!shownBubble || !!p.sitting);
   if (!shownBubble) feel?.hint(hint);

@@ -312,6 +312,8 @@ export interface LevelDef {
   boss?: Boss<any>;
   /** What the page says when the boss does something, by its event's name. */
   bossWords?: Record<string, Words>;
+  /** A line of `bossWords` spoken in a character's own voice, as a talk panel instead of a bubble (order 47, ADR 0057). */
+  talk?: Talk;
   /**
    * The level's own music (order 34: the encore's tune, `game/tune.ts`), asked once a frame with the page's sound while the level is
    * played (null otherwise: it stops), the boss and the clock; it plays what is due and says which of `bossWords` is shouted now.
@@ -349,3 +351,23 @@ export interface Planned {
   name: string;
   place: Words;
 }
+
+/** What the page hands a talk panel to keep off (order 47), CSS pixels of the window: the bar's foot, the touch pad's controls as shown. */
+export interface TalkRoom {
+  bar: number;
+  pad: readonly { x: number; y: number; w: number; h: number }[];
+}
+
+/**
+ * A level's talk panel (order 47, ADR 0057): given the boss's line up now (its key, words, and the steps it came up and goes) and
+ * what the music has him shout, whether one of them is spoken in a character's own voice, and if so a way to draw its panel over
+ * the picture; null where none is, or where there is no room clear of the play, the pad and a notch (the page keeps its bubble).
+ */
+export type Talk = (
+  line: { lines: string[]; until: number; key?: string; since?: number } | null,
+  shout: string | null,
+  sung: string[] | null | undefined,
+  room: TalkRoom,
+  boss: unknown,
+  steps: number
+) => (() => void) | null;
