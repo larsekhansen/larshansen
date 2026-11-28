@@ -95,7 +95,9 @@ run files go on naming it by its `look`, so its box, frames' count, timing, spee
 byte-identical; the figures' tables, the natural selves and the palette test name it as drawn. Holmenkollen's hedgehog is a mountain hare
 in its white winter coat (15 x 12 over the hedgehog's box of 15 x 10: its long ears two rows over it, their black tips, a crest of three
 neon spikes along its back when glammed, which says it hurts from above); three of Slottet's seven pigeons are a balloon seller's cart
-(13 x 9 for the pigeon's kept box, `fit`: three balloons over a little cart, neon glammed, red, white and blue plain); Bjørvika's pigeons
+(13 x 9 for the pigeon's kept box, `fit`; since order 48 two big balloons at two heights over a plain little cart, a coral and a lime
+one glammed in colours the sheen leaves alone, a red and a blue over a green cart plain, and no flag of the crowd held up where a cart
+walks); Bjørvika's pigeons
 at the gate and on the first floor are a small forklift (13 x 9, `fit`); Stortinget's e-scooter is a commuter's bicycle (18 x 13 for the
 scooter's kept box). A figure must do honestly what its look does: a pigeon at Slottet only walks, so a cart can be one; a russ in red
 overalls or a surveyor is a person, taller than a pigeon's box, and was not drawn. Bygdøy's penguins stay: not of Oslo, but the museum's
@@ -280,6 +282,27 @@ For whoever draws or writes next: a place's enemies are its own creatures and th
 neon and glitter belong to the invaders alone. The plans Lars asked for on the same day (the city along Oslo's real streets and
 stations, the front page as a home, the runes) are the planner's to write; none of them is decided.
 
+**Seen in the levels** (order 48, ADR 0058 amended; every level looked at first in `tools/review/o48/before.md`, the result in
+`o48/after.md`). The rules it drew by, for anyone adding to a level:
+- **A place that is honestly modern stays modern, and is quietened**: fewer signs and muted colour, never made to look old (Stortinget:
+  the T roundel and the station's name once a screen and a half, half the posters, the T-bane's band and the posters' blocks an old
+  enamel's colours).
+- **The natural side older where the place truly is**: details of the national romantic kind, one or two a screen, each of its place,
+  from the props kit (`dragonHead`, `bargeBoard`, `skis` in `alive/props.ts`, a level's own material with `carvedWood` and `skiWood`):
+  Frognerseteren's dragon heads and carved barge board, skis against its wall and against Holmenkollen station's post; Holmenkollen's
+  name board an old enamel sign with the name in capitals, where a white panel with a row of squares read as a screen. A wooden
+  material warmer than weathered grey-brown comes near a coin's copper: the props test says so.
+- **The glamour louder where it reads tame**, in what Loki has laid over a thing (neon, chrome, sequins, stage light), and gone with the
+  glamour, so that its breaking is quiet returning: the encore's stage glitters (sequins, drawn once and copied) and burns a marquee of
+  bulbs along its mouth (lights after dark, only those on the screen); plain, the cloth is black and the bulbs dark glass.
+- **Glammed and natural differ at a glance**: every look's glammed self differs from its natural self in half or more of its pixels,
+  but by name (`alive/natural.test.ts`: the wasp, by Lars's word; the ring-throwers, by the park's idea; the fox and the cat, whose own
+  orange is near the glamour's, left for a decision).
+- **The characters carry what they are** (one or two marks each, box, frames and timing kept): him the knit's band across his yoke and
+  rivets on his helmet's rim (wool and iron); the troll a stone grown into its back and a young spruce on its shoulders (stone and moss,
+  older than the town); the plough its fleet number on its door and the marker rod on its blade (the municipality's own); the serpent
+  barnacles on its back and kelp off its chin (the fjord's).
+
 ## Faces when they talk
 
 Order 47 (ADR 0057). Lars: "Maybe when he talks you can make a more detailed version of his face, like they do in many pixel games.
@@ -298,6 +321,10 @@ anyway."
   the play; never over a control, a notch, the home bar or the play; the room it found kept while its line is up; no room, the bubble.
 - **How**: in from the sides over eight steps and out over the last six; a shout flashes behind him once; with reduced motion it
   appears and goes. Painted once a portrait and copied, in the encore's file. Off: take `talk` out of the encore's level.
+- **The raven in the mound** (order 48, ADR 0057 amended): the maze's raven speaks in its own voice, so its portrait (56 x 56: dry,
+  sharp, pleased; a Nordic bird, calm, no neon) stands beside its words in both pages that host the maze (`packages/maze/src/talk.ts`),
+  alone (the hero's portraits are this app's, which the maze's package cannot import). By the maze's rule for words it stands at the top
+  left under the header, or at the foot where he is under it; failing both, the bubble. In its own file, fetched as the scene loads.
 
 ## Frames, shadows and depth
 

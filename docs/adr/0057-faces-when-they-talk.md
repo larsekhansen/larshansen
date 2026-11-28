@@ -82,7 +82,8 @@ neon, plain none of it is on him. Each shown to fail on a planted fault.
   words in their mouths. Left for a decision if their lines are ever written in their own voices.
 - **A mouth that moves with the words**: motion nobody asked for, and nothing a player needs.
 - **A name tag** ("Loki"): the face says who speaks, and a new word in two languages was not asked for.
-- **The maze's raven and mound-dweller**: they speak in the maze's own page and package; left for later (`o47/after.md`).
+- **The maze's raven and mound-dweller**: they speak in the maze's own page and package; left for later (`o47/after.md`). *(Order 48
+  gave the raven its panel: see the amendment below. The mound-dweller does not speak.)*
 
 ## Consequences
 
@@ -90,3 +91,36 @@ neon, plain none of it is on him. Each shown to fail on a planted fault.
   shout, the bar's foot and the pad's controls. `?debug&say=<key>` shows a line as if it came up a second before (`&sayage=0` for its
   first frame).
 - The first script grew by the page's call to the hook (with order 47's other changes, under 400 bytes: `o47/after.md`).
+
+## Amended 28 November 2026 by order 48: the raven's panel in the mound
+
+The maze's raven speaks in its own voice (`packages/maze/src/i18n.ts`), so it has a portrait beside its words, in place of the bubble over
+its head, in both pages that host the maze (`packages/maze/src/talk.ts`; order 48, item 1):
+- **The portrait**: 56 art pixels square, in the maze's grain and the game's way of building a portrait (a backdrop, the figure from parts,
+  an outline in the game's dark): black feathers in the blue-violet sheen a raven takes from a torch, a heavy black bill with its ridge in
+  the grey the raven's figure is drawn in, its pale eye, shaggy throat feathers, the mound's stone in courses and an iron band behind it.
+  A Nordic bird, calm, not glam: no colour of the glamour's family (`talk.test.ts`).
+- **Three expressions**, small, as the mound is quiet: dry (the lid half down), sharp (the brow lowered over the eye, the bill open, the
+  throat feathers raised), pleased (the eye shut in an arc, the head up, the gape curled). Each line's face is a tag beside it
+  (`RAVEN_FACE` in `talk.ts`, keyed by the line's key in `i18n.ts`); no word changed; the scene speaks by key now.
+- **The raven alone**: no listener's portrait. The hero's portraits are the viking game's (`apps/viking/src/render/faces.ts`), which the
+  maze's package cannot import; moving them into the kit would have touched what the front page shares. Where a screen has room for
+  only one, ADR 0057 already has the speaker's alone.
+- **Where it stands, by the maze's own rule for words**: the maze hangs a line over the raven's head while it is in view, otherwise at the
+  top left under the header. A portrait over its head would cover the corridors round it and the raven itself, so the panel takes the
+  second place: the top left under the header, kept off the safe sides; where he is under it (a tile and a half round him), the foot of
+  the screen; where neither has room (no portrait taller than a third of the screen under the header), the bubble as before. It keeps the
+  place it found while its line is up.
+- **How**: in from the left over eight steps, out over the line's last six; with reduced motion it appears and goes. Each portrait painted
+  once and copied. The portraits, the tags and the placing are in a file of their own, fetched as the scene's module loads (long before a
+  level's fade-in is over); until it has come the words hang in their bubble. The maze's harness waits for it before its picture.
+- **Held by** `packages/maze/src/talk.test.ts` (three expressions, each whole and 40 or more pixels from the others, no neon; every line
+  the raven says has a face and words in both languages; the panel never over him, a notch, the home bar or the header and always inside
+  the screen at 390 x 844, 844 x 390, 360 x 640 and 667 x 375 with every notch; every line in both languages placed with him in the
+  middle; it keeps its region; with reduced motion all in at every step) and two scene checks in `packages/maze/src/reduced.test.ts`
+  (drawn as the page draws it: whole from its first frame and the same at every step with reduced motion; sliding without). Each shown to
+  fail on a planted fault (the layout let over him; the slide kept with reduced motion).
+- **Off**: the scene's `talk` import out (`packages/maze/src/scene.ts`), or a line's tag out of `RAVEN_FACE`, and its words hang in their
+  bubble again.
+- **Cost**: the maze page's first script 31.86 to 32.08 kB gzipped (as vite measures it) (the scene's lazy import, its readiness and the lines by key); the
+  portraits and the panel 3.2 kB gzipped in their own file in both pages; the viking page's first script is unchanged by it.

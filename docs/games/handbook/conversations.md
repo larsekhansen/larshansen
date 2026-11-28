@@ -363,6 +363,30 @@ Not answered yet: The tune, the look and the shouts; After you have played; The 
 - **Not answered yet**, as relayed: the tune, the look and the shouts; after he has played; the upright view; his face, and a beard.
   The hero's portrait (order 47) has no beard, as his figure has none; it follows whatever he decides.
 
+### Order 48: the dichotomy, seen (the planner's reading of his sentence)
+
+Not new words from Lars: what the planner decided on his behalf from his sentence of 28 November ("making Oslo quaint,
+Nordic-national-romantic, less technological, less crowded, calm? ... the bad guys are glam, neon, lights, American, loud. ... So the
+bigger face panels when talking. And more detail on the character anyway. And the dichotomy."), built in order 48 by drawing only
+(`apps/viking/tools/review/o48/after.md`; ADR 0058 and 0057 amended). Each is easy to undo:
+
+- **Stortinget quietened, not made old**: the T roundel and the station's name once a screen and a half, half the posters, the band and
+  the posters' blocks in an old enamel's colours. Undo: the spacings (360 back to 120 and 180, 320 to 160) and `BAND`/`quiet` in
+  `apps/viking/src/levels/stortinget.ts`.
+- **Frognerseteren's dragon style and skis** (Korketrekkeren), **Holmenkollen's enamel name board and skis**: undo by the calls to
+  `dragonHead`, `bargeBoard` and `skis` in those levels' files (the old board is in the commit's history).
+- **The encore's stage glitters and burns bulbs while Loki is glammed**: undo by the calls to `sequins()` and `marquee()` in
+  `apps/viking/src/levels/encore.ts`.
+- **The characters' marks**: his knit band and helmet rivets (`packages/pixelkit/src/him.ts`, `himviews.ts`: the rows marked order 48),
+  the troll's stone and spruce (`levels/nordmarka.ts`), the plough's fleet number and marker rod (`levels/nabolaget.ts`), the serpent's
+  barnacles and kelp (`levels/gamlebyen.ts`); each a few lines marked with the order.
+- **Slottet's balloon carts** redrawn (two balloons at two heights) and no crowd flag held up where they walk (item 1 of the order: the
+  cart had been "a muddle of red" in the planner's review of order 47).
+- **The raven's face in the mound** (ADR 0057 amended): its portrait beside its words in place of the bubble; undo by the scene's import
+  of `talk.ts` (`packages/maze/src/scene.ts`).
+- **Found and left for him**: the fox's and the cat's glamour reads tame (their own orange is near the glamour's); a neon of their own
+  would change four levels. And whether any of it reads as he meant: none of it has been seen on a phone.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.
