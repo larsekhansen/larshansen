@@ -51,15 +51,18 @@ export const HIM_INK: Record<string, string> = {
 };
 
 // His top: pompom, helmet, face, tunic, belt (rows 0 to 9 of his box), and his hips (row 10).
+// Order 48 (ADR 0058: the calm Nordic one, wool and iron): two marks from his portrait, rivets on the helmet's rim (row 2) and
+// the knit's band of white across his yoke, a zigzag of two rows (rows 6 and 7), as a Norwegian sweater has; his box, frames and
+// timing as they were.
 const TOP = [
   "....Ww....",
   "...jiII...",
-  "..rrrRRrr.",
+  "..rIrRRIr.",
   "..zsSSiS..",
   "..zsSeSe..",
   "..zssSSS..",
-  ".cxbbBBb..",
-  "cCxbPbBPb.",
+  ".cxPbPBP..",
+  "cCxbPbPBb.",
   "cCxbbbBbB.",
   ".cxyynyy.."
 ];

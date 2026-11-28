@@ -135,8 +135,12 @@ export function stepped(maze: Maze, params: URLSearchParams, input: Input, opts:
   if (params.has("levels")) maze.levels.open();
   opts.beforeDraw?.();
   maze.render(0, 1000);
+  // The raven's portraits come in a file of their own (order 48): a picture taken before they came is drawn again once they have.
+  lastStepped = maze.talkReady() ? null : maze;
   return true;
 }
+/** A stepped maze drawn before the raven's portraits had come, to draw again when they have, before the picture is taken. */
+let lastStepped: Maze | null = null;
 
 /**
  * `perf` (with `steps`): draws the frame fifty times and writes on `line` how many rectangles, colours set and copies
@@ -178,5 +182,9 @@ export function perf(maze: Maze, line: HTMLElement, params?: URLSearchParams) {
 
 /** Tells the frame round the page (`tools/shots.ts --wait`) that its picture is drawn. */
 export function drawn() {
-  if (window.parent !== window) window.parent.postMessage("viking:drawn", "*");
+  const post = () => window.parent !== window && window.parent.postMessage("viking:drawn", "*");
+  const m = lastStepped;
+  lastStepped = null;
+  if (!m) return void post();
+  void m.whenTalkReady().then(() => (m.render(0, 1000), post()));
 }

@@ -387,6 +387,29 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **Two expressions can be one** (order 47): the hero's calm and set faces were 21 pixels apart at 56 x 56, near enough to read as the same
   face at a phone's size; a test now holds every pair of a speaker's expressions 40 or more apart. *Count what tells two drawings apart.*
 
+- **A sheen paints a figure's top edge** (order 48): Slottet's balloons in laser orange and acid green each got a neon hat (the sheen lights
+  the top of every body colour it knows), and the cart read as a face (two round blobs side by side over a bar). In the pink and the lime,
+  which the sheen leaves alone, each balloon kept its own glint; at two heights, no face. *Before choosing a figure's colours, know which
+  the page will recolour (`LIT` in `alive/glamour.ts`, the level's lean in `LEANS`).*
+- **A level's lean turns a colour into another** (order 48): a hot pink balloon is magenta at Slottet (its lean maps the first neon), and
+  magenta is held to a quarter of a figure; the palette test found 33 %. *Look at a figure in its level's lean, not in the frames' own inks.*
+- **Warm wood as a prop comes near a coin** (order 48): Frognerseteren's carving in the logs' own brown was 3.8 from a coin's copper and the
+  hickory skis 5.4; as a prop each is held to 10. Weathered grey-brown carving and birch skis pass. *Run the props test after drawing any
+  wood.*
+- **A lazily fetched drawing and a stepped picture** (order 48): the maze's raven's portraits come in a file of their own, fetched as the
+  scene loads; the harness steps and draws at once, sometimes before it came. The harness now draws again once it has, before it says the
+  picture is drawn. *When a drawing moves to a lazy file, ask what draws before it arrives (the harness, a test) and make it wait.*
+- **What a first script carries for a lazy file** (order 48): the maze page's first script grew 0.46 kB with the raven's panel's tags and
+  placing in the scene; moved into the panel's own file (the scene hands it the line's key and where he is), 0.22 kB. *Give the lazy file
+  the logic and the first script one call (order 47's lesson, again).*
+- **A figure in the kit is in every picture** (order 48): his knit band and helmet rivets (`packages/pixelkit/src/him.ts`) changed every
+  picture of every level and of the maze; the front page keeps its own person and stayed 28 of 28. *Say so before comparing pictures: "every
+  picture differs where he stands" is a kind of difference, and the levels changed beside it need their own check (here: the difference's
+  box at his place, nowhere else).*
+- **Measure the glamour, not only look at it** (order 48): the share of a look's pixels that differ between its glammed and its natural self,
+  on the census the natural test already walks, found what reading pictures had not: the fox (25 %) and the cat (15 %) are orange of their
+  own, near the glamour's orange, so their glamour reads tame. *A number per figure finds the tame ones; then decide by name.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

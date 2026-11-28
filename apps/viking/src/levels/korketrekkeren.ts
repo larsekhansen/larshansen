@@ -20,7 +20,7 @@ import { plane } from "../alive/depth";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { inTheGround, skyBand, underBand } from "../alive/upright";
 import { tile as textured, type Grain } from "../alive/ground";
-import { CAST, box as pbox, dot, poolAlong, prop, tone, type Stuff } from "../alive/props";
+import { CAST, bargeBoard, box as pbox, carvedWood, dot, dragonHead, poolAlong, prop, skiWood, skis, tone, type Stuff } from "../alive/props";
 import { mapBuilder } from "./build";
 import type { Grounds, LevelDef, LevelRules, View } from "./types";
 
@@ -381,14 +381,14 @@ function frognerseteren(v: View) {
     R(x + 5, g - 54, 1, 12, K.logs);
     light(x, g - 54, 12, 12);
   }
-  // The roof: dark shingle over the top ledge, its ridge, a dragon head carved at each gable.
+  // The roof: dark shingle over the top ledge, its ridge; a carved barge board along its eaves, and a dragon head at each end of the
+  // ridge (order 48: the dragon style that makes it Frognerseteren, where three rectangles a head were not seen).
   for (let k = 0; k < 18; k++) R(x0 - 8 + k * 2, g - 4 * TILE - 4 - k, x1 - x0 + 16 - k * 4, 1, k % 4 === 0 ? mix(K.shingle, WHITE, 0.6) : K.shingle);
   for (let k = 0; k < x1 - x0 + 16; k += 3) R(x0 - 8 + k, g - 4 * TILE - 5, 2, 2, K.bank);
-  for (const [ex, d] of [[x0 - 10, -1], [x1 + 8, 1]] as const) {
-    R(ex, g - 4 * TILE - 14, 3, 12, K.carved);
-    R(ex + d * 3, g - 4 * TILE - 18, 4, 4, K.carved);
-    R(ex + d * 6, g - 4 * TILE - 16, 2, 2, K.carved);
-  }
+  bargeBoard(CARVED, x0 - 8, x1 + 8, g - 4 * TILE - 3);
+  dragonHead(CARVED, x0 + 26, g - 4 * TILE - 21, -1);
+  dragonHead(CARVED, x1 - 26, g - 4 * TILE - 21, 1);
+  skis(SKI, x0 + 3, g);
   // The balcony along the first floor, where the boys stand: its floor and its carved rail.
   R(x0 + 8, g - 2 * TILE - 3, x1 - x0 - 16, 3, K.carved);
   for (let x = x0 + 10; x < x1 - 10; x += 6) R(x, g - 2 * TILE - 12, 2, 9, mix(K.carved, INK, 0.2));
@@ -399,6 +399,17 @@ function frognerseteren(v: View) {
   for (let y = g - 2 * TILE; y < g; y += 4) R(29 * TILE, y + 3, 3 * TILE, 1, K.logs);
   for (let k = 0; k < 3; k++) R(29 * TILE + 4 + k * 12, g - 18, 4, 18, k % 2 ? SLEDGE_WINE : K.sledgeWood);
 }
+
+/**
+ * The dragon style (order 48; DESIGN, "Calm Oslo, loud glamour": details of the national romantic kind where the place truly has
+ * them). Frognerseteren is the city's dragon-style log house: dragon heads carved on its gables, carved barge boards along its eaves,
+ * skis against the wall. The pieces are the props kit's (`dragonHead`, `bargeBoard`, `skis`); its carved wood here.
+ */
+/** Pale birch skis (a warmer wood came within 6 of a coin's copper). */
+export const SKI_BIRCH = "#b8a888";
+// Weathered grey-brown, as old carving out in the weather goes (the logs' warm brown came within 4 of a coin's copper as a prop).
+const CARVED: Stuff = carvedWood("#6a5a48", K.logs);
+const SKI: Stuff = skiWood(SKI_BIRCH);
 
 /** The red plastic sledge among the hire sledges (order 34; ADR 0044 amended): a deep wine red, 20.7 off the warning red where the kit's was 5.9. */
 const SLEDGE_WINE = "#8a2030";

@@ -26,14 +26,15 @@ const make = (name: string, ...pieces: Piece[]) => frame(name, HIM_INK, ...piece
 const FACE = [
   "....Ww....",
   "...IIij...",
-  ".rRRRrrrr.",
+  ".rIRRrrIr.",
   "..SSiisz..",
   "..SeSsez..",
   "..SSsssz.."
 ];
+// The knit's band across his yoke (order 48), as from the side.
 const FRONT = [
-  ".BBbbbbxx.",
-  "cBbPbbPbx.",
+  ".BPbPbPbx.",
+  "cBbPbPbbx.",
   "cBbbBbbbx.",
   ".byyynyy.."
 ];
@@ -64,7 +65,7 @@ const TOWARD_BLINK: Piece = [["z..z"], 3, 4];
 const NAPE = [
   "....Ww....",
   "...IIij...",
-  ".rRRRrrrr.",
+  ".rIRRrrIr.",
   "..sszzzz..",
   "..szzzzz..",
   "...zzzz..."

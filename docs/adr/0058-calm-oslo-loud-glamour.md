@@ -48,3 +48,29 @@ And: "And the dichotomy."
 
 `apps/viking/docs/DESIGN.md` has a section, "Calm Oslo, loud glamour", saying this in plain words with his words quoted. Nothing in
 the game changed for this record; the talk panel ([0057](0057-faces-when-they-talk.md)) is its first use.
+
+## Amended 28 November 2026 by order 48: the dichotomy, seen
+
+Order 48 (`docs/games/orders/48-the-dichotomy.md`) made the theme visible in the levels, by drawing only; no route, box, speed, timing,
+heart, enemy placement or word changed, and the plans of 28 November (the real-Oslo rebuild, the front page as a home, the runes) were
+not touched. What was decided, by the planner on Lars's behalf from his sentence ("making Oslo quaint, Nordic-national-romantic, less
+technological, less crowded, calm ... the bad guys are glam, neon, lights, American, loud"), and how each is undone, is in
+`docs/games/handbook/conversations.md`; the table it was chosen from is `apps/viking/tools/review/o48/before.md`, the result `o48/after.md`.
+
+- **A place that is honestly modern stays modern and is quietened** (Stortinget): fewer signs (the T roundel and the station's name once a
+  screen and a half, half the posters) and muted colour (the band and the posters' blocks an old enamel's). The station is not made old.
+- **Details of the national romantic kind where the place truly has them**, one or two a screen, as pieces of the props kit
+  (`alive/props.ts`: `dragonHead`, `bargeBoard`, `skis`, with `carvedWood` and `skiWood` for a level's own material): Frognerseteren's
+  dragon heads and barge board, skis against its wall and against Holmenkollen station's post. Holmenkollen's name board an old enamel
+  sign with the name in capitals (it read as a screen).
+- **The glamour louder where it read tame**: the encore's stage glitters with sequins and burns a marquee of bulbs along its mouth while
+  the glamour is on (lit after dark), and both go with the glamour: plain, the cloth is black and the bulbs dark glass.
+- **The characters**: one or two marks each of what the theme says they are, every box, frame and timing kept: him (wool and iron) the
+  knit's band across his yoke and rivets on his helmet's rim; the troll (stone and moss) a stone in its back and a young spruce on its
+  shoulders; the plough (the municipality's own) its fleet number and its blade's marker rod; the serpent (the fjord's) barnacles and
+  kelp. Slottet's balloon carts redrawn (two balloons, sheen-free colours) and the crowd's flags kept off where they walk.
+- **Held**: every look's glammed self differs from its natural self in half its pixels or more, but by name (`alive/natural.test.ts`): the
+  wasp (amber and black, by Lars's word), the ring-throwers (granite, by the park's idea), and the fox and the cat, whose own orange is
+  near the glamour's. Those two were found here and **left for a decision**: a neon of their own would change four levels.
+- **Not mended, with why**: Langkaia (its glamour reads small; it is the first script's level, and what it draws costs every visitor),
+  Vigelandsparken and Ekeberg (their statues and their Scream's sky are their ideas), and the levels marked 1.

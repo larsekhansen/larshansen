@@ -733,3 +733,77 @@ export function tramSide(x: number, y: number, w: number, h: number, winTop: num
 
 /** For a level's own props: a kept piece painted pixel by pixel (`prop`), and the grid's pen (`dot`, `box`) and a material's tone (`tone`). */
 export { put as prop, dot, box, T as tone, type Grid };
+
+// --- The national romantic kind (order 48; DESIGN, "Calm Oslo, loud glamour") ----------------------------------------------
+// Details of Oslo's old timber, where the place truly has them, one or two a screen: a dragon-style house's carved dragon heads and
+// barge boards (Frognerseteren), skis against a wall (anywhere up the hill in winter). Each a piece kept and copied; its material the
+// level's own (`carvedWood`, `skiWood`).
+
+/** Carved wood: a level's carving tone, its dark the tarred logs it is carved on, lit from the top left. */
+export const carvedWood = (carved: string, logs: string): Stuff => ({ name: "carved wood", ramp: [mix(logs, INK, 0.25), mix(carved, logs, 0.55), carved, mix(carved, WHITE, 0.22)] });
+/** Ski wood: the hickory of an old pair of wooden skis, tarred underneath. */
+export const skiWood = (wood: string): Stuff => ({ name: "ski wood", ramp: [mix(wood, INK, 0.45), mix(wood, INK, 0.2), wood, mix(wood, WHITE, 0.25)] });
+
+/** A dragon head at a ridge's end, 16 x 20: its neck rising off the ridge and curving out, its jaws open, a crest, an eye. */
+const DRAGON = [
+  ".........33.....",
+  "........3221....",
+  ".......32222....",
+  ".......322o2222.",
+  ".......322222223",
+  ".......221...111",
+  ".......22.......",
+  ".......22...2221",
+  "......322..2111.",
+  "......2211111...",
+  ".....322........",
+  ".....22.........",
+  "....322.........",
+  "....22..........",
+  "...322..........",
+  "...22...........",
+  "..322...........",
+  "..221...........",
+  ".3221...........",
+  "3221............"
+];
+/** Draws a dragon head with its neck's foot at (x, y), looking out the way `facing` says. */
+export function dragonHead(s: Stuff, x: number, y: number, facing: 1 | -1) {
+  put("dragon head", [s], facing > 0 ? "r" : "l", 16, 20, facing > 0 ? x : x - 15, y - 20, (g) =>
+    DRAGON.forEach((row, r) =>
+      [...row].forEach((ch, c) => {
+        if (ch === ".") return;
+        dot(g, facing > 0 ? c : 15 - c, r, ch === "o" ? INK : T(s, Number(ch) - 1));
+      })
+    )
+  );
+}
+/** A barge board along eaves from xa to xb, its top at y: a carved band, a row of round holes, its lower edge cut in scallops. */
+export function bargeBoard(s: Stuff, xa: number, xb: number, y: number) {
+  put("barge board", [s], String(xb - xa), xb - xa, 4, xa, y, (g) => {
+    box(g, 0, 0, xb - xa, 1, T(s, 3));
+    box(g, 0, 1, xb - xa, 1, T(s, 2));
+    for (let k = 1; k < xb - xa; k += 4) dot(g, k, 1, T(s, 0));
+    for (let k = 0; k < xb - xa; k += 4) {
+      box(g, k, 2, 3, 1, T(s, 1));
+      dot(g, k + 1, 3, T(s, 0));
+    }
+  });
+}
+/** Two pairs of wooden skis and a pole leaning on a wall, 11 x 30 from their foot at (x, ground). */
+export function skis(s: Stuff, x: number, ground: number) {
+  put("skis", [s, CAST], "", 11, 30, x, ground - 30, (g) => {
+    for (const [sx, lean] of [[1, 0], [5, 1]] as const)
+      for (let r = 2; r < 30; r++) {
+        const dx = Math.floor(((30 - r) * (2 + lean)) / 30);
+        dot(g, sx + dx, r, T(s, r < 4 ? 3 : 2));
+        dot(g, sx + dx + 1, r, T(s, r < 4 ? 2 : 1));
+        if (r === 18) dot(g, sx + dx, r, T(CAST, 0)), dot(g, sx + dx + 1, r, T(CAST, 0));
+      }
+    // The tips, curled up and back.
+    dot(g, 3, 1, T(s, 3)), dot(g, 4, 0, T(s, 2)), dot(g, 8, 1, T(s, 3)), dot(g, 9, 0, T(s, 2));
+    // A pole, its basket near the foot.
+    for (let r = 4; r < 30; r++) dot(g, 10 - Math.floor((30 - r) / 12), r, T(CAST, 2));
+    box(g, 8, 26, 3, 1, T(CAST, 1));
+  });
+}

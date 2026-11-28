@@ -42,6 +42,7 @@ import { levelPaint } from "../src/render/fields";
 import { drawShot } from "../src/render/pickups";
 import { HERO_FACES, LOKI_FACES, heroPortrait, lokiPortrait } from "../src/render/faces";
 import * as mazeFigures from "@larshansen/maze/figures";
+import { RAVEN_FACES, ravenPortrait } from "@larshansen/maze/talk";
 import * as mazeArt from "@larshansen/maze/render";
 import { textTarget } from "@larshansen/pixelkit/text";
 import { noPage } from "../src/render/sprite";
@@ -546,6 +547,8 @@ for (const [file, rows] of maze()) sheets.set(file, rows);
 const portraitRow = (state: string, fs: Frame[]): Row => ({ state, frames: fs.map((f) => frameGrid(f, f.x1, f.y1)) });
 sheets.set("portrait-loki", ["glammed", "the wig knocked off", "the shades knocked off", "plain"].map((st, i) => portraitRow(`his face, ${st}`, LOKI_FACES.map((f) => lokiPortrait(f, i)))));
 sheets.set("portrait-hero", [portraitRow("his face, quiet", HERO_FACES.map((f) => heroPortrait(f)))]);
+// The raven's three in the mound (order 48).
+sheets.set("portrait-raven", [portraitRow("its face, quiet", RAVEN_FACES.map((f) => ravenPortrait(f)))]);
 const throws = new Map<string, { level: string; frames: Grid[] }[]>();
 for (const st of BUILT) {
   const def = await loadLevel(st.id);
