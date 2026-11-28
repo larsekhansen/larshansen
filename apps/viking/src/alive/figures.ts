@@ -56,6 +56,11 @@ export const FIGURE_NAMES: Record<string, Words> = {
   "enemy-fox": n("fox", "rev"),
   "enemy-grill": n("disposable grill", "engangsgrill"),
   "enemy-hedgehog": n("hedgehog", "pinnsvin"),
+  // Figures of their place's own (order 47), each in another look's box and behaviour (`drawAs`).
+  "enemy-hare": n("mountain hare", "fjellhare"),
+  "enemy-bicycle": n("commuter's bicycle", "pendlersykkel"),
+  "enemy-balloons": n("balloon cart", "ballongvogn"),
+  "enemy-forklift": n("forklift", "gaffeltruck"),
   "enemy-salmon": n("salmon", "laks"),
   "enemy-duck": n("mallard", "stokkand"),
   "enemy-coot": n("coot", "sothøne"),

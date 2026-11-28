@@ -10,6 +10,8 @@ import { rampHeight, type Ramp, type TileMap } from "@larshansen/pixelkit/tilema
 import type { EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook, drawLookShot } from "../render/looks";
+import { FOE_INK, SHADES, foeLooks, mark, type Looks } from "../alive/foes";
+import { frame } from "../alive/frames";
 import { mapBuilder } from "./build";
 import { plane } from "../alive/depth";
 import { darker, drawFar, farPiece } from "../alive/far";
@@ -25,7 +27,7 @@ import type { LevelDef, View } from "./types";
 // no steering, the speed climbs past anything he can run, and one button matters, the jump at the
 // lip. Rune H hangs in the flight path; miss it and the landing hill lets him down, the steps under
 // the inrun take him back up to try again. The city lies below in the far backdrop.
-// New: ice, and the inrun (surfaces). Snowball kids throw; hedgehogs and fire baskets are spiky.
+// New: ice, and the inrun (surfaces). Snowball kids throw; a mountain hare (order 47) and fire baskets are spiky.
 //
 //   #  snow   I  ice   H  a red rail (a solid post)   K  rock   =  the walkway's planks
 //   -  the hut's roof   _  a snow-laden branch   c  the snow cannon   b  a bench   $  skilling
@@ -206,8 +208,40 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 145, r: 10, range: 3, rise: 6, period: 180 },
   { kind: "thrower", look: "kid", c: J + 22, r: 24, period: 190, offset: 120 },
   { kind: "spiky", look: "grill", c: J + 8, r: 24, speed: 0, w: 12, h: 12 },
-  { kind: "spiky", look: "hedgehog", c: J + 30, r: 24, range: 3 }
+  // A mountain hare in its white winter coat where the hedgehog was (order 47, Lars: "swap it for a mountain hare"): a hedgehog
+  // sleeps through the winter. Drawn as the hare; its box, speed and behaviour the hedgehog's, which the rules and run files name.
+  { kind: "spiky", look: "hedgehog", drawAs: "hare", c: J + 30, r: 24, range: 3 }
 ];
+
+// --- The mountain hare (order 47; order 35 drew one that read as a pale blob and was taken out): 15 x 12 over the hedgehog's
+// box of 15 x 10, its long ears two rows over it, so its silhouette says hare at a glance: two ears up and a little back, each
+// with its black tip (a mountain hare's own, and dark against the snow), the near one pink inside; a round head with a dark
+// eye, a pink nose; the back rounding down to the rump and the scut; a long hind foot, the fore paws under its chest. In its
+// white winter coat, lit along its top, its shade under its belly and round its thigh. Glammed, a teased crest of neon spikes
+// stands along its back, three of them, sharp, in the level's two neons (it hurts from above, as the hedgehog's spines did)
+// and shades over its eye. An idle of two (its ears turning) and a hop of four by the distance it covers.
+const HARE_EARS = [
+  ["........ll..ll.", "........ww..Wp.", ".........ww.Wp.", "..........w.Wp.", "..........wWWW."],
+  [".......ll...ll.", ".......ww...Wp.", "........ww..Wp.", ".........ww.Wp.", "..........wWWW."]
+];
+const HARE_BODY = [".........WWWWWW", "...wWWWW.WWlWWp", "..wWWWWWWWWWWw.", ".wWWWWWWWWWWw..", "wWWWwwwwWWWW..."];
+/** Its legs as it hops: gathered, pushing off (the hind foot out behind, the fore paws reaching), stretched, landing. */
+const HARE_LEGS = [
+  ["wWWwWWWWwWWw...", ".wwwwww..ww...."],
+  ["wwwWWWWWWWWWWw.", "ww..........ww."],
+  ["wWwWWWWWWWWWww.", ".ww.........ww."],
+  ["wWWwWWWwwWWw...", "..wwww...ww...."]
+];
+const HARE_CREST = (dy: number) => mark(["N..N...", "Nn.Nn.N", "nnnnnnn"], 2, 3 + dy);
+const hare = (name: string, ears: number, legs: number, dy = 0) =>
+  frame(name, FOE_INK, [HARE_EARS[ears], 0, dy], [HARE_BODY, 0, 5 + dy], [HARE_LEGS[legs], 0, 10], HARE_CREST(dy), mark(SHADES, 10, 6 + dy));
+const HARE: Looks = {
+  w: 15,
+  h: 12,
+  idle: [hare("hare, sitting", 0, 0), hare("hare, its ears turning", 1, 0)],
+  move: [hare("hare, hopping 1", 0, 0, 1), hare("hare, hopping 2", 1, 1), hare("hare, hopping 3", 1, 2), hare("hare, hopping 4", 0, 3, 1)]
+};
+foeLooks({ hare: HARE });
 
 // --- Art ----------------------------------------------------------------------------------------------------
 const P = PALETTE;

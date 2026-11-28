@@ -11,7 +11,7 @@ import { rampHeight, type TileMap } from "@larshansen/pixelkit/tilemap";
 import { keepBoxes, leap, type Enemy, type EnemyDef } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
 import { drawLook } from "../render/looks";
-import { FOE_INK, RAT, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
+import { FOE_INK, RAT, SHADES, drawFoe, foeFrame, foeLooks, mark, type Looks } from "../alive/foes";
 import { frame } from "../alive/frames";
 import { plain } from "../render/sprite";
 import { mapBuilder } from "./build";
@@ -232,7 +232,7 @@ export const HAZARDS: Hazard[] = [
 
 /**
  * Pigeons in the ticket hall, one flying under the vault; a shopping trolley on the mezzanine, alone; a
- * rat on platform 1 while he waits; rats that leap out of the track; a scooter, umbrellas tumbling on
+ * rat on platform 1 while he waits; rats that leap out of the track; a commuter's bicycle, umbrellas tumbling on
  * the walkway, a pigeon over it; a rat on platform 3.
  */
 export const ENEMIES: EnemyDef[] = [
@@ -242,12 +242,50 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "trolley", c: 47, r: M - 1, range: 2, w: 12, h: 10, speed: 0.3 },
   { kind: "jumper", look: "trackrat", c: 80, r: P, rise: 30, period: 200 },
   { kind: "walker", look: "rat", c: 92, r: P - 1, range: 2 },
-  { kind: "walker", look: "scooter", c: 139, r: P - 1, range: 2, w: 14, h: 12 },
+  // A commuter's bicycle where the e-scooter was (order 47: scooters are ridden above, not below), riding itself: drawn as the
+  // bicycle, its box, speed and behaviour the scooter's, which the rules and run files name.
+  { kind: "walker", look: "scooter", drawAs: "bicycle", c: 139, r: P - 1, range: 2, w: 14, h: 12 },
   { kind: "spiky", look: "umbrella", c: 145, r: P - 1, range: 1, w: 12, h: 9, speed: 0.25, small: true },
   { kind: "jumper", look: "trackrat", c: 155, r: P, rise: 36, period: 180, offset: 90 },
   { kind: "walker", look: "rat", c: 244, r: U - 1, range: 1 },
   { kind: "jumper", look: "trackrat", c: 259, r: P, rise: 28, period: 190, offset: 40 }
 ];
+
+/**
+ * A commuter's bicycle riding itself (order 47): 18 x 13, drawn for the scooter's kept box (14 x 12, `fit`), its bar a pixel over
+ * the box's top, where he lands on it. A step-through frame lit along its tubes, a saddle, a rear rack with a pannier, a bell on
+ * the bar, a wicker basket on the front with a lamp under it, mudguards' line over two spoked wheels that turn by the distance it
+ * rolls (a spoke's light goes round each hub). Glammed, a neon strip along its top tube, streamers off its bar, a reflector in
+ * the second neon; its own colours (its natural self) a bottle green frame, a brown saddle, a wicker basket, steel spokes.
+ */
+const BIKE_FRAME = [
+  "............lla...",
+  "..llll.......M....",
+  "...ll.......MaYoY.",
+  "....M......M.YoYo.",
+  "mmmmMMMMMMMM.oYoY.",
+  "mdddmM....M..oooo.",
+  "mddd..M..m....m...",
+  ".......Mm.....m...",
+  ".......ll........."
+];
+/** A spoked wheel, 7 across: its tyre near-black, its spokes in the white's shade over the dark, its hub pale; the light goes round. */
+const BIKE_WHEEL = [
+  ["..lll..", ".ldwdl.", "lddwddl", "lwwawwl", "lddwddl", ".ldwdl.", "..lll.."],
+  ["..lll..", ".lwddl.", "ldwddwl", "lddaddl", "lwddwdl", ".lddwl.", "..lll.."],
+  ["..lll..", ".lddWl.", "lddddwl", "lddaddl", "lwddddl", ".lWddl.", "..lll.."],
+  ["..lll..", ".ldWdl.", "lddWddl", "lWWaWWl", "lddWddl", ".ldWdl.", "..lll.."]
+];
+const BIKE_GLAM = [mark(["NNNNNNN"], 4, 4), mark(["N.", "nN", ".n"], 10, 0), mark(["n"], 0, 5)];
+const bike = (name: string, k: number) => frame(name, FOE_INK, [BIKE_FRAME, 0, 0], [BIKE_WHEEL[k], 0, 6], [BIKE_WHEEL[(k + 2) % 4], 11, 6], ...BIKE_GLAM);
+const BICYCLE: Looks = {
+  w: 18,
+  h: 13,
+  fit: true,
+  idle: [bike("bicycle, waiting", 0), bike("bicycle, its wheels a little on", 1)],
+  move: [0, 1, 2, 3].map((k) => bike(`bicycle, rolling ${k + 1}`, k))
+};
+foeLooks({ bicycle: BICYCLE });
 
 export const STORTINGET_RULES = { COLS, ROWS, CARRIERS, LOCAL_LINE, EXPRESS_LINE };
 

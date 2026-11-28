@@ -11,7 +11,7 @@ import { noPage } from "../render/sprite";
 import { drawBreak, type Shape } from "./death";
 import { clock, forced } from "./parts";
 import { LEANS, glam } from "./glamour";
-import { NATURAL, naturalName, naturalOf } from "./natural";
+import { NATURAL, drawnLook, naturalName, naturalOf } from "./natural";
 
 // For the tests and the tools only (order 23): every enemy look of every level drawn in every state it has, through a
 // recorder: still (two breaths), moving (four frames of its cycle), winding up (a thrower), and its death (three
@@ -44,7 +44,7 @@ const at = (p: Play): View => ({ sky: skyFor(new Date(2026, 5, 15, 12), "day"), 
  * The name a look goes by: Rådhuset's gull throws standing, so it is a look of its own; and Gamlebyen's guards are the
  * bishop's, not the fortress's.
  */
-export const lookName = (e: Enemy, level = "") => naturalName(e.def.look, e.def.kind, level);
+export const lookName = (e: Enemy, level = "") => naturalName(drawnLook(e.def), e.def.kind, level);
 
 /**
  * Every look in every built level, each in every state (the first enemy of each look, in the first level it is met). With

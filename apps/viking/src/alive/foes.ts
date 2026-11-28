@@ -242,7 +242,8 @@ export function drawFoe(e: Enemy, f: Frame, w: number, h: number, fit = false) {
 
 /** An enemy in one of the looks drawn as frames, and says so; false for any other. */
 export function drawFoeLook(e: Enemy, t: number): boolean {
-  const l = e.def.look === "gull" ? (e.def.kind === "flyer" ? FLYING.gull : FOES.gullStanding) : FOES[e.def.look];
+  const look = e.def.drawAs ?? e.def.look;
+  const l = look === "gull" ? (e.def.kind === "flyer" ? FLYING.gull : FOES.gullStanding) : FOES[look];
   if (!l) return false;
   if (l.above !== undefined) drawFoe(e, foeFrame(e, t, l), l.w, e.h + l.above, true);
   else drawFoe(e, foeFrame(e, t, l), l.w, l.h, l.fit);

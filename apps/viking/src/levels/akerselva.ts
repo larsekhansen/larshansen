@@ -384,7 +384,11 @@ const grefsenkollen = () =>
 const SAGENE = 2080;
 const PAULUS = 2700;
 
-/** Sagene kirke on its rise above the river: red brick, a tall slim tower and its slim pointed spire, the nave's roof at its foot, trees round it. */
+/**
+ * Sagene kirke on its rise above the river: red brick, a tall slim tower and its slim pointed spire, the nave's roof at its foot, trees
+ * round it. Its spire is old copper (order 47, Lars: "Sagene church's spire: copper"): the green copper goes, hazed as a far thing
+ * is, lit down its left edge, its right edge in shade.
+ */
 const sagene = () =>
   farPiece("akerselva sagene", 40, 98, (b) => {
     // The rise it stands on, grass and trees, lit on its left.
@@ -406,11 +410,13 @@ const sagene = () =>
     b.fill(11, 3, at(36), at(41), darker(brick, 0.45));
     b.fill(12, 1, at(36), at(41), brick);
     b.pane(12, 1, at(24), at(27), darker(brick, 0.4));
+    const copper = mix(METAL.copper, LAND.farHills, 0.3);
     for (let u = 46; u <= 73; u++) {
       const w = Math.max(1, Math.round(7 - ((u - 46) * 6) / 27));
       const x0 = 9 + Math.floor((7 - w) / 2);
-      b.fill(x0, w, at(u), at(u), darker(brick, 0.22));
-      if (w > 2) b.dot(x0, at(u), darker(brick, 0.05));
+      b.fill(x0, w, at(u), at(u), copper);
+      if (w > 2) b.dot(x0, at(u), mix(METAL.copperLight, LAND.farHills, 0.3));
+      if (w > 3) b.dot(x0 + w - 1, at(u), mix(METAL.copperDark, LAND.farHills, 0.3));
     }
     b.fill(12, 1, at(74), at(76), darker(brick, 0.3));
     // Trees in front of the nave's foot and the tower's.
@@ -420,7 +426,10 @@ const sagene = () =>
     }
   });
 
-/** Paulus kirke at Grünerløkka: a broader brick tower with corner pinnacles and a clock, a pointed spire, the gable of the nave beside it. */
+/**
+ * Paulus kirke at Grünerløkka: a broader brick tower with corner pinnacles and a clock, a pointed spire, the gable of the nave beside it.
+ * Its spire is slate grey (order 47, Lars: "Paulus church's spire: slate grey"): the slate lit down its left edge, its right in shade.
+ */
 const paulus = () =>
   farPiece("akerselva paulus", 30, 66, (b) => {
     const brick = mix(RIVER.brickDark, LAND.farHills, 0.15);
@@ -435,9 +444,13 @@ const paulus = () =>
     b.fill(16, 2, 18, 24, darker(brick, 0.45));
     b.fill(20, 2, 18, 24, darker(brick, 0.45));
     for (const x of [13, 23]) b.fill(x, 2, 38, 42, lighter(brick, 0.12)), b.dot(x + (x < 20 ? 0 : 1), 43, lighter(brick, 0.12));
+    const slate = mix(ROOF.churchSlate, LAND.farHills, 0.15);
     for (let u = 39; u <= 63; u++) {
       const w = Math.max(1, Math.round(8 - ((u - 39) * 7) / 24));
-      b.fill(15 + Math.floor((8 - w) / 2), w, u, u, u === 39 ? lighter(ROOF.churchSlate, 0.25) : mix(ROOF.churchSlate, LAND.farHills, 0.1));
+      const x0 = 15 + Math.floor((8 - w) / 2);
+      b.fill(x0, w, u, u, u === 39 ? lighter(ROOF.churchSlate, 0.25) : slate);
+      if (u > 39 && w > 2) b.dot(x0, u, lighter(slate, 0.22));
+      if (u > 39 && w > 3) b.dot(x0 + w - 1, u, darker(slate, 0.15));
     }
     b.fill(19, 1, 64, 66, darker(brick, 0.3));
   });

@@ -14,7 +14,7 @@ import { pulseAge, pulsePhase, type Pulse } from "@larshansen/pixelkit/timed";
 import type { Zone } from "@larshansen/pixelkit/zone";
 import { keepBoxes, type Enemy, type EnemyDef, type Shot } from "../game/enemies";
 import { tbaneDoor } from "../render/furniture";
-import { FOE_INK, SHADES, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
+import { FOE_INK, SHADES, drawFoe, foeFrame, foeLooks, mark, type Looks } from "../alive/foes";
 import { frame, paint, type Piece } from "../alive/frames";
 import { plane } from "../alive/depth";
 import { mapBuilder } from "./build";
@@ -180,7 +180,7 @@ export const SPARKS: Hazard = { x: 55 * TILE + 2, y: (F2 + 1) * TILE, w: 12, h: 
 export const HAZARDS: Hazard[] = [REBAR, REBAR_2, REBAR_3, SPARKS];
 
 /**
- * A crow over the quay, a pigeon and a rat by the gate; a pigeon and a rat on the open floor; a pigeon on
+ * A crow over the quay, a forklift and a rat by the gate; a forklift and a rat on the open floor (order 47: the site's own); a pigeon on
  * the second tower, each away from where the hooks come and go (the third tower's landing has rebar
  * instead, where a man who jumps off the hook comes down); a pigeon on
  * the girder; the two riveters on the next floor's beam over its far end
@@ -191,9 +191,9 @@ export const HAZARDS: Hazard[] = [REBAR, REBAR_2, REBAR_3, SPARKS];
  */
 export const ENEMIES: EnemyDef[] = [
   { kind: "flyer", look: "crow", c: 10, r: G - 4, range: 3, rise: 8, period: 160 },
-  { kind: "walker", look: "pigeon", c: 14, r: G - 1, range: 2 },
+  { kind: "walker", look: "pigeon", drawAs: "forklift", c: 14, r: G - 1, range: 2 },
   { kind: "walker", look: "rat", c: 27, r: G - 1, range: 2 },
-  { kind: "walker", look: "pigeon", c: 59, r: F1 - 1, range: 1 },
+  { kind: "walker", look: "pigeon", drawAs: "forklift", c: 59, r: F1 - 1, range: 1 },
   { kind: "walker", look: "rat", c: 64, r: F1 - 1, range: 2 },
   { kind: "walker", look: "pigeon", c: 112.5, r: F2 - 1, range: 1 },
   { kind: "walker", look: "pigeon", c: 178, r: F2 - 1, range: 2 },
@@ -206,6 +206,34 @@ export const ENEMIES: EnemyDef[] = [
   { kind: "thrower", look: "riveter", c: 229, r: ROOF - 4, period: 120, offset: 60, straight: true, lead: true, faces: -1, reach: 12, blind: 4 },
   { kind: "walker", look: "pigeon", c: 268, r: ROOF - 1, range: 1 }
 ];
+
+/**
+ * A small forklift driving itself (order 47, Lars: "Enemies of the place's own ... yes, draw them"): two of the six pigeons, the
+ * one at the gate and the one on the first floor, are the site's own, drawn as the forklift (`drawAs`) in the pigeon's kept box
+ * (10 x 8), speed and walk, which the rules and the run files go on naming it by. 13 x 9, drawn for that box (`fit`): its roof
+ * over the cab a pixel over the box's top, where he lands on it. Facing right: the mast in front with its forks low, the cab's
+ * frame round a seat behind glass, a beacon on the roof, the body and its counterweight behind, a big front wheel and a small
+ * back one that turn. Glammed, a neon strip along its side and the beacon in neon; its natural self a site's orange forklift
+ * with a grey mast and black tyres.
+ */
+const LIFT_BODY = ["..llYYllll.wl", "..lWWWWWWl.wl", "..lWWWddWl.wl", "..lWWWddWl.wl", "MMMMMMMMMMMwl", "MmmmmmmmmMmwl", "dmmmmmmmmmmwl"];
+const LIFT_WHEELS = [
+  [".lll....llll.", "lwaw...lwawl.", ".lll....llll."],
+  [".lll....llll.", "lawl...lawwl.", ".lll....llll."],
+  [".lll....llll.", "lwal...lwwal.", ".lll....llll."],
+  [".lll....llll.", "lwwa...lawwl.", ".lll....llll."]
+];
+const LIFT_FORKS = ["...........ww", "...........ll"];
+const LIFT_GLAM = [mark(["NN"], 4, 0), mark(["nNnNnNnN"], 1, 4)];
+const forklift = (name: string, w: number) => frame(name, FOE_INK, [LIFT_BODY, 0, 0], [LIFT_WHEELS[w], 0, 6], [LIFT_FORKS, 0, 7], ...LIFT_GLAM);
+const FORKLIFT: Looks = {
+  w: 13,
+  h: 9,
+  fit: true,
+  idle: [forklift("forklift, waiting", 0), forklift("forklift, idling", 1)],
+  move: [0, 1, 2, 3].map((k) => forklift(`forklift, driving ${k + 1}`, k))
+};
+foeLooks({ forklift: FORKLIFT });
 
 export const BJORVIKA_RULES = { COLS, ROWS };
 

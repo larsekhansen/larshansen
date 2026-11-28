@@ -53,12 +53,21 @@ export const NATURAL: Record<string, Natural> = {
   dog: { ink: { ...BROWN_FUR, [E.plum]: "#7a5a40", [E.plumLight]: "#9a7656" }, leave: "run" },
   fox: { ink: { [E.orange]: "#c8642a", [E.orangeLight]: "#d07040" }, leave: "run" },
   cat: { ink: { [E.orange]: "#c87a3a", [E.orangeLight]: "#d8b060", [E.pink]: "#e0a0a0" }, leave: "run" },
+  // The mountain hare (order 47): its white winter coat, a cool grey under its belly, black ear tips (the near-black), a pink nose.
+  hare: { ink: { [E.white]: "#f4f4f0", [E.whiteShade]: "#b4bcc6", [E.pink]: "#d89a9a" }, leave: "run" },
   hedgehog: { ink: { [E.plum]: "#6b5646", [E.plumDark]: "#4a3a2e", [E.plumLight]: "#9a8470", [E.orange]: "#b89070", [E.orangeLight]: "#d4b494", [E.pink]: "#d8a090" }, leave: "run" },
   squirrel: { ink: { [E.orange]: "#b85a2a", [E.orangeLight]: "#d07a40", [E.plum]: "#704a30", [E.plumDark]: "#5a3a24", [E.plumLight]: "#8a6040" }, leave: "run" },
   crab: { ink: { [E.orangeLight]: "#a85a3a", [E.orange]: "#7a3e2a", [E.pink]: "#c08070" }, leave: "run" },
   salmon: { ink: { [E.pink]: "#c87f74", [E.plum]: "#5d6f7c", [E.plumLight]: "#8a98a4", [E.white]: "#d8dfe4", [E.whiteShade]: "#a8b4bc" }, leave: "dive" },
   // Its own colours (order 38): a deep petrol frame lit along its edges, graphite wheels; no hire company's.
   scooter: { ink: { [E.poison]: "#2f6b78", [E.poisonLight]: "#3c7f8c", [E.plum]: "#2a2c30", [E.plumLight]: "#4a4e56", [E.plumDark]: "#2a2c30", [E.pink]: "#c8c8c8", [E.white]: "#e6ebe8", [E.orangeLight]: "#8a3a2a" }, leave: "roll" },
+  // Order 47's figures of their place's own. A commuter's bicycle: a bottle green frame, a brown saddle and pannier, a wicker
+  // basket, steel spokes over dark, a pale hub.
+  bicycle: { ink: { [E.plumLight]: "#4a8466", [E.plum]: "#2f5e48", [E.plumDark]: "#2c2a28", [E.amber]: "#c8a060", [E.orange]: "#8a6034", [E.white]: "#c8ccd0", [E.whiteShade]: "#9aa0a8" }, leave: "roll" },
+  // 17 May's balloon cart: a red, a white and a blue balloon (the flag's own), a green-painted cart.
+  balloons: { ink: { [E.orangeLight]: "#c8283c", [E.magenta]: "#f4f4f2", [E.poisonLight]: "#2a4a9a", [E.plumLight]: "#5a8a5a", [E.plum]: "#3e6a44", [E.plumDark]: "#2a4a30" }, leave: "roll" },
+  // The site's forklift: an orange body, a grey mast and forks, its cab's glass a pale grey-blue, its beacon amber.
+  forklift: { ink: { [E.plumLight]: "#c07a3a", [E.plum]: "#a05e2a", [E.plumDark]: "#6a4224", [E.white]: "#c8d4dc", [E.whiteShade]: "#8a9096", [E.amber]: "#d89a3a" }, leave: "roll" },
   trolley: { ink: { [E.pink]: "#b8bcc4", [E.plum]: "#6a6e78", [E.plumDark]: "#4a4e58", [E.plumLight]: "#9aa0aa", [E.orange]: "#b8403a", [E.orangeLight]: "#d06050" }, leave: "roll" },
   umbrella: { ink: { [E.pink]: "#3a4a6a", [E.plumLight]: "#5a6a8a", [E.plum]: "#2a3650", [E.orangeLight]: "#8a6a4a", [E.orange]: "#6a4e34" }, leave: "fly" },
   anthill: { ink: { [E.orangeLight]: "#a07a4a", [E.orange]: "#7a5a38" }, leave: "stay" },
@@ -81,5 +90,7 @@ export const NATURAL: Record<string, Natural> = {
 /** A look's natural colour for one it is drawn in: its ramp's, or the colour itself (the near-black, its eyes, what is already natural). */
 export const naturalOf = (look: string, c: string): string => NATURAL[look]?.ink[c] ?? c;
 
+/** The look an enemy is drawn as (order 47: `drawAs`, a figure of its place's own in another look's box and behaviour). */
+export const drawnLook = (d: { look: string; drawAs?: string }) => d.drawAs ?? d.look;
 /** The name a look goes by (as the census has it): Rådhuset's gull throws standing; Gamlebyen's guards are the bishop's. */
 export const naturalName = (look: string, kind: string, level: string) => `${look}${kind === "thrower" && look === "gull" ? " (thrower)" : ""}${level === "gamlebyen" && look === "guard" ? " (the bishop's)" : ""}`;

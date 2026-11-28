@@ -18,6 +18,11 @@ export interface EnemyDef {
   kind: EnemyKind;
   /** Which drawing the level gives it: "pigeon", "scooter", "gull", "kid", "hedgehog", "grill"... */
   look: string;
+  /**
+   * Drawn as this look instead (order 47): a figure of its place's own (a mountain hare, a balloon cart, a forklift, a commuter's
+   * bicycle) in the box, frames, speed and behaviour of `look`, which the rules, the tools and the run files go on naming it by.
+   */
+  drawAs?: string;
   /** The tile it starts in; it stands on the floor of that tile (a flyer: the middle of its wave). */
   c: number;
   r: number;
