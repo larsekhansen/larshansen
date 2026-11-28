@@ -89,7 +89,7 @@ phone before going live. The Pi cannot run the game in a headless browser (HANDO
   here.
 - **ADR 0035**: the viking game's first script must stay under 60 kB gzipped; the build fails
   over it. New drawing goes in lazy chunks, and a new module is named in `vite.config.ts` (one it is not told about lands in the
-  first script). Order 42 made room: 55.80 kB (55.82 after order 43, 55.83 after order 44, 55.94 after order 45 and after order 46, 56.05 after order 47, 56.06 after order 48).
+  first script). Order 42 made room: 55.80 kB (55.82 after order 43, 55.83 after order 44, 55.94 after order 45 and after order 46, 56.05 after order 47 and after order 48).
 - **ADR 0044**: colour means something. Yellow paint on a top edge is "stand here" and nothing
   else is that yellow; red outline hurts; pale blue outline is harmless; cyan corners are "use";
   violet is "hit now". `render/palette.test.ts` enforces it.
