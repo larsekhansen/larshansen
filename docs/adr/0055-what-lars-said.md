@@ -115,3 +115,16 @@ The hedgehog is as it was at Akerselva, Nordmarka and Ekeberg; Holmenkollen's ru
 like the rest of the table, and is one word to undo (`look: "hare"`). Nothing else was retuned or moved.
 
 **Reversed in review, the same day.** The planner did not accept it in review: at the game's size it read as a pale blob, and its small spikes said "hurts from above" less clearly than the hedgehog's spines. The hare was taken out again before the merge (the commit and its revert are in the history); Holmenkollen keeps its hedgehog until a hare can be drawn that reads.
+
+## Amended by order 47 (28 November 2026): his second answers
+Lars answered again on 28 November (relayed by his other session; `docs/games/handbook/conversations.md`). Of this record's part 1: the
+plough beaten now says what he wrote, "The plough parks. / Gamle Oslo is clear." / "Brøytebilen parkerer. / Gamle Oslo er fri." (it was
+"The street is clear, for once."); every other line of Gamle Oslo is as live, and the doors labelled Hjem / Home were asked about and
+keep their label ("keep the label"). He asked for the level's first sign to be changed without saying to what: three ways to word it
+wait for him in `apps/viking/tools/review/o47/after.md`; the sign is as it was. Of part 3: every level whose difficulty was in question
+he said to leave as it is; nothing was retuned. Holmenkollen's hedgehog: "swap it for a mountain hare", and "Enemies of the place's own:
+yes, draw them". Order 47 drew them as figures in another look's box and behaviour (`EnemyDef.drawAs`, so the rules and the run files
+are untouched): the mountain hare at Holmenkollen, drawn again to read (long ears with black tips over its box, a crest of neon spikes
+when glammed), a balloon seller's cart for three of Slottet's pigeons, a forklift for two of Bjørvika's, a commuter's bicycle for
+Stortinget's e-scooter (DESIGN, "The levels"). His wider words about the theme are [0058](0058-calm-oslo-loud-glamour.md).
+

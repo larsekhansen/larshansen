@@ -96,3 +96,11 @@ The limits above stand, restated: Loki is nobody real; no real band's or perform
 riff, lyric or nameable melody (Lars named one band; it is read as "the general style", and anything nearer one band waits for his direct
 word); the man who paid is not named again, drawn or quoted; nothing above the encore's block in `game/story.ts` changes (its hash test
 holds); nobody dies.
+
+## Amended by order 47 (28 November 2026): his face when he talks
+Lars asked for "more detail" on Loki and "the bigger face panels when talking". His lines in his own voice are now shown in a talk
+panel, his portrait and the hero's beside the words ([0057](0057-faces-when-they-talk.md)); the hints keep their bubble. His figure on
+the stage carries two marks from the portrait (a lime streak swept back through the wig, the lime star of his make-up under his eye);
+no box, frame, tell or timing changed, the encore's run file byte-identical. The limits above stand: he is nobody real, and the man
+who paid is not named, drawn or quoted.
+
