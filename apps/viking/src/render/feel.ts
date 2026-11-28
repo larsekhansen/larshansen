@@ -21,7 +21,7 @@ import { pixels, type Frame } from "../alive/frames";
 import { shadows } from "../alive/shadows";
 import { BREAK, drawBreak, type Broken } from "../alive/death";
 import { NEON_A, glam, glows, leanFor } from "../alive/glamour";
-import { NATURAL, naturalName } from "../alive/natural";
+import { NATURAL, drawnLook, naturalName } from "../alive/natural";
 import { forced } from "../alive/parts";
 import { lean, outlined } from "./sprite";
 import { ENCORE, STORY, type StoryWords } from "../game/story";
@@ -1412,7 +1412,7 @@ function daylight(x: number, y: number, age: number) {
  * (bare of its marks, in its natural ramp) still and a step on in its cycle, and its marks alone.
  */
 function broken(e: Enemy, look: () => void, level: string, away: number): Broken {
-  const nat = NATURAL[naturalName(e.def.look, e.def.kind, level)];
+  const nat = NATURAL[naturalName(drawnLook(e.def), e.def.kind, level)];
   const leaned = (c: string) => lean[c] ?? c;
   const ink = (c: string) => nat?.ink[c] ?? c;
   const glammed = record(e, look, leaned);
@@ -1438,7 +1438,7 @@ function broken(e: Enemy, look: () => void, level: string, away: number): Broken
 
 /** An invader drawn as its natural self (bare of its marks, in its natural ramp), outlined in the calm pale. */
 function natural(e: Enemy, look: () => void, level: string) {
-  const ink = NATURAL[naturalName(e.def.look, e.def.kind, level)]?.ink ?? {};
+  const ink = NATURAL[naturalName(drawnLook(e.def), e.def.kind, level)]?.ink ?? {};
   const kept = { ...lean };
   for (const k of Object.keys(lean)) delete lean[k];
   Object.assign(lean, ink);

@@ -40,6 +40,7 @@ import { ENCORE, LOKI_DEF } from "../src/levels/encore";
 import type { LevelDef, View } from "../src/levels/types";
 import { levelPaint } from "../src/render/fields";
 import { drawShot } from "../src/render/pickups";
+import { HERO_FACES, LOKI_FACES, heroPortrait, lokiPortrait } from "../src/render/faces";
 import * as mazeFigures from "@larshansen/maze/figures";
 import * as mazeArt from "@larshansen/maze/render";
 import { textTarget } from "@larshansen/pixelkit/text";
@@ -541,6 +542,10 @@ for (const [look, rows] of await enemies()) sheets.set(`enemy-${look}`, rows);
 for (const [boss, rows] of bosses()) sheets.set(`boss-${boss}`, rows);
 sheets.set("boss-loki", loki());
 for (const [file, rows] of maze()) sheets.set(file, rows);
+// The portraits in the talk panel (order 47): Loki's six expressions a row, a row a stage of the fight; the hero's four.
+const portraitRow = (state: string, fs: Frame[]): Row => ({ state, frames: fs.map((f) => frameGrid(f, f.x1, f.y1)) });
+sheets.set("portrait-loki", ["glammed", "the wig knocked off", "the shades knocked off", "plain"].map((st, i) => portraitRow(`his face, ${st}`, LOKI_FACES.map((f) => lokiPortrait(f, i)))));
+sheets.set("portrait-hero", [portraitRow("his face, quiet", HERO_FACES.map((f) => heroPortrait(f)))]);
 const throws = new Map<string, { level: string; frames: Grid[] }[]>();
 for (const st of BUILT) {
   const def = await loadLevel(st.id);

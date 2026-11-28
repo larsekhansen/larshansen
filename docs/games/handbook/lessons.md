@@ -372,6 +372,21 @@ What went wrong or nearly did, and what to do differently. Earlier lessons are i
 - **A picture already taken is a picture** (order 46): order 45's final upright pictures were made from the code origin/main has; six taken again
   from origin/main's build were byte-identical, so its 320 served as the before, which saved half an hour of a busy Pi.
 
+- **A run file can carry a drawing's name** (order 47): the sloppy player writes what hurt him as `kind:look@column`, so a look renamed for a
+  new drawing (a hedgehog drawn as a hare) changes the run files wherever that enemy ever hurts. A figure of its place's own is drawn as
+  another look (`EnemyDef.drawAs`) and keeps the look's name. *Read what a check's output records before calling a change "drawing only".*
+- **A layout worked out every frame jumps with the camera** (order 47): the talk panel went from under the stage's floor to under the bar the
+  frame he jumped onto a speaker. It keeps the room it found for a line while the line is up, and stands at the far side of that room from the
+  play. *Ask what moves under a screen-space layout, and hold it still where it can be.*
+- **A line's age is the line's own** (order 47): the panel first counted a line's age from the frame the page first saw a panel, and under
+  the harness the music had already shown the same shout, so a line said a second ago came up as if new (slid out, its flash at full). *Keep a
+  thing's clock where the thing is.*
+- **Optional chaining costs the first script more than it looks** (order 47): the build writes `a?.b` as `(t=a)==null?void 0:t.b`; the page's
+  talk wiring first cost 304 bytes gzipped, 174 once its bookkeeping moved into the level's hook. *Put logic in the lazy file that already
+  knows the case; leave the page one call.*
+- **Two expressions can be one** (order 47): the hero's calm and set faces were 21 pixels apart at 56 x 56, near enough to read as the same
+  face at a phone's size; a test now holds every pair of a speaker's expressions 40 or more apart. *Count what tells two drawings apart.*
+
 ## What worked and should be kept
 
 - **A census before a rule** (order 32): drawing every scene as the page does and noting every light with who registered it and what

@@ -286,6 +286,83 @@ Also the planner's call, in the same order: on an upright screen the sky reaches
 not at the canvas's foot under the ground (the kit's `drawSky` takes the row, its default unchanged; the page hands it upright). Every upright
 sky but Stortinget's changed by it. Undoing it is one argument in `apps/viking/src/main.ts` (`beginLayers(..., horizon)`).
 
+## Lars's answers, 28 November 2026 (relayed by his other session)
+
+He answered part of what was waiting, typed by him on the review page and relayed by another session ("session projects-8f").
+Order 47 ([`../orders/47-what-lars-said-second.md`](../orders/47-what-lars-said-second.md)) built what he decided. His words as
+relayed, word for word, the review page's numbering:
+
+```
+1. The opening card's new line
+   - Who says it: Trump, as I wrote
+   - How it is told: as a quote, as I wrote it: "Make them see the life of glamour they missed, by spurning me"
+
+2. Loki's outfit, and Poison
+   - the general glam style is close enough (as built)
+   - Note: I do want more detail though. Now it reads more as just... Colorful I guess. Maybe when he talks you can make a more detailed version of his face, like they do in many pixel games. Maybe with over the top emoting like JoJo's Adventures or Ace Attorney. It fits the theme. Maybe that's a good general theme anyway, making Oslo quaint, Nordic-national-romantic, less technological, less crowded, calm? Maybe there are some character tropes to push here too. Like how Dutch people are so direct. What are Norwegians? Like, the bad guys are glam, neon, lights, American, loud. Norwegians and Norway is like described above. Of course it doesn't quite explain why loki, considering the pantheon, is siding with him. But then maybe that makes for an interesting plot reason. He is the god of mischief. And why would he really like the nordics anyway, they fucked him over. Yeah. It kinda does make sense.
+     Right. So the bigger face panels when talking. And more detail on the character anyway. And the dichotomy.
+
+3. The old branch landing-game-polish
+   - delete landing-game-polish
+   - Note: It can delete yeah. If it can't it's no big deal, I can also do it later myself.
+
+4. Gamle Oslo's new lines
+   - The banner's second line: as live
+   - Where in Oslo: as live
+   - The plough wakes: as live
+   - The plough beaten: "The plough parks. Gamle Oslo is clear." / "Brøytebilen parkerer. Gamle Oslo er fri."
+   - The card with the tenth rune: as live
+   - The doors labelled Hjem / Home: keep the label
+   - The level's first sign: change it (see the note)
+   - Note: Maybe we don't let the runes spell my name. Something more thematic to the game. Or we skip the runes. Or they're more directly related to beating loki somehow.
+     Im now also wondering if we shouldn't change the home page to an actual home. Makes more sense for me to travel outside into the game that way. And maybe I just have a big home with many doors for the projects, that way. And the current one ban be woven into the game I guess. Might also make flavoring the home page easier to fit me and the interests that I would want to show about myself professionally could be wall hangings and so on. It sprobably been done a lot, but I still think I like it make a plan.
+     I feel like another detail I want to hammer down more on is that the city doesn't feel like Oslo. I want it to though. This might mean making some levels smaller or bugger to make certain aspects make more sense, but I just want to walk to actual streets as they are and see actual parts of the city. I want real station names and I want the walk in between the station and the goal to be the actual road traveled. Like between Tøyen and Vålerenga, or something. What notable things are on the way, that you might see, which makes for cool level design and a cool ode or homage. Make a plan for this too. This would be a big rebuild.
+
+6. Where the levels disagree with it
+   - Slottet: the biggest event is the easiest level: keep it the breather before the mountain
+   - Nordmarka: a calm forest is among the hardest: leave it as it is
+   - Stortinget: an everyday station measures hard: leave it as it is
+   - Ekeberg: a calm park is one of line 1's harder levels: leave it as it is
+   - Vigelandsparken: a calm park is line 2's hardest: leave it as it is
+   - Line 2 against line 1: leave line 2 as it is
+   - Holmenkollen's hedgehog: swap it for a mountain hare
+   - Enemies of the place's own: yes, draw them
+
+9. Is this it, and is it where it should be?
+   - Sagene church's spire: copper
+   - Paulus church's spire: slate grey
+
+11. Anything else
+   - carry on as planned
+
+Not answered yet: The tune, the look and the shouts; After you have played; The upright view; His face, and a beard.
+```
+
+### The planner's reading
+
+- **Built in order 47** (`apps/viking/tools/review/o47/after.md`): the plough beaten at Gamle Oslo says what he wrote, in both
+  languages; every other line of Gamle Oslo as live; the doors' label Hjem / Home was asked about and kept. Holmenkollen's hedgehog is
+  a mountain hare in its white winter coat, drawn again to read (order 35's was taken out); enemies of the place's own from
+  `apps/viking/tools/review/o34/thematic.md`: a balloon seller's cart for three of Slottet's seven pigeons, a forklift for two of
+  Bjørvika's six, a commuter's bicycle for Stortinget's e-scooter (each in its look's box and behaviour, so nothing about difficulty
+  changed). Sagene kirke's spire old copper, Paulus kirke's slate grey. Faces when they talk (ADR 0057): Loki's portrait in six
+  expressions at every stage of the fight and the hero's in four, beside his words at the encore; more detail on Loki in the level (a
+  lime streak in the wig, the lime star under his eye). The theme written down (ADR 0058, DESIGN's "Calm Oslo, loud glamour"). No
+  difficulty retuned: of every level in question he said "leave it as it is".
+- **Planned, as documents, not built** (the planner writes them): the city along Oslo's real streets and station names (his note:
+  "I just want to walk to actual streets as they are and see actual parts of the city"); the front page as a home with a door for
+  each project; what the runes spell or do (his note: "Maybe we don't let the runes spell my name. Something more thematic to the
+  game. Or we skip the runes. Or they're more directly related to beating loki somehow."). The calm-against-loud theme feeds all three.
+  Nothing of them is decided.
+- **Waiting for his word in the planner's own session**: the quote on the opening card. He asked for it ("Who says it: Trump, as I
+  wrote"; "as a quote, as I wrote it"); it would change the story's limits (ADR 0050, 0052: the man who paid is named, never drawn,
+  never quoted), so it is not built, and the opening card is as live. Deleting `landing-game-polish` ("It can delete yeah. If it can't
+  it's no big deal, I can also do it later myself"): a branch is deleted only on his word in the planner's own session.
+- **Asked back**: the level's first sign at Gamle Oslo. He chose "change it" without saying to what; it is as live, and three ways
+  to word it, both languages, wait for him in `o47/after.md`.
+- **Not answered yet**, as relayed: the tune, the look and the shouts; after he has played; the upright view; his face, and a beard.
+  The hero's portrait (order 47) has no beard, as his figure has none; it follows whatever he decides.
+
 ## Questions waiting for Lars
 
 1. ~~Edge forgiveness: 10, 6, or the rule (above).~~ Answered 22 November: "planner's call"; 10 until he has played.
@@ -294,14 +371,17 @@ sky but Stortinget's changed by it. Undoing it is one argument in `apps/viking/s
 4. ~~Commit `post/gemini-gamedesign-nov-16-2026` or leave it out of the repository?~~ Answered: "leave post/ out of the
    repository".
 5. `landing-game-polish`: a local branch not merged into `main`, from before this work. He said "delete" (22 November,
-   relayed); it waits for his word in the planner's own session before anyone deletes it.
+   relayed) and again on 28 November ("It can delete yeah. If it can't it's no big deal, I can also do it later myself"); it waits
+   for his word in the planner's own session before anyone deletes it.
 6. ~~Line 2's difficulty: the reviews think it is harder than line 1 by more than intended.~~ Answered: "keep line 2 harder",
    with the rule that difficulty and enemies follow the place (DESIGN, ADR 0055; the proposals in
    `apps/viking/tools/review/o34/thematic.md` wait until he has played).
 7. The glamour's wording: every line is in `apps/viking/src/game/story.ts` (both languages, with two or three other openings
    and endings beside them) and in order 27's hand-back. The man who paid is named twice (the opening card, the map's sign).
    22 November: the card "as live", but "Missing some kind of reason why loki put a glamour on them, and the wordplay". He
-   suggested a line; who speaks it is unclear, so it waits for him.
+   suggested a line; who speaks it is unclear, so it waits for him. 28 November: "Who says it: Trump, as I wrote"; "as a quote, as I
+   wrote it: \"Make them see the life of glamour they missed, by spurning me\"". Quoting a real person changes the story's limits
+   (ADR 0050, 0052), so it waits for his word in the planner's own session; the card is as live.
 8. Everything in each hand-back's "for Lars to judge" list (orders 21 to 25): they are
    collected in [`roadmap.md`](roadmap.md). Not answered: he has not played yet.
 9. The encore's words (order 29, ADR 0052): 22 November: keep it, "leave it as it is", "Middelalderparken is right". Every line is in the encore's block at the end of
@@ -320,7 +400,14 @@ sky but Stortinget's changed by it. Undoing it is one argument in `apps/viking/s
    because the park held the summer festival for years and the water mirror is the old shore), and whether the encore should
    be easier or harder (the sloppy player wins it every time). Answered 22 November: the place and the difficulty stay; the
    words are kept, and he wants glam-rock music, a more extreme glam outfit and glammy words (order 34, items 10 and 11).
-10. The tenth station's new lines (order 34): the table above, one built and two others beside each.
+10. ~~The tenth station's new lines (order 34): the table above, one built and two others beside each.~~ Answered 28 November: all
+   as live but the plough beaten ("The plough parks. Gamle Oslo is clear." / "Brøytebilen parkerer. Gamle Oslo er fri.", built in order
+   47); the doors keep "Hjem" / "Home".
 11. The encore's music, Loki's outfit and the shouted lines (order 34): how to hear the tune is in
     `apps/viking/tools/review/o34/after.md` and [`resources.md`](resources.md); the shouted lines and their alternatives are
-    in the encore's block of `game/story.ts` (`ENCORE`, `ENCORE_ALTERNATIVES`) and in the same `after.md`.
+    in the encore's block of `game/story.ts` (`ENCORE`, `ENCORE_ALTERNATIVES`) and in the same `after.md`. 28 November: the outfit "close enough (as built)",
+    with more detail asked for (order 47: his portraits when he talks, ADR 0057); the tune, the look and the shouts not answered yet.
+12. Gamle Oslo's first sign: he chose "change it" (28 November) without saying to what. Three ways to word it, both languages, are in
+   `apps/viking/tools/review/o47/after.md`; the sign is as live until he picks one.
+13. The plans he asked for on 28 November (the city along real streets and stations, the front page as a home, the runes): the planner
+   writes them; nothing is decided.

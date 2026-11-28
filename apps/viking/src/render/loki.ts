@@ -65,7 +65,9 @@ const GLAM: Record<string, string> = {
   X: E.poison,
   x: E.line,
   V: E.hotPink,
-  n: E.magenta
+  n: E.magenta,
+  // Order 47: the lime star under his eye.
+  j: E.lime
 };
 /** His natural self, plain (held 8 or more off every neon and 10 off every role by `levels/encore.test.ts`). */
 export const PLAIN: Record<string, string> = {
@@ -104,7 +106,8 @@ export const PLAIN: Record<string, string> = {
   i: "#8a8e92",
   // The make-up is gone with the glamour: his lids and the corner of his eye are skin again.
   Z: "#d8bcae",
-  z: "#d8bcae"
+  z: "#d8bcae",
+  j: "#d8bcae"
 };
 
 // --- The rig ------------------------------------------------------------------------------------------------------------
@@ -201,22 +204,26 @@ function leg(g: Grid, l: Leg, back: boolean, glam = false) {
   g.put([".BBb.", "BBBBb", "kkkkk"], ax - 2, ay + 1);
 }
 
-/** His head, facing right: his own thin hair, an ear, a brow, the eye, a long nose, a mouth, the chin over his neck. */
-const HEAD = [".rrrrr..", "rRrrrfff", "RRFfffff", "RGFfZyyf", "GGFfZezf", ".GFffffF", ".GFfFmmf", "..GFfff.", "...FFG.."];
+/**
+ * His head, facing right: his own thin hair, an ear, a brow, the eye, a long nose, a mouth, the chin over his neck. Under the eye
+ * (order 47, from his portrait in the talk panel) the lime star of his make-up, a pixel; plain, his skin.
+ */
+const HEAD = [".rrrrr..", "rRrrrfff", "RRFfffff", "RGFfZyyf", "GGFfZezf", ".GFffjfF", ".GFfFmmf", "..GFfff.", "...FFG.."];
 /** The wraparound shades over his eyes: the arm back to the ear, the dark lens one row high, its glint at the front (over his eye's row since order 34; before, two rows at his hairline). */
 const SHADES = ["...Nkkek"];
 /**
  * The wig (order 34): teased as high as the frame allows under the stars of his pose, spiked, wide behind his head, a lime headband over his brow knotted at the back with its ends hanging, the fringe over his forehead, a mullet down his back
- * to his shoulder blades. Laid at his head less nine across and seven down.
+ * to his shoulder blades. Since order 47, as his portrait has it, a lime streak swept back through it from his brow to a spike's
+ * tip. Laid at his head less nine across and seven down.
  */
 const WIG = [
-  "......H...H...H...H..",
-  ".....HH..HhH.HhH.HH..",
-  "....HhHHHhhHHhhHHhH..",
-  "...HhhhhhhhhhhhhhhhH.",
-  "..HhhhhhhhhhhhhhhhhH.",
-  "..HhhdhhhhhhhhhhhhhH.",
-  ".HhhddhhhhhhhhhhhhH..",
+  "......H...H...L...H..",
+  ".....HH..HhH.LhH.HH..",
+  "....HhHHHhhHLhhHHhH..",
+  "...HhhhhhhhLhhhhhhhH.",
+  "..HhhhhhhhLhhhhhhhhH.",
+  "..HhhdhhhLhhhhhhhhhH.",
+  ".HhhddhhLhhhhhhhhhH..",
   ".HhdddLLLLLLLLLLLL...",
   "LHhddHhhhhhhhhhhh....",
   "LLhddddhhhhhHhh......",

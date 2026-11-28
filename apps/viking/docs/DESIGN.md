@@ -89,6 +89,18 @@ its enemies and whether each belongs) with proposals where they disagree, made b
 it. Order 35 tried a mountain hare in its winter coat in place of Holmenkollen's hedgehog (out of its season); the planner took it out
 again in review because it read worse than the hedgehog and signalled "hurts from above" less clearly. A swap must read at least as well.
 
+**Figures of the place's own** (order 47; Lars, 28 November: "swap it for a mountain hare", "Enemies of the place's own: yes, draw
+them"). An enemy may be drawn as another figure than its look (`EnemyDef.drawAs`): the rules, the review's tools and the sloppy player's
+run files go on naming it by its `look`, so its box, frames' count, timing, speed and behaviour are the look's and the run files stay
+byte-identical; the figures' tables, the natural selves and the palette test name it as drawn. Holmenkollen's hedgehog is a mountain hare
+in its white winter coat (15 x 12 over the hedgehog's box of 15 x 10: its long ears two rows over it, their black tips, a crest of three
+neon spikes along its back when glammed, which says it hurts from above); three of Slottet's seven pigeons are a balloon seller's cart
+(13 x 9 for the pigeon's kept box, `fit`: three balloons over a little cart, neon glammed, red, white and blue plain); Bjørvika's pigeons
+at the gate and on the first floor are a small forklift (13 x 9, `fit`); Stortinget's e-scooter is a commuter's bicycle (18 x 13 for the
+scooter's kept box). A figure must do honestly what its look does: a pigeon at Slottet only walks, so a cart can be one; a russ in red
+overalls or a surveyor is a person, taller than a pigeon's box, and was not drawn. Bygdøy's penguins stay: not of Oslo, but the museum's
+joke on Fram's voyage south, which the level makes.
+
 The encore (order 29, ADR 0052): once every rune of both lines is held, a seventeenth stop appears past the longship at the end
 of line 2, **Middelalderparken**, a small festival stage on the water. It has no rune, opens nothing and counts in no total; it
 keeps a best time (`best.encore`). Loki, the Neon Invaders' front man, plays one more song there (see the rules below). Until
@@ -234,7 +246,9 @@ neon and out to hurt him; a stomp breaks it and the creature is itself again and
   allows under his pose's stars, a lime headband, wraparound shades with purple shadow over them, a leopard-print jacket in amber with
   white pads and a studded belt, split neon spandex (pink and acid green, tiger-striped), scarves at his wrists, a pointed guitar slung
   behind him, white boots, stage make-up; the wig, the shades and the jacket (with the rest) knocked off by the three hits, and plain he
-  is natural colours held off every neon and role. The stage's neon, beams and mirror ball are his glamour and go plain with him.
+  is natural colours held off every neon and role. The stage's neon, beams and mirror ball are his glamour and go plain with him. Since
+  order 47 his figure carries two marks from his portrait in the talk panel: a lime streak swept back through the wig from his brow,
+  and the lime star of his make-up under his eye.
 
 **Adding an enemy** (or a level with one): draw it from the enemy palette as frames, as before; give it one or two glam marks
 as `mark` pieces that suit the animal (never more than two pixels over the head he lands on: the palette test; never a
@@ -244,6 +258,46 @@ has one, that it is never neon and that its ending leaves. A look not drawn thro
 (`glamFrame`, as the statues and the salmon do). A new level gets a lean in `LEANS` (the family only) and two to four pieces of
 evidence in `PLACES` (`tools/glance/invasion.ts` finds where; `invasion.test.ts` holds it). Its words, if the story has any for
 it, go in `game/story.ts`, both languages.
+
+## Calm Oslo, loud glamour
+
+Order 47 (ADR 0058). Lars, 28 November: "Maybe that's a good general theme anyway, making Oslo quaint, Nordic-national-romantic, less
+technological, less crowded, calm? ... Like, the bad guys are glam, neon, lights, American, loud. Norwegians and Norway is like
+described above. ... He is the god of mischief. And why would he really like the nordics anyway, they fucked him over. Yeah. It kinda
+does make sense." And: "And the dichotomy."
+
+The game has two sides and tells them apart in everything. **Oslo and its people are calm**: quaint, Nordic and romantic, the wooden
+houses and the fjord, wool, wood, stone and snow, a thermos and a straight face, few people, little technology, nothing loud. **The
+glamour Loki lays over it is loud**: neon, lights, glitter, big hair, a stage, a show, American in its manner. Natural is Oslo and
+neon is the glamour (above); quiet is Oslo and loud is the glamour. The hero is the calm one: beside Loki in the talk panel his face
+stays quiet while Loki's goes as far as it can.
+
+**Why Loki does it**: mischief, and a grudge. He is the god of mischief, and the gods of the north wronged him in the old stories, so he
+has no love for the north; a man who sulked over a prize paid him, and he took the money and did it his own way. This may be said in
+the game only in lines the planner or Lars writes later; no word in the game says it yet, and the story's limits stand (ADR 0050, 0052).
+
+For whoever draws or writes next: a place's enemies are its own creatures and things, glammed; scenery stays natural and quiet; noise,
+neon and glitter belong to the invaders alone. The plans Lars asked for on the same day (the city along Oslo's real streets and
+stations, the front page as a home, the runes) are the planner's to write; none of them is decided.
+
+## Faces when they talk
+
+Order 47 (ADR 0057). Lars: "Maybe when he talks you can make a more detailed version of his face, like they do in many pixel games.
+Maybe with over the top emoting ... It fits the theme." and "So the bigger face panels when talking. And more detail on the character
+anyway."
+
+- **When**: a line said by a character in his own voice: Loki at the encore (his greeting, his three lines as the pieces come off,
+  his leaving line, his four shouts). Narration keeps its bubble: the hints, the bosses' lines (a narrator's), the signs, the lines over
+  him when he is given the shield or the feather.
+- **What**: two portraits 56 art pixels square (`render/faces.ts`), Loki's on the left facing right, the hero's on the right facing
+  him, and the words between them in a box as a bubble's. Loki: six expressions (smug, delighted, outraged, wounded, scheming, a shout)
+  at each stage of the fight (glammed, the wig gone, the shades gone, plain), big brows, eyes and mouth, his head forward for a shout or
+  back when hurt, shock lines, sparkles, a sweat drop, gloom, speed lines. The hero: four (calm, surprised, set, pleased), quiet. Each
+  line's expressions are a tag beside it in `game/story.ts` (`ENCORE_FACES`, below the encore's block).
+- **Where** (`render/talk.ts`, `panelLayout`): under the stage's floor over the pad's controls, or between them, or under the bar over
+  the play; never over a control, a notch, the home bar or the play; the room it found kept while its line is up; no room, the bubble.
+- **How**: in from the sides over eight steps and out over the last six; a shout flashes behind him once; with reduced motion it
+  appears and goes. Painted once a portrait and copied, in the encore's file. Off: take `talk` out of the encore's level.
 
 ## Frames, shadows and depth
 

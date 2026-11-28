@@ -15,7 +15,7 @@ import { climbed, drawGulls, drawOsloHills } from "../render/backdrop";
 const FAR_BIRD = "#4c5462";
 import { tbaneDoor } from "../render/furniture";
 import { tile as textured, type Grain } from "../alive/ground";
-import { FOE_INK, drawFoe, foeFrame, mark, type Looks } from "../alive/foes";
+import { FOE_INK, drawFoe, foeFrame, foeLooks, mark, type Looks } from "../alive/foes";
 import { frame, paint } from "../alive/frames";
 import { HAND_WAVES, crowdFlag, flagFlying, handFlag, person } from "../alive/things";
 import { outlined } from "../render/sprite";
@@ -188,21 +188,50 @@ const SCHOOL = BANNERS_A.length + BANNERS_B.length;
 // ---------------------------------------------------------------------------------------------
 // Pigeons on the ground, gulls in the air, and one e-scooter that rides itself.
 
+/**
+ * Three of the seven pigeons are 17 May's own (order 47, Lars: "Enemies of the place's own ... yes, draw them"): a balloon
+ * seller's cart pushing itself up Karl Johan, drawn as the cart (`drawAs`) in the pigeon's kept box, speed and walk, which the
+ * rules and the run files go on naming it by. The first pigeon, the one met on plain street (order 31), stays a pigeon.
+ */
 export const ENEMIES: EnemyDef[] = [
   { kind: "walker", look: "pigeon", c: 13, r: 25, range: 3 },
   { kind: "walker", look: "pigeon", c: 27, r: 25, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 64, r: 22, range: 2, rise: 8, period: 150 },
-  { kind: "walker", look: "pigeon", c: 80, r: 23, range: 2 },
+  { kind: "walker", look: "pigeon", drawAs: "balloons", c: 80, r: 23, range: 2 },
   { kind: "flyer", look: "gull", c: 98, r: 15, range: 2, rise: 6, period: 170, offset: 40 },
-  { kind: "walker", look: "pigeon", c: 112, r: 22, range: 2 },
+  { kind: "walker", look: "pigeon", drawAs: "balloons", c: 112, r: 22, range: 2 },
   { kind: "flyer", look: "gull", c: 119, r: 14, range: 3, rise: 8, period: 160 },
   { kind: "walker", look: "hotdog", c: 128, r: 22, range: 2, speed: 0.4, w: 18, h: 14, small: true },
   { kind: "walker", look: "pigeon", c: 160, r: 21, range: 2 },
-  { kind: "walker", look: "pigeon", c: 172, r: 21, range: 2, dir: -1 },
+  { kind: "walker", look: "pigeon", drawAs: "balloons", c: 172, r: 21, range: 2, dir: -1 },
   { kind: "flyer", look: "gull", c: 175, r: 18, range: 3, rise: 8, period: 150, offset: 70 },
   { kind: "walker", look: "pigeon", c: 188, r: 19, range: 2 },
   { kind: "flyer", look: "gull", c: 217, r: 13, range: 2, rise: 6, period: 160 }
 ];
+
+/**
+ * A balloon seller's cart (order 47): 13 x 9, drawn for the pigeon's kept box (10 x 8, `fit`), its balloons' tops a pixel over it. Three balloons
+ * on strings to a pole in the cart, each lit at its top left with a knot under it; a little painted box cart on two small wheels
+ * that turn, its handle behind. Glammed, the balloons are neon (laser orange, magenta, acid green), a lime tube runs along the
+ * cart's top and the middle balloon wears shades; its natural self is 17 May's: a red, a white and a blue balloon over a green
+ * cart. Its balloons sway a pixel as it walks.
+ */
+const SELLER_BALLOONS = [
+  [".OO.......GG.", "OaOO.XX..GaGG", "OOOOXaXX.GGGG", ".OO.XXXX..GG.", "...l.XX..l..."],
+  ["..OO......GG.", ".OaOOXX.GaGG.", ".OOOXaXXGGGG.", "..OOXXXX.GG..", "....l.ll.l..."]
+];
+const SELLER_CART = ["..MMMMMMMMMM.", "..mmmmmmmmmMd", "l.ddmdddmdddd"];
+const SELLER_WHEELS = [["...lal...lal."], ["...lla...lla."], ["...all...all."]];
+const SELLER_GLAM = [mark(["nlle"], 5, 2), mark(["LLLLLLLLLL"], 2, 6), mark(["N"], 0, 6)];
+const balloonCart = (name: string, b: number, w: number) => frame(name, FOE_INK, [SELLER_BALLOONS[b], 0, 0], [SELLER_CART, 0, 5], [SELLER_WHEELS[w], 0, 8], ...SELLER_GLAM);
+const BALLOON_CART: Looks = {
+  w: 13,
+  h: 9,
+  fit: true,
+  idle: [balloonCart("balloon cart, waiting", 0, 0), balloonCart("balloon cart, its balloons swaying", 1, 0)],
+  move: [balloonCart("balloon cart, rolling 1", 0, 2), balloonCart("balloon cart, rolling 2", 1, 0), balloonCart("balloon cart, rolling 3", 0, 1), balloonCart("balloon cart, rolling 4", 1, 0)]
+};
+foeLooks({ balloons: BALLOON_CART });
 
 // ---------------------------------------------------------------------------------------------
 // The art. Daylight colours from the palette; the 17 May sky is pinned.

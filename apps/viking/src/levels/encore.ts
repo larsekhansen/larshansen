@@ -9,14 +9,15 @@ import { seen } from "@larshansen/pixelkit/kept";
 import { darker, drawFar, farPiece, lighter } from "../alive/far";
 import { mirrorBall } from "../alive/invasion";
 import { STEEL, lamp, pool, prop, dot, box as pbox, tone, type Stuff } from "../alive/props";
-import { ENCORE as WORDS } from "../game/story";
+import { ENCORE as WORDS, ENCORE_FACES } from "../game/story";
 import { LOKI_STEPS, lokiBoss, type Loki, type LokiDef } from "../game/loki";
-import { encoreMusic } from "../game/tune";
+import { encoreMusic, shoutFrom } from "../game/tune";
 import { drawOsloHills } from "../render/backdrop";
 import { tbaneDoor } from "../render/furniture";
 import { drawLoki, drawRing, drawWave } from "../render/loki";
+import { drawPanel, measured, panelLayout, screenNow } from "../render/talk";
 import { mapBuilder } from "./build";
-import type { LevelDef, View } from "./types";
+import type { LevelDef, Talk, View } from "./types";
 
 // The encore (order 29, ADR 0052): a small festival stage on the water in Middelalderparken, past the last station of line 2,
 // where Loki, the Neon Invaders' front man, plays one more song. It is extra: it opens only once every rune of both lines is
@@ -394,6 +395,43 @@ function mirrored() {
   if (seen(X0 - 8, X1 + 8)) drawProp(MIRRORED, X0 - 8, MIRROR_AT + 2, X1 - X0 + 16);
 }
 
+
+/** The stage's words his own (order 47): the encore's line of `bossWords` by its key in the story's block (he says `leaving` as the boss's `beaten`). */
+const SAID: Record<string, keyof typeof ENCORE_FACES> = { wake: "wake", piece1: "piece1", piece2: "piece2", piece3: "piece3", beaten: "leaving", shout1: "shout1", shout2: "shout2", shout3: "shout3", shout4: "shout4" };
+/** How high over the stage's floor the play he must see reaches: Loki with his club raised and the stars over his pose, him on a speaker. */
+const PLAY_TALL = 80;
+
+/**
+ * Loki's talk panel (order 47, ADR 0057): his portrait and the hero's beside his words, as `game/story.ts` tags each line; a line he
+ * says (it came up when said, goes when its time is up) or one the music has him shout (it came up when the music first said so).
+ */
+/** His tune, which also says when a shouted line came in. */
+const MUSIC = encoreMusic();
+
+function lokiTalk(): Talk {
+  // The line the panel shows and the step it came up; the room it found, kept while the line is up, it still fits and the screen's
+  // own room is the same (the bar, the pad's controls: they come up a frame after a level starts on a touch screen).
+  const kept = { key: "", since: 0, region: -1, room: "" };
+  return (line, shout, sung, room, boss, steps) => {
+    const s = boss as Loki | null;
+    // A shout came in when the music brought it in (a stepped picture sees it first well after that), else when the panel first saw it.
+    const woke = MUSIC.woke?.() ?? null;
+    const sungFrom = () => (kept.key === shout ? kept.since : woke !== null && s ? Math.min(steps, shoutFrom(steps, woke, s.since)) : steps);
+    const said = line?.key && ENCORE_FACES[SAID[line.key]] ? { key: line.key, lines: line.lines, since: line.since ?? steps, left: line.until - steps } : shout && sung && ENCORE_FACES[SAID[shout]] ? { key: shout, lines: sung, since: sungFrom(), left: null } : null;
+    if (!said || !s) return (kept.key = ""), null;
+    const here = `${room.bar} ${room.pad.map((r) => `${r.x},${r.y}`).join(" ")}`;
+    if (said.key !== kept.key || here !== kept.room) Object.assign(kept, { key: said.key, region: -1, room: here });
+    kept.since = said.since;
+    const l = panelLayout(screenNow(room.bar, room.pad, s.def.floor, PLAY_TALL), said.lines, measured, true, kept.region);
+    if (!l) return null;
+    kept.region = l.region;
+    const faces = ENCORE_FACES[SAID[said.key]]!;
+    // His portrait as he is now: the wig gone with the first hit, the shades with the second, plain after the third.
+    const stage = Math.min(3, s.hits);
+    return () => drawPanel(l, faces, stage, steps - said.since, said.left);
+  };
+}
+
 export const ENCORE: LevelDef = {
   id: "encore",
   rune: -1,
@@ -426,8 +464,10 @@ export const ENCORE: LevelDef = {
     shout3: { nb: WORDS.nb.shout3, en: WORDS.en.shout3 },
     shout4: { nb: WORDS.nb.shout4, en: WORDS.en.shout4 }
   },
+  // His lines in his own voice, with his face and the hero's beside them (order 47, ADR 0057); the hints stay in the bubble.
+  talk: lokiTalk(),
   // His tune (order 34, ADR 0055): `game/tune.ts`.
-  music: encoreMusic(),
+  music: MUSIC,
   // The ending card's line (order 29): no runes to count here.
   cardLine: { nb: () => WORDS.nb.ending, en: () => WORDS.en.ending },
   art: {

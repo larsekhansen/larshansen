@@ -195,6 +195,16 @@ export function shoutAt(step: number, woke: number, since: number | null): numbe
   return (Math.floor(m / (2 * BAR)) % SHOUTS) + 1;
 }
 
+/**
+ * The step the shouted line up at `step` came in (order 47: the talk panel slides in from it): the later of its two bars' start and
+ * the first beat of the strut or pose it is shouted in. As `shoutAt`, which says which line it is.
+ */
+export function shoutFrom(step: number, woke: number, since: number): number {
+  const at = woke + INTRO;
+  const block = at + Math.floor((step - at) / (2 * BAR)) * 2 * BAR;
+  return Math.max(block, at + Math.ceil((since - at) / BEAT) * BEAT);
+}
+
 /** Loki's phases he shouts in: strutting and posing. */
 export const SHOUTING = ["strut", "pose"];
 
@@ -219,6 +229,8 @@ export interface Performer {
 export interface Music {
   (sound: Pick<Sfx, "voice" | "muted"> | null, boss: unknown, step: number): string | null;
   audition?: string;
+  /** The step he woke (the music's start), or null while he waits (order 47: when a shouted line came in). */
+  woke?: () => number | null;
 }
 
 export function encoreMusic(): Music {
@@ -261,6 +273,7 @@ export function encoreMusic(): Music {
     until = to;
     return said;
   };
+  music.woke = () => woke;
   return music;
 }
 

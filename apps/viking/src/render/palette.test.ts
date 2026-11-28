@@ -19,6 +19,7 @@ import { airOf, hazeOf } from "./haze";
 import { drawEnemy, drawShot } from "./pickups";
 import { eyes, lastShape, outlined } from "./sprite";
 import { LEANS, leanFor } from "../alive/glamour";
+import { drawnLook } from "../alive/natural";
 import { RIM as HIM_RIM, RIM_ALPHA } from "./feel";
 
 // Order 18 (ADR 0039), order 22 (ADR 0044): colour says what a thing is. What can hurt him is drawn from the enemy
@@ -94,7 +95,8 @@ describe("what can hurt him: the enemy palette", () => {
         if (!e.alive) return;
         // As the page draws it (`foe` in main.ts): the calm pale while it cannot hurt him, the warning red while it can.
         const shape = drawn(() => void (def.art.enemy?.(e, viewOf(p)) || drawEnemy(e, p.t)), e, e.calm ? ROLES.calm : ENEMY.warning);
-        const name = `${e.def.look}${e.def.kind === "thrower" && e.def.look === "gull" ? " (thrower)" : ""}`;
+        // As it is drawn: a figure of its place's own under its own name (order 47, `drawAs`).
+        const name = `${drawnLook(e.def)}${e.def.kind === "thrower" && e.def.look === "gull" ? " (thrower)" : ""}`;
         const s = seen.get(name) ?? { colours: new Set<string>(), tops: [] };
         seen.set(name, s);
         if (!shape) return;
@@ -219,9 +221,9 @@ describe("what can hurt him: the enemy palette", () => {
     for (const name of ["statue", "bronze", "guard", "swan"]) expect(calmSeen.has(name)).toBe(true);
   });
 
-  test("every enemy has eyes that shine after dark, but the things with none (a scooter, a trolley, a grill, an umbrella, a brazier, an anthill, a hot-dog cart)", () => {
+  test("every enemy has eyes that shine after dark, but the things with none (a scooter, a trolley, a grill, an umbrella, a brazier, an anthill, a hot-dog cart; since order 47 a bicycle and a forklift)", () => {
     const eyeless = [...seen.keys()].filter((n) => !withEyes.has(n));
-    expect(eyeless.filter((n) => !["scooter", "trolley", "grill", "umbrella", "brazier", "anthill", "hotdog"].includes(n))).toEqual([]);
+    expect(eyeless.filter((n) => !["scooter", "trolley", "grill", "umbrella", "brazier", "anthill", "hotdog", "bicycle", "forklift"].includes(n))).toEqual([]);
   });
 
   test("stomping works as drawn: the head he lands on is where the picture's head is, within two pixels of the box's top", () => {

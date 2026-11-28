@@ -1268,7 +1268,7 @@ export const NABOLAGET: LevelDef = {
     // Its arrival (order 27): the story's line for it (`game/story.ts`).
     wake: { nb: `Brøytebilen våkner.\nDet siste mellom deg og en rolig kveld.\n${STORY.nb.boss.plough}`, en: `The snow plough wakes.\nThe last thing between you and a quiet evening.\n${STORY.en.boss.plough}` },
     hit: { nb: "Rett på taket.", en: "Right on the roof." },
-    beaten: { nb: "Brøytebilen parkerer.\nGata er fri, for en gangs skyld.", en: "The plough parks.\nThe street is clear, for once." },
+    beaten: { nb: "Brøytebilen parkerer.\nGamle Oslo er fri.", en: "The plough parks.\nGamle Oslo is clear." },
     // Shown over it when a round goes by with no hit, by round: stuck or turned, run into him, or ten seconds of nothing.
     miss1: { nb: "Den setter seg fast i brøytekanten ved klessnora.\nSnora kaster deg høyere enn et hopp.", en: "It sticks in the bank by the washing line.\nThe line throws you higher than a jump." },
     miss2: { nb: "Snora er nede.\nHopp fra terrassen, og rykk.", en: "The line is down.\nJump from the terrace, and dash." },

@@ -236,7 +236,7 @@ function begin(params: URLSearchParams, frame: (whole?: boolean) => void, help: 
   // `?debug&note=pole|shield|sledge` and `?debug&say=<key>` (order 33): words that come only at a moment the harness cannot reach
   // (the pole is given under Holmenkollen's card; the encore's bite needs two hits first), shown as the page shows them.
   const noted = params.has("note") ? note(params.get("note") ?? "", help).then(() => frame(), (e) => (help.textContent = `note: ${e}`)) : undefined;
-  if (params.has("say")) say(params.get("say") ?? "", frame);
+  if (params.has("say")) say(params.get("say") ?? "", frame, Number(params.get("sayage") ?? 60));
   // `?debug&music=band|drums,bass|riff|lead|intro|plain` (order 34): the level's music at once, whatever its boss does, with only
   // those parts, for listening to each layer (the encore's tune: `game/tune.ts`). Sound starts with the first key or touch.
   if (params.has("music")) {
@@ -282,11 +282,12 @@ async function note(which: string, help: HTMLElement) {
 }
 
 /** `?debug&say=<key>` (order 33): the level's boss says that line of its words (a hint after a miss: `missBite`), in its bubble beside it. */
-function say(key: string, frame: () => void) {
-  const g = (window as unknown as { __game: Game & { state: { bossLine: { lines: string[]; until: number } | null } } }).__game;
+function say(key: string, frame: () => void, age: number) {
+  const g = (window as unknown as { __game: Game & { state: { steps: number; bossLine: { lines: string[]; until: number; key?: string; since?: number } | null } } }).__game;
   const words = g.play.def.bossWords?.[key];
   if (!words) return;
-  g.state.bossLine = { lines: words[browserLang()].split("\n"), until: g.state.steps + 300 };
+  // As if it came up `age` steps ago (`&sayage`, order 47: a second by default, so a talk panel is all in; 0 for its first frame).
+  g.state.bossLine = { lines: words[browserLang()].split("\n"), until: g.state.steps + 300, key, since: g.state.steps - age };
   frame();
 }
 

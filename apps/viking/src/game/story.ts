@@ -211,3 +211,26 @@ export const ENCORE_ALTERNATIVES = {
   shout3: [["Hands in the air!\nGloves on is fine!", "Hendene i været!\nMed votter går fint!"]],
   shout4: [["Lights up, Oslo!\nMind the slush!", "Lys på, Oslo!\nPass deg for sørpa!"]]
 };
+
+/**
+ * Who says each of the encore's lines in his own voice, and how he looks saying it (order 47, ADR 0057): Loki's expression and the
+ * hero's beside him, a tag a line, no word changed. The talk panel (`render/talk.ts`) shows their portraits beside the words; a
+ * line with no tag (the hints, which tell the player what to do) stays in its bubble. The same in both languages.
+ */
+export const ENCORE_FACES: Partial<Record<keyof EncoreWords, { loki: "smug" | "delighted" | "outraged" | "wounded" | "scheming" | "shout"; hero: "calm" | "surprised" | "set" | "pleased" }>> = {
+  // "Good evening, Oslo! One more, then you can all go home.": the showman, thrilled with himself; the hero ready.
+  wake: { loki: "delighted", hero: "set" },
+  // "That was a wig. You all knew.": caught out, and cool about it; the hero did not know.
+  piece1: { loki: "smug", hero: "surprised" },
+  // "Shades, in November. Fair point.": conceding, a little hurt.
+  piece2: { loki: "wounded", hero: "calm" },
+  // "Careful. That jacket was rented.": the jacket, of all things.
+  piece3: { loki: "outraged", hero: "set" },
+  // "Lovely crowd. Nobody danced, but nobody left either.": plain, with his thermos, and already thinking of the next one.
+  leaving: { loki: "scheming", hero: "pleased" },
+  // The shouted lines, at the crowd: as loud as he gets; the hero unmoved.
+  shout1: { loki: "shout", hero: "calm" },
+  shout2: { loki: "shout", hero: "calm" },
+  shout3: { loki: "shout", hero: "calm" },
+  shout4: { loki: "shout", hero: "calm" }
+};

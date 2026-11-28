@@ -9,8 +9,8 @@ import { lookName } from "./census";
 // it, and `alive/props.test.ts` that every prop kind a level draws has a name. A new enemy, carrier, thrower or level is
 // listed by itself; only its name has to be written here (the tests say which is missing).
 
-/** What a figure is: him, an enemy's look, a boss, what carries him in a level, what a thrower throws, a pickup or a thing, a harmless mover, a prop. */
-export type FigureGroup = "him" | "enemy" | "boss" | "carrier" | "thrown" | "pickup" | "harmless" | "prop" | "maze";
+/** What a figure is: him, an enemy's look, a boss, what carries him in a level, what a thrower throws, a pickup or a thing, a harmless mover, a prop, the maze's, a portrait in the talk panel (order 47). */
+export type FigureGroup = "him" | "enemy" | "boss" | "carrier" | "thrown" | "pickup" | "harmless" | "prop" | "maze" | "portrait";
 
 export interface FigureKind {
   /** The sheet's file, without `.png`: the group and the kind. */
@@ -56,6 +56,11 @@ export const FIGURE_NAMES: Record<string, Words> = {
   "enemy-fox": n("fox", "rev"),
   "enemy-grill": n("disposable grill", "engangsgrill"),
   "enemy-hedgehog": n("hedgehog", "pinnsvin"),
+  // Figures of their place's own (order 47), each in another look's box and behaviour (`drawAs`).
+  "enemy-hare": n("mountain hare", "fjellhare"),
+  "enemy-bicycle": n("commuter's bicycle", "pendlersykkel"),
+  "enemy-balloons": n("balloon cart", "ballongvogn"),
+  "enemy-forklift": n("forklift", "gaffeltruck"),
   "enemy-salmon": n("salmon", "laks"),
   "enemy-duck": n("mallard", "stokkand"),
   "enemy-coot": n("coot", "sothøne"),
@@ -85,6 +90,9 @@ export const FIGURE_NAMES: Record<string, Words> = {
   "boss-plough": n("the snow plough", "brøytebilen"),
   "boss-serpent": n("the sea serpent", "sjøormen"),
   "boss-loki": n("Loki", "Loke"),
+  // The portraits in the talk panel (order 47, ADR 0057): each expression in a row, a row a stage of the fight.
+  "portrait-loki": n("Loki talking: smug, delighted, outraged, wounded, scheming, shouting", "Loke som snakker: selvgod, henrykt, rasende, såret, lurende, roper"),
+  "portrait-hero": n("the viking listening: calm, surprised, set, pleased", "vikingen som lytter: rolig, overrasket, bestemt, fornøyd"),
   // What carries him, a level at a time.
   "carrier-langkaia": n("the rafts and the rowing boat", "flåtene og robåten"),
   "carrier-akershus": n("the hoist", "heisen"),
@@ -205,6 +213,8 @@ export async function figureKinds(props: Record<string, Iterable<string>> = {}):
     if (def.carriers.length) add("carrier", def.id, def.id);
     for (const [group, kind, here] of ALWAYS) if (here(def)) add(group, kind, def.id);
     for (const kind of props[def.id] ?? []) add("prop", kind, def.id);
+    // The portraits of the talk panel (order 47), in the level that speaks so: who speaks and who listens.
+    if (def.talk) for (const kind of ["loki", "hero"]) add("portrait", kind, def.id);
   }
   for (const kind of MAZE_FIGURES) add("maze", kind, "jernhaugen");
   return [...out.values()];
@@ -283,6 +293,12 @@ export const STATE_WORDS: Record<string, Words> = {
   "the jaws": n("the jaws", "kjevene"),
   "posing: the opening": n("posing: the opening", "poserer: åpningen"),
   "reeling from the hit that takes the next piece": n("reeling from the hit that takes the next piece", "vakler etter slaget som tar neste plagg"),
+  // The portraits (order 47): Loki's rows by the stage of the fight (`LOKI_STAGES`, and plain), the hero's one.
+  "his face, glammed": n("his face, glammed", "ansiktet hans, glammet"),
+  "his face, the wig knocked off": n("his face, the wig knocked off", "ansiktet hans, parykken slått av"),
+  "his face, the shades knocked off": n("his face, the shades knocked off", "ansiktet hans, solbrillene slått av"),
+  "his face, plain": n("his face, plain", "ansiktet hans, vanlig"),
+  "his face, quiet": n("his face, quiet", "ansiktet hans, stille"),
   "plain: standing, shrugging, walking off": n("plain: standing, shrugging, walking off", "vanlig: står, trekker på skuldrene, går av scenen"),
   // The pickups, the things every level has, the harmless movers, by their frames' names.
   spinning: n("spinning", "snurrer"),

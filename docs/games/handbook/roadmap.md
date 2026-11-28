@@ -1,19 +1,28 @@
 # Roadmap
 
-As of 25 November 2026, after order 46 was reviewed and merged (PR #94). Change this file in the same change that makes it wrong.
+As of 28 November 2026, after order 47 was reviewed and merged (PR #95). Change this file in the same change that makes it wrong.
 
 ## Status
 
 | | |
 |---|---|
-| Date | 24 November 2026 |
-| Last live | Order 46, the rest of the upright phone, PR #94 (reviewed and merged on 25 November); before it orders 45 (PR #93), 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
+| Date | 28 November 2026 |
+| Last live | Order 47, what Lars said the second time, PR #95 (reviewed and merged on 28 November); before it orders 46 (PR #94), 45 (PR #93), 44 (PR #92), 43 (PR #91), 42 (PR #90), 41 (PR #89), 40 (PR #88), 39 (PR #87), 38 (PR #86), 37 (PR #85), 36 (PR #84), 35 (PR #83), 34 (PR #82), 33 (PR #81), 32 (PR #80), 31 (PR #79), 30 (PR #78), 29 (PR #77), 28 (PR #76) and 27 (PR #74) |
 | Built, waiting for review | Nothing |
-| Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`); he has not played yet |
-| Weekly allowance | About 71 % used when order 46 was reviewed on 25 November (no further round before the reset) (a round now costs 4 to 5 points); next reset Saturday 28 November 11:00. No new round above 75 %, nothing heavy at 80 % |
+| Lars | Away from 17 November for about two and a half weeks; standing permission in [`conversations.md`](conversations.md). On 22 November he answered the waiting questions through another session (`conversations.md`), and on 28 November part of what was waiting again (order 47); he has not played yet |
+| Weekly allowance | About 7 % used when order 47 was reviewed on 28 November, just after the reset (a round now costs 4 to 5 points); next reset Saturday 5 December 11:00. No new round above 75 %, nothing heavy at 80 % |
 | Paused? | No |
 
 ## In flight
+
+**Order 47, what Lars said the second time** (`orders/47-what-lars-said-second.md`; ADR 0057 and 0058, 0052 and 0055 amended), reviewed, merged and live (PR #95, 28 November). Nothing else is in flight. Lars's answers of 28 November (`conversations.md`, word for word, with the planner's
+reading): the plough beaten at Gamle Oslo as he wrote it; Holmenkollen's mountain hare and enemies of the place's own (a balloon seller's cart
+at Slottet, a forklift at Bjørvika, a commuter's bicycle at Stortinget), each in its look's box and behaviour (`drawAs`, so the run files are
+byte-identical); Sagene kirke's spire copper and Paulus kirke's slate; faces when they talk (ADR 0057): Loki's portrait in six expressions at
+four stages and the hero's in four beside his words at the encore, under the stage's floor or under the bar, never over the pad, a notch or
+the play; two marks from the portrait on his figure; the theme written down (ADR 0058, DESIGN's "Calm Oslo, loud glamour"). Each item, done
+or not, with its measures: `apps/viking/tools/review/o47/after.md`. **The planner has written plans (not builds) for** the city along Oslo's
+real streets and station names, the front page as a home with a door for each project, and the runes: [`plans-28-nov.md`](plans-28-nov.md). Nothing of those is decided and nothing of them is built until Lars says so; the walks in it are from memory and wait for his corrections and a check on a map.
 
 **Order 46, the rest of the upright phone, and a second look at the dark below** (`orders/46-the-rest-upright.md`, ADR 0043 amended), reviewed, merged and live (PR #94, 25 November). Nothing else is in flight. The ground under him upright goes down in its own material's tones, not into a near-black: of three
 tries shown side by side for each material (what stood, the band ending at its material's darkest ramp step, the darkening lower in broader layers)
@@ -173,6 +182,11 @@ whether figures stand out there on a phone is still for Lars.
 
 ## Next
 
+Order 47 left (`apps/viking/tools/review/o47/after.md`): Gamle Oslo's first sign waits for Lars to pick a wording (three in `after.md`); the
+quote on the opening card and deleting `landing-game-polish` wait for his word in the planner's own session; the bosses' portraits (none of the
+three speaks in its own voice: their lines are a narrator's) and the maze's raven, who does speak, have no talk panel; the portraits and the
+panel have been seen only in stepped pictures. The plans for the real-Oslo rebuild, the front page as a home and the runes are the planner's.
+
 Order 46 left (`apps/viking/tools/review/o46/after.md`): the 2s of its table (Langkaia's sky is 43 % of the screen at the quay; Slottet's 17 May sky is
 plain blue between its clouds; Akerselva's Grefsenkollen behind the hall at the start; Nordmarka's dark, which is its idea); the far-layer drawing
 made only upright (Ekeberg's fjord) is held by no test (checked by hand); falling snow is still as sparse upright as the kit draws it (order 45's
@@ -263,7 +277,10 @@ None of these is decided. Each has a reason.
 
 ## Questions waiting for Lars
 
-Kept in [`conversations.md`](conversations.md), "Questions waiting for Lars". Do not let them
+Kept in [`conversations.md`](conversations.md), "Questions waiting for Lars". Since 28 November: the quote on the opening card (it changes the
+story's limits) and deleting `landing-game-polish`, both for his word in the planner's own session; Gamle Oslo's first sign (three wordings in
+`apps/viking/tools/review/o47/after.md`); the tune, the look and the shouts, his play notes, the upright view, and his face and a beard, not
+answered yet. Do not let them
 block work: pick the reading that is cheapest to undo, say which you picked, carry on.
 
 ## Known debts in the tools
@@ -271,7 +288,7 @@ block work: pick the reading that is cheapest to undo, say which you picked, car
 - The front page references live in `/tmp` and die on reboot.
 - `review.sh` and `frontgate.sh` in [`scripts/`](scripts/) have this session's scratch paths
   written into them: set `S` before using them.
-- The viking suite: under 300 s alone since order 35 (286.3 and 287.1 s after order 46, 287.3 and 285.9 s for `origin/main` the same hour, 542 tests; 286.6 and 285.6 s after order 45, 276.1 and 278.0 s for `origin/main` the same hour, 542 tests; 283.6 and 279.9 s after order 44, 281.4 and 282.4 s for `origin/main` the same hour, 539 tests; 277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
+- The viking suite: under 300 s alone since order 35 (289.2 and 290.8 s after order 47, 277.1 and 290.0 s for `origin/main` the same hour, 553 tests; 286.3 and 287.1 s after order 46, 287.3 and 285.9 s for `origin/main` the same hour, 542 tests; 286.6 and 285.6 s after order 45, 276.1 and 278.0 s for `origin/main` the same hour, 542 tests; 283.6 and 279.9 s after order 44, 281.4 and 282.4 s for `origin/main` the same hour, 539 tests; 277.9 and 272.7 s after order 43, 270.5 and 268.2 s for `origin/main` the same hour, 538 tests; 275.6 and 276.1 s after order 42, 280.5 and 269.6 s for `origin/main` the same hour, 537 tests; 263.1 and 273.6 s after order 41, 273.3 and 275.1 s for `origin/main` the same hour; 272.6 to 277.0 s after order 40, 262.2 and 270.9 s for `origin/main` the same hour; 271.5 s after order 39, 270.0 s for `origin/main` the same hour; 265.6 s after order 38, 265.8 s for `origin/main` the same hour; 268.0 s after order 37, 263.1 s for `origin/main` the same hour; `apps/viking/tools/review/o35/after.md` has the three runs and every file's time;
   it was 362.7 s that morning, 370.5 s after order 34). The reach searches are about 100 s of it and CPU-bound on four cores (Akershus's
   alone 52 s, in the kit's physics); the reduced-motion test about 70 s in company. A new test that draws every level should share a
   walk or a recorder already made (`render/fields.ts`: `areaRecorder`, `ANY_METHOD`).
