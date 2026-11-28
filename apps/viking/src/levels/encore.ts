@@ -406,13 +406,15 @@ const PLAY_TALL = 80;
  * says (it came up when said, goes when its time is up) or one the music has him shout (it came up when the music first said so).
  */
 function lokiTalk(): Talk {
-  // The line the panel shows and the step it came up; the room it found, kept while the line is up and it still fits.
-  const kept = { key: "", since: 0, region: -1 };
+  // The line the panel shows and the step it came up; the room it found, kept while the line is up, it still fits and the screen's
+  // own room is the same (the bar, the pad's controls: they come up a frame after a level starts on a touch screen).
+  const kept = { key: "", since: 0, region: -1, room: "" };
   return (line, shout, sung, room, boss, steps) => {
     const s = boss as Loki | null;
     const said = line?.key && ENCORE_FACES[SAID[line.key]] ? { key: line.key, lines: line.lines, since: line.since ?? steps, left: line.until - steps } : shout && sung && ENCORE_FACES[SAID[shout]] ? { key: shout, lines: sung, since: kept.key === shout ? kept.since : steps, left: null } : null;
     if (!said || !s) return (kept.key = ""), null;
-    if (said.key !== kept.key) Object.assign(kept, { key: said.key, region: -1 });
+    const here = `${room.bar} ${room.pad.map((r) => `${r.x},${r.y}`).join(" ")}`;
+    if (said.key !== kept.key || here !== kept.room) Object.assign(kept, { key: said.key, region: -1, room: here });
     kept.since = said.since;
     const l = panelLayout(screenNow(room.bar, room.pad, s.def.floor, PLAY_TALL), said.lines, measured, true, kept.region);
     if (!l) return null;
